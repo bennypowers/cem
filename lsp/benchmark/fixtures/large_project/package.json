@@ -3,11 +3,15 @@
   "version": "1.0.0",
   "description": "Large component library with 50+ elements for stress testing",
   "customElements": "./custom-elements.json",
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
+  "main": "./index.js",
+  "module": "./index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "types": "./index.d.ts",
   "files": [
-    "dist/",
+    "index.js",
+    "src/",
     "custom-elements.json"
   ],
   "scripts": {

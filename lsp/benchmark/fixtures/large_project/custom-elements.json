@@ -4,7 +4,1925 @@
   "modules": [
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/primary.ts",
+      "path": "./index.js",
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button",
+          "declaration": {
+            "name": "MyButton",
+            "module": "./src/components/buttons/primary.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-secondary",
+          "declaration": {
+            "name": "MyButtonSecondary",
+            "module": "./src/components/buttons/secondary.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-tertiary",
+          "declaration": {
+            "name": "MyButtonTertiary",
+            "module": "./src/components/buttons/tertiary.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-ghost",
+          "declaration": {
+            "name": "MyButtonGhost",
+            "module": "./src/components/buttons/ghost.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-outline",
+          "declaration": {
+            "name": "MyButtonOutline",
+            "module": "./src/components/buttons/outline.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-text",
+          "declaration": {
+            "name": "MyButtonText",
+            "module": "./src/components/buttons/text.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-icon",
+          "declaration": {
+            "name": "MyButtonIcon",
+            "module": "./src/components/buttons/icon.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-fab",
+          "declaration": {
+            "name": "MyButtonFab",
+            "module": "./src/components/buttons/fab.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-toggle",
+          "declaration": {
+            "name": "MyButtonToggle",
+            "module": "./src/components/buttons/toggle.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-split",
+          "declaration": {
+            "name": "MyButtonSplit",
+            "module": "./src/components/buttons/split.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-group",
+          "declaration": {
+            "name": "MyButtonGroup",
+            "module": "./src/components/buttons/group.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-toolbar",
+          "declaration": {
+            "name": "MyButtonToolbar",
+            "module": "./src/components/buttons/toolbar.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-dropdown",
+          "declaration": {
+            "name": "MyButtonDropdown",
+            "module": "./src/components/buttons/dropdown.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-pagination",
+          "declaration": {
+            "name": "MyButtonPagination",
+            "module": "./src/components/buttons/pagination.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-breadcrumb",
+          "declaration": {
+            "name": "MyButtonBreadcrumb",
+            "module": "./src/components/buttons/breadcrumb.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-close",
+          "declaration": {
+            "name": "MyButtonClose",
+            "module": "./src/components/buttons/close.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-expand",
+          "declaration": {
+            "name": "MyButtonExpand",
+            "module": "./src/components/buttons/expand.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-collapse",
+          "declaration": {
+            "name": "MyButtonCollapse",
+            "module": "./src/components/buttons/collapse.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-play",
+          "declaration": {
+            "name": "MyButtonPlay",
+            "module": "./src/components/buttons/play.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-pause",
+          "declaration": {
+            "name": "MyButtonPause",
+            "module": "./src/components/buttons/pause.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-stop",
+          "declaration": {
+            "name": "MyButtonStop",
+            "module": "./src/components/buttons/stop.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-next",
+          "declaration": {
+            "name": "MyButtonNext",
+            "module": "./src/components/buttons/next.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-previous",
+          "declaration": {
+            "name": "MyButtonPrevious",
+            "module": "./src/components/buttons/previous.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-submit",
+          "declaration": {
+            "name": "MyButtonSubmit",
+            "module": "./src/components/buttons/submit.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-reset",
+          "declaration": {
+            "name": "MyButtonReset",
+            "module": "./src/components/buttons/reset.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-cancel",
+          "declaration": {
+            "name": "MyButtonCancel",
+            "module": "./src/components/buttons/cancel.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-save",
+          "declaration": {
+            "name": "MyButtonSave",
+            "module": "./src/components/buttons/save.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-edit",
+          "declaration": {
+            "name": "MyButtonEdit",
+            "module": "./src/components/buttons/edit.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-delete",
+          "declaration": {
+            "name": "MyButtonDelete",
+            "module": "./src/components/buttons/delete.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-copy",
+          "declaration": {
+            "name": "MyButtonCopy",
+            "module": "./src/components/buttons/copy.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-share",
+          "declaration": {
+            "name": "MyButtonShare",
+            "module": "./src/components/buttons/share.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-like",
+          "declaration": {
+            "name": "MyButtonLike",
+            "module": "./src/components/buttons/like.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-bookmark",
+          "declaration": {
+            "name": "MyButtonBookmark",
+            "module": "./src/components/buttons/bookmark.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-favorite",
+          "declaration": {
+            "name": "MyButtonFavorite",
+            "module": "./src/components/buttons/favorite.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-download",
+          "declaration": {
+            "name": "MyButtonDownload",
+            "module": "./src/components/buttons/download.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-upload",
+          "declaration": {
+            "name": "MyButtonUpload",
+            "module": "./src/components/buttons/upload.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-print",
+          "declaration": {
+            "name": "MyButtonPrint",
+            "module": "./src/components/buttons/print.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-search",
+          "declaration": {
+            "name": "MyButtonSearch",
+            "module": "./src/components/buttons/search.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-filter",
+          "declaration": {
+            "name": "MyButtonFilter",
+            "module": "./src/components/buttons/filter.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-sort",
+          "declaration": {
+            "name": "MyButtonSort",
+            "module": "./src/components/buttons/sort.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-refresh",
+          "declaration": {
+            "name": "MyButtonRefresh",
+            "module": "./src/components/buttons/refresh.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-sync",
+          "declaration": {
+            "name": "MyButtonSync",
+            "module": "./src/components/buttons/sync.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-settings",
+          "declaration": {
+            "name": "MyButtonSettings",
+            "module": "./src/components/buttons/settings.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-help",
+          "declaration": {
+            "name": "MyButtonHelp",
+            "module": "./src/components/buttons/help.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-info",
+          "declaration": {
+            "name": "MyButtonInfo",
+            "module": "./src/components/buttons/info.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-warning",
+          "declaration": {
+            "name": "MyButtonWarning",
+            "module": "./src/components/buttons/warning.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-error",
+          "declaration": {
+            "name": "MyButtonError",
+            "module": "./src/components/buttons/error.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button-success",
+          "declaration": {
+            "name": "MyButtonSuccess",
+            "module": "./src/components/buttons/success.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input",
+          "declaration": {
+            "name": "MyInput",
+            "module": "./src/components/forms/text.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-email",
+          "declaration": {
+            "name": "MyInputEmail",
+            "module": "./src/components/forms/email.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-password",
+          "declaration": {
+            "name": "MyInputPassword",
+            "module": "./src/components/forms/password.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-number",
+          "declaration": {
+            "name": "MyInputNumber",
+            "module": "./src/components/forms/number.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-tel",
+          "declaration": {
+            "name": "MyInputTel",
+            "module": "./src/components/forms/tel.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-url",
+          "declaration": {
+            "name": "MyInputUrl",
+            "module": "./src/components/forms/url.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-search",
+          "declaration": {
+            "name": "MyInputSearch",
+            "module": "./src/components/forms/search.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-textarea",
+          "declaration": {
+            "name": "MyInputTextarea",
+            "module": "./src/components/forms/textarea.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-select",
+          "declaration": {
+            "name": "MyInputSelect",
+            "module": "./src/components/forms/select.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-checkbox",
+          "declaration": {
+            "name": "MyInputCheckbox",
+            "module": "./src/components/forms/checkbox.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-radio",
+          "declaration": {
+            "name": "MyInputRadio",
+            "module": "./src/components/forms/radio.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-switch",
+          "declaration": {
+            "name": "MyInputSwitch",
+            "module": "./src/components/forms/switch.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-slider",
+          "declaration": {
+            "name": "MyInputSlider",
+            "module": "./src/components/forms/slider.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-range",
+          "declaration": {
+            "name": "MyInputRange",
+            "module": "./src/components/forms/range.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-color",
+          "declaration": {
+            "name": "MyInputColor",
+            "module": "./src/components/forms/color.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-date",
+          "declaration": {
+            "name": "MyInputDate",
+            "module": "./src/components/forms/date.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-time",
+          "declaration": {
+            "name": "MyInputTime",
+            "module": "./src/components/forms/time.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-datetime",
+          "declaration": {
+            "name": "MyInputDatetime",
+            "module": "./src/components/forms/datetime.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-file",
+          "declaration": {
+            "name": "MyInputFile",
+            "module": "./src/components/forms/file.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-hidden",
+          "declaration": {
+            "name": "MyInputHidden",
+            "module": "./src/components/forms/hidden.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-autocomplete",
+          "declaration": {
+            "name": "MyInputAutocomplete",
+            "module": "./src/components/forms/autocomplete.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-combobox",
+          "declaration": {
+            "name": "MyInputCombobox",
+            "module": "./src/components/forms/combobox.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-listbox",
+          "declaration": {
+            "name": "MyInputListbox",
+            "module": "./src/components/forms/listbox.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-multiselect",
+          "declaration": {
+            "name": "MyInputMultiselect",
+            "module": "./src/components/forms/multiselect.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-typeahead",
+          "declaration": {
+            "name": "MyInputTypeahead",
+            "module": "./src/components/forms/typeahead.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-datepicker",
+          "declaration": {
+            "name": "MyInputDatepicker",
+            "module": "./src/components/forms/datepicker.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-timepicker",
+          "declaration": {
+            "name": "MyInputTimepicker",
+            "module": "./src/components/forms/timepicker.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-colorpicker",
+          "declaration": {
+            "name": "MyInputColorpicker",
+            "module": "./src/components/forms/colorpicker.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-filepicker",
+          "declaration": {
+            "name": "MyInputFilepicker",
+            "module": "./src/components/forms/filepicker.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-dropdown",
+          "declaration": {
+            "name": "MyInputDropdown",
+            "module": "./src/components/forms/dropdown.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-rating",
+          "declaration": {
+            "name": "MyInputRating",
+            "module": "./src/components/forms/rating.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-tags",
+          "declaration": {
+            "name": "MyInputTags",
+            "module": "./src/components/forms/tags.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-chips",
+          "declaration": {
+            "name": "MyInputChips",
+            "module": "./src/components/forms/chips.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-tokens",
+          "declaration": {
+            "name": "MyInputTokens",
+            "module": "./src/components/forms/tokens.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-editor",
+          "declaration": {
+            "name": "MyInputEditor",
+            "module": "./src/components/forms/editor.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-wysiwyg",
+          "declaration": {
+            "name": "MyInputWysiwyg",
+            "module": "./src/components/forms/wysiwyg.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-markdown",
+          "declaration": {
+            "name": "MyInputMarkdown",
+            "module": "./src/components/forms/markdown.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-code",
+          "declaration": {
+            "name": "MyInputCode",
+            "module": "./src/components/forms/code.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-json",
+          "declaration": {
+            "name": "MyInputJson",
+            "module": "./src/components/forms/json.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-numeric",
+          "declaration": {
+            "name": "MyInputNumeric",
+            "module": "./src/components/forms/numeric.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-currency",
+          "declaration": {
+            "name": "MyInputCurrency",
+            "module": "./src/components/forms/currency.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-percentage",
+          "declaration": {
+            "name": "MyInputPercentage",
+            "module": "./src/components/forms/percentage.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-duration",
+          "declaration": {
+            "name": "MyInputDuration",
+            "module": "./src/components/forms/duration.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-mask",
+          "declaration": {
+            "name": "MyInputMask",
+            "module": "./src/components/forms/mask.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-format",
+          "declaration": {
+            "name": "MyInputFormat",
+            "module": "./src/components/forms/format.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-validation",
+          "declaration": {
+            "name": "MyInputValidation",
+            "module": "./src/components/forms/validation.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container",
+          "declaration": {
+            "name": "MyContainer",
+            "module": "./src/components/layout/flex.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-grid",
+          "declaration": {
+            "name": "MyContainerGrid",
+            "module": "./src/components/layout/grid.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-stack",
+          "declaration": {
+            "name": "MyContainerStack",
+            "module": "./src/components/layout/stack.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-cluster",
+          "declaration": {
+            "name": "MyContainerCluster",
+            "module": "./src/components/layout/cluster.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-sidebar",
+          "declaration": {
+            "name": "MyContainerSidebar",
+            "module": "./src/components/layout/sidebar.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-switcher",
+          "declaration": {
+            "name": "MyContainerSwitcher",
+            "module": "./src/components/layout/switcher.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-cover",
+          "declaration": {
+            "name": "MyContainerCover",
+            "module": "./src/components/layout/cover.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-frame",
+          "declaration": {
+            "name": "MyContainerFrame",
+            "module": "./src/components/layout/frame.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-center",
+          "declaration": {
+            "name": "MyContainerCenter",
+            "module": "./src/components/layout/center.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-box",
+          "declaration": {
+            "name": "MyContainerBox",
+            "module": "./src/components/layout/box.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-panel",
+          "declaration": {
+            "name": "MyContainerPanel",
+            "module": "./src/components/layout/panel.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-section",
+          "declaration": {
+            "name": "MyContainerSection",
+            "module": "./src/components/layout/section.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-article",
+          "declaration": {
+            "name": "MyContainerArticle",
+            "module": "./src/components/layout/article.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-aside",
+          "declaration": {
+            "name": "MyContainerAside",
+            "module": "./src/components/layout/aside.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-header",
+          "declaration": {
+            "name": "MyContainerHeader",
+            "module": "./src/components/layout/header.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-footer",
+          "declaration": {
+            "name": "MyContainerFooter",
+            "module": "./src/components/layout/footer.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-main",
+          "declaration": {
+            "name": "MyContainerMain",
+            "module": "./src/components/layout/main.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-wrapper",
+          "declaration": {
+            "name": "MyContainerWrapper",
+            "module": "./src/components/layout/wrapper.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-column",
+          "declaration": {
+            "name": "MyContainerColumn",
+            "module": "./src/components/layout/column.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card",
+          "declaration": {
+            "name": "MyCard",
+            "module": "./src/components/cards/basic.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-elevated",
+          "declaration": {
+            "name": "MyCardElevated",
+            "module": "./src/components/cards/elevated.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-outlined",
+          "declaration": {
+            "name": "MyCardOutlined",
+            "module": "./src/components/cards/outlined.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-filled",
+          "declaration": {
+            "name": "MyCardFilled",
+            "module": "./src/components/cards/filled.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-interactive",
+          "declaration": {
+            "name": "MyCardInteractive",
+            "module": "./src/components/cards/interactive.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-media",
+          "declaration": {
+            "name": "MyCardMedia",
+            "module": "./src/components/cards/media.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-product",
+          "declaration": {
+            "name": "MyCardProduct",
+            "module": "./src/components/cards/product.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-profile",
+          "declaration": {
+            "name": "MyCardProfile",
+            "module": "./src/components/cards/profile.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-article",
+          "declaration": {
+            "name": "MyCardArticle",
+            "module": "./src/components/cards/article.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-gallery",
+          "declaration": {
+            "name": "MyCardGallery",
+            "module": "./src/components/cards/gallery.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-pricing",
+          "declaration": {
+            "name": "MyCardPricing",
+            "module": "./src/components/cards/pricing.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-feature",
+          "declaration": {
+            "name": "MyCardFeature",
+            "module": "./src/components/cards/feature.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-testimonial",
+          "declaration": {
+            "name": "MyCardTestimonial",
+            "module": "./src/components/cards/testimonial.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-stats",
+          "declaration": {
+            "name": "MyCardStats",
+            "module": "./src/components/cards/stats.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-dashboard",
+          "declaration": {
+            "name": "MyCardDashboard",
+            "module": "./src/components/cards/dashboard.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav",
+          "declaration": {
+            "name": "MyNav",
+            "module": "./src/components/navigation/primary.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav-secondary",
+          "declaration": {
+            "name": "MyNavSecondary",
+            "module": "./src/components/navigation/secondary.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav-breadcrumb",
+          "declaration": {
+            "name": "MyNavBreadcrumb",
+            "module": "./src/components/navigation/breadcrumb.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav-pagination",
+          "declaration": {
+            "name": "MyNavPagination",
+            "module": "./src/components/navigation/pagination.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav-tabs",
+          "declaration": {
+            "name": "MyNavTabs",
+            "module": "./src/components/navigation/tabs.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav-stepper",
+          "declaration": {
+            "name": "MyNavStepper",
+            "module": "./src/components/navigation/stepper.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav-sidebar",
+          "declaration": {
+            "name": "MyNavSidebar",
+            "module": "./src/components/navigation/sidebar.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav-toolbar",
+          "declaration": {
+            "name": "MyNavToolbar",
+            "module": "./src/components/navigation/toolbar.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav-menu",
+          "declaration": {
+            "name": "MyNavMenu",
+            "module": "./src/components/navigation/menu.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav-dropdown",
+          "declaration": {
+            "name": "MyNavDropdown",
+            "module": "./src/components/navigation/dropdown.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav-context",
+          "declaration": {
+            "name": "MyNavContext",
+            "module": "./src/components/navigation/context.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav-mega",
+          "declaration": {
+            "name": "MyNavMega",
+            "module": "./src/components/navigation/mega.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav-drawer",
+          "declaration": {
+            "name": "MyNavDrawer",
+            "module": "./src/components/navigation/drawer.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav-rail",
+          "declaration": {
+            "name": "MyNavRail",
+            "module": "./src/components/navigation/rail.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-nav-bottom",
+          "declaration": {
+            "name": "MyNavBottom",
+            "module": "./src/components/navigation/bottom.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table",
+          "declaration": {
+            "name": "MyTable",
+            "module": "./src/components/data/basic.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table-sortable",
+          "declaration": {
+            "name": "MyTableSortable",
+            "module": "./src/components/data/sortable.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table-filterable",
+          "declaration": {
+            "name": "MyTableFilterable",
+            "module": "./src/components/data/filterable.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table-editable",
+          "declaration": {
+            "name": "MyTableEditable",
+            "module": "./src/components/data/editable.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table-virtual",
+          "declaration": {
+            "name": "MyTableVirtual",
+            "module": "./src/components/data/virtual.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table-tree",
+          "declaration": {
+            "name": "MyTableTree",
+            "module": "./src/components/data/tree.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table-list",
+          "declaration": {
+            "name": "MyTableList",
+            "module": "./src/components/data/list.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table-grid",
+          "declaration": {
+            "name": "MyTableGrid",
+            "module": "./src/components/data/grid.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table-calendar",
+          "declaration": {
+            "name": "MyTableCalendar",
+            "module": "./src/components/data/calendar.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table-timeline",
+          "declaration": {
+            "name": "MyTableTimeline",
+            "module": "./src/components/data/timeline.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table-kanban",
+          "declaration": {
+            "name": "MyTableKanban",
+            "module": "./src/components/data/kanban.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table-chart",
+          "declaration": {
+            "name": "MyTableChart",
+            "module": "./src/components/data/chart.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table-graph",
+          "declaration": {
+            "name": "MyTableGraph",
+            "module": "./src/components/data/graph.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table-diagram",
+          "declaration": {
+            "name": "MyTableDiagram",
+            "module": "./src/components/data/diagram.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-table-map",
+          "declaration": {
+            "name": "MyTableMap",
+            "module": "./src/components/data/map.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert",
+          "declaration": {
+            "name": "MyAlert",
+            "module": "./src/components/feedback/info.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert-success",
+          "declaration": {
+            "name": "MyAlertSuccess",
+            "module": "./src/components/feedback/success.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert-warning",
+          "declaration": {
+            "name": "MyAlertWarning",
+            "module": "./src/components/feedback/warning.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert-error",
+          "declaration": {
+            "name": "MyAlertError",
+            "module": "./src/components/feedback/error.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert-toast",
+          "declaration": {
+            "name": "MyAlertToast",
+            "module": "./src/components/feedback/toast.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert-banner",
+          "declaration": {
+            "name": "MyAlertBanner",
+            "module": "./src/components/feedback/banner.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert-dialog",
+          "declaration": {
+            "name": "MyAlertDialog",
+            "module": "./src/components/feedback/dialog.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert-snackbar",
+          "declaration": {
+            "name": "MyAlertSnackbar",
+            "module": "./src/components/feedback/snackbar.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert-progress",
+          "declaration": {
+            "name": "MyAlertProgress",
+            "module": "./src/components/feedback/progress.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert-spinner",
+          "declaration": {
+            "name": "MyAlertSpinner",
+            "module": "./src/components/feedback/spinner.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert-skeleton",
+          "declaration": {
+            "name": "MyAlertSkeleton",
+            "module": "./src/components/feedback/skeleton.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert-badge",
+          "declaration": {
+            "name": "MyAlertBadge",
+            "module": "./src/components/feedback/badge.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert-chip",
+          "declaration": {
+            "name": "MyAlertChip",
+            "module": "./src/components/feedback/chip.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert-tag",
+          "declaration": {
+            "name": "MyAlertTag",
+            "module": "./src/components/feedback/tag.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-alert-status",
+          "declaration": {
+            "name": "MyAlertStatus",
+            "module": "./src/components/feedback/status.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image",
+          "declaration": {
+            "name": "MyImage",
+            "module": "./src/components/media/responsive.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-lazy",
+          "declaration": {
+            "name": "MyImageLazy",
+            "module": "./src/components/media/lazy.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-avatar",
+          "declaration": {
+            "name": "MyImageAvatar",
+            "module": "./src/components/media/avatar.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-thumbnail",
+          "declaration": {
+            "name": "MyImageThumbnail",
+            "module": "./src/components/media/thumbnail.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-gallery",
+          "declaration": {
+            "name": "MyImageGallery",
+            "module": "./src/components/media/gallery.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-carousel",
+          "declaration": {
+            "name": "MyImageCarousel",
+            "module": "./src/components/media/carousel.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-video",
+          "declaration": {
+            "name": "MyImageVideo",
+            "module": "./src/components/media/video.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-audio",
+          "declaration": {
+            "name": "MyImageAudio",
+            "module": "./src/components/media/audio.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-player",
+          "declaration": {
+            "name": "MyImagePlayer",
+            "module": "./src/components/media/player.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-embed",
+          "declaration": {
+            "name": "MyImageEmbed",
+            "module": "./src/components/media/embed.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-icon",
+          "declaration": {
+            "name": "MyImageIcon",
+            "module": "./src/components/media/icon.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-logo",
+          "declaration": {
+            "name": "MyImageLogo",
+            "module": "./src/components/media/logo.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-hero",
+          "declaration": {
+            "name": "MyImageHero",
+            "module": "./src/components/media/hero.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-banner",
+          "declaration": {
+            "name": "MyImageBanner",
+            "module": "./src/components/media/banner.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-background",
+          "declaration": {
+            "name": "MyImageBackground",
+            "module": "./src/components/media/background.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal",
+          "declaration": {
+            "name": "MyModal",
+            "module": "./src/components/overlays/dialog.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal-drawer",
+          "declaration": {
+            "name": "MyModalDrawer",
+            "module": "./src/components/overlays/drawer.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal-sidebar",
+          "declaration": {
+            "name": "MyModalSidebar",
+            "module": "./src/components/overlays/sidebar.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal-popup",
+          "declaration": {
+            "name": "MyModalPopup",
+            "module": "./src/components/overlays/popup.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal-tooltip",
+          "declaration": {
+            "name": "MyModalTooltip",
+            "module": "./src/components/overlays/tooltip.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal-popover",
+          "declaration": {
+            "name": "MyModalPopover",
+            "module": "./src/components/overlays/popover.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal-dropdown",
+          "declaration": {
+            "name": "MyModalDropdown",
+            "module": "./src/components/overlays/dropdown.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal-menu",
+          "declaration": {
+            "name": "MyModalMenu",
+            "module": "./src/components/overlays/menu.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal-sheet",
+          "declaration": {
+            "name": "MyModalSheet",
+            "module": "./src/components/overlays/sheet.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal-panel",
+          "declaration": {
+            "name": "MyModalPanel",
+            "module": "./src/components/overlays/panel.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal-overlay",
+          "declaration": {
+            "name": "MyModalOverlay",
+            "module": "./src/components/overlays/overlay.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal-backdrop",
+          "declaration": {
+            "name": "MyModalBackdrop",
+            "module": "./src/components/overlays/backdrop.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal-mask",
+          "declaration": {
+            "name": "MyModalMask",
+            "module": "./src/components/overlays/mask.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal-scrim",
+          "declaration": {
+            "name": "MyModalScrim",
+            "module": "./src/components/overlays/scrim.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-modal-lightbox",
+          "declaration": {
+            "name": "MyModalLightbox",
+            "module": "./src/components/overlays/lightbox.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart",
+          "declaration": {
+            "name": "MyChart",
+            "module": "./src/components/charts/line.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-bar",
+          "declaration": {
+            "name": "MyChartBar",
+            "module": "./src/components/charts/bar.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-pie",
+          "declaration": {
+            "name": "MyChartPie",
+            "module": "./src/components/charts/pie.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-doughnut",
+          "declaration": {
+            "name": "MyChartDoughnut",
+            "module": "./src/components/charts/doughnut.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-area",
+          "declaration": {
+            "name": "MyChartArea",
+            "module": "./src/components/charts/area.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-scatter",
+          "declaration": {
+            "name": "MyChartScatter",
+            "module": "./src/components/charts/scatter.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-bubble",
+          "declaration": {
+            "name": "MyChartBubble",
+            "module": "./src/components/charts/bubble.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-radar",
+          "declaration": {
+            "name": "MyChartRadar",
+            "module": "./src/components/charts/radar.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-polar",
+          "declaration": {
+            "name": "MyChartPolar",
+            "module": "./src/components/charts/polar.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-gauge",
+          "declaration": {
+            "name": "MyChartGauge",
+            "module": "./src/components/charts/gauge.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-heatmap",
+          "declaration": {
+            "name": "MyChartHeatmap",
+            "module": "./src/components/charts/heatmap.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-treemap",
+          "declaration": {
+            "name": "MyChartTreemap",
+            "module": "./src/components/charts/treemap.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-sankey",
+          "declaration": {
+            "name": "MyChartSankey",
+            "module": "./src/components/charts/sankey.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-funnel",
+          "declaration": {
+            "name": "MyChartFunnel",
+            "module": "./src/components/charts/funnel.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-candlestick",
+          "declaration": {
+            "name": "MyChartCandlestick",
+            "module": "./src/components/charts/candlestick.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider",
+          "declaration": {
+            "name": "MyDivider",
+            "module": "./src/components/utilities/horizontal.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider-vertical",
+          "declaration": {
+            "name": "MyDividerVertical",
+            "module": "./src/components/utilities/vertical.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider-spacer",
+          "declaration": {
+            "name": "MyDividerSpacer",
+            "module": "./src/components/utilities/spacer.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider-separator",
+          "declaration": {
+            "name": "MyDividerSeparator",
+            "module": "./src/components/utilities/separator.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider-border",
+          "declaration": {
+            "name": "MyDividerBorder",
+            "module": "./src/components/utilities/border.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider-line",
+          "declaration": {
+            "name": "MyDividerLine",
+            "module": "./src/components/utilities/line.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider-ruler",
+          "declaration": {
+            "name": "MyDividerRuler",
+            "module": "./src/components/utilities/ruler.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider-break",
+          "declaration": {
+            "name": "MyDividerBreak",
+            "module": "./src/components/utilities/break.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider-gap",
+          "declaration": {
+            "name": "MyDividerGap",
+            "module": "./src/components/utilities/gap.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider-margin",
+          "declaration": {
+            "name": "MyDividerMargin",
+            "module": "./src/components/utilities/margin.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider-padding",
+          "declaration": {
+            "name": "MyDividerPadding",
+            "module": "./src/components/utilities/padding.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider-offset",
+          "declaration": {
+            "name": "MyDividerOffset",
+            "module": "./src/components/utilities/offset.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider-indent",
+          "declaration": {
+            "name": "MyDividerIndent",
+            "module": "./src/components/utilities/indent.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider-outdent",
+          "declaration": {
+            "name": "MyDividerOutdent",
+            "module": "./src/components/utilities/outdent.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-divider-gutter",
+          "declaration": {
+            "name": "MyDividerGutter",
+            "module": "./src/components/utilities/gutter.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-icon",
+          "declaration": {
+            "name": "MyIcon",
+            "module": "./src/components/icons/icon.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-text",
+          "declaration": {
+            "name": "MyInputText",
+            "module": "./src/components/forms/input-text.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-flex",
+          "declaration": {
+            "name": "MyContainerFlex",
+            "module": "./src/components/layout/container-flex.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-basic",
+          "declaration": {
+            "name": "MyCardBasic",
+            "module": "./src/components/cards/card-basic.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-line",
+          "declaration": {
+            "name": "MyChartLine",
+            "module": "./src/components/charts/chart-line.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-responsive",
+          "declaration": {
+            "name": "MyImageResponsive",
+            "module": "./src/components/images/image-responsive.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "./src/components/buttons/primary.js",
       "declarations": [
         {
           "kind": "class",
@@ -72,7 +1990,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/secondary.ts",
+      "path": "./src/components/buttons/secondary.js",
       "declarations": [
         {
           "kind": "class",
@@ -140,7 +2058,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/tertiary.ts",
+      "path": "./src/components/buttons/tertiary.js",
       "declarations": [
         {
           "kind": "class",
@@ -208,7 +2126,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/ghost.ts",
+      "path": "./src/components/buttons/ghost.js",
       "declarations": [
         {
           "kind": "class",
@@ -276,7 +2194,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/outline.ts",
+      "path": "./src/components/buttons/outline.js",
       "declarations": [
         {
           "kind": "class",
@@ -344,7 +2262,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/text.ts",
+      "path": "./src/components/buttons/text.js",
       "declarations": [
         {
           "kind": "class",
@@ -412,7 +2330,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/icon.ts",
+      "path": "./src/components/buttons/icon.js",
       "declarations": [
         {
           "kind": "class",
@@ -480,7 +2398,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/fab.ts",
+      "path": "./src/components/buttons/fab.js",
       "declarations": [
         {
           "kind": "class",
@@ -548,7 +2466,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/toggle.ts",
+      "path": "./src/components/buttons/toggle.js",
       "declarations": [
         {
           "kind": "class",
@@ -616,7 +2534,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/split.ts",
+      "path": "./src/components/buttons/split.js",
       "declarations": [
         {
           "kind": "class",
@@ -684,7 +2602,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/group.ts",
+      "path": "./src/components/buttons/group.js",
       "declarations": [
         {
           "kind": "class",
@@ -759,7 +2677,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/toolbar.ts",
+      "path": "./src/components/buttons/toolbar.js",
       "declarations": [
         {
           "kind": "class",
@@ -827,7 +2745,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/dropdown.ts",
+      "path": "./src/components/buttons/dropdown.js",
       "declarations": [
         {
           "kind": "class",
@@ -895,7 +2813,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/pagination.ts",
+      "path": "./src/components/buttons/pagination.js",
       "declarations": [
         {
           "kind": "class",
@@ -963,7 +2881,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/breadcrumb.ts",
+      "path": "./src/components/buttons/breadcrumb.js",
       "declarations": [
         {
           "kind": "class",
@@ -1031,7 +2949,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/close.ts",
+      "path": "./src/components/buttons/close.js",
       "declarations": [
         {
           "kind": "class",
@@ -1099,7 +3017,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/expand.ts",
+      "path": "./src/components/buttons/expand.js",
       "declarations": [
         {
           "kind": "class",
@@ -1167,7 +3085,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/collapse.ts",
+      "path": "./src/components/buttons/collapse.js",
       "declarations": [
         {
           "kind": "class",
@@ -1235,7 +3153,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/play.ts",
+      "path": "./src/components/buttons/play.js",
       "declarations": [
         {
           "kind": "class",
@@ -1303,7 +3221,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/pause.ts",
+      "path": "./src/components/buttons/pause.js",
       "declarations": [
         {
           "kind": "class",
@@ -1371,7 +3289,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/stop.ts",
+      "path": "./src/components/buttons/stop.js",
       "declarations": [
         {
           "kind": "class",
@@ -1439,7 +3357,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/next.ts",
+      "path": "./src/components/buttons/next.js",
       "declarations": [
         {
           "kind": "class",
@@ -1507,7 +3425,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/previous.ts",
+      "path": "./src/components/buttons/previous.js",
       "declarations": [
         {
           "kind": "class",
@@ -1575,7 +3493,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/submit.ts",
+      "path": "./src/components/buttons/submit.js",
       "declarations": [
         {
           "kind": "class",
@@ -1643,7 +3561,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/reset.ts",
+      "path": "./src/components/buttons/reset.js",
       "declarations": [
         {
           "kind": "class",
@@ -1711,7 +3629,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/cancel.ts",
+      "path": "./src/components/buttons/cancel.js",
       "declarations": [
         {
           "kind": "class",
@@ -1779,7 +3697,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/save.ts",
+      "path": "./src/components/buttons/save.js",
       "declarations": [
         {
           "kind": "class",
@@ -1847,7 +3765,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/edit.ts",
+      "path": "./src/components/buttons/edit.js",
       "declarations": [
         {
           "kind": "class",
@@ -1915,7 +3833,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/delete.ts",
+      "path": "./src/components/buttons/delete.js",
       "declarations": [
         {
           "kind": "class",
@@ -1983,7 +3901,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/copy.ts",
+      "path": "./src/components/buttons/copy.js",
       "declarations": [
         {
           "kind": "class",
@@ -2051,7 +3969,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/share.ts",
+      "path": "./src/components/buttons/share.js",
       "declarations": [
         {
           "kind": "class",
@@ -2119,7 +4037,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/like.ts",
+      "path": "./src/components/buttons/like.js",
       "declarations": [
         {
           "kind": "class",
@@ -2187,7 +4105,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/bookmark.ts",
+      "path": "./src/components/buttons/bookmark.js",
       "declarations": [
         {
           "kind": "class",
@@ -2255,7 +4173,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/favorite.ts",
+      "path": "./src/components/buttons/favorite.js",
       "declarations": [
         {
           "kind": "class",
@@ -2323,7 +4241,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/download.ts",
+      "path": "./src/components/buttons/download.js",
       "declarations": [
         {
           "kind": "class",
@@ -2391,7 +4309,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/upload.ts",
+      "path": "./src/components/buttons/upload.js",
       "declarations": [
         {
           "kind": "class",
@@ -2459,7 +4377,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/print.ts",
+      "path": "./src/components/buttons/print.js",
       "declarations": [
         {
           "kind": "class",
@@ -2527,7 +4445,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/search.ts",
+      "path": "./src/components/buttons/search.js",
       "declarations": [
         {
           "kind": "class",
@@ -2595,7 +4513,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/filter.ts",
+      "path": "./src/components/buttons/filter.js",
       "declarations": [
         {
           "kind": "class",
@@ -2663,7 +4581,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/sort.ts",
+      "path": "./src/components/buttons/sort.js",
       "declarations": [
         {
           "kind": "class",
@@ -2731,7 +4649,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/refresh.ts",
+      "path": "./src/components/buttons/refresh.js",
       "declarations": [
         {
           "kind": "class",
@@ -2799,7 +4717,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/sync.ts",
+      "path": "./src/components/buttons/sync.js",
       "declarations": [
         {
           "kind": "class",
@@ -2867,7 +4785,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/settings.ts",
+      "path": "./src/components/buttons/settings.js",
       "declarations": [
         {
           "kind": "class",
@@ -2935,7 +4853,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/help.ts",
+      "path": "./src/components/buttons/help.js",
       "declarations": [
         {
           "kind": "class",
@@ -3003,7 +4921,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/info.ts",
+      "path": "./src/components/buttons/info.js",
       "declarations": [
         {
           "kind": "class",
@@ -3071,7 +4989,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/warning.ts",
+      "path": "./src/components/buttons/warning.js",
       "declarations": [
         {
           "kind": "class",
@@ -3139,7 +5057,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/error.ts",
+      "path": "./src/components/buttons/error.js",
       "declarations": [
         {
           "kind": "class",
@@ -3207,7 +5125,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/buttons/success.ts",
+      "path": "./src/components/buttons/success.js",
       "declarations": [
         {
           "kind": "class",
@@ -3275,7 +5193,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/text.ts",
+      "path": "./src/components/forms/text.js",
       "declarations": [
         {
           "kind": "class",
@@ -3350,7 +5268,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/email.ts",
+      "path": "./src/components/forms/email.js",
       "declarations": [
         {
           "kind": "class",
@@ -3425,7 +5343,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/password.ts",
+      "path": "./src/components/forms/password.js",
       "declarations": [
         {
           "kind": "class",
@@ -3500,7 +5418,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/number.ts",
+      "path": "./src/components/forms/number.js",
       "declarations": [
         {
           "kind": "class",
@@ -3575,7 +5493,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/tel.ts",
+      "path": "./src/components/forms/tel.js",
       "declarations": [
         {
           "kind": "class",
@@ -3650,7 +5568,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/url.ts",
+      "path": "./src/components/forms/url.js",
       "declarations": [
         {
           "kind": "class",
@@ -3725,7 +5643,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/search.ts",
+      "path": "./src/components/forms/search.js",
       "declarations": [
         {
           "kind": "class",
@@ -3800,7 +5718,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/textarea.ts",
+      "path": "./src/components/forms/textarea.js",
       "declarations": [
         {
           "kind": "class",
@@ -3875,7 +5793,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/select.ts",
+      "path": "./src/components/forms/select.js",
       "declarations": [
         {
           "kind": "class",
@@ -3964,7 +5882,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/checkbox.ts",
+      "path": "./src/components/forms/checkbox.js",
       "declarations": [
         {
           "kind": "class",
@@ -4039,7 +5957,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/radio.ts",
+      "path": "./src/components/forms/radio.js",
       "declarations": [
         {
           "kind": "class",
@@ -4114,7 +6032,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/switch.ts",
+      "path": "./src/components/forms/switch.js",
       "declarations": [
         {
           "kind": "class",
@@ -4189,7 +6107,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/slider.ts",
+      "path": "./src/components/forms/slider.js",
       "declarations": [
         {
           "kind": "class",
@@ -4264,7 +6182,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/range.ts",
+      "path": "./src/components/forms/range.js",
       "declarations": [
         {
           "kind": "class",
@@ -4339,7 +6257,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/color.ts",
+      "path": "./src/components/forms/color.js",
       "declarations": [
         {
           "kind": "class",
@@ -4421,7 +6339,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/date.ts",
+      "path": "./src/components/forms/date.js",
       "declarations": [
         {
           "kind": "class",
@@ -4496,7 +6414,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/time.ts",
+      "path": "./src/components/forms/time.js",
       "declarations": [
         {
           "kind": "class",
@@ -4571,7 +6489,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/datetime.ts",
+      "path": "./src/components/forms/datetime.js",
       "declarations": [
         {
           "kind": "class",
@@ -4646,7 +6564,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/file.ts",
+      "path": "./src/components/forms/file.js",
       "declarations": [
         {
           "kind": "class",
@@ -4721,7 +6639,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/hidden.ts",
+      "path": "./src/components/forms/hidden.js",
       "declarations": [
         {
           "kind": "class",
@@ -4796,7 +6714,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/autocomplete.ts",
+      "path": "./src/components/forms/autocomplete.js",
       "declarations": [
         {
           "kind": "class",
@@ -4871,7 +6789,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/combobox.ts",
+      "path": "./src/components/forms/combobox.js",
       "declarations": [
         {
           "kind": "class",
@@ -4946,7 +6864,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/listbox.ts",
+      "path": "./src/components/forms/listbox.js",
       "declarations": [
         {
           "kind": "class",
@@ -5021,7 +6939,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/multiselect.ts",
+      "path": "./src/components/forms/multiselect.js",
       "declarations": [
         {
           "kind": "class",
@@ -5103,7 +7021,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/typeahead.ts",
+      "path": "./src/components/forms/typeahead.js",
       "declarations": [
         {
           "kind": "class",
@@ -5178,7 +7096,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/datepicker.ts",
+      "path": "./src/components/forms/datepicker.js",
       "declarations": [
         {
           "kind": "class",
@@ -5253,7 +7171,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/timepicker.ts",
+      "path": "./src/components/forms/timepicker.js",
       "declarations": [
         {
           "kind": "class",
@@ -5328,7 +7246,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/colorpicker.ts",
+      "path": "./src/components/forms/colorpicker.js",
       "declarations": [
         {
           "kind": "class",
@@ -5410,7 +7328,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/filepicker.ts",
+      "path": "./src/components/forms/filepicker.js",
       "declarations": [
         {
           "kind": "class",
@@ -5485,7 +7403,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/dropdown.ts",
+      "path": "./src/components/forms/dropdown.js",
       "declarations": [
         {
           "kind": "class",
@@ -5560,7 +7478,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/rating.ts",
+      "path": "./src/components/forms/rating.js",
       "declarations": [
         {
           "kind": "class",
@@ -5635,7 +7553,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/tags.ts",
+      "path": "./src/components/forms/tags.js",
       "declarations": [
         {
           "kind": "class",
@@ -5710,7 +7628,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/chips.ts",
+      "path": "./src/components/forms/chips.js",
       "declarations": [
         {
           "kind": "class",
@@ -5785,7 +7703,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/tokens.ts",
+      "path": "./src/components/forms/tokens.js",
       "declarations": [
         {
           "kind": "class",
@@ -5860,7 +7778,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/editor.ts",
+      "path": "./src/components/forms/editor.js",
       "declarations": [
         {
           "kind": "class",
@@ -5935,7 +7853,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/wysiwyg.ts",
+      "path": "./src/components/forms/wysiwyg.js",
       "declarations": [
         {
           "kind": "class",
@@ -6010,7 +7928,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/markdown.ts",
+      "path": "./src/components/forms/markdown.js",
       "declarations": [
         {
           "kind": "class",
@@ -6085,7 +8003,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/code.ts",
+      "path": "./src/components/forms/code.js",
       "declarations": [
         {
           "kind": "class",
@@ -6160,7 +8078,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/json.ts",
+      "path": "./src/components/forms/json.js",
       "declarations": [
         {
           "kind": "class",
@@ -6235,7 +8153,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/numeric.ts",
+      "path": "./src/components/forms/numeric.js",
       "declarations": [
         {
           "kind": "class",
@@ -6310,7 +8228,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/currency.ts",
+      "path": "./src/components/forms/currency.js",
       "declarations": [
         {
           "kind": "class",
@@ -6385,7 +8303,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/percentage.ts",
+      "path": "./src/components/forms/percentage.js",
       "declarations": [
         {
           "kind": "class",
@@ -6460,7 +8378,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/duration.ts",
+      "path": "./src/components/forms/duration.js",
       "declarations": [
         {
           "kind": "class",
@@ -6535,7 +8453,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/mask.ts",
+      "path": "./src/components/forms/mask.js",
       "declarations": [
         {
           "kind": "class",
@@ -6610,7 +8528,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/format.ts",
+      "path": "./src/components/forms/format.js",
       "declarations": [
         {
           "kind": "class",
@@ -6685,7 +8603,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/validation.ts",
+      "path": "./src/components/forms/validation.js",
       "declarations": [
         {
           "kind": "class",
@@ -6760,7 +8678,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/flex.ts",
+      "path": "./src/components/layout/flex.js",
       "declarations": [
         {
           "kind": "class",
@@ -6825,7 +8743,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/grid.ts",
+      "path": "./src/components/layout/grid.js",
       "declarations": [
         {
           "kind": "class",
@@ -6890,7 +8808,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/stack.ts",
+      "path": "./src/components/layout/stack.js",
       "declarations": [
         {
           "kind": "class",
@@ -6955,7 +8873,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/cluster.ts",
+      "path": "./src/components/layout/cluster.js",
       "declarations": [
         {
           "kind": "class",
@@ -7020,7 +8938,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/sidebar.ts",
+      "path": "./src/components/layout/sidebar.js",
       "declarations": [
         {
           "kind": "class",
@@ -7085,7 +9003,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/switcher.ts",
+      "path": "./src/components/layout/switcher.js",
       "declarations": [
         {
           "kind": "class",
@@ -7150,7 +9068,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/cover.ts",
+      "path": "./src/components/layout/cover.js",
       "declarations": [
         {
           "kind": "class",
@@ -7215,7 +9133,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/frame.ts",
+      "path": "./src/components/layout/frame.js",
       "declarations": [
         {
           "kind": "class",
@@ -7280,7 +9198,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/center.ts",
+      "path": "./src/components/layout/center.js",
       "declarations": [
         {
           "kind": "class",
@@ -7345,7 +9263,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/box.ts",
+      "path": "./src/components/layout/box.js",
       "declarations": [
         {
           "kind": "class",
@@ -7410,7 +9328,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/panel.ts",
+      "path": "./src/components/layout/panel.js",
       "declarations": [
         {
           "kind": "class",
@@ -7475,7 +9393,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/section.ts",
+      "path": "./src/components/layout/section.js",
       "declarations": [
         {
           "kind": "class",
@@ -7540,7 +9458,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/article.ts",
+      "path": "./src/components/layout/article.js",
       "declarations": [
         {
           "kind": "class",
@@ -7605,7 +9523,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/aside.ts",
+      "path": "./src/components/layout/aside.js",
       "declarations": [
         {
           "kind": "class",
@@ -7670,7 +9588,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/header.ts",
+      "path": "./src/components/layout/header.js",
       "declarations": [
         {
           "kind": "class",
@@ -7739,7 +9657,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/footer.ts",
+      "path": "./src/components/layout/footer.js",
       "declarations": [
         {
           "kind": "class",
@@ -7808,7 +9726,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/main.ts",
+      "path": "./src/components/layout/main.js",
       "declarations": [
         {
           "kind": "class",
@@ -7873,7 +9791,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/wrapper.ts",
+      "path": "./src/components/layout/wrapper.js",
       "declarations": [
         {
           "kind": "class",
@@ -7938,7 +9856,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/column.ts",
+      "path": "./src/components/layout/column.js",
       "declarations": [
         {
           "kind": "class",
@@ -8003,7 +9921,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/basic.ts",
+      "path": "./src/components/cards/basic.js",
       "declarations": [
         {
           "kind": "class",
@@ -8069,7 +9987,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/elevated.ts",
+      "path": "./src/components/cards/elevated.js",
       "declarations": [
         {
           "kind": "class",
@@ -8135,7 +10053,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/outlined.ts",
+      "path": "./src/components/cards/outlined.js",
       "declarations": [
         {
           "kind": "class",
@@ -8201,7 +10119,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/filled.ts",
+      "path": "./src/components/cards/filled.js",
       "declarations": [
         {
           "kind": "class",
@@ -8267,7 +10185,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/interactive.ts",
+      "path": "./src/components/cards/interactive.js",
       "declarations": [
         {
           "kind": "class",
@@ -8333,7 +10251,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/media.ts",
+      "path": "./src/components/cards/media.js",
       "declarations": [
         {
           "kind": "class",
@@ -8399,7 +10317,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/product.ts",
+      "path": "./src/components/cards/product.js",
       "declarations": [
         {
           "kind": "class",
@@ -8465,7 +10383,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/profile.ts",
+      "path": "./src/components/cards/profile.js",
       "declarations": [
         {
           "kind": "class",
@@ -8531,7 +10449,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/article.ts",
+      "path": "./src/components/cards/article.js",
       "declarations": [
         {
           "kind": "class",
@@ -8597,7 +10515,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/gallery.ts",
+      "path": "./src/components/cards/gallery.js",
       "declarations": [
         {
           "kind": "class",
@@ -8663,7 +10581,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/pricing.ts",
+      "path": "./src/components/cards/pricing.js",
       "declarations": [
         {
           "kind": "class",
@@ -8729,7 +10647,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/feature.ts",
+      "path": "./src/components/cards/feature.js",
       "declarations": [
         {
           "kind": "class",
@@ -8795,7 +10713,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/testimonial.ts",
+      "path": "./src/components/cards/testimonial.js",
       "declarations": [
         {
           "kind": "class",
@@ -8861,7 +10779,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/stats.ts",
+      "path": "./src/components/cards/stats.js",
       "declarations": [
         {
           "kind": "class",
@@ -8927,7 +10845,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/dashboard.ts",
+      "path": "./src/components/cards/dashboard.js",
       "declarations": [
         {
           "kind": "class",
@@ -8993,7 +10911,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/primary.ts",
+      "path": "./src/components/navigation/primary.js",
       "declarations": [
         {
           "kind": "class",
@@ -9051,7 +10969,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/secondary.ts",
+      "path": "./src/components/navigation/secondary.js",
       "declarations": [
         {
           "kind": "class",
@@ -9109,7 +11027,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/breadcrumb.ts",
+      "path": "./src/components/navigation/breadcrumb.js",
       "declarations": [
         {
           "kind": "class",
@@ -9167,7 +11085,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/pagination.ts",
+      "path": "./src/components/navigation/pagination.js",
       "declarations": [
         {
           "kind": "class",
@@ -9225,7 +11143,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/tabs.ts",
+      "path": "./src/components/navigation/tabs.js",
       "declarations": [
         {
           "kind": "class",
@@ -9283,7 +11201,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/stepper.ts",
+      "path": "./src/components/navigation/stepper.js",
       "declarations": [
         {
           "kind": "class",
@@ -9341,7 +11259,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/sidebar.ts",
+      "path": "./src/components/navigation/sidebar.js",
       "declarations": [
         {
           "kind": "class",
@@ -9399,7 +11317,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/toolbar.ts",
+      "path": "./src/components/navigation/toolbar.js",
       "declarations": [
         {
           "kind": "class",
@@ -9457,7 +11375,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/menu.ts",
+      "path": "./src/components/navigation/menu.js",
       "declarations": [
         {
           "kind": "class",
@@ -9515,7 +11433,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/dropdown.ts",
+      "path": "./src/components/navigation/dropdown.js",
       "declarations": [
         {
           "kind": "class",
@@ -9573,7 +11491,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/context.ts",
+      "path": "./src/components/navigation/context.js",
       "declarations": [
         {
           "kind": "class",
@@ -9631,7 +11549,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/mega.ts",
+      "path": "./src/components/navigation/mega.js",
       "declarations": [
         {
           "kind": "class",
@@ -9689,7 +11607,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/drawer.ts",
+      "path": "./src/components/navigation/drawer.js",
       "declarations": [
         {
           "kind": "class",
@@ -9747,7 +11665,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/rail.ts",
+      "path": "./src/components/navigation/rail.js",
       "declarations": [
         {
           "kind": "class",
@@ -9805,7 +11723,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/navigation/bottom.ts",
+      "path": "./src/components/navigation/bottom.js",
       "declarations": [
         {
           "kind": "class",
@@ -9863,7 +11781,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/basic.ts",
+      "path": "./src/components/data/basic.js",
       "declarations": [
         {
           "kind": "class",
@@ -9922,7 +11840,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/sortable.ts",
+      "path": "./src/components/data/sortable.js",
       "declarations": [
         {
           "kind": "class",
@@ -9995,7 +11913,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/filterable.ts",
+      "path": "./src/components/data/filterable.js",
       "declarations": [
         {
           "kind": "class",
@@ -10054,7 +11972,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/editable.ts",
+      "path": "./src/components/data/editable.js",
       "declarations": [
         {
           "kind": "class",
@@ -10113,7 +12031,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/virtual.ts",
+      "path": "./src/components/data/virtual.js",
       "declarations": [
         {
           "kind": "class",
@@ -10172,7 +12090,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/tree.ts",
+      "path": "./src/components/data/tree.js",
       "declarations": [
         {
           "kind": "class",
@@ -10231,7 +12149,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/list.ts",
+      "path": "./src/components/data/list.js",
       "declarations": [
         {
           "kind": "class",
@@ -10290,7 +12208,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/grid.ts",
+      "path": "./src/components/data/grid.js",
       "declarations": [
         {
           "kind": "class",
@@ -10349,7 +12267,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/calendar.ts",
+      "path": "./src/components/data/calendar.js",
       "declarations": [
         {
           "kind": "class",
@@ -10408,7 +12326,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/timeline.ts",
+      "path": "./src/components/data/timeline.js",
       "declarations": [
         {
           "kind": "class",
@@ -10467,7 +12385,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/kanban.ts",
+      "path": "./src/components/data/kanban.js",
       "declarations": [
         {
           "kind": "class",
@@ -10526,7 +12444,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/chart.ts",
+      "path": "./src/components/data/chart.js",
       "declarations": [
         {
           "kind": "class",
@@ -10585,7 +12503,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/graph.ts",
+      "path": "./src/components/data/graph.js",
       "declarations": [
         {
           "kind": "class",
@@ -10644,7 +12562,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/diagram.ts",
+      "path": "./src/components/data/diagram.js",
       "declarations": [
         {
           "kind": "class",
@@ -10703,7 +12621,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/data/map.ts",
+      "path": "./src/components/data/map.js",
       "declarations": [
         {
           "kind": "class",
@@ -10762,7 +12680,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/info.ts",
+      "path": "./src/components/feedback/info.js",
       "declarations": [
         {
           "kind": "class",
@@ -10814,7 +12732,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/success.ts",
+      "path": "./src/components/feedback/success.js",
       "declarations": [
         {
           "kind": "class",
@@ -10866,7 +12784,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/warning.ts",
+      "path": "./src/components/feedback/warning.js",
       "declarations": [
         {
           "kind": "class",
@@ -10918,7 +12836,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/error.ts",
+      "path": "./src/components/feedback/error.js",
       "declarations": [
         {
           "kind": "class",
@@ -10970,7 +12888,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/toast.ts",
+      "path": "./src/components/feedback/toast.js",
       "declarations": [
         {
           "kind": "class",
@@ -11022,7 +12940,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/banner.ts",
+      "path": "./src/components/feedback/banner.js",
       "declarations": [
         {
           "kind": "class",
@@ -11074,7 +12992,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/dialog.ts",
+      "path": "./src/components/feedback/dialog.js",
       "declarations": [
         {
           "kind": "class",
@@ -11126,7 +13044,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/snackbar.ts",
+      "path": "./src/components/feedback/snackbar.js",
       "declarations": [
         {
           "kind": "class",
@@ -11178,7 +13096,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/progress.ts",
+      "path": "./src/components/feedback/progress.js",
       "declarations": [
         {
           "kind": "class",
@@ -11230,7 +13148,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/spinner.ts",
+      "path": "./src/components/feedback/spinner.js",
       "declarations": [
         {
           "kind": "class",
@@ -11282,7 +13200,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/skeleton.ts",
+      "path": "./src/components/feedback/skeleton.js",
       "declarations": [
         {
           "kind": "class",
@@ -11334,7 +13252,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/badge.ts",
+      "path": "./src/components/feedback/badge.js",
       "declarations": [
         {
           "kind": "class",
@@ -11386,7 +13304,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/chip.ts",
+      "path": "./src/components/feedback/chip.js",
       "declarations": [
         {
           "kind": "class",
@@ -11438,7 +13356,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/tag.ts",
+      "path": "./src/components/feedback/tag.js",
       "declarations": [
         {
           "kind": "class",
@@ -11490,7 +13408,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/feedback/status.ts",
+      "path": "./src/components/feedback/status.js",
       "declarations": [
         {
           "kind": "class",
@@ -11542,7 +13460,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/responsive.ts",
+      "path": "./src/components/media/responsive.js",
       "declarations": [
         {
           "kind": "class",
@@ -11601,7 +13519,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/lazy.ts",
+      "path": "./src/components/media/lazy.js",
       "declarations": [
         {
           "kind": "class",
@@ -11660,7 +13578,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/avatar.ts",
+      "path": "./src/components/media/avatar.js",
       "declarations": [
         {
           "kind": "class",
@@ -11726,7 +13644,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/thumbnail.ts",
+      "path": "./src/components/media/thumbnail.js",
       "declarations": [
         {
           "kind": "class",
@@ -11785,7 +13703,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/gallery.ts",
+      "path": "./src/components/media/gallery.js",
       "declarations": [
         {
           "kind": "class",
@@ -11844,7 +13762,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/carousel.ts",
+      "path": "./src/components/media/carousel.js",
       "declarations": [
         {
           "kind": "class",
@@ -11903,7 +13821,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/video.ts",
+      "path": "./src/components/media/video.js",
       "declarations": [
         {
           "kind": "class",
@@ -11962,7 +13880,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/audio.ts",
+      "path": "./src/components/media/audio.js",
       "declarations": [
         {
           "kind": "class",
@@ -12021,7 +13939,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/player.ts",
+      "path": "./src/components/media/player.js",
       "declarations": [
         {
           "kind": "class",
@@ -12080,7 +13998,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/embed.ts",
+      "path": "./src/components/media/embed.js",
       "declarations": [
         {
           "kind": "class",
@@ -12139,7 +14057,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/icon.ts",
+      "path": "./src/components/media/icon.js",
       "declarations": [
         {
           "kind": "class",
@@ -12198,7 +14116,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/logo.ts",
+      "path": "./src/components/media/logo.js",
       "declarations": [
         {
           "kind": "class",
@@ -12257,7 +14175,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/hero.ts",
+      "path": "./src/components/media/hero.js",
       "declarations": [
         {
           "kind": "class",
@@ -12316,7 +14234,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/banner.ts",
+      "path": "./src/components/media/banner.js",
       "declarations": [
         {
           "kind": "class",
@@ -12375,7 +14293,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/media/background.ts",
+      "path": "./src/components/media/background.js",
       "declarations": [
         {
           "kind": "class",
@@ -12434,7 +14352,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/dialog.ts",
+      "path": "./src/components/overlays/dialog.js",
       "declarations": [
         {
           "kind": "class",
@@ -12493,7 +14411,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/drawer.ts",
+      "path": "./src/components/overlays/drawer.js",
       "declarations": [
         {
           "kind": "class",
@@ -12552,7 +14470,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/sidebar.ts",
+      "path": "./src/components/overlays/sidebar.js",
       "declarations": [
         {
           "kind": "class",
@@ -12611,7 +14529,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/popup.ts",
+      "path": "./src/components/overlays/popup.js",
       "declarations": [
         {
           "kind": "class",
@@ -12670,7 +14588,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/tooltip.ts",
+      "path": "./src/components/overlays/tooltip.js",
       "declarations": [
         {
           "kind": "class",
@@ -12729,7 +14647,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/popover.ts",
+      "path": "./src/components/overlays/popover.js",
       "declarations": [
         {
           "kind": "class",
@@ -12788,7 +14706,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/dropdown.ts",
+      "path": "./src/components/overlays/dropdown.js",
       "declarations": [
         {
           "kind": "class",
@@ -12847,7 +14765,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/menu.ts",
+      "path": "./src/components/overlays/menu.js",
       "declarations": [
         {
           "kind": "class",
@@ -12906,7 +14824,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/sheet.ts",
+      "path": "./src/components/overlays/sheet.js",
       "declarations": [
         {
           "kind": "class",
@@ -12965,7 +14883,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/panel.ts",
+      "path": "./src/components/overlays/panel.js",
       "declarations": [
         {
           "kind": "class",
@@ -13024,7 +14942,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/overlay.ts",
+      "path": "./src/components/overlays/overlay.js",
       "declarations": [
         {
           "kind": "class",
@@ -13083,7 +15001,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/backdrop.ts",
+      "path": "./src/components/overlays/backdrop.js",
       "declarations": [
         {
           "kind": "class",
@@ -13142,7 +15060,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/mask.ts",
+      "path": "./src/components/overlays/mask.js",
       "declarations": [
         {
           "kind": "class",
@@ -13201,7 +15119,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/scrim.ts",
+      "path": "./src/components/overlays/scrim.js",
       "declarations": [
         {
           "kind": "class",
@@ -13260,7 +15178,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/overlays/lightbox.ts",
+      "path": "./src/components/overlays/lightbox.js",
       "declarations": [
         {
           "kind": "class",
@@ -13319,7 +15237,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/line.ts",
+      "path": "./src/components/charts/line.js",
       "declarations": [
         {
           "kind": "class",
@@ -13378,7 +15296,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/bar.ts",
+      "path": "./src/components/charts/bar.js",
       "declarations": [
         {
           "kind": "class",
@@ -13437,7 +15355,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/pie.ts",
+      "path": "./src/components/charts/pie.js",
       "declarations": [
         {
           "kind": "class",
@@ -13496,7 +15414,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/doughnut.ts",
+      "path": "./src/components/charts/doughnut.js",
       "declarations": [
         {
           "kind": "class",
@@ -13555,7 +15473,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/area.ts",
+      "path": "./src/components/charts/area.js",
       "declarations": [
         {
           "kind": "class",
@@ -13614,7 +15532,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/scatter.ts",
+      "path": "./src/components/charts/scatter.js",
       "declarations": [
         {
           "kind": "class",
@@ -13673,7 +15591,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/bubble.ts",
+      "path": "./src/components/charts/bubble.js",
       "declarations": [
         {
           "kind": "class",
@@ -13732,7 +15650,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/radar.ts",
+      "path": "./src/components/charts/radar.js",
       "declarations": [
         {
           "kind": "class",
@@ -13791,7 +15709,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/polar.ts",
+      "path": "./src/components/charts/polar.js",
       "declarations": [
         {
           "kind": "class",
@@ -13850,7 +15768,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/gauge.ts",
+      "path": "./src/components/charts/gauge.js",
       "declarations": [
         {
           "kind": "class",
@@ -13909,7 +15827,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/heatmap.ts",
+      "path": "./src/components/charts/heatmap.js",
       "declarations": [
         {
           "kind": "class",
@@ -13968,7 +15886,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/treemap.ts",
+      "path": "./src/components/charts/treemap.js",
       "declarations": [
         {
           "kind": "class",
@@ -14027,7 +15945,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/sankey.ts",
+      "path": "./src/components/charts/sankey.js",
       "declarations": [
         {
           "kind": "class",
@@ -14086,7 +16004,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/funnel.ts",
+      "path": "./src/components/charts/funnel.js",
       "declarations": [
         {
           "kind": "class",
@@ -14145,7 +16063,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/candlestick.ts",
+      "path": "./src/components/charts/candlestick.js",
       "declarations": [
         {
           "kind": "class",
@@ -14204,7 +16122,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/horizontal.ts",
+      "path": "./src/components/utilities/horizontal.js",
       "declarations": [
         {
           "kind": "class",
@@ -14256,7 +16174,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/vertical.ts",
+      "path": "./src/components/utilities/vertical.js",
       "declarations": [
         {
           "kind": "class",
@@ -14308,7 +16226,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/spacer.ts",
+      "path": "./src/components/utilities/spacer.js",
       "declarations": [
         {
           "kind": "class",
@@ -14360,7 +16278,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/separator.ts",
+      "path": "./src/components/utilities/separator.js",
       "declarations": [
         {
           "kind": "class",
@@ -14412,7 +16330,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/border.ts",
+      "path": "./src/components/utilities/border.js",
       "declarations": [
         {
           "kind": "class",
@@ -14464,7 +16382,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/line.ts",
+      "path": "./src/components/utilities/line.js",
       "declarations": [
         {
           "kind": "class",
@@ -14516,7 +16434,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/ruler.ts",
+      "path": "./src/components/utilities/ruler.js",
       "declarations": [
         {
           "kind": "class",
@@ -14568,7 +16486,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/break.ts",
+      "path": "./src/components/utilities/break.js",
       "declarations": [
         {
           "kind": "class",
@@ -14620,7 +16538,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/gap.ts",
+      "path": "./src/components/utilities/gap.js",
       "declarations": [
         {
           "kind": "class",
@@ -14672,7 +16590,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/margin.ts",
+      "path": "./src/components/utilities/margin.js",
       "declarations": [
         {
           "kind": "class",
@@ -14724,7 +16642,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/padding.ts",
+      "path": "./src/components/utilities/padding.js",
       "declarations": [
         {
           "kind": "class",
@@ -14776,7 +16694,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/offset.ts",
+      "path": "./src/components/utilities/offset.js",
       "declarations": [
         {
           "kind": "class",
@@ -14828,7 +16746,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/indent.ts",
+      "path": "./src/components/utilities/indent.js",
       "declarations": [
         {
           "kind": "class",
@@ -14880,7 +16798,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/outdent.ts",
+      "path": "./src/components/utilities/outdent.js",
       "declarations": [
         {
           "kind": "class",
@@ -14932,7 +16850,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/utilities/gutter.ts",
+      "path": "./src/components/utilities/gutter.js",
       "declarations": [
         {
           "kind": "class",
@@ -14984,7 +16902,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/icons/icon.ts",
+      "path": "./src/components/icons/icon.js",
       "declarations": [
         {
           "kind": "class",
@@ -15029,7 +16947,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/forms/input-text.ts",
+      "path": "./src/components/forms/input-text.js",
       "declarations": [
         {
           "kind": "class",
@@ -15074,7 +16992,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/layout/container-flex.ts",
+      "path": "./src/components/layout/container-flex.js",
       "declarations": [
         {
           "kind": "class",
@@ -15112,7 +17030,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/cards/card-basic.ts",
+      "path": "./src/components/cards/card-basic.js",
       "declarations": [
         {
           "kind": "class",
@@ -15150,7 +17068,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/charts/chart-line.ts",
+      "path": "./src/components/charts/chart-line.js",
       "declarations": [
         {
           "kind": "class",
@@ -15188,7 +17106,7 @@
     },
     {
       "kind": "javascript-module",
-      "path": "./src/components/images/image-responsive.ts",
+      "path": "./src/components/images/image-responsive.js",
       "declarations": [
         {
           "kind": "class",

@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html>
-<head><title>Attribute Hover Test</title></head>
+<head>
+    <title>Attribute Hover Test</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "large-component-library": "./index.js"
+        }
+      }
+    </script>
+    <script type="module">
+      import "large-component-library";
+    </script>
+</head>
 <body>
   <!-- Button attributes -->
   <my-button variant="primary"

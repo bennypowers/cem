@@ -10,7 +10,7 @@ export class AppDashboard extends LitElement {
       background: #f8f9fa;
       min-height: 100vh;
     }
-    
+
     .header {
       background: white;
       padding: 1.5rem;
@@ -18,14 +18,14 @@ export class AppDashboard extends LitElement {
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 1.5rem;
       margin-bottom: 2rem;
     }
-    
+
     .sidebar {
       grid-column: 1;
       background: white;
@@ -33,17 +33,17 @@ export class AppDashboard extends LitElement {
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    
+
     .main-content {
       grid-column: 2 / -1;
     }
   `;
 
-  @property({ type: String }) 
-  title = 'Dashboard';
+  @property({ type: String })
+  accessor title = 'Dashboard';
 
   @property({ type: Array })
-  users = [
+  accessor users = [
     { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Admin', status: 'active' },
     { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'User', status: 'pending' },
     { id: 3, name: 'Bob Johnson', email: 'bob@example.com', role: 'Editor', status: 'active' },
@@ -52,13 +52,13 @@ export class AppDashboard extends LitElement {
   ];
 
   @state()
-  private selectedUser: any = null;
+  private accessor selectedUser: any = null;
 
   @state()
-  private showModal = false;
+  private accessor showModal = false;
 
   @state()
-  private formData = {
+  private accessor formData = {
     name: '',
     email: '',
     role: 'user',
@@ -78,7 +78,7 @@ export class AppDashboard extends LitElement {
             <h1>${this.title}</h1>
             <p>Manage your application dashboard with comprehensive controls</p>
           </div>
-          
+
           <my-button-group>
             <my-button-primary @click=${this._handleCreateUser}>
               <my-image-icon slot="icon" name="plus"></my-image-icon>
@@ -132,18 +132,18 @@ export class AppDashboard extends LitElement {
             <my-card-basic>
               <h3 slot="header">Filters</h3>
               <my-container-stack gap="medium">
-                <my-input-search 
-                  placeholder="Search users..." 
+                <my-input-search
+                  placeholder="Search users..."
                   @input=${this._handleSearch}>
                 </my-input-search>
-                
+
                 <my-input-select label="Role Filter">
                   <option value="">All Roles</option>
                   <option value="admin">Admin</option>
                   <option value="user">User</option>
                   <option value="editor">Editor</option>
                 </my-input-select>
-                
+
                 <my-input-select label="Status Filter">
                   <option value="">All Status</option>
                   <option value="active">Active</option>
@@ -223,8 +223,8 @@ export class AppDashboard extends LitElement {
                       </td>
                       <td>
                         <my-container-flex gap="small" align="center">
-                          <my-image-avatar 
-                            src="/api/avatar/${user.id}" 
+                          <my-image-avatar
+                            src="/api/avatar/${user.id}"
                             alt="${user.name}"
                             size="small">
                           </my-image-avatar>
@@ -252,13 +252,13 @@ export class AppDashboard extends LitElement {
                       </td>
                       <td>
                         <my-button-group size="small">
-                          <my-button-icon 
-                            icon="edit" 
+                          <my-button-icon
+                            icon="edit"
                             @click=${() => this._editUser(user)}
                             variant="ghost">
                           </my-button-icon>
-                          <my-button-icon 
-                            icon="eye" 
+                          <my-button-icon
+                            icon="eye"
                             @click=${() => this._viewUser(user)}
                             variant="ghost">
                           </my-button-icon>
@@ -304,7 +304,7 @@ export class AppDashboard extends LitElement {
             <my-container-grid gap="medium">
               <my-card-elevated>
                 <h3 slot="header">User Growth</h3>
-                <my-chart-line 
+                <my-chart-line
                   .data=${[
                     { x: 'Jan', y: 10 },
                     { x: 'Feb', y: 15 },
@@ -320,7 +320,7 @@ export class AppDashboard extends LitElement {
 
               <my-card-elevated>
                 <h3 slot="header">Role Distribution</h3>
-                <my-chart-doughnut 
+                <my-chart-doughnut
                   .data=${[
                     { label: 'Admin', value: 2, color: '#ef4444' },
                     { label: 'User', value: 2, color: '#3b82f6' },
@@ -332,7 +332,7 @@ export class AppDashboard extends LitElement {
 
               <my-card-elevated>
                 <h3 slot="header">Activity Heatmap</h3>
-                <my-chart-heatmap 
+                <my-chart-heatmap
                   .data=${this._generateHeatmapData()}
                   responsive>
                 </my-chart-heatmap>
@@ -353,7 +353,6 @@ export class AppDashboard extends LitElement {
         <my-alert-success dismissible icon="check">
           User data has been successfully updated.
         </my-alert-success>
-        
         <my-alert-info icon="info">
           System maintenance scheduled for tonight at 2 AM UTC.
         </my-alert-info>
@@ -368,37 +367,35 @@ export class AppDashboard extends LitElement {
         <h2 slot="header">
           ${this.selectedUser ? 'Edit User' : 'Create User'}
         </h2>
-        
+
         <my-container-stack gap="large">
           <!-- Personal Information -->
           <my-card-basic>
             <h3 slot="header">Personal Information</h3>
             <my-container-grid gap="medium">
-              <my-input-text 
-                label="Full Name" 
+              <my-input-text
+                label="Full Name"
                 .value=${this.formData.name}
                 @input=${this._updateFormData('name')}
                 required>
               </my-input-text>
-              
-              <my-input-email 
-                label="Email Address" 
+              <my-input-email
+                label="Email Address"
                 .value=${this.formData.email}
                 @input=${this._updateFormData('email')}
                 required>
               </my-input-email>
-              
-              <my-input-select 
-                label="Role" 
+              <my-input-select
+                label="Role"
                 .value=${this.formData.role}
                 @change=${this._updateFormData('role')}>
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
                 <option value="editor">Editor</option>
               </my-input-select>
-              
-              <my-input-tel 
-                label="Phone Number" 
+
+              <my-input-tel
+                label="Phone Number"
                 placeholder="+1 (555) 123-4567">
               </my-input-tel>
             </my-container-grid>
@@ -408,20 +405,20 @@ export class AppDashboard extends LitElement {
           <my-card-basic>
             <h3 slot="header">Preferences</h3>
             <my-container-stack gap="medium">
-              <my-input-switch 
-                label="Email Notifications" 
+              <my-input-switch
+                label="Email Notifications"
                 .checked=${this.formData.preferences.notifications}
                 @change=${this._updatePreference('notifications')}>
               </my-input-switch>
-              
-              <my-input-switch 
-                label="Dark Mode" 
+
+              <my-input-switch
+                label="Dark Mode"
                 .checked=${this.formData.preferences.darkMode}
                 @change=${this._updatePreference('darkMode')}>
               </my-input-switch>
-              
-              <my-input-select 
-                label="Language" 
+
+              <my-input-select
+                label="Language"
                 .value=${this.formData.preferences.language}
                 @change=${this._updatePreference('language')}>
                 <option value="en">English</option>
@@ -446,7 +443,7 @@ export class AppDashboard extends LitElement {
       <!-- Settings Drawer -->
       <my-modal-drawer placement="right" .open=${false}>
         <h2 slot="header">Dashboard Settings</h2>
-        
+
         <my-container-stack gap="large">
           <my-input-switch label="Auto-refresh data"></my-input-switch>
           <my-input-slider label="Refresh interval (seconds)" min="5" max="60" value="30"></my-input-slider>
@@ -478,7 +475,7 @@ export class AppDashboard extends LitElement {
   private _getRoleVariant(role: string) {
     const variants: Record<string, string> = {
       'admin': 'error',
-      'editor': 'warning', 
+      'editor': 'warning',
       'user': 'info'
     };
     return variants[role.toLowerCase()] || 'info';
