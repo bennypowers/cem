@@ -35,12 +35,13 @@ function M.setup_treesitter()
 		)
 	end
 
-	-- IMPORTANT: Set packpath to include site directory for parser discovery
-	-- This is where parsers (.so files) are installed
+	-- IMPORTANT: Set packpath and runtimepath for parser discovery
+	-- Following nvim-regexplainer pattern: both packpath and rtp need the site directory
 	local site_path = data_path .. "/site"
-	vim.opt.packpath = { site_path }
+	vim.opt.packpath = { site_path, "$VIMRUNTIME" }
 
-	-- Add nvim-treesitter to runtime path so it can be loaded
+	-- Add site directory and nvim-treesitter to runtime path
+	vim.opt.rtp:prepend(site_path)
 	vim.opt.rtp:prepend(treesitter_path)
 
 	-- Verify HTML and TypeScript parsers are available
