@@ -17,7 +17,8 @@ get_metric() {
 get_success_rate() {
   local file=$1
   local path=$2
-  local rate=$(jq -r "$path // 0" "$file" 2>/dev/null || echo "0")
+  local rate
+  rate=$(jq -r "$path // 0" "$file" 2>/dev/null || echo "0")
   awk "BEGIN {printf \"%.0f%%\", $rate * 100}"
 }
 
@@ -72,7 +73,8 @@ references_success=$(get_success_rate "$PR_JSON" '.benchmarks.references_perform
 calc_delta() {
   local pr=$1
   local base=$2
-  local delta=$(awk "BEGIN {printf \"%.2f\", $pr - $base}")
+  local delta
+  delta=$(awk "BEGIN {printf \"%.2f\", $pr - $base}")
   local pct=0
 
   if awk "BEGIN {exit !($base != 0)}"; then

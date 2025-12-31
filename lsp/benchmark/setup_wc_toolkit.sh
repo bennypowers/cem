@@ -7,7 +7,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$SCRIPT_DIR/bin"
 VERSION="0.0.6"
-TAG="@wc-toolkit/language-server@${VERSION}"
 BASE_URL="https://github.com/wc-toolkit/wc-language-server/releases/download/%40wc-toolkit%2Flanguage-server%40${VERSION}"
 
 echo "Setting up wc-language-server for benchmarks..."
