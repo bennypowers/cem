@@ -23,8 +23,8 @@ benchmark/
 │   ├── hover_benchmark.lua              # Hover performance (10 iterations per element) ✅ ACTIVE
 │   ├── completion_benchmark.lua         # Completion performance (15 iterations per context) ✅ ACTIVE
 │   ├── diagnostics_benchmark.lua        # Diagnostics publishing ✅ ACTIVE
-│   ├── references_performance_benchmark.lua  # Go-to-references workspace search ✅ ACTIVE
-│   ├── attribute_hover_benchmark.lua    # Attribute hover correctness (21 attributes) ✅ ACTIVE
+│   ├── references_benchmark.lua         # Go-to-references workspace search ✅ ACTIVE
+│   ├── hover_attribute_benchmark.lua    # Attribute hover correctness (21 attributes) ✅ ACTIVE
 │   ├── lit_template_benchmark.lua       # Lit-html template support testing ✅ ACTIVE
 │   ├── file_lifecycle_benchmark.lua     # ⚠️ DEPRECATED: Artificial delays dominate timing
 │   ├── stress_test_benchmark.lua        # ⚠️ DEPRECATED: Bulk operations not realistic
@@ -33,10 +33,10 @@ benchmark/
 │   ├── multi_buffer_benchmark.lua       # ⚠️ DEPRECATED: Artificial wait periods
 │   ├── neovim_workflow_benchmark.lua    # ⚠️ DEPRECATED: Editor operations, not LSP
 │   └── large_project_benchmark.lua      # ⚠️ DEPRECATED: Small test fixture (5 files)
-├── utils/                      # Measurement and reporting utilities
+├── utils/                      # Measurement and workspace utilities
+│   ├── benchmark.lua          # Benchmark setup/teardown helpers
 │   ├── measurement.lua        # Statistical analysis functions
-│   ├── reporting.lua          # Output formatting
-│   └── workspace.lua          # Workspace management
+│   └── workspace.lua          # Workspace and file management
 ├── fixtures/                  # Test data
 │   ├── medium_project/        # Standard test project
 │   ├── large_project/         # Stress testing project
@@ -178,30 +178,9 @@ View results at: [CEM Docs](https://cem.run/docs/benchmarks/)
 
 ### Adding New Benchmarks
 
-1. Create module in `modules/new_benchmark.lua`:
-```lua
-local measurement = require('utils.measurement')
-local M = {}
-
-function M.run_new_benchmark(config, fixture_dir)
-  -- Implementation
-  return {
-    success = true,
-    server_name = _G.BENCHMARK_LSP_NAME,
-    statistics = stats,
-    -- Additional metrics
-  }
-end
-
-return M
-```
-
-2. Add to `run_modular_benchmark.lua`:
-```lua
-local new_benchmark = require('modules.new_benchmark')
--- Add to benchmarks table
-{name = "new", module = new_benchmark}
-```
+1. Create module in `modules/new_benchmark.lua` using shared helpers from `utils/benchmark.lua`
+2. Add to benchmarks table in `run_modular_benchmark.lua`
+3. See existing modules for patterns
 
 ### Statistical Significance
 

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "2.1.0",
   "readme": "Comprehensive component library with 300+ elements for LSP benchmarking and stress testing",
   "modules": [
     {
@@ -3918,6 +3918,20 @@
                 "text": "boolean"
               },
               "description": "Readonly state"
+            },
+            {
+              "name": "multiple",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Multiple selection"
+            },
+            {
+              "name": "searchable",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Enable search functionality"
             }
           ],
           "events": [
@@ -9951,6 +9965,20 @@
                 "text": "boolean"
               },
               "description": "Enable selection"
+            },
+            {
+              "name": "striped",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Striped rows"
+            },
+            {
+              "name": "page-size",
+              "type": {
+                "text": "number"
+              },
+              "description": "Page size for pagination"
             }
           ]
         }
@@ -11675,6 +11703,13 @@
                 "text": "string"
               },
               "description": "Aspect ratio"
+            },
+            {
+              "name": "size",
+              "type": {
+                "text": "string"
+              },
+              "description": "Avatar size (small, medium, large)"
             }
           ]
         }
@@ -14943,6 +14978,248 @@
           "name": "my-divider-gutter",
           "declaration": {
             "name": "MyDividerGutter"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "./src/components/icons/icon.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Icon component for displaying SVG icons",
+          "name": "MyIcon",
+          "tagName": "my-icon",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "name",
+              "type": {
+                "text": "string"
+              },
+              "description": "Icon name from the icon library"
+            },
+            {
+              "name": "size",
+              "type": {
+                "text": "string"
+              },
+              "description": "Icon size (small, medium, large)"
+            },
+            {
+              "name": "color",
+              "type": {
+                "text": "string"
+              },
+              "description": "Icon color"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-icon",
+          "declaration": {
+            "name": "MyIcon"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "./src/components/forms/input-text.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Text input component",
+          "name": "MyInputText",
+          "tagName": "my-input-text",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "description": "Input value"
+            },
+            {
+              "name": "placeholder",
+              "type": {
+                "text": "string"
+              },
+              "description": "Placeholder text"
+            },
+            {
+              "name": "required",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Required field"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-input-text",
+          "declaration": {
+            "name": "MyInputText"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "./src/components/layout/container-flex.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Flexible container with gap and justify controls",
+          "name": "MyContainerFlex",
+          "tagName": "my-container-flex",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "gap",
+              "type": {
+                "text": "string"
+              },
+              "description": "Gap size between items"
+            },
+            {
+              "name": "justify",
+              "type": {
+                "text": "string"
+              },
+              "description": "Justification alignment"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-container-flex",
+          "declaration": {
+            "name": "MyContainerFlex"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "./src/components/cards/card-basic.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Basic card component",
+          "name": "MyCardBasic",
+          "tagName": "my-card-basic",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "string"
+              },
+              "description": "Card style variant"
+            },
+            {
+              "name": "clickable",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Clickable card"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card-basic",
+          "declaration": {
+            "name": "MyCardBasic"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "./src/components/charts/chart-line.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Line chart component",
+          "name": "MyChartLine",
+          "tagName": "my-chart-line",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "responsive",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Responsive chart sizing"
+            },
+            {
+              "name": "animated",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Animated transitions"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-chart-line",
+          "declaration": {
+            "name": "MyChartLine"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "./src/components/images/image-responsive.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "Responsive image component",
+          "name": "MyImageResponsive",
+          "tagName": "my-image-responsive",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "loading",
+              "type": {
+                "text": "string"
+              },
+              "description": "Loading strategy (lazy, eager)"
+            },
+            {
+              "name": "fit",
+              "type": {
+                "text": "string"
+              },
+              "description": "Image fit mode (cover, contain, fill)"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-image-responsive",
+          "declaration": {
+            "name": "MyImageResponsive"
           }
         }
       ]

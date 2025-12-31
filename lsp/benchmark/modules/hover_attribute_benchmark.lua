@@ -2,64 +2,34 @@
 -- Tests LSP hover accuracy for attributes in large manifests
 
 local measurement = require("utils.measurement")
+local benchmark = require("utils.benchmark")
 
 local M = {}
 
-function M.run_attribute_hover_benchmark(config, fixture_dir)
+function M.run_hover_attribute_benchmark(config, fixture_dir)
 	local server_name = _G.BENCHMARK_LSP_NAME or "unknown"
-	print(string.format("=== %s LSP Attribute Hover Benchmark ===", server_name))
 
-	-- Change to fixture directory (use large project for comprehensive testing)
-	vim.cmd("cd " .. vim.fn.fnameescape(fixture_dir))
-
-	-- Start LSP server
-	local client_id = vim.lsp.start(config)
-	if not client_id then
+	-- Setup LSP client
+	local client, err = benchmark.setup_client(config, fixture_dir)
+	if not client then
 		return {
 			success = false,
-			error = "Failed to start LSP server",
+			error = err,
 		}
 	end
 
-	local client = vim.lsp.get_client_by_id(client_id)
-
-	-- Wait for initialization
-	local ready = vim.wait(10000, function()
-		return client.server_capabilities ~= nil and not client.is_stopped()
-	end)
-
-	if not ready then
-		client.stop()
+	-- Setup test file (use large project for comprehensive testing)
+	local bufnr, test_file = benchmark.setup_test_file(fixture_dir, "hover-attribute", "html", 3000, client)
+	if not bufnr then
+		benchmark.cleanup_test(nil, nil, client)
 		return {
 			success = false,
-			error = "Server failed to initialize",
-		}
-	end
-
-	-- Load HTML content from fixture file
-	local fixture_file = fixture_dir .. "/attribute-hover-test.html"
-
-	-- Copy to test file for LSP processing
-	vim.fn.writefile(vim.fn.readfile(fixture_file), "test-attribute-hover.html")
-
-	-- Open file
-	vim.cmd("edit test-attribute-hover.html")
-	vim.cmd("set filetype=html")
-	local bufnr = vim.api.nvim_get_current_buf()
-
-	-- Wait for document processing
-	vim.wait(3000)
-
-	if client.is_stopped() then
-		vim.fn.delete("test-attribute-hover.html")
-		return {
-			success = false,
-			error = "Client stopped during file processing",
+			error = test_file, -- test_file contains error message on failure
 		}
 	end
 
 	-- Test positions for different attribute types
-	-- NOTE: These positions are hardcoded for fixtures/large_project/attribute-hover-test.html
+	-- NOTE: These positions are hardcoded for fixtures/large_project/hover-attribute-test.html
 	-- If the fixture file is modified, these positions must be updated accordingly
 	local test_positions = {
 		-- Button attributes
@@ -153,16 +123,7 @@ function M.run_attribute_hover_benchmark(config, fixture_dir)
 	local hover_results = {}
 	local iterations_per_attribute = 3 -- Test each attribute multiple times
 
-	for i, test_pos in ipairs(test_positions) do
-		print(
-			string.format(
-				"Testing hover on %s.%s (%d iterations)...",
-				test_pos.element,
-				test_pos.attr,
-				iterations_per_attribute
-			)
-		)
-
+	for _, test_pos in ipairs(test_positions) do
 		local function single_hover()
 			local hover_result = nil
 			local hover_error = nil
@@ -170,11 +131,11 @@ function M.run_attribute_hover_benchmark(config, fixture_dir)
 
 			local hover_start = vim.uv.hrtime()
 
-			client.request("textDocument/hover", {
+			client:request("textDocument/hover", {
 				textDocument = { uri = vim.uri_from_bufnr(bufnr) },
 				position = { line = test_pos.line, character = test_pos.character },
-			}, function(err, result)
-				hover_error = err
+			}, function(hover_err, result)
+				hover_error = hover_err
 				hover_result = result
 				hover_completed = true
 			end)
@@ -241,7 +202,7 @@ function M.run_attribute_hover_benchmark(config, fixture_dir)
 		})
 
 		-- Check if client survived
-		if client.is_stopped() then
+		if client:is_stopped() then
 			break
 		end
 
@@ -250,38 +211,27 @@ function M.run_attribute_hover_benchmark(config, fixture_dir)
 	end
 
 	-- Clean up
-	vim.api.nvim_buf_delete(bufnr, { force = true })
-	vim.fn.delete("test-attribute-hover.html")
-	client.stop()
+	benchmark.cleanup_test(bufnr, test_file, client)
 
-	-- Calculate overall statistics
-	local total_successful = 0
-	local total_attempts = 0
+	-- Calculate overall statistics (includes accuracy tracking)
+	local aggregated = benchmark.aggregate_results(hover_results)
 	local total_accurate = 0
-	local all_times = {}
 
 	for _, result in ipairs(hover_results) do
-		total_successful = total_successful + result.successful_runs
-		total_attempts = total_attempts + result.iterations
 		total_accurate = total_accurate + (result.accuracy_rate * result.successful_runs)
-		for _, time in ipairs(result.statistics and { result.statistics.mean } or {}) do
-			table.insert(all_times, time)
-		end
 	end
 
-	local overall_stats = measurement.calculate_statistics(all_times)
-
 	return {
-		success = total_successful > 0,
+		success = aggregated.total_successful > 0,
 		server_name = server_name,
 		total_attributes_tested = #test_positions,
-		total_attempts = total_attempts,
-		total_successful = total_successful,
-		success_rate = total_attempts > 0 and total_successful / total_attempts or 0,
-		accuracy_rate = total_successful > 0 and total_accurate / total_successful or 0,
-		overall_statistics = overall_stats,
+		total_attempts = aggregated.total_attempts,
+		total_successful = aggregated.total_successful,
+		success_rate = aggregated.success_rate,
+		accuracy_rate = aggregated.total_successful > 0 and total_accurate / aggregated.total_successful or 0,
+		overall_statistics = aggregated.overall_statistics,
 		attribute_results = hover_results,
-		client_survived = not client.is_stopped(),
+		client_survived = not client:is_stopped(),
 	}
 end
 

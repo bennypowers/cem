@@ -12,8 +12,8 @@ local startup_benchmark = require("modules.startup_benchmark")
 local hover_benchmark = require("modules.hover_benchmark")
 local completion_benchmark = require("modules.completion_benchmark")
 local diagnostics_benchmark = require("modules.diagnostics_benchmark")
-local attribute_hover_benchmark = require("modules.attribute_hover_benchmark")
-local references_performance_benchmark = require("modules.references_performance_benchmark")
+local hover_attribute_benchmark = require("modules.hover_attribute_benchmark")
+local references_benchmark = require("modules.references_benchmark")
 
 local function run_all_benchmarks()
 	local overall_start_time = vim.fn.reltime()
@@ -29,8 +29,8 @@ local function run_all_benchmarks()
 		return
 	end
 
-	print(string.format("Running modular benchmarks for %s LSP server (max %ds)", server_name, max_total_time_seconds))
-	print("=" .. string.rep("=", 50))
+	print(string.format("[%s]: Running LSP benchmarks (max %ds)", server_name, max_total_time_seconds))
+	print("=" .. string.rep("=", 50) .. "\n")
 
 	-- Use large project fixture for expanded features
 	local fixture_dir = script_dir .. "/fixtures/large_project"
@@ -52,10 +52,10 @@ local function run_all_benchmarks()
 	local benchmarks = {
 		{ name = "startup", module = startup_benchmark },
 		{ name = "hover", module = hover_benchmark },
+		{ name = "hover_attribute", module = hover_attribute_benchmark },
 		{ name = "completion", module = completion_benchmark },
 		{ name = "diagnostics", module = diagnostics_benchmark },
-		{ name = "attribute_hover", module = attribute_hover_benchmark },
-		{ name = "references_performance", module = references_performance_benchmark },
+		{ name = "references", module = references_benchmark },
 	}
 
 	for _, benchmark in ipairs(benchmarks) do
@@ -78,9 +78,21 @@ local function run_all_benchmarks()
 		if success then
 			all_results.benchmarks[benchmark.name] = result
 			if result.success then
-				print("✅")
+				io.write("✅\n")
 			else
-				print(string.format("❌ %s", result.error or "unknown error"))
+				-- Show detailed error information
+				local error_msg = result.error or "test criteria not met"
+				io.write(string.format("❌ %s\n", error_msg))
+
+				-- Show additional diagnostic info for debugging
+				if not result.not_supported then
+					if result.errors and #result.errors > 0 then
+						print(string.format("  Errors: %s", table.concat(result.errors, ", ")))
+					end
+					if result.failed_runs and result.failed_runs > 0 then
+						print(string.format("  Failed runs: %d/%d", result.failed_runs, result.iterations or 0))
+					end
+				end
 			end
 		else
 			print(string.format("❌ crashed: %s", result))
@@ -92,6 +104,17 @@ local function run_all_benchmarks()
 
 		-- Small delay between benchmarks
 		vim.wait(1000)
+	end
+
+	-- Skip summary table in comparison mode
+	local comparison_mode = os.getenv("BENCHMARK_COMPARISON_MODE")
+
+	if comparison_mode then
+		-- Just save results and exit quietly in comparison mode
+		local temp_results_file = string.format("/tmp/cem-benchmark-%s.json", server_name)
+		local json_content = vim.fn.json_encode(all_results)
+		vim.fn.writefile({ json_content }, temp_results_file)
+		return
 	end
 
 	-- Generate summary report
@@ -164,7 +187,8 @@ local function run_all_benchmarks()
 
 			print(string.format("%-20s %s%s%s", benchmark_name, status, details, correctness))
 		else
-			print(string.format("%-20s ❌ FAIL - %s", benchmark_name, result.error or "unknown"))
+			local status_icon = result.not_supported and "⊘ NOT SUPPORTED" or "❌ FAIL"
+			print(string.format("%-20s %s - %s", benchmark_name, status_icon, result.error or "unknown"))
 		end
 	end
 
@@ -197,7 +221,7 @@ local function run_all_benchmarks()
 	local total_elapsed_time = vim.fn.reltime(overall_start_time)[1]
 	print(string.format("Total benchmark time: %.1fs / %.0fs limit", total_elapsed_time, max_total_time_seconds))
 
-	print(string.rep("=", 50))
+	print(string.rep("=", 50) .. "\n")
 end
 
 -- Run benchmarks

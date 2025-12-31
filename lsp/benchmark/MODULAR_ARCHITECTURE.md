@@ -16,7 +16,7 @@ benchmark/
 │   ├── diagnostics_benchmark.lua        # Diagnostics publishing (with capability detection)
 │   ├── file_lifecycle_benchmark.lua     # File operations (5 iterations)
 │   ├── stress_test_benchmark.lua        # Large workload scenarios
-│   ├── attribute_hover_benchmark.lua    # Attribute hover correctness (21 attributes)
+│   ├── hover_attribute_benchmark.lua    # Attribute hover correctness (21 attributes)
 │   ├── edit_cycles_benchmark.lua        # Edit responsiveness (rapid HTML editing)
 │   └── lit_template_benchmark.lua       # Lit-html template support testing
 ├── run_modular_benchmark.lua   # Main benchmark runner
@@ -105,11 +105,11 @@ return M
 
 1. **startup_benchmark.lua**: Tests server initialization time (20 iterations)
 2. **hover_benchmark.lua**: Tests hover request performance and functionality (30 total tests)
-3. **completion_benchmark.lua**: Tests completion request performance (45 total tests)
-4. **diagnostics_benchmark.lua**: Tests diagnostics publishing with capability detection
-5. **file_lifecycle_benchmark.lua**: Tests file open/change/close operations (5 iterations)
-6. **stress_test_benchmark.lua**: Tests high-load scenarios with large documents (800+ lines)
-7. **attribute_hover_benchmark.lua**: Tests attribute hover correctness across 21 attribute types
+3. **hover_attribute_benchmark.lua**: Tests attribute hover correctness across 21 attribute types
+4. **completion_benchmark.lua**: Tests completion request performance (45 total tests)
+5. **diagnostics_benchmark.lua**: Tests diagnostics publishing with capability detection
+6. **file_lifecycle_benchmark.lua**: Tests file open/change/close operations (5 iterations)
+7. **stress_test_benchmark.lua**: Tests high-load scenarios with large documents (800+ lines)
 8. **edit_cycles_benchmark.lua**: Tests LSP responsiveness during rapid HTML editing (3 scenarios)
 9. **lit_template_benchmark.lua**: Tests LSP functionality within TypeScript template literals (5 scenarios)
 

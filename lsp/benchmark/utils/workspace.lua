@@ -25,21 +25,6 @@ function M.setup_workspace(fixture_name)
 	return fixture_path
 end
 
--- Create a test file with specified content
-function M.create_test_file(filename, content)
-	local filepath = vim.fn.expand(filename)
-
-	-- Ensure directory exists
-	local dir = vim.fn.fnamemodify(filepath, ":h")
-	vim.fn.mkdir(dir, "p")
-
-	-- Write content to file
-	local lines = vim.split(content, "\n")
-	vim.fn.writefile(lines, filepath)
-
-	return filepath
-end
-
 -- Open a file in Neovim buffer
 function M.open_file(filepath)
 	vim.cmd("edit " .. vim.fn.fnameescape(filepath))
@@ -49,7 +34,7 @@ function M.open_file(filepath)
 	vim.wait(100)
 
 	-- Ensure LSP clients are attached
-	local attached_clients = vim.lsp.get_active_clients({ bufnr = bufnr })
+	local attached_clients = vim.lsp.get_clients({ bufnr = bufnr })
 	if #attached_clients > 0 then
 		-- Manually trigger didOpen if needed
 		local uri = vim.uri_from_bufnr(bufnr)
@@ -84,11 +69,6 @@ function M.get_buffer_content(bufnr)
 	return table.concat(lines, "\n")
 end
 
--- Set cursor position in buffer
-function M.set_cursor(line, col)
-	vim.api.nvim_win_set_cursor(0, { line, col })
-end
-
 -- Find text position in buffer (1-based line, 0-based character)
 function M.find_text_position(text, bufnr)
 	bufnr = bufnr or vim.api.nvim_get_current_buf()
@@ -102,26 +82,6 @@ function M.find_text_position(text, bufnr)
 	end
 
 	error(string.format("Text '%s' not found in buffer", text))
-end
-
--- Update file content and trigger LSP change events
-function M.update_file_content(filepath, new_content)
-	local bufnr = vim.fn.bufnr(filepath)
-
-	if bufnr == -1 then
-		-- File not open, create/update directly
-		local lines = vim.split(new_content, "\n")
-		vim.fn.writefile(lines, filepath)
-	else
-		-- File is open in buffer, update buffer content
-		local lines = vim.split(new_content, "\n")
-		vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-
-		-- Save buffer to trigger file system events
-		vim.api.nvim_buf_call(bufnr, function()
-			vim.cmd("write")
-		end)
-	end
 end
 
 -- Wait for LSP diagnostics to be published
@@ -177,50 +137,6 @@ function M.cleanup()
 		vim.cmd("cd " .. vim.fn.fnameescape(original_dir))
 		original_dir = nil
 	end
-end
-
--- Generate test HTML content with custom elements
-function M.generate_html_content(elements)
-	elements = elements or { "my-element" }
-
-	local content = [[<!DOCTYPE html>
-<html>
-<head>
-  <title>Test Document</title>
-</head>
-<body>
-]]
-
-	for _, element in ipairs(elements) do
-		content = content .. string.format("  <%s></%s>\n", element, element)
-	end
-
-	content = content .. [[</body>
-</html>]]
-
-	return content
-end
-
--- Generate test TypeScript content with Lit templates
-function M.generate_typescript_content(elements)
-	elements = elements or { "my-element" }
-
-	local content = [[import { html, LitElement } from 'lit';
-
-export class TestComponent extends LitElement {
-  render() {
-    return html`
-]]
-
-	for _, element in ipairs(elements) do
-		content = content .. string.format("      <%s></%s>\n", element, element)
-	end
-
-	content = content .. [[    `;
-  }
-}]]
-
-	return content
 end
 
 return M

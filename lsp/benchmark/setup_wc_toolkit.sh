@@ -14,6 +14,12 @@ echo "Setting up wc-language-server for benchmarks..."
 # Create bin directory
 mkdir -p "$BIN_DIR"
 
+# Check if already installed
+if [ -f "$BIN_DIR/wc-language-server" ]; then
+  echo "✓ wc-language-server already installed at $BIN_DIR/wc-language-server (Delete to reinstall)"
+  exit 0
+fi
+
 # Detect platform and download appropriate binary
 OS="$(uname -s)"
 ARCH="$(uname -m)"
@@ -78,5 +84,4 @@ EOF
 fi
 
 echo ""
-echo "Run benchmarks with:"
-echo "  make bench-lsp-wc"
+echo "Run benchmarks with: make bench-lsp-wc"

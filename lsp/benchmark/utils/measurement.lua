@@ -56,8 +56,6 @@ function M.run_iterations(func, iterations, description)
 	iterations = iterations or 10
 	description = description or "operation"
 
-	print(string.format("Running %d iterations of %s...", iterations, description))
-
 	local times = {}
 	local results = {}
 	local errors = {}

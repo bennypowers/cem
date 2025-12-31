@@ -82,14 +82,14 @@ base_diagnostics=$(get_metric "$BASE_JSON" '.benchmarks.diagnostics.duration_ms'
 diagnostics_success=$(get_success_rate "$PR_JSON" '.benchmarks.diagnostics.success_rate')
 
 # 5. Attribute Hover
-pr_attr_hover=$(get_metric "$PR_JSON" '.benchmarks.attribute_hover.overall_statistics.mean')
-base_attr_hover=$(get_metric "$BASE_JSON" '.benchmarks.attribute_hover.overall_statistics.mean')
-attr_hover_success=$(get_success_rate "$PR_JSON" '.benchmarks.attribute_hover.success_rate')
+pr_attr_hover=$(get_metric "$PR_JSON" '.benchmarks.hover_attribute.overall_statistics.mean')
+base_attr_hover=$(get_metric "$BASE_JSON" '.benchmarks.hover_attribute.overall_statistics.mean')
+attr_hover_success=$(get_success_rate "$PR_JSON" '.benchmarks.hover_attribute.success_rate')
 
 # 6. References
-pr_references=$(get_metric "$PR_JSON" '.benchmarks.references_performance.average_search_time')
-base_references=$(get_metric "$BASE_JSON" '.benchmarks.references_performance.average_search_time')
-references_success=$(get_success_rate "$PR_JSON" '.benchmarks.references_performance.success_rate')
+pr_references=$(get_metric "$PR_JSON" '.benchmarks.references.average_search_time')
+base_references=$(get_metric "$BASE_JSON" '.benchmarks.references.average_search_time')
+references_success=$(get_success_rate "$PR_JSON" '.benchmarks.references.success_rate')
 
 # Helper: Calculate delta and choose emoji
 calc_delta() {

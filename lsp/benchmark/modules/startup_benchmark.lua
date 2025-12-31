@@ -7,11 +7,9 @@ local M = {}
 
 function M.run_startup_benchmark(config, fixture_dir)
 	local server_name = _G.BENCHMARK_LSP_NAME or "unknown"
-	print(string.format("=== %s LSP Startup Benchmark ===", server_name))
 
 	-- Change to fixture directory
 	vim.cmd("cd " .. vim.fn.fnameescape(fixture_dir))
-	print("Working directory:", vim.fn.getcwd())
 
 	-- Run multiple iterations for statistical analysis
 	local iterations = 20 -- Increased for better statistical confidence
@@ -27,22 +25,27 @@ function M.run_startup_benchmark(config, fixture_dir)
 
 		local client = vim.lsp.get_client_by_id(client_id)
 
+		if not client then
+			print("NO CLIENT")
+			return
+		end
+
 		-- Wait for initialization
 		local ready = vim.wait(10000, function()
-			return client.server_capabilities ~= nil and not client.is_stopped()
+			return client.server_capabilities ~= nil and not client:is_stopped()
 		end)
 
 		local startup_duration = (vim.uv.hrtime() - startup_start) / 1e6
 
 		if not ready then
-			client.stop()
+			client:stop()
 			return nil, "Server failed to initialize"
 		end
 
 		local capabilities_count = vim.tbl_count(client.server_capabilities or {})
 
 		-- Clean shutdown
-		client.stop()
+		client:stop()
 		vim.wait(100) -- Allow cleanup
 
 		return { startup_duration, capabilities_count }

@@ -2,59 +2,29 @@
 -- Tests LSP completion request performance and functionality
 
 local measurement = require("utils.measurement")
+local benchmark = require("utils.benchmark")
 
 local M = {}
 
 function M.run_completion_benchmark(config, fixture_dir)
 	local server_name = _G.BENCHMARK_LSP_NAME or "unknown"
-	print(string.format("=== %s LSP Completion Benchmark ===", server_name))
 
-	-- Change to fixture directory
-	vim.cmd("cd " .. vim.fn.fnameescape(fixture_dir))
-
-	-- Start LSP server
-	local client_id = vim.lsp.start(config)
-	if not client_id then
+	-- Setup LSP client
+	local client, err = benchmark.setup_client(config, fixture_dir)
+	if not client then
 		return {
 			success = false,
-			error = "Failed to start LSP server",
+			error = err,
 		}
 	end
 
-	local client = vim.lsp.get_client_by_id(client_id)
-
-	-- Wait for initialization
-	local ready = vim.wait(10000, function()
-		return client.server_capabilities ~= nil and not client.is_stopped()
-	end)
-
-	if not ready then
-		client.stop()
+	-- Setup test file
+	local bufnr, test_file = benchmark.setup_test_file(fixture_dir, "completion", "html", 2000, client)
+	if not bufnr then
+		benchmark.cleanup_test(nil, nil, client)
 		return {
 			success = false,
-			error = "Server failed to initialize",
-		}
-	end
-
-	-- Load HTML content from fixture file
-	local fixture_file = fixture_dir .. "/completion-test.html"
-
-	-- Copy to test file for LSP processing
-	vim.fn.writefile(vim.fn.readfile(fixture_file), "test-completion.html")
-
-	-- Open file
-	vim.cmd("edit test-completion.html")
-	vim.cmd("set filetype=html")
-	local bufnr = vim.api.nvim_get_current_buf()
-
-	-- Wait for document processing
-	vim.wait(2000)
-
-	if client.is_stopped() then
-		vim.fn.delete("test-completion.html")
-		return {
-			success = false,
-			error = "Client stopped during file processing",
+			error = test_file, -- test_file contains error message on failure
 		}
 	end
 
@@ -72,9 +42,7 @@ function M.run_completion_benchmark(config, fixture_dir)
 	-- due to manifest traversal and attribute enumeration complexity
 	local iterations_per_context = 15
 
-	for i, test_pos in ipairs(test_positions) do
-		print(string.format("Testing completion in %s (%d iterations)...", test_pos.context, iterations_per_context))
-
+	for _, test_pos in ipairs(test_positions) do
 		local function single_completion()
 			local comp_result = nil
 			local comp_error = nil
@@ -82,11 +50,11 @@ function M.run_completion_benchmark(config, fixture_dir)
 
 			local comp_start = vim.uv.hrtime()
 
-			client.request("textDocument/completion", {
+			client:request("textDocument/completion", {
 				textDocument = { uri = vim.uri_from_bufnr(bufnr) },
 				position = { line = test_pos.line, character = test_pos.character },
-			}, function(err, result)
-				comp_error = err
+			}, function(comp_err, result)
+				comp_error = comp_err
 				comp_result = result
 				comp_completed = true
 			end)
@@ -138,7 +106,7 @@ function M.run_completion_benchmark(config, fixture_dir)
 		})
 
 		-- Check if client survived
-		if client.is_stopped() then
+		if client:is_stopped() then
 			break
 		end
 
@@ -146,38 +114,24 @@ function M.run_completion_benchmark(config, fixture_dir)
 	end
 
 	-- Clean up
-	vim.api.nvim_buf_delete(bufnr, { force = true })
-	vim.fn.delete("test-completion.html")
-	client.stop()
+	benchmark.cleanup_test(bufnr, test_file, client)
 
 	-- Calculate overall statistics
-	local total_successful = 0
-	local total_attempts = 0
-	local all_times = {}
-
-	for _, result in ipairs(completion_results) do
-		total_successful = total_successful + result.successful_runs
-		total_attempts = total_attempts + result.iterations
-		for _, time in ipairs(result.all_times_ms) do
-			table.insert(all_times, time)
-		end
-	end
-
-	local overall_stats = measurement.calculate_statistics(all_times)
+	local aggregated = benchmark.aggregate_results(completion_results)
 
 	return {
-		success = total_successful > 0,
+		success = aggregated.total_successful > 0,
 		server_name = server_name,
 		total_contexts = #test_positions,
-		total_attempts = total_attempts,
-		total_successful = total_successful,
-		success_rate = total_attempts > 0 and total_successful / total_attempts or 0,
-		overall_statistics = overall_stats,
+		total_attempts = aggregated.total_attempts,
+		total_successful = aggregated.total_successful,
+		success_rate = aggregated.success_rate,
+		overall_statistics = aggregated.overall_statistics,
 		completion_results = completion_results,
-		client_survived = not client.is_stopped(),
+		client_survived = not client:is_stopped(),
 		-- Backward compatibility
-		successful_completions = total_successful,
-		average_duration_ms = overall_stats.mean,
+		successful_completions = aggregated.total_successful,
+		average_duration_ms = aggregated.overall_statistics.mean,
 	}
 end
 

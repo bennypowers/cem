@@ -10,7 +10,7 @@
 
 {{ if and $cem.benchmarks $wc.benchmarks }}
 {{/* Only show simple protocol operations */}}
-{{ $simpleBenchmarks := slice "startup" "hover" "completion" "diagnostics" "references_performance" }}
+{{ $simpleBenchmarks := slice "startup" "hover" "completion" "diagnostics" "references" }}
 {{ $bar_height := 40 }}
 {{ $bar_spacing := 60 }}
 {{ $max_value_label_width := 70 }}
@@ -24,7 +24,7 @@
   "hover" "Hover Info"
   "completion" "Autocompletion"
   "diagnostics" "Diagnostics"
-  "references_performance" "Find References"
+  "references" "Find References"
 }}
 
 <div class="lsp-simple-benchmark-chart">
