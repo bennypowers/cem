@@ -1,0 +1,27 @@
+{
+  "html": {
+    "command": "cem",
+    "args": ["lsp", "--stdio"],
+    "extensionToLanguage": {
+      ".html": "html",
+      ".htm": "html"
+    }
+  },
+  "typescript": {
+    "command": "cem",
+    "args": ["lsp", "--stdio"],
+    "extensionToLanguage": {
+      ".ts": "typescript",
+      ".tsx": "typescript"
+    }
+  },
+  "javascript": {
+    "command": "cem",
+    "args": ["lsp", "--stdio"],
+    "extensionToLanguage": {
+      ".js": "javascript",
+      ".mjs": "javascript",
+      ".cjs": "javascript"
+    }
+  }
+}

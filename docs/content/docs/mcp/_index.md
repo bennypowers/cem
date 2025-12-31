@@ -23,8 +23,9 @@ For best practices on writing effective descriptions within this limit, see [Wri
 
 ## Quick Start
 
+Start MCP server for current workspace
+
 ```bash
-# Start MCP server for current workspace
 cem mcp
 ```
 
@@ -105,11 +106,21 @@ Once connected, AI assistants can access your component information through natu
 }
 ```
 
+### Claude Code
+
+Install the CEM plugin which includes both LSP and MCP support:
+
+```text
+/plugin marketplace add bennypowers/cem
+/plugin install cem
+```
+
+The MCP server activates automatically when the plugin is installed.
+
 ### Other Clients
 
 The CEM MCP server works with any MCP-compatible AI client:
 
-- **Claude Code** - See [Claude Code MCP docs](https://docs.anthropic.com/en/docs/claude-code/mcp)
 - **Cursor** - See [Cursor MCP integration](https://docs.cursor.com/mcp)
 - **Continue.dev** - See [Continue MCP setup](https://docs.continue.dev/mcp)
 - **Custom clients** - See [MCP specification](https://spec.modelcontextprotocol.io/)

@@ -78,6 +78,11 @@ The `cem lsp` command starts a Language Server Protocol (LSP) server that provid
 - Support for HTML files and TypeScript template literals
 - Automatic manifest discovery and live reloading
 
+**IDE Extensions:**
+- [VSCode](extensions/vscode/)
+- [Zed](extensions/zed/)
+- [Claude Code](extensions/claude-code/)
+
 See more in the [LSP docs][lspdocs]
 
 ---

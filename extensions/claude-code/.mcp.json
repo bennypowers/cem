@@ -1,0 +1,7 @@
+{
+  "cem": {
+    "command": "cem",
+    "args": ["mcp"],
+    "description": "Custom Elements Manifest server for AI-native HTML generation and component understanding"
+  }
+}
