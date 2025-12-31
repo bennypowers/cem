@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "./my-button.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyButton",
+          "tagName": "my-button",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "variant",
+              "type": { "text": "string" },
+              "description": "Button style variant"
+            },
+            {
+              "name": "size",
+              "type": { "text": "string" },
+              "description": "Button size"
+            },
+            {
+              "name": "disabled",
+              "type": { "text": "boolean" },
+              "description": "Disabled state"
+            },
+            {
+              "name": "loading",
+              "type": { "text": "boolean" },
+              "description": "Loading state"
+            },
+            {
+              "name": "icon",
+              "type": { "text": "string" },
+              "description": "Icon name"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button",
+          "declaration": { "name": "MyButton" }
+        }
+      ]
+    }
+  ]
+}

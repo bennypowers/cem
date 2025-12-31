@@ -1,0 +1,16 @@
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "## `icon` attribute\n\n**On `<my-button>` element**\n\n**Type:** `string`\n\nIcon name\n\n"
+  },
+  "range": {
+    "start": {
+      "line": 10,
+      "character": 13
+    },
+    "end": {
+      "line": 10,
+      "character": 17
+    }
+  }
+}

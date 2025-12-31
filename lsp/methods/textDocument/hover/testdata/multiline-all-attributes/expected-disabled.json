@@ -1,0 +1,16 @@
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "## `disabled` attribute\n\n**On `<my-button>` element**\n\n**Type:** `boolean`\n\nDisabled state\n\n"
+  },
+  "range": {
+    "start": {
+      "line": 8,
+      "character": 13
+    },
+    "end": {
+      "line": 8,
+      "character": 21
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "## `variant` attribute\n\n**On `<my-button>` element**\n\n**Type:** `string`\n\nButton style variant\n\n"
+  },
+  "range": {
+    "start": {
+      "line": 6,
+      "character": 13
+    },
+    "end": {
+      "line": 6,
+      "character": 20
+    }
+  }
+}

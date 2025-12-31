@@ -1,0 +1,16 @@
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "## `size` attribute\n\n**On `<my-button>` element**\n\n**Type:** `string`\n\nButton size\n\n"
+  },
+  "range": {
+    "start": {
+      "line": 7,
+      "character": 13
+    },
+    "end": {
+      "line": 7,
+      "character": 17
+    }
+  }
+}
