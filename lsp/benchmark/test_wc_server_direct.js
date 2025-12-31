@@ -30,11 +30,66 @@ const initRequest = {
   }
 };
 
-let responseData = '';
+// Buffer for accumulating LSP messages
+let buffer = Buffer.alloc(0);
+
+// Parse LSP messages from buffer
+function parseLSPMessages(buffer) {
+  const messages = [];
+  let offset = 0;
+
+  while (offset < buffer.length) {
+    // Find Content-Length header
+    const headerEnd = buffer.indexOf('\r\n\r\n', offset);
+    if (headerEnd === -1) break; // Incomplete header
+
+    const headerText = buffer.slice(offset, headerEnd).toString('utf8');
+    const contentLengthMatch = headerText.match(/Content-Length: (\d+)/i);
+
+    if (!contentLengthMatch) {
+      console.error('No Content-Length header found');
+      break;
+    }
+
+    const contentLength = parseInt(contentLengthMatch[1], 10);
+    const messageStart = headerEnd + 4; // Skip \r\n\r\n
+    const messageEnd = messageStart + contentLength;
+
+    if (messageEnd > buffer.length) break; // Incomplete message body
+
+    const messageBody = buffer.slice(messageStart, messageEnd).toString('utf8');
+
+    try {
+      messages.push(JSON.parse(messageBody));
+    } catch (e) {
+      console.error('Failed to parse message body:', e.message);
+    }
+
+    offset = messageEnd;
+  }
+
+  // Return remaining buffer (incomplete message)
+  return { messages, remaining: buffer.slice(offset) };
+}
 
 server.stdout.on('data', (data) => {
-  responseData += data.toString();
-  console.log('Server Response:', data.toString());
+  // Accumulate data into buffer
+  buffer = Buffer.concat([buffer, data]);
+
+  // Parse complete messages
+  const { messages, remaining } = parseLSPMessages(buffer);
+  buffer = remaining;
+
+  // Process each complete message
+  for (const message of messages) {
+    console.log('Received LSP message:', JSON.stringify(message, null, 2));
+
+    // Check for initialize response
+    if (message.id === 1 && message.result && message.result.capabilities) {
+      console.log('\n=== SERVER CAPABILITIES ===');
+      console.log(JSON.stringify(message.result.capabilities, null, 2));
+    }
+  }
 });
 
 server.stderr.on('data', (data) => {
@@ -43,23 +98,6 @@ server.stderr.on('data', (data) => {
 
 server.on('close', (code) => {
   console.log('Server closed with code:', code);
-  
-  // Try to parse the response
-  try {
-    const lines = responseData.split('\n').filter(line => line.trim());
-    for (const line of lines) {
-      if (line.includes('"result"') && line.includes('capabilities')) {
-        const response = JSON.parse(line);
-        console.log('\n=== SERVER CAPABILITIES ===');
-        console.log(JSON.stringify(response.result.capabilities, null, 2));
-        break;
-      }
-    }
-  } catch (e) {
-    console.log('Could not parse server response:', e.message);
-    console.log('Raw response:', responseData);
-  }
-  
   process.exit(0);
 });
 

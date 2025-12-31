@@ -38,9 +38,12 @@ server.on('close', (code) => {
   process.exit(0);
 });
 
-// Send initialize request
+// Send initialize request with LSP protocol headers
 try {
-  server.stdin.write(JSON.stringify(initRequest) + '\n');
+  const payload = JSON.stringify(initRequest);
+  const contentLength = Buffer.byteLength(payload, 'utf8');
+  const header = `Content-Length: ${contentLength}\r\n\r\n`;
+  server.stdin.write(header + payload);
 } catch (err) {
   console.error('Failed to send initialize request:', err);
   process.exit(1);
