@@ -35,6 +35,7 @@ type Document interface {
 	AnalyzeCompletionContextTS(position protocol.Position, dm any) *CompletionAnalysis
 	CompletionPrefix(analysis *CompletionAnalysis) string                            // Get completion prefix using tree-sitter
 	ScriptTags() []ScriptTag                                                         // Get parsed script tags
+	ImportMap() map[string]string                                                    // Get import map (if any) from <script type="importmap">
 	FindModuleScript() (protocol.Position, bool)                                     // Find insertion point in module script
 	FindInlineModuleScript() (protocol.Position, bool)                               // Find insertion point in inline module script (no src)
 	FindHeadInsertionPoint(dm any) (protocol.Position, bool)                         // Find insertion point in <head> section

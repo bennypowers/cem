@@ -98,6 +98,11 @@ func (d *TypeScriptDocument) ScriptTags() []types.ScriptTag {
 	return d.scriptTags
 }
 
+// ImportMap returns nil for TypeScript documents (no importmaps in TS files)
+func (d *TypeScriptDocument) ImportMap() map[string]string {
+	return nil
+}
+
 // UpdateContent updates the document content
 func (d *TypeScriptDocument) UpdateContent(content string, version int32) {
 	d.mu.Lock()

@@ -399,6 +399,15 @@ func parseTypeScriptImports(content string, ctx types.ServerContext) []string {
 func parseModuleScriptImports(ctx types.ServerContext, doc types.Document) []string {
 	var importedElements []string
 
+	// Get importmap from document (if any)
+	var importMap map[string]string
+	if doc != nil {
+		importMap = doc.ImportMap()
+		if len(importMap) > 0 {
+			helpers.SafeDebugLog("[DIAGNOSTICS] Using importmap with %d entries for module script resolution", len(importMap))
+		}
+	}
+
 	// Use tree-sitter parsed script tags from document
 	if doc != nil {
 		scriptTags := doc.ScriptTags()
@@ -406,7 +415,7 @@ func parseModuleScriptImports(ctx types.ServerContext, doc types.Document) []str
 			if scriptTag.IsModule {
 				// Use the parsed imports from tree-sitter
 				for _, importStmt := range scriptTag.Imports {
-					elements := resolveImportPathToElements(importStmt.ImportPath, ctx)
+					elements := resolveImportPathToElementsWithImportMap(importStmt.ImportPath, ctx, importMap)
 					importedElements = append(importedElements, elements...)
 				}
 			}
@@ -491,14 +500,41 @@ func parseNonModuleScriptImports(content string, ctx types.ServerContext) []stri
 // resolveImportPathToElements resolves an import path to custom element tag names
 // This function checks manifest data first, then uses module graph for additional re-export information
 func resolveImportPathToElements(importPath string, ctx types.ServerContext) []string {
+	return resolveImportPathToElementsWithImportMap(importPath, ctx, nil)
+}
+
+// resolveImportPathToElementsWithImportMap resolves an import path to custom element tag names
+// If importMap is provided and contains a mapping for the import path, it resolves the mapped path first
+func resolveImportPathToElementsWithImportMap(importPath string, ctx types.ServerContext, importMap map[string]string) []string {
 	var elements []string
 
 	helpers.SafeDebugLog("[DIAGNOSTICS] Resolving import path '%s' to elements", importPath)
 
-	// Check manifest-based resolution first (primary source)
+	// IMPORTANT: If importmap exists and has a mapping for this import, resolve the mapped path
+	// Importmaps take precedence over package.json-based resolution
+	var resolvedPath = importPath
+	if importMap != nil {
+		if mapped, exists := importMap[importPath]; exists {
+			helpers.SafeDebugLog("[DIAGNOSTICS] Importmap maps '%s' -> '%s'", importPath, mapped)
+			resolvedPath = mapped
+			// Resolve both the original package name AND the mapped path
+			// This handles the case where "large-component-library" maps to "./index.js"
+			// and we need to understand that elements from the package are available
+		}
+	}
+
+	// Check manifest-based resolution for BOTH the original import path and resolved path
+	// This ensures we match elements whether using package names or file paths
 	manifestElements := resolveImportPathWithManifests(importPath, ctx)
 	elements = append(elements, manifestElements...)
 	helpers.SafeDebugLog("[DIAGNOSTICS] Manifest resolved '%s' to %d elements: %v", importPath, len(manifestElements), manifestElements)
+
+	// If importmap resolved to a different path, also try resolving that
+	if resolvedPath != importPath {
+		mappedElements := resolveImportPathWithManifests(resolvedPath, ctx)
+		elements = append(elements, mappedElements...)
+		helpers.SafeDebugLog("[DIAGNOSTICS] Mapped path '%s' resolved to %d elements: %v", resolvedPath, len(mappedElements), mappedElements)
+	}
 
 	// Lazy build module graph for this import path, then check for additional re-export aware resolution
 	if moduleGraph := ctx.ModuleGraph(); moduleGraph != nil {

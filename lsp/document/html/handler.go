@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package html
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -66,6 +67,13 @@ func (h *Handler) CreateDocument(uri, content string, version int32) types.Docum
 		helpers.SafeDebugLog("[HTML] Failed to parse script tags with handler: %v", err)
 	} else {
 		doc.SetScriptTags(scriptTags)
+	}
+
+	// Parse import map (must be called after script tags are parsed)
+	if importMap, err := h.ParseImportMap(doc); err != nil {
+		helpers.SafeDebugLog("[HTML] Failed to parse import map: %v", err)
+	} else if importMap != nil {
+		doc.SetImportMap(importMap)
 	}
 
 	return doc
@@ -209,6 +217,72 @@ func (h *Handler) ParseScriptTags(doc types.Document) ([]types.ScriptTag, error)
 	}
 
 	return scriptTags, nil
+}
+
+// ParseImportMap parses the import map from <script type="importmap"> tag
+func (h *Handler) ParseImportMap(doc types.Document) (map[string]string, error) {
+	htmlDoc, ok := doc.(*HTMLDocument)
+	if !ok {
+		return nil, fmt.Errorf("document is not an HTML document")
+	}
+
+	// Check script tags for type="importmap"
+	scriptTags := htmlDoc.ScriptTags()
+	for _, scriptTag := range scriptTags {
+		if strings.ToLower(scriptTag.Type) == "importmap" {
+			// Get the JSON content from the script tag
+			content, err := htmlDoc.Content()
+			if err != nil {
+				continue
+			}
+
+			// Extract the script content using the ContentRange
+			lines := strings.Split(content, "\n")
+			var jsonContent strings.Builder
+
+			startLine := int(scriptTag.ContentRange.Start.Line)
+			endLine := int(scriptTag.ContentRange.End.Line)
+
+			for i := startLine; i <= endLine && i < len(lines); i++ {
+				line := lines[i]
+				if i == startLine {
+					// Start from the character position on the first line
+					if int(scriptTag.ContentRange.Start.Character) < len(line) {
+						line = line[scriptTag.ContentRange.Start.Character:]
+					}
+				}
+				if i == endLine {
+					// End at the character position on the last line
+					if int(scriptTag.ContentRange.End.Character) < len(line) {
+						line = line[:scriptTag.ContentRange.End.Character]
+					}
+				}
+				jsonContent.WriteString(line)
+				if i < endLine {
+					jsonContent.WriteString("\n")
+				}
+			}
+
+			// Parse the JSON
+			var importMapJSON struct {
+				Imports map[string]string `json:"imports"`
+			}
+
+			if err := json.Unmarshal([]byte(jsonContent.String()), &importMapJSON); err != nil {
+				helpers.SafeDebugLog("[HTML] Failed to parse importmap JSON: %v", err)
+				continue
+			}
+
+			// Return the imports mapping
+			if importMapJSON.Imports != nil {
+				helpers.SafeDebugLog("[HTML] Parsed importmap with %d entries: %v", len(importMapJSON.Imports), importMapJSON.Imports)
+				return importMapJSON.Imports, nil
+			}
+		}
+	}
+
+	// No importmap found
+	return nil, nil
 }
 
 // parseImportStatements parses import statements from script content

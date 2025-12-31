@@ -99,6 +99,11 @@ func (d *TSXDocument) ScriptTags() []types.ScriptTag {
 	return d.scriptTags
 }
 
+// ImportMap returns nil for TSX documents (no importmaps in TSX files)
+func (d *TSXDocument) ImportMap() map[string]string {
+	return nil
+}
+
 // UpdateContent updates the document content
 func (d *TSXDocument) UpdateContent(content string, version int32) {
 	d.mu.Lock()

@@ -18,6 +18,7 @@ package document
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"bennypowers.dev/cem/lsp/document/html"
@@ -152,6 +153,13 @@ func (dm *documentManager) UpdateDocumentWithChanges(uri, content string, versio
 		return dm.OpenDocument(uri, content, version)
 	}
 
+	// Get the language handler for this document
+	language := getLanguageFromURI(uri)
+	handler, handlerExists := dm.languageHandlers[language]
+	if !handlerExists {
+		handler = dm.languageHandlers["html"] // Fallback to HTML
+	}
+
 	// Try incremental parsing if we have changes and an existing tree
 	if len(changes) > 0 && doc.Tree() != nil {
 		helpers.SafeDebugLog("[DOCUMENT] Attempting incremental parsing for %s", uri)
@@ -173,6 +181,15 @@ func (dm *documentManager) UpdateDocumentWithChanges(uri, content string, versio
 
 			// Note: OldTree cleanup is handled by SetTree method
 
+			// IMPORTANT: Re-parse script tags and importmap ONLY if script content changed
+			// This ensures diagnostics reflect the current document state while being performant
+			if dm.scriptContentChanged(doc, changes) {
+				helpers.SafeDebugLog("[DOCUMENT] Script content changed, re-parsing metadata for %s", uri)
+				dm.reparseDocumentMetadata(doc, handler)
+			} else {
+				helpers.SafeDebugLog("[DOCUMENT] Script content unchanged, skipping metadata re-parse for %s", uri)
+			}
+
 			return doc
 		} else {
 			helpers.SafeDebugLog("[DOCUMENT] Incremental parsing failed for %s: %v", uri, result.Error)
@@ -181,11 +198,6 @@ func (dm *documentManager) UpdateDocumentWithChanges(uri, content string, versio
 
 	// Fall back to full document recreation
 	helpers.SafeDebugLog("[DOCUMENT] Using full document recreation for %s", uri)
-	language := getLanguageFromURI(uri)
-	handler, handlerExists := dm.languageHandlers[language]
-	if !handlerExists {
-		handler = dm.languageHandlers["html"] // Fallback to HTML
-	}
 
 	if handler != nil {
 		// Close the old document
@@ -197,6 +209,128 @@ func (dm *documentManager) UpdateDocumentWithChanges(uri, content string, versio
 	}
 
 	return doc
+}
+
+// scriptContentChanged checks if any of the document changes affected script tags or importmaps
+func (dm *documentManager) scriptContentChanged(doc types.Document, changes []protocol.TextDocumentContentChangeEvent) bool {
+	if doc == nil || len(changes) == 0 {
+		return false
+	}
+
+	// Get existing script tags
+	scriptTags := doc.ScriptTags()
+	if len(scriptTags) == 0 {
+		// No existing script tags - check if changes might add one
+		// Look for "<script" in the change text
+		for _, change := range changes {
+			if strings.Contains(change.Text, "<script") {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Check if any change overlaps with existing script tag ranges
+	for _, change := range changes {
+		if change.Range == nil {
+			// Full document change - script content definitely changed
+			return true
+		}
+
+		changeStart := change.Range.Start
+		changeEnd := change.Range.End
+
+		for _, scriptTag := range scriptTags {
+			// Check if change overlaps with script tag range
+			if rangesOverlap(changeStart, changeEnd, scriptTag.Range.Start, scriptTag.Range.End) {
+				return true
+			}
+		}
+
+		// Also check if the change text contains script-related content
+		if strings.Contains(change.Text, "<script") || strings.Contains(change.Text, "</script>") {
+			return true
+		}
+	}
+
+	return false
+}
+
+// rangesOverlap checks if two ranges overlap
+func rangesOverlap(start1, end1, start2, end2 protocol.Position) bool {
+	// Range 1 starts before range 2 ends, AND range 1 ends after range 2 starts
+	return !positionAfter(start1, end2) && !positionBefore(end1, start2)
+}
+
+// positionBefore checks if pos1 is strictly before pos2
+func positionBefore(pos1, pos2 protocol.Position) bool {
+	if pos1.Line < pos2.Line {
+		return true
+	}
+	if pos1.Line == pos2.Line && pos1.Character < pos2.Character {
+		return true
+	}
+	return false
+}
+
+// positionAfter checks if pos1 is strictly after pos2
+func positionAfter(pos1, pos2 protocol.Position) bool {
+	if pos1.Line > pos2.Line {
+		return true
+	}
+	if pos1.Line == pos2.Line && pos1.Character > pos2.Character {
+		return true
+	}
+	return false
+}
+
+// reparseDocumentMetadata re-parses script tags and importmap for HTML documents
+// This is called after incremental updates to ensure metadata is up-to-date
+func (dm *documentManager) reparseDocumentMetadata(doc types.Document, handler types.LanguageHandler) {
+	if doc == nil || handler == nil {
+		return
+	}
+
+	// Only HTML documents have script tags and importmaps
+	if doc.Language() != "html" {
+		return
+	}
+
+	// Use type assertion to access HTML-specific handler methods
+	type scriptTagParser interface {
+		ParseScriptTags(doc types.Document) ([]types.ScriptTag, error)
+		ParseImportMap(doc types.Document) (map[string]string, error)
+	}
+
+	if htmlHandler, ok := handler.(scriptTagParser); ok {
+		// Re-parse script tags
+		if scriptTags, err := htmlHandler.ParseScriptTags(doc); err != nil {
+			helpers.SafeDebugLog("[DOCUMENT] Failed to re-parse script tags: %v", err)
+		} else {
+			// Use type assertion to set script tags
+			type scriptTagSetter interface {
+				SetScriptTags([]types.ScriptTag)
+			}
+			if setter, ok := doc.(scriptTagSetter); ok {
+				setter.SetScriptTags(scriptTags)
+				helpers.SafeDebugLog("[DOCUMENT] Re-parsed %d script tags", len(scriptTags))
+			}
+		}
+
+		// Re-parse import map
+		if importMap, err := htmlHandler.ParseImportMap(doc); err != nil {
+			helpers.SafeDebugLog("[DOCUMENT] Failed to re-parse import map: %v", err)
+		} else if importMap != nil {
+			// Use type assertion to set import map
+			type importMapSetter interface {
+				SetImportMap(map[string]string)
+			}
+			if setter, ok := doc.(importMapSetter); ok {
+				setter.SetImportMap(importMap)
+				helpers.SafeDebugLog("[DOCUMENT] Re-parsed import map with %d entries", len(importMap))
+			}
+		}
+	}
 }
 
 // Document retrieves a tracked document
