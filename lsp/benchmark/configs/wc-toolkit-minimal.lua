@@ -5,32 +5,12 @@
 local benchmark_dir = vim.fn.getcwd()
 vim.opt.runtimepath:prepend(benchmark_dir)
 
--- Basic vim settings for LSP
-vim.opt.compatible = false
-vim.opt.hidden = true
-vim.opt.backup = false
-vim.opt.writebackup = false
-vim.opt.swapfile = false
+-- Load common configuration
+local common = require("configs.common")
 
--- Disable all unnecessary features for performance
-vim.opt.number = false
-vim.opt.relativenumber = false
-vim.opt.cursorline = false
-vim.opt.cursorcolumn = false
-vim.opt.showmode = false
-vim.opt.showcmd = false
-vim.opt.ruler = false
-vim.opt.laststatus = 0
-vim.opt.signcolumn = "no"
-
--- Suppress LSP info messages (prevents "No information available" spam during benchmarks)
-local original_notify = vim.notify
-vim.notify = function(msg, level, opts)
-  -- Only suppress INFO level messages, keep warnings and errors visible
-  if level ~= vim.log.levels.INFO then
-    original_notify(msg, level, opts)
-  end
-end
+-- Setup common settings and tree-sitter
+common.setup_common_settings()
+common.setup_treesitter()
 
 -- wc-toolkit LSP configuration (using local npx wrapper)
 local wc_server_path = benchmark_dir .. '/bin/wc-language-server'

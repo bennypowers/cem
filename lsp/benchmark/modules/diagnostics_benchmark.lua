@@ -8,8 +8,27 @@ local M = {}
 function M.run_diagnostics_benchmark(config, fixture_dir)
 	local server_name = _G.BENCHMARK_LSP_NAME or "unknown"
 
-	-- Setup LSP client
-	local client, err = benchmark.setup_client(config, fixture_dir)
+	-- Track diagnostics
+	local received_diagnostics = {}
+	local diagnostics_received = false
+
+	-- Add client-specific diagnostics handler to config
+	-- This avoids modifying global handlers and prevents collisions with other LSP usage
+	local client_config = vim.tbl_deep_extend("force", config, {
+		handlers = {
+			["textDocument/publishDiagnostics"] = function(diag_err, result, ctx, handler_config)
+				if result and result.diagnostics then
+					received_diagnostics = result.diagnostics
+					diagnostics_received = true
+				end
+				-- Call the default handler to update diagnostics state
+				vim.lsp.diagnostic.on_publish_diagnostics(diag_err, result, ctx, handler_config)
+			end,
+		},
+	})
+
+	-- Setup LSP client with custom handlers
+	local client, err = benchmark.setup_client(client_config, fixture_dir)
 	if not client then
 		return {
 			success = false,
@@ -17,29 +36,11 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 		}
 	end
 
-	-- Track diagnostics
-	local received_diagnostics = {}
-	local diagnostics_received = false
-
-	-- Set up diagnostics handler BEFORE opening file
-	local original_handler = vim.lsp.handlers["textDocument/publishDiagnostics"]
-	vim.lsp.handlers["textDocument/publishDiagnostics"] = function(diag_err, result, ctx, handler_config)
-		if result and result.diagnostics then
-			received_diagnostics = result.diagnostics
-			diagnostics_received = true
-		end
-		if original_handler then
-			original_handler(diag_err, result, ctx, handler_config)
-		end
-	end
-
 	local diagnostics_start = vim.uv.hrtime()
 
 	-- Now open the file (which will trigger didOpen and diagnostics)
 	local bufnr, test_file = benchmark.setup_test_file(fixture_dir, "diagnostics", "html", 2000, client)
 	if not bufnr then
-		-- Restore handler before cleanup
-		vim.lsp.handlers["textDocument/publishDiagnostics"] = original_handler
 		benchmark.cleanup_test(nil, nil, client)
 		return {
 			success = false,
@@ -55,9 +56,6 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 
 	local diagnostics_duration = (vim.uv.hrtime() - diagnostics_start) / 1e6
 	local client_stopped = client:is_stopped()
-
-	-- Restore original handler
-	vim.lsp.handlers["textDocument/publishDiagnostics"] = original_handler
 
 	-- Check if server supports diagnostics
 	local supports_diagnostics = client.server_capabilities

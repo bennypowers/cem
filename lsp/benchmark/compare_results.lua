@@ -193,7 +193,11 @@ local function main()
 				end
 			end
 		end
-		print(string.format("CEM Overall: %.0f%% (%d/%d)", (cem_passed / cem_total) * 100, cem_passed, cem_total))
+		if cem_total > 0 then
+			print(string.format("CEM Overall: %.0f%% (%d/%d)", (cem_passed / cem_total) * 100, cem_passed, cem_total))
+		else
+			print("CEM Overall: N/A (0/0) - No matching benchmarks found")
+		end
 	end
 
 	if wc_data and wc_data.benchmarks then
@@ -208,7 +212,11 @@ local function main()
 				end
 			end
 		end
-		print(string.format("WC-Toolkit Overall: %.0f%% (%d/%d)", (wc_passed / wc_total) * 100, wc_passed, wc_total))
+		if wc_total > 0 then
+			print(string.format("WC-Toolkit Overall: %.0f%% (%d/%d)", (wc_passed / wc_total) * 100, wc_passed, wc_total))
+		else
+			print("WC-Toolkit Overall: N/A (0/0) - No matching benchmarks found")
+		end
 	end
 
 	print(string.rep("=", 70) .. "\n")

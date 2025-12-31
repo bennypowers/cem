@@ -41,6 +41,30 @@ local function run_all_benchmarks()
 		return
 	end
 
+	-- Verify tree-sitter parsers are available
+	-- These are required for dynamic position finding in benchmarks
+	local required_parsers = { "html", "typescript" }
+	local missing_parsers = {}
+
+	for _, lang in ipairs(required_parsers) do
+		local ok = pcall(vim.treesitter.language.get_lang, lang)
+		if not ok then
+			table.insert(missing_parsers, lang)
+		end
+	end
+
+	if #missing_parsers > 0 then
+		print(
+			string.format(
+				"ERROR: Required tree-sitter parsers missing: %s",
+				table.concat(missing_parsers, ", ")
+			)
+		)
+		print("Install with: nvim --headless -c 'TSInstallSync html typescript' -c 'quit'")
+		print("Or ensure nvim-treesitter is properly configured in your Neovim setup.")
+		return
+	end
+
 	local all_results = {
 		server_name = server_name,
 		timestamp = os.date("%Y-%m-%d %H:%M:%S"),
@@ -113,7 +137,39 @@ local function run_all_benchmarks()
 		-- Just save results and exit quietly in comparison mode
 		local temp_results_file = string.format("/tmp/cem-benchmark-%s.json", server_name)
 		local json_content = vim.fn.json_encode(all_results)
-		vim.fn.writefile({ json_content }, temp_results_file)
+
+		-- Attempt to write results file with error handling
+		local write_ok, write_err = pcall(function()
+			local result = vim.fn.writefile({ json_content }, temp_results_file)
+			if result ~= 0 then
+				error(string.format("writefile returned %d", result))
+			end
+		end)
+
+		if not write_ok then
+			-- Write failed, try fallback with io.open
+			local fallback_ok, fallback_err = pcall(function()
+				local file = io.open(temp_results_file, "w")
+				if not file then
+					error("Failed to open file")
+				end
+				file:write(json_content)
+				file:close()
+			end)
+
+			if not fallback_ok then
+				-- Both methods failed, report error
+				local error_msg = string.format(
+					"Failed to write benchmark results to %s: %s (fallback: %s)",
+					temp_results_file,
+					write_err,
+					fallback_err
+				)
+				io.stderr:write(error_msg .. "\n")
+				vim.notify(error_msg, vim.log.levels.ERROR)
+			end
+		end
+
 		return
 	end
 
@@ -214,8 +270,43 @@ local function run_all_benchmarks()
 	-- Save individual server results to temporary file for combining later
 	local temp_results_file = string.format("/tmp/cem-benchmark-%s.json", server_name)
 	local json_content = vim.fn.json_encode(all_results)
-	vim.fn.writefile({ json_content }, temp_results_file)
-	print(string.format("\nResults saved to: %s", temp_results_file))
+
+	-- Attempt to write results file with error handling
+	local write_ok, write_err = pcall(function()
+		local result = vim.fn.writefile({ json_content }, temp_results_file)
+		if result ~= 0 then
+			error(string.format("writefile returned %d", result))
+		end
+	end)
+
+	if not write_ok then
+		-- Write failed, try fallback with io.open
+		local fallback_ok, fallback_err = pcall(function()
+			local file = io.open(temp_results_file, "w")
+			if not file then
+				error("Failed to open file")
+			end
+			file:write(json_content)
+			file:close()
+		end)
+
+		if not fallback_ok then
+			-- Both methods failed, report error
+			local error_msg = string.format(
+				"Failed to write benchmark results to %s: %s (fallback: %s)",
+				temp_results_file,
+				write_err,
+				fallback_err
+			)
+			io.stderr:write(error_msg .. "\n")
+			vim.notify(error_msg, vim.log.levels.ERROR)
+			print(string.format("\n⚠️  WARNING: %s", error_msg))
+		else
+			print(string.format("\nResults saved to: %s (using fallback method)", temp_results_file))
+		end
+	else
+		print(string.format("\nResults saved to: %s", temp_results_file))
+	end
 
 	-- Final timing report
 	local total_elapsed_time = vim.fn.reltime(overall_start_time)[1]

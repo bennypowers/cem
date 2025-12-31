@@ -28,14 +28,37 @@ function M.run_hover_benchmark(config, fixture_dir)
 		}
 	end
 
-	-- Test hover on various elements with statistical analysis
-	-- NOTE: These positions are hardcoded for fixtures/large_project/hover-test.html
-	-- If the fixture file is modified, these positions must be updated accordingly
-	local test_positions = {
-		{ element = "my-button", line = 4, character = 10 },
-		{ element = "my-card", line = 5, character = 10 },
-		{ element = "my-icon", line = 9, character = 10 }, -- Line 10 in file (0-indexed)
+	-- Dynamically find test positions using tree-sitter
+	-- This replaces hardcoded positions and adapts automatically to fixture changes
+	local position_finder = require("utils.position_finder")
+	local test_file_path = fixture_dir .. "/hover-test.html"
+
+	local element_specs = {
+		{ element = "my-button", occurrence = 1 },
+		{ element = "my-card", occurrence = 1 },
+		{ element = "my-icon", occurrence = 1 },
 	}
+
+	local positions = position_finder.find_elements_batch(test_file_path, element_specs)
+
+	-- Validate all positions found
+	local test_positions = {}
+	for _, pos in ipairs(positions) do
+		if pos.error then
+			return {
+				success = false,
+				error = string.format("Position finding failed: %s", pos.error),
+			}
+		end
+		table.insert(test_positions, pos)
+	end
+
+	if #test_positions ~= 3 then
+		return {
+			success = false,
+			error = string.format("Expected 3 positions, found %d", #test_positions),
+		}
+	end
 
 	local hover_results = {}
 	local iterations_per_element = 10 -- Multiple iterations per element for statistical confidence
@@ -113,6 +136,9 @@ function M.run_hover_benchmark(config, fixture_dir)
 		-- No artificial delay - real-world usage is rapid successive requests
 	end
 
+	-- Capture client state before cleanup
+	local client_survived = not client:is_stopped()
+
 	-- Clean up
 	benchmark.cleanup_test(bufnr, test_file, client)
 
@@ -128,7 +154,7 @@ function M.run_hover_benchmark(config, fixture_dir)
 		success_rate = aggregated.success_rate,
 		overall_statistics = aggregated.overall_statistics,
 		hover_results = hover_results,
-		client_survived = not client:is_stopped(),
+		client_survived = client_survived,
 		-- Backward compatibility
 		successful_hovers = aggregated.total_successful,
 		average_duration_ms = aggregated.overall_statistics.mean,

@@ -30,7 +30,14 @@ function M.run_completion_benchmark(config, fixture_dir)
 
 	-- Test completion at various positions with statistical analysis
 	-- NOTE: These positions are hardcoded for fixtures/medium_project/completion-test.html
-	-- If the fixture file is modified, these positions must be updated accordingly
+	--
+	-- TODO: Replace hardcoded positions with tree-sitter-based dynamic position finding
+	-- Challenge: Completion positions test **incomplete syntax** (e.g., "<my-" without closing tag)
+	-- Tree-sitter may not parse incomplete tags correctly. Options:
+	--   1. Investigate tree-sitter error recovery nodes
+	--   2. Use hybrid approach: tree-sitter for complete elements, text patterns for incomplete
+	--   3. Keep hardcoded positions for this special case
+	-- For now, keeping hardcoded positions to avoid blocking other benchmark improvements.
 	local test_positions = {
 		{ context = "tag-name-completion", line = 4, character = 6 }, -- After "my-"
 		{ context = "attribute-completion", line = 5, character = 13 }, -- Inside my-button tag
@@ -113,6 +120,9 @@ function M.run_completion_benchmark(config, fixture_dir)
 		-- No artificial delay - real-world usage is rapid successive requests
 	end
 
+	-- Capture client state before cleanup
+	local client_survived = not client:is_stopped()
+
 	-- Clean up
 	benchmark.cleanup_test(bufnr, test_file, client)
 
@@ -128,7 +138,7 @@ function M.run_completion_benchmark(config, fixture_dir)
 		success_rate = aggregated.success_rate,
 		overall_statistics = aggregated.overall_statistics,
 		completion_results = completion_results,
-		client_survived = not client:is_stopped(),
+		client_survived = client_survived,
 		-- Backward compatibility
 		successful_completions = aggregated.total_successful,
 		average_duration_ms = aggregated.overall_statistics.mean,

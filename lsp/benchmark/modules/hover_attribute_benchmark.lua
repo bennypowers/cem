@@ -28,98 +28,70 @@ function M.run_hover_attribute_benchmark(config, fixture_dir)
 		}
 	end
 
-	-- Test positions for different attribute types
-	-- NOTE: These positions are hardcoded for fixtures/large_project/hover-attribute-test.html
-	-- If the fixture file is modified, these positions must be updated accordingly
-	-- Lines are 0-based (LSP convention)
-	local test_positions = {
-		-- Button attributes (lines 18-22 in file = 17-21 0-based)
-		{
-			element = "my-button",
-			attr = "variant",
-			line = 17,
-			character = 13,
-			expected_content = "Button style variant",
-		},
-		{ element = "my-button", attr = "size", line = 18, character = 13, expected_content = "Button size" },
-		{ element = "my-button", attr = "disabled", line = 19, character = 13, expected_content = "Disabled state" },
-		{ element = "my-button", attr = "loading", line = 20, character = 13, expected_content = "Loading state" },
-		{ element = "my-button", attr = "icon", line = 21, character = 13, expected_content = "Icon name" },
+	-- Dynamically find attribute positions using tree-sitter
+	-- This replaces hardcoded positions and adapts automatically to fixture changes
+	local position_finder = require("utils.position_finder")
+	local test_file_path = fixture_dir .. "/hover-attribute-test.html"
 
-		-- Form attributes (lines 30-37 in file = 29-36 0-based)
-		{ element = "my-input-text", attr = "value", line = 29, character = 17, expected_content = "Input value" },
-		{
-			element = "my-input-text",
-			attr = "placeholder",
-			line = 30,
-			character = 17,
-			expected_content = "Placeholder text",
-		},
-		{
-			element = "my-input-text",
-			attr = "required",
-			line = 31,
-			character = 17,
-			expected_content = "Required field",
-		},
-		{
-			element = "my-input-select",
-			attr = "multiple",
-			line = 35,
-			character = 19,
-			expected_content = "Multiple selection",
-		},
-		{
-			element = "my-input-select",
-			attr = "searchable",
-			line = 36,
-			character = 19,
-			expected_content = "searchable",
-		},
+	-- Define attributes to test (semantic specification without hardcoded line/character)
+	local attribute_specs = {
+		-- Button attributes
+		{ element = "my-button", attr = "variant", expected_content = "Button style variant" },
+		{ element = "my-button", attr = "size", expected_content = "Button size" },
+		{ element = "my-button", attr = "disabled", expected_content = "Disabled state" },
+		{ element = "my-button", attr = "loading", expected_content = "Loading state" },
+		{ element = "my-button", attr = "icon", expected_content = "Icon name" },
 
-		-- Layout attributes (lines 43-48 in file = 42-47 0-based)
-		{ element = "my-container-flex", attr = "gap", line = 42, character = 21, expected_content = "Gap size" },
-		{
-			element = "my-container-flex",
-			attr = "justify",
-			line = 44,
-			character = 21,
-			expected_content = "Justification",
-		},
-		{ element = "my-card-basic", attr = "variant", line = 46, character = 19, expected_content = "Card style" },
-		{
-			element = "my-card-basic",
-			attr = "clickable",
-			line = 47,
-			character = 19,
-			expected_content = "Clickable card",
-		},
+		-- Form attributes
+		{ element = "my-input-text", attr = "value", expected_content = "Input value" },
+		{ element = "my-input-text", attr = "placeholder", expected_content = "Placeholder text" },
+		{ element = "my-input-text", attr = "required", expected_content = "Required field" },
+		{ element = "my-input-select", attr = "multiple", expected_content = "Multiple selection" },
+		{ element = "my-input-select", attr = "searchable", expected_content = "searchable" },
 
-		-- Chart attributes (lines 56-58 in file = 55-57 0-based)
-		{ element = "my-chart-line", attr = "responsive", line = 56, character = 17, expected_content = "responsive" },
-		{ element = "my-chart-line", attr = "animated", line = 57, character = 17, expected_content = "animated" },
+		-- Layout attributes
+		{ element = "my-container-flex", attr = "gap", expected_content = "Gap size" },
+		{ element = "my-container-flex", attr = "justify", expected_content = "Justification" },
+		{ element = "my-card-basic", attr = "variant", expected_content = "Card style" },
+		{ element = "my-card-basic", attr = "clickable", expected_content = "Clickable card" },
 
-		-- Table attributes (lines 59-62 in file = 58-61 0-based)
-		{ element = "my-table-sortable", attr = "striped", line = 58, character = 23, expected_content = "striped" },
-		{
-			element = "my-table-sortable",
-			attr = "page-size",
-			line = 61,
-			character = 21,
-			expected_content = "page-size",
-		},
+		-- Chart attributes
+		{ element = "my-chart-line", attr = "responsive", expected_content = "responsive" },
+		{ element = "my-chart-line", attr = "animated", expected_content = "animated" },
 
-		-- Media attributes (lines 65-71 in file = 64-70 0-based)
-		{
-			element = "my-image-responsive",
-			attr = "loading",
-			line = 66,
-			character = 23,
-			expected_content = "Loading strategy",
-		},
-		{ element = "my-image-responsive", attr = "fit", line = 67, character = 23, expected_content = "fit" },
-		{ element = "my-image-avatar", attr = "size", line = 58, character = 19, expected_content = "size" },
+		-- Table attributes
+		{ element = "my-table-sortable", attr = "striped", expected_content = "striped" },
+		{ element = "my-table-sortable", attr = "page-size", expected_content = "page-size" },
+
+		-- Media attributes
+		{ element = "my-image-responsive", attr = "loading", expected_content = "Loading strategy" },
+		{ element = "my-image-responsive", attr = "fit", expected_content = "fit" },
+		{ element = "my-image-avatar", attr = "size", expected_content = "size" },
 	}
+
+	local test_positions = position_finder.find_attributes_batch(test_file_path, attribute_specs)
+
+	-- Validate all attribute positions found
+	local errors = {}
+	for _, pos in ipairs(test_positions) do
+		if pos.error then
+			table.insert(errors, string.format("%s.%s: %s", pos.element, pos.attr, pos.error))
+		end
+	end
+
+	if #errors > 0 then
+		return {
+			success = false,
+			error = string.format("Position finding failed:\n  %s", table.concat(errors, "\n  ")),
+		}
+	end
+
+	if #test_positions ~= 21 then
+		return {
+			success = false,
+			error = string.format("Expected 21 attribute positions, found %d", #test_positions),
+		}
+	end
 
 	local hover_results = {}
 	local iterations_per_attribute = 3 -- Test each attribute multiple times
@@ -211,6 +183,9 @@ function M.run_hover_attribute_benchmark(config, fixture_dir)
 		vim.wait(50)
 	end
 
+	-- Capture client state before cleanup
+	local client_survived = not client:is_stopped()
+
 	-- Clean up
 	benchmark.cleanup_test(bufnr, test_file, client)
 
@@ -232,7 +207,7 @@ function M.run_hover_attribute_benchmark(config, fixture_dir)
 		accuracy_rate = aggregated.total_successful > 0 and total_accurate / aggregated.total_successful or 0,
 		overall_statistics = aggregated.overall_statistics,
 		attribute_results = hover_results,
-		client_survived = not client:is_stopped(),
+		client_survived = client_survived,
 	}
 end
 

@@ -8,7 +8,7 @@ local M = {}
 function M.run_startup_benchmark(config, fixture_dir)
 	local server_name = _G.BENCHMARK_LSP_NAME or "unknown"
 
-	-- Change to fixture directory
+	-- Change to fixture directory (GLOBAL working directory change - safe because benchmarks run sequentially)
 	vim.cmd("cd " .. vim.fn.fnameescape(fixture_dir))
 
 	-- Run multiple iterations for statistical analysis
@@ -26,8 +26,7 @@ function M.run_startup_benchmark(config, fixture_dir)
 		local client = vim.lsp.get_client_by_id(client_id)
 
 		if not client then
-			print("NO CLIENT")
-			return
+			return nil, "Failed to get client by ID"
 		end
 
 		-- Wait for initialization

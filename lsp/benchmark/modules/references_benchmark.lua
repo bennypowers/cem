@@ -63,7 +63,8 @@ local function test_references_for_elements(elements, _)
 end
 
 -- Function to test references during active editing
-local function test_references_during_editing()
+-- NOTE: Uses positions_map passed from parent function
+local function test_references_during_editing(positions_map)
 	local results = {
 		tests = {},
 		total_references = 0,
@@ -72,10 +73,22 @@ local function test_references_during_editing()
 	}
 
 	-- Start editing document while triggering references
-	local test_elements = {
-		{ element = "my-nav", line = 21, col = 8 },
-		{ element = "my-button-primary", line = 53, col = 13 },
-	}
+	-- Positions are dynamically found via tree-sitter
+	local test_elements = {}
+	if positions_map["my-nav"] then
+		table.insert(test_elements, {
+			element = "my-nav",
+			line = positions_map["my-nav"].line,
+			col = positions_map["my-nav"].character,
+		})
+	end
+	if positions_map["my-button-primary"] then
+		table.insert(test_elements, {
+			element = "my-button-primary",
+			line = positions_map["my-button-primary"].line,
+			col = positions_map["my-button-primary"].character,
+		})
+	end
 
 	for _, element_test in ipairs(test_elements) do
 		-- Start typing to simulate active editing
@@ -139,16 +152,20 @@ local function test_references_during_editing()
 end
 
 -- Function to test references in TypeScript template literals
-local function test_template_literal_references()
+-- NOTE: Uses positions_map passed from parent function
+local function test_template_literal_references(positions_map)
 	local results = {
 		tests = {},
 		total_references = 0,
 		avg_search_time = 0,
 	}
 
-	-- Test references within template literals (if the file has them)
+	-- Test references within template literals
+	-- NOTE: For TypeScript files, positions should be computed from lit-template.ts
+	-- For now, using approximate hardcoded positions as tree-sitter TypeScript template support
+	-- may require additional work. This is a known limitation.
 	local template_elements = {
-		{ element = "my-container-flex", line = 176, col = 11 }, -- Approximate position in template
+		{ element = "my-container-flex", line = 176, col = 11 },
 		{ element = "my-button-primary", line = 182, col = 13 },
 	}
 
@@ -203,6 +220,29 @@ function M.run_references_benchmark(_, fixture_dir)
 	local start_time = vim.fn.reltime()
 	local max_time_seconds = 45
 
+	-- Pre-compute element positions using tree-sitter (before any LSP timing)
+	local position_finder = require("utils.position_finder")
+	local test_file_path = fixture_dir .. "/large-page.html"
+
+	local element_specs = {
+		{ element = "my-nav", occurrence = 1 },
+		{ element = "my-button-primary", occurrence = 1 },
+		{ element = "my-card-product", occurrence = 1 },
+		{ element = "my-divider", occurrence = 1 },
+		{ element = "my-container-flex", occurrence = 1 },
+	}
+
+	local positions_map = {}
+	for _, spec in ipairs(element_specs) do
+		local pos, err = position_finder.find_element_position(test_file_path, spec.element, spec.occurrence)
+		if pos then
+			positions_map[spec.element] = pos
+		else
+			-- Log warning but continue (some elements may not exist in fixture)
+			print(string.format("Warning: %s", err))
+		end
+	end
+
 	local results = {
 		success = false,
 		server_name = _G.BENCHMARK_LSP_NAME,
@@ -240,11 +280,34 @@ function M.run_references_benchmark(_, fixture_dir)
 		results.references_supported = supports_references
 		results.not_supported = not supports_references
 
-		local small_scale_results = test_references_for_elements({
-			{ element = "my-nav", expected_min = 1, line = 21, col = 8 },
-			{ element = "my-button-primary", expected_min = 2, line = 53, col = 13 },
-			{ element = "my-card-product", expected_min = 1, line = 134, col = 15 },
-		}, "small_scale")
+		-- Build small scale test list using dynamic positions
+		local small_scale_tests = {}
+		if positions_map["my-nav"] then
+			table.insert(small_scale_tests, {
+				element = "my-nav",
+				expected_min = 1,
+				line = positions_map["my-nav"].line,
+				col = positions_map["my-nav"].character,
+			})
+		end
+		if positions_map["my-button-primary"] then
+			table.insert(small_scale_tests, {
+				element = "my-button-primary",
+				expected_min = 2,
+				line = positions_map["my-button-primary"].line,
+				col = positions_map["my-button-primary"].character,
+			})
+		end
+		if positions_map["my-card-product"] then
+			table.insert(small_scale_tests, {
+				element = "my-card-product",
+				expected_min = 1,
+				line = positions_map["my-card-product"].line,
+				col = positions_map["my-card-product"].character,
+			})
+		end
+
+		local small_scale_results = test_references_for_elements(small_scale_tests, "small_scale")
 
 		results.project_scale_results.small = {
 			duration = tonumber(vim.fn.reltimestr(vim.fn.reltime(small_start))),
@@ -280,11 +343,34 @@ function M.run_references_benchmark(_, fixture_dir)
 		-- Set active file back to large-page for reference testing
 		vim.cmd("edit " .. fixture_dir .. "/large-page.html")
 
-		local medium_scale_results = test_references_for_elements({
-			{ element = "my-nav", expected_min = 2, line = 21, col = 8 },
-			{ element = "my-button-primary", expected_min = 3, line = 53, col = 13 },
-			{ element = "my-divider", expected_min = 2, line = 32, col = 8 },
-		}, "medium_scale")
+		-- Build medium scale test list using dynamic positions
+		local medium_scale_tests = {}
+		if positions_map["my-nav"] then
+			table.insert(medium_scale_tests, {
+				element = "my-nav",
+				expected_min = 2,
+				line = positions_map["my-nav"].line,
+				col = positions_map["my-nav"].character,
+			})
+		end
+		if positions_map["my-button-primary"] then
+			table.insert(medium_scale_tests, {
+				element = "my-button-primary",
+				expected_min = 3,
+				line = positions_map["my-button-primary"].line,
+				col = positions_map["my-button-primary"].character,
+			})
+		end
+		if positions_map["my-divider"] then
+			table.insert(medium_scale_tests, {
+				element = "my-divider",
+				expected_min = 2,
+				line = positions_map["my-divider"].line,
+				col = positions_map["my-divider"].character,
+			})
+		end
+
+		local medium_scale_results = test_references_for_elements(medium_scale_tests, "medium_scale")
 
 		results.project_scale_results.medium = {
 			duration = tonumber(vim.fn.reltimestr(vim.fn.reltime(medium_start))),
@@ -302,7 +388,7 @@ function M.run_references_benchmark(_, fixture_dir)
 		local editing_start = vim.fn.reltime()
 
 		-- Create a scenario where we trigger references while document is being modified
-		local editing_results = test_references_during_editing()
+		local editing_results = test_references_during_editing(positions_map)
 
 		results.project_scale_results.during_editing = {
 			duration = tonumber(vim.fn.reltimestr(vim.fn.reltime(editing_start))),
@@ -326,7 +412,7 @@ function M.run_references_benchmark(_, fixture_dir)
 			return false
 		end)
 
-		local template_results = test_template_literal_references()
+		local template_results = test_template_literal_references(positions_map)
 
 		results.project_scale_results.template_literals = {
 			duration = tonumber(vim.fn.reltimestr(vim.fn.reltime(template_start))),

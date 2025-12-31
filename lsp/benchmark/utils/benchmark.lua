@@ -1,6 +1,12 @@
 --[[
 Benchmark utilities for LSP testing
 Provides common setup, teardown, and aggregation functions
+
+IMPORTANT SIDE EFFECTS:
+- setup_client() changes the GLOBAL working directory (vim.cmd("cd ..."))
+- This affects all code in the same Neovim instance
+- Benchmarks MUST be run sequentially, NOT in parallel
+- Working directory is NOT automatically restored by cleanup_test()
 ]]
 
 local measurement = require("utils.measurement")
@@ -8,6 +14,10 @@ local measurement = require("utils.measurement")
 local M = {}
 
 --- Setup and initialize LSP client
+---
+--- WARNING: This function changes the GLOBAL working directory to fixture_dir.
+--- The working directory is NOT automatically restored by cleanup_test().
+---
 --- @param config table LSP client configuration
 --- @param fixture_dir string Directory to use as working directory
 --- @return table|nil client LSP client if successful
