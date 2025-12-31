@@ -52,12 +52,21 @@ jobs:
         run: |
           set -e  # Exit on any error
 
-          # Clean up any old nvim config that might interfere
+          # Verify tree-sitter CLI is available (prevents silent TSInstall hangs)
+          echo "Verifying tree-sitter CLI..."
+          tree-sitter --version || {
+            echo "ERROR: tree-sitter CLI not found!"
+            exit 1
+          }
+
+          # Clean up any old nvim config
           rm -rf ~/.config/nvim
 
           # Install nvim-treesitter plugin to native package location
           NVIM_SITE="$HOME/.local/share/nvim/site/pack/plugins/start"
-          PARSER_DIR="$NVIM_SITE/nvim-treesitter/parser"
+
+          # Modern nvim-treesitter installs parsers to ~/.local/share/nvim/site/parser/
+          PARSER_INSTALL_DIR="$HOME/.local/share/nvim/site/parser"
 
           echo "Installing nvim-treesitter plugin..."
           mkdir -p "$NVIM_SITE"
@@ -66,25 +75,32 @@ jobs:
               "$NVIM_SITE/nvim-treesitter"
           fi
 
-          # Install parsers using TSInstall (requires tree-sitter CLI)
-          # Note: nvim-treesitter auto-loads from site/pack/*/start/
-          echo "Installing HTML and TypeScript parsers with TSInstall..."
-          nvim --headless +'TSInstall! html' +'TSInstall! typescript' +qall
+          # Create parser directory where modern nvim-treesitter installs to
+          mkdir -p "$PARSER_INSTALL_DIR"
 
-          # Wait a moment for async operations to complete
+          # Install parsers using TSInstall with timeout to prevent hangs
+          echo "Installing HTML and TypeScript parsers with TSInstall..."
+          timeout 120 nvim --headless +'TSInstall! html' +'TSInstall! typescript' +qall || {
+            echo "ERROR: TSInstall timed out or failed"
+            echo "Checking nvim version:"
+            nvim --version | head -3
+            echo "Checking if nvim-treesitter loaded:"
+            nvim --headless +'echo has("nvim-treesitter")' +qall
+            exit 1
+          }
+
+          # Wait a moment for any async cleanup
           sleep 2
 
           # Verify parsers were installed
-          echo "Checking for installed parsers..."
-          find "$HOME/.local/share/nvim" -name "*.so" -type f || true
-
-          if [ -f "$PARSER_DIR/html.so" ] && [ -f "$PARSER_DIR/typescript.so" ]; then
+          echo "Checking for installed parsers in $PARSER_INSTALL_DIR..."
+          if [ -f "$PARSER_INSTALL_DIR/html.so" ] && [ -f "$PARSER_INSTALL_DIR/typescript.so" ]; then
             echo "✅ Tree-sitter parsers installed successfully:"
-            ls -lh "$PARSER_DIR/html.so" "$PARSER_DIR/typescript.so"
+            ls -lh "$PARSER_INSTALL_DIR/html.so" "$PARSER_INSTALL_DIR/typescript.so"
           else
-            echo "ERROR: Parsers not found in expected location: $PARSER_DIR"
-            echo "Searching for parsers in all nvim directories:"
-            find "$HOME/.local/share/nvim" -name "*.so" -type f
+            echo "ERROR: Parsers not found in $PARSER_INSTALL_DIR"
+            echo "Searching for all .so files in nvim directories:"
+            find "$HOME/.local/share/nvim" -name "*.so" -type f 2>/dev/null || echo "No .so files found"
             exit 1
           fi
 
