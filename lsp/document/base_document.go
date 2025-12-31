@@ -165,6 +165,11 @@ func (d *BaseDocument) ScriptTags() []types.ScriptTag {
 	return d.scriptTags
 }
 
+// ImportMap returns nil by default (HTML documents override this to provide import maps)
+func (d *BaseDocument) ImportMap() map[string]string {
+	return nil
+}
+
 // SetScriptTags sets the script tags (protected method for subclasses)
 func (d *BaseDocument) SetScriptTags(scriptTags []types.ScriptTag) {
 	d.mu.Lock()

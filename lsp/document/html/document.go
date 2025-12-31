@@ -38,6 +38,7 @@ type HTMLDocument struct {
 	tree       *ts.Tree
 	parser     *ts.Parser
 	scriptTags []types.ScriptTag
+	importMap  map[string]string // Import map from <script type="importmap">
 	mu         sync.RWMutex
 }
 
@@ -85,6 +86,21 @@ func (d *HTMLDocument) ScriptTags() []types.ScriptTag {
 	return d.scriptTags
 }
 
+// ImportMap returns the import map from <script type="importmap"> tag
+func (d *HTMLDocument) ImportMap() map[string]string {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	if d.importMap == nil {
+		return nil
+	}
+	// Return a copy to prevent external mutation
+	result := make(map[string]string, len(d.importMap))
+	for k, v := range d.importMap {
+		result[k] = v
+	}
+	return result
+}
+
 // UpdateContent updates the document content
 func (d *HTMLDocument) UpdateContent(content string, version int32) {
 	d.mu.Lock()
@@ -122,6 +138,13 @@ func (d *HTMLDocument) SetScriptTags(scriptTags []types.ScriptTag) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.scriptTags = scriptTags
+}
+
+// SetImportMap sets the import map
+func (d *HTMLDocument) SetImportMap(importMap map[string]string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.importMap = importMap
 }
 
 // Close cleans up document resources
@@ -713,7 +736,7 @@ func (d *HTMLDocument) FindAttributeAtPosition(position protocol.Position, dm an
 func (d *HTMLDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
 	// Use reflection to call GetLanguageHandler to avoid circular imports
 	dmValue := reflect.ValueOf(dm)
-	if dmValue.Kind() == reflect.Ptr && !dmValue.IsNil() {
+	if dmValue.Kind() == reflect.Pointer && !dmValue.IsNil() {
 		method := dmValue.MethodByName("GetLanguageHandler")
 		if method.IsValid() {
 			results := method.Call([]reflect.Value{reflect.ValueOf("html")})

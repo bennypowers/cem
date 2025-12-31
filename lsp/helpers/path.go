@@ -24,16 +24,16 @@ import (
 // This handles simple relative path prefixes for module graph building
 func NormalizeImportPath(importPath string) string {
 	// Handle relative imports like './my-icon.js'
-	if strings.HasPrefix(importPath, "./") {
+	if after, ok := strings.CutPrefix(importPath, "./"); ok {
 		// Convert './my-icon.js' to 'my-icon.js'
-		return strings.TrimPrefix(importPath, "./")
+		return after
 	}
 
 	// Handle parent directory imports like '../shared/utils.js'
-	if strings.HasPrefix(importPath, "../") {
+	if after, ok := strings.CutPrefix(importPath, "../"); ok {
 		// For now, just remove the prefix - more sophisticated resolution
 		// could be added if needed
-		return strings.TrimPrefix(importPath, "../")
+		return after
 	}
 
 	// Handle absolute imports (npm packages, etc.) - return as-is
@@ -63,6 +63,21 @@ func NormalizePathForMatching(path string) string {
 
 // PathsMatch checks if an import path matches an element source path using sophisticated matching logic
 func PathsMatch(importPath, elementSource string) bool {
+	// IMPORTANT: Check for package-level bare specifier imports FIRST (before normalization)
+	// When importing "package-name" (without subpath), it should match elements from that package
+	// like "package-name/index.js", "package-name/button.js", etc.
+	// This handles self-imports where a package imports itself by name.
+	//
+	// Examples:
+	// - "large-component-library" matches "large-component-library/index.js"
+	// - "@rhds/elements" matches "@rhds/elements/rh-card/rh-card.js"
+	// - "my-package" matches "my-package/src/component.js"
+	//
+	// Use the original (non-normalized) paths for this check to preserve package names
+	if strings.HasPrefix(elementSource, importPath+"/") {
+		return true
+	}
+
 	// Normalize both paths for comparison
 	normalizedImport := NormalizePathForMatching(importPath)
 	normalizedSource := NormalizePathForMatching(elementSource)
@@ -82,8 +97,16 @@ func PathsMatch(importPath, elementSource string) bool {
 		return true
 	}
 
+	// Also check normalized paths for package prefix matching
+	// This handles cases where elementSource has been normalized but still contains package structure
+	if strings.HasPrefix(normalizedSource, normalizedImport+"/") {
+		return true
+	}
+
 	// Check file name matching (last resort)
-	importFile := strings.TrimSuffix(strings.Split(normalizedImport, "/")[len(strings.Split(normalizedImport, "/"))-1], ".js")
-	sourceFile := strings.TrimSuffix(strings.Split(normalizedSource, "/")[len(strings.Split(normalizedSource, "/"))-1], ".js")
+	importParts := strings.Split(normalizedImport, "/")
+	sourceParts := strings.Split(normalizedSource, "/")
+	importFile := strings.TrimSuffix(importParts[len(importParts)-1], ".js")
+	sourceFile := strings.TrimSuffix(sourceParts[len(sourceParts)-1], ".js")
 	return importFile == sourceFile
 }
