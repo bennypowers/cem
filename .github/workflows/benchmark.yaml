@@ -34,9 +34,9 @@ jobs:
 
       - name: Install tree-sitter CLI
         run: |
-          # Pin to v0.24.4 for reproducible builds (latest stable as of 2025-01)
+          # Pin to v0.26.3 for reproducible builds (latest stable as of 2025-01)
           # Unpinned installs can cause CI failures when breaking changes are released
-          npm install -g tree-sitter-cli@0.24.4
+          npm install -g tree-sitter-cli@0.26.3
 
       - name: Cache Neovim plugins and parsers
         uses: actions/cache@v4
@@ -44,7 +44,7 @@ jobs:
           path: |
             ~/.local/share/nvim
             ~/.config/nvim
-          key: ${{ runner.os }}-neovim-tree-sitter-0.24.4-${{ hashFiles('.github/workflows/benchmark.yaml') }}
+          key: ${{ runner.os }}-neovim-tree-sitter-0.26.3-${{ hashFiles('.github/workflows/benchmark.yaml') }}
           restore-keys: |
             ${{ runner.os }}-neovim-
 
