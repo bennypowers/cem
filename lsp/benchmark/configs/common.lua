@@ -7,67 +7,67 @@ local M = {}
 --- This is required for dynamic position finding in benchmarks
 function M.setup_treesitter()
 	local data_path = vim.fn.stdpath("data")
-	local lazypath = data_path .. "/lazy/lazy.nvim"
-	local treesitter_path = data_path .. "/lazy/nvim-treesitter"
 
-	-- Install lazy.nvim if not present
-	if vim.fn.isdirectory(lazypath) == 0 then
-		print("Installing lazy.nvim plugin manager...")
-		vim.fn.system({
-			"git",
-			"clone",
-			"--filter=blob:none",
-			"https://github.com/folke/lazy.nvim.git",
-			"--branch=stable",
-			lazypath,
-		})
-	end
-	vim.opt.rtp:prepend(lazypath)
+	-- Check for nvim-treesitter in two possible locations:
+	-- 1. CI: ~/.local/share/nvim/site/pack/plugins/start/nvim-treesitter (installed by workflow)
+	-- 2. Local: ~/.local/share/nvim/lazy/nvim-treesitter (installed manually with lazy.nvim)
+	local treesitter_path = nil
+	local ci_path = data_path .. "/site/pack/plugins/start/nvim-treesitter"
+	local local_path = data_path .. "/lazy/nvim-treesitter"
 
-	-- Install nvim-treesitter if not present
-	if vim.fn.isdirectory(treesitter_path) == 0 then
-		print("Installing nvim-treesitter...")
-		require("lazy").setup({
-			{
-				"nvim-treesitter/nvim-treesitter",
-				build = ":TSUpdate",
-			},
-		})
+	if vim.fn.isdirectory(ci_path) == 1 then
+		treesitter_path = ci_path
+		print("Using nvim-treesitter from CI location: " .. ci_path)
+	elseif vim.fn.isdirectory(local_path) == 1 then
+		treesitter_path = local_path
+		print("Using nvim-treesitter from local location: " .. local_path)
 	else
-		vim.opt.rtp:prepend(treesitter_path)
+		error(
+			"nvim-treesitter not found!\n"
+				.. "Expected at either:\n"
+				.. "  - "
+				.. ci_path
+				.. " (CI)\n"
+				.. "  - "
+				.. local_path
+				.. " (local)\n"
+				.. "Install with: nvim --headless -c 'TSInstallSync html typescript' -c 'quit'"
+		)
 	end
 
-	-- Ensure HTML and TypeScript parsers are installed
-	local parsers_to_install = {}
+	-- IMPORTANT: Set packpath and runtimepath for parser discovery
+	-- Following nvim-regexplainer pattern: both packpath and rtp need the site directory
+	local site_path = data_path .. "/site"
+	vim.opt.packpath = { site_path, "$VIMRUNTIME" }
+
+	-- Add site directory and nvim-treesitter to runtime path
+	vim.opt.rtp:prepend(site_path)
+	vim.opt.rtp:prepend(treesitter_path)
+
+	-- Verify HTML and TypeScript parsers are available
+	-- NOTE: In CI, parsers are pre-installed by the workflow before running benchmarks
+	-- This just verifies they're accessible, doesn't try to install them
+	local missing_parsers = {}
 	for _, lang in ipairs({ "html", "typescript" }) do
-		-- Check if parser can actually parse content (not just if it's registered)
-		local test_ok = pcall(function()
-			vim.treesitter.get_string_parser("<div></div>", lang)
+		-- Check if parser library exists and can be loaded
+		local has_parser = pcall(function()
+			-- Try to create a simple string parser - this will fail if parser isn't available
+			vim.treesitter.get_string_parser("<test />", lang)
 		end)
 
-		if not test_ok then
-			table.insert(parsers_to_install, lang)
+		if not has_parser then
+			table.insert(missing_parsers, lang)
 		end
 	end
 
-	if #parsers_to_install > 0 then
-		print(string.format("Installing tree-sitter parsers: %s", table.concat(parsers_to_install, ", ")))
-
-		-- Check if tree-sitter CLI is available
-		local has_tree_sitter_cli = vim.fn.executable("tree-sitter") == 1
-		if not has_tree_sitter_cli then
-			print("ERROR: tree-sitter CLI not found!")
-			print("Install it with: npm install -g tree-sitter-cli")
-			print("Or on Arch Linux: sudo pacman -S tree-sitter")
-			print("Or on macOS: brew install tree-sitter")
-			error("tree-sitter CLI required for parser installation")
-		end
-
-		-- Set up nvim-treesitter configs to enable installation commands
-		require("nvim-treesitter.configs").setup({
-			ensure_installed = parsers_to_install,
-			sync_install = true,
-		})
+	if #missing_parsers > 0 then
+		print("ERROR: Missing tree-sitter parsers: " .. table.concat(missing_parsers, ", "))
+		print("")
+		print("In CI, parsers should be pre-installed by the 'Install nvim-treesitter and parsers' workflow step.")
+		print("Locally, install parsers by running:")
+		print("  nvim --headless -c 'TSInstallSync html typescript' -c 'quit'")
+		print("")
+		error("Required tree-sitter parsers not available")
 	end
 end
 

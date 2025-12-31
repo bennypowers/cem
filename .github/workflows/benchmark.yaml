@@ -50,50 +50,65 @@ jobs:
 
       - name: Install nvim-treesitter and parsers
         run: |
-          # Create minimal init.lua with nvim-treesitter
-          mkdir -p ~/.config/nvim
-          cat > ~/.config/nvim/init.lua << 'EOF'
-          -- Bootstrap lazy.nvim plugin manager
-          local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-          if not vim.loop.fs_stat(lazypath) then
-            vim.fn.system({
-              "git", "clone", "--filter=blob:none",
-              "https://github.com/folke/lazy.nvim.git",
-              "--branch=stable",
-              lazypath,
-            })
+          set -e  # Exit on any error
+
+          # Verify tree-sitter CLI is available
+          echo "Verifying tree-sitter CLI..."
+          tree-sitter --version
+
+          # Install nvim-treesitter plugin
+          NVIM_SITE="$HOME/.local/share/nvim/site/pack/plugins/start"
+          PARSER_INSTALL_DIR="$HOME/.local/share/nvim/site"
+
+          echo "Installing nvim-treesitter plugin..."
+          mkdir -p "$NVIM_SITE"
+          if [ ! -d "$NVIM_SITE/nvim-treesitter" ]; then
+            git clone --depth=1 https://github.com/nvim-treesitter/nvim-treesitter.git \
+              "$NVIM_SITE/nvim-treesitter"
+          fi
+
+          # Create install script using modern nvim-treesitter API
+          cat > /tmp/install_parsers.lua << 'LUA'
+          -- Set packpath to load nvim-treesitter
+          vim.opt.packpath = { vim.fn.expand("~/.local/share/nvim/site") }
+          vim.cmd.packloadall()
+
+          -- Set up nvim-treesitter with install_dir
+          local ts = require('nvim-treesitter')
+          ts.setup {
+            install_dir = vim.fn.expand("~/.local/share/nvim/site")
+          }
+
+          -- Install parsers programmatically
+          print("Installing HTML and TypeScript parsers...")
+          local ok, err = pcall(function()
+            ts.install({ 'html', 'typescript' }):wait(120000)
+          end)
+
+          if not ok then
+            print("ERROR: Parser installation failed: " .. tostring(err))
+            os.exit(1)
           end
-          vim.opt.rtp:prepend(lazypath)
 
-          require("lazy").setup({
-            {
-              "nvim-treesitter/nvim-treesitter",
-              build = ":TSUpdate",
-              config = function()
-                require("nvim-treesitter.configs").setup({
-                  ensure_installed = { "html", "typescript" },
-                  sync_install = true,
-                })
-              end,
-            },
-          })
-          EOF
+          print("✅ Parsers installed successfully")
+          os.exit(0)
+          LUA
 
-          # Install parsers
-          nvim --headless -c "TSInstallSync html typescript" -c "quit"
+          # Run parser installation
+          echo "Installing HTML and TypeScript parsers..."
+          nvim --headless -u /tmp/install_parsers.lua
 
-          # Verify installation
-          echo "Verifying HTML parser installation..."
-          nvim --headless -c "lua print(vim.treesitter.language.get_lang('html'))" -c "quit" || {
-            echo "ERROR: HTML parser not installed"
+          # Verify parsers were installed
+          echo "Verifying parsers..."
+          if [ -f "$PARSER_INSTALL_DIR/parser/html.so" ] && [ -f "$PARSER_INSTALL_DIR/parser/typescript.so" ]; then
+            echo "✅ Tree-sitter parsers installed successfully:"
+            ls -lh "$PARSER_INSTALL_DIR/parser/html.so" "$PARSER_INSTALL_DIR/parser/typescript.so"
+          else
+            echo "ERROR: Parsers not found in $PARSER_INSTALL_DIR/parser/"
+            echo "Searching for all .so files:"
+            find "$HOME/.local/share/nvim" -name "*.so" -type f 2>/dev/null || echo "No .so files found"
             exit 1
-          }
-          echo "Verifying TypeScript parser installation..."
-          nvim --headless -c "lua print(vim.treesitter.language.get_lang('typescript'))" -c "quit" || {
-            echo "ERROR: TypeScript parser not installed"
-            exit 1
-          }
-          echo "✅ Tree-sitter parsers installed successfully"
+          fi
 
       - name: Run benchmarks on PR branch
         id: bench-pr
