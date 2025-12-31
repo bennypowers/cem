@@ -50,50 +50,43 @@ jobs:
 
       - name: Install nvim-treesitter and parsers
         run: |
-          # Create minimal init.lua with nvim-treesitter
-          mkdir -p ~/.config/nvim
-          cat > ~/.config/nvim/init.lua << 'EOF'
-          -- Bootstrap lazy.nvim plugin manager
-          local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-          if not vim.loop.fs_stat(lazypath) then
-            vim.fn.system({
-              "git", "clone", "--filter=blob:none",
-              "https://github.com/folke/lazy.nvim.git",
-              "--branch=stable",
-              lazypath,
-            })
-          end
-          vim.opt.rtp:prepend(lazypath)
+          set -e  # Exit on any error
 
-          require("lazy").setup({
-            {
-              "nvim-treesitter/nvim-treesitter",
-              build = ":TSUpdate",
-              config = function()
-                require("nvim-treesitter.configs").setup({
-                  ensure_installed = { "html", "typescript" },
-                  sync_install = true,
-                })
-              end,
-            },
-          })
-          EOF
+          # Clean up any old nvim config that might interfere
+          rm -rf ~/.config/nvim
 
-          # Install parsers
-          nvim --headless -c "TSInstallSync html typescript" -c "quit"
+          # Install nvim-treesitter plugin to native package location
+          NVIM_SITE="$HOME/.local/share/nvim/site/pack/plugins/start"
+          PARSER_DIR="$NVIM_SITE/nvim-treesitter/parser"
 
-          # Verify installation
-          echo "Verifying HTML parser installation..."
-          nvim --headless -c "lua print(vim.treesitter.language.get_lang('html'))" -c "quit" || {
-            echo "ERROR: HTML parser not installed"
+          echo "Installing nvim-treesitter plugin..."
+          mkdir -p "$NVIM_SITE"
+          if [ ! -d "$NVIM_SITE/nvim-treesitter" ]; then
+            git clone --depth=1 https://github.com/nvim-treesitter/nvim-treesitter.git \
+              "$NVIM_SITE/nvim-treesitter"
+          fi
+
+          # Install parsers using TSInstall (requires tree-sitter CLI)
+          # Note: nvim-treesitter auto-loads from site/pack/*/start/
+          echo "Installing HTML and TypeScript parsers with TSInstall..."
+          nvim --headless +'TSInstall! html' +'TSInstall! typescript' +qall
+
+          # Wait a moment for async operations to complete
+          sleep 2
+
+          # Verify parsers were installed
+          echo "Checking for installed parsers..."
+          find "$HOME/.local/share/nvim" -name "*.so" -type f || true
+
+          if [ -f "$PARSER_DIR/html.so" ] && [ -f "$PARSER_DIR/typescript.so" ]; then
+            echo "✅ Tree-sitter parsers installed successfully:"
+            ls -lh "$PARSER_DIR/html.so" "$PARSER_DIR/typescript.so"
+          else
+            echo "ERROR: Parsers not found in expected location: $PARSER_DIR"
+            echo "Searching for parsers in all nvim directories:"
+            find "$HOME/.local/share/nvim" -name "*.so" -type f
             exit 1
-          }
-          echo "Verifying TypeScript parser installation..."
-          nvim --headless -c "lua print(vim.treesitter.language.get_lang('typescript'))" -c "quit" || {
-            echo "ERROR: TypeScript parser not installed"
-            exit 1
-          }
-          echo "✅ Tree-sitter parsers installed successfully"
+          fi
 
       - name: Run benchmarks on PR branch
         id: bench-pr
