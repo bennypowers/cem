@@ -102,6 +102,6 @@ func NewError(message string) error {
 }
 
 // NewErrorf creates a new formatted error with standardized conventions
-func NewErrorf(format string, args ...interface{}) error {
+func NewErrorf(format string, args ...any) error {
 	return fmt.Errorf(format, args...)
 }

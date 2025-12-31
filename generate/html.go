@@ -140,8 +140,8 @@ func (mp *ModuleProcessor) processRenderTemplate(
 	for captureMap := range matcher.ParentCaptures(root, text, "part") {
 		if pn, ok := captureMap["part.name"]; ok && len(pn) > 0 {
 			partNameNode := pn[0]
-			partNames := strings.Fields(pn[0].Text)
-			for _, partName := range partNames {
+			partNames := strings.FieldsSeq(pn[0].Text)
+			for partName := range partNames {
 				if comment, ok := captureMap["comment"]; ok && len(comment) > 0 {
 					yamlDoc, err := parseYamlComment(comment[0].Text, "part")
 					if err != nil {
