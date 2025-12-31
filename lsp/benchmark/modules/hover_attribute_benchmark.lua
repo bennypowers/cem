@@ -86,10 +86,10 @@ function M.run_hover_attribute_benchmark(config, fixture_dir)
 		}
 	end
 
-	if #test_positions ~= 21 then
+	if #test_positions ~= #attribute_specs then
 		return {
 			success = false,
-			error = string.format("Expected 21 attribute positions, found %d", #test_positions),
+			error = string.format("Expected %d attribute positions, found %d", #attribute_specs, #test_positions),
 		}
 	end
 

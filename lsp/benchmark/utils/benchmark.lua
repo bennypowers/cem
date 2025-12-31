@@ -65,9 +65,13 @@ function M.setup_test_file(fixture_dir, test_name, filetype, wait_ms, client)
 	local test_file = "test-" .. test_name .. "." .. filetype
 
 	-- Copy fixture to test file for LSP processing
+	if vim.fn.filereadable(fixture_file) == 0 then
+		return nil, "Fixture file not found: " .. fixture_file
+	end
+
 	local fixture_lines = vim.fn.readfile(fixture_file)
 	if #fixture_lines == 0 then
-		return nil, "Failed to read fixture file: " .. fixture_file
+		return nil, "Fixture file is empty: " .. fixture_file
 	end
 
 	vim.fn.writefile(fixture_lines, test_file)

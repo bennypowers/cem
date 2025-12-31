@@ -158,7 +158,8 @@
         {{ end }}
 
         <!-- Benchmark label -->
-        <text x="0" y="{{ add $y 12 }}"
+        <text x="0"
+              y="{{ add $y 12 }}"
               font-size="14"
               font-weight="600"
               fill="var(--label-color)">
@@ -209,7 +210,8 @@
         {{ end }}
 
         <!-- Benchmark label (parent category) -->
-        <text x="0" y="{{ add $y 12 }}"
+        <text x="0"
+              y="{{ add $y 12 }}"
               font-size="14"
               font-weight="600"
               fill="var(--label-color)">
@@ -254,7 +256,8 @@
               {{ end }}
 
               <!-- Stat sublabel -->
-              <text x="20" y="{{ add $y 12 }}"
+              <text x="20"
+                    y="{{ add $y 12 }}"
                     font-size="12"
                     font-style="italic"
                     fill="var(--value-color)">
@@ -306,11 +309,27 @@
 
     <!-- Legend -->
     {{ $legendY := sub $y 10 }}
-    <rect x="{{ $label_width }}" y="{{ $legendY }}" width="80" height="14" rx="3" fill="url(#cem-gradient)" />
-    <text x="{{ add $label_width 88 }}" y="{{ add $legendY 11 }}" font-size="12" fill="var(--label-color)">CEM LSP</text>
+    <rect x="{{ $label_width }}"
+          y="{{ $legendY }}"
+          width="80"
+          height="14"
+          rx="3"
+          fill="url(#cem-gradient)" />
+    <text x="{{ add $label_width 88 }}"
+          y="{{ add $legendY 11 }}"
+          font-size="12"
+          fill="var(--label-color)">CEM LSP</text>
 
-    <rect x="{{ add $label_width 180 }}" y="{{ $legendY }}" width="80" height="14" rx="3" fill="url(#wc-gradient)" />
-    <text x="{{ add $label_width 268 }}" y="{{ add $legendY 11 }}" font-size="12" fill="var(--label-color)">wc-toolkit</text>
+    <rect x="{{ add $label_width 180 }}"
+          y="{{ $legendY }}"
+          width="80"
+          height="14"
+          rx="3"
+          fill="url(#wc-gradient)" />
+    <text x="{{ add $label_width 268 }}"
+          y="{{ add $legendY 11 }}"
+          font-size="12"
+          fill="var(--label-color)">wc-toolkit</text>
   </svg>
 </div>
 

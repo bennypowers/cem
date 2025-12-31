@@ -29,7 +29,7 @@ function M.run_completion_benchmark(config, fixture_dir)
 	end
 
 	-- Test completion at various positions with statistical analysis
-	-- NOTE: These positions are hardcoded for fixtures/medium_project/completion-test.html
+	-- NOTE: These positions are hardcoded for fixtures/large_project/completion-test.html
 	--
 	-- TODO: Replace hardcoded positions with tree-sitter-based dynamic position finding
 	-- Challenge: Completion positions test **incomplete syntax** (e.g., "<my-" without closing tag)

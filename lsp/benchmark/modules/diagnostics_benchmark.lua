@@ -7,6 +7,7 @@ local M = {}
 
 function M.run_diagnostics_benchmark(config, fixture_dir)
 	local server_name = _G.BENCHMARK_LSP_NAME or "unknown"
+	local DIAGNOSTICS_TIMEOUT_MS = 3000
 
 	-- Track diagnostics
 	local received_diagnostics = {}
@@ -50,7 +51,7 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 
 	-- Wait for diagnostics to be published (if not already received)
 	local diagnostics_success = diagnostics_received
-		or vim.wait(3000, function()
+		or vim.wait(DIAGNOSTICS_TIMEOUT_MS, function()
 			return diagnostics_received or client:is_stopped()
 		end)
 
@@ -76,7 +77,7 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 	elseif client_stopped then
 		result.error = "Client stopped during diagnostics test"
 	elseif not diagnostics_success then
-		result.error = "Timeout waiting for diagnostics (5s)"
+		result.error = string.format("Timeout waiting for diagnostics (%gs)", DIAGNOSTICS_TIMEOUT_MS / 1000)
 	elseif diagnostics_success and not client_stopped then
 		-- Analyze diagnostics by severity
 		local error_count = 0

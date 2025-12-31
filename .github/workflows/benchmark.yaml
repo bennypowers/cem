@@ -38,6 +38,16 @@ jobs:
           # Unpinned installs can cause CI failures when breaking changes are released
           npm install -g tree-sitter-cli@0.24.4
 
+      - name: Cache Neovim plugins and parsers
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/nvim
+            ~/.config/nvim
+          key: ${{ runner.os }}-neovim-${{ hashFiles('.github/workflows/benchmark.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-neovim-
+
       - name: Install nvim-treesitter and parsers
         run: |
           # Create minimal init.lua with nvim-treesitter
