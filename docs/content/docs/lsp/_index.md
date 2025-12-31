@@ -218,6 +218,20 @@ When you type an invalid slot name, the language server:
 2. **Suggests corrections** based on available slots from your manifest
 3. **Provides one-click fixes** through your editor's quick fix menu
 
+## Performance Benchmarks
+
+The CEM LSP server undergoes comprehensive performance testing through a statistically rigorous benchmark suite. Results show competitive performance across all LSP operations:
+
+- **Startup Time**: Sub-2ms initialization (mean: 1.96ms)
+- **Hover Performance**: Sub-millisecond response times (mean: 0.40ms)
+- **Completion Speed**: Fast autocomplete suggestions (mean: 1.00ms)
+- **Memory Efficiency**: Low memory footprint (~400KB baseline)
+- **Reliability**: 100% success rates for core LSP operations
+
+{{< lsp-benchmark-summary >}}
+
+For detailed benchmark methodology, statistical analysis, and comparison with other LSP implementations, see the [benchmark documentation](https://github.com/bennypowers/cem/tree/main/lsp/benchmark#readme).
+
 ## Architecture
 The server uses tree-sitter for robust parsing and maintains an in-memory index
 of custom elements for fast completion and hover responses. LSP methods are

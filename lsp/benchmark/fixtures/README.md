@@ -4,7 +4,7 @@ This directory contains test fixtures for benchmarking LSP performance at differ
 
 ## Project Sizes
 
-### Small Project (10 elements)
+### Small Project (3 elements)
 - **Location**: `small_project/`
 - **Elements**: 3 basic components (button, card, input)
 - **Purpose**: Baseline performance testing

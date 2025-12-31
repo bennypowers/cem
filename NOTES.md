@@ -4,8 +4,8 @@
 
 #### Flattened Union Types
 
-When generating the manifest, `cem` will now try to computed the concrete types
-of unions. For example, if a button element defines it's `type` field like so:
+When generating the manifest, `cem` will now try to compute the concrete types
+of unions. For example, if a button element defines its `type` field like so:
 
 ```ts
 type ButtonType = 'button' | 'submit' | 'reset';
@@ -34,7 +34,7 @@ their definition:
 }
 ```
 
-Types will resolve across module in your project, but will not yet resolve 
+Types will resolve across modules in your project, but will not yet resolve 
 across packages (e.g. from node_modules).
 
 This also means that these fields' dev server knobs will render as `<select>` 

@@ -13,7 +13,7 @@ A comprehensive, statistically rigorous benchmarking framework for comparing Lan
 
 ## 📁 Architecture
 
-```
+```text
 benchmark/
 ├── configs/                    # Minimal Neovim configurations per tool
 │   ├── cem-minimal.lua        # cem LSP configuration
@@ -98,26 +98,6 @@ nvim --headless --clean -l generate_comparison_report.lua
 - **Reliability**: Overall benchmark completion rates
 - **Error Analysis**: Detailed failure categorization
 
-### Example Output
-
-```
-BENCHMARK SUMMARY FOR CEM
-==================================================
-startup              ✅ PASS (1.98ms) [100% success]
-  Stats: Mean=1.98ms, P95=2.65ms, P99=2.96ms, StdDev=0.40ms
-  Success rate: 100.0% (20/20)
-  Memory usage: 375.2KB
-
-hover                ✅ PASS [67% success]
-  Success rate: 66.7% (20/30)
-
-completion           ✅ PASS [100% success]
-  Success rate: 100.0% (45/45)
-
-Overall Success Rate: 100.0% (6/6)
-🎉 Server performance is GOOD
-```
-
 ## 🎯 Benchmark Philosophy
 
 This suite focuses on **pure LSP protocol timing** without editor overhead. The benchmarks measure actual LSP server performance by isolating protocol request/response cycles from editor operations.
@@ -192,7 +172,7 @@ Results are saved to `lsp/benchmark/results/` as JSON files with:
 - Memory usage metrics
 - Timestamp and server information
 
-View results at: https://cem.run/docs/benchmarks/
+View results at: [CEM Docs](https://cem.run/docs/benchmarks/)
 
 ## 🛠 Development
 

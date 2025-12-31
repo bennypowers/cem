@@ -31,6 +31,16 @@
 - **USE FIXTURE FILES**: Always use fixture files instead of inline content in organized directories
 - **USE CANONICAL TEST HELPERS**: Use `testhelpers.NewMockDocument(content)` for mock documents
 
+### Benchmark Validation
+- Performance benchmarks are located in `lsp/benchmark/` directory
+- **Modular Architecture**: Each LSP operation has its own benchmark module
+- **Statistical Rigor**: Multiple iterations with P50/P95/P99 analysis and standard deviation
+- **Validation Tool**: Use benchmarks to validate LSP correctness and performance
+- **Comparison Testing**: Compare CEM LSP against wc-toolkit LSP for feature parity
+- **Run Benchmarks**: `make bench-lsp` for comprehensive validation before major releases
+- **Continuous Monitoring**: Check `lsp/benchmark/PERFORMANCE_ANALYSIS.md` for current performance baselines
+- **Regression Detection**: Use benchmark results to detect performance regressions
+
 ## Common LSP Implementation Pitfalls
 
 ### Nil Pointer Safety

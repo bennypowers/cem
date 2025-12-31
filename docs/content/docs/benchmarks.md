@@ -302,13 +302,13 @@ Pure LSP protocol timing in `.html` files. Each benchmark measures the time from
 {{< loadchart.inline >}}
 <script type="module" src="{{ absURL "js/charts.js" }}"></script>
 {{</ loadchart.inline >}}
-<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace.js"></script>
-<link id="shoelace-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/light.css">
-<link id="shoelace-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/dist/themes/dark.css" disabled>
-<link id="hljs-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github.min.css">
-<link id="hljs-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css" disabled>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace.js"></script>
+<link id="shoelace-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/dist/themes/light.css">
+<link id="shoelace-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/dist/themes/dark.css" disabled>
+<link id="hljs-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.11.1/styles/github.min.css">
+<link id="hljs-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.11.1/styles/github-dark.min.css" disabled>
 
 <script type="module">
 // Import json-viewer for the page
-import 'https://unpkg.com/@alenaksu/json-viewer@2.0.1/dist/json-viewer.bundle.js';
+import 'https://unpkg.com/@alenaksu/json-viewer@2.1.2/dist/json-viewer.bundle.js';
 </script>

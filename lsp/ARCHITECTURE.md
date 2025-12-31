@@ -63,3 +63,37 @@ Uses adapter pattern with unified type system:
 - **O(1) Lookups**: Hash table indexes for manifest data
 - **Parser Pooling**: Shared parser instances across operations
 - **Incremental Parsing**: Updates only changed document sections
+
+## Benchmark Infrastructure
+
+A comprehensive LSP benchmark suite (`lsp/benchmark/`) provides statistically rigorous performance testing and validation:
+
+### Modular Architecture
+- **Test Modules**: Independent benchmarks for each LSP operation (startup, hover, completion, diagnostics, references, etc.)
+- **Statistical Analysis**: Multiple iterations with P50/P95/P99 percentile analysis and standard deviation
+- **Comparison Framework**: Fair side-by-side testing between CEM LSP and wc-toolkit LSP
+- **Automated Reports**: Statistical analysis generation with performance recommendations
+
+### Active Benchmarks
+- **Startup**: Server initialization performance (20 iterations)
+- **Hover**: Element and attribute documentation retrieval (10 iterations per element)
+- **Completion**: Tag and attribute autocomplete performance (15 iterations per context)
+- **Diagnostics**: Validation and error detection speed
+- **References**: Workspace-wide element search performance
+- **Attribute Hover**: Correctness testing across 21 test attributes
+- **Lit Templates**: Template literal support validation
+
+### Testing Strategy
+- **Fixture-Based**: Realistic test projects (small/medium/large) with actual manifest data
+- **Memory Tracking**: Monitors memory usage during operations using Lua garbage collector
+- **Reliability Metrics**: Success rates, error categorization, and server stability
+- **Cross-Platform**: Uses Neovim headless mode for reproducible testing
+
+### Usage
+```bash
+make bench-lsp        # Both servers
+make bench-lsp-cem    # CEM only
+./run_comparison.sh   # Full comparison with statistical report
+```
+
+See `lsp/benchmark/README.md` for detailed documentation and `lsp/benchmark/PERFORMANCE_ANALYSIS.md` for latest results.
