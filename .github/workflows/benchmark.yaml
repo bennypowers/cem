@@ -30,10 +30,12 @@ jobs:
         id: bench-pr
         run: scripts/benchmark-ci-run.sh pr
 
+      - name: Build CEM binary for LSP benchmarks
+        run: make build
+
       - name: Run LSP benchmarks on PR branch
         id: bench-lsp-pr
         timeout-minutes: 5
-        continue-on-error: true
         run: scripts/lsp-benchmark-ci-run.sh pr
 
       - name: Checkout target branch (base)
@@ -49,10 +51,12 @@ jobs:
         id: bench-base
         run: scripts/benchmark-ci-run.sh base
 
+      - name: Build CEM binary for LSP benchmarks (base)
+        run: make build
+
       - name: Run LSP benchmarks on base branch
         id: bench-lsp-base
         timeout-minutes: 5
-        continue-on-error: true
         run: scripts/lsp-benchmark-ci-run.sh base
 
       - name: Restore PR context for comparison
