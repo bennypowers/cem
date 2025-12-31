@@ -104,7 +104,9 @@ func PathsMatch(importPath, elementSource string) bool {
 	}
 
 	// Check file name matching (last resort)
-	importFile := strings.TrimSuffix(strings.Split(normalizedImport, "/")[len(strings.Split(normalizedImport, "/"))-1], ".js")
-	sourceFile := strings.TrimSuffix(strings.Split(normalizedSource, "/")[len(strings.Split(normalizedSource, "/"))-1], ".js")
+	importParts := strings.Split(normalizedImport, "/")
+	sourceParts := strings.Split(normalizedSource, "/")
+	importFile := strings.TrimSuffix(importParts[len(importParts)-1], ".js")
+	sourceFile := strings.TrimSuffix(sourceParts[len(sourceParts)-1], ".js")
 	return importFile == sourceFile
 }

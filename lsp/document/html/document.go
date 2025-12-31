@@ -90,7 +90,15 @@ func (d *HTMLDocument) ScriptTags() []types.ScriptTag {
 func (d *HTMLDocument) ImportMap() map[string]string {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	return d.importMap
+	if d.importMap == nil {
+		return nil
+	}
+	// Return a copy to prevent external mutation
+	result := make(map[string]string, len(d.importMap))
+	for k, v := range d.importMap {
+		result[k] = v
+	}
+	return result
 }
 
 // UpdateContent updates the document content

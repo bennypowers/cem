@@ -244,19 +244,49 @@ func (h *Handler) ParseImportMap(doc types.Document) (map[string]string, error) 
 			endLine := int(scriptTag.ContentRange.End.Line)
 
 			for i := startLine; i <= endLine && i < len(lines); i++ {
-				line := lines[i]
-				if i == startLine {
-					// Start from the character position on the first line
-					if int(scriptTag.ContentRange.Start.Character) < len(line) {
-						line = line[scriptTag.ContentRange.Start.Character:]
+				originalLine := lines[i]
+				line := originalLine
+
+				// Special case: both start and end on same line
+				if startLine == endLine {
+					// Compute both indices against the original line
+					startChar := int(scriptTag.ContentRange.Start.Character)
+					endChar := int(scriptTag.ContentRange.End.Character)
+
+					// Bounds check
+					if startChar < 0 {
+						startChar = 0
+					}
+					if startChar > len(originalLine) {
+						startChar = len(originalLine)
+					}
+					if endChar < 0 {
+						endChar = 0
+					}
+					if endChar > len(originalLine) {
+						endChar = len(originalLine)
+					}
+					if endChar < startChar {
+						endChar = startChar
+					}
+
+					line = originalLine[startChar:endChar]
+				} else {
+					// Multi-line: handle start and end separately
+					if i == startLine {
+						// Start from the character position on the first line
+						if int(scriptTag.ContentRange.Start.Character) < len(line) {
+							line = line[scriptTag.ContentRange.Start.Character:]
+						}
+					}
+					if i == endLine {
+						// End at the character position on the last line
+						if int(scriptTag.ContentRange.End.Character) < len(line) {
+							line = line[:scriptTag.ContentRange.End.Character]
+						}
 					}
 				}
-				if i == endLine {
-					// End at the character position on the last line
-					if int(scriptTag.ContentRange.End.Character) < len(line) {
-						line = line[:scriptTag.ContentRange.End.Character]
-					}
-				}
+
 				jsonContent.WriteString(line)
 				if i < endLine {
 					jsonContent.WriteString("\n")

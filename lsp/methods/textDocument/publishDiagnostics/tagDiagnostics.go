@@ -549,6 +549,16 @@ func resolveImportPathToElementsWithImportMap(importPath string, ctx types.Serve
 			ctx.DebugLog("✅ LAZY BUILD: Completed for '%s'", importPath)
 		}
 
+		// Also build for mapped path if different
+		if resolvedPath != importPath {
+			if err := moduleGraph.BuildForImportPath(resolvedPath); err != nil {
+				ctx.DebugLog("❌ LAZY BUILD: Failed for mapped path '%s': %v", resolvedPath, err)
+				helpers.SafeDebugLog("[DIAGNOSTICS] Warning: Failed to lazy build module graph for mapped path '%s': %v", resolvedPath, err)
+			} else {
+				ctx.DebugLog("✅ LAZY BUILD: Completed for mapped path '%s'", resolvedPath)
+			}
+		}
+
 		// LOG: Check what modules exist in graph after build
 		allModules := moduleGraph.GetAllModulePaths()
 		ctx.DebugLog("📊 MODULE GRAPH: Contains %d modules after build: %v", len(allModules), allModules)
@@ -560,6 +570,16 @@ func resolveImportPathToElementsWithImportMap(importPath string, ctx types.Serve
 			elements = append(elements, moduleGraphElements...)
 		} else {
 			ctx.DebugLog("🔍 MODULE GRAPH: No elements found for import '%s'", importPath)
+		}
+
+		// Also try module graph resolution with mapped path if different
+		if resolvedPath != importPath {
+			mappedGraphElements := resolveImportPathWithModuleGraph(resolvedPath, moduleGraph)
+			if len(mappedGraphElements) > 0 {
+				ctx.DebugLog("🎯 MODULE GRAPH: Resolved mapped path '%s' to %d elements: %v", resolvedPath, len(mappedGraphElements), mappedGraphElements)
+				helpers.SafeDebugLog("[DIAGNOSTICS] Module graph resolved mapped path '%s' to %d elements: %v", resolvedPath, len(mappedGraphElements), mappedGraphElements)
+				elements = append(elements, mappedGraphElements...)
+			}
 		}
 	} else {
 		ctx.DebugLog("⚠️ MODULE GRAPH: Not available in context")
