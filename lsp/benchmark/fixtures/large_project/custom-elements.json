@@ -1918,7 +1918,8 @@
             "module": "./src/components/images/image-responsive.js"
           }
         }
-      ]
+      ],
+      "declarations": []
     },
     {
       "kind": "javascript-module",

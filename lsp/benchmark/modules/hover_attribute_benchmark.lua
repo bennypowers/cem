@@ -31,92 +31,93 @@ function M.run_hover_attribute_benchmark(config, fixture_dir)
 	-- Test positions for different attribute types
 	-- NOTE: These positions are hardcoded for fixtures/large_project/hover-attribute-test.html
 	-- If the fixture file is modified, these positions must be updated accordingly
+	-- Lines are 0-based (LSP convention)
 	local test_positions = {
-		-- Button attributes (lines 6-10)
+		-- Button attributes (lines 18-22 in file = 17-21 0-based)
 		{
 			element = "my-button",
 			attr = "variant",
-			line = 5,
+			line = 17,
 			character = 13,
 			expected_content = "Button style variant",
 		},
-		{ element = "my-button", attr = "size", line = 6, character = 13, expected_content = "Button size" },
-		{ element = "my-button", attr = "disabled", line = 7, character = 13, expected_content = "Disabled state" },
-		{ element = "my-button", attr = "loading", line = 8, character = 13, expected_content = "Loading state" },
-		{ element = "my-button", attr = "icon", line = 9, character = 13, expected_content = "Icon name" },
+		{ element = "my-button", attr = "size", line = 18, character = 13, expected_content = "Button size" },
+		{ element = "my-button", attr = "disabled", line = 19, character = 13, expected_content = "Disabled state" },
+		{ element = "my-button", attr = "loading", line = 20, character = 13, expected_content = "Loading state" },
+		{ element = "my-button", attr = "icon", line = 21, character = 13, expected_content = "Icon name" },
 
-		-- Form attributes (lines 18-26)
-		{ element = "my-input-text", attr = "value", line = 17, character = 17, expected_content = "Input value" },
+		-- Form attributes (lines 30-37 in file = 29-36 0-based)
+		{ element = "my-input-text", attr = "value", line = 29, character = 17, expected_content = "Input value" },
 		{
 			element = "my-input-text",
 			attr = "placeholder",
-			line = 18,
+			line = 30,
 			character = 17,
 			expected_content = "Placeholder text",
 		},
 		{
 			element = "my-input-text",
 			attr = "required",
-			line = 19,
+			line = 31,
 			character = 17,
 			expected_content = "Required field",
 		},
 		{
 			element = "my-input-select",
 			attr = "multiple",
-			line = 23,
+			line = 35,
 			character = 19,
 			expected_content = "Multiple selection",
 		},
 		{
 			element = "my-input-select",
 			attr = "searchable",
-			line = 24,
+			line = 36,
 			character = 19,
 			expected_content = "searchable",
 		},
 
-		-- Layout attributes (lines 31-37)
-		{ element = "my-container-flex", attr = "gap", line = 30, character = 21, expected_content = "Gap size" },
+		-- Layout attributes (lines 43-48 in file = 42-47 0-based)
+		{ element = "my-container-flex", attr = "gap", line = 42, character = 21, expected_content = "Gap size" },
 		{
 			element = "my-container-flex",
 			attr = "justify",
-			line = 32,
+			line = 44,
 			character = 21,
 			expected_content = "Justification",
 		},
-		{ element = "my-card-basic", attr = "variant", line = 34, character = 19, expected_content = "Card style" },
+		{ element = "my-card-basic", attr = "variant", line = 46, character = 19, expected_content = "Card style" },
 		{
 			element = "my-card-basic",
 			attr = "clickable",
-			line = 35,
+			line = 47,
 			character = 19,
 			expected_content = "Clickable card",
 		},
 
-		-- Chart attributes (lines 44-46)
-		{ element = "my-chart-line", attr = "responsive", line = 44, character = 17, expected_content = "responsive" },
-		{ element = "my-chart-line", attr = "animated", line = 45, character = 17, expected_content = "animated" },
+		-- Chart attributes (lines 56-58 in file = 55-57 0-based)
+		{ element = "my-chart-line", attr = "responsive", line = 56, character = 17, expected_content = "responsive" },
+		{ element = "my-chart-line", attr = "animated", line = 57, character = 17, expected_content = "animated" },
 
-		-- Table attributes (lines 47-50)
-		{ element = "my-table-sortable", attr = "striped", line = 46, character = 23, expected_content = "striped" },
+		-- Table attributes (lines 59-62 in file = 58-61 0-based)
+		{ element = "my-table-sortable", attr = "striped", line = 58, character = 23, expected_content = "striped" },
 		{
 			element = "my-table-sortable",
 			attr = "page-size",
-			line = 49,
+			line = 61,
 			character = 21,
 			expected_content = "page-size",
 		},
 
-		-- Media attributes (lines 53-59)
+		-- Media attributes (lines 65-71 in file = 64-70 0-based)
 		{
 			element = "my-image-responsive",
 			attr = "loading",
-			line = 54,
+			line = 66,
 			character = 23,
 			expected_content = "Loading strategy",
 		},
-		{ element = "my-image-responsive", attr = "fit", line = 55, character = 23, expected_content = "fit" },
+		{ element = "my-image-responsive", attr = "fit", line = 67, character = 23, expected_content = "fit" },
 		{ element = "my-image-avatar", attr = "size", line = 58, character = 19, expected_content = "size" },
 	}
 
