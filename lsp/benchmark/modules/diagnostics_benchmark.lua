@@ -21,9 +21,9 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 				if result and result.diagnostics then
 					received_diagnostics = result.diagnostics
 					diagnostics_received = true
+					-- Update diagnostics state using modern API
+					vim.diagnostic.set(ctx.client_id, ctx.bufnr, result.diagnostics)
 				end
-				-- Call the default handler to update diagnostics state
-				vim.lsp.diagnostic.on_publish_diagnostics(diag_err, result, ctx, handler_config)
 			end,
 		},
 	})
