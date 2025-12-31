@@ -35,7 +35,12 @@ function M.setup_treesitter()
 		)
 	end
 
-	-- IMPORTANT: Add nvim-treesitter to runtime path so it can be loaded with --clean flag
+	-- IMPORTANT: Set packpath to include site directory for parser discovery
+	-- This is where parsers (.so files) are installed
+	local site_path = data_path .. "/site"
+	vim.opt.packpath = { site_path }
+
+	-- Add nvim-treesitter to runtime path so it can be loaded
 	vim.opt.rtp:prepend(treesitter_path)
 
 	-- Verify HTML and TypeScript parsers are available
