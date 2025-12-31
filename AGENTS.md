@@ -21,8 +21,31 @@ Practice TDD. When writing tests, always use the fixture/golden patterns we've e
 
 - **Fixtures**: Input test data - the content directories/files your code operates on (e.g., `serve/testdata/transforms/http-typescript/simple-greeting.ts`). Use `NewFixtureFS()` helper from `internal/platform/testutil` instead of `os.ReadFile()` to load fixtures into in-memory file systems.
 - **Goldens**: Expected output files to compare against (e.g., `serve/middleware/routes/testdata/chrome-rendering/expected-basic.html`). Tests should support `--update` flag to regenerate golden files when intentional changes occur.
+- Always use Makefile targets for running tests or builds, since they export the necessary env vars.
+- For LSP tests, ALWAYS use `testutil.RunLSPFixtures()` - NEVER use direct `os.ReadFile()` calls.
 
-Always use Makefile targets for running tests or builds, since they export the necessary env vars.
+### LSP Testing Patterns
+
+- **Fixture Structure**: Each test scenario is a subdirectory containing:
+  - `input.html` or `input.ts` (required)
+  - `manifest.json` (optional)
+  - `expected.json` or `expected-*.json` (optional, for assertions)
+  - `package.json` pointing `customElements` block to `manifest.json`
+
+- **RunLSPFixtures Pattern**:
+  ```go
+  testutil.RunLSPFixtures(t, "testdata/my-test-suite", func(t *testing.T, fixture *testutil.LSPFixture) {
+      // Setup context
+      ctx := testhelpers.NewMockServerContext()
+
+      // Use fixture.InputContent, fixture.Manifest, etc.
+      // Load expected data with fixture.GetExpected("key", &expected)
+  })
+  ```
+
+- **Multiple Expected Files**: Use `expected-variant.json`, `expected-size.json` pattern for testing multiple positions/cases in one fixture
+
+- **Regression Test Isolation**: Keep regression test fixtures in separate directories (e.g., `testdata-regression/`) to avoid interference with standard test discovery
 
 ## Git
 

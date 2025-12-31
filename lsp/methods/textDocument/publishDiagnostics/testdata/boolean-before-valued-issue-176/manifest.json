@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "./mdw-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MdwCard",
+          "tagName": "mdw-card",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "elevated",
+              "type": { "text": "boolean" },
+              "description": "Elevated card style"
+            },
+            {
+              "name": "padding",
+              "type": { "text": "number" },
+              "description": "Card padding"
+            },
+            {
+              "name": "gap",
+              "type": { "text": "number" },
+              "description": "Gap between items"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "mdw-card",
+          "declaration": { "name": "MdwCard" }
+        }
+      ]
+    }
+  ]
+}
