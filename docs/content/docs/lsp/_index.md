@@ -230,7 +230,38 @@ The CEM LSP server undergoes comprehensive performance testing through a statist
 
 {{< lsp-benchmark-summary >}}
 
-For detailed benchmark methodology, statistical analysis, and comparison with other LSP implementations, see the [benchmark documentation](https://github.com/bennypowers/cem/tree/main/lsp/benchmark#readme).
+### Running Benchmarks
+
+To run LSP benchmarks locally:
+
+```bash
+# Prerequisites: Build CEM and install Neovim 0.9+
+make build
+
+# Run benchmarks for CEM LSP
+make bench-lsp-cem
+
+# Run benchmarks for both CEM and wc-toolkit (requires setup)
+cd lsp/benchmark
+./setup_wc_toolkit.sh  # One-time setup
+cd ../..
+make bench-lsp
+
+# Generate comparison report
+cd lsp/benchmark
+./run_comparison.sh
+```
+
+### Maintaining Benchmarks
+
+The benchmark infrastructure is modular and extensible:
+
+- **Add New Benchmarks**: Create modules in `lsp/benchmark/modules/` for new LSP operations
+- **Update Fixtures**: Modify test projects in `lsp/benchmark/fixtures/` for different scenarios
+- **Statistical Analysis**: Results include P50/P95/P99 percentiles with standard deviation
+- **CI Integration**: Benchmarks can be integrated into CI/CD pipelines for regression detection
+
+For detailed benchmark methodology, statistical analysis, and comparison with other LSP implementations, see the [benchmark documentation](https://github.com/bennypowers/cem/tree/main/lsp/benchmark#readme) and [full benchmark results](/docs/benchmarks/).
 
 ## Architecture
 The server uses tree-sitter for robust parsing and maintains an in-memory index
