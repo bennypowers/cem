@@ -8,7 +8,7 @@
   },
   "plugins": [
     {
-      "name": "cem-lsp",
+      "name": "cem",
       "description": "LSP and MCP support for Custom Elements - intelligent autocomplete, validation, and AI-native component understanding",
       "version": "0.7.5",
       "author": {
@@ -17,7 +17,16 @@
       },
       "source": "./extensions/claude-code",
       "category": "development",
-      "keywords": ["custom-elements", "web-components", "html", "typescript", "javascript", "lit", "lsp", "mcp"]
+      "keywords": [
+        "custom-elements",
+        "web-components",
+        "html",
+        "typescript",
+        "javascript",
+        "lit",
+        "lsp",
+        "mcp"
+      ]
     }
   ]
 }

@@ -111,7 +111,7 @@ Install the CEM plugin which includes both LSP and MCP support:
 
 ```
 /plugin marketplace add bennypowers/cem
-/plugin install cem-lsp
+/plugin install cem
 ```
 
 The MCP server activates automatically when the plugin is installed.

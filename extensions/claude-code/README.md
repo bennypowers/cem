@@ -49,9 +49,9 @@ Add this marketplace to Claude Code:
 /plugin marketplace add bennypowers/cem
 ```
 
-Then install the LSP plugin:
+Then install the plugin:
 ```
-/plugin install cem-lsp
+/plugin install cem
 ```
 
 ## Usage

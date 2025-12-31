@@ -175,7 +175,7 @@ Then install the plugin:
 
 ```
 /plugin marketplace add bennypowers/cem
-/plugin install cem-lsp
+/plugin install cem
 ```
 
 The LSP activates automatically for HTML, TypeScript, and JavaScript files.
