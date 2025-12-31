@@ -91,6 +91,7 @@ jobs:
           end
 
           print("✅ Parsers installed successfully")
+          os.exit(0)
           LUA
 
           # Run parser installation
