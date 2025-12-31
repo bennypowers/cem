@@ -220,6 +220,74 @@ func TestFindWorkspaceRoot_GitSubmoduleBoundary(t *testing.T) {
 	})
 }
 
+// TestFindWorkspaceRoot_SimplePackageInGitRepo tests that we prefer the nearest
+// package.json over the git root when no workspace metadata is present.
+// This is the LSP use case: opening a file in a package subdirectory should use
+// that package's manifest, not the parent repo's.
+func TestFindWorkspaceRoot_SimplePackageInGitRepo(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create structure:
+	// tmpDir/
+	//   .git/
+	//   package.json (parent, maybe no customElements)
+	//   lsp/
+	//     benchmark/
+	//       fixtures/
+	//         large_project/
+	//           package.json (with customElements)
+	//           custom-elements.json
+
+	// Create .git directory at root
+	gitDir := filepath.Join(tmpDir, ".git")
+	err := os.Mkdir(gitDir, 0755)
+	require.NoError(t, err)
+
+	// Create parent package.json (no workspaces, no customElements)
+	parentPackageJSON := filepath.Join(tmpDir, "package.json")
+	err = os.WriteFile(parentPackageJSON, []byte(`{
+		"name": "cem",
+		"version": "1.0.0"
+	}`), 0644)
+	require.NoError(t, err)
+
+	// Create nested directory structure
+	fixtureDir := filepath.Join(tmpDir, "lsp", "benchmark", "fixtures", "large_project")
+	err = os.MkdirAll(fixtureDir, 0755)
+	require.NoError(t, err)
+
+	// Create fixture package.json with customElements
+	fixturePackageJSON := filepath.Join(fixtureDir, "package.json")
+	err = os.WriteFile(fixturePackageJSON, []byte(`{
+		"name": "large-component-library",
+		"version": "1.0.0",
+		"customElements": "./custom-elements.json"
+	}`), 0644)
+	require.NoError(t, err)
+
+	// Create a test file
+	testFile := filepath.Join(fixtureDir, "hover-attribute-test.html")
+	err = os.WriteFile(testFile, []byte("<my-button></my-button>"), 0644)
+	require.NoError(t, err)
+
+	t.Run("Find nearest package.json, not git root", func(t *testing.T) {
+		// Start from test file in fixture directory
+		// Should find fixtureDir (nearest package.json), not tmpDir (git root)
+		root, err := workspace.FindWorkspaceRoot(testFile)
+		require.NoError(t, err)
+		assert.Equal(t, fixtureDir, root,
+			"Expected to find nearest package.json at fixture dir, not git root")
+	})
+
+	t.Run("Find nearest package.json from directory", func(t *testing.T) {
+		// Start from fixture directory itself
+		root, err := workspace.FindWorkspaceRoot(fixtureDir)
+		require.NoError(t, err)
+		assert.Equal(t, fixtureDir, root,
+			"Expected to return fixture dir with package.json, not git root")
+	})
+}
+
 // TestFindWorkspaceRoot_WorkspaceMetadataClimb tests that we DO climb when
 // workspace metadata (not just VCS markers) is present
 func TestFindWorkspaceRoot_WorkspaceMetadataClimb(t *testing.T) {
