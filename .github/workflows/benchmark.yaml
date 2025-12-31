@@ -44,7 +44,7 @@ jobs:
           path: |
             ~/.local/share/nvim
             ~/.config/nvim
-          key: ${{ runner.os }}-neovim-${{ hashFiles('.github/workflows/benchmark.yaml') }}
+          key: ${{ runner.os }}-neovim-tree-sitter-0.24.4-${{ hashFiles('.github/workflows/benchmark.yaml') }}
           restore-keys: |
             ${{ runner.os }}-neovim-
 

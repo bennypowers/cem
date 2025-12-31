@@ -53,7 +53,7 @@ jq -e '.error' "$PR_JSON" >/dev/null 2>&1 && pr_failed=true
 jq -e '.error' "$BASE_JSON" >/dev/null 2>&1 && base_failed=true
 
 # Check if base is empty/missing (first run scenario)
-if jq -e '.error == "script_not_found"' "$BASE_JSON" >/dev/null 2>&1; then
+if [ "$(jq -r '.error // ""' "$BASE_JSON" 2>/dev/null)" = "script_not_found" ]; then
   base_missing=true
 fi
 

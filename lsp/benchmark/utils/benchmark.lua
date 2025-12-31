@@ -78,8 +78,8 @@ function M.setup_test_file(fixture_dir, test_name, filetype, wait_ms, client)
 
 	-- Open file
 	vim.cmd("edit " .. vim.fn.fnameescape(test_file))
-	vim.cmd("set filetype=" .. filetype)
 	local bufnr = vim.api.nvim_get_current_buf()
+	vim.bo[bufnr].filetype = filetype
 
 	-- Wait for document processing
 	vim.wait(wait_ms)

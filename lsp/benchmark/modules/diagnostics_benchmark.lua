@@ -22,7 +22,9 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 					received_diagnostics = result.diagnostics
 					diagnostics_received = true
 					-- Update diagnostics state using modern API
-					vim.diagnostic.set(ctx.client_id, ctx.bufnr, result.diagnostics)
+					-- Create namespace from client ID (vim.diagnostic.set expects namespace, not client_id)
+					local namespace = vim.api.nvim_create_namespace(("lsp_%d"):format(ctx.client_id))
+					vim.diagnostic.set(namespace, ctx.bufnr, result.diagnostics)
 				end
 			end,
 		},
@@ -78,7 +80,7 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 		result.error = "Client stopped during diagnostics test"
 	elseif not diagnostics_success then
 		result.error = string.format("Timeout waiting for diagnostics (%gs)", DIAGNOSTICS_TIMEOUT_MS / 1000)
-	elseif diagnostics_success and not client_stopped then
+	else
 		-- Analyze diagnostics by severity
 		local error_count = 0
 		local warning_count = 0
@@ -86,13 +88,13 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 		local hint_count = 0
 
 		for _, diagnostic in ipairs(received_diagnostics) do
-			if diagnostic.severity == 1 then
+			if diagnostic.severity == vim.diagnostic.severity.ERROR then
 				error_count = error_count + 1
-			elseif diagnostic.severity == 2 then
+			elseif diagnostic.severity == vim.diagnostic.severity.WARN then
 				warning_count = warning_count + 1
-			elseif diagnostic.severity == 3 then
+			elseif diagnostic.severity == vim.diagnostic.severity.INFO then
 				info_count = info_count + 1
-			elseif diagnostic.severity == 4 then
+			elseif diagnostic.severity == vim.diagnostic.severity.HINT then
 				hint_count = hint_count + 1
 			end
 		end
@@ -104,8 +106,6 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 			hints = hint_count,
 		}
 		result.success = true
-	else
-		result.error = "No diagnostics received"
 	end
 
 	-- Clean up

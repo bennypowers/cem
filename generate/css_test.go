@@ -84,7 +84,7 @@ func TestCssCache_ThreadSafety(t *testing.T) {
 
 	// Writer goroutine
 	go func() {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			cache.Set("/test.css", testProps)
 		}
 		done <- true
@@ -92,7 +92,7 @@ func TestCssCache_ThreadSafety(t *testing.T) {
 
 	// Reader goroutine
 	go func() {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			cache.Get("/test.css")
 		}
 		done <- true

@@ -40,7 +40,7 @@ fi
 
 # Check if base is a placeholder (first run scenario)
 base_missing=false
-if [ "$(cat "$BASE_TIME_FILE")" = "0" ] && [ "$(cat "$BASE_JSON")" = "{}" ]; then
+if [ "$(cat "$BASE_TIME_FILE")" = "0" ] && jq -e '. == {}' "$BASE_JSON" >/dev/null 2>&1; then
   base_missing=true
 fi
 
@@ -98,6 +98,10 @@ else
   fi
 fi
 
+# Get branch names (or use placeholders for local testing)
+base_ref="${GITHUB_BASE_REF:-main}"
+head_ref="${GITHUB_HEAD_REF:-current}"
+
 # Get workflow run URL (set by GitHub automatically)
 run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
@@ -108,8 +112,8 @@ if [ "$base_missing" = true ]; then
 
 |        | Branch    | Total Time (s) | # Runs | Avg Time/run (s) | Output Size (kb) | Perf/kb (s/kb) |
 |--------|-----------|----------------|--------|------------------|------------------|----------------|
-| Base   | \`${GITHUB_BASE_REF}\` | $base_time | $base_num_runs | $base_avg_time | $base_size_kb | $base_perf_kb |
-| PR     | \`${GITHUB_HEAD_REF}\` | $pr_time | $pr_num_runs | $pr_avg_time | $pr_size_kb | $pr_perf_kb |
+| Base   | \`${base_ref}\` | $base_time | $base_num_runs | $base_avg_time | $base_size_kb | $base_perf_kb |
+| PR     | \`${head_ref}\` | $pr_time | $pr_num_runs | $pr_avg_time | $pr_size_kb | $pr_perf_kb |
 | Δ      |           | --- | --- | --- | --- | --- $emoji |
 
 ℹ️ **First Run**: Base branch does not have benchmark infrastructure. Showing PR results only. Future runs will include comparisons.
@@ -138,8 +142,8 @@ else
 
 |        | Branch    | Total Time (s) | # Runs | Avg Time/run (s) | Output Size (kb) | Perf/kb (s/kb) |
 |--------|-----------|----------------|--------|------------------|------------------|----------------|
-| Base   | \`${GITHUB_BASE_REF}\` | $base_time | $base_num_runs | $base_avg_time | $base_size_kb | $base_perf_kb |
-| PR     | \`${GITHUB_HEAD_REF}\` | $pr_time | $pr_num_runs | $pr_avg_time | $pr_size_kb | $pr_perf_kb |
+| Base   | \`${base_ref}\` | $base_time | $base_num_runs | $base_avg_time | $base_size_kb | $base_perf_kb |
+| PR     | \`${head_ref}\` | $pr_time | $pr_num_runs | $pr_avg_time | $pr_size_kb | $pr_perf_kb |
 | Δ      |           | $(awk "BEGIN {printf \"%+.4f\", $pr_time - $base_time}") | $(($pr_num_runs - $base_num_runs)) | $(awk "BEGIN {printf \"%+.4f\", $pr_avg_time - $base_avg_time}") | $(($pr_size_kb - $base_size_kb)) | $(awk "BEGIN {printf \"%+.4f\", $delta_perf}") $emoji |
 
 **Perf/kb delta ratio:** $(awk "BEGIN {printf \"%.2fx\", $delta_ratio}") $emoji
