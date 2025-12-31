@@ -89,7 +89,10 @@
         {{ $hasNestedStats := false }}
         {{ $nestedStats := slice }}
 
-        {{/* Try different data structure patterns */}}
+        {{/* Extract timing values from various data structure patterns.
+             NOTE: This logic is duplicated for CEM (lines 93-124) and WC (lines 126-136).
+             Hugo templates have limited abstraction capabilities, making extraction difficult.
+             Consider creating a partial template if this pattern appears elsewhere. */}}
         {{ if $cemBench.statistics }}
           {{ $cemTime = $cemBench.statistics.mean }}
         {{ else if $cemBench.overall_statistics }}

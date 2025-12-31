@@ -1,3 +1,9 @@
+{{/* Data source: lsp-benchmark-results with nested servers structure.
+     NOTE: This uses combined data file (same as lsp-benchmark-summary.html).
+     In contrast, lsp-benchmark-chart.html reads separate files:
+       - lsp-benchmark-results-cem
+       - lsp-benchmark-results-wc-toolkit
+     The build pipeline must produce both data formats. */}}
 {{ $combined := index .Site.Data "lsp-benchmark-results" | default dict }}
 {{ $cem := index $combined.servers "cem" | default dict }}
 {{ $wc := index $combined.servers "wc-toolkit" | default dict }}
