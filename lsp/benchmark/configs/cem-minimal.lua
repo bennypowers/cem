@@ -33,10 +33,11 @@ vim.notify = function(msg, level, opts)
 end
 
 -- Minimal LSP configuration for cem
--- Use built binary from dist/ directory (relative to benchmark directory)
+-- Use built binary from dist/ directory (absolute path from benchmark directory)
+local cem_bin = benchmark_dir .. "/../../dist/cem"
 local cem_config = {
 	name = "cem-lsp",
-	cmd = { "../../dist/cem", "lsp" },
+	cmd = { cem_bin, "lsp" },
 	root_markers = {
 		"custom-elements.json",
 		"package.json",
