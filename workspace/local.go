@@ -368,45 +368,78 @@ func FindWorkspaceRoot(startPath string) (string, error) {
 	current := absPath
 	checked := make(map[string]bool)
 
-	// Track the last directory we found with any workspace indicator
-	var lastRootCandidate string
+	// Track both workspace metadata and simple package.json
+	var workspaceRootCandidate string // Monorepo root with workspace metadata
+	var packageJSONCandidate string   // Nearest package.json
 
 	for !checked[current] {
 		checked[current] = true
 
+		// Check for package.json - record first one we find
+		if packageJSONCandidate == "" && hasPackageJSON(current) {
+			packageJSONCandidate = current
+		}
+
 		// Check if current directory has VCS marker
 		hasVCS := isVCSRoot(current)
-		// Check if current directory has workspace metadata
+		// Check if current directory has workspace metadata (monorepo indicators)
 		hasWorkspaceMeta := hasWorkspaceMetadata(current)
 
-		// If we have either VCS marker or workspace metadata, this is a candidate root
-		if hasVCS || hasWorkspaceMeta {
-			// If we ONLY have VCS marker (no workspace metadata), treat as hard boundary
-			// This prevents crossing Git submodule boundaries
-			if hasVCS && !hasWorkspaceMeta {
-				return current, nil
-			}
+		// If we have workspace metadata, this is a monorepo root candidate
+		if hasWorkspaceMeta {
+			workspaceRootCandidate = current
+		}
 
-			// We have workspace metadata - record this as a candidate
-			// but continue climbing to see if there's a parent workspace
-			lastRootCandidate = current
+		// If we hit VCS boundary, stop and return best candidate
+		if hasVCS {
+			// Prefer package.json with customElements over workspace metadata without it
+			// This ensures nested packages with actual manifests are used instead of
+			// parent monorepo roots without manifests
+			if workspaceRootCandidate != "" && hasPackageJSON(workspaceRootCandidate) {
+				// Workspace root has customElements, use it
+				return workspaceRootCandidate, nil
+			}
+			if packageJSONCandidate != "" {
+				// Use nearest package.json with customElements
+				return packageJSONCandidate, nil
+			}
+			if workspaceRootCandidate != "" {
+				// Workspace root exists but no customElements anywhere
+				return workspaceRootCandidate, nil
+			}
+			// Fallback to VCS root
+			return current, nil
 		}
 
 		// Move to parent directory
 		parent := filepath.Dir(current)
 		if parent == current {
-			// Reached filesystem root
-			if lastRootCandidate != "" {
-				return lastRootCandidate, nil
+			// Reached filesystem root without finding VCS
+			// Prefer package.json with customElements over workspace metadata without it
+			if workspaceRootCandidate != "" && hasPackageJSON(workspaceRootCandidate) {
+				return workspaceRootCandidate, nil
+			}
+			if packageJSONCandidate != "" {
+				return packageJSONCandidate, nil
+			}
+			if workspaceRootCandidate != "" {
+				return workspaceRootCandidate, nil
 			}
 			return absPath, nil // Return original path as fallback
 		}
 		current = parent
 	}
 
-	// If we exhausted all directories and found a candidate, return it
-	if lastRootCandidate != "" {
-		return lastRootCandidate, nil
+	// If we exhausted all directories, return best candidate
+	// Prefer package.json with customElements over workspace metadata without it
+	if workspaceRootCandidate != "" && hasPackageJSON(workspaceRootCandidate) {
+		return workspaceRootCandidate, nil
+	}
+	if packageJSONCandidate != "" {
+		return packageJSONCandidate, nil
+	}
+	if workspaceRootCandidate != "" {
+		return workspaceRootCandidate, nil
 	}
 
 	return absPath, nil // Return original path as fallback
@@ -420,6 +453,27 @@ func isVCSRoot(dir string) bool {
 		return true
 	}
 	return false
+}
+
+// hasPackageJSON checks if a directory contains a package.json file
+// This indicates a package boundary that LSP should respect
+func hasPackageJSON(dir string) bool {
+	packageJSONPath := filepath.Join(dir, "package.json")
+	data, err := os.ReadFile(packageJSONPath)
+	if err != nil {
+		return false
+	}
+
+	var pkg struct {
+		CustomElements string `json:"customElements"`
+	}
+	if err := json.Unmarshal(data, &pkg); err != nil {
+		return false
+	}
+
+	// Only consider this a workspace root if it has a customElements field
+	// This ensures we skip package.json files that don't reference a manifest
+	return pkg.CustomElements != ""
 }
 
 // hasWorkspaceMetadata checks if a directory contains workspace metadata files
