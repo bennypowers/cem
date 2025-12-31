@@ -36,7 +36,7 @@ end
 -- Use built binary from dist/ directory (relative to benchmark directory)
 local cem_config = {
 	name = "cem-lsp",
-	cmd = { "/../../dist/cem", "lsp" },
+	cmd = { "../../dist/cem", "lsp" },
 	root_markers = {
 		"custom-elements.json",
 		"package.json",
