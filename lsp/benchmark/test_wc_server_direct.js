@@ -63,19 +63,24 @@ server.on('close', (code) => {
   process.exit(0);
 });
 
-// Send initialize request
-const requestLine = JSON.stringify(initRequest) + '\n';
-console.log('Sending request:', requestLine);
-server.stdin.write(requestLine);
+// Send initialize request with LSP framing
+const requestJson = JSON.stringify(initRequest);
+const requestLength = Buffer.byteLength(requestJson, 'utf8');
+const requestMessage = `Content-Length: ${requestLength}\r\n\r\n${requestJson}`;
+console.log('Sending request:', requestMessage);
+server.stdin.write(requestMessage);
 
-// Send initialized notification
+// Send initialized notification with LSP framing
 setTimeout(() => {
   const initializedNotification = {
     jsonrpc: "2.0",
     method: "initialized",
     params: {}
   };
-  server.stdin.write(JSON.stringify(initializedNotification) + '\n');
+  const notificationJson = JSON.stringify(initializedNotification);
+  const notificationLength = Buffer.byteLength(notificationJson, 'utf8');
+  const notificationMessage = `Content-Length: ${notificationLength}\r\n\r\n${notificationJson}`;
+  server.stdin.write(notificationMessage);
 }, 1000);
 
 // Exit after 5 seconds

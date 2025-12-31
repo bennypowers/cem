@@ -470,7 +470,7 @@ export class AppDashboard extends LitElement {
       Array.from({ length: 24 }, (_, hour) => ({
         day,
         hour,
-        value: Math.floor(Math.random() * 100)
+        value: (day * 24 + hour) % 100  // Deterministic pattern for consistent benchmarking
       }))
     ).flat();
   }

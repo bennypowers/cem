@@ -39,10 +39,18 @@ server.on('close', (code) => {
 });
 
 // Send initialize request
-server.stdin.write(JSON.stringify(initRequest) + '\n');
+try {
+  server.stdin.write(JSON.stringify(initRequest) + '\n');
+} catch (err) {
+  console.error('Failed to send initialize request:', err);
+  process.exit(1);
+}
 
 // Exit after 5 seconds
 setTimeout(() => {
   server.kill();
   console.log('\nFinal response data:', responseData);
+  if (!responseData) {
+    console.warn('Warning: No response received from server');
+  }
 }, 5000);

@@ -33,7 +33,7 @@ export default {
       tagFormatter: (tagName) => tagName.replace("wa-", "awesome-"),
 
       diagnosticSeverity: {
-        /** Deprecated attributes will now all show as an error for Web Awesome components */
+        /** Duplicate attributes will show as a warning for Web Awesome components */
         duplicateAttribute: "warning",
       },
     },
