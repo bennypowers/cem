@@ -26,6 +26,11 @@ jobs:
           go get .
           go install gotest.tools/gotestsum@latest
           go install github.com/mfridman/tparse@latest
+      - name: Setup Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
       - name: Run benchmarks on PR branch
         id: bench-pr
         run: scripts/benchmark-ci-run.sh pr
