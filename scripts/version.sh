@@ -48,25 +48,29 @@ else
 fi
 
 # Update Claude Code marketplace version
-echo "Updating .claude-plugin/marketplace.json..."
-if command -v jq &> /dev/null; then
-  # Use jq if available (preferred for correctness)
-  jq ".plugins[0].version = \"$VERSION\"" .claude-plugin/marketplace.json > .claude-plugin/marketplace.json.tmp
-  mv .claude-plugin/marketplace.json.tmp .claude-plugin/marketplace.json
-elif command -v node &> /dev/null; then
-  # Use Node.js if available
-  node -e "
-    const fs = require('fs');
-    const marketplace = JSON.parse(fs.readFileSync('.claude-plugin/marketplace.json', 'utf8'));
-    marketplace.plugins[0].version = '$VERSION';
-    fs.writeFileSync('.claude-plugin/marketplace.json', JSON.stringify(marketplace, null, 2) + '\n');
-  "
+if [ ! -f .claude-plugin/marketplace.json ]; then
+  echo "Warning: .claude-plugin/marketplace.json not found, skipping marketplace update"
 else
-  # Fallback to sed - update the first "version" within plugins array
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    sed -i '' '/"plugins"/,/"version"/ s/"version": ".*"/"version": "'"$VERSION"'"/' .claude-plugin/marketplace.json
+  echo "Updating .claude-plugin/marketplace.json..."
+  if command -v jq &> /dev/null; then
+    # Use jq if available (preferred for correctness)
+    jq ".plugins[0].version = \"$VERSION\"" .claude-plugin/marketplace.json > .claude-plugin/marketplace.json.tmp
+    mv .claude-plugin/marketplace.json.tmp .claude-plugin/marketplace.json
+  elif command -v node &> /dev/null; then
+    # Use Node.js if available
+    node -e "
+      const fs = require('fs');
+      const marketplace = JSON.parse(fs.readFileSync('.claude-plugin/marketplace.json', 'utf8'));
+      marketplace.plugins[0].version = '$VERSION';
+      fs.writeFileSync('.claude-plugin/marketplace.json', JSON.stringify(marketplace, null, 2) + '\n');
+    "
   else
-    sed -i '/"plugins"/,/"version"/ s/"version": ".*"/"version": "'"$VERSION"'"/' .claude-plugin/marketplace.json
+    # Fallback to sed - update the first "version" within plugins array
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      sed -i '' '/"plugins"/,/"version"/ s/"version": ".*"/"version": "'"$VERSION"'"/' .claude-plugin/marketplace.json
+    else
+      sed -i '/"plugins"/,/"version"/ s/"version": ".*"/"version": "'"$VERSION"'"/' .claude-plugin/marketplace.json
+    fi
   fi
 fi
 

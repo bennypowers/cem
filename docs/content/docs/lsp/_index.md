@@ -166,14 +166,13 @@ For **eglot**:
 Install CEM first:
 
 ```bash
-npm install -g @pwrs/cem
-# or
+npm install -g @pwrs/cem # or
 go install bennypowers.dev/cem@latest
 ```
 
 Then install the plugin:
 
-```
+```text
 /plugin marketplace add bennypowers/cem
 /plugin install cem
 ```

@@ -23,8 +23,9 @@ For best practices on writing effective descriptions within this limit, see [Wri
 
 ## Quick Start
 
+Start MCP server for current workspace
+
 ```bash
-# Start MCP server for current workspace
 cem mcp
 ```
 
@@ -109,7 +110,7 @@ Once connected, AI assistants can access your component information through natu
 
 Install the CEM plugin which includes both LSP and MCP support:
 
-```
+```text
 /plugin marketplace add bennypowers/cem
 /plugin install cem
 ```
