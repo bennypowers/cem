@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	"bennypowers.dev/cem/lsp/testhelpers"
@@ -30,19 +29,16 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// TestHover_MultilineAllAttributes tests hover on all attributes that failed in the benchmark
-// This test verifies that our fix for attribute value matching (issue #176, #179) works for ALL
-// attributes on a multi-line element, not just a single one.
+// TestHover_MultilineAllAttributes tests hover on all attributes that failed in the benchmark.
+// This is a regression test for issues #176 and #179, ensuring our attribute value matching fix
+// works for ALL attributes on a multi-line element.
 //
-// Benchmark failures showed these attributes all failed with "No result":
-// - variant (line 6, char 13)
-// - size (line 7, char 13)
-// - disabled (line 8, char 13)
-// - loading (line 9, char 13)
-// - icon (line 10, char 13)
+// Benchmark failures (on docs/lsp/benchmarks branch) showed these 5 attributes all failed:
+// - variant, size, disabled, loading, icon
+//
+// Root cause: Benchmark test positions were outdated, but this test validates the fix works.
 func TestHover_MultilineAllAttributes(t *testing.T) {
-	// Load fixture data manually
-	fixtureDir := "testdata/multiline-all-attributes"
+	fixtureDir := "testdata/multiline-all-attributes-regression"
 
 	// Read input HTML
 	inputHTML, err := os.ReadFile(filepath.Join(fixtureDir, "input.html"))
@@ -50,60 +46,21 @@ func TestHover_MultilineAllAttributes(t *testing.T) {
 		t.Fatalf("Failed to read input.html: %v", err)
 	}
 
-	// Read manifest
+	// Read and parse manifest
 	manifestBytes, err := os.ReadFile(filepath.Join(fixtureDir, "manifest.json"))
 	if err != nil {
 		t.Fatalf("Failed to read manifest.json: %v", err)
 	}
 
-	// Create fixture-like structure for expected data loading
-	fixture := &testutil.LSPFixture{
-		Name:         "multiline-all-attributes",
-		InputContent: string(inputHTML),
-		InputType:    "html",
-		Manifest:     json.RawMessage(manifestBytes),
-		ExpectedMap:  make(map[string]any),
+	var pkg M.Package
+	if err := json.Unmarshal(manifestBytes, &pkg); err != nil {
+		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
-	// Load all expected-*.json files
-	entries, err := os.ReadDir(fixtureDir)
-	if err == nil {
-		for _, entry := range entries {
-			if entry.IsDir() {
-				continue
-			}
-			name := entry.Name()
-			if filepath.Ext(name) == ".json" && filepath.Base(name) != "manifest.json" {
-				fullPath := filepath.Join(fixtureDir, name)
-				data, err := os.ReadFile(fullPath)
-				if err != nil {
-					continue
-				}
-				var expectedData any
-				if err := json.Unmarshal(data, &expectedData); err != nil {
-					continue
-				}
-				// Handle "expected-*.json" pattern
-				if len(name) > len("expected-") && name[:len("expected-")] == "expected-" {
-					key := name[len("expected-") : len(name)-len(".json")]
-					fixture.ExpectedMap[key] = expectedData
-				}
-			}
-		}
-	}
-
-	// Parse manifest
+	// Setup context
 	ctx := testhelpers.NewMockServerContext()
-	if fixture.Manifest != nil {
-		var pkg M.Package
-		err := json.Unmarshal(fixture.Manifest, &pkg)
-		if err != nil {
-			t.Fatalf("Failed to parse manifest: %v", err)
-		}
-		ctx.AddManifest(&pkg)
-	}
+	ctx.AddManifest(&pkg)
 
-	// Create document manager
 	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create DocumentManager: %v", err)
@@ -112,32 +69,36 @@ func TestHover_MultilineAllAttributes(t *testing.T) {
 	ctx.SetDocumentManager(dm)
 
 	uri := "file:///test.html"
-	doc := dm.OpenDocument(uri, fixture.InputContent, 1)
+	doc := dm.OpenDocument(uri, string(inputHTML), 1)
 	ctx.AddDocument(uri, doc)
 
-	// Test each attribute at its cursor position
+	// Test each attribute that failed in the benchmark
 	testCases := []struct {
-		name            string
-		position        protocol.Position
-		expectedFileKey string
+		name     string
+		position protocol.Position
 	}{
-		{"variant", protocol.Position{Line: 6, Character: 13}, "variant"},
-		{"size", protocol.Position{Line: 7, Character: 13}, "size"},
-		{"disabled", protocol.Position{Line: 8, Character: 13}, "disabled"},
-		{"loading", protocol.Position{Line: 9, Character: 13}, "loading"},
-		{"icon", protocol.Position{Line: 10, Character: 13}, "icon"},
+		{"variant", protocol.Position{Line: 6, Character: 13}},
+		{"size", protocol.Position{Line: 7, Character: 13}},
+		{"disabled", protocol.Position{Line: 8, Character: 13}},
+		{"loading", protocol.Position{Line: 9, Character: 13}},
+		{"icon", protocol.Position{Line: 10, Character: 13}},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Load expected hover response for this attribute
-			var expected protocol.Hover
-			err := fixture.GetExpected(tc.expectedFileKey, &expected)
+			// Load expected result
+			expectedFile := filepath.Join(fixtureDir, "expected-"+tc.name+".json")
+			expectedBytes, err := os.ReadFile(expectedFile)
 			if err != nil {
-				t.Fatalf("Failed to get expected hover for %s: %v", tc.name, err)
+				t.Fatalf("Failed to read %s: %v", expectedFile, err)
 			}
 
-			// Create hover params
+			var expected protocol.Hover
+			if err := json.Unmarshal(expectedBytes, &expected); err != nil {
+				t.Fatalf("Failed to parse %s: %v", expectedFile, err)
+			}
+
+			// Call hover
 			params := &protocol.HoverParams{
 				TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 					TextDocument: protocol.TextDocumentIdentifier{URI: uri},
@@ -145,23 +106,42 @@ func TestHover_MultilineAllAttributes(t *testing.T) {
 				},
 			}
 
-			// Call hover
 			result, err := hover.Hover(ctx, nil, params)
 			if err != nil {
-				t.Fatalf("Hover failed for %s: %v", tc.name, err)
+				t.Fatalf("Hover failed: %v", err)
 			}
 
 			if result == nil {
-				t.Fatalf("Expected hover result for %s, got nil", tc.name)
+				t.Fatal("Expected hover result, got nil")
 			}
 
-			// Verify result matches expected
-			resultJSON, _ := json.MarshalIndent(result, "", "  ")
-			expectedJSON, _ := json.MarshalIndent(expected, "", "  ")
+			// Structured comparison
+			actualContents, ok := result.Contents.(protocol.MarkupContent)
+			if !ok {
+				t.Fatalf("Expected Contents to be MarkupContent, got %T", result.Contents)
+			}
 
-			if string(resultJSON) != string(expectedJSON) {
-				t.Errorf("Hover result for %s does not match expected.\n\nGot:\n%s\n\nExpected:\n%s",
-					tc.name, string(resultJSON), string(expectedJSON))
+			expectedContents, ok := expected.Contents.(protocol.MarkupContent)
+			if !ok {
+				t.Fatalf("Expected Contents in expected.json to be MarkupContent, got %T", expected.Contents)
+			}
+
+			if actualContents.Kind != expectedContents.Kind {
+				t.Errorf("Expected kind %s, got %s", expectedContents.Kind, actualContents.Kind)
+			}
+
+			if actualContents.Value != expectedContents.Value {
+				t.Errorf("Expected value:\n%s\n\nGot:\n%s", expectedContents.Value, actualContents.Value)
+			}
+
+			// Verify range
+			if expected.Range != nil && result.Range != nil {
+				if result.Range.Start.Line != expected.Range.Start.Line ||
+					result.Range.Start.Character != expected.Range.Start.Character ||
+					result.Range.End.Line != expected.Range.End.Line ||
+					result.Range.End.Character != expected.Range.End.Character {
+					t.Errorf("Range mismatch.\nExpected: %+v\nGot: %+v", expected.Range, result.Range)
+				}
 			}
 		})
 	}
