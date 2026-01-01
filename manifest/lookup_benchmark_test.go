@@ -245,7 +245,7 @@ func benchmarkExportLookupMap(b *testing.B, numExports int) {
 // This benchmark exercises the full rendering pipeline including attribute field
 // lookups and export lookups using the optimized map-based implementation.
 func BenchmarkRenderableCreation(b *testing.B) {
-	manifestJSON, err := os.ReadFile(filepath.Join("fixtures", "custom-element-member-grouping.json"))
+	manifestJSON, err := os.ReadFile(filepath.Join("testdata", "custom-element-member-grouping.json"))
 	if err != nil {
 		b.Fatalf("Failed to load fixture: %v", err)
 	}

@@ -37,7 +37,7 @@ func TestAttributeToTableRowGolden(t *testing.T) {
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
 	testutil.CheckGolden(t, "attribute_row", []byte(table), testutil.GoldenOptions{
-		Dir:       "fixtures",
+		Dir:       "testdata",
 		Extension: ".md",
 		StripANSI: true,
 	})
@@ -56,7 +56,7 @@ func TestSlotToTableRowGolden(t *testing.T) {
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
 	testutil.CheckGolden(t, "slot_row", []byte(table), testutil.GoldenOptions{
-		Dir:       "fixtures",
+		Dir:       "testdata",
 		Extension: ".md",
 		StripANSI: true,
 	})
@@ -75,7 +75,7 @@ func TestEventToTableRowGolden(t *testing.T) {
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
 	testutil.CheckGolden(t, "event_row", []byte(table), testutil.GoldenOptions{
-		Dir:       "fixtures",
+		Dir:       "testdata",
 		Extension: ".md",
 		StripANSI: true,
 	})
@@ -94,7 +94,7 @@ func TestCssPropertyToTableRowGolden(t *testing.T) {
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
 	testutil.CheckGolden(t, "css_property_row", []byte(table), testutil.GoldenOptions{
-		Dir:       "fixtures",
+		Dir:       "testdata",
 		Extension: ".md",
 		StripANSI: true,
 	})
@@ -113,7 +113,7 @@ func TestCssPartToTableRowGolden(t *testing.T) {
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
 	testutil.CheckGolden(t, "css_part_row", []byte(table), testutil.GoldenOptions{
-		Dir:       "fixtures",
+		Dir:       "testdata",
 		Extension: ".md",
 		StripANSI: true,
 	})
@@ -137,7 +137,7 @@ func TestClassMethodToTableRowGolden(t *testing.T) {
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
 	testutil.CheckGolden(t, "class_method_row", []byte(table), testutil.GoldenOptions{
-		Dir:       "fixtures",
+		Dir:       "testdata",
 		Extension: ".md",
 		StripANSI: true,
 	})

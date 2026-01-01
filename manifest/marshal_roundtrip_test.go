@@ -27,7 +27,7 @@ import (
 // manifest and then marshal it back to JSON without losing any data.
 func TestMarshalUnmarshalRoundTrip(t *testing.T) {
 	// Load the comprehensive golden file
-	goldenPath := filepath.Join("fixtures", "marshal-roundtrip-comprehensive.json")
+	goldenPath := filepath.Join("testdata", "marshal-roundtrip-comprehensive.json")
 	originalJSON, err := os.ReadFile(goldenPath)
 	if err != nil {
 		t.Fatalf("Failed to read golden file: %v", err)

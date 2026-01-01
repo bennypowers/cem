@@ -29,7 +29,7 @@ import (
 
 func TestRenderableCustomElementDeclaration(t *testing.T) {
 	t.Run("ToTreeNode", func(t *testing.T) {
-		manifestJSON, err := os.ReadFile(filepath.Join("fixtures", "custom-element-member-grouping.json"))
+		manifestJSON, err := os.ReadFile(filepath.Join("testdata", "custom-element-member-grouping.json"))
 		if err != nil {
 			t.Fatal(err)
 		}

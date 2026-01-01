@@ -55,7 +55,7 @@ func clearBackreferences(pkg *manifest.Package) {
 // using a comprehensive manifest that includes all possible types and structures.
 func TestPackage(t *testing.T) {
 	// Load the comprehensive test manifest
-	manifestPath := filepath.Join("fixtures", "comprehensive-clone-test.json")
+	manifestPath := filepath.Join("testdata", "comprehensive-clone-test.json")
 	manifestData, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatalf("Failed to read test manifest: %v", err)

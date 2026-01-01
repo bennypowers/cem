@@ -44,7 +44,7 @@ func mustRunFixture(t *testing.T) {
 
 func loadFixture(t *testing.T, name string) []byte {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join("fixtures", name))
+	data, err := os.ReadFile(filepath.Join("testdata", name))
 	if err != nil {
 		t.Fatalf("failed to load fixture %s: %v", name, err)
 	}
