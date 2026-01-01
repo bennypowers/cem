@@ -89,20 +89,6 @@ func (p *Package) Clone() *Package {
 	return cloned
 }
 
-// FindCustomElementDeclaration finds the CustomElementDeclaration for a given tag name.
-// This provides access to the full declaration including summary and description,
-// which are not available on the CustomElement struct alone.
-//
-// Returns nil if the package is nil, the tag name is empty, or no matching element is found.
-//
-// Usage:
-//
-//	decl := pkg.FindCustomElementDeclaration("my-button")
-//	if decl != nil {
-//		fmt.Println(decl.Summary)
-//		fmt.Println(decl.Description)
-//	}
-//
 // FindDeclaration resolves a Reference to its Declaration.
 // Searches all modules in the package for a matching declaration.
 // If ref.Module is specified, only searches in that module.
@@ -148,6 +134,19 @@ func (p *Package) FindDeclaration(ref Reference) Declaration {
 	return nil
 }
 
+// FindCustomElementDeclaration finds the CustomElementDeclaration for a given tag name.
+// This provides access to the full declaration including summary and description,
+// which are not available on the CustomElement struct alone.
+//
+// Returns nil if the package is nil, the tag name is empty, or no matching element is found.
+//
+// Usage:
+//
+//	decl := pkg.FindCustomElementDeclaration("my-button")
+//	if decl != nil {
+//		fmt.Println(decl.Summary)
+//		fmt.Println(decl.Description)
+//	}
 func (p *Package) FindCustomElementDeclaration(tagName string) *CustomElementDeclaration {
 	if p == nil || tagName == "" {
 		return nil
