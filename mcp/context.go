@@ -564,42 +564,42 @@ func (e *MCPElementInfoAdapter) Package() string {
 // Member accessors returning manifest types directly
 func (e *MCPElementInfoAdapter) Attributes() []M.Attribute {
 	if decl := e.Declaration(); decl != nil {
-		return decl.Attributes
+		return decl.Attributes()
 	}
 	return nil
 }
 
 func (e *MCPElementInfoAdapter) Slots() []M.Slot {
 	if decl := e.Declaration(); decl != nil {
-		return decl.Slots
+		return decl.Slots()
 	}
 	return nil
 }
 
 func (e *MCPElementInfoAdapter) Events() []M.Event {
 	if decl := e.Declaration(); decl != nil {
-		return decl.Events
+		return decl.Events()
 	}
 	return nil
 }
 
 func (e *MCPElementInfoAdapter) CssProperties() []M.CssCustomProperty {
 	if decl := e.Declaration(); decl != nil {
-		return decl.CssProperties
+		return decl.CssProperties()
 	}
 	return nil
 }
 
 func (e *MCPElementInfoAdapter) CssParts() []M.CssPart {
 	if decl := e.Declaration(); decl != nil {
-		return decl.CssParts
+		return decl.CssParts()
 	}
 	return nil
 }
 
 func (e *MCPElementInfoAdapter) CssStates() []M.CssCustomState {
 	if decl := e.Declaration(); decl != nil {
-		return decl.CssStates
+		return decl.CssStates()
 	}
 	return nil
 }

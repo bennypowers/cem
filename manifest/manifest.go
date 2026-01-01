@@ -33,9 +33,10 @@ func normalizePath(path string) string {
 
 // Embedded type for Types with Name, Summary, and Description
 type FullyQualified struct {
-	Name        string `json:"name"`
-	Summary     string `json:"summary,omitempty"`
-	Description string `json:"description,omitempty"`
+	Name        string  `json:"name"`
+	Summary     string  `json:"summary,omitempty"`
+	Description string  `json:"description,omitempty"`
+	Module      *Module `json:"-"` // Backreference to containing module
 }
 
 // Clone creates a deep copy of the FullyQualified structure.

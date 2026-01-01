@@ -757,11 +757,12 @@ func (r *Registry) addManifest(manifest *M.Package, packageName string) {
 					// Collect tag name for logging
 					tagNames = append(tagNames, element.TagName)
 
-					// Index attributes for this element
-					if element.Attributes != nil {
+					// Index attributes for this element (using flattened getter for mixin support)
+					attrs := customElementDecl.Attributes() // Flattens mixins automatically
+					if len(attrs) > 0 {
 						attrMap := make(map[string]*M.Attribute)
-						for i := range element.Attributes {
-							attr := &element.Attributes[i]
+						for i := range attrs {
+							attr := &attrs[i]
 							attrMap[attr.Name] = attr
 						}
 						r.attributes[element.TagName] = attrMap
@@ -1150,7 +1151,8 @@ func (r *Registry) StartGenerateWatcher() error {
 			for _, decl := range module.Declarations {
 				if customElement, ok := decl.(*M.CustomElementDeclaration); ok {
 					if customElement.TagName == "test-button" {
-						for _, attr := range customElement.Attributes {
+						attrs := customElement.Attributes()
+						for _, attr := range attrs {
 							if attr.Name == "variant" && attr.Type != nil {
 								helpers.SafeDebugLog("Received manifest - variant type: '%s'", attr.Type.Text)
 							}

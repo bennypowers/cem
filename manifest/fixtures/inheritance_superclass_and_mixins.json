@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "base.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "BaseElement",
+          "customElement": true,
+          "tagName": "base-element",
+          "attributes": [
+            {
+              "name": "base-prop",
+              "type": { "text": "string" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "mixins.js",
+      "declarations": [
+        {
+          "kind": "mixin",
+          "customElement": true,
+          "name": "DisabledMixin",
+          "attributes": [
+            {
+              "name": "disabled",
+              "type": { "text": "boolean" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "combined.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "CombinedElement",
+          "customElement": true,
+          "tagName": "combined-element",
+          "superclass": {
+            "name": "BaseElement",
+            "module": "base.js"
+          },
+          "mixins": [
+            {
+              "name": "DisabledMixin",
+              "module": "mixins.js"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "child-prop",
+              "type": { "text": "number" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

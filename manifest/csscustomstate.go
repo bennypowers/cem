@@ -29,7 +29,8 @@ var _ Deprecatable = (*RenderableCssCustomState)(nil)
 // CssCustomState describes a CSS custom state.
 type CssCustomState struct {
 	FullyQualified
-	Deprecated Deprecated `json:"deprecated,omitempty"` // bool or string
+	InheritedFrom *Reference `json:"inheritedFrom,omitempty"`
+	Deprecated    Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 func (x *CssCustomState) IsDeprecated() bool {
@@ -70,6 +71,11 @@ func (c CssCustomState) Clone() CssCustomState {
 
 	// Clone the embedded FullyQualified
 	cloned.FullyQualified = c.FullyQualified.Clone()
+
+	if c.InheritedFrom != nil {
+		inheritedFrom := *c.InheritedFrom
+		cloned.InheritedFrom = &inheritedFrom
+	}
 
 	if c.Deprecated != nil {
 		cloned.Deprecated = c.Deprecated.Clone()
@@ -125,14 +131,20 @@ func (x *RenderableCssCustomState) ColumnHeadings() []string {
 	return []string{
 		"Name",
 		"Summary",
+		"Inherited From",
 	}
 }
 
 // Renders a CssCustomState as a table row.
 func (x *RenderableCssCustomState) ToTableRow() []string {
+	inheritedFrom := ""
+	if x.CssCustomState.InheritedFrom != nil {
+		inheritedFrom = x.CssCustomState.InheritedFrom.Name
+	}
 	return []string{
 		highlightIfDeprecated(x),
 		x.CssCustomState.Summary,
+		inheritedFrom,
 	}
 }
 

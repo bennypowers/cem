@@ -25,9 +25,9 @@ func applyToClassDeclaration(info *classInfo, declaration *M.ClassDeclaration) {
 
 func applyToCustomElementDeclaration(info *classInfo, declaration *M.CustomElementDeclaration) {
 	applyToClassDeclaration(info, &declaration.ClassDeclaration)
-	declaration.Attributes = slices.Concat(
+	declaration.CustomElement.Attributes = slices.Concat(
 		info.Attrs,
-		declaration.Attributes,
+		declaration.CustomElement.Attributes,
 	)
 
 	jsdocSlots := make(map[string]M.Slot)
@@ -35,53 +35,53 @@ func applyToCustomElementDeclaration(info *classInfo, declaration *M.CustomEleme
 		jsdocSlots[jsdocSlot.Name] = jsdocSlot
 	}
 
-	for i := range declaration.Slots {
-		if jsdocSlot, ok := jsdocSlots[declaration.Slots[i].Name]; ok {
-			if declaration.Slots[i].Description == "" {
-				declaration.Slots[i].Description = jsdocSlot.Description
+	for i := range declaration.CustomElement.Slots {
+		if jsdocSlot, ok := jsdocSlots[declaration.CustomElement.Slots[i].Name]; ok {
+			if declaration.CustomElement.Slots[i].Description == "" {
+				declaration.CustomElement.Slots[i].Description = jsdocSlot.Description
 			}
-			if declaration.Slots[i].Summary == "" {
-				declaration.Slots[i].Summary = jsdocSlot.Summary
+			if declaration.CustomElement.Slots[i].Summary == "" {
+				declaration.CustomElement.Slots[i].Summary = jsdocSlot.Summary
 			}
-			if declaration.Slots[i].Deprecated == nil {
-				declaration.Slots[i].Deprecated = jsdocSlot.Deprecated
+			if declaration.CustomElement.Slots[i].Deprecated == nil {
+				declaration.CustomElement.Slots[i].Deprecated = jsdocSlot.Deprecated
 			}
 			delete(jsdocSlots, jsdocSlot.Name)
 		}
 	}
 
 	for _, jsdocSlot := range jsdocSlots {
-		declaration.Slots = append(declaration.Slots, jsdocSlot)
+		declaration.CustomElement.Slots = append(declaration.CustomElement.Slots, jsdocSlot)
 	}
 
-	declaration.Events = info.Events
-	declaration.CssProperties = info.CssProperties
+	declaration.CustomElement.Events = info.Events
+	declaration.CustomElement.CssProperties = info.CssProperties
 
 	jsdocParts := make(map[string]M.CssPart)
 	for _, jsdocPart := range info.CssParts {
 		jsdocParts[jsdocPart.Name] = jsdocPart
 	}
 
-	for i := range declaration.CssParts {
-		if jsdocPart, ok := jsdocParts[declaration.CssParts[i].Name]; ok {
-			if declaration.CssParts[i].Description == "" {
-				declaration.CssParts[i].Description = jsdocPart.Description
+	for i := range declaration.CustomElement.CssParts {
+		if jsdocPart, ok := jsdocParts[declaration.CustomElement.CssParts[i].Name]; ok {
+			if declaration.CustomElement.CssParts[i].Description == "" {
+				declaration.CustomElement.CssParts[i].Description = jsdocPart.Description
 			}
-			if declaration.CssParts[i].Summary == "" {
-				declaration.CssParts[i].Summary = jsdocPart.Summary
+			if declaration.CustomElement.CssParts[i].Summary == "" {
+				declaration.CustomElement.CssParts[i].Summary = jsdocPart.Summary
 			}
-			if declaration.CssParts[i].Deprecated == nil {
-				declaration.CssParts[i].Deprecated = jsdocPart.Deprecated
+			if declaration.CustomElement.CssParts[i].Deprecated == nil {
+				declaration.CustomElement.CssParts[i].Deprecated = jsdocPart.Deprecated
 			}
 			delete(jsdocParts, jsdocPart.Name)
 		}
 	}
 
 	for _, jsdocPart := range jsdocParts {
-		declaration.CssParts = append(declaration.CssParts, jsdocPart)
+		declaration.CustomElement.CssParts = append(declaration.CustomElement.CssParts, jsdocPart)
 	}
 
-	declaration.CssStates = info.CssStates
+	declaration.CustomElement.CssStates = info.CssStates
 	declaration.Demos = info.Demos
 	if info.TagName != "" {
 		declaration.TagName = info.TagName

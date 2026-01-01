@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "base.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "BaseElement",
+          "tagName": "base-element",
+          "customElement": true,
+          "description": "Base element with slots and events",
+          "slots": [
+            {
+              "name": "header",
+              "description": "Header slot"
+            }
+          ],
+          "events": [
+            {
+              "name": "base-changed",
+              "type": { "text": "CustomEvent" },
+              "description": "Fired when base changes"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "base-prop",
+              "type": { "text": "string" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "child.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ChildElement",
+          "tagName": "child-element",
+          "customElement": true,
+          "description": "Child element extending BaseElement",
+          "superclass": {
+            "name": "BaseElement",
+            "module": "base.js"
+          },
+          "slots": [
+            {
+              "name": "footer",
+              "description": "Footer slot"
+            }
+          ],
+          "events": [
+            {
+              "name": "child-changed",
+              "type": { "text": "CustomEvent" },
+              "description": "Fired when child changes"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "child-prop",
+              "type": { "text": "number" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

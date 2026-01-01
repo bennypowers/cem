@@ -222,6 +222,7 @@ func (x *RenderableAttribute) ColumnHeadings() []string {
 		"Summary",
 		"Default",
 		"Type",
+		"Inherited From",
 	}
 }
 
@@ -230,6 +231,7 @@ func (x *RenderableAttribute) ToTableRow() []string {
 	domProp := ""
 	reflects := ""
 	typeText := ""
+	inheritedFrom := ""
 	if x.CustomElementField != nil {
 		domProp = x.CustomElementField.Name
 		if x.CustomElementField.Reflects {
@@ -239,6 +241,9 @@ func (x *RenderableAttribute) ToTableRow() []string {
 	if x.Attribute.Type != nil {
 		typeText = x.Attribute.Type.Text
 	}
+	if x.Attribute.InheritedFrom != nil {
+		inheritedFrom = x.Attribute.InheritedFrom.Name
+	}
 	return []string{
 		highlightIfDeprecated(x),
 		domProp,
@@ -246,6 +251,7 @@ func (x *RenderableAttribute) ToTableRow() []string {
 		x.Attribute.Summary,
 		x.Attribute.Default,
 		typeText,
+		inheritedFrom,
 	}
 }
 

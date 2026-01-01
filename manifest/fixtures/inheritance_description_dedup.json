@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "parent.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ParentElement",
+          "tagName": "parent-element",
+          "customElement": true,
+          "description": "Parent element",
+          "attributes": [
+            {
+              "name": "same-desc",
+              "type": { "text": "string" },
+              "description": "Same description"
+            },
+            {
+              "name": "different-desc",
+              "type": { "text": "string" },
+              "description": "Parent description"
+            },
+            {
+              "name": "empty-child-desc",
+              "type": { "text": "string" },
+              "description": "Parent description"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "child.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ChildElement",
+          "tagName": "child-element",
+          "customElement": true,
+          "description": "Child element extending ParentElement",
+          "superclass": {
+            "name": "ParentElement",
+            "module": "parent.js"
+          },
+          "attributes": [
+            {
+              "name": "same-desc",
+              "type": { "text": "string" },
+              "description": "Same description"
+            },
+            {
+              "name": "different-desc",
+              "type": { "text": "string" },
+              "description": "Child description"
+            },
+            {
+              "name": "empty-child-desc",
+              "type": { "text": "string" },
+              "description": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

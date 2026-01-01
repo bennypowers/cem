@@ -1,61 +1,61 @@
-# <root>
+# [1;33m[1;33m<root>[0m[0m
 
-# module src/test-elem.js
+# [1;33m[1;33m[94mmodule[0m[1;33m src/test-elem.js[0m[0m
 
-# `<test-elem>`
+# [1;33m[1;33m`<test-elem>`[0m[0m
 
-## Attributes
+## [1;33m[1;33mAttributes[0m[0m
 
-Name  | DOM Property | Reflects | Summary     | Default
------ | ------------ | -------- | ----------- | -------
-`foo` | `foo`        | ✅       | Foo summary | `bar`  
-`bar` | `bar`        |          |             |        
+[96m[96mName [90m[90m | [0m[96m[0m[96mDOM Property[90m[90m | [0m[96m[0m[96mReflects[90m[90m | [0m[96m[0m[96mSummary    [90m[90m | [0m[96m[0m[96mDefault[0m
+[96m[0m[0m-----[90m[90m | [0m[0m------------[90m[90m | [0m[0m--------[90m[90m | [0m[0m-----------[90m[90m | [0m[0m-------
+`foo`[90m[90m | [0m[0m`foo`       [90m[90m | [0m[0m✅      [90m[90m | [0m[0mFoo summary[90m[90m | [0m[0m`bar`  
+`bar`[90m[90m | [0m[0m`bar`       [90m[90m | [0m[0m        [90m[90m | [0m[0m           [90m[90m | [0m[0m       
 
-## Slots
+## [1;33m[1;33mSlots[0m[0m
 
-Name        | Summary          
------------ | -----------------
-`<default>` | Default slot     
-`icon`      | Slot for the icon
+[96m[96mName       [90m[90m | [0m[96m[0m[96mSummary          [0m
+[96m[0m[0m-----------[90m[90m | [0m[0m-----------------
+`icon`     [90m[90m | [0m[0mSlot for the icon
+`<default>`[90m[90m | [0m[0mDefault slot     
 
-## Events
+## [1;33m[1;33mEvents[0m[0m
 
-Name        | Type                       | Summary        
------------ | -------------------------- | ---------------
-`submitted` | `CustomEvent<'a'|'b'|'c'>` | Fires on submit
-`reset`     |                            |                
+[96m[96mName       [90m[90m | [0m[96m[0m[96mType                      [90m[90m | [0m[96m[0m[96mSummary        [0m
+[96m[0m[0m-----------[90m[90m | [0m[0m--------------------------[90m[90m | [0m[0m---------------
+`submitted`[90m[90m | [0m[0m`CustomEvent<'a'|'b'|'c'>`[90m[90m | [0m[0mFires on submit
+`reset`    [90m[90m | [0m[0m                          [90m[90m | [0m[0m               
 
-## Fields
+## [1;33m[1;33mFields[0m[0m
 
-Name  | Summary          
------ | -----------------
-`foo` | Foo field summary
-`bar` |                  
+[96m[96mName [90m[90m | [0m[96m[0m[96mSummary          [0m
+[96m[0m[0m-----[90m[90m | [0m[0m-----------------
+`foo`[90m[90m | [0m[0mFoo field summary
+`bar`[90m[90m | [0m[0m                 
 
-## Methods
+## [1;33m[1;33mMethods[0m[0m
 
-Name           | Return Type            | Privacy | Static  | Summary     
--------------- | ---------------------- | ------- | ------- | ------------
-`doThing`      | `void | Promise<void>` | public  | `false` | Does a thing
-`privateStuff` | `string`               | private | `true`  |             
+[96m[96mName          [90m[90m | [0m[96m[0m[96mReturn Type           [90m[90m | [0m[96m[0m[96mPrivacy[90m[90m | [0m[96m[0m[96mStatic [90m[90m | [0m[96m[0m[96mSummary     [0m
+[96m[0m[0m--------------[90m[90m | [0m[0m----------------------[90m[90m | [0m[0m-------[90m[90m | [0m[0m-------[90m[90m | [0m[0m------------
+`doThing`     [90m[90m | [0m[0m`void | Promise<void>`[90m[90m | [0m[0mpublic [90m[90m | [0m[0m`false`[90m[90m | [0m[0mDoes a thing
+`privateStuff`[90m[90m | [0m[0m`string`              [90m[90m | [0m[0mprivate[90m[90m | [0m[0m`true` [90m[90m | [0m[0m            
 
-## CSS Properties
+## [1;33m[1;33mCSS Properties[0m[0m
 
-Name           | Syntax    | Default | Summary   
--------------- | --------- | ------- | ----------
-`--main-color` | `<color>` | `#fff`  | Main color
-`--unused`     |           |         |           
+[96m[96mName          [90m[90m | [0m[96m[0m[96mSyntax   [90m[90m | [0m[96m[0m[96mDefault[90m[90m | [0m[96m[0m[96mSummary   [0m
+[96m[0m[0m--------------[90m[90m | [0m[0m---------[90m[90m | [0m[0m-------[90m[90m | [0m[0m----------
+`--unused`    [90m[90m | [0m[0m         [90m[90m | [0m[0m       [90m[90m | [0m[0m          
+`--main-color`[90m[90m | [0m[0m`<color>`[90m[90m | [0m[0m`#fff` [90m[90m | [0m[0mMain color
 
-## CSS Parts
+## [1;33m[1;33mCSS Parts[0m[0m
 
-Name    | Summary       
-------- | --------------
-`label` | The label part
+[96m[96mName   [90m[90m | [0m[96m[0m[96mSummary       [0m
+[96m[0m[0m-------[90m[90m | [0m[0m--------------
+`label`[90m[90m | [0m[0mThe label part
 
-## CSS States
+## [1;33m[1;33mCSS States[0m[0m
 
-Name         | Summary     
------------- | ------------
-`--active`   | Active state
-`--inactive` |             
+[96m[96mName        [90m[90m | [0m[96m[0m[96mSummary     [0m
+[96m[0m[0m------------[90m[90m | [0m[0m------------
+`--active`  [90m[90m | [0m[0mActive state
+`--inactive`[90m[90m | [0m[0m            
 

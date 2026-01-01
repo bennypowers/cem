@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "mixins.js",
+      "declarations": [
+        {
+          "kind": "mixin",
+          "name": "DisabledMixin",
+          "customElement": true,
+          "description": "Provides disabled functionality",
+          "attributes": [
+            {
+              "name": "disabled",
+              "type": { "text": "boolean" },
+              "description": "Disables the element"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "disabled",
+              "type": { "text": "boolean" },
+              "default": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "button.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyButton",
+          "tagName": "my-button",
+          "customElement": true,
+          "description": "A button element",
+          "mixins": [
+            {
+              "name": "DisabledMixin",
+              "module": "mixins.js"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "label",
+              "type": { "text": "string" },
+              "description": "Button label"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "label",
+              "type": { "text": "string" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

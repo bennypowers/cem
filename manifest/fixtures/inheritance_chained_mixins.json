@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "base-mixin.js",
+      "declarations": [
+        {
+          "kind": "mixin",
+          "customElement": true,
+          "name": "BaseMixin",
+          "description": "Base mixin in chain",
+          "attributes": [
+            {
+              "name": "base-attr",
+              "type": { "text": "string" },
+              "description": "Base attribute"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "middle-mixin.js",
+      "declarations": [
+        {
+          "kind": "mixin",
+          "customElement": true,
+          "name": "MiddleMixin",
+          "description": "Middle mixin that uses BaseMixin",
+          "mixins": [
+            {
+              "name": "BaseMixin",
+              "module": "base-mixin.js"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "middle-attr",
+              "type": { "text": "number" },
+              "description": "Middle attribute"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ChainedElement",
+          "tagName": "chained-element",
+          "customElement": true,
+          "description": "Element using chained mixin",
+          "mixins": [
+            {
+              "name": "MiddleMixin",
+              "module": "middle-mixin.js"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "element-attr",
+              "type": { "text": "boolean" },
+              "description": "Element's own attribute"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

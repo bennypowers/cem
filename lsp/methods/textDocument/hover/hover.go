@@ -158,9 +158,9 @@ func CreateElementHoverContentFromDeclaration(decl *M.CustomElementDeclaration) 
 	}
 
 	// 4. Attributes, Events, Slots using shared formatters
-	content.WriteString(formatAttributes(decl.Attributes))
-	content.WriteString(formatEvents(decl.Events))
-	content.WriteString(formatSlots(decl.Slots))
+	content.WriteString(formatAttributes(decl.Attributes()))
+	content.WriteString(formatEvents(decl.Events()))
+	content.WriteString(formatSlots(decl.Slots()))
 
 	return content.String()
 }
@@ -177,6 +177,9 @@ func formatAttributes(attrs []M.Attribute) string {
 		content.WriteString(fmt.Sprintf("- **`%s`**", attr.Name))
 		if attr.Type != nil && attr.Type.Text != "" {
 			content.WriteString(fmt.Sprintf(" _%s_", attr.Type.Text))
+		}
+		if attr.InheritedFrom != nil {
+			content.WriteString(fmt.Sprintf(" _(inherited from %s)_", attr.InheritedFrom.Name))
 		}
 		if attr.Description != "" {
 			content.WriteString(fmt.Sprintf(" - %s", attr.Description))
@@ -200,6 +203,9 @@ func formatEvents(events []M.Event) string {
 		if event.Type != nil && event.Type.Text != "" {
 			content.WriteString(fmt.Sprintf(" _%s_", event.Type.Text))
 		}
+		if event.InheritedFrom != nil {
+			content.WriteString(fmt.Sprintf(" _(inherited from %s)_", event.InheritedFrom.Name))
+		}
 		if event.Description != "" {
 			content.WriteString(fmt.Sprintf(" - %s", event.Description))
 		}
@@ -219,6 +225,9 @@ func formatSlots(slots []M.Slot) string {
 	content.WriteString("### Slots\n\n")
 	for _, slot := range slots {
 		content.WriteString(fmt.Sprintf("- **`%s`**", slot.Name))
+		if slot.InheritedFrom != nil {
+			content.WriteString(fmt.Sprintf(" _(inherited from %s)_", slot.InheritedFrom.Name))
+		}
 		if slot.Description != "" {
 			content.WriteString(fmt.Sprintf(" - %s", slot.Description))
 		}
@@ -235,6 +244,11 @@ func CreateAttributeHoverContent(attr *M.Attribute, tagName string) string {
 	// Title
 	content.WriteString(fmt.Sprintf("## `%s` attribute\n\n", attr.Name))
 	content.WriteString(fmt.Sprintf("**On `<%s>` element**\n\n", tagName))
+
+	// Inheritance info
+	if attr.InheritedFrom != nil {
+		content.WriteString(fmt.Sprintf("_Inherited from %s_\n\n", attr.InheritedFrom.Name))
+	}
 
 	// Type
 	if attr.Type != nil && attr.Type.Text != "" {

@@ -54,8 +54,53 @@ func TestPackage(t *testing.T) {
 	// 3. Modifying the original doesn't affect the clone
 
 	t.Run("ClonedValueEqualsOriginal", func(t *testing.T) {
-		if !reflect.DeepEqual(&original, cloned) {
-			t.Error("Cloned package is not deeply equal to original")
+		// Create copies with backreferences set to nil for comparison
+		// (backreferences intentionally point to different objects in clone vs original)
+		origCopy := original.Clone()
+		clonedCopy := cloned.Clone()
+
+		// Clear backreferences for comparison
+		for i := range origCopy.Modules {
+			origCopy.Modules[i].Package = nil
+			for j := range origCopy.Modules[i].Declarations {
+				switch decl := origCopy.Modules[i].Declarations[j].(type) {
+				case *manifest.ClassDeclaration:
+					decl.Module = nil
+				case *manifest.CustomElementDeclaration:
+					decl.Module = nil
+				case *manifest.MixinDeclaration:
+					decl.Module = nil
+				case *manifest.CustomElementMixinDeclaration:
+					decl.Module = nil
+				case *manifest.FunctionDeclaration:
+					decl.Module = nil
+				case *manifest.VariableDeclaration:
+					decl.Module = nil
+				}
+			}
+		}
+		for i := range clonedCopy.Modules {
+			clonedCopy.Modules[i].Package = nil
+			for j := range clonedCopy.Modules[i].Declarations {
+				switch decl := clonedCopy.Modules[i].Declarations[j].(type) {
+				case *manifest.ClassDeclaration:
+					decl.Module = nil
+				case *manifest.CustomElementDeclaration:
+					decl.Module = nil
+				case *manifest.MixinDeclaration:
+					decl.Module = nil
+				case *manifest.CustomElementMixinDeclaration:
+					decl.Module = nil
+				case *manifest.FunctionDeclaration:
+					decl.Module = nil
+				case *manifest.VariableDeclaration:
+					decl.Module = nil
+				}
+			}
+		}
+
+		if !reflect.DeepEqual(origCopy, clonedCopy) {
+			t.Error("Cloned package is not deeply equal to original (excluding backreferences)")
 		}
 	})
 
@@ -236,27 +281,31 @@ func TestPackage(t *testing.T) {
 		for _, module := range cloned.Modules {
 			for _, decl := range module.Declarations {
 				if customElement, ok := decl.(*manifest.CustomElementDeclaration); ok {
-					// Test attributes
-					for i, attr := range customElement.Attributes {
+					// Test attributes (use OwnAttributes for direct field access)
+					clonedAttrs := customElement.OwnAttributes()
+					for i, attr := range clonedAttrs {
 						// Modify the clone
 						attr.Summary = "Modified attribute summary"
 
 						// Verify original is unchanged
-						if i < len(original.Modules[0].Declarations[1].(*manifest.CustomElementDeclaration).Attributes) {
-							originalAttr := original.Modules[0].Declarations[1].(*manifest.CustomElementDeclaration).Attributes[i]
+						originalAttrs := original.Modules[0].Declarations[1].(*manifest.CustomElementDeclaration).OwnAttributes()
+						if i < len(originalAttrs) {
+							originalAttr := originalAttrs[i]
 							if originalAttr.Summary == "Modified attribute summary" {
 								t.Error("Original attribute was modified when clone was changed")
 							}
 						}
 					}
 
-					// Test events
-					for i, event := range customElement.Events {
+					// Test events (use OwnEvents for direct field access)
+					clonedEvents := customElement.OwnEvents()
+					for i, event := range clonedEvents {
 						event.Summary = "Modified event summary"
 
 						// Verify original is unchanged
-						if i < len(original.Modules[0].Declarations[1].(*manifest.CustomElementDeclaration).Events) {
-							originalEvent := original.Modules[0].Declarations[1].(*manifest.CustomElementDeclaration).Events[i]
+						originalEvents := original.Modules[0].Declarations[1].(*manifest.CustomElementDeclaration).OwnEvents()
+						if i < len(originalEvents) {
+							originalEvent := originalEvents[i]
 							if originalEvent.Summary == "Modified event summary" {
 								t.Error("Original event was modified when clone was changed")
 							}

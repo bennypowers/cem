@@ -127,7 +127,7 @@ func TestNewRenderablePackage_WithMapLookup(t *testing.T) {
 		// Add an attribute that references one of the fields
 		attr := &manifest.Attribute{}
 		attr.Name = "attr" + string(rune('a'))
-		ced.Attributes = []manifest.Attribute{*attr}
+		ced.CustomElement.Attributes = []manifest.Attribute{*attr}
 
 		mod.Declarations = []manifest.Declaration{ced}
 

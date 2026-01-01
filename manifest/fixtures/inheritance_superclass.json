@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "base.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "BaseElement",
+          "tagName": "base-element",
+          "customElement": true,
+          "description": "Base element class",
+          "attributes": [
+            {
+              "name": "base-prop",
+              "type": { "text": "string" },
+              "description": "Base property"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "baseProp",
+              "type": { "text": "string" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "child.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "ChildElement",
+          "tagName": "child-element",
+          "customElement": true,
+          "description": "Child element extending BaseElement",
+          "superclass": {
+            "name": "BaseElement",
+            "module": "base.js"
+          },
+          "attributes": [
+            {
+              "name": "child-prop",
+              "type": { "text": "number" },
+              "description": "Child property"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "childProp",
+              "type": { "text": "number" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

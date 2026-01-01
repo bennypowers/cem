@@ -342,7 +342,7 @@ func (mp *ModuleProcessor) processClasses() error {
 			})
 			parsed.CssProperties = slices.Collect(maps.Values(props))
 			slices.SortStableFunc(parsed.CssProperties, sortCustomProperty)
-			ce.CssProperties = append(ce.CssProperties, parsed.CssProperties...)
+			ce.CustomElement.CssProperties = append(ce.CustomElement.CssProperties, parsed.CssProperties...)
 		}
 
 		processed[className] = parsed

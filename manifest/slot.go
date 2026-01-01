@@ -29,8 +29,9 @@ var _ Renderable = (*RenderableSlot)(nil)
 // Slot in a custom element.
 type Slot struct {
 	FullyQualified
-	StartByte  uint       `json:"-" yaml:"-"`
-	Deprecated Deprecated `json:"deprecated,omitempty"` // bool or string
+	InheritedFrom *Reference `json:"inheritedFrom,omitempty"`
+	StartByte     uint       `json:"-" yaml:"-"`
+	Deprecated    Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 func (x *Slot) IsDeprecated() bool {
@@ -73,6 +74,11 @@ func (s Slot) Clone() Slot {
 
 	// Clone the embedded FullyQualified
 	cloned.FullyQualified = s.FullyQualified.Clone()
+
+	if s.InheritedFrom != nil {
+		inheritedFrom := *s.InheritedFrom
+		cloned.InheritedFrom = &inheritedFrom
+	}
 
 	if s.Deprecated != nil {
 		cloned.Deprecated = s.Deprecated.Clone()
@@ -131,14 +137,20 @@ func (x *RenderableSlot) ColumnHeadings() []string {
 	return []string{
 		"Name",
 		"Summary",
+		"Inherited From",
 	}
 }
 
 // Renders a Slot as a table row.
 func (x *RenderableSlot) ToTableRow() []string {
+	inheritedFrom := ""
+	if x.Slot.InheritedFrom != nil {
+		inheritedFrom = x.Slot.InheritedFrom.Name
+	}
 	return []string{
 		highlightIfDeprecated(x),
 		x.Slot.Summary,
+		inheritedFrom,
 	}
 }
 

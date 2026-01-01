@@ -29,8 +29,9 @@ var _ Renderable = (*RenderableCssPart)(nil)
 // CssPart describes a CSS part.
 type CssPart struct {
 	FullyQualified
-	StartByte  uint       `json:"-" yaml:"-"`
-	Deprecated Deprecated `json:"deprecated,omitempty"` // bool or string
+	InheritedFrom *Reference `json:"inheritedFrom,omitempty"`
+	StartByte     uint       `json:"-" yaml:"-"`
+	Deprecated    Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 func NewCssPart(
@@ -89,6 +90,11 @@ func (c CssPart) Clone() CssPart {
 	// Clone the embedded FullyQualified
 	cloned.FullyQualified = c.FullyQualified.Clone()
 
+	if c.InheritedFrom != nil {
+		inheritedFrom := *c.InheritedFrom
+		cloned.InheritedFrom = &inheritedFrom
+	}
+
 	if c.Deprecated != nil {
 		cloned.Deprecated = c.Deprecated.Clone()
 	}
@@ -143,14 +149,20 @@ func (x *RenderableCssPart) ColumnHeadings() []string {
 	return []string{
 		"Name",
 		"Summary",
+		"Inherited From",
 	}
 }
 
 // Renders a CssPart as a table row.
 func (x *RenderableCssPart) ToTableRow() []string {
+	inheritedFrom := ""
+	if x.CssPart.InheritedFrom != nil {
+		inheritedFrom = x.CssPart.InheritedFrom.Name
+	}
 	return []string{
 		highlightIfDeprecated(x),
 		x.CssPart.Summary,
+		inheritedFrom,
 	}
 }
 

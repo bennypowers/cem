@@ -38,6 +38,7 @@ type JavaScriptModule struct {
 	Declarations []Declaration `json:"declarations,omitempty"`
 	Exports      []Export      `json:"exports,omitempty"`
 	Deprecated   Deprecated    `json:"deprecated,omitempty"` // bool or string
+	Package      *Package      `json:"-"`                    // Backreference to containing package
 }
 
 func NewModule(file string) *Module {
@@ -81,6 +82,24 @@ func (m *Module) UnmarshalJSON(data []byte) error {
 	}
 	if m.Declarations == nil {
 		m.Declarations = []Declaration{}
+	}
+
+	// Set backreferences from declarations to module
+	for i := range m.Declarations {
+		switch decl := m.Declarations[i].(type) {
+		case *ClassDeclaration:
+			decl.Module = m
+		case *CustomElementDeclaration:
+			decl.Module = m
+		case *MixinDeclaration:
+			decl.Module = m
+		case *CustomElementMixinDeclaration:
+			decl.Module = m
+		case *FunctionDeclaration:
+			decl.Module = m
+		case *VariableDeclaration:
+			decl.Module = m
+		}
 	}
 
 	for _, e := range aux.Exports {
@@ -140,6 +159,24 @@ func (m *JavaScriptModule) Clone() *JavaScriptModule {
 		}
 	} else {
 		cloned.Exports = []Export{} // Maintain consistency
+	}
+
+	// Set backreferences from declarations to module (same as UnmarshalJSON)
+	for i := range cloned.Declarations {
+		switch decl := cloned.Declarations[i].(type) {
+		case *ClassDeclaration:
+			decl.Module = cloned
+		case *CustomElementDeclaration:
+			decl.Module = cloned
+		case *MixinDeclaration:
+			decl.Module = cloned
+		case *CustomElementMixinDeclaration:
+			decl.Module = cloned
+		case *FunctionDeclaration:
+			decl.Module = cloned
+		case *VariableDeclaration:
+			decl.Module = cloned
+		}
 	}
 
 	return cloned

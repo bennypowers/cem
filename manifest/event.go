@@ -131,19 +131,24 @@ func (x *RenderableEvent) Children() []Renderable {
 }
 
 func (x *RenderableEvent) ColumnHeadings() []string {
-	return []string{"Name", "Type", "Summary"}
+	return []string{"Name", "Type", "Summary", "Inherited From"}
 }
 
 // Renders an Event as a table row.
 func (x *RenderableEvent) ToTableRow() []string {
 	eventType := ""
+	inheritedFrom := ""
 	if x.Event.Type != nil {
 		eventType = x.Event.Type.Text
+	}
+	if x.Event.InheritedFrom != nil {
+		inheritedFrom = x.Event.InheritedFrom.Name
 	}
 	return []string{
 		highlightIfDeprecated(x),
 		eventType,
 		x.Event.Summary,
+		inheritedFrom,
 	}
 }
 

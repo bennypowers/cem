@@ -29,10 +29,11 @@ var _ Renderable = (*RenderableCssCustomProperty)(nil)
 // CssCustomProperty describes a CSS custom property.
 type CssCustomProperty struct {
 	FullyQualified
-	StartByte  uint       `json:"-"`
-	Default    string     `json:"default,omitempty"`
-	Syntax     string     `json:"syntax,omitempty"`
-	Deprecated Deprecated `json:"deprecated,omitempty"` // bool or string
+	InheritedFrom *Reference `json:"inheritedFrom,omitempty"`
+	StartByte     uint       `json:"-"`
+	Default       string     `json:"default,omitempty"`
+	Syntax        string     `json:"syntax,omitempty"`
+	Deprecated    Deprecated `json:"deprecated,omitempty"` // bool or string
 }
 
 func (x *CssCustomProperty) IsDeprecated() bool {
@@ -82,6 +83,11 @@ func (c CssCustomProperty) Clone() CssCustomProperty {
 	// Clone the embedded FullyQualified
 	cloned.FullyQualified = c.FullyQualified.Clone()
 
+	if c.InheritedFrom != nil {
+		inheritedFrom := *c.InheritedFrom
+		cloned.InheritedFrom = &inheritedFrom
+	}
+
 	if c.Deprecated != nil {
 		cloned.Deprecated = c.Deprecated.Clone()
 	}
@@ -117,16 +123,21 @@ func (x *RenderableCssCustomProperty) Children() []Renderable {
 }
 
 func (x *RenderableCssCustomProperty) ColumnHeadings() []string {
-	return []string{"Name", "Syntax", "Default", "Summary"}
+	return []string{"Name", "Syntax", "Default", "Summary", "Inherited From"}
 }
 
 // Renders a CSS CssCustomProperty as a table row.
 func (x *RenderableCssCustomProperty) ToTableRow() []string {
+	inheritedFrom := ""
+	if x.CssCustomProperty.InheritedFrom != nil {
+		inheritedFrom = x.CssCustomProperty.InheritedFrom.Name
+	}
 	return []string{
 		highlightIfDeprecated(x),
 		x.CssCustomProperty.Syntax,
 		x.CssCustomProperty.Default,
 		x.CssCustomProperty.Summary,
+		inheritedFrom,
 	}
 }
 

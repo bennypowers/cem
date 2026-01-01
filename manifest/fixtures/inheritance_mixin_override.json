@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "disabled-mixin.js",
+      "declarations": [
+        {
+          "kind": "mixin",
+          "customElement": true,
+          "name": "DisabledMixin",
+          "description": "Provides disabled functionality",
+          "attributes": [
+            {
+              "name": "disabled",
+              "type": { "text": "boolean" },
+              "description": "Disables the element"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "custom-button.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "CustomButton",
+          "tagName": "custom-button",
+          "customElement": true,
+          "description": "Button that overrides disabled to use string type",
+          "mixins": [
+            {
+              "name": "DisabledMixin",
+              "module": "disabled-mixin.js"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "disabled",
+              "type": { "text": "string" },
+              "description": "Custom disabled implementation"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

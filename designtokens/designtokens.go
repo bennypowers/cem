@@ -125,7 +125,7 @@ func (l *Loader) Load(ctx types.WorkspaceContext) (types.DesignTokens, error) {
 func MergeDesignTokensToModule(module *M.Module, designTokens types.DesignTokens) {
 	for i, d := range module.Declarations {
 		if d, ok := d.(*M.CustomElementDeclaration); ok {
-			for i, p := range d.CssProperties {
+			for i, p := range d.CustomElement.CssProperties {
 				if token, ok := designTokens.Get(p.Name); ok {
 					// Merge user's description with design token description
 					// If user has a description, concatenate with two newlines
@@ -139,7 +139,7 @@ func MergeDesignTokensToModule(module *M.Module, designTokens types.DesignTokens
 						}
 					}
 					p.Syntax = token.Syntax()
-					d.CssProperties[i] = p
+					d.CustomElement.CssProperties[i] = p
 				}
 			}
 		}
