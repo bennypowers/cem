@@ -9,16 +9,24 @@ import (
 	"bennypowers.dev/cem/manifest"
 )
 
+// loadFixture loads a test fixture from the fixtures directory
+// TODO: Migrate to testutil.NewFixtureFS() pattern per coding guidelines
+func loadFixture(t *testing.T, name string) []byte {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("fixtures", name))
+	if err != nil {
+		t.Fatalf("failed to load fixture %s: %v", name, err)
+	}
+	return data
+}
+
 func TestRenderableAttribute_WithMapLookup(t *testing.T) {
 	t.Run("MatchesCurrentBehavior", func(t *testing.T) {
 		// Load fixture with custom element members
-		manifestJSON, err := os.ReadFile(filepath.Join("fixtures", "custom_element_member_with_attribute.json"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		manifestJSON := loadFixture(t, "custom_element_member_with_attribute.json")
 
 		var pkg manifest.Package
-		if err := json.Unmarshal([]byte(manifestJSON), &pkg); err != nil {
+		if err := json.Unmarshal(manifestJSON, &pkg); err != nil {
 			t.Fatal(err)
 		}
 
@@ -38,13 +46,10 @@ func TestRenderableAttribute_WithMapLookup(t *testing.T) {
 func TestRenderableCustomElementDeclaration_WithMapLookup(t *testing.T) {
 	t.Run("MatchesCurrentBehavior", func(t *testing.T) {
 		// Load fixture with custom element exports
-		manifestJSON, err := os.ReadFile(filepath.Join("fixtures", "custom-element-member-grouping.json"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		manifestJSON := loadFixture(t, "custom-element-member-grouping.json")
 
 		var pkg manifest.Package
-		if err := json.Unmarshal([]byte(manifestJSON), &pkg); err != nil {
+		if err := json.Unmarshal(manifestJSON, &pkg); err != nil {
 			t.Fatal(err)
 		}
 
@@ -63,10 +68,7 @@ func TestRenderableCustomElementDeclaration_WithMapLookup(t *testing.T) {
 func TestNewRenderablePackage_WithMapLookup(t *testing.T) {
 	t.Run("ComprehensiveFixture", func(t *testing.T) {
 		// Load comprehensive test fixture
-		manifestJSON, err := os.ReadFile(filepath.Join("fixtures", "comprehensive-clone-test.json"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		manifestJSON := loadFixture(t, "comprehensive-clone-test.json")
 
 		var pkg manifest.Package
 		if err := json.Unmarshal([]byte(manifestJSON), &pkg); err != nil {

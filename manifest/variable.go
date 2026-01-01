@@ -127,7 +127,6 @@ func NewRenderableVariableDeclaration(
 
 func (x *RenderableVariableDeclaration) Name() string {
 	return x.VariableDeclaration.Name()
-	// "var " + x.VariableDeclaration.Name()
 }
 
 func (x *RenderableVariableDeclaration) Label() string {
