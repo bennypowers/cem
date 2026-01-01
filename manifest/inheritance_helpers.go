@@ -420,22 +420,11 @@ func mergeCssStates(classStates []CssCustomState, mixinStates []CssCustomState, 
 
 // mergeClassMembers combines class members (fields/methods) from class and mixins.
 // Members can be fields or methods, we merge by name.
+// Preserves source order: inherited members first (not overridden), then class members.
 func mergeClassMembers(classMembers []ClassMember, mixinMembers []ClassMember, mixinRef Reference) []ClassMember {
-	memberMap := make(map[string]ClassMember)
-
-	for _, member := range mixinMembers {
-		// Set InheritedFrom based on member type (only if not already set)
-		switch m := member.(type) {
-		case *ClassField:
-			if m.InheritedFrom == nil && mixinRef.Name != "" {
-				m.InheritedFrom = &mixinRef
-			}
-		case *ClassMethod:
-			if m.InheritedFrom == nil && mixinRef.Name != "" {
-				m.InheritedFrom = &mixinRef
-			}
-		}
-		// Use a key combining name and kind for unique identification
+	// Build map for O(1) override detection
+	classMap := make(map[string]ClassMember)
+	for _, member := range classMembers {
 		var key string
 		switch m := member.(type) {
 		case *ClassField:
@@ -445,9 +434,38 @@ func mergeClassMembers(classMembers []ClassMember, mixinMembers []ClassMember, m
 		default:
 			continue
 		}
-		memberMap[key] = member
+		classMap[key] = member
 	}
 
+	// Result slice to preserve order
+	result := make([]ClassMember, 0, len(mixinMembers)+len(classMembers))
+
+	// 1. Add inherited members that aren't overridden (preserves order from mixinMembers)
+	for _, member := range mixinMembers {
+		var key string
+		switch m := member.(type) {
+		case *ClassField:
+			key = "field:" + m.Name
+			// Set InheritedFrom if not already set
+			if m.InheritedFrom == nil && mixinRef.Name != "" {
+				m.InheritedFrom = &mixinRef
+			}
+		case *ClassMethod:
+			key = "method:" + m.Name
+			if m.InheritedFrom == nil && mixinRef.Name != "" {
+				m.InheritedFrom = &mixinRef
+			}
+		default:
+			continue
+		}
+
+		// Only add if not overridden by class
+		if _, overridden := classMap[key]; !overridden {
+			result = append(result, member)
+		}
+	}
+
+	// 2. Add class members (preserves order from classMembers, overrides inherited)
 	for _, member := range classMembers {
 		var key string
 		switch m := member.(type) {
@@ -462,11 +480,12 @@ func mergeClassMembers(classMembers []ClassMember, mixinMembers []ClassMember, m
 			continue
 		}
 
-		if existing, exists := memberMap[key]; exists {
+		// Check if we're overriding an inherited member
+		if inheritedMember, exists := getMemberFromSlice(mixinMembers, key); exists {
 			// Merge summaries/descriptions with smart deduplication
 			switch m := member.(type) {
 			case *ClassField:
-				if existingField, ok := existing.(*ClassField); ok {
+				if existingField, ok := inheritedMember.(*ClassField); ok {
 					if m.Summary == "" {
 						m.Summary = existingField.Summary
 					}
@@ -476,10 +495,9 @@ func mergeClassMembers(classMembers []ClassMember, mixinMembers []ClassMember, m
 					} else if m.Description != existingField.Description && existingField.Description != "" {
 						m.Description = m.Description + "\n\n" + existingField.Description
 					}
-					// If descriptions match → use class description (no duplication)
 				}
 			case *ClassMethod:
-				if existingMethod, ok := existing.(*ClassMethod); ok {
+				if existingMethod, ok := inheritedMember.(*ClassMethod); ok {
 					if m.Summary == "" {
 						m.Summary = existingMethod.Summary
 					}
@@ -489,19 +507,33 @@ func mergeClassMembers(classMembers []ClassMember, mixinMembers []ClassMember, m
 					} else if m.Description != existingMethod.Description && existingMethod.Description != "" {
 						m.Description = m.Description + "\n\n" + existingMethod.Description
 					}
-					// If descriptions match → use class description (no duplication)
 				}
 			}
 		}
-		memberMap[key] = member
-	}
 
-	result := make([]ClassMember, 0, len(memberMap))
-	for _, member := range memberMap {
 		result = append(result, member)
 	}
 
 	return result
+}
+
+// getMemberFromSlice finds a member in a slice by key (for description merging)
+func getMemberFromSlice(members []ClassMember, key string) (ClassMember, bool) {
+	for _, member := range members {
+		var memberKey string
+		switch m := member.(type) {
+		case *ClassField:
+			memberKey = "field:" + m.Name
+		case *ClassMethod:
+			memberKey = "method:" + m.Name
+		default:
+			continue
+		}
+		if memberKey == key {
+			return member, true
+		}
+	}
+	return nil, false
 }
 
 // flattenMembers resolves and flattens all members from class and mixins.
@@ -630,10 +662,24 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 		fm.cssProperties = mergeCssProperties(ced.OwnCssProperties(), cssProps, Reference{})
 		fm.cssParts = mergeCssParts(ced.OwnCssParts(), cssParts, Reference{})
 		fm.cssStates = mergeCssStates(ced.OwnCssStates(), cssStates, Reference{})
-		fm.fields = mergeClassMembers(ced.Members, fields, Reference{})
-		fm.methods = fm.fields // Both fields and methods are in Members
 
-		// Sort all members for deterministic output
+		// Merge all members (fields + methods) in source order
+		allMembers := mergeClassMembers(ced.Members, fields, Reference{})
+
+		// Separate fields and methods while preserving source order
+		fm.fields = make([]ClassMember, 0)
+		fm.methods = make([]ClassMember, 0)
+		for _, member := range allMembers {
+			switch member.(type) {
+			case *ClassField:
+				fm.fields = append(fm.fields, member)
+			case *ClassMethod:
+				fm.methods = append(fm.methods, member)
+			}
+		}
+
+		// Sort attributes, slots, events, CSS members alphabetically for deterministic output
+		// Note: fields and methods preserve source order (application order: base → derived → class)
 		slices.SortFunc(fm.attributes, func(a, b Attribute) int {
 			return strings.Compare(a.Name, b.Name)
 		})
@@ -651,22 +697,6 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 		})
 		slices.SortFunc(fm.cssStates, func(a, b CssCustomState) int {
 			return strings.Compare(a.Name, b.Name)
-		})
-		slices.SortFunc(fm.fields, func(a, b ClassMember) int {
-			var aName, bName string
-			switch m := a.(type) {
-			case *ClassField:
-				aName = m.Name
-			case *ClassMethod:
-				aName = m.Name
-			}
-			switch m := b.(type) {
-			case *ClassField:
-				bName = m.Name
-			case *ClassMethod:
-				bName = m.Name
-			}
-			return strings.Compare(aName, bName)
 		})
 
 		// Store in cache
