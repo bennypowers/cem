@@ -50,7 +50,7 @@ func (m *MixinDeclaration) Name() string {
 	if m == nil {
 		return ""
 	}
-	return m.ClassLike.Name
+	return m.FullyQualified.Name
 }
 
 // Clone creates a deep copy of the MixinDeclaration.
@@ -154,7 +154,7 @@ func (c *CustomElementMixinDeclaration) Name() string {
 	if c == nil {
 		return ""
 	}
-	return c.ClassLike.Name
+	return c.FullyQualified.Name
 }
 
 // Clone creates a deep copy of the CustomElementMixinDeclaration.
