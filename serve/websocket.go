@@ -110,24 +110,61 @@ func (wm *websocketManager) Broadcast(message []byte) error {
 }
 
 // BroadcastShutdown sends a shutdown notification to all clients before closing
+// Sets write deadlines to prevent blocking on unresponsive clients during shutdown
 func (wm *websocketManager) BroadcastShutdown() error {
 	shutdownMsg := []byte(`{"type":"shutdown","reason":"server-shutdown"}`)
-	return wm.Broadcast(shutdownMsg)
+
+	// Snapshot connections while holding read lock
+	wm.mu.RLock()
+	snapshot := make([]*connWrapper, 0, len(wm.connections))
+	for _, wrapper := range wm.connections {
+		snapshot = append(snapshot, wrapper)
+	}
+	wm.mu.RUnlock()
+
+	// Write shutdown messages with timeouts to prevent hanging on unresponsive clients
+	var failedConnections []*websocket.Conn
+	for _, wrapper := range snapshot {
+		wrapper.mu.Lock()
+		// Set write deadline of 1 second - if client isn't reading, we'll time out
+		_ = wrapper.conn.SetWriteDeadline(time.Now().Add(1 * time.Second))
+		err := wrapper.conn.WriteMessage(websocket.TextMessage, shutdownMsg)
+		wrapper.mu.Unlock()
+
+		if err != nil {
+			failedConnections = append(failedConnections, wrapper.conn)
+		}
+	}
+
+	// Clean up failed connections
+	if len(failedConnections) > 0 {
+		wm.mu.Lock()
+		for _, conn := range failedConnections {
+			delete(wm.connections, conn)
+			_ = conn.Close()
+		}
+		wm.mu.Unlock()
+	}
+
+	return nil
 }
 
 // CloseAll gracefully closes all WebSocket connections
+// Sets write deadlines to prevent blocking on unresponsive clients during shutdown
 func (wm *websocketManager) CloseAll() error {
 	wm.mu.Lock()
 	defer wm.mu.Unlock()
 
 	for conn, wrapper := range wm.connections {
-		// Send close frame with normal closure code
+		// Send close frame with normal closure code and 500ms timeout
+		// If client isn't reading, we'll time out and force close anyway
 		wrapper.mu.Lock()
+		_ = conn.SetWriteDeadline(time.Now().Add(500 * time.Millisecond))
 		_ = conn.WriteMessage(websocket.CloseMessage,
 			websocket.FormatCloseMessage(websocket.CloseNormalClosure, "server shutting down"))
 		wrapper.mu.Unlock()
 
-		// Close the underlying connection
+		// Close the underlying connection (this will make read loops exit)
 		_ = conn.Close()
 	}
 
