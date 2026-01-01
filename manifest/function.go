@@ -204,6 +204,9 @@ func NewRenderableFunctionDeclaration(
 }
 
 func (x *RenderableFunctionDeclaration) Name() string {
+	if x == nil || x.FunctionDeclaration == nil {
+		return ""
+	}
 	return x.FunctionDeclaration.Name()
 	// label := pterm.LightBlue("function") + " " + highlightIfDeprecated(x.FunctionDeclaration.Name(), x)
 }

@@ -452,6 +452,9 @@ func NewRenderableCustomElementDeclaration(
 }
 
 func (x *RenderableCustomElementDeclaration) Name() string {
+	if x == nil || x.CustomElementDeclaration == nil {
+		return ""
+	}
 	return x.CustomElementDeclaration.TagName
 }
 

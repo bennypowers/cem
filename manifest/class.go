@@ -199,6 +199,9 @@ func NewRenderableClassDeclaration(
 }
 
 func (x *RenderableClassDeclaration) Name() string {
+	if x == nil || x.ClassDeclaration == nil {
+		return ""
+	}
 	return x.ClassDeclaration.Name()
 }
 

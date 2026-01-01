@@ -105,7 +105,6 @@ func (v *VariableDeclaration) UnmarshalJSON(data []byte) error {
 }
 
 type RenderableVariableDeclaration struct {
-	name                string
 	VariableDeclaration *VariableDeclaration
 	Module              *Module
 	Package             *Package
@@ -118,7 +117,6 @@ func NewRenderableVariableDeclaration(
 	pkg *Package,
 ) *RenderableVariableDeclaration {
 	return &RenderableVariableDeclaration{
-		name:                vd.Name(),
 		VariableDeclaration: vd,
 		Module:              mod,
 		Package:             pkg,
@@ -126,6 +124,9 @@ func NewRenderableVariableDeclaration(
 }
 
 func (x *RenderableVariableDeclaration) Name() string {
+	if x == nil || x.VariableDeclaration == nil {
+		return ""
+	}
 	return x.VariableDeclaration.Name()
 }
 

@@ -190,6 +190,9 @@ func (c *CustomElementMixinDeclaration) Clone() Declaration {
 }
 
 func (x *RenderableMixinDeclaration) Name() string {
+	if x == nil || x.MixinDeclaration == nil {
+		return ""
+	}
 	return x.MixinDeclaration.Name()
 }
 
@@ -310,6 +313,9 @@ func (x *RenderableCustomElementMixinDeclaration) Children() []Renderable {
 }
 
 func (x *RenderableCustomElementMixinDeclaration) Name() string {
+	if x == nil || x.CustomElementMixinDeclaration == nil {
+		return ""
+	}
 	return x.CustomElementMixinDeclaration.Name()
 }
 
