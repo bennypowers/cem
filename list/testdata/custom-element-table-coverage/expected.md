@@ -43,25 +43,25 @@
 
 [96m[96mName            [90m[90m | [0m[96m[0m[96mDOM Property[90m[90m | [0m[96m[0m[96mReflects[90m[90m | [0m[96m[0m[96mSummary            [90m[90m | [0m[96m[0m[96mDefault[90m[90m | [0m[96m[0m[96mType    [90m[90m | [0m[96m[0m[96mInherited From[0m
 [96m[0m[0m----------------[90m[90m | [0m[0m------------[90m[90m | [0m[0m--------[90m[90m | [0m[0m-------------------[90m[90m | [0m[0m-------[90m[90m | [0m[0m--------[90m[90m | [0m[0m--------------
-`bar`           [90m[90m | [0m[0m`bar`       [90m[90m | [0m[0m        [90m[90m | [0m[0m                   [90m[90m | [0m[0m       [90m[90m | [0m[0m        [90m[90m | [0m[0m              
-`foo`           [90m[90m | [0m[0m`foo`       [90m[90m | [0m[0m✅      [90m[90m | [0m[0mFoo summary        [90m[90m | [0m[0m`bar`  [90m[90m | [0m[0m`string`[90m[90m | [0m[0m              
 `inherited-attr`[90m[90m | [0m[0m            [90m[90m | [0m[0m        [90m[90m | [0m[0mInherited attribute[90m[90m | [0m[0m       [90m[90m | [0m[0m        [90m[90m | [0m[0mBaseElem      
+`foo`           [90m[90m | [0m[0m`foo`       [90m[90m | [0m[0m✅      [90m[90m | [0m[0mFoo summary        [90m[90m | [0m[0m`bar`  [90m[90m | [0m[0m`string`[90m[90m | [0m[0m              
+`bar`           [90m[90m | [0m[0m`bar`       [90m[90m | [0m[0m        [90m[90m | [0m[0m                   [90m[90m | [0m[0m       [90m[90m | [0m[0m        [90m[90m | [0m[0m              
 
 ## [1;33m[1;33mSlots[0m[0m
 
 [96m[96mName            [90m[90m | [0m[96m[0m[96mSummary          [90m[90m | [0m[96m[0m[96mInherited From[0m
 [96m[0m[0m----------------[90m[90m | [0m[0m-----------------[90m[90m | [0m[0m--------------
+`inherited-slot`[90m[90m | [0m[0mInherited slot   [90m[90m | [0m[0mBaseElem      
 `<default>`     [90m[90m | [0m[0mDefault slot     [90m[90m | [0m[0m              
 `icon`          [90m[90m | [0m[0mSlot for the icon[90m[90m | [0m[0m              
-`inherited-slot`[90m[90m | [0m[0mInherited slot   [90m[90m | [0m[0mBaseElem      
 
 ## [1;33m[1;33mEvents[0m[0m
 
 [96m[96mName             [90m[90m | [0m[96m[0m[96mType                      [90m[90m | [0m[96m[0m[96mSummary        [90m[90m | [0m[96m[0m[96mInherited From[0m
 [96m[0m[0m-----------------[90m[90m | [0m[0m--------------------------[90m[90m | [0m[0m---------------[90m[90m | [0m[0m--------------
 `inherited-event`[90m[90m | [0m[0m                          [90m[90m | [0m[0mInherited event[90m[90m | [0m[0mBaseElem      
-`reset`          [90m[90m | [0m[0m                          [90m[90m | [0m[0m               [90m[90m | [0m[0m              
 `submitted`      [90m[90m | [0m[0m`CustomEvent<'a'|'b'|'c'>`[90m[90m | [0m[0mFires on submit[90m[90m | [0m[0m              
+`reset`          [90m[90m | [0m[0m                          [90m[90m | [0m[0m               [90m[90m | [0m[0m              
 
 ## [1;33m[1;33mFields[0m[0m
 

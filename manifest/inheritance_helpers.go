@@ -18,7 +18,6 @@ package manifest
 
 import (
 	"slices"
-	"strings"
 	"sync"
 )
 
@@ -177,245 +176,384 @@ func resolveMixins(pkg *Package, classLike *ClassLike, visited map[string]bool) 
 // mergeAttributes combines attributes from class and inherited sources (superclass/mixins).
 // Inherited attributes have InheritedFrom set to the source reference.
 // Class attributes take precedence and have InheritedFrom = nil.
+// Preserves source order: inherited attributes first (not overridden), then class attributes.
 // Description handling (avoid duplication):
 //   - If class description is empty → use inherited description
 //   - If class description == inherited description → use once (no duplication)
 //   - If both have different descriptions → concatenate: class + "\n\n" + inherited
 func mergeAttributes(classAttrs []Attribute, inheritedAttrs []Attribute, inheritedRef Reference) []Attribute {
-	// Create map for O(1) lookup
-	attrMap := make(map[string]Attribute)
-
-	// Add all inherited attributes with InheritedFrom set
-	for _, attr := range inheritedAttrs {
-		// Only set InheritedFrom if not already set (preserve existing inheritance info)
-		if attr.InheritedFrom == nil && inheritedRef.Name != "" {
-			attr.InheritedFrom = &inheritedRef
-		}
-		attrMap[attr.Name] = attr
+	// Build map for O(1) override detection
+	classMap := make(map[string]Attribute)
+	for _, attr := range classAttrs {
+		classMap[attr.Name] = attr
 	}
 
-	// Add class attributes (override inherited attributes)
-	for _, attr := range classAttrs {
-		if existing, exists := attrMap[attr.Name]; exists {
-			// Merge: smart description handling, class precedence for values
+	// Result slice to preserve order
+	result := make([]Attribute, 0, len(inheritedAttrs)+len(classAttrs))
 
-			// Summary: use class if present, otherwise inherited
+	// 1. Add inherited attributes that aren't overridden (preserves order from inheritedAttrs)
+	for _, attr := range inheritedAttrs {
+		// Set InheritedFrom if not already set
+		if attr.InheritedFrom == nil && inheritedRef.Name != "" {
+			// Create a copy of inheritedRef to avoid pointer aliasing
+			ref := inheritedRef
+			attr.InheritedFrom = &ref
+		}
+
+		// Only add if not overridden by class
+		if _, overridden := classMap[attr.Name]; !overridden {
+			result = append(result, attr)
+		}
+	}
+
+	// 2. Add class attributes (preserves order from classAttrs, overrides inherited)
+	for _, attr := range classAttrs {
+		// Check if we're overriding an inherited attribute
+		if inheritedAttr, exists := getAttributeFromSlice(inheritedAttrs, attr.Name); exists {
+			// Merge summaries/descriptions with smart deduplication
 			if attr.Summary == "" {
-				attr.Summary = existing.Summary
+				attr.Summary = inheritedAttr.Summary
 			}
 
 			// Description: avoid duplication
 			if attr.Description == "" {
-				// Class has no description → use inherited
-				attr.Description = existing.Description
-			} else if attr.Description != existing.Description && existing.Description != "" {
-				// Both have different descriptions → concatenate
-				attr.Description = attr.Description + "\n\n" + existing.Description
+				attr.Description = inheritedAttr.Description
+			} else if attr.Description != inheritedAttr.Description && inheritedAttr.Description != "" {
+				attr.Description = attr.Description + "\n\n" + inheritedAttr.Description
 			}
-			// If descriptions match → use class description (no duplication)
-
-			// Class attr overrides, so clear InheritedFrom
-			attr.InheritedFrom = nil
 		}
-		attrMap[attr.Name] = attr
-	}
 
-	// Convert map to slice
-	result := make([]Attribute, 0, len(attrMap))
-	for _, attr := range attrMap {
+		// Clear InheritedFrom for class attributes
+		attr.InheritedFrom = nil
 		result = append(result, attr)
 	}
 
 	return result
 }
 
+// getAttributeFromSlice finds an attribute in a slice by name (for description merging)
+func getAttributeFromSlice(attrs []Attribute, name string) (Attribute, bool) {
+	for _, attr := range attrs {
+		if attr.Name == name {
+			return attr, true
+		}
+	}
+	return Attribute{}, false
+}
+
 // mergeSlots combines slots from class and inherited sources (superclass/mixins).
+// Preserves source order: inherited slots first (not overridden), then class slots.
 // Uses smart description deduplication like mergeAttributes.
 func mergeSlots(classSlots []Slot, inheritedSlots []Slot, inheritedRef Reference) []Slot {
-	slotMap := make(map[string]Slot)
-
-	for _, slot := range inheritedSlots {
-		// Only set InheritedFrom if not already set (preserve existing inheritance info)
-		if slot.InheritedFrom == nil && inheritedRef.Name != "" {
-			slot.InheritedFrom = &inheritedRef
-		}
-		slotMap[slot.Name] = slot
+	// Build map for O(1) override detection
+	classMap := make(map[string]Slot)
+	for _, slot := range classSlots {
+		classMap[slot.Name] = slot
 	}
 
+	// Result slice to preserve order
+	result := make([]Slot, 0, len(inheritedSlots)+len(classSlots))
+
+	// 1. Add inherited slots that aren't overridden (preserves order from inheritedSlots)
+	for _, slot := range inheritedSlots {
+		// Set InheritedFrom if not already set
+		if slot.InheritedFrom == nil && inheritedRef.Name != "" {
+			// Create a copy of inheritedRef to avoid pointer aliasing
+			ref := inheritedRef
+			slot.InheritedFrom = &ref
+		}
+
+		// Only add if not overridden by class
+		if _, overridden := classMap[slot.Name]; !overridden {
+			result = append(result, slot)
+		}
+	}
+
+	// 2. Add class slots (preserves order from classSlots, overrides inherited)
 	for _, slot := range classSlots {
-		if existing, exists := slotMap[slot.Name]; exists {
+		// Check if we're overriding an inherited slot
+		if inheritedSlot, exists := getSlotFromSlice(inheritedSlots, slot.Name); exists {
+			// Merge summaries/descriptions with smart deduplication
 			if slot.Summary == "" {
-				slot.Summary = existing.Summary
+				slot.Summary = inheritedSlot.Summary
 			}
+
 			// Description: avoid duplication
 			if slot.Description == "" {
-				slot.Description = existing.Description
-			} else if slot.Description != existing.Description && existing.Description != "" {
-				slot.Description = slot.Description + "\n\n" + existing.Description
+				slot.Description = inheritedSlot.Description
+			} else if slot.Description != inheritedSlot.Description && inheritedSlot.Description != "" {
+				slot.Description = slot.Description + "\n\n" + inheritedSlot.Description
 			}
-			slot.InheritedFrom = nil
 		}
-		slotMap[slot.Name] = slot
-	}
 
-	result := make([]Slot, 0, len(slotMap))
-	for _, slot := range slotMap {
+		// Clear InheritedFrom for class slots
+		slot.InheritedFrom = nil
 		result = append(result, slot)
 	}
 
 	return result
 }
 
-// mergeEvents combines events from class and mixins.
-// Uses smart description deduplication like mergeAttributes.
-func mergeEvents(classEvents []Event, mixinEvents []Event, mixinRef Reference) []Event {
-	eventMap := make(map[string]Event)
-
-	for _, event := range mixinEvents {
-		// Only set InheritedFrom if not already set (preserve existing inheritance info)
-		if event.InheritedFrom == nil && mixinRef.Name != "" {
-			event.InheritedFrom = &mixinRef
+// getSlotFromSlice finds a slot in a slice by name (for description merging)
+func getSlotFromSlice(slots []Slot, name string) (Slot, bool) {
+	for _, slot := range slots {
+		if slot.Name == name {
+			return slot, true
 		}
-		eventMap[event.Name] = event
+	}
+	return Slot{}, false
+}
+
+// mergeEvents combines events from class and mixins.
+// Preserves source order: inherited events first (not overridden), then class events.
+// Uses smart description deduplication like mergeAttributes.
+func mergeEvents(classEvents []Event, inheritedEvents []Event, inheritedRef Reference) []Event {
+	// Build map for O(1) override detection
+	classMap := make(map[string]Event)
+	for _, event := range classEvents {
+		classMap[event.Name] = event
 	}
 
+	// Result slice to preserve order
+	result := make([]Event, 0, len(inheritedEvents)+len(classEvents))
+
+	// 1. Add inherited events that aren't overridden (preserves order from inheritedEvents)
+	for _, event := range inheritedEvents {
+		// Set InheritedFrom if not already set
+		if event.InheritedFrom == nil && inheritedRef.Name != "" {
+			// Create a copy of inheritedRef to avoid pointer aliasing
+			ref := inheritedRef
+			event.InheritedFrom = &ref
+		}
+
+		// Only add if not overridden by class
+		if _, overridden := classMap[event.Name]; !overridden {
+			result = append(result, event)
+		}
+	}
+
+	// 2. Add class events (preserves order from classEvents, overrides inherited)
 	for _, event := range classEvents {
-		if existing, exists := eventMap[event.Name]; exists {
+		// Check if we're overriding an inherited event
+		if inheritedEvent, exists := getEventFromSlice(inheritedEvents, event.Name); exists {
+			// Merge summaries/descriptions with smart deduplication
 			if event.Summary == "" {
-				event.Summary = existing.Summary
+				event.Summary = inheritedEvent.Summary
 			}
+
 			// Description: avoid duplication
 			if event.Description == "" {
-				event.Description = existing.Description
-			} else if event.Description != existing.Description && existing.Description != "" {
-				event.Description = event.Description + "\n\n" + existing.Description
+				event.Description = inheritedEvent.Description
+			} else if event.Description != inheritedEvent.Description && inheritedEvent.Description != "" {
+				event.Description = event.Description + "\n\n" + inheritedEvent.Description
 			}
-			// If descriptions match → use class description (no duplication)
-			event.InheritedFrom = nil
 		}
-		eventMap[event.Name] = event
-	}
 
-	result := make([]Event, 0, len(eventMap))
-	for _, event := range eventMap {
+		// Clear InheritedFrom for class events
+		event.InheritedFrom = nil
 		result = append(result, event)
 	}
 
 	return result
 }
 
-// mergeCssProperties combines CSS properties from class and mixins.
-// Uses smart description deduplication like mergeAttributes.
-func mergeCssProperties(classProps []CssCustomProperty, mixinProps []CssCustomProperty, mixinRef Reference) []CssCustomProperty {
-	propMap := make(map[string]CssCustomProperty)
-
-	for _, prop := range mixinProps {
-		// Only set InheritedFrom if not already set (preserve existing inheritance info)
-		if prop.InheritedFrom == nil && mixinRef.Name != "" {
-			prop.InheritedFrom = &mixinRef
+// getEventFromSlice finds an event in a slice by name (for description merging)
+func getEventFromSlice(events []Event, name string) (Event, bool) {
+	for _, event := range events {
+		if event.Name == name {
+			return event, true
 		}
-		propMap[prop.Name] = prop
+	}
+	return Event{}, false
+}
+
+// mergeCssProperties combines CSS properties from class and mixins.
+// Preserves source order: inherited properties first (not overridden), then class properties.
+// Uses smart description deduplication like mergeAttributes.
+func mergeCssProperties(classProps []CssCustomProperty, inheritedProps []CssCustomProperty, inheritedRef Reference) []CssCustomProperty {
+	// Build map for O(1) override detection
+	classMap := make(map[string]CssCustomProperty)
+	for _, prop := range classProps {
+		classMap[prop.Name] = prop
 	}
 
+	// Result slice to preserve order
+	result := make([]CssCustomProperty, 0, len(inheritedProps)+len(classProps))
+
+	// 1. Add inherited properties that aren't overridden (preserves order from inheritedProps)
+	for _, prop := range inheritedProps {
+		// Set InheritedFrom if not already set
+		if prop.InheritedFrom == nil && inheritedRef.Name != "" {
+			// Create a copy of inheritedRef to avoid pointer aliasing
+			ref := inheritedRef
+			prop.InheritedFrom = &ref
+		}
+
+		// Only add if not overridden by class
+		if _, overridden := classMap[prop.Name]; !overridden {
+			result = append(result, prop)
+		}
+	}
+
+	// 2. Add class properties (preserves order from classProps, overrides inherited)
 	for _, prop := range classProps {
-		if existing, exists := propMap[prop.Name]; exists {
+		// Check if we're overriding an inherited property
+		if inheritedProp, exists := getCssPropertyFromSlice(inheritedProps, prop.Name); exists {
+			// Merge summaries/descriptions with smart deduplication
 			if prop.Summary == "" {
-				prop.Summary = existing.Summary
+				prop.Summary = inheritedProp.Summary
 			}
+
 			// Description: avoid duplication
 			if prop.Description == "" {
-				prop.Description = existing.Description
-			} else if prop.Description != existing.Description && existing.Description != "" {
-				prop.Description = prop.Description + "\n\n" + existing.Description
+				prop.Description = inheritedProp.Description
+			} else if prop.Description != inheritedProp.Description && inheritedProp.Description != "" {
+				prop.Description = prop.Description + "\n\n" + inheritedProp.Description
 			}
-			// If descriptions match → use class description (no duplication)
-			prop.InheritedFrom = nil
 		}
-		propMap[prop.Name] = prop
-	}
 
-	result := make([]CssCustomProperty, 0, len(propMap))
-	for _, prop := range propMap {
+		// Clear InheritedFrom for class properties
+		prop.InheritedFrom = nil
 		result = append(result, prop)
 	}
 
 	return result
 }
 
-// mergeCssParts combines CSS parts from class and mixins.
-// Uses smart description deduplication like mergeAttributes.
-func mergeCssParts(classParts []CssPart, mixinParts []CssPart, mixinRef Reference) []CssPart {
-	partMap := make(map[string]CssPart)
-
-	for _, part := range mixinParts {
-		// Only set InheritedFrom if not already set (preserve existing inheritance info)
-		if part.InheritedFrom == nil && mixinRef.Name != "" {
-			part.InheritedFrom = &mixinRef
+// getCssPropertyFromSlice finds a CSS property in a slice by name (for description merging)
+func getCssPropertyFromSlice(props []CssCustomProperty, name string) (CssCustomProperty, bool) {
+	for _, prop := range props {
+		if prop.Name == name {
+			return prop, true
 		}
-		partMap[part.Name] = part
+	}
+	return CssCustomProperty{}, false
+}
+
+// mergeCssParts combines CSS parts from class and mixins.
+// Preserves source order: inherited parts first (not overridden), then class parts.
+// Uses smart description deduplication like mergeAttributes.
+func mergeCssParts(classParts []CssPart, inheritedParts []CssPart, inheritedRef Reference) []CssPart {
+	// Build map for O(1) override detection
+	classMap := make(map[string]CssPart)
+	for _, part := range classParts {
+		classMap[part.Name] = part
 	}
 
+	// Result slice to preserve order
+	result := make([]CssPart, 0, len(inheritedParts)+len(classParts))
+
+	// 1. Add inherited parts that aren't overridden (preserves order from inheritedParts)
+	for _, part := range inheritedParts {
+		// Set InheritedFrom if not already set
+		if part.InheritedFrom == nil && inheritedRef.Name != "" {
+			// Create a copy of inheritedRef to avoid pointer aliasing
+			ref := inheritedRef
+			part.InheritedFrom = &ref
+		}
+
+		// Only add if not overridden by class
+		if _, overridden := classMap[part.Name]; !overridden {
+			result = append(result, part)
+		}
+	}
+
+	// 2. Add class parts (preserves order from classParts, overrides inherited)
 	for _, part := range classParts {
-		if existing, exists := partMap[part.Name]; exists {
+		// Check if we're overriding an inherited part
+		if inheritedPart, exists := getCssPartFromSlice(inheritedParts, part.Name); exists {
+			// Merge summaries/descriptions with smart deduplication
 			if part.Summary == "" {
-				part.Summary = existing.Summary
+				part.Summary = inheritedPart.Summary
 			}
+
 			// Description: avoid duplication
 			if part.Description == "" {
-				part.Description = existing.Description
-			} else if part.Description != existing.Description && existing.Description != "" {
-				part.Description = part.Description + "\n\n" + existing.Description
+				part.Description = inheritedPart.Description
+			} else if part.Description != inheritedPart.Description && inheritedPart.Description != "" {
+				part.Description = part.Description + "\n\n" + inheritedPart.Description
 			}
-			// If descriptions match → use class description (no duplication)
-			part.InheritedFrom = nil
 		}
-		partMap[part.Name] = part
-	}
 
-	result := make([]CssPart, 0, len(partMap))
-	for _, part := range partMap {
+		// Clear InheritedFrom for class parts
+		part.InheritedFrom = nil
 		result = append(result, part)
 	}
 
 	return result
 }
 
-// mergeCssStates combines CSS states from class and mixins.
-// Uses smart description deduplication like mergeAttributes.
-func mergeCssStates(classStates []CssCustomState, mixinStates []CssCustomState, mixinRef Reference) []CssCustomState {
-	stateMap := make(map[string]CssCustomState)
-
-	for _, state := range mixinStates {
-		// Only set InheritedFrom if not already set (preserve existing inheritance info)
-		if state.InheritedFrom == nil && mixinRef.Name != "" {
-			state.InheritedFrom = &mixinRef
+// getCssPartFromSlice finds a CSS part in a slice by name (for description merging)
+func getCssPartFromSlice(parts []CssPart, name string) (CssPart, bool) {
+	for _, part := range parts {
+		if part.Name == name {
+			return part, true
 		}
-		stateMap[state.Name] = state
+	}
+	return CssPart{}, false
+}
+
+// mergeCssStates combines CSS states from class and mixins.
+// Preserves source order: inherited states first (not overridden), then class states.
+// Uses smart description deduplication like mergeAttributes.
+func mergeCssStates(classStates []CssCustomState, inheritedStates []CssCustomState, inheritedRef Reference) []CssCustomState {
+	// Build map for O(1) override detection
+	classMap := make(map[string]CssCustomState)
+	for _, state := range classStates {
+		classMap[state.Name] = state
 	}
 
+	// Result slice to preserve order
+	result := make([]CssCustomState, 0, len(inheritedStates)+len(classStates))
+
+	// 1. Add inherited states that aren't overridden (preserves order from inheritedStates)
+	for _, state := range inheritedStates {
+		// Set InheritedFrom if not already set
+		if state.InheritedFrom == nil && inheritedRef.Name != "" {
+			// Create a copy of inheritedRef to avoid pointer aliasing
+			ref := inheritedRef
+			state.InheritedFrom = &ref
+		}
+
+		// Only add if not overridden by class
+		if _, overridden := classMap[state.Name]; !overridden {
+			result = append(result, state)
+		}
+	}
+
+	// 2. Add class states (preserves order from classStates, overrides inherited)
 	for _, state := range classStates {
-		if existing, exists := stateMap[state.Name]; exists {
+		// Check if we're overriding an inherited state
+		if inheritedState, exists := getCssStateFromSlice(inheritedStates, state.Name); exists {
+			// Merge summaries/descriptions with smart deduplication
 			if state.Summary == "" {
-				state.Summary = existing.Summary
+				state.Summary = inheritedState.Summary
 			}
+
 			// Description: avoid duplication
 			if state.Description == "" {
-				state.Description = existing.Description
-			} else if state.Description != existing.Description && existing.Description != "" {
-				state.Description = state.Description + "\n\n" + existing.Description
+				state.Description = inheritedState.Description
+			} else if state.Description != inheritedState.Description && inheritedState.Description != "" {
+				state.Description = state.Description + "\n\n" + inheritedState.Description
 			}
-			// If descriptions match → use class description (no duplication)
-			state.InheritedFrom = nil
 		}
-		stateMap[state.Name] = state
-	}
 
-	result := make([]CssCustomState, 0, len(stateMap))
-	for _, state := range stateMap {
+		// Clear InheritedFrom for class states
+		state.InheritedFrom = nil
 		result = append(result, state)
 	}
 
 	return result
+}
+
+// getCssStateFromSlice finds a CSS state in a slice by name (for description merging)
+func getCssStateFromSlice(states []CssCustomState, name string) (CssCustomState, bool) {
+	for _, state := range states {
+		if state.Name == name {
+			return state, true
+		}
+	}
+	return CssCustomState{}, false
 }
 
 // mergeClassMembers combines class members (fields/methods) from class and mixins.
@@ -448,12 +586,16 @@ func mergeClassMembers(classMembers []ClassMember, mixinMembers []ClassMember, m
 			key = "field:" + m.Name
 			// Set InheritedFrom if not already set
 			if m.InheritedFrom == nil && mixinRef.Name != "" {
-				m.InheritedFrom = &mixinRef
+				// Create a copy of mixinRef to avoid pointer aliasing
+				ref := mixinRef
+				m.InheritedFrom = &ref
 			}
 		case *ClassMethod:
 			key = "method:" + m.Name
 			if m.InheritedFrom == nil && mixinRef.Name != "" {
-				m.InheritedFrom = &mixinRef
+				// Create a copy of mixinRef to avoid pointer aliasing
+				ref := mixinRef
+				m.InheritedFrom = &ref
 			}
 		default:
 			continue
@@ -592,18 +734,71 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 			if superclassRef.Name != "" {
 				superclassDecl := pkg.FindDeclaration(superclassRef)
 				if cedSuper, ok := superclassDecl.(*CustomElementDeclaration); ok {
-					// CustomElement superclass - merge all custom element members
-					attrs = mergeAttributes(attrs, cedSuper.OwnAttributes(), superclassRef)
-					slots = mergeSlots(slots, cedSuper.OwnSlots(), superclassRef)
-					events = mergeEvents(events, cedSuper.OwnEvents(), superclassRef)
-					cssProps = mergeCssProperties(cssProps, cedSuper.OwnCssProperties(), superclassRef)
-					cssParts = mergeCssParts(cssParts, cedSuper.OwnCssParts(), superclassRef)
-					cssStates = mergeCssStates(cssStates, cedSuper.OwnCssStates(), superclassRef)
+					// CustomElement superclass - append inherited members with InheritedFrom set
+					// We don't use merge here because merging multiple inherited sources would
+					// incorrectly clear InheritedFrom fields
+					for _, attr := range cedSuper.OwnAttributes() {
+						if attr.InheritedFrom == nil {
+							ref := superclassRef
+							attr.InheritedFrom = &ref
+						}
+						attrs = append(attrs, attr)
+					}
+					for _, slot := range cedSuper.OwnSlots() {
+						if slot.InheritedFrom == nil {
+							ref := superclassRef
+							slot.InheritedFrom = &ref
+						}
+						slots = append(slots, slot)
+					}
+					for _, event := range cedSuper.OwnEvents() {
+						if event.InheritedFrom == nil {
+							ref := superclassRef
+							event.InheritedFrom = &ref
+						}
+						events = append(events, event)
+					}
+					for _, prop := range cedSuper.OwnCssProperties() {
+						if prop.InheritedFrom == nil {
+							ref := superclassRef
+							prop.InheritedFrom = &ref
+						}
+						cssProps = append(cssProps, prop)
+					}
+					for _, part := range cedSuper.OwnCssParts() {
+						if part.InheritedFrom == nil {
+							ref := superclassRef
+							part.InheritedFrom = &ref
+						}
+						cssParts = append(cssParts, part)
+					}
+					for _, state := range cedSuper.OwnCssStates() {
+						if state.InheritedFrom == nil {
+							ref := superclassRef
+							state.InheritedFrom = &ref
+						}
+						cssStates = append(cssStates, state)
+					}
 				}
 			}
 
-			// Merge superclass members (all superclasses contribute via ClassLike.Members)
-			fields = mergeClassMembers(fields, superclass.Members, superclassRef)
+			// Append superclass members (all superclasses contribute via ClassLike.Members)
+			for _, member := range superclass.Members {
+				switch m := member.(type) {
+				case *ClassField:
+					if m.InheritedFrom == nil {
+						ref := superclassRef
+						m.InheritedFrom = &ref
+					}
+					fields = append(fields, m)
+				case *ClassMethod:
+					if m.InheritedFrom == nil {
+						ref := superclassRef
+						m.InheritedFrom = &ref
+					}
+					fields = append(fields, m)
+				}
+			}
 		}
 
 		// 2. Resolve and process mixins (can be multiple, more complex)
@@ -635,22 +830,73 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 				}
 			}
 
-			// Merge mixin members
-			// For CustomElementMixin, merge custom element members (attributes, slots, etc.)
+			// Append mixin members
+			// For CustomElementMixin, append custom element members (attributes, slots, etc.)
 			if cemMixin, ok := mixinDecl.(*CustomElementMixinDeclaration); ok {
 				// CustomElementMixin has attributes, slots, events, CSS
 				// Use Own* methods to get direct members (not flattened)
-				attrs = mergeAttributes(attrs, cemMixin.OwnAttributes(), mixinRef)
-				slots = mergeSlots(slots, cemMixin.OwnSlots(), mixinRef)
-				events = mergeEvents(events, cemMixin.OwnEvents(), mixinRef)
-				cssProps = mergeCssProperties(cssProps, cemMixin.OwnCssProperties(), mixinRef)
-				cssParts = mergeCssParts(cssParts, cemMixin.OwnCssParts(), mixinRef)
-				cssStates = mergeCssStates(cssStates, cemMixin.OwnCssStates(), mixinRef)
+				for _, attr := range cemMixin.OwnAttributes() {
+					if attr.InheritedFrom == nil {
+						ref := mixinRef
+						attr.InheritedFrom = &ref
+					}
+					attrs = append(attrs, attr)
+				}
+				for _, slot := range cemMixin.OwnSlots() {
+					if slot.InheritedFrom == nil {
+						ref := mixinRef
+						slot.InheritedFrom = &ref
+					}
+					slots = append(slots, slot)
+				}
+				for _, event := range cemMixin.OwnEvents() {
+					if event.InheritedFrom == nil {
+						ref := mixinRef
+						event.InheritedFrom = &ref
+					}
+					events = append(events, event)
+				}
+				for _, prop := range cemMixin.OwnCssProperties() {
+					if prop.InheritedFrom == nil {
+						ref := mixinRef
+						prop.InheritedFrom = &ref
+					}
+					cssProps = append(cssProps, prop)
+				}
+				for _, part := range cemMixin.OwnCssParts() {
+					if part.InheritedFrom == nil {
+						ref := mixinRef
+						part.InheritedFrom = &ref
+					}
+					cssParts = append(cssParts, part)
+				}
+				for _, state := range cemMixin.OwnCssStates() {
+					if state.InheritedFrom == nil {
+						ref := mixinRef
+						state.InheritedFrom = &ref
+					}
+					cssStates = append(cssStates, state)
+				}
 			}
 
 			// All mixins have class members (from ClassLike)
 			if mixinClassLike != nil {
-				fields = mergeClassMembers(fields, mixinClassLike.Members, mixinRef)
+				for _, member := range mixinClassLike.Members {
+					switch m := member.(type) {
+					case *ClassField:
+						if m.InheritedFrom == nil {
+							ref := mixinRef
+							m.InheritedFrom = &ref
+						}
+						fields = append(fields, m)
+					case *ClassMethod:
+						if m.InheritedFrom == nil {
+							ref := mixinRef
+							m.InheritedFrom = &ref
+						}
+						fields = append(fields, m)
+					}
+				}
 			}
 		}
 
@@ -678,26 +924,8 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 			}
 		}
 
-		// Sort attributes, slots, events, CSS members alphabetically for deterministic output
-		// Note: fields and methods preserve source order (application order: base → derived → class)
-		slices.SortFunc(fm.attributes, func(a, b Attribute) int {
-			return strings.Compare(a.Name, b.Name)
-		})
-		slices.SortFunc(fm.slots, func(a, b Slot) int {
-			return strings.Compare(a.Name, b.Name)
-		})
-		slices.SortFunc(fm.events, func(a, b Event) int {
-			return strings.Compare(a.Name, b.Name)
-		})
-		slices.SortFunc(fm.cssProperties, func(a, b CssCustomProperty) int {
-			return strings.Compare(a.Name, b.Name)
-		})
-		slices.SortFunc(fm.cssParts, func(a, b CssPart) int {
-			return strings.Compare(a.Name, b.Name)
-		})
-		slices.SortFunc(fm.cssStates, func(a, b CssCustomState) int {
-			return strings.Compare(a.Name, b.Name)
-		})
+		// All members preserve source order (inherited first, then class's own)
+		// Order within each category follows: base → derived → class (inheritance application order)
 
 		// Store in cache
 		flattenedMembersCache.Store(cacheKey, fm)

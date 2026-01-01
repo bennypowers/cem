@@ -266,15 +266,15 @@ func TestUnmarshalPackage(t *testing.T) {
 			if len(attrs) != 2 {
 				t.Fatalf("len(Attributes) = %d, want 2", len(attrs))
 			}
-			// Attributes are now sorted alphabetically: elevated, variant
-			if attrs[0].Name != "elevated" || attrs[1].Name != "variant" {
-				t.Errorf("Attribute names = %q,%q, want %q,%q (alphabetically sorted)", attrs[0].Name, attrs[1].Name, "elevated", "variant")
+			// Attributes preserve source order from JSON: variant, elevated
+			if attrs[0].Name != "variant" || attrs[1].Name != "elevated" {
+				t.Errorf("Attribute names = %q,%q, want %q,%q (source order)", attrs[0].Name, attrs[1].Name, "variant", "elevated")
 			}
-			if attrs[0].Type == nil || attrs[0].Type.Text != "boolean" {
-				t.Errorf("First attribute type = %+v, want boolean", attrs[0].Type)
+			if attrs[0].Type == nil || attrs[0].Type.Text != "\"primary\" | \"secondary\"" {
+				t.Errorf("First attribute type = %+v, want union", attrs[0].Type)
 			}
-			if attrs[1].Type == nil || attrs[1].Type.Text != "\"primary\" | \"secondary\"" {
-				t.Errorf("Second attribute type = %+v, want union", attrs[1].Type)
+			if attrs[1].Type == nil || attrs[1].Type.Text != "boolean" {
+				t.Errorf("Second attribute type = %+v, want boolean", attrs[1].Type)
 			}
 			t.Run("Attribute", func(t *testing.T) {
 				t.Run("TypeText", func(t *testing.T) {
