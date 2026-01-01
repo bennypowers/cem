@@ -23,6 +23,12 @@ import (
 )
 
 // External caches for flattened members (pattern from lookup_helpers.go)
+//
+// Cache Invalidation Policy:
+// - Keys are *CustomElementDeclaration pointers, which are stable across the package lifecycle
+// - Declarations are assumed to be immutable after initial package unmarshaling/population
+// - No invalidation mechanism is provided, as declarations are not modified incrementally
+// - If incremental updates are needed in the future, cache clearing should be added
 var (
 	flattenedMembersCache = &sync.Map{}
 	flattenedMembersOnce  = &sync.Map{}
@@ -52,7 +58,9 @@ func resolveSuperclass(pkg *Package, classLike *ClassLike, visited map[string]bo
 	superclassRef := *classLike.Superclass
 
 	// Skip if already visited (circular reference detection)
-	if visited[superclassRef.Name] {
+	// Use composite key to handle same-named classes across different modules
+	visitKey := superclassRef.Module + ":" + superclassRef.Name
+	if visited[visitKey] {
 		return nil
 	}
 
@@ -80,7 +88,7 @@ func resolveSuperclass(pkg *Package, classLike *ClassLike, visited map[string]bo
 	}
 
 	// Mark as visited
-	visited[superclassRef.Name] = true
+	visited[visitKey] = true
 
 	// Recursively resolve the superclass's superclass (depth-first)
 	var result []*ClassLike
@@ -105,7 +113,9 @@ func resolveMixins(pkg *Package, classLike *ClassLike, visited map[string]bool) 
 
 	for _, mixinRef := range classLike.Mixins {
 		// Skip if already visited (circular reference detection)
-		if visited[mixinRef.Name] {
+		// Use composite key to handle same-named mixins across different modules
+		visitKey := mixinRef.Module + ":" + mixinRef.Name
+		if visited[visitKey] {
 			continue
 		}
 
@@ -129,7 +139,7 @@ func resolveMixins(pkg *Package, classLike *ClassLike, visited map[string]bool) 
 		}
 
 		// Mark as visited
-		visited[mixinRef.Name] = true
+		visited[visitKey] = true
 
 		// Recursively resolve this mixin's mixins (depth-first)
 		nestedMixins := resolveMixins(pkg, mixinClassLike, visited)
@@ -141,6 +151,28 @@ func resolveMixins(pkg *Package, classLike *ClassLike, visited map[string]bool) 
 
 	return result
 }
+
+// Merge Functions Design Note:
+//
+// The following merge functions (mergeAttributes, mergeSlots, mergeEvents, etc.) follow
+// similar patterns but are implemented separately for each member type rather than using
+// Go generics. This is intentional:
+//
+// 1. Type Safety: Each function works with specific types (Attribute, Slot, etc.) with
+//    different field structures, making compile-time type checking straightforward.
+//
+// 2. Clarity: Explicit functions are easier to understand and debug than generic code
+//    with interface constraints and type parameters.
+//
+// 3. Member-Specific Logic: While the patterns are similar, each type has unique fields
+//    (e.g., Attribute.FieldName, Slot-specific handling) that would require complex
+//    interface definitions or reflection to handle generically.
+//
+// 4. Performance: No runtime type assertions or reflection overhead.
+//
+// The code duplication (~200 lines) is a conscious trade-off for maintainability and
+// type safety. If generics support improves or patterns diverge significantly, this
+// decision can be revisited.
 
 // mergeAttributes combines attributes from class and inherited sources (superclass/mixins).
 // Inherited attributes have InheritedFrom set to the source reference.
@@ -492,9 +524,8 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 	onceValue, _ := flattenedMembersOnce.LoadOrStore(cacheKey, &sync.Once{})
 	once := onceValue.(*sync.Once)
 
-	var result *flattenedMembers
 	once.Do(func() {
-		result = &flattenedMembers{}
+		fm := &flattenedMembers{}
 
 		// Start with empty slices
 		var (
@@ -568,8 +599,6 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 			for i := range pkg.Modules {
 				if slices.Contains(pkg.Modules[i].Declarations, mixinDecl) {
 					mixinRef.Module = pkg.Modules[i].Path
-				}
-				if mixinRef.Module != "" {
 					break
 				}
 			}
@@ -595,35 +624,35 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 
 		// Finally merge with class's own members
 		// Class members override mixin members
-		result.attributes = mergeAttributes(ced.OwnAttributes(), attrs, Reference{})
-		result.slots = mergeSlots(ced.OwnSlots(), slots, Reference{})
-		result.events = mergeEvents(ced.OwnEvents(), events, Reference{})
-		result.cssProperties = mergeCssProperties(ced.OwnCssProperties(), cssProps, Reference{})
-		result.cssParts = mergeCssParts(ced.OwnCssParts(), cssParts, Reference{})
-		result.cssStates = mergeCssStates(ced.OwnCssStates(), cssStates, Reference{})
-		result.fields = mergeClassMembers(ced.Members, fields, Reference{})
-		result.methods = result.fields // Both fields and methods are in Members
+		fm.attributes = mergeAttributes(ced.OwnAttributes(), attrs, Reference{})
+		fm.slots = mergeSlots(ced.OwnSlots(), slots, Reference{})
+		fm.events = mergeEvents(ced.OwnEvents(), events, Reference{})
+		fm.cssProperties = mergeCssProperties(ced.OwnCssProperties(), cssProps, Reference{})
+		fm.cssParts = mergeCssParts(ced.OwnCssParts(), cssParts, Reference{})
+		fm.cssStates = mergeCssStates(ced.OwnCssStates(), cssStates, Reference{})
+		fm.fields = mergeClassMembers(ced.Members, fields, Reference{})
+		fm.methods = fm.fields // Both fields and methods are in Members
 
 		// Sort all members for deterministic output
-		slices.SortFunc(result.attributes, func(a, b Attribute) int {
+		slices.SortFunc(fm.attributes, func(a, b Attribute) int {
 			return strings.Compare(a.Name, b.Name)
 		})
-		slices.SortFunc(result.slots, func(a, b Slot) int {
+		slices.SortFunc(fm.slots, func(a, b Slot) int {
 			return strings.Compare(a.Name, b.Name)
 		})
-		slices.SortFunc(result.events, func(a, b Event) int {
+		slices.SortFunc(fm.events, func(a, b Event) int {
 			return strings.Compare(a.Name, b.Name)
 		})
-		slices.SortFunc(result.cssProperties, func(a, b CssCustomProperty) int {
+		slices.SortFunc(fm.cssProperties, func(a, b CssCustomProperty) int {
 			return strings.Compare(a.Name, b.Name)
 		})
-		slices.SortFunc(result.cssParts, func(a, b CssPart) int {
+		slices.SortFunc(fm.cssParts, func(a, b CssPart) int {
 			return strings.Compare(a.Name, b.Name)
 		})
-		slices.SortFunc(result.cssStates, func(a, b CssCustomState) int {
+		slices.SortFunc(fm.cssStates, func(a, b CssCustomState) int {
 			return strings.Compare(a.Name, b.Name)
 		})
-		slices.SortFunc(result.fields, func(a, b ClassMember) int {
+		slices.SortFunc(fm.fields, func(a, b ClassMember) int {
 			var aName, bName string
 			switch m := a.(type) {
 			case *ClassField:
@@ -641,13 +670,10 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 		})
 
 		// Store in cache
-		flattenedMembersCache.Store(cacheKey, result)
+		flattenedMembersCache.Store(cacheKey, fm)
 	})
 
-	// Return cached result (either just created or previously cached)
-	if cached, ok := flattenedMembersCache.Load(cacheKey); ok {
-		return cached.(*flattenedMembers)
-	}
-
-	return result
+	// Return cached result
+	cached, _ := flattenedMembersCache.Load(cacheKey)
+	return cached.(*flattenedMembers)
 }
