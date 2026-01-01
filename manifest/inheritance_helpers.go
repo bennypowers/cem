@@ -18,6 +18,7 @@ package manifest
 
 import (
 	"slices"
+	"strings"
 	"sync"
 )
 
@@ -602,6 +603,42 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 		result.cssStates = mergeCssStates(ced.OwnCssStates(), cssStates, Reference{})
 		result.fields = mergeClassMembers(ced.Members, fields, Reference{})
 		result.methods = result.fields // Both fields and methods are in Members
+
+		// Sort all members for deterministic output
+		slices.SortFunc(result.attributes, func(a, b Attribute) int {
+			return strings.Compare(a.Name, b.Name)
+		})
+		slices.SortFunc(result.slots, func(a, b Slot) int {
+			return strings.Compare(a.Name, b.Name)
+		})
+		slices.SortFunc(result.events, func(a, b Event) int {
+			return strings.Compare(a.Name, b.Name)
+		})
+		slices.SortFunc(result.cssProperties, func(a, b CssCustomProperty) int {
+			return strings.Compare(a.Name, b.Name)
+		})
+		slices.SortFunc(result.cssParts, func(a, b CssPart) int {
+			return strings.Compare(a.Name, b.Name)
+		})
+		slices.SortFunc(result.cssStates, func(a, b CssCustomState) int {
+			return strings.Compare(a.Name, b.Name)
+		})
+		slices.SortFunc(result.fields, func(a, b ClassMember) int {
+			var aName, bName string
+			switch m := a.(type) {
+			case *ClassField:
+				aName = m.Name
+			case *ClassMethod:
+				aName = m.Name
+			}
+			switch m := b.(type) {
+			case *ClassField:
+				bName = m.Name
+			case *ClassMethod:
+				bName = m.Name
+			}
+			return strings.Compare(aName, bName)
+		})
 
 		// Store in cache
 		flattenedMembersCache.Store(cacheKey, result)

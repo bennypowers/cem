@@ -1,2 +1,2 @@
-[96m[96mName   [90m[90m | [0m[96m[0m[96mDOM Property[90m[90m | [0m[96m[0m[96mReflects[90m[90m | [0m[96m[0m[96mSummary[90m[90m | [0m[96m[0m[96mDefault[90m[90m | [0m[96m[0m[96mType                   [90m[90m | [0m[96m[0m[96mInherited From[0m
-[96m[0m[0mvariant[90m[90m | [0m[0m            [90m[90m | [0m[0m        [90m[90m | [0m[0m       [90m[90m | [0m[0m       [90m[90m | [0m[0m"primary" | "secondary"[90m[90m | [0m[0m              
+[96m[96mName    [90m[90m | [0m[96m[0m[96mDOM Property[90m[90m | [0m[96m[0m[96mReflects[90m[90m | [0m[96m[0m[96mSummary[90m[90m | [0m[96m[0m[96mDefault[90m[90m | [0m[96m[0m[96mType   [90m[90m | [0m[96m[0m[96mInherited From[0m
+[96m[0m[0melevated[90m[90m | [0m[0m            [90m[90m | [0m[0m        [90m[90m | [0m[0m       [90m[90m | [0m[0m       [90m[90m | [0m[0mboolean[90m[90m | [0m[0m              

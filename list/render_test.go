@@ -27,7 +27,7 @@ import (
 func TestRender(t *testing.T) {
 	t.Run("custom-element-table-coverage", func(t *testing.T) {
 		var pkg M.Package
-		testutil.LoadJSONFixture(t, "custom-element-table-coverage.json", &pkg)
+		testutil.LoadJSONFixture(t, "custom-element-table-coverage/input.json", &pkg)
 
 		renderable := M.NewRenderablePackage(&pkg)
 
@@ -37,10 +37,7 @@ func TestRender(t *testing.T) {
 			t.Fatalf("Render failed: %v", err)
 		}
 
-		testutil.CheckGolden(t, "", []byte(output), testutil.GoldenOptions{
-			Dir:          "goldens",
-			AutoName:     true,
-			Extension:    ".md",
+		testutil.CheckGolden(t, "testdata/custom-element-table-coverage/expected.md", []byte(output), testutil.GoldenOptions{
 			StripANSI:    true,
 			NormalizeEOL: true,
 		})
