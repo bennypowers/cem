@@ -37,7 +37,8 @@ func TestRender(t *testing.T) {
 			t.Fatalf("Render failed: %v", err)
 		}
 
-		testutil.CheckGolden(t, "testdata/custom-element-table-coverage/expected.md", []byte(output), testutil.GoldenOptions{
+		testutil.CheckGolden(t, "custom-element-table-coverage/expected.md", []byte(output), testutil.GoldenOptions{
+			Dir:          "testdata",
 			StripANSI:    true,
 			NormalizeEOL: true,
 		})
