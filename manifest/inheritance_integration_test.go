@@ -323,3 +323,93 @@ func TestInheritance_SlotsAndEvents(t *testing.T) {
 		t.Error("Expected at least one inherited event")
 	}
 }
+
+// TestInheritance_MultiLevelSuperclass tests 3-level superclass chain (Grandchild → Child → Base)
+func TestInheritance_MultiLevelSuperclass(t *testing.T) {
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "inheritance_multilevel_superclass.json", &pkg)
+
+	// Get the grandchild element (3 levels deep)
+	grandchildDecl := pkg.FindCustomElementDeclaration("grandchild-element")
+	if grandchildDecl == nil {
+		t.Fatal("Failed to find grandchild-element")
+	}
+
+	// Test that all 3 attributes are present
+	attrs := grandchildDecl.Attributes()
+	if len(attrs) != 3 {
+		t.Fatalf("Expected 3 flattened attributes (base + child + grandchild), got %d", len(attrs))
+	}
+
+	// Build map for easy lookup
+	attrMap := make(map[string]*manifest.Attribute)
+	for i := range attrs {
+		attrMap[attrs[i].Name] = &attrs[i]
+	}
+
+	// Verify base-attr is inherited from BaseElement
+	baseAttr, ok := attrMap["base-attr"]
+	if !ok {
+		t.Error("base-attr not found - should be inherited from BaseElement through the chain")
+	} else {
+		if baseAttr.InheritedFrom == nil {
+			t.Error("base-attr should have InheritedFrom set")
+		} else if baseAttr.InheritedFrom.Name != "BaseElement" {
+			t.Errorf("base-attr.InheritedFrom.Name = %s, want BaseElement", baseAttr.InheritedFrom.Name)
+		}
+	}
+
+	// Verify child-attr is inherited from ChildElement
+	childAttr, ok := attrMap["child-attr"]
+	if !ok {
+		t.Error("child-attr not found - should be inherited from ChildElement")
+	} else {
+		if childAttr.InheritedFrom == nil {
+			t.Error("child-attr should have InheritedFrom set")
+		} else if childAttr.InheritedFrom.Name != "ChildElement" {
+			t.Errorf("child-attr.InheritedFrom.Name = %s, want ChildElement", childAttr.InheritedFrom.Name)
+		}
+	}
+
+	// Verify grandchild-attr is NOT inherited (own attribute)
+	grandchildAttr, ok := attrMap["grandchild-attr"]
+	if !ok {
+		t.Error("grandchild-attr not found - should be own attribute")
+	} else {
+		if grandchildAttr.InheritedFrom != nil {
+			t.Errorf("grandchild-attr should not have InheritedFrom set (own attribute), but has %s", grandchildAttr.InheritedFrom.Name)
+		}
+	}
+
+	// Also verify intermediate level (ChildElement) works correctly
+	childDecl := pkg.FindCustomElementDeclaration("child-element")
+	if childDecl == nil {
+		t.Fatal("Failed to find child-element")
+	}
+
+	childAttrs := childDecl.Attributes()
+	if len(childAttrs) != 2 {
+		t.Fatalf("ChildElement: Expected 2 flattened attributes (base + child), got %d", len(childAttrs))
+	}
+
+	childAttrMap := make(map[string]*manifest.Attribute)
+	for i := range childAttrs {
+		childAttrMap[childAttrs[i].Name] = &childAttrs[i]
+	}
+
+	// ChildElement should inherit base-attr from BaseElement
+	if attr, ok := childAttrMap["base-attr"]; !ok {
+		t.Error("ChildElement: base-attr not found")
+	} else if attr.InheritedFrom == nil {
+		t.Error("ChildElement: base-attr should have InheritedFrom set")
+	} else if attr.InheritedFrom.Name != "BaseElement" {
+		t.Errorf("ChildElement: base-attr.InheritedFrom.Name = %s, want BaseElement", attr.InheritedFrom.Name)
+	}
+
+	// ChildElement's child-attr should be its own
+	if attr, ok := childAttrMap["child-attr"]; !ok {
+		t.Error("ChildElement: child-attr not found")
+	} else if attr.InheritedFrom != nil {
+		t.Error("ChildElement: child-attr should not have InheritedFrom set (own attribute)")
+	}
+}

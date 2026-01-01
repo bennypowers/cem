@@ -513,21 +513,15 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 		visitedSuperclass := make(map[string]bool)
 		superclasses := resolveSuperclass(pkg, &ced.ClassLike, visitedSuperclass)
 
-		for i, superclass := range superclasses {
-			// Find the superclass reference for InheritedFrom
-			// For the first superclass, use ced.Superclass
-			// For chain members, construct a reference to the current superclass
-			var superclassRef Reference
-			if i == 0 && ced.Superclass != nil {
-				superclassRef = *ced.Superclass
-			} else {
-				// For chain members (i > 0), construct a Reference to the current superclass
-				superclassRef = Reference{
-					Name: superclass.Name,
-				}
-				if superclass.Module != nil {
-					superclassRef.Module = superclass.Module.Path
-				}
+		for _, superclass := range superclasses {
+			// Construct a reference to the current superclass for InheritedFrom tracking
+			// Note: resolveSuperclass returns [base → derived], so we construct the reference
+			// from the current superclass in the chain, not from ced.Superclass
+			superclassRef := Reference{
+				Name: superclass.Name,
+			}
+			if superclass.Module != nil {
+				superclassRef.Module = superclass.Module.Path
 			}
 
 			// Check if this is a CustomElementDeclaration (has attributes, slots, etc.)
