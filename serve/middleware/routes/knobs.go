@@ -493,9 +493,10 @@ func generateKnobsForInstance(declaration *M.CustomElementDeclaration, currentVa
 
 	// Generate attribute knobs (skip if same-named property exists)
 	if enabled[KnobCategoryAttribute] {
+		attrs := declaration.Attributes()
 		seenAttrs := make(map[string]*M.Attribute)
-		for i := range declaration.Attributes {
-			attr := &declaration.Attributes[i]
+		for i := range attrs {
+			attr := &attrs[i]
 			// Skip attribute if a property with the same name exists
 			if propertyNames[attr.Name] {
 				continue
@@ -515,8 +516,8 @@ func generateKnobsForInstance(declaration *M.CustomElementDeclaration, currentVa
 
 		// Convert deduplicated attributes to knobs in source order
 		seen := make(map[string]bool)
-		for i := range declaration.Attributes {
-			attr := &declaration.Attributes[i]
+		for i := range attrs {
+			attr := &attrs[i]
 			// Skip if already processed or not in deduplicated set
 			if seen[attr.Name] {
 				continue
@@ -545,7 +546,8 @@ func generateKnobsForInstance(declaration *M.CustomElementDeclaration, currentVa
 
 	// Generate CSS custom property knobs
 	if enabled[KnobCategoryCSSProperty] {
-		for _, cssProp := range declaration.CssProperties {
+		cssProps := declaration.CssProperties()
+		for _, cssProp := range cssProps {
 			knob := cssPropertyToKnob(cssProp, currentValues)
 			knobs.CSSPropertyKnobs = append(knobs.CSSPropertyKnobs, knob)
 		}

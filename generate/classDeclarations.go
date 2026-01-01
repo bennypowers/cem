@@ -77,12 +77,7 @@ func (mp *ModuleProcessor) generateClassDeclarationParsed(
 	}
 
 	if decl != nil {
-		switch d := decl.(type) {
-		case *M.ClassDeclaration:
-			className = d.Name
-		case *M.CustomElementDeclaration:
-			className = d.Name
-		}
+		className = decl.Name()
 	}
 	parsed := &ParsedClass{
 		Name:           className,
@@ -160,7 +155,7 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 
 	err = mp.step("Processing members", 1, func() error {
 		members, err := mp.getClassMembersFromClassDeclarationNode(
-			declaration.Name,
+			declaration.Name(),
 			classDeclarationNode,
 			superclassName,
 		)
@@ -214,7 +209,7 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 
 	err = mp.step("Processing observedAttributes", 1, func() error {
 		for _, name := range captures["observedAttributes.attributeName"] {
-			declaration.Attributes = append(declaration.Attributes, M.Attribute{
+			declaration.CustomElement.Attributes = append(declaration.CustomElement.Attributes, M.Attribute{
 				StartByte: name.StartByte,
 				FullyQualified: M.FullyQualified{
 					Name: name.Text,
@@ -239,7 +234,7 @@ func (mp *ModuleProcessor) generateHTMLElementClassDeclaration(
 				return err
 			}
 		}
-		slices.SortStableFunc(declaration.Attributes, func(a M.Attribute, b M.Attribute) int {
+		slices.SortStableFunc(declaration.CustomElement.Attributes, func(a M.Attribute, b M.Attribute) int {
 			return int(a.StartByte - b.StartByte)
 		})
 		return nil
@@ -279,7 +274,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		errs = errors.Join(errs, &Q.NoCaptureError{Capture: "tag-name", Query: "classes"})
 	}
 
-	declaration.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
+	declaration.CustomElement.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
 		field, ok := (member).(*M.CustomElementField)
 		if ok && field.Attribute != "" {
 			return []M.Attribute{{
@@ -311,7 +306,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 				return err
 			}
 		}
-		slices.SortStableFunc(declaration.Attributes, func(a M.Attribute, b M.Attribute) int {
+		slices.SortStableFunc(declaration.CustomElement.Attributes, func(a M.Attribute, b M.Attribute) int {
 			return int(a.StartByte - b.StartByte)
 		})
 		return nil
@@ -354,10 +349,10 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		errs = errors.Join(errs, err)
 	}
 
-	slices.SortStableFunc(declaration.Slots, func(a M.Slot, b M.Slot) int {
+	slices.SortStableFunc(declaration.CustomElement.Slots, func(a M.Slot, b M.Slot) int {
 		return int(a.StartByte - b.StartByte)
 	})
-	slices.SortStableFunc(declaration.CssParts, func(a M.CssPart, b M.CssPart) int {
+	slices.SortStableFunc(declaration.CustomElement.CssParts, func(a M.CssPart, b M.CssPart) int {
 		return int(a.StartByte - b.StartByte)
 	})
 

@@ -38,12 +38,34 @@ type JavaScriptModule struct {
 	Declarations []Declaration `json:"declarations,omitempty"`
 	Exports      []Export      `json:"exports,omitempty"`
 	Deprecated   Deprecated    `json:"deprecated,omitempty"` // bool or string
+	Package      *Package      `json:"-"`                    // Backreference to containing package
 }
 
 func NewModule(file string) *Module {
 	return &Module{
 		Kind: "javascript-module",
 		Path: normalizePath(file),
+	}
+}
+
+// setDeclarationBackreferences establishes backreferences from declarations to their containing module.
+// This should be called after creating or cloning a module's declarations.
+func setDeclarationBackreferences(mod *JavaScriptModule) {
+	for i := range mod.Declarations {
+		switch decl := mod.Declarations[i].(type) {
+		case *ClassDeclaration:
+			decl.Module = mod
+		case *CustomElementDeclaration:
+			decl.Module = mod
+		case *MixinDeclaration:
+			decl.Module = mod
+		case *CustomElementMixinDeclaration:
+			decl.Module = mod
+		case *FunctionDeclaration:
+			decl.Module = mod
+		case *VariableDeclaration:
+			decl.Module = mod
+		}
 	}
 }
 
@@ -82,6 +104,9 @@ func (m *Module) UnmarshalJSON(data []byte) error {
 	if m.Declarations == nil {
 		m.Declarations = []Declaration{}
 	}
+
+	// Set backreferences from declarations to module
+	setDeclarationBackreferences(m)
 
 	for _, e := range aux.Exports {
 		export, err := unmarshalExport(e)
@@ -141,6 +166,9 @@ func (m *JavaScriptModule) Clone() *JavaScriptModule {
 	} else {
 		cloned.Exports = []Export{} // Maintain consistency
 	}
+
+	// Set backreferences from declarations to module
+	setDeclarationBackreferences(cloned)
 
 	return cloned
 }

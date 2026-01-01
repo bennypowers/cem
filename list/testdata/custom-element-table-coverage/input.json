@@ -3,6 +3,55 @@
   "modules": [
     {
       "kind": "javascript-module",
+      "path": "src/base-elem.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "BaseElem",
+          "tagName": "base-elem",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "inherited-attr",
+              "summary": "Inherited attribute"
+            }
+          ],
+          "events": [
+            {
+              "name": "inherited-event",
+              "summary": "Inherited event"
+            }
+          ],
+          "slots": [
+            {
+              "name": "inherited-slot",
+              "summary": "Inherited slot"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--inherited-color",
+              "summary": "Inherited color",
+              "syntax": "<color>"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "inherited-part",
+              "summary": "Inherited part"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "base-elem"
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/test-elem.js",
       "declarations": [
         {
@@ -10,11 +59,18 @@
           "name": "TestElem",
           "tagName": "test-elem",
           "customElement": true,
+          "superclass": {
+            "name": "BaseElem",
+            "module": "src/base-elem.js"
+          },
           "attributes": [
             {
               "name": "foo",
               "summary": "Foo summary",
-              "default": "bar"
+              "default": "bar",
+              "type": {
+                "text": "string"
+              }
             },
             {
               "name": "bar"

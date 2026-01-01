@@ -44,7 +44,7 @@ func dumpTree(t *testing.T, node pterm.TreeNode, depth int) {
 
 func TestRenderableClassDeclaration(t *testing.T) {
 	t.Run("ToTreeNode", func(t *testing.T) {
-		manifestJSON, err := os.ReadFile(filepath.Join("fixtures", "class-member-grouping.json"))
+		manifestJSON, err := os.ReadFile(filepath.Join("testdata", "class-member-grouping.json"))
 		if err != nil {
 			t.Fatal(err)
 		}

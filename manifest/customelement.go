@@ -110,6 +110,13 @@ func (c CustomElement) Clone() CustomElement {
 
 func (*CustomElementDeclaration) isDeclaration() {}
 
+func (c *CustomElementDeclaration) Name() string {
+	if c == nil {
+		return ""
+	}
+	return c.ClassLike.Name
+}
+
 // Clone creates a deep copy of the CustomElementDeclaration.
 // Handles both embedded ClassDeclaration and CustomElement structures with all their nested types.
 //
@@ -136,38 +143,38 @@ func (c *CustomElementDeclaration) Clone() Declaration {
 }
 
 func (d *CustomElementDeclaration) AddOrUpdatePart(part CssPart) {
-	i := slices.IndexFunc(d.CssParts, func(p CssPart) bool { return p.Name == part.Name })
+	i := slices.IndexFunc(d.CustomElement.CssParts, func(p CssPart) bool { return p.Name == part.Name })
 	if i >= 0 {
 		if part.Description != "" {
-			d.CssParts[i].Description = part.Description
+			d.CustomElement.CssParts[i].Description = part.Description
 		}
 		if part.Summary != "" {
-			d.CssParts[i].Summary = part.Summary
+			d.CustomElement.CssParts[i].Summary = part.Summary
 		}
 		if part.Deprecated != nil {
-			d.CssParts[i].Deprecated = part.Deprecated
+			d.CustomElement.CssParts[i].Deprecated = part.Deprecated
 		}
-		d.CssParts[i].StartByte = part.StartByte
+		d.CustomElement.CssParts[i].StartByte = part.StartByte
 	} else {
-		d.CssParts = append(d.CssParts, part)
+		d.CustomElement.CssParts = append(d.CustomElement.CssParts, part)
 	}
 }
 
 func (d *CustomElementDeclaration) AddOrUpdateSlot(slot Slot) {
-	i := slices.IndexFunc(d.Slots, func(p Slot) bool { return p.Name == slot.Name })
+	i := slices.IndexFunc(d.CustomElement.Slots, func(p Slot) bool { return p.Name == slot.Name })
 	if i >= 0 {
 		if slot.Description != "" {
-			d.Slots[i].Description = slot.Description
+			d.CustomElement.Slots[i].Description = slot.Description
 		}
 		if slot.Summary != "" {
-			d.Slots[i].Summary = slot.Summary
+			d.CustomElement.Slots[i].Summary = slot.Summary
 		}
 		if slot.Deprecated != nil {
-			d.Slots[i].Deprecated = slot.Deprecated
+			d.CustomElement.Slots[i].Deprecated = slot.Deprecated
 		}
-		d.Slots[i].StartByte = slot.StartByte
+		d.CustomElement.Slots[i].StartByte = slot.StartByte
 	} else {
-		d.Slots = append(d.Slots, slot)
+		d.CustomElement.Slots = append(d.CustomElement.Slots, slot)
 	}
 }
 
@@ -180,6 +187,133 @@ func (x *CustomElementDeclaration) IsDeprecated() bool {
 
 func (x *CustomElementDeclaration) GetStartByte() uint {
 	return x.StartByte
+}
+
+// getPackage traverses backreferences to get the containing package.
+// Returns nil if any backreference in the chain is nil.
+func (ced *CustomElementDeclaration) getPackage() *Package {
+	if ced == nil || ced.Module == nil {
+		return nil
+	}
+	return ced.Module.Package
+}
+
+// Own* getters return direct members only (no mixins)
+
+func (ced *CustomElementDeclaration) OwnAttributes() []Attribute {
+	if ced == nil {
+		return nil
+	}
+	return ced.CustomElement.Attributes
+}
+
+func (ced *CustomElementDeclaration) OwnSlots() []Slot {
+	if ced == nil {
+		return nil
+	}
+	return ced.CustomElement.Slots
+}
+
+func (ced *CustomElementDeclaration) OwnEvents() []Event {
+	if ced == nil {
+		return nil
+	}
+	return ced.CustomElement.Events
+}
+
+func (ced *CustomElementDeclaration) OwnCssProperties() []CssCustomProperty {
+	if ced == nil {
+		return nil
+	}
+	return ced.CustomElement.CssProperties
+}
+
+func (ced *CustomElementDeclaration) OwnCssParts() []CssPart {
+	if ced == nil {
+		return nil
+	}
+	return ced.CustomElement.CssParts
+}
+
+func (ced *CustomElementDeclaration) OwnCssStates() []CssCustomState {
+	if ced == nil {
+		return nil
+	}
+	return ced.CustomElement.CssStates
+}
+
+// Flattening getters return members including mixins
+// Mixin members will have InheritedFrom populated
+
+func (ced *CustomElementDeclaration) Attributes() []Attribute {
+	pkg := ced.getPackage()
+	if pkg == nil {
+		return ced.OwnAttributes()
+	}
+	return ced.flattenMembers(pkg).attributes
+}
+
+func (ced *CustomElementDeclaration) Slots() []Slot {
+	pkg := ced.getPackage()
+	if pkg == nil {
+		return ced.OwnSlots()
+	}
+	return ced.flattenMembers(pkg).slots
+}
+
+func (ced *CustomElementDeclaration) Events() []Event {
+	pkg := ced.getPackage()
+	if pkg == nil {
+		return ced.OwnEvents()
+	}
+	return ced.flattenMembers(pkg).events
+}
+
+func (ced *CustomElementDeclaration) CssProperties() []CssCustomProperty {
+	pkg := ced.getPackage()
+	if pkg == nil {
+		return ced.OwnCssProperties()
+	}
+	return ced.flattenMembers(pkg).cssProperties
+}
+
+func (ced *CustomElementDeclaration) CssParts() []CssPart {
+	pkg := ced.getPackage()
+	if pkg == nil {
+		return ced.OwnCssParts()
+	}
+	return ced.flattenMembers(pkg).cssParts
+}
+
+func (ced *CustomElementDeclaration) CssStates() []CssCustomState {
+	pkg := ced.getPackage()
+	if pkg == nil {
+		return ced.OwnCssStates()
+	}
+	return ced.flattenMembers(pkg).cssStates
+}
+
+// Fields and Methods return flattened class members
+func (ced *CustomElementDeclaration) Fields() []ClassMember {
+	if ced == nil {
+		return nil
+	}
+	pkg := ced.getPackage()
+	if pkg == nil {
+		return ced.Members
+	}
+	return ced.flattenMembers(pkg).fields
+}
+
+func (ced *CustomElementDeclaration) Methods() []ClassMember {
+	if ced == nil {
+		return nil
+	}
+	pkg := ced.getPackage()
+	if pkg == nil {
+		return ced.Members
+	}
+	return ced.flattenMembers(pkg).methods
 }
 
 func (c *CustomElementDeclaration) UnmarshalJSON(data []byte) (errs error) {
@@ -251,15 +385,16 @@ func NewRenderableCustomElementDeclaration(
 ) *RenderableCustomElementDeclaration {
 	// Use O(1) map lookups instead of O(n) linear search
 	// TODO get je, cee from other modules
-	cee := mod.LookupCustomElementExport(ced.Name)
-	je := mod.LookupJavaScriptExport(ced.Name)
+	cee := mod.LookupCustomElementExport(ced.Name())
+	je := mod.LookupJavaScriptExport(ced.Name())
 	r := RenderableCustomElementDeclaration{
 		CustomElementDeclaration: ced,
 		CustomElementExport:      cee,
 		Module:                   mod,
 	}
-	for i := range ced.Attributes {
-		m := NewRenderableAttribute(&ced.Attributes[i], ced, cee, mod)
+	attrs := ced.Attributes()
+	for i := range attrs {
+		m := NewRenderableAttribute(&attrs[i], ced, cee, mod)
 		r.ChildNodes = append(r.ChildNodes, m)
 		r.attributes = append(r.attributes, m)
 	}
@@ -268,28 +403,33 @@ func NewRenderableCustomElementDeclaration(
 		r.ChildNodes = append(r.ChildNodes, m)
 		r.demos = append(r.demos, m)
 	}
-	for i := range ced.Events {
-		m := NewRenderableEvent(&ced.Events[i], ced, cee, mod)
+	eventsSlice := ced.Events()
+	for i := range eventsSlice {
+		m := NewRenderableEvent(&eventsSlice[i], ced, cee, mod)
 		r.ChildNodes = append(r.ChildNodes, m)
 		r.events = append(r.events, m)
 	}
-	for i := range ced.Slots {
-		m := NewRenderableSlot(&ced.Slots[i], ced, cee, mod)
+	slotsSlice := ced.Slots()
+	for i := range slotsSlice {
+		m := NewRenderableSlot(&slotsSlice[i], ced, cee, mod)
 		r.ChildNodes = append(r.ChildNodes, m)
 		r.slots = append(r.slots, m)
 	}
-	for i := range ced.CssParts {
-		m := NewRenderableCssPart(&ced.CssParts[i], ced, cee, mod)
+	cssParts := ced.CssParts()
+	for i := range cssParts {
+		m := NewRenderableCssPart(&cssParts[i], ced, cee, mod)
 		r.ChildNodes = append(r.ChildNodes, m)
 		r.cssparts = append(r.cssparts, m)
 	}
-	for i := range ced.CssProperties {
-		m := NewRenderableCssCustomProperty(&ced.CssProperties[i], ced, cee, mod)
+	cssProperties := ced.CssProperties()
+	for i := range cssProperties {
+		m := NewRenderableCssCustomProperty(&cssProperties[i], ced, cee, mod)
 		r.ChildNodes = append(r.ChildNodes, m)
 		r.cssprops = append(r.cssprops, m)
 	}
-	for i := range ced.CssStates {
-		m := NewRenderableCssCustomState(&ced.CssStates[i], ced, cee, mod)
+	cssStates := ced.CssStates()
+	for i := range cssStates {
+		m := NewRenderableCssCustomState(&cssStates[i], ced, cee, mod)
 		r.ChildNodes = append(r.ChildNodes, m)
 		r.cssstates = append(r.cssstates, m)
 	}
@@ -312,6 +452,9 @@ func NewRenderableCustomElementDeclaration(
 }
 
 func (x *RenderableCustomElementDeclaration) Name() string {
+	if x == nil || x.CustomElementDeclaration == nil {
+		return ""
+	}
 	return x.CustomElementDeclaration.TagName
 }
 
@@ -380,7 +523,7 @@ func (x *RenderableCustomElementDeclaration) ToTableRow() []string {
 	}
 	return []string{
 		highlightIfDeprecated(x),
-		x.CustomElementDeclaration.Name,
+		x.CustomElementDeclaration.Name(),
 		modulePath,
 		x.CustomElementDeclaration.Summary,
 	}

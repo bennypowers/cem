@@ -342,7 +342,7 @@ func (mp *ModuleProcessor) processClasses() error {
 			})
 			parsed.CssProperties = slices.Collect(maps.Values(props))
 			slices.SortStableFunc(parsed.CssProperties, sortCustomProperty)
-			ce.CssProperties = append(ce.CssProperties, parsed.CssProperties...)
+			ce.CustomElement.CssProperties = append(ce.CustomElement.CssProperties, parsed.CssProperties...)
 		}
 
 		processed[className] = parsed
@@ -442,12 +442,12 @@ func (mp *ModuleProcessor) processDeclarations() error {
 			className := classNameNodes[0].Text
 			idx := slices.IndexFunc(mp.module.Declarations, func(decl M.Declaration) bool {
 				d, ok := decl.(*M.ClassDeclaration)
-				return ok && d.Name == classNameNodes[0].Text
+				return ok && d.Name() == classNameNodes[0].Text
 			})
 			if idx >= 0 {
 				declaration := mp.module.Declarations[idx]
 				if declaration != nil {
-					reference := M.NewReference(declaration.(*M.ClassDeclaration).Name, "", mp.module.Path)
+					reference := M.NewReference(declaration.Name(), "", mp.module.Path)
 					mp.module.Exports = append(mp.module.Exports, M.NewCustomElementExport(
 						tagName,
 						reference,
@@ -477,7 +477,7 @@ func (mp *ModuleProcessor) processDeclarations() error {
 		reference := M.NewReference(name, "", mp.module.Path)
 		index := slices.IndexFunc(mp.module.Declarations, func(d M.Declaration) bool {
 			if ce, ok := d.(*M.CustomElementDeclaration); ok {
-				return ce.Name == name
+				return ce.Name() == name
 			} else {
 				return false
 			}

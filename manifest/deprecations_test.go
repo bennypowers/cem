@@ -30,7 +30,7 @@ import (
 func TestDeprecated(t *testing.T) {
 	t.Run("deprecated-module", func(t *testing.T) {
 
-		manifestPath := filepath.Join("fixtures", "deprecated-module.json")
+		manifestPath := filepath.Join("testdata", "deprecated-module.json")
 		raw, err := os.ReadFile(manifestPath)
 		if err != nil {
 			t.Fatalf("failed to read manifest fixture: %v", err)
@@ -46,7 +46,7 @@ func TestDeprecated(t *testing.T) {
 	})
 
 	t.Run("deprecations", func(t *testing.T) {
-		manifestPath := filepath.Join("fixtures", "deprecations.json")
+		manifestPath := filepath.Join("testdata", "deprecations.json")
 		raw, err := os.ReadFile(manifestPath)
 		if err != nil {
 			t.Fatalf("failed to read manifest fixture: %v", err)
@@ -162,7 +162,7 @@ func TestDeprecated(t *testing.T) {
 	})
 
 	t.Run("VisualTreeOutput", func(t *testing.T) {
-		manifestPath := filepath.Join("fixtures", "deprecations.json")
+		manifestPath := filepath.Join("testdata", "deprecations.json")
 		raw, err := os.ReadFile(manifestPath)
 		if err != nil {
 			t.Fatalf("failed to read manifest fixture: %v", err)

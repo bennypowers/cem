@@ -71,10 +71,10 @@ func TestSourceHrefGeneration(t *testing.T) {
 		for _, decl := range module.Declarations {
 			switch d := decl.(type) {
 			case *M.ClassDeclaration:
-				if d.Name == "TestClass" {
+				if d.Name() == "TestClass" {
 					foundClass = true
 					if d.Source == nil || d.Source.Href == "" {
-						t.Errorf("Expected source href for class %s, got nil", d.Name)
+						t.Errorf("Expected source href for class %s, got nil", d.Name())
 					} else {
 						expectedPrefix := "https://github.com/example/repo/tree/main/src/source-hrefs.ts#L"
 						if !strings.HasPrefix(d.Source.Href, expectedPrefix) {
@@ -83,10 +83,10 @@ func TestSourceHrefGeneration(t *testing.T) {
 					}
 				}
 			case *M.FunctionDeclaration:
-				if d.Name == "testFunction" {
+				if d.Name() == "testFunction" {
 					foundFunction = true
 					if d.Source == nil || d.Source.Href == "" {
-						t.Errorf("Expected source href for function %s, got nil", d.Name)
+						t.Errorf("Expected source href for function %s, got nil", d.Name())
 					} else {
 						expectedPrefix := "https://github.com/example/repo/tree/main/src/source-hrefs.ts#L"
 						if !strings.HasPrefix(d.Source.Href, expectedPrefix) {
@@ -95,10 +95,10 @@ func TestSourceHrefGeneration(t *testing.T) {
 					}
 				}
 			case *M.VariableDeclaration:
-				if d.Name == "testVariable" {
+				if d.Name() == "testVariable" {
 					foundVariable = true
 					if d.Source == nil || d.Source.Href == "" {
-						t.Errorf("Expected source href for variable %s, got nil", d.Name)
+						t.Errorf("Expected source href for variable %s, got nil", d.Name())
 					} else {
 						expectedPrefix := "https://github.com/example/repo/tree/main/src/source-hrefs.ts#L"
 						if !strings.HasPrefix(d.Source.Href, expectedPrefix) {
@@ -176,15 +176,15 @@ func TestSourceHrefGenerationWithoutConfig(t *testing.T) {
 				switch d := decl.(type) {
 				case *M.ClassDeclaration:
 					if d.Source != nil {
-						t.Errorf("Expected no source href for class %s when sourceControlRootUrl is not configured, but got: %s", d.Name, d.Source.Href)
+						t.Errorf("Expected no source href for class %s when sourceControlRootUrl is not configured, but got: %s", d.Name(), d.Source.Href)
 					}
 				case *M.FunctionDeclaration:
 					if d.Source != nil {
-						t.Errorf("Expected no source href for function %s when sourceControlRootUrl is not configured, but got: %s", d.Name, d.Source.Href)
+						t.Errorf("Expected no source href for function %s when sourceControlRootUrl is not configured, but got: %s", d.Name(), d.Source.Href)
 					}
 				case *M.VariableDeclaration:
 					if d.Source != nil {
-						t.Errorf("Expected no source href for variable %s when sourceControlRootUrl is not configured, but got: %s", d.Name, d.Source.Href)
+						t.Errorf("Expected no source href for variable %s when sourceControlRootUrl is not configured, but got: %s", d.Name(), d.Source.Href)
 					}
 				}
 			}

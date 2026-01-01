@@ -47,6 +47,9 @@ var completionTestConfigs = map[string]struct {
 	"test-alert-state":    {TagName: "test-alert", AttributeName: "state"},
 	"test-alert-variant":  {TagName: "test-alert", AttributeName: "variant"},
 	"test-alert-disabled": {TagName: "test-alert", AttributeName: "disabled"},
+
+	// mixin fixtures
+	"mixin-attributes": {TagName: "my-button", AttributeName: "disabled"},
 }
 
 // TestAttributeValueCompletions_NewFixtures runs all attribute value completion tests

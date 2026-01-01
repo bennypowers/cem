@@ -2,23 +2,24 @@ package manifest_test
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
+	"io/fs"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/manifest"
 )
 
 func TestRenderableAttribute_WithMapLookup(t *testing.T) {
 	t.Run("MatchesCurrentBehavior", func(t *testing.T) {
 		// Load fixture with custom element members
-		manifestJSON, err := os.ReadFile(filepath.Join("fixtures", "custom_element_member_with_attribute.json"))
+		fixtureFS := testutil.NewFixtureFS(t, "", "/")
+		manifestJSON, err := fs.ReadFile(fixtureFS, "/custom_element_member_with_attribute.json")
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("failed to load fixture: %v", err)
 		}
 
 		var pkg manifest.Package
-		if err := json.Unmarshal([]byte(manifestJSON), &pkg); err != nil {
+		if err := json.Unmarshal(manifestJSON, &pkg); err != nil {
 			t.Fatal(err)
 		}
 
@@ -38,13 +39,14 @@ func TestRenderableAttribute_WithMapLookup(t *testing.T) {
 func TestRenderableCustomElementDeclaration_WithMapLookup(t *testing.T) {
 	t.Run("MatchesCurrentBehavior", func(t *testing.T) {
 		// Load fixture with custom element exports
-		manifestJSON, err := os.ReadFile(filepath.Join("fixtures", "custom-element-member-grouping.json"))
+		fixtureFS := testutil.NewFixtureFS(t, "", "/")
+		manifestJSON, err := fs.ReadFile(fixtureFS, "/custom-element-member-grouping.json")
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("failed to load fixture: %v", err)
 		}
 
 		var pkg manifest.Package
-		if err := json.Unmarshal([]byte(manifestJSON), &pkg); err != nil {
+		if err := json.Unmarshal(manifestJSON, &pkg); err != nil {
 			t.Fatal(err)
 		}
 
@@ -63,13 +65,14 @@ func TestRenderableCustomElementDeclaration_WithMapLookup(t *testing.T) {
 func TestNewRenderablePackage_WithMapLookup(t *testing.T) {
 	t.Run("ComprehensiveFixture", func(t *testing.T) {
 		// Load comprehensive test fixture
-		manifestJSON, err := os.ReadFile(filepath.Join("fixtures", "comprehensive-clone-test.json"))
+		fixtureFS := testutil.NewFixtureFS(t, "", "/")
+		manifestJSON, err := fs.ReadFile(fixtureFS, "/comprehensive-clone-test.json")
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("failed to load fixture: %v", err)
 		}
 
 		var pkg manifest.Package
-		if err := json.Unmarshal([]byte(manifestJSON), &pkg); err != nil {
+		if err := json.Unmarshal(manifestJSON, &pkg); err != nil {
 			t.Fatal(err)
 		}
 
@@ -106,7 +109,7 @@ func TestNewRenderablePackage_WithMapLookup(t *testing.T) {
 		mod.Path = "/test.js"
 
 		ced := &manifest.CustomElementDeclaration{}
-		ced.Name = "TestElement"
+		ced.ClassLike.Name = "TestElement"
 		ced.TagName = "test-element"
 
 		// Add many members to test map performance
@@ -127,13 +130,13 @@ func TestNewRenderablePackage_WithMapLookup(t *testing.T) {
 		// Add an attribute that references one of the fields
 		attr := &manifest.Attribute{}
 		attr.Name = "attr" + string(rune('a'))
-		ced.Attributes = []manifest.Attribute{*attr}
+		ced.CustomElement.Attributes = []manifest.Attribute{*attr}
 
 		mod.Declarations = []manifest.Declaration{ced}
 
 		cee := &manifest.CustomElementExport{}
 		cee.Declaration = &manifest.Reference{
-			Name:   ced.Name,
+			Name:   ced.Name(),
 			Module: mod.Path,
 		}
 		mod.Exports = []manifest.Export{cee}

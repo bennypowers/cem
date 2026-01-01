@@ -26,11 +26,36 @@ import (
 	"bennypowers.dev/cem/manifest"
 )
 
+// clearBackreferences clears all backreferences in a package for comparison purposes.
+// Backreferences intentionally point to different objects in clone vs original,
+// so they must be cleared before comparing for value equality.
+func clearBackreferences(pkg *manifest.Package) {
+	for i := range pkg.Modules {
+		pkg.Modules[i].Package = nil
+		for j := range pkg.Modules[i].Declarations {
+			switch decl := pkg.Modules[i].Declarations[j].(type) {
+			case *manifest.ClassDeclaration:
+				decl.Module = nil
+			case *manifest.CustomElementDeclaration:
+				decl.Module = nil
+			case *manifest.MixinDeclaration:
+				decl.Module = nil
+			case *manifest.CustomElementMixinDeclaration:
+				decl.Module = nil
+			case *manifest.FunctionDeclaration:
+				decl.Module = nil
+			case *manifest.VariableDeclaration:
+				decl.Module = nil
+			}
+		}
+	}
+}
+
 // TestPackage tests the Clone functionality across all manifest types
 // using a comprehensive manifest that includes all possible types and structures.
 func TestPackage(t *testing.T) {
 	// Load the comprehensive test manifest
-	manifestPath := filepath.Join("fixtures", "comprehensive-clone-test.json")
+	manifestPath := filepath.Join("testdata", "comprehensive-clone-test.json")
 	manifestData, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatalf("Failed to read test manifest: %v", err)
@@ -54,8 +79,17 @@ func TestPackage(t *testing.T) {
 	// 3. Modifying the original doesn't affect the clone
 
 	t.Run("ClonedValueEqualsOriginal", func(t *testing.T) {
-		if !reflect.DeepEqual(&original, cloned) {
-			t.Error("Cloned package is not deeply equal to original")
+		// Create copies with backreferences set to nil for comparison
+		// (backreferences intentionally point to different objects in clone vs original)
+		origCopy := original.Clone()
+		clonedCopy := cloned.Clone()
+
+		// Clear backreferences for comparison
+		clearBackreferences(origCopy)
+		clearBackreferences(clonedCopy)
+
+		if !reflect.DeepEqual(origCopy, clonedCopy) {
+			t.Error("Cloned package is not deeply equal to original (excluding backreferences)")
 		}
 	})
 
@@ -236,27 +270,31 @@ func TestPackage(t *testing.T) {
 		for _, module := range cloned.Modules {
 			for _, decl := range module.Declarations {
 				if customElement, ok := decl.(*manifest.CustomElementDeclaration); ok {
-					// Test attributes
-					for i, attr := range customElement.Attributes {
+					// Test attributes (use OwnAttributes for direct field access)
+					clonedAttrs := customElement.OwnAttributes()
+					for i, attr := range clonedAttrs {
 						// Modify the clone
 						attr.Summary = "Modified attribute summary"
 
 						// Verify original is unchanged
-						if i < len(original.Modules[0].Declarations[1].(*manifest.CustomElementDeclaration).Attributes) {
-							originalAttr := original.Modules[0].Declarations[1].(*manifest.CustomElementDeclaration).Attributes[i]
+						originalAttrs := original.Modules[0].Declarations[1].(*manifest.CustomElementDeclaration).OwnAttributes()
+						if i < len(originalAttrs) {
+							originalAttr := originalAttrs[i]
 							if originalAttr.Summary == "Modified attribute summary" {
 								t.Error("Original attribute was modified when clone was changed")
 							}
 						}
 					}
 
-					// Test events
-					for i, event := range customElement.Events {
+					// Test events (use OwnEvents for direct field access)
+					clonedEvents := customElement.OwnEvents()
+					for i, event := range clonedEvents {
 						event.Summary = "Modified event summary"
 
 						// Verify original is unchanged
-						if i < len(original.Modules[0].Declarations[1].(*manifest.CustomElementDeclaration).Events) {
-							originalEvent := original.Modules[0].Declarations[1].(*manifest.CustomElementDeclaration).Events[i]
+						originalEvents := original.Modules[0].Declarations[1].(*manifest.CustomElementDeclaration).OwnEvents()
+						if i < len(originalEvents) {
+							originalEvent := originalEvents[i]
 							if originalEvent.Summary == "Modified event summary" {
 								t.Error("Original event was modified when clone was changed")
 							}
@@ -342,4 +380,86 @@ func TestCloneNilSafety(t *testing.T) {
 			t.Error("Cloning nil CustomElementExport should return nil")
 		}
 	})
+}
+
+// TestCloneBackreferences verifies that backreferences are correctly set after cloning
+func TestCloneBackreferences(t *testing.T) {
+	// Create a package with modules and declarations
+	pkg := &manifest.Package{
+		SchemaVersion: "2.0.0",
+	}
+
+	mod := &manifest.Module{}
+	mod.Path = "/test.js"
+
+	// Add various declaration types
+	classDecl := &manifest.ClassDeclaration{}
+	classDecl.ClassLike.Name = "TestClass"
+
+	customElementDecl := &manifest.CustomElementDeclaration{}
+	customElementDecl.ClassLike.Name = "TestElement"
+	customElementDecl.TagName = "test-element"
+
+	mixinDecl := &manifest.MixinDeclaration{}
+	mixinDecl.FullyQualified.Name = "TestMixin"
+
+	funcDecl := &manifest.FunctionDeclaration{}
+	funcDecl.FullyQualified.Name = "testFunction"
+
+	varDecl := &manifest.VariableDeclaration{}
+	varDecl.PropertyLike.Name = "testVar"
+
+	mod.Declarations = []manifest.Declaration{
+		classDecl,
+		customElementDecl,
+		mixinDecl,
+		funcDecl,
+		varDecl,
+	}
+
+	pkg.Modules = []manifest.Module{*mod}
+
+	// Clone the package
+	cloned := pkg.Clone()
+
+	// Verify the cloned package is not nil
+	if cloned == nil {
+		t.Fatal("Cloned package should not be nil")
+	}
+
+	// Verify we have modules
+	if len(cloned.Modules) != 1 {
+		t.Fatalf("Expected 1 module, got %d", len(cloned.Modules))
+	}
+
+	// Verify the module's Package backreference
+	if cloned.Modules[0].Package != cloned {
+		t.Error("Module.Package should point to cloned package")
+	}
+
+	// Verify all declaration backreferences point to the module in the cloned slice
+	for i, decl := range cloned.Modules[0].Declarations {
+		var declModule *manifest.Module
+		switch d := decl.(type) {
+		case *manifest.ClassDeclaration:
+			declModule = d.Module
+		case *manifest.CustomElementDeclaration:
+			declModule = d.Module
+		case *manifest.MixinDeclaration:
+			declModule = d.Module
+		case *manifest.FunctionDeclaration:
+			declModule = d.Module
+		case *manifest.VariableDeclaration:
+			declModule = d.Module
+		}
+
+		if declModule != &cloned.Modules[0] {
+			t.Errorf("Declaration[%d] Module pointer should point to &cloned.Modules[0], but points elsewhere", i)
+		}
+
+		// Also verify the module's Package is correct
+		if declModule != nil && declModule.Package != cloned {
+			t.Errorf("Declaration[%d] Module.Package should point to cloned package", i)
+		}
+	}
 }

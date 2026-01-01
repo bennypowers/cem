@@ -81,7 +81,58 @@ func (p *Package) Clone() *Package {
 		cloned.Modules = []Module{} // Maintain empty slice vs nil consistency
 	}
 
+	// Set backreferences from modules to package (same as UnmarshalJSON)
+	for i := range cloned.Modules {
+		cloned.Modules[i].Package = cloned
+
+		// Update declaration backreferences to point to module in slice (not temporary clone)
+		for j := range cloned.Modules[i].Declarations {
+			switch decl := cloned.Modules[i].Declarations[j].(type) {
+			case *ClassDeclaration:
+				decl.Module = &cloned.Modules[i]
+			case *CustomElementDeclaration:
+				decl.Module = &cloned.Modules[i]
+			case *MixinDeclaration:
+				decl.Module = &cloned.Modules[i]
+			case *CustomElementMixinDeclaration:
+				decl.Module = &cloned.Modules[i]
+			case *FunctionDeclaration:
+				decl.Module = &cloned.Modules[i]
+			case *VariableDeclaration:
+				decl.Module = &cloned.Modules[i]
+			}
+		}
+	}
+
 	return cloned
+}
+
+// FindDeclaration resolves a Reference to its Declaration.
+// Searches all modules in the package for a matching declaration.
+// If ref.Module is specified, only searches in that module.
+// Returns nil if not found or if package/reference is nil.
+func (p *Package) FindDeclaration(ref Reference) Declaration {
+	if p == nil || ref.Name == "" {
+		return nil
+	}
+
+	for i := range p.Modules {
+		mod := &p.Modules[i]
+
+		// If module path specified, skip other modules
+		if ref.Module != "" && mod.Path != ref.Module {
+			continue
+		}
+
+		// Search declarations in this module
+		for _, decl := range mod.Declarations {
+			if decl.Name() == ref.Name {
+				return decl
+			}
+		}
+	}
+
+	return nil
 }
 
 // FindCustomElementDeclaration finds the CustomElementDeclaration for a given tag name.
@@ -150,6 +201,30 @@ func (x *Package) UnmarshalJSON(data []byte) error {
 	if x.Modules == nil {
 		x.Modules = []Module{}
 	}
+
+	// Set backreferences from modules to package
+	for i := range x.Modules {
+		x.Modules[i].Package = x
+
+		// Update declaration backreferences to point to module in slice (not local var)
+		for j := range x.Modules[i].Declarations {
+			switch decl := x.Modules[i].Declarations[j].(type) {
+			case *ClassDeclaration:
+				decl.Module = &x.Modules[i]
+			case *CustomElementDeclaration:
+				decl.Module = &x.Modules[i]
+			case *MixinDeclaration:
+				decl.Module = &x.Modules[i]
+			case *CustomElementMixinDeclaration:
+				decl.Module = &x.Modules[i]
+			case *FunctionDeclaration:
+				decl.Module = &x.Modules[i]
+			case *VariableDeclaration:
+				decl.Module = &x.Modules[i]
+			}
+		}
+	}
+
 	return nil
 }
 

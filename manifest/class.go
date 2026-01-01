@@ -81,6 +81,13 @@ type ClassDeclaration struct {
 
 func (*ClassDeclaration) isDeclaration() {}
 
+func (c *ClassDeclaration) Name() string {
+	if c == nil {
+		return ""
+	}
+	return c.ClassLike.Name
+}
+
 // Clone creates a deep copy of the ClassDeclaration.
 // Handles all nested ClassMembers and properly clones the embedded ClassLike structure.
 //
@@ -164,7 +171,7 @@ func NewRenderableClassDeclaration(
 	for i := range mod.Exports {
 		exp := mod.Exports[i]
 		if je, ok := exp.(*JavaScriptExport); ok {
-			if je.Declaration.Name == class.Name && (je.Declaration.Module == "" || je.Declaration.Module == mod.Path) {
+			if je.Declaration.Name == class.Name() && (je.Declaration.Module == "" || je.Declaration.Module == mod.Path) {
 				break
 			}
 		}
@@ -192,7 +199,10 @@ func NewRenderableClassDeclaration(
 }
 
 func (x *RenderableClassDeclaration) Name() string {
-	return x.ClassDeclaration.Name
+	if x == nil || x.ClassDeclaration == nil {
+		return ""
+	}
+	return x.ClassDeclaration.Name()
 }
 
 func (x *RenderableClassDeclaration) Label() string {
@@ -236,7 +246,7 @@ func (x *RenderableClassDeclaration) ToTableRow() []string {
 		modulePath = x.Module.Path
 	}
 	return []string{
-		x.ClassDeclaration.Name,
+		x.ClassDeclaration.Name(),
 		modulePath,
 		x.ClassDeclaration.Summary,
 	}

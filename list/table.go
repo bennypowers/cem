@@ -192,7 +192,7 @@ func RenderTagsTable(manifest *M.Package, opts RenderOptions) (string, error) {
 			if ce, ok := decl.(*M.CustomElementDeclaration); ok {
 				rows = append(rows, []string{
 					"<" + ce.TagName + ">",
-					ce.Name,
+					ce.Name(),
 					mod.Path,
 					ce.Summary,
 				})

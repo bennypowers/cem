@@ -35,6 +35,13 @@ type VariableDeclaration struct {
 
 func (*VariableDeclaration) isDeclaration() {}
 
+func (v *VariableDeclaration) Name() string {
+	if v == nil {
+		return ""
+	}
+	return v.PropertyLike.Name
+}
+
 // Clone creates a deep copy of the VariableDeclaration.
 // Handles the embedded PropertyLike structure and source reference.
 //
@@ -98,7 +105,6 @@ func (v *VariableDeclaration) UnmarshalJSON(data []byte) error {
 }
 
 type RenderableVariableDeclaration struct {
-	name                string
 	VariableDeclaration *VariableDeclaration
 	Module              *Module
 	Package             *Package
@@ -111,7 +117,6 @@ func NewRenderableVariableDeclaration(
 	pkg *Package,
 ) *RenderableVariableDeclaration {
 	return &RenderableVariableDeclaration{
-		name:                vd.Name,
 		VariableDeclaration: vd,
 		Module:              mod,
 		Package:             pkg,
@@ -119,8 +124,10 @@ func NewRenderableVariableDeclaration(
 }
 
 func (x *RenderableVariableDeclaration) Name() string {
-	return x.VariableDeclaration.Name
-	// "var " + x.VariableDeclaration.Name
+	if x == nil || x.VariableDeclaration == nil {
+		return ""
+	}
+	return x.VariableDeclaration.Name()
 }
 
 func (x *RenderableVariableDeclaration) Label() string {
@@ -149,7 +156,7 @@ func (x *RenderableVariableDeclaration) ToTableRow() []string {
 		typeText = x.VariableDeclaration.Type.Text
 	}
 	return []string{
-		x.VariableDeclaration.Name,
+		x.VariableDeclaration.Name(),
 		typeText,
 		x.VariableDeclaration.Summary,
 	}

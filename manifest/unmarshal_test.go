@@ -44,7 +44,7 @@ func mustRunFixture(t *testing.T) {
 
 func loadFixture(t *testing.T, name string) []byte {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join("fixtures", name))
+	data, err := os.ReadFile(filepath.Join("testdata", name))
 	if err != nil {
 		t.Fatalf("failed to load fixture %s: %v", name, err)
 	}
@@ -189,8 +189,8 @@ func TestUnmarshalPackage(t *testing.T) {
 			decls := mustModuleDecls(t, mod, 2)
 
 			ce := mustCustomElementDecl(t, decls[0])
-			if ce.Name != "MyCard" || ce.TagName != "my-card" {
-				t.Errorf("CustomElementDeclaration: got Name=%q, TagName=%q; want 'MyCard', 'my-card'", ce.Name, ce.TagName)
+			if ce.Name() != "MyCard" || ce.TagName != "my-card" {
+				t.Errorf("CustomElementDeclaration: got Name=%q, TagName=%q; want 'MyCard', 'my-card'", ce.Name(), ce.TagName)
 			}
 			if len(ce.Members) != 1 {
 				t.Fatalf("CustomElementDeclaration members = %+v, want 1 member", ce.Members)
@@ -201,8 +201,8 @@ func TestUnmarshalPackage(t *testing.T) {
 			}
 
 			cl := mustClassDecl(t, decls[1])
-			if cl.Name != "CardBase" {
-				t.Errorf("ClassDeclaration: got Name=%q, want 'CardBase'", cl.Name)
+			if cl.Name() != "CardBase" {
+				t.Errorf("ClassDeclaration: got Name=%q, want 'CardBase'", cl.Name())
 			}
 			field2 := mustClassField(t, cl.Members[0])
 			if field2.Name != "bar" || field2.Type == nil || field2.Type.Text != "number" {
@@ -219,8 +219,8 @@ func TestUnmarshalPackage(t *testing.T) {
 			if ce.TagName != "my-card" {
 				t.Errorf("TagName = %q, want 'my-card'", ce.TagName)
 			}
-			if ce.Name != "MyCard" {
-				t.Errorf("Name = %q, want 'MyCard'", ce.Name)
+			if ce.Name() != "MyCard" {
+				t.Errorf("Name = %q, want 'MyCard'", ce.Name())
 			}
 		})
 
@@ -262,17 +262,19 @@ func TestUnmarshalPackage(t *testing.T) {
 			manifestJSON := loadFixture(t, "custom_element_attributes.json")
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-			if len(ce.Attributes) != 2 {
-				t.Fatalf("len(Attributes) = %d, want 2", len(ce.Attributes))
+			attrs := ce.Attributes()
+			if len(attrs) != 2 {
+				t.Fatalf("len(Attributes) = %d, want 2", len(attrs))
 			}
-			if ce.Attributes[0].Name != "variant" || ce.Attributes[1].Name != "elevated" {
-				t.Errorf("Attribute names = %q,%q, want %q,%q", ce.Attributes[0].Name, ce.Attributes[1].Name, "variant", "elevated")
+			// Attributes preserve source order from JSON: variant, elevated
+			if attrs[0].Name != "variant" || attrs[1].Name != "elevated" {
+				t.Errorf("Attribute names = %q,%q, want %q,%q (source order)", attrs[0].Name, attrs[1].Name, "variant", "elevated")
 			}
-			if ce.Attributes[0].Type == nil || ce.Attributes[0].Type.Text != "\"primary\" | \"secondary\"" {
-				t.Errorf("First attribute type = %+v, want union", ce.Attributes[0].Type)
+			if attrs[0].Type == nil || attrs[0].Type.Text != "\"primary\" | \"secondary\"" {
+				t.Errorf("First attribute type = %+v, want union", attrs[0].Type)
 			}
-			if ce.Attributes[1].Type == nil || ce.Attributes[1].Type.Text != "boolean" {
-				t.Errorf("Second attribute type = %+v, want boolean", ce.Attributes[1].Type)
+			if attrs[1].Type == nil || attrs[1].Type.Text != "boolean" {
+				t.Errorf("Second attribute type = %+v, want boolean", attrs[1].Type)
 			}
 			t.Run("Attribute", func(t *testing.T) {
 				t.Run("TypeText", func(t *testing.T) {
@@ -282,8 +284,9 @@ func TestUnmarshalPackage(t *testing.T) {
 					if !ok {
 						t.Fatalf("not a CustomElementDeclaration: %#v", getFirstDecl(t, pkg))
 					}
-					if len(ce.Attributes) != 1 || ce.Attributes[0].Type.Text != "number" {
-						t.Errorf("unexpected attribute type: %#v", ce.Attributes)
+					attrs := ce.Attributes()
+					if len(attrs) != 1 || attrs[0].Type.Text != "number" {
+						t.Errorf("unexpected attribute type: %#v", attrs)
 					}
 				})
 				t.Run("Deprecation", func(t *testing.T) {
@@ -292,11 +295,12 @@ func TestUnmarshalPackage(t *testing.T) {
 						pkg := mustUnmarshalPackage(t, loadFixture(t, "custom-element-attr-deprecated-none.json"))
 						mod := mustFirstModule(t, pkg)
 						ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
-						if len(ce.Attributes) != 1 {
-							t.Fatalf("len(Attributes) = %d, want 1", len(ce.Attributes))
+						attrs := ce.Attributes()
+						if len(attrs) != 1 {
+							t.Fatalf("len(Attributes) = %d, want 1", len(attrs))
 						}
-						if ce.Attributes[0].Deprecated != nil {
-							t.Errorf("Attribute.Deprecated = %v, want nil", ce.Attributes[0].Deprecated)
+						if attrs[0].Deprecated != nil {
+							t.Errorf("Attribute.Deprecated = %v, want nil", attrs[0].Deprecated)
 						}
 					})
 
@@ -305,10 +309,11 @@ func TestUnmarshalPackage(t *testing.T) {
 						pkg := mustUnmarshalPackage(t, loadFixture(t, "custom-element-attr-deprecated-bool.json"))
 						mod := mustFirstModule(t, pkg)
 						ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
-						if len(ce.Attributes) != 1 {
-							t.Fatalf("len(Attributes) = %d, want 1", len(ce.Attributes))
+						attrs := ce.Attributes()
+						if len(attrs) != 1 {
+							t.Fatalf("len(Attributes) = %d, want 1", len(attrs))
 						}
-						dep := ce.Attributes[0].Deprecated
+						dep := attrs[0].Deprecated
 						if dep == nil {
 							t.Errorf("Attribute.Deprecated = nil, want non-nil")
 						} else if v, ok := dep.(DeprecatedFlag); !ok || !bool(v) {
@@ -321,10 +326,11 @@ func TestUnmarshalPackage(t *testing.T) {
 						pkg := mustUnmarshalPackage(t, loadFixture(t, "custom-element-attr-deprecated-reason.json"))
 						mod := mustFirstModule(t, pkg)
 						ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
-						if len(ce.Attributes) != 1 {
-							t.Fatalf("len(Attributes) = %d, want 1", len(ce.Attributes))
+						attrs := ce.Attributes()
+						if len(attrs) != 1 {
+							t.Fatalf("len(Attributes) = %d, want 1", len(attrs))
 						}
-						dep := ce.Attributes[0].Deprecated
+						dep := attrs[0].Deprecated
 						if dep == nil {
 							t.Errorf("Attribute.Deprecated = nil, want non-nil")
 						} else if v, ok := dep.(DeprecatedReason); !ok || string(v) != "use something else" {
@@ -338,8 +344,9 @@ func TestUnmarshalPackage(t *testing.T) {
 				manifestJSON := loadFixture(t, "custom_element_events.json")
 				pkg := mustUnmarshalPackage(t, manifestJSON)
 				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-				if len(ce.Events) != 1 || ce.Events[0].Name != "my-card-selected" {
-					t.Errorf("Events = %+v, want 1 my-card-selected", ce.Events)
+				events := ce.Events()
+				if len(events) != 1 || events[0].Name != "my-card-selected" {
+					t.Errorf("Events = %+v, want 1 my-card-selected", events)
 				}
 				t.Run("TypeText", func(t *testing.T) {
 					data := loadFixture(t, "event-type-text.json")
@@ -348,8 +355,9 @@ func TestUnmarshalPackage(t *testing.T) {
 					if !ok {
 						t.Fatalf("not a CustomElementDeclaration: %#v", getFirstDecl(t, pkg))
 					}
-					if len(ce.Events) != 1 || ce.Events[0].Type.Text != "CustomEvent" {
-						t.Errorf("unexpected event type: %#v", ce.Events)
+					events := ce.Events()
+					if len(events) != 1 || events[0].Type.Text != "CustomEvent" {
+						t.Errorf("unexpected event type: %#v", events)
 					}
 				})
 				t.Run("Deprecation", func(t *testing.T) {
@@ -358,7 +366,7 @@ func TestUnmarshalPackage(t *testing.T) {
 						manifestJSON := loadFixture(t, "event-deprecated-bool.json")
 						pkg := mustUnmarshalPackage(t, manifestJSON)
 						ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-						evs := ce.Events
+						evs := ce.Events()
 						if len(evs) != 1 {
 							t.Fatalf("len(Events) = %d, want 1", len(evs))
 						}
@@ -372,7 +380,7 @@ func TestUnmarshalPackage(t *testing.T) {
 						manifestJSON := loadFixture(t, "event-deprecated-reason.json")
 						pkg := mustUnmarshalPackage(t, manifestJSON)
 						ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-						evs := ce.Events
+						evs := ce.Events()
 						if len(evs) != 1 {
 							t.Fatalf("len(Events) = %d, want 1", len(evs))
 						}
@@ -389,8 +397,9 @@ func TestUnmarshalPackage(t *testing.T) {
 			manifestJSON := loadFixture(t, "custom_element_slots.json")
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-			if len(ce.Slots) != 1 || ce.Slots[0].Description != "Default slot" {
-				t.Errorf("Slots = %+v, want 1 Default slot", ce.Slots)
+			slots := ce.Slots()
+			if len(slots) != 1 || slots[0].Description != "Default slot" {
+				t.Errorf("Slots = %+v, want 1 Default slot", slots)
 			}
 		})
 
@@ -400,7 +409,7 @@ func TestUnmarshalPackage(t *testing.T) {
 				manifestJSON := loadFixture(t, "slot-deprecated-bool.json")
 				pkg := mustUnmarshalPackage(t, manifestJSON)
 				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-				slots := ce.Slots
+				slots := ce.Slots()
 				if len(slots) != 1 {
 					t.Fatalf("len(Slots) = %d, want 1", len(slots))
 				}
@@ -414,7 +423,7 @@ func TestUnmarshalPackage(t *testing.T) {
 				manifestJSON := loadFixture(t, "slot-deprecated-reason.json")
 				pkg := mustUnmarshalPackage(t, manifestJSON)
 				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-				slots := ce.Slots
+				slots := ce.Slots()
 				if len(slots) != 1 {
 					t.Fatalf("len(Slots) = %d, want 1", len(slots))
 				}
@@ -429,14 +438,17 @@ func TestUnmarshalPackage(t *testing.T) {
 			manifestJSON := loadFixture(t, "custom_element_css_parts_properties_states.json")
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-			if len(ce.CssParts) != 1 || ce.CssParts[0].Name != "header" {
-				t.Errorf("CssParts = %+v, want 1 header", ce.CssParts)
+			parts := ce.CssParts()
+			if len(parts) != 1 || parts[0].Name != "header" {
+				t.Errorf("CssParts = %+v, want 1 header", parts)
 			}
-			if len(ce.CssProperties) != 1 || ce.CssProperties[0].Name != "--my-card-color" {
-				t.Errorf("CssProperties = %+v, want 1 --my-card-color", ce.CssProperties)
+			props := ce.CssProperties()
+			if len(props) != 1 || props[0].Name != "--my-card-color" {
+				t.Errorf("CssProperties = %+v, want 1 --my-card-color", props)
 			}
-			if len(ce.CssStates) != 1 || ce.CssStates[0].Name != "--active" {
-				t.Errorf("CssStates = %+v, want 1 --active", ce.CssStates)
+			states := ce.CssStates()
+			if len(states) != 1 || states[0].Name != "--active" {
+				t.Errorf("CssStates = %+v, want 1 --active", states)
 			}
 		})
 
@@ -446,7 +458,7 @@ func TestUnmarshalPackage(t *testing.T) {
 				manifestJSON := loadFixture(t, "part-deprecated-bool.json")
 				pkg := mustUnmarshalPackage(t, manifestJSON)
 				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-				parts := ce.CssParts
+				parts := ce.CssParts()
 				if len(parts) != 1 {
 					t.Fatalf("len(CssParts) = %d, want 1", len(parts))
 				}
@@ -460,7 +472,7 @@ func TestUnmarshalPackage(t *testing.T) {
 				manifestJSON := loadFixture(t, "part-deprecated-reason.json")
 				pkg := mustUnmarshalPackage(t, manifestJSON)
 				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-				parts := ce.CssParts
+				parts := ce.CssParts()
 				if len(parts) != 1 {
 					t.Fatalf("len(CssParts) = %d, want 1", len(parts))
 				}
@@ -476,7 +488,7 @@ func TestUnmarshalPackage(t *testing.T) {
 				manifestJSON := loadFixture(t, "css-property-deprecated-bool.json")
 				pkg := mustUnmarshalPackage(t, manifestJSON)
 				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-				props := ce.CssProperties
+				props := ce.CssProperties()
 				if len(props) != 1 {
 					t.Fatalf("len(CssProperties) = %d, want 1", len(props))
 				}
@@ -489,7 +501,7 @@ func TestUnmarshalPackage(t *testing.T) {
 				manifestJSON := loadFixture(t, "css-property-deprecated-reason.json")
 				pkg := mustUnmarshalPackage(t, manifestJSON)
 				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-				props := ce.CssProperties
+				props := ce.CssProperties()
 				if len(props) != 1 {
 					t.Fatalf("len(CssProperties) = %d, want 1", len(props))
 				}
@@ -505,7 +517,7 @@ func TestUnmarshalPackage(t *testing.T) {
 				manifestJSON := loadFixture(t, "css-state-deprecated-bool.json")
 				pkg := mustUnmarshalPackage(t, manifestJSON)
 				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-				states := ce.CssStates
+				states := ce.CssStates()
 				if len(states) != 1 {
 					t.Fatalf("len(CssStates) = %d, want 1", len(states))
 				}
@@ -518,7 +530,7 @@ func TestUnmarshalPackage(t *testing.T) {
 				manifestJSON := loadFixture(t, "css-state-deprecated-reason.json")
 				pkg := mustUnmarshalPackage(t, manifestJSON)
 				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
-				states := ce.CssStates
+				states := ce.CssStates()
 				if len(states) != 1 {
 					t.Fatalf("len(CssStates) = %d, want 1", len(states))
 				}
@@ -586,8 +598,8 @@ func TestUnmarshalPackage(t *testing.T) {
 		pkg := mustUnmarshalPackage(t, manifestJSON)
 		mod := mustFirstModule(t, pkg)
 		c := mustClassDecl(t, mustModuleDecls(t, mod, 1)[0])
-		if c.Name != "MyCardBase" {
-			t.Errorf("Name = %q, want 'MyCardBase'", c.Name)
+		if c.Name() != "MyCardBase" {
+			t.Errorf("Name = %q, want 'MyCardBase'", c.Name())
 		}
 		if len(c.Members) != 1 {
 			t.Errorf("Members = %+v, want 1 member", c.Members)
@@ -670,7 +682,7 @@ func TestUnmarshalPackage(t *testing.T) {
 		pkg := mustUnmarshalPackage(t, manifestJSON)
 		mod := mustFirstModule(t, pkg)
 		m := mustMixinDecl(t, mustModuleDecls(t, mod, 1)[0])
-		if m.Name != "MyMixin" {
+		if m.Name() != "MyMixin" {
 			t.Errorf("Name = %+v, want 'MyMixin'", m)
 		}
 		if len(m.Members) != 1 {
@@ -714,8 +726,8 @@ func TestUnmarshalPackage(t *testing.T) {
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			mod := mustFirstModule(t, pkg)
 			fn := mustFunctionDecl(t, mustModuleDecls(t, mod, 1)[0])
-			if fn.Name != "helperFn" {
-				t.Errorf("Name = %q, want 'helperFn'", fn.Name)
+			if fn.Name() != "helperFn" {
+				t.Errorf("Name = %q, want 'helperFn'", fn.Name())
 			}
 			if len(fn.Parameters) != 1 || fn.Parameters[0].Name != "x" || fn.Parameters[0].Type == nil || fn.Parameters[0].Type.Text != "number" {
 				t.Errorf("Parameters = %+v, want 1 x number", fn.Parameters)
@@ -823,8 +835,8 @@ func TestUnmarshalPackage(t *testing.T) {
 		pkg := mustUnmarshalPackage(t, manifestJSON)
 		mod := mustFirstModule(t, pkg)
 		v := mustVariableDecl(t, mustModuleDecls(t, mod, 1)[0])
-		if v.Name != "CONST_VAL" {
-			t.Errorf("Name = %q, want 'CONST_VAL'", v.Name)
+		if v.Name() != "CONST_VAL" {
+			t.Errorf("Name = %q, want 'CONST_VAL'", v.Name())
 		}
 		if v.Type == nil || v.Type.Text != "string" {
 			t.Errorf("Type = %+v, want string", v.Type)
@@ -870,8 +882,8 @@ func TestUnmarshalPackage(t *testing.T) {
 		pkg := mustUnmarshalPackage(t, manifestJSON)
 		mod := mustFirstModule(t, pkg)
 		cem := mustCustomElementMixinDecl(t, mustModuleDecls(t, mod, 1)[0])
-		if cem.Name != "MyCustomElementMixin" {
-			t.Errorf("Name = %q, want 'MyCustomElementMixin'", cem.Name)
+		if cem.Name() != "MyCustomElementMixin" {
+			t.Errorf("Name = %q, want 'MyCustomElementMixin'", cem.Name())
 		}
 		if len(cem.Members) != 1 {
 			t.Errorf("Members = %+v, want 1 item", cem.Members)
@@ -880,8 +892,9 @@ func TestUnmarshalPackage(t *testing.T) {
 		if member.Name != "cemProp" {
 			t.Errorf("Members = %+v, want 1 cemProp", cem.Members)
 		}
-		if len(cem.Attributes) != 1 || cem.Attributes[0].Name != "cem-attr" {
-			t.Errorf("Attributes = %+v, want 1 cem-attr", cem.Attributes)
+		attrs := cem.Attributes()
+		if len(attrs) != 1 || attrs[0].Name != "cem-attr" {
+			t.Errorf("Attributes = %+v, want 1 cem-attr", attrs)
 		}
 	})
 

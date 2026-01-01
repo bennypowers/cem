@@ -18,18 +18,19 @@ package manifest
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
+	"io/fs"
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRenderableCustomElementDeclaration(t *testing.T) {
 	t.Run("ToTreeNode", func(t *testing.T) {
-		manifestJSON, err := os.ReadFile(filepath.Join("fixtures", "custom-element-member-grouping.json"))
+		fixtureFS := testutil.NewFixtureFS(t, "", "/")
+		manifestJSON, err := fs.ReadFile(fixtureFS, "/custom-element-member-grouping.json")
 		if err != nil {
 			t.Fatal(err)
 		}

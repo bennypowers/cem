@@ -196,7 +196,7 @@ func (x *Package) TagRenderableAttributes(tagName string) (attrs []*RenderableAt
 		}
 	}
 	attrMap := make(map[string]RenderableAttribute)
-	for _, attr := range ced.Attributes {
+	for _, attr := range ced.Attributes() {
 		attrCopy := attr // Create a copy of the loop variable
 		var field *CustomElementField
 		if f, ok := fieldMap[attrCopy.Name]; ok {
@@ -228,8 +228,9 @@ func (x *Package) TagRenderableSlots(tagName string) (slots []*RenderableSlot, e
 	if err != nil {
 		return nil, err
 	}
-	for i := range ced.Slots {
-		slot := &ced.Slots[i]
+	slotsSlice := ced.Slots()
+	for i := range slotsSlice {
+		slot := &slotsSlice[i]
 		slots = append(slots, &RenderableSlot{
 			Slot:                     slot,
 			CustomElementDeclaration: ced,
@@ -246,8 +247,9 @@ func (x *Package) TagRenderableCssProperties(tagName string) (props []*Renderabl
 	if err != nil {
 		return nil, err
 	}
-	for i := range ced.CssProperties {
-		prop := &ced.CssProperties[i]
+	cssProperties := ced.CssProperties()
+	for i := range cssProperties {
+		prop := &cssProperties[i]
 		props = append(props, &RenderableCssCustomProperty{
 			CssCustomProperty:        prop,
 			CustomElementDeclaration: ced,
@@ -264,8 +266,9 @@ func (x *Package) TagRenderableCssStates(tagName string) (states []*RenderableCs
 	if err != nil {
 		return nil, err
 	}
-	for i := range ced.CssStates {
-		state := &ced.CssStates[i]
+	cssStates := ced.CssStates()
+	for i := range cssStates {
+		state := &cssStates[i]
 		states = append(states, &RenderableCssCustomState{
 			CssCustomState:           state,
 			CustomElementDeclaration: ced,
@@ -282,8 +285,9 @@ func (x *Package) TagRenderableCssParts(tagName string) (parts []*RenderableCssP
 	if err != nil {
 		return nil, err
 	}
-	for i := range ced.CssParts {
-		part := &ced.CssParts[i]
+	cssParts := ced.CssParts()
+	for i := range cssParts {
+		part := &cssParts[i]
 		parts = append(parts, &RenderableCssPart{
 			CssPart:                  part,
 			CustomElementDeclaration: ced,
@@ -300,8 +304,9 @@ func (x *Package) TagRenderableEvents(tagName string) (events []*RenderableEvent
 	if err != nil {
 		return nil, err
 	}
-	for i := range ced.Events {
-		event := &ced.Events[i]
+	eventsSlice := ced.Events()
+	for i := range eventsSlice {
+		event := &eventsSlice[i]
 		events = append(events, &RenderableEvent{
 			Event:                    event,
 			CustomElementDeclaration: ced,

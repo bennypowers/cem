@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "circular.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "CircularElement",
+          "tagName": "circular-element",
+          "customElement": true,
+          "description": "Element with circular superclass reference",
+          "superclass": {
+            "name": "CircularElement",
+            "module": "circular.js"
+          },
+          "attributes": [
+            {
+              "name": "own-attr",
+              "type": { "text": "string" },
+              "description": "Own attribute"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

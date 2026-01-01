@@ -37,7 +37,7 @@ func NewFixtureFS(t *testing.T, fixtureDir string, rootPath string) *platform.Ma
 
 	// Go test changes working directory based on which package is being tested.
 	// Try multiple possible paths:
-	// 1. testdata/ - for tests in serve package
+	// 1. testdata/ - for tests in current package
 	// 2. ../../testdata/ - for tests in serve/middleware/* packages
 	// 3. serve/testdata/ - fallback if running from module root
 	possiblePaths := []string{

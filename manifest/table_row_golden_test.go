@@ -29,14 +29,15 @@ func TestAttributeToTableRowGolden(t *testing.T) {
 	testutil.LoadJSONFixture(t, "custom_element_attributes.json", &pkg)
 
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
-	renderable := manifest.NewRenderableAttribute(&ced.Attributes[0], ced, nil, &pkg.Modules[0])
+	attrs := ced.Attributes()
+	renderable := manifest.NewRenderableAttribute(&attrs[0], ced, nil, &pkg.Modules[0])
 
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
 	testutil.CheckGolden(t, "attribute_row", []byte(table), testutil.GoldenOptions{
-		Dir:       "fixtures",
+		Dir:       "testdata",
 		Extension: ".md",
 		StripANSI: true,
 	})
@@ -47,14 +48,15 @@ func TestSlotToTableRowGolden(t *testing.T) {
 	testutil.LoadJSONFixture(t, "custom_element_slots.json", &pkg)
 
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
-	renderable := manifest.NewRenderableSlot(&ced.Slots[0], ced, nil, &pkg.Modules[0])
+	slots := ced.Slots()
+	renderable := manifest.NewRenderableSlot(&slots[0], ced, nil, &pkg.Modules[0])
 
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
 	testutil.CheckGolden(t, "slot_row", []byte(table), testutil.GoldenOptions{
-		Dir:       "fixtures",
+		Dir:       "testdata",
 		Extension: ".md",
 		StripANSI: true,
 	})
@@ -65,14 +67,15 @@ func TestEventToTableRowGolden(t *testing.T) {
 	testutil.LoadJSONFixture(t, "custom_element_events.json", &pkg)
 
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
-	renderable := manifest.NewRenderableEvent(&ced.Events[0], ced, nil, &pkg.Modules[0])
+	events := ced.Events()
+	renderable := manifest.NewRenderableEvent(&events[0], ced, nil, &pkg.Modules[0])
 
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
 	testutil.CheckGolden(t, "event_row", []byte(table), testutil.GoldenOptions{
-		Dir:       "fixtures",
+		Dir:       "testdata",
 		Extension: ".md",
 		StripANSI: true,
 	})
@@ -83,14 +86,15 @@ func TestCssPropertyToTableRowGolden(t *testing.T) {
 	testutil.LoadJSONFixture(t, "custom_element_css_parts_properties_states.json", &pkg)
 
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
-	renderable := manifest.NewRenderableCssCustomProperty(&ced.CssProperties[0], ced, nil, &pkg.Modules[0])
+	props := ced.CssProperties()
+	renderable := manifest.NewRenderableCssCustomProperty(&props[0], ced, nil, &pkg.Modules[0])
 
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
 	testutil.CheckGolden(t, "css_property_row", []byte(table), testutil.GoldenOptions{
-		Dir:       "fixtures",
+		Dir:       "testdata",
 		Extension: ".md",
 		StripANSI: true,
 	})
@@ -101,14 +105,15 @@ func TestCssPartToTableRowGolden(t *testing.T) {
 	testutil.LoadJSONFixture(t, "custom_element_css_parts_properties_states.json", &pkg)
 
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
-	renderable := manifest.NewRenderableCssPart(&ced.CssParts[0], ced, nil, &pkg.Modules[0])
+	parts := ced.CssParts()
+	renderable := manifest.NewRenderableCssPart(&parts[0], ced, nil, &pkg.Modules[0])
 
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
 	testutil.CheckGolden(t, "css_part_row", []byte(table), testutil.GoldenOptions{
-		Dir:       "fixtures",
+		Dir:       "testdata",
 		Extension: ".md",
 		StripANSI: true,
 	})
@@ -132,7 +137,7 @@ func TestClassMethodToTableRowGolden(t *testing.T) {
 
 	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
 	testutil.CheckGolden(t, "class_method_row", []byte(table), testutil.GoldenOptions{
-		Dir:       "fixtures",
+		Dir:       "testdata",
 		Extension: ".md",
 		StripANSI: true,
 	})
