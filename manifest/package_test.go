@@ -26,6 +26,31 @@ import (
 	"bennypowers.dev/cem/manifest"
 )
 
+// clearBackreferences clears all backreferences in a package for comparison purposes.
+// Backreferences intentionally point to different objects in clone vs original,
+// so they must be cleared before comparing for value equality.
+func clearBackreferences(pkg *manifest.Package) {
+	for i := range pkg.Modules {
+		pkg.Modules[i].Package = nil
+		for j := range pkg.Modules[i].Declarations {
+			switch decl := pkg.Modules[i].Declarations[j].(type) {
+			case *manifest.ClassDeclaration:
+				decl.Module = nil
+			case *manifest.CustomElementDeclaration:
+				decl.Module = nil
+			case *manifest.MixinDeclaration:
+				decl.Module = nil
+			case *manifest.CustomElementMixinDeclaration:
+				decl.Module = nil
+			case *manifest.FunctionDeclaration:
+				decl.Module = nil
+			case *manifest.VariableDeclaration:
+				decl.Module = nil
+			}
+		}
+	}
+}
+
 // TestPackage tests the Clone functionality across all manifest types
 // using a comprehensive manifest that includes all possible types and structures.
 func TestPackage(t *testing.T) {
@@ -60,44 +85,8 @@ func TestPackage(t *testing.T) {
 		clonedCopy := cloned.Clone()
 
 		// Clear backreferences for comparison
-		for i := range origCopy.Modules {
-			origCopy.Modules[i].Package = nil
-			for j := range origCopy.Modules[i].Declarations {
-				switch decl := origCopy.Modules[i].Declarations[j].(type) {
-				case *manifest.ClassDeclaration:
-					decl.Module = nil
-				case *manifest.CustomElementDeclaration:
-					decl.Module = nil
-				case *manifest.MixinDeclaration:
-					decl.Module = nil
-				case *manifest.CustomElementMixinDeclaration:
-					decl.Module = nil
-				case *manifest.FunctionDeclaration:
-					decl.Module = nil
-				case *manifest.VariableDeclaration:
-					decl.Module = nil
-				}
-			}
-		}
-		for i := range clonedCopy.Modules {
-			clonedCopy.Modules[i].Package = nil
-			for j := range clonedCopy.Modules[i].Declarations {
-				switch decl := clonedCopy.Modules[i].Declarations[j].(type) {
-				case *manifest.ClassDeclaration:
-					decl.Module = nil
-				case *manifest.CustomElementDeclaration:
-					decl.Module = nil
-				case *manifest.MixinDeclaration:
-					decl.Module = nil
-				case *manifest.CustomElementMixinDeclaration:
-					decl.Module = nil
-				case *manifest.FunctionDeclaration:
-					decl.Module = nil
-				case *manifest.VariableDeclaration:
-					decl.Module = nil
-				}
-			}
-		}
+		clearBackreferences(origCopy)
+		clearBackreferences(clonedCopy)
 
 		if !reflect.DeepEqual(origCopy, clonedCopy) {
 			t.Error("Cloned package is not deeply equal to original (excluding backreferences)")

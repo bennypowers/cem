@@ -48,6 +48,27 @@ func NewModule(file string) *Module {
 	}
 }
 
+// setDeclarationBackreferences establishes backreferences from declarations to their containing module.
+// This should be called after creating or cloning a module's declarations.
+func setDeclarationBackreferences(mod *JavaScriptModule) {
+	for i := range mod.Declarations {
+		switch decl := mod.Declarations[i].(type) {
+		case *ClassDeclaration:
+			decl.Module = mod
+		case *CustomElementDeclaration:
+			decl.Module = mod
+		case *MixinDeclaration:
+			decl.Module = mod
+		case *CustomElementMixinDeclaration:
+			decl.Module = mod
+		case *FunctionDeclaration:
+			decl.Module = mod
+		case *VariableDeclaration:
+			decl.Module = mod
+		}
+	}
+}
+
 func (m *Module) UnmarshalJSON(data []byte) error {
 	type Rest Module
 	aux := &struct {
@@ -85,22 +106,7 @@ func (m *Module) UnmarshalJSON(data []byte) error {
 	}
 
 	// Set backreferences from declarations to module
-	for i := range m.Declarations {
-		switch decl := m.Declarations[i].(type) {
-		case *ClassDeclaration:
-			decl.Module = m
-		case *CustomElementDeclaration:
-			decl.Module = m
-		case *MixinDeclaration:
-			decl.Module = m
-		case *CustomElementMixinDeclaration:
-			decl.Module = m
-		case *FunctionDeclaration:
-			decl.Module = m
-		case *VariableDeclaration:
-			decl.Module = m
-		}
-	}
+	setDeclarationBackreferences(m)
 
 	for _, e := range aux.Exports {
 		export, err := unmarshalExport(e)
@@ -161,23 +167,8 @@ func (m *JavaScriptModule) Clone() *JavaScriptModule {
 		cloned.Exports = []Export{} // Maintain consistency
 	}
 
-	// Set backreferences from declarations to module (same as UnmarshalJSON)
-	for i := range cloned.Declarations {
-		switch decl := cloned.Declarations[i].(type) {
-		case *ClassDeclaration:
-			decl.Module = cloned
-		case *CustomElementDeclaration:
-			decl.Module = cloned
-		case *MixinDeclaration:
-			decl.Module = cloned
-		case *CustomElementMixinDeclaration:
-			decl.Module = cloned
-		case *FunctionDeclaration:
-			decl.Module = cloned
-		case *VariableDeclaration:
-			decl.Module = cloned
-		}
-	}
+	// Set backreferences from declarations to module
+	setDeclarationBackreferences(cloned)
 
 	return cloned
 }
