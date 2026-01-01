@@ -516,12 +516,18 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 		for i, superclass := range superclasses {
 			// Find the superclass reference for InheritedFrom
 			// For the first superclass, use ced.Superclass
-			// For chain members, find their reference
+			// For chain members, construct a reference to the current superclass
 			var superclassRef Reference
 			if i == 0 && ced.Superclass != nil {
 				superclassRef = *ced.Superclass
-			} else if superclass.Superclass != nil {
-				superclassRef = *superclass.Superclass
+			} else {
+				// For chain members (i > 0), construct a Reference to the current superclass
+				superclassRef = Reference{
+					Name: superclass.Name,
+				}
+				if superclass.Module != nil {
+					superclassRef.Module = superclass.Module.Path
+				}
 			}
 
 			// Check if this is a CustomElementDeclaration (has attributes, slots, etc.)
