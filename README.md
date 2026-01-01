@@ -1,4 +1,4 @@
-# cem
+# `cem` - Custom Elements Manifest Multitool
 
 **cem** is a command-line tool for generating and querying
 [Custom Elements Manifest][cem] files. It can analyze your codebase and generate
