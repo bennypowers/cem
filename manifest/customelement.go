@@ -288,6 +288,9 @@ func (ced *CustomElementDeclaration) CssStates() []CssCustomState {
 
 // Fields and Methods return flattened class members
 func (ced *CustomElementDeclaration) Fields() []ClassMember {
+	if ced == nil {
+		return nil
+	}
 	pkg := ced.getPackage()
 	if pkg == nil {
 		return ced.Members
@@ -296,6 +299,9 @@ func (ced *CustomElementDeclaration) Fields() []ClassMember {
 }
 
 func (ced *CustomElementDeclaration) Methods() []ClassMember {
+	if ced == nil {
+		return nil
+	}
 	pkg := ced.getPackage()
 	if pkg == nil {
 		return ced.Members
