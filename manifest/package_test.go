@@ -381,3 +381,85 @@ func TestCloneNilSafety(t *testing.T) {
 		}
 	})
 }
+
+// TestCloneBackreferences verifies that backreferences are correctly set after cloning
+func TestCloneBackreferences(t *testing.T) {
+	// Create a package with modules and declarations
+	pkg := &manifest.Package{
+		SchemaVersion: "2.0.0",
+	}
+
+	mod := &manifest.Module{}
+	mod.Path = "/test.js"
+
+	// Add various declaration types
+	classDecl := &manifest.ClassDeclaration{}
+	classDecl.ClassLike.Name = "TestClass"
+
+	customElementDecl := &manifest.CustomElementDeclaration{}
+	customElementDecl.ClassLike.Name = "TestElement"
+	customElementDecl.TagName = "test-element"
+
+	mixinDecl := &manifest.MixinDeclaration{}
+	mixinDecl.FullyQualified.Name = "TestMixin"
+
+	funcDecl := &manifest.FunctionDeclaration{}
+	funcDecl.FullyQualified.Name = "testFunction"
+
+	varDecl := &manifest.VariableDeclaration{}
+	varDecl.PropertyLike.Name = "testVar"
+
+	mod.Declarations = []manifest.Declaration{
+		classDecl,
+		customElementDecl,
+		mixinDecl,
+		funcDecl,
+		varDecl,
+	}
+
+	pkg.Modules = []manifest.Module{*mod}
+
+	// Clone the package
+	cloned := pkg.Clone()
+
+	// Verify the cloned package is not nil
+	if cloned == nil {
+		t.Fatal("Cloned package should not be nil")
+	}
+
+	// Verify we have modules
+	if len(cloned.Modules) != 1 {
+		t.Fatalf("Expected 1 module, got %d", len(cloned.Modules))
+	}
+
+	// Verify the module's Package backreference
+	if cloned.Modules[0].Package != cloned {
+		t.Error("Module.Package should point to cloned package")
+	}
+
+	// Verify all declaration backreferences point to the module in the cloned slice
+	for i, decl := range cloned.Modules[0].Declarations {
+		var declModule *manifest.Module
+		switch d := decl.(type) {
+		case *manifest.ClassDeclaration:
+			declModule = d.Module
+		case *manifest.CustomElementDeclaration:
+			declModule = d.Module
+		case *manifest.MixinDeclaration:
+			declModule = d.Module
+		case *manifest.FunctionDeclaration:
+			declModule = d.Module
+		case *manifest.VariableDeclaration:
+			declModule = d.Module
+		}
+
+		if declModule != &cloned.Modules[0] {
+			t.Errorf("Declaration[%d] Module pointer should point to &cloned.Modules[0], but points elsewhere", i)
+		}
+
+		// Also verify the module's Package is correct
+		if declModule != nil && declModule.Package != cloned {
+			t.Errorf("Declaration[%d] Module.Package should point to cloned package", i)
+		}
+	}
+}

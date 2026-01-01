@@ -84,6 +84,24 @@ func (p *Package) Clone() *Package {
 	// Set backreferences from modules to package (same as UnmarshalJSON)
 	for i := range cloned.Modules {
 		cloned.Modules[i].Package = cloned
+
+		// Update declaration backreferences to point to module in slice (not temporary clone)
+		for j := range cloned.Modules[i].Declarations {
+			switch decl := cloned.Modules[i].Declarations[j].(type) {
+			case *ClassDeclaration:
+				decl.Module = &cloned.Modules[i]
+			case *CustomElementDeclaration:
+				decl.Module = &cloned.Modules[i]
+			case *MixinDeclaration:
+				decl.Module = &cloned.Modules[i]
+			case *CustomElementMixinDeclaration:
+				decl.Module = &cloned.Modules[i]
+			case *FunctionDeclaration:
+				decl.Module = &cloned.Modules[i]
+			case *VariableDeclaration:
+				decl.Module = &cloned.Modules[i]
+			}
+		}
 	}
 
 	return cloned
