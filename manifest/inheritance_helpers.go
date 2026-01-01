@@ -28,6 +28,15 @@ import (
 // - Declarations are assumed to be immutable after initial package unmarshaling/population
 // - No invalidation mechanism is provided, as declarations are not modified incrementally
 // - If incremental updates are needed in the future, cache clearing should be added
+//
+// Memory Considerations:
+// - Caches grow unbounded (no size limits or eviction policy)
+// - For LSP servers or long-running processes that load many packages:
+//   - Memory usage is proportional to the number of unique CustomElementDeclarations processed
+//   - Each cached entry contains slices of attributes, slots, events, etc.
+//   - Consider periodically clearing caches if memory becomes a concern
+//
+// - Typical usage (CLI tools processing a single package) has negligible memory impact
 var (
 	flattenedMembersCache = &sync.Map{}
 	flattenedMembersOnce  = &sync.Map{}
@@ -699,6 +708,15 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 	once := onceValue.(*sync.Once)
 
 	once.Do(func() {
+		// Defensive recovery to prevent panics from deadlocking other goroutines
+		// If a panic occurs, we store an empty result rather than blocking forever
+		defer func() {
+			if r := recover(); r != nil {
+				// Store empty result on panic to allow other goroutines to proceed
+				flattenedMembersCache.Store(cacheKey, &flattenedMembers{})
+			}
+		}()
+
 		fm := &flattenedMembers{}
 
 		// Start with empty slices
@@ -812,10 +830,10 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 			var mixinClassLike *ClassLike
 			switch m := mixinDecl.(type) {
 			case *MixinDeclaration:
-				mixinName = m.Name
+				mixinName = m.Name()
 				mixinClassLike = &m.ClassLike
 			case *CustomElementMixinDeclaration:
-				mixinName = m.Name
+				mixinName = m.Name()
 				mixinClassLike = &m.ClassLike
 			}
 
@@ -823,6 +841,9 @@ func (ced *CustomElementDeclaration) flattenMembers(pkg *Package) *flattenedMemb
 			mixinRef := Reference{Name: mixinName}
 
 			// Find module path for this mixin
+			// Performance: O(modules × declarations) linear search
+			// Acceptable for typical projects (< 100 modules, < 50 declarations/module)
+			// Could be optimized with a reverse lookup map if profiling shows bottleneck
 			for i := range pkg.Modules {
 				if slices.Contains(pkg.Modules[i].Declarations, mixinDecl) {
 					mixinRef.Module = pkg.Modules[i].Path

@@ -46,6 +46,13 @@ type CustomElementMixinDeclaration struct {
 
 func (*MixinDeclaration) isDeclaration() {}
 
+func (m *MixinDeclaration) Name() string {
+	if m == nil {
+		return ""
+	}
+	return m.ClassLike.Name
+}
+
 // Clone creates a deep copy of the MixinDeclaration.
 // Handles all embedded structures including ClassLike, FunctionLike, and FullyQualified.
 //
@@ -143,6 +150,13 @@ func NewRenderableMixinDeclaration(
 
 func (*CustomElementMixinDeclaration) isDeclaration() {}
 
+func (c *CustomElementMixinDeclaration) Name() string {
+	if c == nil {
+		return ""
+	}
+	return c.ClassLike.Name
+}
+
 // Clone creates a deep copy of the CustomElementMixinDeclaration.
 // Handles all embedded structures including MixinDeclaration, CustomElementDeclaration, and FullyQualified.
 //
@@ -176,7 +190,7 @@ func (c *CustomElementMixinDeclaration) Clone() Declaration {
 }
 
 func (x *RenderableMixinDeclaration) Name() string {
-	return x.MixinDeclaration.Name
+	return x.MixinDeclaration.Name()
 }
 
 func (x *RenderableMixinDeclaration) Label() string {
@@ -296,7 +310,7 @@ func (x *RenderableCustomElementMixinDeclaration) Children() []Renderable {
 }
 
 func (x *RenderableCustomElementMixinDeclaration) Name() string {
-	return x.CustomElementMixinDeclaration.Name
+	return x.CustomElementMixinDeclaration.Name()
 }
 
 func (x *RenderableCustomElementMixinDeclaration) Label() string {

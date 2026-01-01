@@ -106,7 +106,7 @@ func TestNewRenderablePackage_WithMapLookup(t *testing.T) {
 		mod.Path = "/test.js"
 
 		ced := &manifest.CustomElementDeclaration{}
-		ced.Name = "TestElement"
+		ced.ClassLike.Name = "TestElement"
 		ced.TagName = "test-element"
 
 		// Add many members to test map performance
@@ -133,7 +133,7 @@ func TestNewRenderablePackage_WithMapLookup(t *testing.T) {
 
 		cee := &manifest.CustomElementExport{}
 		cee.Declaration = &manifest.Reference{
-			Name:   ced.Name,
+			Name:   ced.Name(),
 			Module: mod.Path,
 		}
 		mod.Exports = []manifest.Export{cee}

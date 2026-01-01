@@ -88,6 +88,13 @@ type FunctionDeclaration struct {
 
 func (*FunctionDeclaration) isDeclaration() {}
 
+func (f *FunctionDeclaration) Name() string {
+	if f == nil {
+		return ""
+	}
+	return f.FullyQualified.Name
+}
+
 // Clone creates a deep copy of the FunctionDeclaration.
 // Handles the embedded FunctionLike and FullyQualified structures with parameters and return type.
 //
@@ -179,7 +186,7 @@ func NewRenderableFunctionDeclaration(
 	var je *JavaScriptExport
 	for i, exp := range mod.Exports {
 		if eje, ok := exp.(*JavaScriptExport); ok {
-			if eje.Declaration.Name == fd.Name && (eje.Declaration.Module == "" || eje.Declaration.Module == mod.Path) {
+			if eje.Declaration.Name == fd.Name() && (eje.Declaration.Module == "" || eje.Declaration.Module == mod.Path) {
 				je = mod.Exports[i].(*JavaScriptExport)
 				break
 			}
@@ -197,8 +204,8 @@ func NewRenderableFunctionDeclaration(
 }
 
 func (x *RenderableFunctionDeclaration) Name() string {
-	return x.FunctionDeclaration.Name
-	// label := pterm.LightBlue("function") + " " + highlightIfDeprecated(x.FunctionDeclaration.Name, x)
+	return x.FunctionDeclaration.Name()
+	// label := pterm.LightBlue("function") + " " + highlightIfDeprecated(x.FunctionDeclaration.Name(), x)
 }
 
 func (x *RenderableFunctionDeclaration) Label() string {

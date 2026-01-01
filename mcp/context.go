@@ -66,7 +66,6 @@ func NewMCPCustomElementDeclaration(element *M.CustomElement, tagName string) *M
 	decl := &M.CustomElementDeclaration{
 		CustomElement: *element,
 	}
-	decl.Name = tagName
 	decl.TagName = tagName
 
 	// Create a RenderableCustomElementDeclaration
@@ -340,7 +339,7 @@ func (ctx *MCPContext) GetAllElements() map[string]MCPTypes.ElementInfo {
 }
 
 // GetManifestSchema returns the JSON schema for custom elements manifests
-func (ctx *MCPContext) GetManifestSchema() (map[string]interface{}, error) {
+func (ctx *MCPContext) GetManifestSchema() (map[string]any, error) {
 	// Use the same schema detection and retrieval logic as the schema resource
 	versions := ctx.GetManifestSchemaVersions()
 
@@ -360,7 +359,7 @@ func (ctx *MCPContext) GetManifestSchema() (map[string]interface{}, error) {
 	}
 
 	// Parse the JSON schema data into a map for return
-	var schema map[string]interface{}
+	var schema map[string]any
 	if err := json.Unmarshal(schemaData, &schema); err != nil {
 		return nil, fmt.Errorf("failed to parse schema JSON: %w", err)
 	}
@@ -461,7 +460,7 @@ func extractGuidelinesFromElement(element *M.CustomElement) []string {
 }
 
 // generateCacheKey generates a unique cache key for the element
-func generateCacheKey(tagName string, element *M.CustomElement) string {
+func generateCacheKey(tagName string, _ *M.CustomElement) string {
 	// Use tag name for basic cache key
 	return tagName
 }

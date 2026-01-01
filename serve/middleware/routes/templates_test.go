@@ -37,8 +37,8 @@ func TestDeclarationAsKind(t *testing.T) {
 		if result == nil {
 			t.Fatal("Expected non-nil result for matching type")
 		}
-		if result.Name != "TestClass" {
-			t.Errorf("Expected Name='TestClass', got %q", result.Name)
+		if result.Name() != "TestClass" {
+			t.Errorf("Expected Name='TestClass', got %q", result.Name())
 		}
 	})
 
@@ -72,8 +72,8 @@ func TestDeclarationAsKind(t *testing.T) {
 		if result == nil {
 			t.Fatal("Expected non-nil result for matching type")
 		}
-		if result.Name != "myFunction" {
-			t.Errorf("Expected Name='myFunction', got %q", result.Name)
+		if result.Name() != "myFunction" {
+			t.Errorf("Expected Name='myFunction', got %q", result.Name())
 		}
 	})
 
@@ -88,8 +88,8 @@ func TestDeclarationAsKind(t *testing.T) {
 		if result == nil {
 			t.Fatal("Expected non-nil result for matching type")
 		}
-		if result.Name != "myVar" {
-			t.Errorf("Expected Name='myVar', got %q", result.Name)
+		if result.Name() != "myVar" {
+			t.Errorf("Expected Name='myVar', got %q", result.Name())
 		}
 	})
 
@@ -102,8 +102,8 @@ func TestDeclarationAsKind(t *testing.T) {
 		if result == nil {
 			t.Fatal("Expected non-nil result for matching type")
 		}
-		if result.Name != "MyMixin" {
-			t.Errorf("Expected Name='MyMixin', got %q", result.Name)
+		if result.Name() != "MyMixin" {
+			t.Errorf("Expected Name='MyMixin', got %q", result.Name())
 		}
 	})
 

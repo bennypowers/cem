@@ -189,8 +189,8 @@ func TestUnmarshalPackage(t *testing.T) {
 			decls := mustModuleDecls(t, mod, 2)
 
 			ce := mustCustomElementDecl(t, decls[0])
-			if ce.Name != "MyCard" || ce.TagName != "my-card" {
-				t.Errorf("CustomElementDeclaration: got Name=%q, TagName=%q; want 'MyCard', 'my-card'", ce.Name, ce.TagName)
+			if ce.Name() != "MyCard" || ce.TagName != "my-card" {
+				t.Errorf("CustomElementDeclaration: got Name=%q, TagName=%q; want 'MyCard', 'my-card'", ce.Name(), ce.TagName)
 			}
 			if len(ce.Members) != 1 {
 				t.Fatalf("CustomElementDeclaration members = %+v, want 1 member", ce.Members)
@@ -201,8 +201,8 @@ func TestUnmarshalPackage(t *testing.T) {
 			}
 
 			cl := mustClassDecl(t, decls[1])
-			if cl.Name != "CardBase" {
-				t.Errorf("ClassDeclaration: got Name=%q, want 'CardBase'", cl.Name)
+			if cl.Name() != "CardBase" {
+				t.Errorf("ClassDeclaration: got Name=%q, want 'CardBase'", cl.Name())
 			}
 			field2 := mustClassField(t, cl.Members[0])
 			if field2.Name != "bar" || field2.Type == nil || field2.Type.Text != "number" {
@@ -219,8 +219,8 @@ func TestUnmarshalPackage(t *testing.T) {
 			if ce.TagName != "my-card" {
 				t.Errorf("TagName = %q, want 'my-card'", ce.TagName)
 			}
-			if ce.Name != "MyCard" {
-				t.Errorf("Name = %q, want 'MyCard'", ce.Name)
+			if ce.Name() != "MyCard" {
+				t.Errorf("Name = %q, want 'MyCard'", ce.Name())
 			}
 		})
 
@@ -598,8 +598,8 @@ func TestUnmarshalPackage(t *testing.T) {
 		pkg := mustUnmarshalPackage(t, manifestJSON)
 		mod := mustFirstModule(t, pkg)
 		c := mustClassDecl(t, mustModuleDecls(t, mod, 1)[0])
-		if c.Name != "MyCardBase" {
-			t.Errorf("Name = %q, want 'MyCardBase'", c.Name)
+		if c.Name() != "MyCardBase" {
+			t.Errorf("Name = %q, want 'MyCardBase'", c.Name())
 		}
 		if len(c.Members) != 1 {
 			t.Errorf("Members = %+v, want 1 member", c.Members)
@@ -682,7 +682,7 @@ func TestUnmarshalPackage(t *testing.T) {
 		pkg := mustUnmarshalPackage(t, manifestJSON)
 		mod := mustFirstModule(t, pkg)
 		m := mustMixinDecl(t, mustModuleDecls(t, mod, 1)[0])
-		if m.Name != "MyMixin" {
+		if m.Name() != "MyMixin" {
 			t.Errorf("Name = %+v, want 'MyMixin'", m)
 		}
 		if len(m.Members) != 1 {
@@ -726,8 +726,8 @@ func TestUnmarshalPackage(t *testing.T) {
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			mod := mustFirstModule(t, pkg)
 			fn := mustFunctionDecl(t, mustModuleDecls(t, mod, 1)[0])
-			if fn.Name != "helperFn" {
-				t.Errorf("Name = %q, want 'helperFn'", fn.Name)
+			if fn.Name() != "helperFn" {
+				t.Errorf("Name = %q, want 'helperFn'", fn.Name())
 			}
 			if len(fn.Parameters) != 1 || fn.Parameters[0].Name != "x" || fn.Parameters[0].Type == nil || fn.Parameters[0].Type.Text != "number" {
 				t.Errorf("Parameters = %+v, want 1 x number", fn.Parameters)
@@ -835,8 +835,8 @@ func TestUnmarshalPackage(t *testing.T) {
 		pkg := mustUnmarshalPackage(t, manifestJSON)
 		mod := mustFirstModule(t, pkg)
 		v := mustVariableDecl(t, mustModuleDecls(t, mod, 1)[0])
-		if v.Name != "CONST_VAL" {
-			t.Errorf("Name = %q, want 'CONST_VAL'", v.Name)
+		if v.Name() != "CONST_VAL" {
+			t.Errorf("Name = %q, want 'CONST_VAL'", v.Name())
 		}
 		if v.Type == nil || v.Type.Text != "string" {
 			t.Errorf("Type = %+v, want string", v.Type)
@@ -882,8 +882,8 @@ func TestUnmarshalPackage(t *testing.T) {
 		pkg := mustUnmarshalPackage(t, manifestJSON)
 		mod := mustFirstModule(t, pkg)
 		cem := mustCustomElementMixinDecl(t, mustModuleDecls(t, mod, 1)[0])
-		if cem.Name != "MyCustomElementMixin" {
-			t.Errorf("Name = %q, want 'MyCustomElementMixin'", cem.Name)
+		if cem.Name() != "MyCustomElementMixin" {
+			t.Errorf("Name = %q, want 'MyCustomElementMixin'", cem.Name())
 		}
 		if len(cem.Members) != 1 {
 			t.Errorf("Members = %+v, want 1 item", cem.Members)

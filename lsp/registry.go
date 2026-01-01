@@ -270,7 +270,7 @@ func (r *Registry) loadWorkspaceManifest(workspace types.WorkspaceContext) error
 			helpers.SafeDebugLog("  Module [%d]: %s with %d declarations", i, module.Path, len(module.Declarations))
 			for j, decl := range module.Declarations {
 				if customElementDecl, ok := decl.(*M.CustomElementDeclaration); ok {
-					helpers.SafeDebugLog("    Declaration [%d]: %s (tag: %s)", j, customElementDecl.Name, customElementDecl.TagName)
+					helpers.SafeDebugLog("    Declaration [%d]: %s (tag: %s)", j, customElementDecl.Name(), customElementDecl.TagName)
 				}
 			}
 		}
@@ -372,9 +372,9 @@ func (r *Registry) discoverWorkspacePackages(workspace types.WorkspaceContext) (
 	var positivePatterns []string
 	var negativePatterns []string
 	for _, pattern := range workspacePatterns {
-		if strings.HasPrefix(pattern, "!") {
+		if after, ok := strings.CutPrefix(pattern, "!"); ok {
 			// Remove the "!" prefix for negation patterns
-			negativePatterns = append(negativePatterns, strings.TrimPrefix(pattern, "!"))
+			negativePatterns = append(negativePatterns, after)
 		} else {
 			positivePatterns = append(positivePatterns, pattern)
 		}
@@ -426,7 +426,7 @@ func (r *Registry) parseNpmYarnWorkspaces(path string) ([]string, error) {
 	}
 
 	var pkg struct {
-		Workspaces interface{} `json:"workspaces"`
+		Workspaces any `json:"workspaces"`
 	}
 
 	if err := json.Unmarshal(data, &pkg); err != nil {
@@ -439,7 +439,7 @@ func (r *Registry) parseNpmYarnWorkspaces(path string) ([]string, error) {
 
 	// Handle both array format and object format
 	switch w := pkg.Workspaces.(type) {
-	case []interface{}:
+	case []any:
 		// Array format: ["packages/*"]
 		patterns := make([]string, 0, len(w))
 		for _, p := range w {
@@ -448,9 +448,9 @@ func (r *Registry) parseNpmYarnWorkspaces(path string) ([]string, error) {
 			}
 		}
 		return patterns, nil
-	case map[string]interface{}:
+	case map[string]any:
 		// Object format: {"packages": ["packages/*"]}
-		if pkgs, ok := w["packages"].([]interface{}); ok {
+		if pkgs, ok := w["packages"].([]any); ok {
 			patterns := make([]string, 0, len(pkgs))
 			for _, p := range pkgs {
 				if str, ok := p.(string); ok {
@@ -657,7 +657,7 @@ func (r *Registry) generateInMemoryManifest(packagePath string, packageName stri
 }
 
 // loadConfigManifests loads manifests specified in the config
-func (r *Registry) loadConfigManifests(workspace types.WorkspaceContext) error {
+func (r *Registry) loadConfigManifests(_ types.WorkspaceContext) error {
 	// TODO: Add config support for specifying additional manifest paths
 	// This would allow users to specify manifests from non-npm sources
 	return nil
@@ -742,7 +742,7 @@ func (r *Registry) addManifest(manifest *M.Package, packageName string) {
 					// Store the element definition with source information
 					elementDef := &ElementDefinition{
 						CustomElement: element,
-						className:     customElementDecl.Name, // Store the class name from the declaration
+						className:     customElementDecl.Name(), // Store the class name from the declaration
 						modulePath:    module.Path,
 						Source:        customElementDecl.Source,
 						packageName:   packageName,
@@ -1330,13 +1330,7 @@ func (r *RegistryManifestResolver) FindManifestModulesForImportPath(importPath s
 		// Use the same path matching logic as tagDiagnostics.go
 		if r.pathsMatch(importPath, modulePath) {
 			// Avoid duplicates
-			found := false
-			for _, existing := range matchingModules {
-				if existing == modulePath {
-					found = true
-					break
-				}
-			}
+			found := slices.Contains(matchingModules, modulePath)
 			if !found {
 				matchingModules = append(matchingModules, modulePath)
 			}
@@ -1486,7 +1480,7 @@ func (r *Registry) initializeLazyModuleGraph(workspace types.WorkspaceContext) {
 
 	// Populate the module graph with custom element definitions from manifests
 	// This is fast since it only uses already-loaded manifest data
-	elementMap := make(map[string]interface{})
+	elementMap := make(map[string]any)
 	for tagName, elementDef := range r.ElementDefinitions {
 		elementMap[tagName] = elementDef
 	}

@@ -77,12 +77,7 @@ func (mp *ModuleProcessor) generateClassDeclarationParsed(
 	}
 
 	if decl != nil {
-		switch d := decl.(type) {
-		case *M.ClassDeclaration:
-			className = d.Name
-		case *M.CustomElementDeclaration:
-			className = d.Name
-		}
+		className = decl.Name()
 	}
 	parsed := &ParsedClass{
 		Name:           className,
@@ -160,7 +155,7 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 
 	err = mp.step("Processing members", 1, func() error {
 		members, err := mp.getClassMembersFromClassDeclarationNode(
-			declaration.Name,
+			declaration.Name(),
 			classDeclarationNode,
 			superclassName,
 		)

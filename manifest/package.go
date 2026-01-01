@@ -108,24 +108,7 @@ func (p *Package) FindDeclaration(ref Reference) Declaration {
 
 		// Search declarations in this module
 		for _, decl := range mod.Declarations {
-			// Extract name from declaration
-			var declName string
-			switch d := decl.(type) {
-			case *ClassDeclaration:
-				declName = d.Name
-			case *CustomElementDeclaration:
-				declName = d.Name
-			case *MixinDeclaration:
-				declName = d.Name
-			case *CustomElementMixinDeclaration:
-				declName = d.Name
-			case *FunctionDeclaration:
-				declName = d.Name
-			case *VariableDeclaration:
-				declName = d.Name
-			}
-
-			if declName == ref.Name {
+			if decl.Name() == ref.Name {
 				return decl
 			}
 		}

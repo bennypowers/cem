@@ -110,6 +110,13 @@ func (c CustomElement) Clone() CustomElement {
 
 func (*CustomElementDeclaration) isDeclaration() {}
 
+func (c *CustomElementDeclaration) Name() string {
+	if c == nil {
+		return ""
+	}
+	return c.ClassLike.Name
+}
+
 // Clone creates a deep copy of the CustomElementDeclaration.
 // Handles both embedded ClassDeclaration and CustomElement structures with all their nested types.
 //
@@ -378,8 +385,8 @@ func NewRenderableCustomElementDeclaration(
 ) *RenderableCustomElementDeclaration {
 	// Use O(1) map lookups instead of O(n) linear search
 	// TODO get je, cee from other modules
-	cee := mod.LookupCustomElementExport(ced.Name)
-	je := mod.LookupJavaScriptExport(ced.Name)
+	cee := mod.LookupCustomElementExport(ced.Name())
+	je := mod.LookupJavaScriptExport(ced.Name())
 	r := RenderableCustomElementDeclaration{
 		CustomElementDeclaration: ced,
 		CustomElementExport:      cee,
@@ -513,7 +520,7 @@ func (x *RenderableCustomElementDeclaration) ToTableRow() []string {
 	}
 	return []string{
 		highlightIfDeprecated(x),
-		x.CustomElementDeclaration.Name,
+		x.CustomElementDeclaration.Name(),
 		modulePath,
 		x.CustomElementDeclaration.Summary,
 	}

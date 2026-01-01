@@ -96,8 +96,8 @@ func TestPackage_FindCustomElementDeclaration(t *testing.T) {
 				t.Fatalf("Expected to find declaration for tag name %q, got nil", tt.tagName)
 			}
 
-			if decl.Name != tt.expectedName {
-				t.Errorf("Expected name %q, got %q", tt.expectedName, decl.Name)
+			if decl.Name() != tt.expectedName {
+				t.Errorf("Expected name %q, got %q", tt.expectedName, decl.Name())
 			}
 
 			if decl.Summary != tt.expectedSummary {

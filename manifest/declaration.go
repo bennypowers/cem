@@ -27,6 +27,7 @@ type Declaration interface {
 	isDeclaration()
 	GetStartByte() uint
 	Clone() Declaration
+	Name() string
 }
 
 func unmarshalDeclaration(data json.RawMessage) (Declaration, error) {
