@@ -286,6 +286,11 @@ func CreateEventHoverContent(event *M.Event, tagName string) string {
 	content.WriteString(fmt.Sprintf("## `%s` event\n\n", event.Name))
 	content.WriteString(fmt.Sprintf("**On `<%s>` element**\n\n", tagName))
 
+	// Inheritance info
+	if event.InheritedFrom != nil {
+		content.WriteString(fmt.Sprintf("_Inherited from %s_\n\n", event.InheritedFrom.Name))
+	}
+
 	// Type (event detail type)
 	if event.Type != nil && event.Type.Text != "" {
 		content.WriteString(fmt.Sprintf("**Type:** `%s`\n\n", event.Type.Text))
