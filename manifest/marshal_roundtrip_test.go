@@ -18,17 +18,18 @@ package manifest
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
+	"io/fs"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform/testutil"
 )
 
 // TestMarshalUnmarshalRoundTrip tests that we can unmarshal a comprehensive JSON
 // manifest and then marshal it back to JSON without losing any data.
 func TestMarshalUnmarshalRoundTrip(t *testing.T) {
 	// Load the comprehensive golden file
-	goldenPath := filepath.Join("testdata", "marshal-roundtrip-comprehensive.json")
-	originalJSON, err := os.ReadFile(goldenPath)
+	fixtureFS := testutil.NewFixtureFS(t, "", "/")
+	originalJSON, err := fs.ReadFile(fixtureFS, "/marshal-roundtrip-comprehensive.json")
 	if err != nil {
 		t.Fatalf("Failed to read golden file: %v", err)
 	}
