@@ -163,11 +163,24 @@ func (fw *fileWatcher) Close() error {
 // processEvents processes raw fsnotify events and applies debouncing
 func (fw *fileWatcher) processEvents() {
 	defer fw.wg.Done()
+
+	// Create a ticker for periodic shutdown checks
+	// This prevents select statement starvation when events flood
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case event, ok := <-fw.watcher.Events:
 			if !ok {
 				return
+			}
+
+			// Check shutdown before processing event
+			select {
+			case <-fw.done:
+				return
+			default:
 			}
 
 			// Ignore files and directories based on configured patterns
@@ -218,6 +231,15 @@ func (fw *fileWatcher) processEvents() {
 			}
 			if fw.logger != nil {
 				fw.logger.Error("File watcher error: %v", err)
+			}
+
+		case <-ticker.C:
+			// Periodic check for shutdown signal
+			// This ensures done channel is checked regularly even during event floods
+			select {
+			case <-fw.done:
+				return
+			default:
 			}
 
 		case <-fw.done:

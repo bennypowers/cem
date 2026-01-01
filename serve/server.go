@@ -340,6 +340,16 @@ func (s *Server) Close() error {
 	// Note: server.Shutdown() already closes the listener, so we don't need to close it again
 	// The listener is only closed explicitly in error paths during Start()
 
+	// CRITICAL: Signal shutdown to all goroutines FIRST
+	// This allows handleFileChanges and other goroutines to see the shutdown signal
+	// and start exiting before we close their channels
+	s.logger.Debug("Signaling shutdown to all goroutines")
+	close(s.shutdown)
+
+	// Give goroutines a brief moment to see shutdown signal and start exiting
+	time.Sleep(50 * time.Millisecond)
+
+	s.logger.Debug("Closing file watcher")
 	if s.watcher != nil {
 		if err := s.watcher.Close(); err != nil {
 			s.logger.Error("Failed to close file watcher: %v", err)
@@ -356,9 +366,6 @@ func (s *Server) Close() error {
 	}
 
 	s.running = false
-
-	// Signal shutdown to all goroutines
-	close(s.shutdown)
 
 	s.logger.Info("Server stopped")
 	return nil

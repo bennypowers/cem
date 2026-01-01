@@ -313,7 +313,30 @@ func (s *Server) handleFileChanges() {
 		return
 	}
 
-	for event := range s.watcher.Events() {
+	for {
+		// Check shutdown to prevent goroutine leak
+		select {
+		case <-s.shutdown:
+			s.logger.Debug("handleFileChanges: shutdown signal received, exiting")
+			return
+		default:
+		}
+
+		// Wait for next event with shutdown check
+		var event FileEvent
+		var ok bool
+		select {
+		case event, ok = <-s.watcher.Events():
+			if !ok {
+				// Channel closed
+				s.logger.Debug("handleFileChanges: watcher events channel closed, exiting")
+				return
+			}
+		case <-s.shutdown:
+			s.logger.Debug("handleFileChanges: shutdown during event wait, exiting")
+			return
+		}
+
 		// Process all files in the batched event
 		filesToProcess := event.Paths
 		if len(filesToProcess) == 0 {

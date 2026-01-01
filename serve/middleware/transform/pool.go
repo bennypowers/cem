@@ -20,6 +20,7 @@ package transform
 import (
 	"errors"
 	"sync"
+	"time"
 )
 
 var (
@@ -60,6 +61,10 @@ func NewPool(maxWorkers, queueDepth int) *Pool {
 
 // dispatch processes tasks from the queue
 func (p *Pool) dispatch() {
+	// Periodic shutdown check to prevent select starvation
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-p.closed:
@@ -83,6 +88,13 @@ func (p *Pool) dispatch() {
 			case <-p.closed:
 				// Pool closed while waiting for worker
 				return
+			}
+		case <-ticker.C:
+			// Periodic check to prevent select starvation
+			select {
+			case <-p.closed:
+				return
+			default:
 			}
 		}
 	}
