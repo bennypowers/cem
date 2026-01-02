@@ -89,7 +89,7 @@ func TestValidateE2E(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Check if fixture exists, skip if not (some may not exist yet)
-			fixturePath := filepath.Join("fixture", tc.fixture, "custom-elements.json")
+			fixturePath := filepath.Join("testdata", "fixtures", tc.fixture, "custom-elements.json")
 			if _, err := os.Stat(fixturePath); os.IsNotExist(err) {
 				t.Skipf("Fixture %s does not exist", tc.fixture)
 			}

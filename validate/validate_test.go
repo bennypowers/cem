@@ -52,7 +52,7 @@ func TestValidateGolden(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Check if fixture exists
-			fixturePath := filepath.Join("..", "cmd", "fixture", tc.fixture, "custom-elements.json")
+			fixturePath := filepath.Join("..", "cmd", "testdata", "fixtures", tc.fixture, "custom-elements.json")
 			if _, err := os.Stat(fixturePath); os.IsNotExist(err) {
 				t.Skipf("Fixture %s does not exist", fixturePath)
 			}
@@ -86,7 +86,7 @@ func TestValidateGolden(t *testing.T) {
 }
 
 func TestValidateWithDisabledWarnings(t *testing.T) {
-	fixturePath := filepath.Join("..", "cmd", "fixture", "warning-lifecycle-methods", "custom-elements.json")
+	fixturePath := filepath.Join("..", "cmd", "testdata", "fixtures", "warning-lifecycle-methods", "custom-elements.json")
 	if _, err := os.Stat(fixturePath); os.IsNotExist(err) {
 		t.Skip("warning-lifecycle-methods fixture does not exist")
 	}

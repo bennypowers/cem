@@ -79,7 +79,7 @@ func TestGenerateE2E(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			projectDir := setupTest(t, tc.fixture)
 			outputFilePath := filepath.Join(projectDir, tc.outputFile)
-			goldenPath := filepath.Join("goldens", tc.name+".json")
+			goldenPath := filepath.Join("testdata", "goldens", tc.name+".json")
 
 			command := tc.command
 			if len(command) > 0 && command[len(command)-1] == "--package" {

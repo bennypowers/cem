@@ -37,7 +37,7 @@ func TestGenerateOutsideProjectRoot(t *testing.T) {
 
 	// Copy the design token fixture to the project directory
 	projectDir := filepath.Join(tmpDir, "test-project")
-	fixtureDir := "fixtures/project-design-tokens"
+	fixtureDir := "testdata/fixtures/project-design-tokens"
 
 	// Create the project directory first
 	err = os.MkdirAll(projectDir, 0755)
@@ -128,7 +128,7 @@ func TestGenerateOutsideProjectRootRelativePaths(t *testing.T) {
 
 	// Copy the design token fixture to the project directory
 	projectDir := filepath.Join(tmpDir, "test-project")
-	fixtureDir := "fixtures/project-design-tokens"
+	fixtureDir := "testdata/fixtures/project-design-tokens"
 
 	// Create the project directory first
 	err = os.MkdirAll(projectDir, 0755)
