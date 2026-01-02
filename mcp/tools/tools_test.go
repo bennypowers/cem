@@ -36,7 +36,7 @@ var update = flag.Bool("update", false, "update golden files")
 
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
 func getTestRegistry(t *testing.T) *mcp.MCPContextAdapter {
-	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
+	workspace := W.NewFileSystemWorkspaceContext("../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -227,7 +227,7 @@ func TestTemplateRenderer_Basic(t *testing.T) {
 // Helper function to test templates with fixture/golden pattern
 func testTemplateWithGolden(t *testing.T, templateName, contextName, fixtureFile, goldenFile string) {
 	// Read template data from fixture file
-	fixturePath := filepath.Join("../fixtures", contextName, fixtureFile)
+	fixturePath := filepath.Join("../testdata/fixtures", contextName, fixtureFile)
 	fixtureData, err := os.ReadFile(fixturePath)
 	require.NoError(t, err, "Should be able to read fixture file: %s", fixturePath)
 
@@ -240,7 +240,7 @@ func testTemplateWithGolden(t *testing.T, templateName, contextName, fixtureFile
 	require.NoError(t, err, "Template should render without error")
 
 	// Handle -update flag
-	goldenPath := filepath.Join("../fixtures", contextName, goldenFile)
+	goldenPath := filepath.Join("../testdata/fixtures", contextName, goldenFile)
 	if *update {
 		err := os.WriteFile(goldenPath, []byte(output), 0644)
 		require.NoError(t, err, "Failed to update golden file %s", goldenPath)

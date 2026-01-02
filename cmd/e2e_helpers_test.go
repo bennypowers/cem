@@ -120,7 +120,7 @@ func setupTest(t *testing.T, fixtureName string) (projectDir string) {
 
 	// Create a project directory within the temp directory
 	projectDir = filepath.Join(tmpDir, fixtureName)
-	err = os.CopyFS(projectDir, os.DirFS(filepath.Join(".", "fixture", fixtureName)))
+	err = os.CopyFS(projectDir, os.DirFS(filepath.Join("testdata", "fixtures", fixtureName)))
 	if err != nil {
 		t.Fatalf("%s", err)
 	}

@@ -287,7 +287,7 @@ func setupLSPTest(t *testing.T, fixtureName string) (workDir string, client *lsp
 
 	// Copy fixture to workspace
 	workDir = filepath.Join(tmpDir, fixtureName)
-	err = os.CopyFS(workDir, os.DirFS(filepath.Join(".", "fixture", fixtureName)))
+	err = os.CopyFS(workDir, os.DirFS(filepath.Join("testdata", "fixtures", fixtureName)))
 	if err != nil {
 		os.RemoveAll(tmpDir)
 		t.Fatalf("Failed to copy fixture: %v", err)
@@ -479,7 +479,7 @@ func TestLSPDidChange(t *testing.T) {
 	}
 
 	// Load the updated content from fixture
-	updatedContentBytes, err := os.ReadFile(filepath.Join("fixture", "lsp-didchange", "my-element.updated.js"))
+	updatedContentBytes, err := os.ReadFile(filepath.Join("testdata", "fixtures", "lsp-didchange", "my-element.updated.js"))
 	if err != nil {
 		t.Fatalf("Failed to read updated fixture: %v", err)
 	}

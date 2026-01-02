@@ -197,6 +197,6 @@ func TestWebSocketReload(t *testing.T) {
 func TestFixturePattern(t *testing.T) {
 	// This test doesn't need to run anything, it just verifies
 	// the fixture structure exists
-	// See serve/fixture/simple-demo/ for the established pattern
-	t.Log("Fixture pattern established in serve/fixture/simple-demo/")
+	// See serve/testdata/fixtures/simple-demo/ for the established pattern
+	t.Log("Fixture pattern established in serve/testdata/fixtures/simple-demo/")
 }

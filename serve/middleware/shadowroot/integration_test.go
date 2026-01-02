@@ -30,20 +30,20 @@ import (
 	"bennypowers.dev/cem/serve/middleware/shadowroot"
 )
 
-//go:embed integration_testdata/**
+//go:embed testdata/**
 var integrationFS embed.FS
 
 // realTemplateRenderer uses actual Go template rendering to test attribute handling
 func realTemplateRenderer(elementName string, data interface{}) (string, error) {
 	// Read template
-	templatePath := fmt.Sprintf("integration_testdata/templates/elements/%s/%s.html", elementName, elementName)
+	templatePath := fmt.Sprintf("testdata/templates/elements/%s/%s.html", elementName, elementName)
 	templateContent, err := integrationFS.ReadFile(templatePath)
 	if err != nil {
 		return "", fmt.Errorf("template not found: %s", elementName)
 	}
 
 	// Read CSS
-	cssPath := fmt.Sprintf("integration_testdata/templates/elements/%s/%s.css", elementName, elementName)
+	cssPath := fmt.Sprintf("testdata/templates/elements/%s/%s.css", elementName, elementName)
 	cssContent, err := integrationFS.ReadFile(cssPath)
 	if err != nil {
 		cssContent = []byte("/* no styles */")
@@ -70,7 +70,7 @@ func TestIntegration_AttributeMap(t *testing.T) {
 	logger := &mockLogger{}
 	broadcaster := &mockBroadcaster{}
 
-	mw := shadowroot.NewWithPrefix(logger, broadcaster, integrationFS, "integration_testdata/templates/elements", realTemplateRenderer)
+	mw := shadowroot.NewWithPrefix(logger, broadcaster, integrationFS, "testdata/templates/elements", realTemplateRenderer)
 
 	// Handler returns button with variant attribute
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +100,7 @@ func TestIntegration_CamelCaseProperties(t *testing.T) {
 	logger := &mockLogger{}
 	broadcaster := &mockBroadcaster{}
 
-	mw := shadowroot.NewWithPrefix(logger, broadcaster, integrationFS, "integration_testdata/templates/elements", realTemplateRenderer)
+	mw := shadowroot.NewWithPrefix(logger, broadcaster, integrationFS, "testdata/templates/elements", realTemplateRenderer)
 
 	// Handler returns button with aria-label
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +130,7 @@ func TestIntegration_ConditionalTemplate(t *testing.T) {
 	logger := &mockLogger{}
 	broadcaster := &mockBroadcaster{}
 
-	mw := shadowroot.NewWithPrefix(logger, broadcaster, integrationFS, "integration_testdata/templates/elements", realTemplateRenderer)
+	mw := shadowroot.NewWithPrefix(logger, broadcaster, integrationFS, "testdata/templates/elements", realTemplateRenderer)
 
 	tests := []struct {
 		name        string
@@ -179,7 +179,7 @@ func TestIntegration_NestedWithAttributes(t *testing.T) {
 	logger := &mockLogger{}
 	broadcaster := &mockBroadcaster{}
 
-	mw := shadowroot.NewWithPrefix(logger, broadcaster, integrationFS, "integration_testdata/templates/elements", realTemplateRenderer)
+	mw := shadowroot.NewWithPrefix(logger, broadcaster, integrationFS, "testdata/templates/elements", realTemplateRenderer)
 
 	// Parent contains child with attributes in its shadow template
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -215,7 +215,7 @@ func TestIntegration_MissingTemplate(t *testing.T) {
 	logger := &mockLogger{}
 	broadcaster := &mockBroadcaster{}
 
-	mw := shadowroot.NewWithPrefix(logger, broadcaster, integrationFS, "integration_testdata/templates/elements", realTemplateRenderer)
+	mw := shadowroot.NewWithPrefix(logger, broadcaster, integrationFS, "testdata/templates/elements", realTemplateRenderer)
 
 	// Use an element that's NOT in the known elements set
 	// It should be silently skipped (no warning/broadcast)

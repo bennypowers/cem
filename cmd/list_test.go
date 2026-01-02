@@ -102,6 +102,7 @@ func TestListE2E(t *testing.T) {
 				}
 
 				golden := filepath.Join(
+					"testdata",
 					"goldens",
 					fmt.Sprintf(
 						"list.%s.golden.md",

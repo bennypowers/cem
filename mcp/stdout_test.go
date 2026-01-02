@@ -47,7 +47,7 @@ func TestMCPCommandStdoutClean(t *testing.T) {
 
 	// Start MCP server
 	cmd := exec.Command(binPath, "mcp")
-	cmd.Dir = "./fixtures/multiple-elements-integration"
+	cmd.Dir = "./testdata/fixtures/multiple-elements-integration"
 
 	// Capture stdout and stderr
 	var stdout, stderr bytes.Buffer
@@ -124,7 +124,7 @@ func TestMCPServerStdoutCleanWithQuietMode(t *testing.T) {
 	}()
 
 	// Create workspace and MCP server
-	workspace := W.NewFileSystemWorkspaceContext("./fixtures/multiple-elements-integration")
+	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
 	err = workspace.Init()
 	require.NoError(t, err)
 
@@ -182,7 +182,7 @@ func TestMCPServerStderrAllowed(t *testing.T) {
 	}()
 
 	// Create workspace with basic integration
-	workspace := W.NewFileSystemWorkspaceContext("./fixtures/basic-integration")
+	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/basic-integration")
 	err = workspace.Init()
 	require.NoError(t, err)
 

@@ -33,7 +33,7 @@ func TestGenerateHTML_WithFixtures(t *testing.T) {
 	registry := getTestRegistry(t)
 
 	// Find all test fixture directories
-	fixturesDir := "../fixtures/generate-html"
+	fixturesDir := "../testdata/fixtures/generate-html"
 	fixtures, err := os.ReadDir(fixturesDir)
 	require.NoError(t, err, "Should be able to read fixtures directory")
 
@@ -253,7 +253,7 @@ func testGenerateHtmlWithGolden(t *testing.T, args tools.GenerateHtmlArgs, golde
 	output := textContent.Text
 
 	// Handle -update flag
-	goldenPath := filepath.Join("../fixtures/generate-html-integration", goldenFile)
+	goldenPath := filepath.Join("../testdata/fixtures/generate-html-integration", goldenFile)
 	if *update {
 		err := os.MkdirAll(filepath.Dir(goldenPath), 0755)
 		require.NoError(t, err, "Failed to create golden file directory")
