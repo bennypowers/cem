@@ -6,7 +6,7 @@ const updateGoldens = process.argv.includes('--update-goldens');
 export default {
   files: [
     'middleware/routes/templates/**/*.test.js',
-    'frontend-tests/**/*.test.js'
+    'testdata/frontend-tests/**/*.test.js'
   ],
   nodeResolve: true,
   // Only show errors in browser logs, filter out dev mode warnings
