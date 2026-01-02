@@ -1,0 +1,19 @@
+{
+  "name": "@cem-examples/kitchen-sink",
+  "version": "1.0.0",
+  "description": "Comprehensive custom elements example showcasing all CEM features",
+  "type": "module",
+  "customElements": "custom-elements.json",
+  "scripts": {
+    "analyze": "cem generate",
+    "serve": "cem serve"
+  },
+  "devDependencies": {
+    "@pwrs/cem": "workspace:*",
+    "lit": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": ["custom-elements", "web-components", "example", "comprehensive"],
+  "author": "Benny Powers",
+  "license": "GPL-3.0-or-later"
+}

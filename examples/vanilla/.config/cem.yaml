@@ -1,0 +1,5 @@
+sourceControlRootUrl: https://github.com/bennypowers/cem/tree/main/examples/vanilla/
+generate:
+  files:
+    - elements/**/*.ts
+  output: custom-elements.json

@@ -43,13 +43,13 @@ func TestNewGenerateSession(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "valid project with classes",
-			fixture: "testdata/fixtures/project-classes",
+			name:    "valid project kitchen-sink",
+			fixture: "../examples/kitchen-sink",
 			wantErr: false,
 		},
 		{
-			name:    "valid project with CSS",
-			fixture: "testdata/fixtures/project-css",
+			name:    "valid project intermediate",
+			fixture: "../examples/intermediate",
 			wantErr: false,
 		},
 	}
@@ -89,30 +89,30 @@ func TestGenerateSession_GenerateFullManifest(t *testing.T) {
 		cancelContext bool
 	}{
 		{
-			name:          "generate from class fields",
-			fixture:       "testdata/fixtures/project-classes",
-			files:         []string{"src/class-fields.ts"},
+			name:          "generate from demo-button",
+			fixture:       "../examples/kitchen-sink",
+			files:         []string{"elements/demo-button/demo-button.ts"},
 			expectModules: true,
 			expectErr:     false,
 		},
 		{
-			name:          "generate from multiple files",
-			fixture:       "testdata/fixtures/project-classes",
-			files:         []string{"src/class-fields.ts", "src/class-methods.ts"},
+			name:          "generate from multiple components",
+			fixture:       "../examples/intermediate",
+			files:         []string{"elements/ui-button/ui-button.ts", "elements/ui-card/ui-card.ts"},
 			expectModules: true,
 			expectErr:     false,
 		},
 		{
 			name:          "generate with cancelled context",
-			fixture:       "testdata/fixtures/project-classes",
-			files:         []string{"src/class-fields.ts"},
+			fixture:       "../examples/intermediate",
+			files:         []string{"elements/ui-button/ui-button.ts"},
 			expectModules: false,
 			expectErr:     true,
 			cancelContext: true,
 		},
 		{
 			name:          "generate with no files",
-			fixture:       "testdata/fixtures/project-classes",
+			fixture:       "../examples/minimal",
 			files:         []string{},
 			expectModules: false,
 			expectErr:     false,
@@ -180,21 +180,21 @@ func TestGenerateSession_GetInMemoryManifest(t *testing.T) {
 	}{
 		{
 			name:          "nil before generation",
-			fixture:       "testdata/fixtures/project-classes",
+			fixture:       "../examples/minimal",
 			generateFirst: false,
 			expectNil:     true,
 		},
 		{
 			name:          "populated after generation",
-			fixture:       "testdata/fixtures/project-classes",
-			files:         []string{"src/class-fields.ts"},
+			fixture:       "../examples/minimal",
+			files:         []string{"elements/hello-world/hello-world.ts"},
 			generateFirst: true,
 			expectNil:     false,
 		},
 		{
 			name:            "concurrent access safety",
-			fixture:         "testdata/fixtures/project-classes",
-			files:           []string{"src/class-fields.ts"},
+			fixture:         "../examples/intermediate",
+			files:           []string{"elements/ui-button/ui-button.ts"},
 			generateFirst:   false,
 			testConcurrency: true,
 		},
@@ -258,11 +258,11 @@ func TestGenerateSession_GetInMemoryManifest(t *testing.T) {
 }
 
 func TestGenerateSession_QueryManagerReuse(t *testing.T) {
-	ctx := setupTestContext(t, "testdata/fixtures/project-classes")
+	ctx := setupTestContext(t, "../examples/minimal")
 
 	cfg, err := ctx.Config()
 	require.NoError(t, err)
-	cfg.Generate.Files = []string{"src/class-fields.ts"}
+	cfg.Generate.Files = []string{"elements/hello-world/hello-world.ts"}
 
 	session, err := NewGenerateSession(ctx)
 	require.NoError(t, err)
@@ -477,12 +477,12 @@ func TestMergeModulesIntoManifest_WithIndex(t *testing.T) {
 }
 
 func BenchmarkGenerateSession_SingleGeneration(b *testing.B) {
-	ctx := W.NewFileSystemWorkspaceContext("testdata/fixtures/project-classes")
+	ctx := W.NewFileSystemWorkspaceContext("../examples/minimal")
 	require.NoError(b, ctx.Init())
 
 	cfg, err := ctx.Config()
 	require.NoError(b, err)
-	cfg.Generate.Files = []string{"src/class-fields.ts"}
+	cfg.Generate.Files = []string{"elements/hello-world/hello-world.ts"}
 
 	for b.Loop() {
 		session, err := NewGenerateSession(ctx)
@@ -496,7 +496,7 @@ func BenchmarkGenerateSession_SingleGeneration(b *testing.B) {
 }
 
 func TestSetMaxWorkers(t *testing.T) {
-	ctx := setupTestContext(t, "testdata/fixtures/project-classes")
+	ctx := setupTestContext(t, "../examples/minimal")
 
 	session, err := NewGenerateSession(ctx)
 	require.NoError(t, err)
@@ -511,11 +511,11 @@ func TestSetMaxWorkers(t *testing.T) {
 }
 
 func TestSetMaxWorkers_BeforeProcessing(t *testing.T) {
-	ctx := setupTestContext(t, "testdata/fixtures/project-classes")
+	ctx := setupTestContext(t, "../examples/minimal")
 
 	cfg, err := ctx.Config()
 	require.NoError(t, err)
-	cfg.Generate.Files = []string{"src/class-fields.ts"}
+	cfg.Generate.Files = []string{"elements/hello-world/hello-world.ts"}
 
 	session, err := NewGenerateSession(ctx)
 	require.NoError(t, err)
@@ -534,7 +534,7 @@ func TestSetMaxWorkers_BeforeProcessing(t *testing.T) {
 }
 
 func TestSetMaxWorkers_ConcurrentAccess(t *testing.T) {
-	ctx := setupTestContext(t, "testdata/fixtures/project-classes")
+	ctx := setupTestContext(t, "../examples/minimal")
 
 	session, err := NewGenerateSession(ctx)
 	require.NoError(t, err)
@@ -567,7 +567,7 @@ func TestSetMaxWorkers_ConcurrentAccess(t *testing.T) {
 }
 
 func TestSetMaxWorkers_ZeroValue(t *testing.T) {
-	ctx := setupTestContext(t, "testdata/fixtures/project-classes")
+	ctx := setupTestContext(t, "../examples/minimal")
 
 	session, err := NewGenerateSession(ctx)
 	require.NoError(t, err)
@@ -582,12 +582,12 @@ func TestSetMaxWorkers_ZeroValue(t *testing.T) {
 }
 
 func BenchmarkGenerateSession_ReusedSession(b *testing.B) {
-	ctx := W.NewFileSystemWorkspaceContext("testdata/fixtures/project-classes")
+	ctx := W.NewFileSystemWorkspaceContext("../examples/minimal")
 	require.NoError(b, ctx.Init())
 
 	cfg, err := ctx.Config()
 	require.NoError(b, err)
-	cfg.Generate.Files = []string{"src/class-fields.ts"}
+	cfg.Generate.Files = []string{"elements/hello-world/hello-world.ts"}
 
 	session, err := NewGenerateSession(ctx)
 	require.NoError(b, err)

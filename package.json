@@ -5,7 +5,8 @@
   "description": "Custom Elements Manifest tools and extensions",
   "workspaces": [
     "extensions/vscode",
-    "extensions/vscode/client"
+    "extensions/vscode/client",
+    "examples/*"
   ],
   "scripts": {
     "build": "npm run build --workspaces",

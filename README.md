@@ -129,6 +129,62 @@ See the [Configuration Reference][configdocs] for more information.
 
 ---
 
+## Examples
+
+The `examples/` directory contains fully-runnable example projects that demonstrate CEM features at different complexity levels. Each example serves as both test fixtures and user-facing documentation.
+
+### [Minimal](examples/minimal/)
+The simplest possible custom element - perfect for getting started.
+- Single component (`<hello-world>`)
+- Basic properties and slots
+- **Start here** if you're new to CEM
+
+### [Vanilla](examples/vanilla/)
+Web Components without frameworks - pure standards.
+- Native `HTMLElement` extension
+- `observedAttributes` and lifecycle callbacks
+- Shows CEM works with any approach
+
+### [Intermediate](examples/intermediate/)
+Real-world UI component library.
+- Multiple components (`<ui-button>`, `<ui-card>`, `<ui-icon>`)
+- Variants, sizes, and states
+- Demo discovery with HTML microdata
+- **Recommended** for most projects
+
+### [Kitchen Sink](examples/kitchen-sink/)
+Comprehensive feature showcase - everything CEM can do.
+- Production-quality button component
+- All attribute types, slots, events, CSS parts
+- Design token integration
+- Complete JSDoc documentation
+
+### [TypeScript Paths](examples/typescript-paths/)
+Advanced build configuration patterns.
+- TypeScript path mappings (`@components/*`)
+- `src/` → `dist/` build flow
+- Dev server URL rewrites
+- Recommended for build-heavy projects
+
+### Running Examples
+
+```bash
+# Install dependencies (from repository root)
+npm install
+
+# Generate manifests for all examples
+make examples-analyze
+
+# Or work with a specific example
+cd examples/intermediate
+npm run analyze  # Generate manifest
+npm run serve    # Start dev server
+```
+
+All examples are tested in CI to ensure they stay current with CEM development.
+
+---
+
 ## Contributing
 
 For information on building and testing, please see

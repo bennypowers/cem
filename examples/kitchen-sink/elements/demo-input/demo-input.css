@@ -1,0 +1,88 @@
+:host {
+  display: inline-block;
+  width:
+    /** Width of the input field */
+    var(--demo-input-width, 200px);
+}
+
+#wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+#label {
+  font-size:
+    /** Font size of the label */
+    var(--demo-input-label-size, 0.875rem);
+  font-weight:
+    /** Font weight of the label */
+    var(--demo-input-label-weight, 500);
+  color:
+    /** Color of the label text */
+    var(--demo-input-label-color, #374151);
+}
+
+#input {
+  padding:
+    /** Padding inside the input */
+    var(--demo-input-padding, 0.5rem 0.75rem);
+  border:
+    1px
+    solid
+    /** Border color of the input */
+    var(--demo-input-border-color, #d1d5db);
+  border-radius:
+    /** Border radius of the input */
+    var(--demo-input-radius, 4px);
+  font-size:
+    /** Font size of input text */
+    var(--demo-input-font-size, 1rem);
+  font-family: inherit;
+  color:
+    /** Text color inside the input */
+    var(--demo-input-color, #111827);
+  background:
+    /** Background color of the input */
+    var(--demo-input-bg, white);
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color:
+      /** Border color when focused */
+      var(--demo-input-focus-border-color, #3b82f6);
+    box-shadow:
+      /** Box shadow when focused */
+      var(--demo-input-focus-shadow, 0 0 0 3px rgba(59, 130, 246, 0.1));
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background:
+      /** Background color when disabled */
+      var(--demo-input-disabled-bg, #f3f4f6);
+  }
+
+  &.error {
+    border-color:
+      /** Border color when in error state */
+      var(--demo-input-error-border-color, #ef4444);
+  }
+}
+
+#helper-text {
+  font-size:
+    /** Font size of helper text */
+    var(--demo-input-helper-size, 0.75rem);
+  color:
+    /** Color of helper text */
+    var(--demo-input-helper-color, #6b7280);
+
+  &.error {
+    color:
+      /** Color of error message text */
+      var(--demo-input-error-color, #ef4444);
+  }
+}

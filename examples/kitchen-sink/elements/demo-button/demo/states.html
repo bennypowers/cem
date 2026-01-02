@@ -1,0 +1,58 @@
+<meta itemprop="demo-for" content="demo-button">
+<meta itemprop="demo-url" content="/elements/demo-button/demo/states/">
+
+<script type="text/markdown" itemprop="description">
+# Button States
+
+Demonstrates the different interactive states and sizes:
+- **Sizes**: Small, medium, and large variants
+- **Disabled**: Cannot be interacted with
+- **Pill**: Fully rounded corners for alternate styling
+</script>
+
+<h1>Button States</h1>
+
+<section>
+  <h2>Sizes</h2>
+  <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+    <demo-button size="small">Small</demo-button>
+    <demo-button size="medium">Medium</demo-button>
+    <demo-button size="large">Large</demo-button>
+  </div>
+</section>
+
+<section>
+  <h2>Disabled</h2>
+  <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+    <demo-button disabled variant="brand">Brand</demo-button>
+    <demo-button disabled variant="success">Success</demo-button>
+    <demo-button disabled variant="warning">Warning</demo-button>
+    <demo-button disabled variant="danger">Danger</demo-button>
+  </div>
+</section>
+
+<section>
+  <h2>Pill Shape</h2>
+  <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+    <demo-button pill variant="brand">Pill Button</demo-button>
+    <demo-button pill size="small">Small Pill</demo-button>
+    <demo-button pill size="large">Large Pill</demo-button>
+  </div>
+</section>
+
+<style>
+  section {
+    margin: 2rem 0;
+  }
+  h1 {
+    margin: 0 0 2rem;
+  }
+  h2 {
+    margin: 0 0 1rem;
+    font-size: 1.25rem;
+  }
+</style>
+
+<script type="module">
+  import '../demo-button.js';
+</script>

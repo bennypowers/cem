@@ -1,0 +1,66 @@
+{
+  "$schema": "https://tr.designtokens.org/format/snapshot/design-tokens-format-module.schema.json",
+  "demo": {
+    "color": {
+      "brand": {
+        "$type": "color",
+        "$value": "#0070f3",
+        "$description": "Primary brand color"
+      },
+      "success": {
+        "$type": "color",
+        "$value": "#10b981",
+        "$description": "Success state color"
+      },
+      "warning": {
+        "$type": "color",
+        "$value": "#f59e0b",
+        "$description": "Warning state color"
+      },
+      "danger": {
+        "$type": "color",
+        "$value": "#ef4444",
+        "$description": "Danger state color"
+      },
+      "neutral": {
+        "$type": "color",
+        "$value": "#666666",
+        "$description": "Neutral gray color"
+      }
+    },
+    "spacing": {
+      "small": {
+        "$type": "dimension",
+        "$value": "0.25rem",
+        "$description": "Small spacing unit"
+      },
+      "medium": {
+        "$type": "dimension",
+        "$value": "0.5rem",
+        "$description": "Medium spacing unit"
+      },
+      "large": {
+        "$type": "dimension",
+        "$value": "0.75rem",
+        "$description": "Large spacing unit"
+      }
+    },
+    "radius": {
+      "small": {
+        "$type": "dimension",
+        "$value": "4px",
+        "$description": "Small border radius"
+      },
+      "medium": {
+        "$type": "dimension",
+        "$value": "8px",
+        "$description": "Medium border radius"
+      },
+      "pill": {
+        "$type": "dimension",
+        "$value": "999px",
+        "$description": "Fully rounded (pill shape)"
+      }
+    }
+  }
+}

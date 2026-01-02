@@ -1,0 +1,480 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "elements/ui-button/ui-button.js",
+      "declarations": [
+        {
+          "name": "UiButton",
+          "summary": "Buttons represent actions available to the user",
+          "description": "A button component with multiple variants and sizes.",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "variant",
+              "description": "The button variant",
+              "type": {
+                "text": "'primary' | 'secondary' | 'success' | 'danger'"
+              },
+              "default": "'primary'",
+              "kind": "field",
+              "attribute": "variant",
+              "reflects": true
+            },
+            {
+              "name": "size",
+              "description": "The button size",
+              "type": {
+                "text": "'small' | 'medium' | 'large'"
+              },
+              "default": "'medium'",
+              "kind": "field",
+              "attribute": "size",
+              "reflects": true
+            },
+            {
+              "name": "disabled",
+              "description": "Whether the button is disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "disabled",
+              "reflects": true
+            },
+            {
+              "name": "loading",
+              "description": "Whether the button is in a loading state",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "loading",
+              "reflects": true
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-button/ui-button.ts#L33"
+          },
+          "kind": "class",
+          "tagName": "ui-button",
+          "attributes": [
+            {
+              "name": "variant",
+              "description": "The button variant",
+              "type": {
+                "text": "'primary' | 'secondary' | 'success' | 'danger'"
+              },
+              "default": "'primary'",
+              "fieldName": "variant"
+            },
+            {
+              "name": "size",
+              "description": "The button size",
+              "type": {
+                "text": "'small' | 'medium' | 'large'"
+              },
+              "default": "'medium'",
+              "fieldName": "size"
+            },
+            {
+              "name": "disabled",
+              "description": "Whether the button is disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "disabled"
+            },
+            {
+              "name": "loading",
+              "description": "Whether the button is in a loading state",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "loading"
+            }
+          ],
+          "events": [
+            {
+              "name": "click",
+              "description": "Emitted when the button is clicked"
+            },
+            {
+              "name": "focus",
+              "description": "Emitted when the button gains focus"
+            },
+            {
+              "name": "blur",
+              "description": "Emitted when the button loses focus"
+            }
+          ],
+          "slots": [
+            {
+              "name": "start",
+              "description": "Content placed before the label (e.g., an icon)"
+            },
+            {
+              "name": "",
+              "description": "The button's label"
+            },
+            {
+              "name": "end",
+              "description": "Content placed after the label (e.g., an icon)"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "base",
+              "description": "The button's base wrapper element"
+            },
+            {
+              "name": "start",
+              "description": "The start slot container"
+            },
+            {
+              "name": "label",
+              "description": "The button's label"
+            },
+            {
+              "name": "end",
+              "description": "The end slot container"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--button-bg",
+              "description": "Background color of the button"
+            },
+            {
+              "name": "--button-color",
+              "description": "Text color"
+            },
+            {
+              "name": "--button-border",
+              "description": "Border style"
+            },
+            {
+              "name": "--button-radius",
+              "description": "Border radius"
+            },
+            {
+              "name": "--button-padding",
+              "description": "Internal padding"
+            },
+            {
+              "name": "--button-padding",
+              "default": "0.5rem 1rem"
+            },
+            {
+              "name": "--button-bg",
+              "default": "#0070f3"
+            },
+            {
+              "name": "--button-border",
+              "default": "none"
+            },
+            {
+              "name": "--button-radius",
+              "default": "4px"
+            },
+            {
+              "name": "--button-color",
+              "default": "white"
+            }
+          ],
+          "demos": [
+            {
+              "description": "# Button Sizes\n\n  Demonstrates the three available sizes for the ui-button component: small, medium, and large.",
+              "url": "/elements/ui-button/demo/sizes",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-button/demo/sizes.html"
+              }
+            },
+            {
+              "description": "# Button Variants\n\n  This demo showcases the different color variants available for the ui-button component.",
+              "url": "/elements/ui-button/demo/variants",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-button/demo/variants.html"
+              }
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "ui-button",
+          "declaration": {
+            "name": "UiButton",
+            "module": "elements/ui-button/ui-button.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "UiButton",
+          "declaration": {
+            "name": "UiButton",
+            "module": "elements/ui-button/ui-button.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "elements/ui-card/ui-card.js",
+      "declarations": [
+        {
+          "name": "UiCard",
+          "summary": "Cards contain content and actions about a single subject",
+          "description": "A card component for grouping related content.",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "heading",
+              "description": "The card heading text (alternative to header slot)",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "heading"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-card/ui-card.ts#L26"
+          },
+          "kind": "class",
+          "tagName": "ui-card",
+          "attributes": [
+            {
+              "name": "heading",
+              "description": "The card heading text (alternative to header slot)",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "heading"
+            }
+          ],
+          "slots": [
+            {
+              "name": "header",
+              "description": "Content for the card header"
+            },
+            {
+              "name": "",
+              "description": "The card's main content"
+            },
+            {
+              "name": "footer",
+              "description": "Content for the card footer (e.g., actions)"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "base",
+              "description": "The card's base wrapper"
+            },
+            {
+              "name": "header",
+              "description": "The header container"
+            },
+            {
+              "name": "body",
+              "description": "The body/content container"
+            },
+            {
+              "name": "footer",
+              "description": "The footer container"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--card-bg",
+              "description": "Background color of the card"
+            },
+            {
+              "name": "--card-border",
+              "description": "Border style"
+            },
+            {
+              "name": "--card-radius",
+              "description": "Border radius"
+            },
+            {
+              "name": "--card-padding",
+              "description": "Internal padding"
+            },
+            {
+              "name": "--card-shadow",
+              "description": "Box shadow for elevation"
+            },
+            {
+              "name": "--card-bg",
+              "default": "white"
+            },
+            {
+              "name": "--card-border",
+              "default": "1px solid #e5e5e5"
+            },
+            {
+              "name": "--card-radius",
+              "default": "8px"
+            },
+            {
+              "name": "--card-shadow",
+              "default": "0 2px 4px rgba(0, 0, 0, 0.1)"
+            },
+            {
+              "name": "--card-padding",
+              "default": "1rem"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "ui-card",
+          "declaration": {
+            "name": "UiCard",
+            "module": "elements/ui-card/ui-card.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "UiCard",
+          "declaration": {
+            "name": "UiCard",
+            "module": "elements/ui-card/ui-card.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "elements/ui-icon/ui-icon.js",
+      "declarations": [
+        {
+          "name": "UiIcon",
+          "summary": "A simple icon component with size control",
+          "description": "An icon component for displaying simple SVG icons.",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "name",
+              "description": "The name of the icon to display",
+              "type": {
+                "text": "'check' | 'x' | 'chevron-right' | 'heart' | 'star'"
+              },
+              "default": "'check'",
+              "kind": "field",
+              "attribute": "name"
+            },
+            {
+              "name": "label",
+              "description": "Accessible label for the icon (required for accessibility)",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "label"
+            },
+            {
+              "name": "iconPath",
+              "type": {
+                "text": "string"
+              },
+              "readonly": true,
+              "kind": "field",
+              "privacy": "private"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-icon/ui-icon.ts#L16"
+          },
+          "kind": "class",
+          "tagName": "ui-icon",
+          "attributes": [
+            {
+              "name": "name",
+              "description": "The name of the icon to display",
+              "type": {
+                "text": "'check' | 'x' | 'chevron-right' | 'heart' | 'star'"
+              },
+              "default": "'check'",
+              "fieldName": "name"
+            },
+            {
+              "name": "label",
+              "description": "Accessible label for the icon (required for accessibility)",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "label"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "base",
+              "description": "The icon's base SVG element"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--icon-color",
+              "description": "Color of the icon"
+            },
+            {
+              "name": "--icon-size",
+              "description": "Size of the icon (width and height)"
+            },
+            {
+              "name": "--icon-size",
+              "default": "1em"
+            },
+            {
+              "name": "--icon-color",
+              "default": "currentColor"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "ui-icon",
+          "declaration": {
+            "name": "UiIcon",
+            "module": "elements/ui-icon/ui-icon.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "UiIcon",
+          "declaration": {
+            "name": "UiIcon",
+            "module": "elements/ui-icon/ui-icon.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "elements/vanilla-element/vanilla-element.js",
+      "declarations": [
+        {
+          "name": "VanillaElement",
+          "description": "A vanilla custom element demonstrating Web Components without a framework.\n\nThis component shows how to create custom elements using only native Web APIs,\nwith proper JSDoc annotations for CEM manifest generation.",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "parameters": [
+                {
+                  "name": "name",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "oldValue",
+                  "type": {
+                    "text": "string | null"
+                  }
+                },
+                {
+                  "name": "newValue",
+                  "type": {
+                    "text": "string | null"
+                  }
+                }
+              ],
+              "name": "attributeChangedCallback",
+              "kind": "method"
+            },
+            {
+              "name": "message",
+              "description": "Gets the message to display",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "reversed",
+              "description": "Gets whether the message should be reversed",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "render",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/vanilla/elements/vanilla-element/vanilla-element.ts#L22"
+          },
+          "kind": "class",
+          "attributes": [
+            {
+              "name": "message",
+              "description": "The message to display",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "reversed",
+              "description": "Whether to display the message in reverse",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "message"
+            },
+            {
+              "name": "reversed"
+            }
+          ],
+          "events": [
+            {
+              "name": ""
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Default slot for additional content"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "message",
+              "description": "The message paragraph element"
+            },
+            {
+              "name": "container",
+              "description": "The container div element"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--vanilla-bg",
+              "description": "Background color of the container"
+            },
+            {
+              "name": "--vanilla-color",
+              "description": "Text color"
+            },
+            {
+              "name": "--vanilla-padding",
+              "description": "Padding around the content"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "VanillaElement",
+            "module": "elements/vanilla-element/vanilla-element.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "VanillaElement",
+          "declaration": {
+            "name": "VanillaElement",
+            "module": "elements/vanilla-element/vanilla-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

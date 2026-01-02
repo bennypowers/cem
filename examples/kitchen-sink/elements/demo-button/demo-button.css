@@ -1,0 +1,156 @@
+:host {
+  display: inline-block;
+}
+
+#button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding:
+    /**
+     * Internal padding of the button
+     * @summary Button padding
+     */
+    var(--demo-button-padding, 0.5rem 1rem);
+  background:
+    /**
+     * Background color of the button
+     * @summary Button background color
+     */
+    var(--demo-button-bg, #0070f3);
+  color:
+    /**
+     * Text color of the button
+     * @summary Button text color
+     */
+    var(--demo-button-color, white);
+  border:
+    /**
+     * Border style of the button
+     * @summary Button border
+     */
+    var(--demo-button-border, none);
+  border-radius:
+    /**
+     * Border radius for rounded corners
+     * @summary Button border radius
+     */
+    var(--demo-button-radius, 4px);
+  font-family: inherit;
+  font-size:
+    /**
+     * Font size of button text
+     * @summary Button font size
+     */
+    var(--demo-button-font-size, 1rem);
+  font-weight:
+    /**
+     * Font weight of button text
+     * @summary Button font weight
+     */
+    var(--demo-button-font-weight, 500);
+  cursor: pointer;
+  transition:
+    all
+    /**
+     * Transition duration for animations
+     * @summary Button transition duration
+     */
+    var(--demo-button-transition, 0.2s)
+    ease;
+  position: relative;
+
+  &:hover:not(.disabled):not(.loading) {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  &:active:not(.disabled):not(.loading) {
+    transform: translateY(0);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--demo-button-bg);
+    outline-offset: 2px;
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.loading {
+    color: transparent;
+    pointer-events: none;
+  }
+
+  /* Variants */
+  &.neutral {
+    --demo-button-bg: #666;
+    --demo-button-color: white;
+  }
+
+  &.brand {
+    --demo-button-bg: #0070f3;
+    --demo-button-color: white;
+  }
+
+  &.success {
+    --demo-button-bg: #10b981;
+    --demo-button-color: white;
+  }
+
+  &.warning {
+    --demo-button-bg: #f59e0b;
+    --demo-button-color: white;
+  }
+
+  &.danger {
+    --demo-button-bg: #ef4444;
+    --demo-button-color: white;
+  }
+
+  /* Appearances */
+  &.filled {
+    background: var(--demo-button-bg);
+    color: var(--demo-button-color);
+  }
+
+  &.outlined {
+    background: transparent;
+    color: var(--demo-button-bg);
+    border: 1px solid var(--demo-button-bg);
+  }
+
+  &.plain {
+    background: transparent;
+    color: var(--demo-button-bg);
+    border: none;
+  }
+
+  /* Sizes */
+  &.small {
+    --demo-button-padding: 0.25rem 0.75rem;
+    --demo-button-font-size: 0.875rem;
+  }
+
+  &.medium {
+    --demo-button-padding: 0.5rem 1rem;
+    --demo-button-font-size: 1rem;
+  }
+
+  &.large {
+    --demo-button-padding: 0.75rem 1.5rem;
+    --demo-button-font-size: 1.125rem;
+  }
+
+  /* Pill shape */
+  &.pill {
+    --demo-button-radius: 999px;
+  }
+}
+
+[hidden] {
+  display: none !important;
+}

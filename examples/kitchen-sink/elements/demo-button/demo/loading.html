@@ -1,0 +1,51 @@
+<meta itemprop="demo-for" content="demo-button">
+<meta itemprop="demo-url" content="/elements/demo-button/demo/loading/">
+<meta itemprop="description" content="Loading spinner states across all variants, sizes, and appearances">
+
+<h1>Loading States</h1>
+
+<section>
+  <h2>Loading Variants</h2>
+  <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+    <demo-button loading variant="brand">Brand Loading</demo-button>
+    <demo-button loading variant="success">Success Loading</demo-button>
+    <demo-button loading variant="warning">Warning Loading</demo-button>
+    <demo-button loading variant="danger">Danger Loading</demo-button>
+    <demo-button loading variant="neutral">Neutral Loading</demo-button>
+  </div>
+</section>
+
+<section>
+  <h2>Loading Sizes</h2>
+  <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+    <demo-button loading size="small">Small</demo-button>
+    <demo-button loading size="medium">Medium</demo-button>
+    <demo-button loading size="large">Large</demo-button>
+  </div>
+</section>
+
+<section>
+  <h2>Loading Appearances</h2>
+  <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+    <demo-button loading appearance="filled">Filled</demo-button>
+    <demo-button loading appearance="outlined">Outlined</demo-button>
+    <demo-button loading appearance="plain">Plain</demo-button>
+  </div>
+</section>
+
+<style>
+  section {
+    margin: 2rem 0;
+  }
+  h1 {
+    margin: 0 0 2rem;
+  }
+  h2 {
+    margin: 0 0 1rem;
+    font-size: 1.25rem;
+  }
+</style>
+
+<script type="module">
+  import '../demo-button.js';
+</script>
