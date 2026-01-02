@@ -77,7 +77,7 @@ func TestValidateGolden(t *testing.T) {
 
 			// Check against golden file
 			testutil.CheckGolden(t, tc.name, jsonBytes, testutil.GoldenOptions{
-				Dir:         "goldens",
+				Dir:         "testdata/goldens",
 				Extension:   ".json",
 				UseJSONDiff: true,
 			})
