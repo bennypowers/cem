@@ -34,7 +34,7 @@ func TestMultipleSchemaVersions_FixtureGolden(t *testing.T) {
 // loadManifestFromFixture loads a manifest from a fixture file and creates a ManifestContext
 func loadManifestFromFixture(t *testing.T, version string) ManifestContext {
 	// Load manifest fixture file
-	manifestPath := filepath.Join("..", "fixtures", "multiple-schemas", version, "custom-elements.json")
+	manifestPath := filepath.Join("..", "testdata", "fixtures", "multiple-schemas", version, "custom-elements.json")
 	manifestData, err := os.ReadFile(manifestPath)
 	require.NoError(t, err, "Should be able to read manifest fixture for version %s", version)
 
@@ -99,7 +99,7 @@ func testSchemaVersionWithGolden(t *testing.T, version string) {
 }
 
 func testWithGoldenFile(t *testing.T, actual, goldenFileName string) {
-	goldenPath := filepath.Join("..", "fixtures", "multiple-schemas", goldenFileName)
+	goldenPath := filepath.Join("..", "testdata", "fixtures", "multiple-schemas", goldenFileName)
 
 	// Check for update mode via environment variable (internal test pattern)
 	if updateGolden := os.Getenv("UPDATE_GOLDEN"); updateGolden != "" {
@@ -146,7 +146,7 @@ func testBackwardsCompatibilityWithGolden(t *testing.T, version string) {
 }
 
 func testBackwardsCompatibilityWithGoldenFile(t *testing.T, actual, goldenFileName string) {
-	goldenPath := filepath.Join("..", "fixtures", "schema-backwards-compatibility", goldenFileName)
+	goldenPath := filepath.Join("..", "testdata", "fixtures", "schema-backwards-compatibility", goldenFileName)
 
 	// Check for update mode via environment variable (internal test pattern)
 	if updateGolden := os.Getenv("UPDATE_GOLDEN"); updateGolden != "" {

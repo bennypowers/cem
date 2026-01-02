@@ -30,7 +30,7 @@ import (
 )
 
 func TestNewServer(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./fixtures/basic-integration")
+	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/basic-integration")
 
 	server, err := NewServer(workspace)
 	require.NoError(t, err)
@@ -42,7 +42,7 @@ func TestNewServer(t *testing.T) {
 }
 
 func TestServer_GetInfo(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./fixtures/basic-integration")
+	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/basic-integration")
 	server, err := NewServer(workspace)
 	require.NoError(t, err)
 
@@ -54,7 +54,7 @@ func TestServer_GetInfo(t *testing.T) {
 }
 
 func TestServer_VersionConsistency(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./fixtures/basic-integration")
+	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/basic-integration")
 	server, err := NewServer(workspace)
 	require.NoError(t, err)
 
@@ -65,7 +65,7 @@ func TestServer_VersionConsistency(t *testing.T) {
 }
 
 func TestDynamicSchemaVersionDetection(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./fixtures/basic-integration")
+	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/basic-integration")
 
 	// Initialize workspace
 	err := workspace.Init()

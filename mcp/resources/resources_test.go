@@ -39,7 +39,7 @@ var update = flag.Bool("update", false, "update golden files")
 
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
 func getTestRegistry(t *testing.T) *mcp.MCPContext {
-	workspace := W.NewFileSystemWorkspaceContext("../fixtures/multiple-elements-integration")
+	workspace := W.NewFileSystemWorkspaceContext("../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -565,7 +565,7 @@ func testResourceWithGolden(t *testing.T, uri string, goldenFile string) {
 	output := content.Text
 
 	// Handle --update flag
-	goldenPath := filepath.Join("../fixtures/resource-integration", goldenFile)
+	goldenPath := filepath.Join("../testdata/fixtures/resource-integration", goldenFile)
 	if *update {
 		err := os.MkdirAll(filepath.Dir(goldenPath), 0755)
 		require.NoError(t, err, "Failed to create golden file directory")

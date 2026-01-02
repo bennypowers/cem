@@ -36,7 +36,7 @@ var update = flag.Bool("update", false, "update golden files")
 
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
 func getTestRegistry(t *testing.T) *mcp.MCPContext {
-	workspace := W.NewFileSystemWorkspaceContext("./fixtures/multiple-elements-integration")
+	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
