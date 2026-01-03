@@ -151,43 +151,28 @@
           "cssProperties": [
             {
               "name": "--button-bg",
-              "description": "Background color of the button"
-            },
-            {
-              "name": "--button-color",
-              "description": "Text color"
-            },
-            {
-              "name": "--button-border",
-              "description": "Border style"
-            },
-            {
-              "name": "--button-radius",
-              "description": "Border radius"
-            },
-            {
-              "name": "--button-padding",
-              "description": "Internal padding"
-            },
-            {
-              "name": "--button-padding",
-              "default": "0.5rem 1rem"
-            },
-            {
-              "name": "--button-bg",
+              "description": "Background color of the button",
               "default": "#0070f3"
             },
             {
+              "name": "--button-color",
+              "description": "Text color",
+              "default": "white"
+            },
+            {
               "name": "--button-border",
+              "description": "Border style",
               "default": "none"
             },
             {
               "name": "--button-radius",
+              "description": "Border radius",
               "default": "4px"
             },
             {
-              "name": "--button-color",
-              "default": "white"
+              "name": "--button-padding",
+              "description": "Internal padding",
+              "default": "0.5rem 1rem"
             }
           ],
           "demos": [
@@ -301,43 +286,28 @@
           "cssProperties": [
             {
               "name": "--card-bg",
-              "description": "Background color of the card"
-            },
-            {
-              "name": "--card-border",
-              "description": "Border style"
-            },
-            {
-              "name": "--card-radius",
-              "description": "Border radius"
-            },
-            {
-              "name": "--card-padding",
-              "description": "Internal padding"
-            },
-            {
-              "name": "--card-shadow",
-              "description": "Box shadow for elevation"
-            },
-            {
-              "name": "--card-bg",
+              "description": "Background color of the card",
               "default": "white"
             },
             {
               "name": "--card-border",
+              "description": "Border style",
               "default": "1px solid #e5e5e5"
             },
             {
               "name": "--card-radius",
+              "description": "Border radius",
               "default": "8px"
             },
             {
-              "name": "--card-shadow",
-              "default": "0 2px 4px rgba(0, 0, 0, 0.1)"
+              "name": "--card-padding",
+              "description": "Internal padding",
+              "default": "1rem"
             },
             {
-              "name": "--card-padding",
-              "default": "1rem"
+              "name": "--card-shadow",
+              "description": "Box shadow for elevation",
+              "default": "0 2px 4px rgba(0, 0, 0, 0.1)"
             }
           ],
           "customElement": true
@@ -439,19 +409,13 @@
           "cssProperties": [
             {
               "name": "--icon-color",
-              "description": "Color of the icon"
-            },
-            {
-              "name": "--icon-size",
-              "description": "Size of the icon (width and height)"
-            },
-            {
-              "name": "--icon-size",
-              "default": "1em"
-            },
-            {
-              "name": "--icon-color",
+              "description": "Color of the icon",
               "default": "currentColor"
+            },
+            {
+              "name": "--icon-size",
+              "description": "Size of the icon (width and height)",
+              "default": "1em"
             }
           ],
           "customElement": true
