@@ -1,7 +1,7 @@
 sourceControlRootUrl: https://github.com/bennypowers/cem/tree/main/examples/typescript-paths/
 generate:
   files:
-    - src/components/**/*.ts
+    - src/**/*.ts
   output: custom-elements.json
 serve:
   # URL rewrites allow dev server to serve from source
@@ -9,3 +9,8 @@ serve:
   urlRewrites:
     - from: /dist/(.*)
       to: /src/$1
+    # TypeScript path mapping aliases
+    - from: /@components/(.*)
+      to: /src/components/$1
+    - from: /@utils/(.*)
+      to: /src/utils/$1

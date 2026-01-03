@@ -54,7 +54,16 @@ This allows imports like:
 
 ```typescript
 import { TsButton } from '@components/ts-button.js';
-import { formatDate } from '@utils/date.js';
+import { capitalize, kebabCase } from '@utils/format.js';
+```
+
+**Real Example** (from `src/components/ts-button.ts`):
+
+```typescript
+import { capitalize } from '@utils/format.js';
+
+// Use the utility in the component
+const displayLabel = this.label ? capitalize(this.label) : '';
 ```
 
 ### 2. Separate Source and Output
@@ -141,14 +150,23 @@ After building, the same HTML works in production because the files exist in `di
 
 ### With Path Mappings
 
-If you create another component, you can import with path mappings:
+Components and utilities use clean import paths:
 
 ```typescript
-// src/components/another-component.ts
+// src/index.ts - Entry point demonstrating path mappings
 import { TsButton } from '@components/ts-button.js';
+import { capitalize, kebabCase, truncate } from '@utils/format.js';
 
-// TypeScript knows @components/* → src/components/*
+// TypeScript resolves:
+// @components/* → src/components/*
+// @utils/* → src/utils/*
 ```
+
+**Available Utilities** (`src/utils/format.ts`):
+
+- `capitalize(str)` - Capitalizes first letter
+- `kebabCase(str)` - Converts to kebab-case
+- `truncate(str, maxLength)` - Truncates with ellipsis
 
 ## Dev Server URL Rewrites Explained
 
@@ -167,13 +185,24 @@ serve:
   urlRewrites:
     - from: /dist/(.*)
       to: /src/$1
+    # TypeScript path mapping aliases
+    - from: /@components/(.*)
+      to: /src/components/$1
+    - from: /@utils/(.*)
+      to: /src/utils/$1
 ```
 
-When browser requests `/dist/components/ts-button.js`:
-1. Dev server intercepts the request
-2. Matches the pattern `/dist/(.*)`
-3. Rewrites to `/src/components/ts-button.ts`
-4. Serves the source file
+**How URL rewrites work:**
+
+1. **Production paths** (`/dist/*`):
+   - Browser requests: `/dist/components/ts-button.js`
+   - Dev server rewrites to: `/src/components/ts-button.ts`
+   - Serves the TypeScript source directly
+
+2. **Path mapping aliases** (`@components/*`, `@utils/*`):
+   - Browser requests: `/@components/ts-button.js`
+   - Dev server rewrites to: `/src/components/ts-button.ts`
+   - Allows using TypeScript aliases in development
 
 Benefits:
 - Edit source, see changes immediately

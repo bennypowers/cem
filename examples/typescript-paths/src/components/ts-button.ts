@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { capitalize } from '@utils/format.js';
 
 /**
  * A button component demonstrating TypeScript path mappings.
@@ -65,9 +66,12 @@ export class TsButton extends LitElement {
   @property() label = '';
 
   render() {
+    // Demonstrate @utils/* path mapping by capitalizing the label
+    const displayLabel = this.label ? capitalize(this.label) : '';
+
     return html`
       <button part="base" ?disabled=${this.disabled}>
-        ${this.label ? this.label : html`<slot></slot>`}
+        ${displayLabel || html`<slot></slot>`}
       </button>
     `;
   }
