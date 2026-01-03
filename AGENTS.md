@@ -78,6 +78,9 @@ Format attributes vertically aligned and sort by importance, e.g.:
         @click="${this.#onClick}">
 ```
 
+When manipulating HTML via JavaScript, prefer template cloning and the DOM API
+to the innerHTML setter.
+
 ## CSS
 - Use native CSS nesting syntax.
 - but don't nest under :host except when using host attrs like `:host([disabled]) { button { ... } }`
