@@ -82,6 +82,14 @@ Full cross-component example demonstrating:
   const result = document.getElementById('result');
   const submitButton = form.querySelector('[type="submit"]');
 
+  const resultTemplate = document.createElement('template');
+  resultTemplate.innerHTML = `
+    <strong>Form Submitted!</strong><br>
+    Name: <span class="name-value"></span><br>
+    Email: <span class="email-value"></span><br>
+    Message: <span class="message-value"></span>
+  `;
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -93,12 +101,15 @@ Full cross-component example demonstrating:
     submitButton.loading = false;
 
     const formData = new FormData(form);
-    result.innerHTML = `
-      <strong>Form Submitted!</strong><br>
-      Name: ${formData.get('name')}<br>
-      Email: ${formData.get('email')}<br>
-      Message: ${formData.get('message')}
-    `;
+
+    // Clone template and safely populate with user data
+    const content = resultTemplate.content.cloneNode(true);
+    content.querySelector('.name-value').textContent = formData.get('name');
+    content.querySelector('.email-value').textContent = formData.get('email');
+    content.querySelector('.message-value').textContent = formData.get('message');
+
+    result.innerHTML = '';
+    result.appendChild(content);
     result.classList.add('show');
   });
 
