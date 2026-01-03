@@ -159,9 +159,6 @@
               "kind": "method"
             }
           ],
-          "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo-button.ts#L33"
-          },
           "kind": "class",
           "tagName": "demo-button",
           "attributes": [
@@ -420,9 +417,6 @@
             "name": "LitElement",
             "package": "lit"
           },
-          "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-card/demo-card.ts#L6"
-          },
           "kind": "class",
           "tagName": "demo-card",
           "slots": [
@@ -494,15 +488,6 @@
               "default": "#f9fafb"
             }
           ],
-          "demos": [
-            {
-              "description": "# Form Integration\n\nFull cross-component example demonstrating:\n- Form submission with demo-button (submit/reset types)\n- Input validation with demo-input\n- Layout structure with demo-card (header/footer slots)\n- Loading state during async operations",
-              "url": "/elements/demo-button/demo/forms/",
-              "source": {
-                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/forms.html"
-              }
-            }
-          ],
           "customElement": true
         }
       ],
@@ -555,9 +540,6 @@
               "attribute": "label"
             }
           ],
-          "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-icon/demo-icon.ts#L19"
-          },
           "kind": "class",
           "tagName": "demo-icon",
           "attributes": [
@@ -586,22 +568,13 @@
           "cssProperties": [
             {
               "name": "--demo-icon-size",
-              "description": "Width of the icon\n\nHeight of the icon",
+              "description": "Width of the iconHeight of the icon",
               "default": "1em"
             },
             {
               "name": "--demo-icon-color",
               "description": "Color of the icon",
               "default": "currentColor"
-            }
-          ],
-          "demos": [
-            {
-              "description": "# Buttons with Icons\n\nCross-component demo showing demo-button with demo-icon integration:\n- Icons before label (start slot)\n- Icons after label (end slot)\n- Icon-only buttons with aria-label",
-              "url": "/elements/demo-button/demo/with-icons/",
-              "source": {
-                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/with-icons.html"
-              }
             }
           ],
           "customElement": true
@@ -630,6 +603,23 @@
       "kind": "javascript-module",
       "path": "elements/demo-input/demo-input.js",
       "declarations": [
+        {
+          "name": "DemoInputEvent",
+          "superclass": {
+            "name": "Event",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            }
+          ],
+          "kind": "class"
+        },
         {
           "name": "DemoInput",
           "superclass": {
@@ -796,9 +786,6 @@
               "kind": "method"
             }
           ],
-          "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo-input.ts#L8"
-          },
           "kind": "class",
           "tagName": "demo-input",
           "attributes": [
@@ -994,19 +981,18 @@
               "default": "#ef4444"
             }
           ],
-          "demos": [
-            {
-              "description": "# Form Integration\n\nFull cross-component example demonstrating:\n- Form submission with demo-button (submit/reset types)\n- Input validation with demo-input\n- Layout structure with demo-card (header/footer slots)\n- Loading state during async operations",
-              "url": "/elements/demo-button/demo/forms/",
-              "source": {
-                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/forms.html"
-              }
-            }
-          ],
           "customElement": true
         }
       ],
       "exports": [
+        {
+          "kind": "js",
+          "name": "DemoInputEvent",
+          "declaration": {
+            "name": "DemoInputEvent",
+            "module": "elements/demo-input/demo-input.js"
+          }
+        },
         {
           "kind": "custom-element-definition",
           "name": "demo-input",
@@ -1036,9 +1022,6 @@
           "superclass": {
             "name": "LitElement",
             "package": "lit"
-          },
-          "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-spinner/demo-spinner.ts#L15"
           },
           "kind": "class",
           "tagName": "demo-spinner",
