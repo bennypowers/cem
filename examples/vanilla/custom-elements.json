@@ -76,17 +76,6 @@
               "type": {
                 "text": "boolean"
               }
-            },
-            {
-              "name": "message"
-            },
-            {
-              "name": "reversed"
-            }
-          ],
-          "events": [
-            {
-              "name": ""
             }
           ],
           "slots": [
@@ -125,7 +114,7 @@
       "exports": [
         {
           "kind": "custom-element-definition",
-          "name": "",
+          "name": "vanilla-element",
           "declaration": {
             "name": "VanillaElement",
             "module": "elements/vanilla-element/vanilla-element.js"

@@ -56,18 +56,12 @@
           "cssProperties": [
             {
               "name": "--ts-button-bg",
-              "description": "Background color"
-            },
-            {
-              "name": "--ts-button-color",
-              "description": "Text color"
-            },
-            {
-              "name": "--ts-button-bg",
+              "description": "Background color",
               "default": "#4f46e5"
             },
             {
               "name": "--ts-button-color",
+              "description": "Text color",
               "default": "white"
             }
           ],
