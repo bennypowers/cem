@@ -4,6 +4,9 @@
   "description": "Minimal custom element example for CEM",
   "type": "module",
   "customElements": "custom-elements.json",
+  "exports": {
+    "./*": "./*"
+  },
   "scripts": {
     "analyze": "cem generate",
     "serve": "cem serve"

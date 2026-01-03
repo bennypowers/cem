@@ -4,6 +4,9 @@
   "description": "Intermediate custom elements example with multiple practical components",
   "type": "module",
   "customElements": "custom-elements.json",
+  "exports": {
+    "./*": "./*"
+  },
   "scripts": {
     "analyze": "cem generate",
     "serve": "cem serve"

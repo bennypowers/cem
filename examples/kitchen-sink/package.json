@@ -4,6 +4,9 @@
   "description": "Comprehensive custom elements example showcasing all CEM features",
   "type": "module",
   "customElements": "custom-elements.json",
+  "exports": {
+    "./*": "./*"
+  },
   "scripts": {
     "analyze": "cem generate",
     "serve": "cem serve"

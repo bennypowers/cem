@@ -4,6 +4,9 @@
   "description": "Example demonstrating TypeScript path mappings with CEM",
   "type": "module",
   "customElements": "custom-elements.json",
+  "exports": {
+    "./*": "./*"
+  },
   "scripts": {
     "analyze": "cem generate",
     "serve": "cem serve",

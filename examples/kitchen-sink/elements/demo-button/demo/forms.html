@@ -1,4 +1,4 @@
-<meta itemprop="demo-for" content="demo-button demo-input demo-card">
+<meta itemprop="demo-for" content="demo-button">
 <meta itemprop="demo-url" content="/elements/demo-button/demo/forms/">
 
 <script type="text/markdown" itemprop="description">
@@ -61,17 +61,25 @@ Full cross-component example demonstrating:
       justify-content: flex-end;
     }
   }
+
   #result {
     margin-top: 1rem;
     padding: 1rem;
     background: #f3f4f6;
     border-radius: 4px;
     display: none;
-  }
-  #result.show {
-    display: block;
+    &.show {
+      display: block;
+    }
   }
 </style>
+
+<template id="result-template">
+  <strong>Form Submitted!</strong><br>
+  Name: <span class="name-value"></span><br>
+  Email: <span class="email-value"></span><br>
+  Message: <span class="message-value"></span>
+</template>
 
 <script type="module">
   import '../demo-button.js';
@@ -82,13 +90,7 @@ Full cross-component example demonstrating:
   const result = document.getElementById('result');
   const submitButton = form.querySelector('[type="submit"]');
 
-  const resultTemplate = document.createElement('template');
-  resultTemplate.innerHTML = `
-    <strong>Form Submitted!</strong><br>
-    Name: <span class="name-value"></span><br>
-    Email: <span class="email-value"></span><br>
-    Message: <span class="message-value"></span>
-  `;
+  const resultTemplate = document.getElementById('result-template');
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
