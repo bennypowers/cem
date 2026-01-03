@@ -21,7 +21,7 @@ This example demonstrates the absolute minimum needed to create a custom element
 
 ## Project Structure
 
-```
+```text
 minimal/
 ├── .config/
 │   └── cem.yaml              # CEM configuration

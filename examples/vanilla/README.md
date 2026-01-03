@@ -27,7 +27,7 @@ Perfect for:
 
 ## Project Structure
 
-```
+```text
 vanilla/
 ├── .config/
 │   └── cem.yaml                     # CEM configuration

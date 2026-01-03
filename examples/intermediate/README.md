@@ -57,7 +57,7 @@ A simple SVG icon component.
 
 ## Project Structure
 
-```
+```text
 intermediate/
 ├── .config/
 │   └── cem.yaml                      # CEM config with demo discovery

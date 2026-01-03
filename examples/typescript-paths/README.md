@@ -20,7 +20,7 @@ Perfect for:
 
 ## Project Structure
 
-```
+```text
 typescript-paths/
 ├── .config/
 │   └── cem.yaml              # With URL rewrite config

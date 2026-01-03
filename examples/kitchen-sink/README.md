@@ -116,7 +116,7 @@ Tokens are prefixed with `--demo` and can be used throughout the component.
 
 ## Project Structure
 
-```
+```text
 kitchen-sink/
 ├── .config/
 │   └── cem.yaml                      # Config with tokens & demos
