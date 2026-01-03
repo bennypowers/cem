@@ -1,3 +1,11 @@
+export class MessageChangedEvent extends Event {
+  message: string;
+  constructor(message: string) {
+    super('message-changed', { bubbles: true, composed: true });
+    this.message = message;
+  }
+}
+
 /**
  * A vanilla custom element demonstrating Web Components without a framework.
  *
@@ -5,7 +13,7 @@
  * with proper JSDoc annotations for CEM manifest generation.
  *
  * @element vanilla-element
- * @fires {CustomEvent<{message: string}>} message-changed - Dispatched when the message attribute changes
+ * @fires {MessageChangedEvent} message-changed - Dispatched when the message attribute changes
  *
  * @attr {string} message - The message to display
  * @attr {boolean} reversed - Whether to display the message in reverse
@@ -20,6 +28,7 @@
  * @cssprop --vanilla-padding - Padding around the content
  */
 export class VanillaElement extends HTMLElement {
+  private static template = document.createElement('template');
   static get observedAttributes() {
     return ['message', 'reversed'];
   }
@@ -36,13 +45,7 @@ export class VanillaElement extends HTMLElement {
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
     if (oldValue !== newValue) {
       if (name === 'message') {
-        this.dispatchEvent(
-          new CustomEvent('message-changed', {
-            detail: { message: newValue || '' },
-            bubbles: true,
-            composed: true,
-          })
-        );
+        this.dispatchEvent(new MessageChangedEvent(newValue || ''));
       }
       this.render();
     }
@@ -87,7 +90,7 @@ export class VanillaElement extends HTMLElement {
 
     if (!this.shadowRoot) return;
 
-    this.shadowRoot.innerHTML = `
+    VanillaElement.template.innerHTML = `
       <style>
         :host {
           display: block;
@@ -108,6 +111,9 @@ export class VanillaElement extends HTMLElement {
         <slot></slot>
       </div>
     `;
+
+    this.shadowRoot.innerHTML = '';
+    this.shadowRoot.appendChild(VanillaElement.template.content.cloneNode(true));
   }
 }
 

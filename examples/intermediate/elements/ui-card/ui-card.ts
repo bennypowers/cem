@@ -29,7 +29,7 @@ export class UiCard extends LitElement {
       display: block;
     }
 
-    .card {
+    #card {
       background: var(--card-bg, white);
       border: var(--card-border, 1px solid #e5e5e5);
       border-radius: var(--card-radius, 8px);
@@ -37,26 +37,26 @@ export class UiCard extends LitElement {
       overflow: hidden;
     }
 
-    .header,
-    .body,
-    .footer {
+    #header,
+    #body,
+    #footer {
       padding: var(--card-padding, 1rem);
     }
 
-    .header {
+    #header {
       border-bottom: 1px solid #e5e5e5;
       font-weight: 600;
     }
 
-    .header:empty {
+    #header:empty {
       display: none;
     }
 
-    .body {
+    #body {
       flex: 1;
     }
 
-    .footer {
+    #footer {
       border-top: 1px solid #e5e5e5;
       background: #f9f9f9;
       display: flex;
@@ -64,7 +64,7 @@ export class UiCard extends LitElement {
       align-items: center;
     }
 
-    .footer:empty {
+    #footer:empty {
       display: none;
     }
   `;
@@ -76,15 +76,15 @@ export class UiCard extends LitElement {
 
   render() {
     return html`
-      <div part="base" class="card">
-        <div part="header" class="header">
+      <div id="card" part="base">
+        <div id="header" part="header">
           ${this.heading ? html`<div>${this.heading}</div>` : ''}
           <slot name="header"></slot>
         </div>
-        <div part="body" class="body">
+        <div id="body" part="body">
           <slot></slot>
         </div>
-        <div part="footer" class="footer">
+        <div id="footer" part="footer">
           <slot name="footer"></slot>
         </div>
       </div>

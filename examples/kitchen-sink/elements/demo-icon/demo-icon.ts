@@ -22,6 +22,13 @@ export class DemoIcon extends LitElement {
   @property() name: keyof typeof ICONS = 'check';
   @property() label = '';
 
+  connectedCallback() {
+    super.connectedCallback();
+    if (!this.label) {
+      console.warn('demo-icon: Missing "label" attribute. Icons should have labels for screen readers.');
+    }
+  }
+
   render() {
     const icon = ICONS[this.name] || ICONS.check;
 

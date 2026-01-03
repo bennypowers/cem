@@ -92,7 +92,15 @@ export class DemoButton extends LitElement {
     this.hasStartSlot = this.querySelector('[slot="start"]') !== null;
     this.hasEndSlot = this.querySelector('[slot="end"]') !== null;
     this.hasDefaultSlot = Array.from(this.childNodes).some(
-      node => !node.nodeValue?.trim() || (node as Element).slot === undefined
+      node => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          return !!node.nodeValue?.trim();
+        }
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          return !(node as Element).hasAttribute('slot');
+        }
+        return false;
+      }
     );
   }
 

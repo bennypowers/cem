@@ -4,11 +4,19 @@ import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import styles from './demo-input.css' with { type: 'css' };
 
+export class DemoInputEvent extends Event {
+  value: string;
+  constructor(type: string, value: string) {
+    super(type, { bubbles: true, composed: true });
+    this.value = value;
+  }
+}
+
 @customElement('demo-input')
 export class DemoInput extends LitElement {
   static styles = [styles];
 
-  @query('.input') input!: HTMLInputElement;
+  @query('#input') input!: HTMLInputElement;
 
   @property() label = '';
   @property() value = '';
@@ -25,20 +33,12 @@ export class DemoInput extends LitElement {
 
   private handleInput(e: Event) {
     this.value = (e.target as HTMLInputElement).value;
-    this.dispatchEvent(new CustomEvent('input', {
-      detail: { value: this.value },
-      bubbles: true,
-      composed: true
-    }));
+    this.dispatchEvent(new DemoInputEvent('demo-input', this.value));
   }
 
   private handleChange(e: Event) {
     this.value = (e.target as HTMLInputElement).value;
-    this.dispatchEvent(new CustomEvent('change', {
-      detail: { value: this.value },
-      bubbles: true,
-      composed: true
-    }));
+    this.dispatchEvent(new DemoInputEvent('demo-change', this.value));
   }
 
   focus(options?: FocusOptions) {
