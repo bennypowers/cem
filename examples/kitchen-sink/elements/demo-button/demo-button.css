@@ -87,28 +87,28 @@
 
   /* Variants */
   &.neutral {
-    --demo-button-bg: #666;
-    --demo-button-color: white;
+    --demo-button-bg: light-dark(#666, #888);
+    --demo-button-color: light-dark(white, #f0f0f0);
   }
 
   &.brand {
-    --demo-button-bg: #0070f3;
-    --demo-button-color: white;
+    --demo-button-bg: light-dark(#0070f3, #3291ff);
+    --demo-button-color: light-dark(white, #f0f0f0);
   }
 
   &.success {
-    --demo-button-bg: #10b981;
-    --demo-button-color: white;
+    --demo-button-bg: light-dark(#10b981, #34d399);
+    --demo-button-color: light-dark(white, #f0f0f0);
   }
 
   &.warning {
-    --demo-button-bg: #f59e0b;
-    --demo-button-color: white;
+    --demo-button-bg: light-dark(#f59e0b, #fbbf24);
+    --demo-button-color: light-dark(white, #1a1a1a);
   }
 
   &.danger {
-    --demo-button-bg: #ef4444;
-    --demo-button-color: white;
+    --demo-button-bg: light-dark(#ef4444, #f87171);
+    --demo-button-color: light-dark(white, #f0f0f0);
   }
 
   /* Appearances */
