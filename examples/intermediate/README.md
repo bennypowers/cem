@@ -108,26 +108,22 @@ Navigate to the component files and demo pages in your browser.
 ### Basic Usage
 
 ```html
-<!DOCTYPE html>
-<html>
-<head>
-  <script type="module" src="/elements/ui-button/ui-button.js"></script>
-  <script type="module" src="/elements/ui-card/ui-card.js"></script>
-  <script type="module" src="/elements/ui-icon/ui-icon.js"></script>
-</head>
-<body>
-  <ui-card heading="Welcome">
-    <p>This is a card with a button</p>
-    <div slot="footer">
-      <ui-button variant="primary">
-        <ui-icon name="check" label="Confirm" slot="start"></ui-icon>
-        Confirm
-      </ui-button>
-      <ui-button variant="secondary">Cancel</ui-button>
-    </div>
-  </ui-card>
-</body>
-</html>
+<script type="module">
+  import "@cem-elements/intermediate/elements/ui-button/ui-button.js";
+  import "@cem-elements/intermediate/elements/ui-card/ui-card.js";
+  import "@cem-elements/intermediate/elements/ui-icon/ui-icon.js";
+</script>
+
+<ui-card heading="Welcome">
+  <p>This is a card with a button</p>
+  <div slot="footer">
+    <ui-button variant="primary">
+      <ui-icon name="check" label="Confirm" slot="start"></ui-icon>
+      Confirm
+    </ui-button>
+    <ui-button variant="secondary">Cancel</ui-button>
+  </div>
+</ui-card>
 ```
 
 ### Styling with CSS Custom Properties
@@ -168,13 +164,8 @@ ui-card::part(header) {
 This example includes demo HTML files with microdata for automatic demo discovery:
 
 ```html
-<meta itemprop="demo-for" content="ui-button">
-<meta itemprop="demo-url" content="/elements/ui-button/demo/variants">
-
-<script type="text/markdown" itemprop="description">
-# Button Variants
-Description of this demo...
-</script>
+<meta itemprop="description"
+      content="Description of this demo...">
 ```
 
 When you run `npm run analyze`, CEM will automatically discover these demos and include them in the manifest.

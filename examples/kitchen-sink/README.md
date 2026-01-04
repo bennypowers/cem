@@ -262,13 +262,8 @@ demo-button {
 The demo HTML files include microdata for automatic discovery:
 
 ```html
-<meta itemprop="demo-for" content="demo-button">
-<meta itemprop="demo-url" content="/elements/demo-button/demo/variants">
-
-<script type="text/markdown" itemprop="description">
-# Button Variants
-Comprehensive demonstration of all color variants...
-</script>
+<meta itemprop="description"
+      content="Comprehensive demonstration of all color variants...">
 ```
 
 CEM automatically discovers these and adds them to the manifest under the `demos` field.

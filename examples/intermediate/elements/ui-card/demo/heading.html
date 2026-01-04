@@ -1,0 +1,30 @@
+<meta itemprop="description"
+      content="Demonstrates ui-card with the heading attribute to set header text.">
+
+<ui-card heading="Simple Card">
+  <p>This card uses the <code>heading</code> attribute to set the header text.</p>
+  <p>The content goes in the default slot and can contain any HTML elements.</p>
+</ui-card>
+
+<style>
+  ui-card {
+    font-family: system-ui, sans-serif;
+    max-width: 600px;
+    margin: 1rem;
+    p {
+      line-height: 1.6;
+      margin: 0.5rem 0;
+    }
+    code {
+      background: light-dark(#f3f4f6, #374151);
+      padding: 0.125rem 0.25rem;
+      border-radius: 0.25rem;
+      font-family: monospace;
+      font-size: 0.875em;
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/intermediate/elements/ui-card/ui-card.js'
+</script>

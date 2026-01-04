@@ -9,9 +9,9 @@
   /** Internal padding */
   padding: var(--button-padding, 0.5rem 1rem);
   /** Background color of the button */
-  background: var(--button-bg, #0070f3);
+  background: var(--button-bg, light-dark(#0070f3, #3b9eff));
   /** Text color */
-  color: var(--button-color, white);
+  color: var(--button-color, light-dark(white, white));
   /** Border style */
   border: var(--button-border, none);
   /** Border radius */
@@ -36,23 +36,23 @@
 
   /* Variants */
   &.primary {
-    --button-bg: #0070f3;
-    --button-color: white;
+    --button-bg: light-dark(#0070f3, #3b9eff);
+    --button-color: light-dark(white, white);
   }
 
   &.secondary {
-    --button-bg: #666;
-    --button-color: white;
+    --button-bg: light-dark(#666, #999);
+    --button-color: light-dark(white, white);
   }
 
   &.success {
-    --button-bg: #10b981;
-    --button-color: white;
+    --button-bg: light-dark(#10b981, #22c55e);
+    --button-color: light-dark(white, white);
   }
 
   &.danger {
-    --button-bg: #ef4444;
-    --button-color: white;
+    --button-bg: light-dark(#ef4444, #f87171);
+    --button-color: light-dark(white, white);
   }
 
   /* Sizes */
@@ -84,4 +84,8 @@ ui-spinner {
   transform: translate(-50%, -50%);
   --spinner-color: var(--button-color);
   --spinner-size: 1em;
+}
+
+::slotted(ui-icon) {
+  --icon-color: currentcolor;
 }

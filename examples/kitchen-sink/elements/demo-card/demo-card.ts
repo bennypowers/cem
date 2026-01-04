@@ -2,33 +2,39 @@ import { LitElement, html } from 'lit';
 import { customElement } from 'lit/decorators.js';
 import styles from './demo-card.css' with { type: 'css' };
 
+/**
+ * A card component for grouping related content.
+ *
+ * @summary Cards contain content and actions about a single subject
+ */
 @customElement('demo-card')
 export class DemoCard extends LitElement {
   static styles = [styles];
 
   render() {
     return html`
-      <!-- Header slot container -->
+      <!-- The header container -->
       <div id="header" part="header">
-        <!--
-          summary: Header slot
-          description: |
-            Place header content here, such as a title or actions.
-            This section is visually separated from the body.
-        -->
+        <!-- slot:
+               summary: Content for the card header (e.g., title, actions)
+             part:
+               summary: The header container -->
         <slot name="header"></slot>
       </div>
-      <!-- Body slot container -->
+      <!-- The body/content container -->
       <div id="body" part="body">
-        <!-- The main content area of the card -->
+        <!-- slot:
+               summary: The card's main content
+             part:
+               summary: The body/content container -->
         <slot></slot>
       </div>
-      <!-- Footer slot container -->
+      <!-- The footer container -->
       <div id="footer" part="footer">
-        <!--
-          summary: Footer slot
-          description: Place footer content like actions or metadata here
-        -->
+        <!-- slot:
+               summary: Content for the card footer (e.g., actions, metadata)
+             part:
+               summary: The footer container -->
         <slot name="footer"></slot>
       </div>
     `;

@@ -18,13 +18,37 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package serve
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
+	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/serve/middleware"
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
 	"bennypowers.dev/cem/serve/middleware/routes"
 	W "bennypowers.dev/cem/workspace"
 )
+
+// contextWithShutdown creates a context that is cancelled when either:
+// - The provided timeout is reached, or
+// - The server begins shutting down
+// This prevents resource leaks during long-running operations.
+func (s *Server) contextWithShutdown(timeout time.Duration) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+
+	// Spawn goroutine to cancel context if server shuts down
+	go func() {
+		select {
+		case <-s.Done():
+			cancel()
+		case <-ctx.Done():
+			// Context already cancelled/timed out
+		}
+	}()
+
+	return ctx, cancel
+}
 
 // IsWorkspace returns true if server is running in workspace mode
 func (s *Server) IsWorkspace() bool {
@@ -54,26 +78,6 @@ func (s *Server) SourceControlRootURL() string {
 	return s.sourceControlRootURL
 }
 
-// discoverWorkspacePackages finds all packages in workspace with manifests
-func discoverWorkspacePackages(rootDir string) ([]middleware.WorkspacePackage, error) {
-	packages, err := W.LoadWorkspaceManifests(rootDir)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert workspace.PackageWithManifest to middleware.WorkspacePackage
-	contexts := make([]middleware.WorkspacePackage, len(packages))
-	for i, pkg := range packages {
-		contexts[i] = middleware.WorkspacePackage{
-			Name:     pkg.Name,
-			Path:     pkg.Path,
-			Manifest: pkg.Manifest,
-		}
-	}
-
-	return contexts, nil
-}
-
 // InitializeWorkspaceMode detects and initializes workspace mode if applicable
 func (s *Server) InitializeWorkspaceMode() error {
 	s.mu.Lock()
@@ -89,10 +93,14 @@ func (s *Server) InitializeWorkspaceMode() error {
 		return nil
 	}
 
-	// Discover packages with manifests
-	packages, err := discoverWorkspacePackages(s.watchDir)
+	// Generate fresh manifests for all workspace packages
+	// This ensures we use current demo URLs instead of stale data from disk
+	s.mu.Unlock() // Unlock before calling regenerateWorkspaceManifests
+	packages, err := s.generateInitialWorkspaceManifests(s.watchDir)
+	s.mu.Lock() // Re-lock for remaining initialization
+
 	if err != nil {
-		return fmt.Errorf("discovering workspace packages: %w", err)
+		return fmt.Errorf("generating workspace manifests: %w", err)
 	}
 
 	// If no packages have customElements field, fall back to single-package mode
@@ -145,4 +153,137 @@ func (s *Server) InitializeWorkspaceMode() error {
 	}
 
 	return nil
+}
+
+// generateManifestForPackage generates a manifest for a single workspace package
+// Returns nil and an error if generation fails at any step.
+func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo) (*middleware.WorkspacePackage, error) {
+	// Create workspace context for this package
+	workspace := W.NewFileSystemWorkspaceContext(pkgInfo.Path)
+	if err := workspace.Init(); err != nil {
+		return nil, fmt.Errorf("initializing workspace for %s: %w", pkgInfo.Name, err)
+	}
+
+	// Create generate session
+	session, err := G.NewGenerateSession(workspace)
+	if err != nil {
+		return nil, fmt.Errorf("creating session for %s: %w", pkgInfo.Name, err)
+	}
+	defer session.Close()
+
+	// Generate manifest with cancellable context (respects shutdown signal)
+	ctx, cancel := s.contextWithShutdown(30 * time.Second)
+	defer cancel()
+	pkg, err := session.GenerateFullManifest(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("generating manifest for %s: %w", pkgInfo.Name, err)
+	}
+
+	// Marshal to JSON
+	manifestBytes, err := json.MarshalIndent(pkg, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("marshaling manifest for %s: %w", pkgInfo.Name, err)
+	}
+
+	return &middleware.WorkspacePackage{
+		Name:     pkgInfo.Name,
+		Path:     pkgInfo.Path,
+		Manifest: manifestBytes,
+	}, nil
+}
+
+// generateInitialWorkspaceManifests generates fresh manifests for all workspace packages
+// Used during server initialization. Returns packages with freshly generated manifests.
+func (s *Server) generateInitialWorkspaceManifests(watchDir string) ([]middleware.WorkspacePackage, error) {
+	// Find all workspace packages
+	packageDirs, err := W.FindPackagesWithManifests(watchDir)
+	if err != nil {
+		return nil, fmt.Errorf("finding workspace packages: %w", err)
+	}
+
+	if len(packageDirs) == 0 {
+		return nil, nil // Return empty list, not error
+	}
+
+	// Generate fresh manifests for each package
+	packages := make([]middleware.WorkspacePackage, 0, len(packageDirs))
+
+	for _, pkgInfo := range packageDirs {
+		pkg, err := s.generateManifestForPackage(pkgInfo)
+		if err != nil {
+			s.logger.Warning("Failed to generate manifest for package %s: %v", pkgInfo.Name, err)
+			continue
+		}
+		packages = append(packages, *pkg)
+	}
+
+	return packages, nil
+}
+
+// regenerateWorkspaceManifests regenerates manifests for all workspace packages
+// and rebuilds the routing table. Used during file change events in workspace mode.
+func (s *Server) regenerateWorkspaceManifests() (int, error) {
+	s.mu.RLock()
+	watchDir := s.watchDir
+	s.mu.RUnlock()
+
+	if watchDir == "" {
+		return 0, fmt.Errorf("no watch directory set")
+	}
+
+	// Find all workspace packages
+	packageDirs, err := W.FindPackagesWithManifests(watchDir)
+	if err != nil {
+		return 0, fmt.Errorf("finding workspace packages: %w", err)
+	}
+
+	if len(packageDirs) == 0 {
+		s.logger.Warning("No packages found in workspace during regeneration")
+		return 0, nil
+	}
+
+	// Generate fresh manifests for each package
+	packages := make([]middleware.WorkspacePackage, 0, len(packageDirs))
+	totalSize := 0
+
+	for _, pkgInfo := range packageDirs {
+		pkg, err := s.generateManifestForPackage(pkgInfo)
+		if err != nil {
+			s.logger.Warning("Failed to generate manifest for package %s: %v", pkgInfo.Name, err)
+			continue
+		}
+		packages = append(packages, *pkg)
+		totalSize += len(pkg.Manifest)
+	}
+
+	if len(packages) == 0 {
+		return 0, fmt.Errorf("failed to regenerate any package manifests")
+	}
+
+	// Build routing table from regenerated packages
+	pkgContexts := make([]routes.PackageContext, len(packages))
+	for i, pkg := range packages {
+		pkgContexts[i] = routes.PackageContext{
+			Name:     pkg.Name,
+			Path:     pkg.Path,
+			Manifest: pkg.Manifest,
+		}
+	}
+
+	workspaceRoutingTable, err := routes.BuildWorkspaceRoutingTable(pkgContexts)
+	if err != nil {
+		s.logger.Warning("Failed to build workspace routing table: %v", err)
+		// Continue anyway - still update packages even if routing fails
+	}
+
+	// Update server state under write lock
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.workspacePackages = packages
+	s.demoRoutes = workspaceRoutingTable
+	s.logger.Debug("Regenerated %d workspace package manifests, built routing table with %d demo routes",
+		len(packages), len(workspaceRoutingTable))
+
+	return totalSize, nil
 }

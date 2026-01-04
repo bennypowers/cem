@@ -1,0 +1,22 @@
+<meta itemprop="description"
+      content="A simple demo-input with label and placeholder.">
+
+<demo-input label="Username"
+            placeholder="Enter your username"></demo-input>
+
+<style>
+  demo-input {
+    font-family: system-ui, sans-serif;
+    max-width: 400px;
+    margin: 1rem;
+    display: block;
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-input/demo-input.js';
+
+  document.querySelector('demo-input').addEventListener('demo-input', (e) => {
+    console.log('Input value:', e.value);
+  });
+</script>

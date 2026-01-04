@@ -1,0 +1,43 @@
+<meta itemprop="description"
+      content="Demonstrates demo-card with header, body, and footer slots.">
+
+<demo-card>
+  <h3 slot="header">Product Details</h3>
+  <p>View comprehensive information about this product including features, specifications, and pricing.</p>
+  <button slot="footer">Cancel</button>
+  <button slot="footer">View Details</button>
+</demo-card>
+
+<style>
+  demo-card {
+    font-family: system-ui, sans-serif;
+    max-width: 600px;
+    margin: 1rem;
+
+    p {
+      line-height: 1.6;
+      margin: 0.5rem 0;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+
+    button {
+      padding: 0.5rem 1rem;
+      border-radius: 0.25rem;
+      border: 1px solid light-dark(#d1d5db, #4b5563);
+      background: light-dark(#fff, #374151);
+      cursor: pointer;
+
+      &:hover {
+        background: light-dark(#f3f4f6, #4b5563);
+      }
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-card/demo-card.js';
+</script>

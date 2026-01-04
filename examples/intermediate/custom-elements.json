@@ -181,7 +181,7 @@
             {
               "name": "--button-bg",
               "description": "Background color of the button",
-              "default": "#0070f3"
+              "default": "light-dark(#0070f3, #3b9eff)"
             },
             {
               "name": "--button-border",
@@ -196,22 +196,36 @@
             {
               "name": "--button-color",
               "description": "Text color",
-              "default": "white"
+              "default": "light-dark(white, white)"
             }
           ],
           "demos": [
             {
-              "description": "# Button Sizes\n\n  Demonstrates the three available sizes for the ui-button component: small, medium, and large.",
-              "url": "/elements/ui-button/demo/sizes",
+              "description": "Demonstrates the three available sizes for the ui-button component: small, medium, and large.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-button/sizes/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-button/demo/sizes.html"
               }
             },
             {
-              "description": "# Button Variants\n\n  This demo showcases the different color variants available for the ui-button component.",
-              "url": "/elements/ui-button/demo/variants",
+              "description": "Demonstrates disabled and loading states for the ui-button component.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-button/states/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-button/demo/states.html"
+              }
+            },
+            {
+              "description": "Showcases the different color variants available for the ui-button component.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-button/variants/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-button/demo/variants.html"
+              }
+            },
+            {
+              "description": "Demonstrates ui-button with icon slots at the start and end positions.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-button/with-icons/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-button/demo/with-icons.html"
               }
             }
           ],
@@ -256,6 +270,7 @@
               "type": {
                 "text": "string"
               },
+              "default": "''",
               "kind": "field",
               "attribute": "heading"
             }
@@ -272,6 +287,7 @@
               "type": {
                 "text": "string"
               },
+              "default": "''",
               "fieldName": "heading"
             }
           ],
@@ -311,12 +327,12 @@
             {
               "name": "--card-bg",
               "description": "Background color of the card",
-              "default": "white"
+              "default": "light-dark(white, #1f2937)"
             },
             {
               "name": "--card-border",
               "description": "Border style",
-              "default": "1px solid #e5e5e5"
+              "default": "1px solid light-dark(#e5e5e5, #374151)"
             },
             {
               "name": "--card-radius",
@@ -326,12 +342,56 @@
             {
               "name": "--card-shadow",
               "description": "Box shadow for elevation",
-              "default": "0 2px 4px rgba(0, 0, 0, 0.1)"
+              "default": "light-dark(0 2px 4px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.4))"
             },
             {
               "name": "--card-padding",
               "description": "Internal padding",
               "default": "1rem"
+            }
+          ],
+          "demos": [
+            {
+              "description": "Demonstrates ui-card with action buttons in the footer for user confirmations.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-card/actions/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-card/demo/actions.html"
+              }
+            },
+            {
+              "description": "Demonstrates multiple ui-card components arranged in a responsive grid layout.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-card/grid/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-card/demo/grid.html"
+              }
+            },
+            {
+              "description": "Demonstrates ui-card with the heading attribute to set header text.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-card/heading/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-card/demo/heading.html"
+              }
+            },
+            {
+              "description": "Interactive demo combining ui-card, ui-button, and ui-icon with click handlers.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-card/interactive/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-card/demo/interactive.html"
+              }
+            },
+            {
+              "description": "Demonstrates ui-card for pricing plans with structured content and call-to-action buttons.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-card/pricing/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-card/demo/pricing.html"
+              }
+            },
+            {
+              "description": "Demonstrates ui-card with custom header and footer slots for flexible content.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-card/slots/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-card/demo/slots.html"
+              }
             }
           ],
           "customElement": true
@@ -412,6 +472,7 @@
               "type": {
                 "text": "number"
               },
+              "default": "16",
               "kind": "field",
               "attribute": "size"
             }
@@ -446,6 +507,7 @@
               "type": {
                 "text": "number"
               },
+              "default": "16",
               "fieldName": "size"
             }
           ],
@@ -464,7 +526,37 @@
             {
               "name": "--icon-color",
               "description": "Color of the icon",
-              "default": "currentColor"
+              "default": "light-dark(#1f2937, #e5e7eb)"
+            }
+          ],
+          "demos": [
+            {
+              "description": "Demonstrates ui-icon with different colors using CSS.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-icon/colors/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-icon/demo/colors.html"
+              }
+            },
+            {
+              "description": "Showcases all available icon names: check, x, chevron-right, heart, and star.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-icon/icons/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-icon/demo/icons.html"
+              }
+            },
+            {
+              "description": "Interactive demo showing clickable icons that toggle between states.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-icon/interactive/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-icon/demo/interactive.html"
+              }
+            },
+            {
+              "description": "Demonstrates different sizes for the ui-icon component, from small to extra large icons.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-icon/sizes/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-icon/demo/sizes.html"
+              }
             }
           ],
           "customElement": true
@@ -518,6 +610,7 @@
               "type": {
                 "text": "number"
               },
+              "default": "16",
               "kind": "field",
               "attribute": "size"
             }
@@ -543,6 +636,7 @@
               "type": {
                 "text": "number"
               },
+              "default": "16",
               "fieldName": "size"
             }
           ],
@@ -571,8 +665,8 @@
           ],
           "demos": [
             {
-              "description": "# Loading Spinner\n\nDemonstrates the ui-spinner component in various sizes and colors.",
-              "url": "/elements/ui-spinner/demo/basic/",
+              "description": "Demonstrates the ui-spinner component in various sizes and colors.",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-spinner/basic/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-spinner/demo/basic.html"
               }

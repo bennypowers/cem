@@ -1,0 +1,33 @@
+<meta itemprop="description"
+      content="Demonstrates disabled and readonly states of demo-input.">
+
+<div class="input-list">
+  <demo-input label="Normal Input"
+              value="You can edit this"
+              helper-text="This input is editable"></demo-input>
+
+  <demo-input label="Disabled Input"
+              value="Cannot edit this"
+              disabled
+              helper-text="This input is disabled"></demo-input>
+
+  <demo-input label="Readonly Input"
+              value="Cannot edit but can select"
+              readonly
+              helper-text="This input is read-only"></demo-input>
+</div>
+
+<style>
+  .input-list {
+    font-family: system-ui, sans-serif;
+    max-width: 500px;
+    margin: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-input/demo-input.js';
+</script>

@@ -1,0 +1,70 @@
+<meta itemprop="description"
+      content="Interactive demo combining ui-card, ui-button, and ui-icon with click handlers.">
+
+<ui-card>
+  <ui-icon slot="header" name="star" label="Favorite" size="24" style="color: #f59e0b"></ui-icon>
+  <strong slot="header">Featured Item</strong>
+  <p>This card combines multiple components together.</p>
+  <p>Click the buttons below to see the interaction.</p>
+  <ui-button id="like-btn"
+             slot="footer"
+             variant="secondary">
+    <ui-icon slot="start"
+             name="heart"
+             label="Like"
+             size="16"></ui-icon>
+    Like
+  </ui-button>
+  <ui-button id="share-btn"
+             slot="footer"
+             variant="secondary">
+    <ui-icon slot="start"
+             name="chevron-right"
+             label="Share"
+             size="16"></ui-icon>
+    Share
+  </ui-button>
+  <ui-button slot="footer"
+             variant="primary">
+    <ui-icon slot="start"
+             name="check"
+             label="Save"
+             size="16"></ui-icon>
+    Save
+  </ui-button>
+
+</ui-card>
+
+<style>
+  ui-card {
+    font-family: system-ui, sans-serif;
+    max-width: 600px;
+    margin: 1rem;
+    p {
+      line-height: 1.6;
+      margin: 0.5rem 0;
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/intermediate/elements/ui-card/ui-card.js'
+  import '@cem-examples/intermediate/elements/ui-button/ui-button.js'
+  import '@cem-examples/intermediate/elements/ui-icon/ui-icon.js'
+
+  // Add click handlers
+  const likeBtn = document.getElementById('like-btn');
+  const shareBtn = document.getElementById('share-btn');
+
+  let liked = false;
+  likeBtn.addEventListener('click', () => {
+    liked = !liked;
+    likeBtn.variant = liked ? 'success' : 'secondary';
+    console.log(liked ? 'Liked!' : 'Unliked');
+  });
+
+  shareBtn.addEventListener('click', () => {
+    console.log('Share clicked!');
+    alert('Share functionality would go here');
+  });
+</script>

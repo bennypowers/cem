@@ -335,13 +335,34 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 			return nil, err
 		}
 
+		// Make filePath relative to package path for workspace mode
+		// This prevents path duplication when joining with PackagePath later
+		// Note: filePath is guaranteed to be relative after normalizeAndValidateDemoPath
+		relFilePath := filePath
+
+		// Strip workspace-relative prefix from filePath if present
+		// Example: pkg.Path="/home/user/cem/examples/intermediate" (absolute)
+		//          filePath="examples/intermediate/elements/ui-button/demo/sizes.html" (relative)
+		//          We need to strip "examples/intermediate/" to get "elements/ui-button/demo/sizes.html"
+		// We can't compare pkg.Path directly with filePath since one is absolute and one is relative,
+		// so we try increasingly longer suffixes of pkg.Path to find the workspace-relative portion.
+		normalizedFilePath := filepath.ToSlash(filePath)
+		pathParts := strings.Split(filepath.ToSlash(pkg.Path), "/")
+		for i := len(pathParts) - 1; i >= 0; i-- {
+			possiblePrefix := strings.Join(pathParts[i:], "/")
+			if strings.HasPrefix(normalizedFilePath, possiblePrefix+"/") {
+				relFilePath = strings.TrimPrefix(normalizedFilePath, possiblePrefix+"/")
+				break
+			}
+		}
+
 		// Check for duplicate routes before assignment
 		if existing, exists := routes[localRoute]; exists {
 			return nil, fmt.Errorf("duplicate demo route %q in package %s (%s): %s (tagName: %s) conflicts with existing %s (tagName: %s)",
 				localRoute,
 				pkg.Name,
 				pkg.Path,
-				filePath,
+				relFilePath,
 				renderableDemo.CustomElementDeclaration.TagName,
 				existing.FilePath,
 				existing.TagName)
@@ -352,7 +373,7 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 			TagName:     renderableDemo.CustomElementDeclaration.TagName,
 			Demo:        renderableDemo.Demo,
 			Declaration: renderableDemo.CustomElementDeclaration,
-			FilePath:    filePath,
+			FilePath:    relFilePath,
 			PackageName: pkg.Name,
 			PackagePath: pkg.Path,
 		}

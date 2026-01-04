@@ -43,6 +43,8 @@ type packageJSON struct {
 // findWorkspaceRoot walks up the directory tree to find the workspace root
 // Returns the directory containing node_modules or workspace configuration
 // Stops at git repository boundaries to avoid breaking out of submodules
+// This is an internal version that accepts a FileSystem for testing.
+// Production code should use workspace.FindWorkspaceRoot instead.
 func findWorkspaceRoot(startDir string, fs platform.FileSystem) string {
 	dir := startDir
 	for {
@@ -191,7 +193,10 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 				continue
 			}
 
-			if err := addPackageExportsToImportMap(result, depName, depPath, rootDir, cfg.Logger, fs); err != nil {
+			// Use workspaceRoot as base for path calculations when workspaceRoot != rootDir
+			// This ensures paths like /node_modules/... instead of /../../node_modules/...
+			pathBase := workspaceRoot
+			if err := addPackageExportsToImportMap(result, depName, depPath, pathBase, cfg.Logger, fs); err != nil {
 				if cfg.Logger != nil {
 					cfg.Logger.Warning("Failed to add package %s exports: %v", depName, err)
 				}

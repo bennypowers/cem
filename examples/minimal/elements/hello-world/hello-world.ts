@@ -14,7 +14,6 @@ import { customElement, property } from 'lit/decorators.js';
 export class HelloWorld extends LitElement {
   /**
    * The name to greet
-   * @type {string}
    */
   @property() name = 'World';
 

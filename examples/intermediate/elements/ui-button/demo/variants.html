@@ -1,86 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UI Button Variants Demo</title>
+<meta itemprop="description"
+      content="Showcases the different color variants available for the ui-button component.">
 
-  <!-- Demo Discovery Metadata -->
-  <meta itemprop="demo-for" content="ui-button">
-  <meta itemprop="demo-url" content="/elements/ui-button/demo/variants">
+<div class="button-group">
+  <ui-button variant="primary">Primary</ui-button>
+  <ui-button variant="secondary">Secondary</ui-button>
+  <ui-button variant="success">Success</ui-button>
+  <ui-button variant="danger">Danger</ui-button>
+</div>
 
-  <script type="text/markdown" itemprop="description">
-  # Button Variants
+<style>
+  .button-group {
+    font-family: system-ui, sans-serif;
+    max-width: 800px;
+    margin: 1rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+</style>
 
-  This demo showcases the different color variants available for the ui-button component.
-  </script>
+<script type="module">
+  import '@cem-examples/intermediate/elements/ui-button/ui-button.js'
 
-  <script type="module" src="../ui-button.js"></script>
-
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      max-width: 800px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-
-    .demo-section {
-      margin: 2rem 0;
-
-      & .button-group {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-        margin: 1rem 0;
-      }
-    }
-  </style>
-</head>
-<body>
-  <h1>UI Button Variants</h1>
-
-  <div class="demo-section">
-    <h2>Color Variants</h2>
-    <div class="button-group">
-      <ui-button variant="primary">Primary</ui-button>
-      <ui-button variant="secondary">Secondary</ui-button>
-      <ui-button variant="success">Success</ui-button>
-      <ui-button variant="danger">Danger</ui-button>
-    </div>
-  </div>
-
-  <div class="demo-section">
-    <h2>With Icons</h2>
-    <div class="button-group">
-      <ui-button variant="primary">
-        <span slot="start">→</span>
-        With Start Icon
-      </ui-button>
-      <ui-button variant="success">
-        Save
-        <span slot="end">✓</span>
-      </ui-button>
-    </div>
-  </div>
-
-  <div class="demo-section">
-    <h2>States</h2>
-    <div class="button-group">
-      <ui-button disabled>Disabled</ui-button>
-      <ui-button loading>Loading</ui-button>
-    </div>
-  </div>
-
-  <script>
-    // Add click handlers
-    document.querySelectorAll('ui-button').forEach(button => {
-      button.addEventListener('click', () => {
-        if (!button.hasAttribute('disabled') && !button.hasAttribute('loading')) {
-          console.log('Button clicked:', button.textContent.trim());
-        }
-      });
+  // Add click handlers
+  document.querySelectorAll('ui-button').forEach(button => {
+    button.addEventListener('click', () => {
+      if (button.hasAttribute('disabled') || button.hasAttribute('loading')) return;
+      console.log('Button clicked:', button.textContent.trim());
     });
-  </script>
-</body>
-</html>
+  });
+</script>

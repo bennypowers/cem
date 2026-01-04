@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 import styles from './ui-card.css' with { type: 'css' };
@@ -16,7 +16,8 @@ export class UiCard extends LitElement {
    * @summary The card heading text
    * The heading attribute's value is overrides by the `header` slot
    */
-  @property() heading?: string;
+  @property()
+  accessor heading = '';
 
   render() {
     return html`
@@ -24,7 +25,7 @@ export class UiCard extends LitElement {
       <div id="card" part="base">
         <!-- The header container -->
         <div id="header" part="header">
-          ${this.heading ? html`<div>${this.heading}</div>` : ''}
+          ${!this.heading ? '' : html`<div>${this.heading}</div>`}
           <!-- Content for the card header -->
           <slot name="header"></slot>
         </div>

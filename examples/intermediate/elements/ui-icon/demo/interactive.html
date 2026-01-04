@@ -1,0 +1,83 @@
+<meta itemprop="description"
+      content="Interactive demo showing clickable icons that toggle between states.">
+
+<div class="icon-row">
+  <div class="icon-item">
+    <ui-icon id="favorite"
+             name="heart"
+             label="Toggle favorite"
+             size="48"></ui-icon>
+    <span id="favorite-status">Not favorited</span>
+  </div>
+  <div class="icon-item">
+    <ui-icon id="rating"
+             name="star"
+             label="Toggle rating"
+             size="48"></ui-icon>
+    <span id="rating-status">Not rated</span>
+  </div>
+</div>
+
+<style>
+  .icon-row {
+    font-family: system-ui, sans-serif;
+    max-width: 800px;
+    margin: 1rem;
+    display: flex;
+    gap: 3rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .icon-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+
+    & ui-icon {
+      cursor: pointer;
+      color: #ccc;
+      transition: color 0.2s ease, transform 0.1s ease;
+
+      &:hover {
+        transform: scale(1.1);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+    }
+
+    & span {
+      font-size: 0.875rem;
+      color: light-dark(#666, #9ca3af);
+      min-width: 100px;
+      text-align: center;
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/intermediate/elements/ui-icon/ui-icon.js'
+
+  // Add click handlers for interactive icons
+  const favorite = document.getElementById('favorite');
+  const favoriteStatus = document.getElementById('favorite-status');
+  const rating = document.getElementById('rating');
+  const ratingStatus = document.getElementById('rating-status');
+
+  let isFavorited = false;
+  favorite.addEventListener('click', () => {
+    isFavorited = !isFavorited;
+    favorite.style.color = isFavorited ? '#ef4444' : '#ccc';
+    favoriteStatus.textContent = isFavorited ? 'Favorited!' : 'Not favorited';
+  });
+
+  let isRated = false;
+  rating.addEventListener('click', () => {
+    isRated = !isRated;
+    rating.style.color = isRated ? '#f59e0b' : '#ccc';
+    ratingStatus.textContent = isRated ? 'Rated!' : 'Not rated';
+  });
+</script>

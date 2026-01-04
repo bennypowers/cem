@@ -20,6 +20,7 @@ package serve
 import (
 	"encoding/json"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -292,6 +293,7 @@ func (s *Server) broadcastSmartReload(changedPath, relPath string, invalidatedFi
 	}
 
 	// Broadcast reload only to affected pages
+	s.logger.Debug("Broadcasting reload to %d affected pages: %v", len(affectedPageURLs), affectedPageURLs)
 	files := []string{relPath}
 	msgBytes, err := s.CreateReloadMessage(files, "file-change")
 	if err != nil {
@@ -337,52 +339,65 @@ func (s *Server) handleFileChanges() {
 			return
 		}
 
-		// Process all files in the batched event
-		filesToProcess := event.Paths
-		if len(filesToProcess) == 0 {
-			filesToProcess = []string{event.Path}
-		}
+		// Recover from panics to prevent server crash
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					s.logger.Error("Panic in file change handler: %v", r)
+					s.logger.Debug("Stack trace: %s", string(debug.Stack()))
+				}
+			}()
 
-		// Check if path resolver needs rebuild (tsconfig.json, config files changed)
-		if s.shouldRebuildPathResolver(filesToProcess) {
-			s.logger.Info("Rebuilding path resolver due to source file change")
-			if err := s.rebuildPathResolver(); err != nil {
-				s.logger.Error("Failed to rebuild path resolver: %v", err)
-				// Continue processing - don't block other hot-reload logic
+			// Process all files in the batched event
+			filesToProcess := event.Paths
+			if len(filesToProcess) == 0 {
+				filesToProcess = []string{event.Path}
 			}
-			// Note: rebuildPathResolver() handles broadcasting reload message
-		}
 
-		// Filter to only relevant source files and collect TS/JS files
-		relevantFiles, tsJsFiles := s.filterRelevantFiles(filesToProcess)
-		if len(relevantFiles) == 0 {
-			continue
-		}
-
-		// Use first file for display/logging purposes
-		changedPath := relevantFiles[0]
-		relPath := changedPath
-		if s.watchDir != "" {
-			if rel, err := filepath.Rel(s.watchDir, changedPath); err == nil {
-				relPath = rel
+			// Check if path resolver needs rebuild (tsconfig.json, config files changed)
+			if s.shouldRebuildPathResolver(filesToProcess) {
+				s.logger.Info("Rebuilding path resolver due to source file change")
+				if err := s.rebuildPathResolver(); err != nil {
+					s.logger.Error("Failed to rebuild path resolver: %v", err)
+					// Continue processing - don't block other hot-reload logic
+				}
+				// Note: rebuildPathResolver() handles broadcasting reload message
 			}
-		}
 
-		// Resolve .js to .ts if source exists and log
-		displayPath := s.resolveSourceFile(relPath)
-		s.logger.Info("File changed: %s", displayPath)
+			// Filter to only relevant source files and collect TS/JS files
+			relevantFiles, tsJsFiles := s.filterRelevantFiles(filesToProcess)
+			if len(relevantFiles) == 0 {
+				return
+			}
 
-		// Collect affected files from transform cache and module graph
-		invalidatedFiles := s.collectAffectedFiles(changedPath)
+			// Use first file for display/logging purposes
+			changedPath := relevantFiles[0]
+			relPath := changedPath
+			if s.watchDir != "" {
+				if rel, err := filepath.Rel(s.watchDir, changedPath); err == nil {
+					relPath = rel
+				}
+			}
 
-		// Regenerate manifest if TS/JS files changed
-		s.regenerateManifestIfNeeded(tsJsFiles)
+			// Resolve .js to .ts if source exists and log
+			displayPath := s.resolveSourceFile(relPath)
+			s.logger.Info("File changed: %s", displayPath)
 
-		// Regenerate import map if package.json or file structure changed
-		s.regenerateImportMapIfNeeded(event)
+			// Collect affected files from transform cache and module graph
+			invalidatedFiles := s.collectAffectedFiles(changedPath)
+			if len(invalidatedFiles) > 0 {
+				s.logger.Debug("Collected %d invalidated files for %s", len(invalidatedFiles), displayPath)
+			}
 
-		// Broadcast smart reload to affected pages
-		s.broadcastSmartReload(changedPath, relPath, invalidatedFiles)
+			// Regenerate manifest if TS/JS files changed
+			s.regenerateManifestIfNeeded(tsJsFiles)
+
+			// Regenerate import map if package.json or file structure changed
+			s.regenerateImportMapIfNeeded(event)
+
+			// Broadcast smart reload to affected pages
+			s.broadcastSmartReload(changedPath, relPath, invalidatedFiles)
+		}() // End panic recovery function
 	}
 }
 
@@ -470,6 +485,7 @@ func (s *Server) buildAffectedFilesMap(changedPath string, invalidatedFiles []st
 // Returns true if the route's HTML file is affected or if it imports any affected files
 func (s *Server) isRouteAffectedByFile(routePath string, routeEntry *types.DemoRouteEntry, affectedFiles map[string]bool, watchDir string) bool {
 	// First, check if the changed file IS this demo HTML file
+	// In workspace mode, we need to check both the package-relative path and the full workspace-relative path
 	if affectedFiles[routeEntry.FilePath] ||
 		affectedFiles["/"+routeEntry.FilePath] ||
 		affectedFiles[strings.TrimPrefix(routeEntry.FilePath, "/")] {
@@ -477,7 +493,23 @@ func (s *Server) isRouteAffectedByFile(routePath string, routeEntry *types.DemoR
 		return true
 	}
 
-	htmlPath := filepath.Join(watchDir, routeEntry.FilePath)
+	// In workspace mode, use PackagePath; in single-package mode, use watchDir
+	baseDir := watchDir
+	if routeEntry.PackagePath != "" {
+		baseDir = routeEntry.PackagePath
+		// Also check the full workspace-relative path for workspace mode
+		// Construct full path relative to workspace root
+		relToWorkspace, err := filepath.Rel(watchDir, filepath.Join(baseDir, routeEntry.FilePath))
+		if err == nil {
+			if affectedFiles[relToWorkspace] ||
+				affectedFiles["/"+relToWorkspace] ||
+				affectedFiles[strings.TrimPrefix(relToWorkspace, "/")] {
+				s.logger.Debug("Page %s is the changed file itself (workspace-relative match)", routePath)
+				return true
+			}
+		}
+	}
+	htmlPath := filepath.Join(baseDir, routeEntry.FilePath)
 
 	// Extract imports from HTML
 	imports, err := s.extractModuleImports(htmlPath)
@@ -553,6 +585,8 @@ func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []stri
 
 	if len(affectedPages) == 0 {
 		s.logger.Debug("No pages import any of the affected files")
+	} else {
+		s.logger.Debug("Found %d affected pages: %v", len(affectedPages), affectedPages)
 	}
 
 	return affectedPages

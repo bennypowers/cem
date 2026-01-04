@@ -1,0 +1,53 @@
+<meta itemprop="description"
+      content="Demonstrates demo-icon at different sizes using CSS.">
+
+<div class="size-demo">
+  <div class="size-item">
+    <demo-icon name="star" label="Small star" style="width: 16px; height: 16px;"></demo-icon>
+    <span>16px</span>
+  </div>
+  <div class="size-item">
+    <demo-icon name="star" label="Medium star" style="width: 24px; height: 24px;"></demo-icon>
+    <span>24px</span>
+  </div>
+  <div class="size-item">
+    <demo-icon name="star" label="Large star" style="width: 32px; height: 32px;"></demo-icon>
+    <span>32px</span>
+  </div>
+  <div class="size-item">
+    <demo-icon name="star" label="Extra large star" style="width: 48px; height: 48px;"></demo-icon>
+    <span>48px</span>
+  </div>
+  <div class="size-item">
+    <demo-icon name="star" label="Huge star" style="width: 64px; height: 64px;"></demo-icon>
+    <span>64px</span>
+  </div>
+</div>
+
+<style>
+  .size-demo {
+    font-family: system-ui, sans-serif;
+    max-width: 800px;
+    margin: 1rem;
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .size-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+
+    span {
+      font-size: 0.875rem;
+      color: light-dark(#666, #9ca3af);
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-icon/demo-icon.js';
+</script>

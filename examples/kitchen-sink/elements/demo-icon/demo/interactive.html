@@ -1,0 +1,77 @@
+<meta itemprop="description"
+      content="Interactive demo-icon elements that respond to user interaction.">
+
+<div class="interactive-demo">
+  <button id="like-btn" aria-label="Like">
+    <demo-icon name="heart" label="Like"></demo-icon>
+    <span>Like</span>
+  </button>
+
+  <button id="star-btn" aria-label="Star">
+    <demo-icon name="star" label="Star"></demo-icon>
+    <span>Star</span>
+  </button>
+
+  <button id="search-btn" aria-label="Search">
+    <demo-icon name="search" label="Search"></demo-icon>
+    <span>Search</span>
+  </button>
+</div>
+
+<style>
+  .interactive-demo {
+    font-family: system-ui, sans-serif;
+    max-width: 600px;
+    margin: 1rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: 1px solid light-dark(#d1d5db, #4b5563);
+      border-radius: 0.5rem;
+      background: light-dark(#fff, #374151);
+      cursor: pointer;
+      transition: all 0.2s;
+
+      demo-icon {
+        width: 20px;
+        height: 20px;
+        transition: color 0.2s;
+      }
+
+      &:hover {
+        background: light-dark(#f3f4f6, #4b5563);
+        border-color: light-dark(#9ca3af, #6b7280);
+      }
+
+      &:active {
+        transform: scale(0.98);
+      }
+
+      &.active {
+        background: light-dark(#3b82f6, #2563eb);
+        border-color: light-dark(#2563eb, #1d4ed8);
+        color: white;
+      }
+
+      span {
+        font-size: 0.875rem;
+      }
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-icon/demo-icon.js';
+
+  document.querySelectorAll('.interactive-demo button').forEach(button => {
+    button.addEventListener('click', () => {
+      button.classList.toggle('active');
+    });
+  });
+</script>

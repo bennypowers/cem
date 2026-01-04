@@ -9,5 +9,5 @@ svg {
   width: var(--icon-size, 1em);
   height: var(--icon-size, 1em);
   /** Color of the icon */
-  fill: var(--icon-color, currentColor);
+  fill: var(--icon-color, light-dark(#1f2937, #e5e7eb));
 }

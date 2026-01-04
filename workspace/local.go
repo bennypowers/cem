@@ -488,7 +488,7 @@ func hasWorkspaceMetadata(dir string) bool {
 	packageJSONPath := filepath.Join(dir, "package.json")
 	if data, err := os.ReadFile(packageJSONPath); err == nil {
 		var pkg struct {
-			Workspaces interface{} `json:"workspaces"`
+			Workspaces any `json:"workspaces"`
 		}
 		if err := json.Unmarshal(data, &pkg); err == nil && pkg.Workspaces != nil {
 			return true

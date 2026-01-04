@@ -1,0 +1,57 @@
+<meta itemprop="description"
+      content="Showcases all available icon names: check, x, chevron-right, heart, and star.">
+
+<div class="icon-grid">
+  <div class="icon-card">
+    <ui-icon name="check" label="Check mark" size="32"></ui-icon>
+    <span>check</span>
+  </div>
+  <div class="icon-card">
+    <ui-icon name="x" label="Close" size="32"></ui-icon>
+    <span>x</span>
+  </div>
+  <div class="icon-card">
+    <ui-icon name="chevron-right" label="Next" size="32"></ui-icon>
+    <span>chevron-right</span>
+  </div>
+  <div class="icon-card">
+    <ui-icon name="heart" label="Favorite" size="32"></ui-icon>
+    <span>heart</span>
+  </div>
+  <div class="icon-card">
+    <ui-icon name="star" label="Rating" size="32"></ui-icon>
+    <span>star</span>
+  </div>
+</div>
+
+<style>
+  .icon-grid {
+    font-family: system-ui, sans-serif;
+    max-width: 800px;
+    margin: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+  }
+
+  .icon-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border: 1px solid light-dark(#e5e7eb, #374151);
+    border-radius: 0.5rem;
+    background: light-dark(#f9fafb, #1f2937);
+
+    & span {
+      font-size: 0.875rem;
+      color: light-dark(#666, #9ca3af);
+      font-family: monospace;
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/intermediate/elements/ui-icon/ui-icon.js'
+</script>

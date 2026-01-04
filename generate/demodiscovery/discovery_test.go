@@ -17,130 +17,91 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package demodiscovery
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	C "bennypowers.dev/cem/cmd/config"
+	"bennypowers.dev/cem/internal/platform/testutil"
 	Q "bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
 )
 
-func TestExtractDemoMetadata(t *testing.T) {
-	tests := []struct {
-		name     string
-		html     string
-		expected DemoMetadata
-	}{
-		{
-			name: "microdata URL and description",
-			html: `<!DOCTYPE html>
-<html>
-<head>
-<meta itemprop="demo-url" content="/elements/call-to-action/demo/">
-<meta itemprop="description" content="Primary variant demonstration">
-</head>
-<body>
-<pf-call-to-action variant="primary">Click me</pf-call-to-action>
-</body>
-</html>`,
-			expected: DemoMetadata{
-				URL:         "/elements/call-to-action/demo/",
-				Description: "Primary variant demonstration",
-				DemoFor:     nil,
-			},
-		},
-		{
-			name: "microdata with demo-for association",
-			html: `<!DOCTYPE html>
-<html>
-<head>
-<meta itemprop="demo-url" content="/elements/button/demo/">
-<meta itemprop="demo-for" content="rh-button pf-button">
-</head>
-<body>
-<rh-button>Click me</rh-button>
-</body>
-</html>`,
-			expected: DemoMetadata{
-				URL:         "/elements/button/demo/",
-				Description: "",
-				DemoFor:     []string{"rh-button", "pf-button"},
-			},
-		},
-		{
-			name: "script tag with markdown description",
-			html: `<!DOCTYPE html>
-<html>
-<head>
-<meta itemprop="demo-url" content="/elements/card/demo/">
-<script type="text/markdown" itemprop="description">
-# Card Demo
-Showcases different card variants with accessibility features.
-</script>
-</head>
-<body>
-<rh-card>Content</rh-card>
-</body>
-</html>`,
-			expected: DemoMetadata{
-				URL:         "/elements/card/demo/",
-				Description: "# Card Demo\nShowcases different card variants with accessibility features.",
-				DemoFor:     nil,
-			},
-		},
-		{
-			name: "no metadata",
-			html: `<!DOCTYPE html>
-<html>
-<body>
-<rh-button>Click me</rh-button>
-</body>
-</html>`,
-			expected: DemoMetadata{
-				URL:         "",
-				Description: "",
-				DemoFor:     nil,
-			},
-		},
+// Helper function to run fixture-based tests
+func runFixtureTest[T any](t *testing.T, fixtureDir string, test func(t *testing.T, inputPath string, expected *T)) {
+	t.Helper()
+
+	fixtures, err := os.ReadDir(filepath.Join("testdata", fixtureDir))
+	if err != nil {
+		t.Fatalf("Failed to read fixture directory %s: %v", fixtureDir, err)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Create temporary file
-			tmpDir := t.TempDir()
-			filePath := filepath.Join(tmpDir, "demo.html")
-			err := os.WriteFile(filePath, []byte(tt.html), 0644)
-			if err != nil {
-				t.Fatalf("Failed to write test file: %v", err)
+	for _, fixture := range fixtures {
+		if !fixture.IsDir() {
+			continue
+		}
+
+		t.Run(fixture.Name(), func(t *testing.T) {
+			fixturePath := filepath.Join(fixtureDir, fixture.Name())
+			inputPath := filepath.Join(fixturePath, "input.html")
+			expectedPath := filepath.Join(fixturePath, "expected.json")
+
+			// Read expected output
+			var expected T
+			expectedBytes := testutil.LoadFixtureFile(t, expectedPath)
+			if err := json.Unmarshal(expectedBytes, &expected); err != nil {
+				t.Fatalf("Failed to unmarshal expected JSON: %v", err)
 			}
 
-			// Extract metadata
-			ctx := W.NewFileSystemWorkspaceContext(tmpDir)
-			result, err := extractDemoMetadata(ctx, filePath)
-			if err != nil {
-				t.Fatalf("extractDemoMetadata failed: %v", err)
-			}
+			// Run test
+			test(t, inputPath, &expected)
 
-			// Compare results
-			if result.URL != tt.expected.URL {
-				t.Errorf("URL mismatch: got %q, want %q", result.URL, tt.expected.URL)
-			}
-			if result.Description != tt.expected.Description {
-				t.Errorf("Description mismatch: got %q, want %q", result.Description, tt.expected.Description)
-			}
-			if len(result.DemoFor) != len(tt.expected.DemoFor) {
-				t.Errorf("DemoFor length mismatch: got %d, want %d", len(result.DemoFor), len(tt.expected.DemoFor))
-			} else {
-				for i, elem := range result.DemoFor {
-					if elem != tt.expected.DemoFor[i] {
-						t.Errorf("DemoFor[%d] mismatch: got %q, want %q", i, elem, tt.expected.DemoFor[i])
-					}
-				}
+			// If update flag is set, write actual output as new golden file
+			if *testutil.Update {
+				// This would be implemented per test type
+				t.Log("Golden file update not yet implemented for this test")
 			}
 		})
 	}
+}
+
+func TestExtractDemoMetadata(t *testing.T) {
+	runFixtureTest[DemoMetadata](t, "extract-metadata", func(t *testing.T, inputPath string, expected *DemoMetadata) {
+		// Create temporary copy for testing
+		tmpDir := t.TempDir()
+		tmpPath := filepath.Join(tmpDir, "input.html")
+
+		input := testutil.LoadFixtureFile(t, inputPath)
+		if err := os.WriteFile(tmpPath, input, 0644); err != nil {
+			t.Fatalf("Failed to write test file: %v", err)
+		}
+
+		// Extract metadata
+		ctx := W.NewFileSystemWorkspaceContext(tmpDir)
+		result, err := extractDemoMetadata(ctx, tmpPath)
+		if err != nil {
+			t.Fatalf("extractDemoMetadata failed: %v", err)
+		}
+
+		// Compare results
+		if result.URL != expected.URL {
+			t.Errorf("URL mismatch: got %q, want %q", result.URL, expected.URL)
+		}
+		if result.Description != expected.Description {
+			t.Errorf("Description mismatch: got %q, want %q", result.Description, expected.Description)
+		}
+		if len(result.DemoFor) != len(expected.DemoFor) {
+			t.Errorf("DemoFor length mismatch: got %d, want %d", len(result.DemoFor), len(expected.DemoFor))
+		} else {
+			for i, elem := range result.DemoFor {
+				if elem != expected.DemoFor[i] {
+					t.Errorf("DemoFor[%d] mismatch: got %q, want %q", i, elem, expected.DemoFor[i])
+				}
+			}
+		}
+	})
 }
 
 func TestGenerateFallbackURL(t *testing.T) {
@@ -318,95 +279,59 @@ func TestGenerateFallbackURL(t *testing.T) {
 	}
 }
 
+type extractTagsConfig struct {
+	ElementAliases map[string]string `json:"elementAliases"`
+	DemoPath       string            `json:"demoPath"`
+}
+
 func TestExtractDemoTags(t *testing.T) {
-	tests := []struct {
-		name           string
-		html           string
-		elementAliases map[string]string
-		demoPath       string
-		expected       []string
-	}{
-		{
-			name: "explicit microdata association",
-			html: `<!DOCTYPE html>
-<html>
-<head>
-<meta itemprop="demo-for" content="rh-button pf-button">
-</head>
-<body>
-<rh-card>Should be ignored</rh-card>
-</body>
-</html>`,
-			elementAliases: map[string]string{"rh-button": "button"},
-			demoPath:       "/components/button/demo/primary.html",
-			expected:       []string{"rh-button", "pf-button"},
-		},
-		{
-			name: "content-based fallback",
-			html: `<!DOCTYPE html>
-<html>
-<body>
-<rh-button>Click me</rh-button>
-<rh-card>Content</rh-card>
-</body>
-</html>`,
-			elementAliases: map[string]string{"rh-button": "button"},
-			demoPath:       "/demos/mixed/example.html",      // Path that doesn't match aliases
-			expected:       []string{"rh-button", "rh-card"}, // Should find both from content
-		},
-	}
+	runFixtureTest[[]string](t, "extract-tags", func(t *testing.T, inputPath string, expected *[]string) {
+		// Read config
+		configPath := filepath.Join(filepath.Dir(inputPath), "config.json")
+		configBytes := testutil.LoadFixtureFile(t, configPath)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Create temporary file
-			tmpDir := t.TempDir()
-			filePath := filepath.Join(tmpDir, tt.demoPath)
-			err := os.MkdirAll(filepath.Dir(filePath), 0755)
-			if err != nil {
-				t.Fatalf("Failed to create directories: %v", err)
-			}
-			err = os.WriteFile(filePath, []byte(tt.html), 0644)
-			if err != nil {
-				t.Fatalf("Failed to write test file: %v", err)
-			}
+		var config extractTagsConfig
+		if err := json.Unmarshal(configBytes, &config); err != nil {
+			t.Fatalf("Failed to unmarshal config JSON: %v", err)
+		}
 
-			// Extract tags
-			ctx := W.NewFileSystemWorkspaceContext(tmpDir)
-			result, err := extractDemoTags(ctx, filePath, tt.elementAliases)
-			if err != nil {
-				t.Fatalf("extractDemoTags failed: %v", err)
-			}
+		// Create temporary directory structure
+		tmpDir := t.TempDir()
+		tmpPath := filepath.Join(tmpDir, config.DemoPath)
+		if err := os.MkdirAll(filepath.Dir(tmpPath), 0755); err != nil {
+			t.Fatalf("Failed to create directories: %v", err)
+		}
 
-			// t.Logf("Test %s: got tags %v, expected %v", tt.name, result, tt.expected)
+		input := testutil.LoadFixtureFile(t, inputPath)
+		if err := os.WriteFile(tmpPath, input, 0644); err != nil {
+			t.Fatalf("Failed to write test file: %v", err)
+		}
 
-			// Compare results (order-independent for content-based fallback)
-			if len(result) != len(tt.expected) {
-				t.Errorf("Tag count mismatch: got %d (%v), want %d (%v)",
-					len(result), result, len(tt.expected), tt.expected)
-				return
-			}
+		// Extract tags
+		ctx := W.NewFileSystemWorkspaceContext(tmpDir)
+		result, err := extractDemoTags(ctx, tmpPath, config.ElementAliases)
+		if err != nil {
+			t.Fatalf("extractDemoTags failed: %v", err)
+		}
 
-			// For content-based tests, use order-independent comparison
-			if tt.name == "content-based fallback" {
-				resultSet := make(map[string]bool)
-				for _, tag := range result {
-					resultSet[tag] = true
-				}
-				for _, expectedTag := range tt.expected {
-					if !resultSet[expectedTag] {
-						t.Errorf("Expected tag %q not found in result %v", expectedTag, result)
-					}
-				}
-			} else {
-				// For other tests, maintain order-dependent comparison
-				for i, tag := range result {
-					if tag != tt.expected[i] {
-						t.Errorf("Tag[%d] mismatch: got %q, want %q", i, tag, tt.expected[i])
-					}
-				}
+		// Compare results (order-independent for content-based fallback)
+		if len(result) != len(*expected) {
+			t.Errorf("Tag count mismatch: got %d (%v), want %d (%v)",
+				len(result), result, len(*expected), *expected)
+			return
+		}
+
+		// Use order-independent comparison for content-based tests
+		resultSet := make(map[string]bool)
+		for _, tag := range result {
+			resultSet[tag] = true
+		}
+		for _, expectedTag := range *expected {
+			if !resultSet[expectedTag] {
+				t.Errorf("Expected tag %q not found in result %v", expectedTag, result)
 			}
-		})
-	}
+		}
+	})
 }
 
 func TestExtractParameterValues(t *testing.T) {
@@ -482,44 +407,39 @@ func TestExtractParameterValues(t *testing.T) {
 	}
 }
 
+type newDemoMapConfig struct {
+	ElementAliases map[string]string `json:"elementAliases"`
+}
+
 func TestNewDemoMap(t *testing.T) {
-	// Create temporary demo files
+	// Read config
+	configPath := filepath.Join("new-demo-map", "config.json")
+	configBytes := testutil.LoadFixtureFile(t, configPath)
+
+	var config newDemoMapConfig
+	if err := json.Unmarshal(configBytes, &config); err != nil {
+		t.Fatalf("Failed to unmarshal config JSON: %v", err)
+	}
+
+	// Create temporary directory and copy fixtures
 	tmpDir := t.TempDir()
 
-	// Demo 1: Explicit microdata
+	demo1Input := testutil.LoadFixtureFile(t, filepath.Join("new-demo-map", "demo1", "input.html"))
 	demo1Path := filepath.Join(tmpDir, "demo1.html")
-	demo1Content := `<!DOCTYPE html>
-<html>
-<head>
-<meta itemprop="demo-for" content="rh-button">
-</head>
-<body><rh-button>Click</rh-button></body>
-</html>`
-	err := os.WriteFile(demo1Path, []byte(demo1Content), 0644)
-	if err != nil {
+	if err := os.WriteFile(demo1Path, demo1Input, 0644); err != nil {
 		t.Fatalf("Failed to write demo1: %v", err)
 	}
 
-	// Demo 2: Content-based discovery
+	demo2Input := testutil.LoadFixtureFile(t, filepath.Join("new-demo-map", "demo2", "input.html"))
 	demo2Path := filepath.Join(tmpDir, "demo2.html")
-	demo2Content := `<!DOCTYPE html>
-<html>
-<body><rh-card>Content</rh-card></body>
-</html>`
-	err = os.WriteFile(demo2Path, []byte(demo2Content), 0644)
-	if err != nil {
+	if err := os.WriteFile(demo2Path, demo2Input, 0644); err != nil {
 		t.Fatalf("Failed to write demo2: %v", err)
-	}
-
-	elementAliases := map[string]string{
-		"rh-button": "button",
-		"rh-card":   "card",
 	}
 
 	// Create workspace context for test
 	ctx := W.NewFileSystemWorkspaceContext(tmpDir)
 
-	demoMap, err := NewDemoMap(ctx, []string{demo1Path, demo2Path}, elementAliases)
+	demoMap, err := NewDemoMap(ctx, []string{demo1Path, demo2Path}, config.ElementAliases)
 	if err != nil {
 		t.Fatalf("NewDemoMap failed: %v", err)
 	}
@@ -538,27 +458,12 @@ func TestNewDemoMap(t *testing.T) {
 }
 
 func TestMicrodataExtraction(t *testing.T) {
-	html := `<!DOCTYPE html>
-<html>
-<head>
-<meta itemprop="demo-for" content="rh-button pf-button">
-</head>
-<body>
-<rh-card>Should be ignored</rh-card>
-</body>
-</html>`
+	inputPath := filepath.Join("microdata-extraction", "input.html")
+	expectedPath := filepath.Join("microdata-extraction", "expected.txt")
 
-	tmpDir := t.TempDir()
-	filePath := filepath.Join(tmpDir, "test.html")
-	err := os.WriteFile(filePath, []byte(html), 0644)
-	if err != nil {
-		t.Fatalf("Failed to write test file: %v", err)
-	}
-
-	code, err := os.ReadFile(filePath)
-	if err != nil {
-		t.Fatalf("Failed to read test file: %v", err)
-	}
+	code := testutil.LoadFixtureFile(t, inputPath)
+	expectedBytes := testutil.LoadFixtureFile(t, expectedPath)
+	expected := strings.TrimSpace(string(expectedBytes))
 
 	parser := Q.GetHTMLParser()
 	defer Q.PutHTMLParser(parser)
@@ -568,36 +473,18 @@ func TestMicrodataExtraction(t *testing.T) {
 
 	demoFor := extractMicrodata(root, code, "demo-for")
 
-	if demoFor != "rh-button pf-button" {
-		t.Errorf("Expected 'rh-button pf-button', got %q", demoFor)
+	if demoFor != expected {
+		t.Errorf("Expected %q, got %q", expected, demoFor)
 	}
 }
 
 func TestScriptMarkdownExtraction(t *testing.T) {
-	html := `<!DOCTYPE html>
-<html>
-<head>
-<script type="text/markdown" itemprop="description">
-# Card Demo
-Showcases different card variants with accessibility features.
-</script>
-</head>
-<body>
-<rh-card>Content</rh-card>
-</body>
-</html>`
+	inputPath := filepath.Join("script-markdown-extraction", "input.html")
+	expectedPath := filepath.Join("script-markdown-extraction", "expected.txt")
 
-	tmpDir := t.TempDir()
-	filePath := filepath.Join(tmpDir, "test.html")
-	err := os.WriteFile(filePath, []byte(html), 0644)
-	if err != nil {
-		t.Fatalf("Failed to write test file: %v", err)
-	}
-
-	code, err := os.ReadFile(filePath)
-	if err != nil {
-		t.Fatalf("Failed to read test file: %v", err)
-	}
+	code := testutil.LoadFixtureFile(t, inputPath)
+	expectedBytes := testutil.LoadFixtureFile(t, expectedPath)
+	expected := string(expectedBytes)
 
 	parser := Q.GetHTMLParser()
 	defer Q.PutHTMLParser(parser)
@@ -606,7 +493,6 @@ Showcases different card variants with accessibility features.
 	root := tree.RootNode()
 
 	description := extractMicrodata(root, code, "description")
-	expected := "# Card Demo\nShowcases different card variants with accessibility features."
 
 	if description != expected {
 		t.Errorf("Expected %q, got %q", expected, description)
