@@ -1,0 +1,83 @@
+<meta itemprop="description"
+      content="Basic demonstration of ts-button with TypeScript path mappings.">
+
+<section>
+  <h2>Component with @components/* Import</h2>
+  <p>The button component is imported using <code>@components/ts-button.js</code></p>
+  <div class="demo">
+    <ts-button label="hello world">Default</ts-button>
+    <ts-button label="click me">Custom Label</ts-button>
+    <ts-button disabled>Disabled</ts-button>
+  </div>
+  <p><em>Note: Labels are automatically capitalized using the @utils/format utility!</em></p>
+</section>
+
+<section>
+  <h2>Path Mappings Configuration</h2>
+  <p>Defined in <code>tsconfig.json</code>:</p>
+  <pre><code>"paths": {
+  "@components/*": ["./src/components/*"],
+  "@utils/*": ["./src/utils/*"]
+}</code></pre>
+</section>
+
+<section>
+  <h2>Usage Examples</h2>
+  <pre><code>// Instead of relative paths:
+import { TsButton } from '../../components/ts-button.js';
+import { capitalize } from '../../utils/format.js';
+
+// Use clean path aliases:
+import { TsButton } from '@components/ts-button.js';
+import { capitalize } from '@utils/format.js';</code></pre>
+</section>
+
+<script type="module">
+  // In development, import directly from source files
+  // The dev server rewrites /dist/*.js to /src/*.ts
+  import '@components/ts-button.js';
+  import { capitalize, kebabCase, truncate } from '@utils/format.js';
+
+  console.log('Utilities from @utils/format:');
+  console.log('  capitalize("hello"):', capitalize('hello'));
+  console.log('  kebabCase("MyButton"):', kebabCase('MyButton'));
+  console.log('  truncate("long text", 8):', truncate('long text', 8));
+</script>
+
+<style>
+  section {
+    font-family: system-ui, sans-serif;
+    max-width: 800px;
+    margin: 1rem;
+
+    & h2 {
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+    }
+
+    & p {
+      margin: 0.5rem 0;
+      color: light-dark(#666, #9ca3af);
+    }
+  }
+
+  .demo {
+    display: flex;
+    gap: 1rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+  }
+
+  pre {
+    background: light-dark(#f5f5f5, #2d2d2d);
+    color: light-dark(#333, #e0e0e0);
+    padding: 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+
+  code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+  }
+</style>

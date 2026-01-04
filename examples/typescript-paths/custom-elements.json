@@ -15,6 +15,16 @@
           },
           "members": [
             {
+              "name": "disabled",
+              "description": "Whether the button is disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "disabled"
+            },
+            {
               "name": "label",
               "description": "Button label (alternative to slot)",
               "type": {
@@ -31,6 +41,15 @@
           "kind": "class",
           "tagName": "ts-button",
           "attributes": [
+            {
+              "name": "disabled",
+              "description": "Whether the button is disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "disabled"
+            },
             {
               "name": "label",
               "description": "Button label (alternative to slot)",
@@ -56,19 +75,22 @@
           "cssProperties": [
             {
               "name": "--ts-button-bg",
-              "description": "Background color"
-            },
-            {
-              "name": "--ts-button-color",
-              "description": "Text color"
-            },
-            {
-              "name": "--ts-button-bg",
+              "description": "Background color",
               "default": "#4f46e5"
             },
             {
               "name": "--ts-button-color",
+              "description": "Text color",
               "default": "white"
+            }
+          ],
+          "demos": [
+            {
+              "description": "Basic demonstration of ts-button with TypeScript path mappings.",
+              "url": "https://bennypowers.dev/cem/examples/typescript-paths/components/basic/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/typescript-paths/src/components/demo/basic.html"
+              }
             }
           ],
           "customElement": true
