@@ -14,6 +14,16 @@
           },
           "members": [
             {
+              "name": "message",
+              "description": "Toast message text",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "message"
+            },
+            {
               "name": "open",
               "description": "Toast visibility",
               "type": {
@@ -32,6 +42,15 @@
           "kind": "class",
           "tagName": "alert-toast",
           "attributes": [
+            {
+              "name": "message",
+              "description": "Toast message text",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "message"
+            },
             {
               "name": "open",
               "description": "Toast visibility",
@@ -81,8 +100,46 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "src",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "src"
+            },
+            {
+              "name": "alt",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Avatar'",
+              "kind": "field",
+              "attribute": "alt"
+            }
+          ],
           "kind": "class",
           "tagName": "avatar-image",
+          "attributes": [
+            {
+              "name": "src",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "src"
+            },
+            {
+              "name": "alt",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Avatar'",
+              "fieldName": "alt"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -118,12 +175,48 @@
           },
           "members": [
             {
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Click me!'",
+              "kind": "field",
+              "attribute": "label"
+            },
+            {
+              "name": "clicks",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "attribute": "clicks"
+            },
+            {
               "name": "onClick",
               "kind": "method"
             }
           ],
           "kind": "class",
           "tagName": "button-element",
+          "attributes": [
+            {
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Click me!'",
+              "fieldName": "label"
+            },
+            {
+              "name": "clicks",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "fieldName": "clicks"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -159,12 +252,31 @@
           },
           "members": [
             {
+              "name": "text",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "text"
+            },
+            {
               "name": "copy",
               "kind": "method"
             }
           ],
           "kind": "class",
           "tagName": "clipboard-copy",
+          "attributes": [
+            {
+              "name": "text",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "text"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -197,8 +309,29 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "selected",
+              "type": {
+                "text": "string"
+              },
+              "default": "'#ff0000'",
+              "kind": "field",
+              "attribute": "selected"
+            }
+          ],
           "kind": "class",
           "tagName": "color-picker",
+          "attributes": [
+            {
+              "name": "selected",
+              "type": {
+                "text": "string"
+              },
+              "default": "'#ff0000'",
+              "fieldName": "selected"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -233,6 +366,66 @@
             "package": "lit"
           },
           "members": [
+            {
+              "name": "title",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "title"
+            },
+            {
+              "name": "description",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "description"
+            },
+            {
+              "name": "count",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "attribute": "count"
+            },
+            {
+              "name": "enabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true",
+              "kind": "field",
+              "attribute": "enabled"
+            },
+            {
+              "name": "items",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "kind": "field",
+              "attribute": "items"
+            },
+            {
+              "name": "theme",
+              "type": {
+                "text": "string"
+              },
+              "default": "'light'",
+              "kind": "field",
+              "attribute": "theme"
+            },
+            {
+              "name": "config",
+              "default": "{}",
+              "kind": "field",
+              "attribute": "config"
+            },
             {
               "name": "increment",
               "description": "Increments the count by 1.",
@@ -298,6 +491,61 @@
           ],
           "kind": "class",
           "tagName": "complex-component",
+          "attributes": [
+            {
+              "name": "title",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "title"
+            },
+            {
+              "name": "description",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "description"
+            },
+            {
+              "name": "count",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "fieldName": "count"
+            },
+            {
+              "name": "enabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true",
+              "fieldName": "enabled"
+            },
+            {
+              "name": "items",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "fieldName": "items"
+            },
+            {
+              "name": "theme",
+              "type": {
+                "text": "string"
+              },
+              "default": "'light'",
+              "fieldName": "theme"
+            },
+            {
+              "name": "config",
+              "default": "{}",
+              "fieldName": "config"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -330,8 +578,46 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "users",
+              "type": {
+                "text": "User[]"
+              },
+              "default": "[]",
+              "kind": "field",
+              "attribute": "users"
+            },
+            {
+              "name": "config",
+              "type": {
+                "text": "Record<string, unknown>"
+              },
+              "default": "{}",
+              "kind": "field",
+              "attribute": "config"
+            }
+          ],
           "kind": "class",
           "tagName": "complex-types",
+          "attributes": [
+            {
+              "name": "users",
+              "type": {
+                "text": "User[]"
+              },
+              "default": "[]",
+              "fieldName": "users"
+            },
+            {
+              "name": "config",
+              "type": {
+                "text": "Record<string, unknown>"
+              },
+              "default": "{}",
+              "fieldName": "config"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -364,8 +650,29 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "dark",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "dark"
+            }
+          ],
           "kind": "class",
           "tagName": "dark-mode-toggle",
+          "attributes": [
+            {
+              "name": "dark",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "dark"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -436,6 +743,21 @@
           },
           "members": [
             {
+              "name": "emojis",
+              "default": "['😀','😂','😍','🤔','😎','😭']",
+              "kind": "field",
+              "attribute": "emojis"
+            },
+            {
+              "name": "selected",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "selected"
+            },
+            {
               "parameters": [
                 {
                   "name": "e",
@@ -451,6 +773,21 @@
           ],
           "kind": "class",
           "tagName": "emoji-picker",
+          "attributes": [
+            {
+              "name": "emojis",
+              "default": "['😀','😂','😍','🤔','😎','😭']",
+              "fieldName": "emojis"
+            },
+            {
+              "name": "selected",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "selected"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -549,8 +886,29 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "expanded",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "expanded"
+            }
+          ],
           "kind": "class",
           "tagName": "expandable-panel",
+          "attributes": [
+            {
+              "name": "expanded",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "expanded"
+            }
+          ],
           "slots": [
             {
               "name": ""
@@ -589,8 +947,46 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "for",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "for"
+            },
+            {
+              "name": "required",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "required"
+            }
+          ],
           "kind": "class",
           "tagName": "field-label",
+          "attributes": [
+            {
+              "name": "for",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "for"
+            },
+            {
+              "name": "required",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "required"
+            }
+          ],
           "slots": [
             {
               "name": ""
@@ -628,8 +1024,29 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "files",
+              "type": {
+                "text": "File[]"
+              },
+              "default": "[]",
+              "kind": "field",
+              "attribute": "files"
+            }
+          ],
           "kind": "class",
           "tagName": "file-uploader",
+          "attributes": [
+            {
+              "name": "files",
+              "type": {
+                "text": "File[]"
+              },
+              "default": "[]",
+              "fieldName": "files"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -663,8 +1080,46 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "icon",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "icon"
+            },
+            {
+              "name": "count",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "attribute": "count"
+            }
+          ],
           "kind": "class",
           "tagName": "icon-badge",
+          "attributes": [
+            {
+              "name": "icon",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "icon"
+            },
+            {
+              "name": "count",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "fieldName": "count"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -699,6 +1154,24 @@
           },
           "members": [
             {
+              "name": "images",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "kind": "field",
+              "attribute": "images"
+            },
+            {
+              "name": "current",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "attribute": "current"
+            },
+            {
               "name": "prev",
               "kind": "method"
             },
@@ -709,6 +1182,24 @@
           ],
           "kind": "class",
           "tagName": "image-gallery",
+          "attributes": [
+            {
+              "name": "images",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "fieldName": "images"
+            },
+            {
+              "name": "current",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "fieldName": "current"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -744,6 +1235,24 @@
           },
           "members": [
             {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "value"
+            },
+            {
+              "name": "editing",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "editing"
+            },
+            {
               "name": "displayValue",
               "readonly": true,
               "kind": "field"
@@ -751,6 +1260,24 @@
           ],
           "kind": "class",
           "tagName": "inline-edit",
+          "attributes": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "value"
+            },
+            {
+              "name": "editing",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "editing"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -785,6 +1312,24 @@
           },
           "members": [
             {
+              "name": "key",
+              "type": {
+                "text": "string"
+              },
+              "default": "'k'",
+              "kind": "field",
+              "attribute": "key"
+            },
+            {
+              "name": "ctrl",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "ctrl"
+            },
+            {
               "parameters": [
                 {
                   "name": "e",
@@ -800,6 +1345,24 @@
           ],
           "kind": "class",
           "tagName": "keyboard-shortcut",
+          "attributes": [
+            {
+              "name": "key",
+              "type": {
+                "text": "string"
+              },
+              "default": "'k'",
+              "fieldName": "key"
+            },
+            {
+              "name": "ctrl",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "ctrl"
+            }
+          ],
           "slots": [
             {
               "name": ""
@@ -882,8 +1445,29 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "markdown",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "markdown"
+            }
+          ],
           "kind": "class",
           "tagName": "markdown-viewer",
+          "attributes": [
+            {
+              "name": "markdown",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "markdown"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -917,8 +1501,46 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "text",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "text"
+            },
+            {
+              "name": "align",
+              "type": {
+                "text": "'left' | 'right'"
+              },
+              "default": "'left'",
+              "kind": "field",
+              "attribute": "align"
+            }
+          ],
           "kind": "class",
           "tagName": "message-bubble",
+          "attributes": [
+            {
+              "name": "text",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "text"
+            },
+            {
+              "name": "align",
+              "type": {
+                "text": "'left' | 'right'"
+              },
+              "default": "'left'",
+              "fieldName": "align"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1028,8 +1650,46 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "message",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "message"
+            },
+            {
+              "name": "visible",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "visible"
+            }
+          ],
           "kind": "class",
           "tagName": "notification-banner",
+          "attributes": [
+            {
+              "name": "message",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "message"
+            },
+            {
+              "name": "visible",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "visible"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1065,6 +1725,15 @@
           },
           "members": [
             {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "value"
+            },
+            {
               "name": "_handleClick",
               "description": "This method starts with underscore but has no privacy flag.\nShould trigger a validation warning.",
               "kind": "method"
@@ -1082,6 +1751,16 @@
           ],
           "kind": "class",
           "tagName": "privacy-test",
+          "attributes": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "value"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1114,8 +1793,29 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "progress",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "attribute": "progress"
+            }
+          ],
           "kind": "class",
           "tagName": "progress-circle",
+          "attributes": [
+            {
+              "name": "progress",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "fieldName": "progress"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1148,8 +1848,63 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "value",
+              "type": {
+                "text": "number"
+              },
+              "default": "50",
+              "kind": "field",
+              "attribute": "value"
+            },
+            {
+              "name": "min",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "attribute": "min"
+            },
+            {
+              "name": "max",
+              "type": {
+                "text": "number"
+              },
+              "default": "100",
+              "kind": "field",
+              "attribute": "max"
+            }
+          ],
           "kind": "class",
           "tagName": "range-slider",
+          "attributes": [
+            {
+              "name": "value",
+              "type": {
+                "text": "number"
+              },
+              "default": "50",
+              "fieldName": "value"
+            },
+            {
+              "name": "min",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "fieldName": "min"
+            },
+            {
+              "name": "max",
+              "type": {
+                "text": "number"
+              },
+              "default": "100",
+              "fieldName": "max"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1217,8 +1972,29 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "query",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "query"
+            }
+          ],
           "kind": "class",
           "tagName": "search-bar",
+          "attributes": [
+            {
+              "name": "query",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "query"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1252,8 +2028,29 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "heading",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "heading"
+            }
+          ],
           "kind": "class",
           "tagName": "section-header",
+          "attributes": [
+            {
+              "name": "heading",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "heading"
+            }
+          ],
           "slots": [
             {
               "name": "actions"
@@ -1326,8 +2123,29 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "ratio",
+              "type": {
+                "text": "number"
+              },
+              "default": "0.5",
+              "kind": "field",
+              "attribute": "ratio"
+            }
+          ],
           "kind": "class",
           "tagName": "split-pane",
+          "attributes": [
+            {
+              "name": "ratio",
+              "type": {
+                "text": "number"
+              },
+              "default": "0.5",
+              "fieldName": "ratio"
+            }
+          ],
           "slots": [
             {
               "name": "left"
@@ -1368,8 +2186,29 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "rating",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "attribute": "rating"
+            }
+          ],
           "kind": "class",
           "tagName": "star-rating",
+          "attributes": [
+            {
+              "name": "rating",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "fieldName": "rating"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1404,6 +2243,24 @@
           },
           "members": [
             {
+              "name": "steps",
+              "type": {
+                "text": "number"
+              },
+              "default": "3",
+              "kind": "field",
+              "attribute": "steps"
+            },
+            {
+              "name": "current",
+              "type": {
+                "text": "number"
+              },
+              "default": "1",
+              "kind": "field",
+              "attribute": "current"
+            },
+            {
               "name": "completed",
               "readonly": true,
               "kind": "field"
@@ -1411,6 +2268,24 @@
           ],
           "kind": "class",
           "tagName": "step-progress",
+          "attributes": [
+            {
+              "name": "steps",
+              "type": {
+                "text": "number"
+              },
+              "default": "3",
+              "fieldName": "steps"
+            },
+            {
+              "name": "current",
+              "type": {
+                "text": "number"
+              },
+              "default": "1",
+              "fieldName": "current"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1443,8 +2318,40 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "tabs",
+              "default": "['Tab 1', 'Tab 2']",
+              "kind": "field",
+              "attribute": "tabs"
+            },
+            {
+              "name": "selected",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "attribute": "selected"
+            }
+          ],
           "kind": "class",
           "tagName": "tab-navigation",
+          "attributes": [
+            {
+              "name": "tabs",
+              "default": "['Tab 1', 'Tab 2']",
+              "fieldName": "tabs"
+            },
+            {
+              "name": "selected",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "fieldName": "selected"
+            }
+          ],
           "slots": [
             {
               "name": "panel-${this.selected}"
@@ -1485,6 +2392,15 @@
           },
           "members": [
             {
+              "name": "tags",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "kind": "field",
+              "attribute": "tags"
+            },
+            {
               "parameters": [
                 {
                   "name": "tag",
@@ -1511,6 +2427,16 @@
           ],
           "kind": "class",
           "tagName": "tag-list",
+          "attributes": [
+            {
+              "name": "tags",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "fieldName": "tags"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1543,8 +2469,29 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "text",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Scrolling Text'",
+              "kind": "field",
+              "attribute": "text"
+            }
+          ],
           "kind": "class",
           "tagName": "text-ticker",
+          "attributes": [
+            {
+              "name": "text",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Scrolling Text'",
+              "fieldName": "text"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1650,12 +2597,31 @@
           },
           "members": [
             {
+              "name": "messages",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "kind": "field",
+              "attribute": "messages"
+            },
+            {
               "name": "clear",
               "kind": "method"
             }
           ],
           "kind": "class",
           "tagName": "toast-stack",
+          "attributes": [
+            {
+              "name": "messages",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "fieldName": "messages"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1750,8 +2716,46 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "name",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "name"
+            },
+            {
+              "name": "src",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "src"
+            }
+          ],
           "kind": "class",
           "tagName": "user-avatar",
+          "attributes": [
+            {
+              "name": "name",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "name"
+            },
+            {
+              "name": "src",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "src"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1784,8 +2788,29 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "users",
+              "type": {
+                "text": "User[]"
+              },
+              "default": "[]",
+              "kind": "field",
+              "attribute": "users"
+            }
+          ],
           "kind": "class",
           "tagName": "user-list",
+          "attributes": [
+            {
+              "name": "users",
+              "type": {
+                "text": "User[]"
+              },
+              "default": "[]",
+              "fieldName": "users"
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1858,6 +2883,17 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "members": [
+            {
+              "name": "enabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "true",
+              "kind": "field",
+              "attribute": "enabled"
+            }
+          ],
           "kind": "class"
         },
         {
@@ -1866,6 +2902,14 @@
             "name": "BaseItem"
           },
           "members": [
+            {
+              "name": "note",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Special'",
+              "kind": "field"
+            },
             {
               "name": "render",
               "kind": "method"
