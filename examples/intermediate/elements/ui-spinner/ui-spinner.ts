@@ -16,12 +16,14 @@ export class UiSpinner extends LitElement {
   /**
    * Accessible label for the spinner
    */
-  @property() label = 'Loading';
+  @property()
+  accessor label = 'Loading';
 
   /**
    * The size of the spinner in pixels
    */
-  @property({ type: Number }) size?: number;
+  @property({ type: Number })
+  accessor size = 16;
 
   render() {
     const { size, label } = this;

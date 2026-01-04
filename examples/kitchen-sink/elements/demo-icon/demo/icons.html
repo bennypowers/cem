@@ -1,0 +1,83 @@
+<meta itemprop="description"
+      content="Showcases all available icon names in demo-icon component.">
+
+<div class="icon-grid">
+  <div class="icon-card">
+    <demo-icon name="alert" label="Alert"></demo-icon>
+    <span>alert</span>
+  </div>
+  <div class="icon-card">
+    <demo-icon name="check" label="Check mark"></demo-icon>
+    <span>check</span>
+  </div>
+  <div class="icon-card">
+    <demo-icon name="chevron" label="Chevron"></demo-icon>
+    <span>chevron</span>
+  </div>
+  <div class="icon-card">
+    <demo-icon name="heart" label="Favorite"></demo-icon>
+    <span>heart</span>
+  </div>
+  <div class="icon-card">
+    <demo-icon name="info" label="Information"></demo-icon>
+    <span>info</span>
+  </div>
+  <div class="icon-card">
+    <demo-icon name="minus" label="Minus"></demo-icon>
+    <span>minus</span>
+  </div>
+  <div class="icon-card">
+    <demo-icon name="plus" label="Plus"></demo-icon>
+    <span>plus</span>
+  </div>
+  <div class="icon-card">
+    <demo-icon name="search" label="Search"></demo-icon>
+    <span>search</span>
+  </div>
+  <div class="icon-card">
+    <demo-icon name="star" label="Rating"></demo-icon>
+    <span>star</span>
+  </div>
+  <div class="icon-card">
+    <demo-icon name="x" label="Close"></demo-icon>
+    <span>x</span>
+  </div>
+</div>
+
+<style>
+  .icon-grid {
+    font-family: system-ui, sans-serif;
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+  }
+
+  .icon-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border: 1px solid light-dark(#e5e7eb, #374151);
+    border-radius: 0.5rem;
+    background: light-dark(#f9fafb, #1f2937);
+
+    demo-icon {
+      width: 32px;
+      height: 32px;
+    }
+
+    span {
+      font-size: 0.875rem;
+      color: light-dark(#666, #9ca3af);
+      font-family: monospace;
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-icon/demo-icon.js';
+</script>

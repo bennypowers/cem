@@ -1,0 +1,25 @@
+<meta itemprop="description"
+      content="Demonstrates ui-card with action buttons in the footer for user confirmations.">
+
+<ui-card heading="Confirm Action">
+  <p>Are you sure you want to proceed with this action? This cannot be undone.</p>
+  <ui-button slot="footer" variant="secondary">Cancel</ui-button>
+  <ui-button slot="footer" variant="primary">Confirm</ui-button>
+</ui-card>
+
+<style>
+  ui-card {
+    font-family: system-ui, sans-serif;
+    max-width: 500px;
+    margin: 1rem;
+    p {
+      line-height: 1.6;
+      margin: 0.5rem 0;
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/intermediate/elements/ui-card/ui-card.js'
+  import '@cem-examples/intermediate/elements/ui-button/ui-button.js'
+</script>

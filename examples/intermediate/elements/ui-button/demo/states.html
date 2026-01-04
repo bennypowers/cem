@@ -1,0 +1,39 @@
+<meta itemprop="description"
+      content="Demonstrates disabled and loading states for the ui-button component.">
+
+<div class="button-group">
+  <ui-button variant="primary">Normal</ui-button>
+  <ui-button variant="primary" disabled>Disabled</ui-button>
+  <ui-button variant="primary" loading>Loading</ui-button>
+</div>
+
+<div class="button-group">
+  <ui-button variant="success">Normal</ui-button>
+  <ui-button variant="success" disabled>Disabled</ui-button>
+  <ui-button variant="success" loading>Loading</ui-button>
+</div>
+
+<style>
+  .button-group {
+    font-family: system-ui, sans-serif;
+    max-width: 800px;
+    margin: 1rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/intermediate/elements/ui-button/ui-button.js'
+
+  // Add click handlers
+  document.querySelectorAll('ui-button').forEach(button => {
+    button.addEventListener('click', () => {
+      if (!button.hasAttribute('disabled') && !button.hasAttribute('loading')) {
+        console.log('Button clicked:', button.textContent.trim());
+      }
+    });
+  });
+</script>

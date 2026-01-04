@@ -1,0 +1,62 @@
+<meta itemprop="description"
+      content="Demonstrates demo-icon with different colors using CSS color property.">
+
+<div class="color-demo">
+  <div class="color-item">
+    <demo-icon name="heart" label="Default heart"></demo-icon>
+    <span>Default</span>
+  </div>
+  <div class="color-item">
+    <demo-icon name="heart" label="Red heart" style="color: #ef4444;"></demo-icon>
+    <span>Red</span>
+  </div>
+  <div class="color-item">
+    <demo-icon name="heart" label="Blue heart" style="color: #3b82f6;"></demo-icon>
+    <span>Blue</span>
+  </div>
+  <div class="color-item">
+    <demo-icon name="heart" label="Green heart" style="color: #10b981;"></demo-icon>
+    <span>Green</span>
+  </div>
+  <div class="color-item">
+    <demo-icon name="heart" label="Yellow heart" style="color: #f59e0b;"></demo-icon>
+    <span>Yellow</span>
+  </div>
+  <div class="color-item">
+    <demo-icon name="heart" label="Purple heart" style="color: #8b5cf6;"></demo-icon>
+    <span>Purple</span>
+  </div>
+</div>
+
+<style>
+  .color-demo {
+    font-family: system-ui, sans-serif;
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .color-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+
+    demo-icon {
+      width: 32px;
+      height: 32px;
+    }
+
+    span {
+      font-size: 0.875rem;
+      color: light-dark(#666, #9ca3af);
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-icon/demo-icon.js';
+</script>

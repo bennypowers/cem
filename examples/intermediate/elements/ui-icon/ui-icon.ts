@@ -36,17 +36,20 @@ export class UiIcon extends LitElement {
    * The name of the icon to display
    * @type {'check' | 'x' | 'chevron-right' | 'heart' | 'star'}
    */
-  @property() name: IconName = 'check';
+  @property()
+  accessor name: IconName = 'check';
 
   /**
    * Accessible label for the icon (required for accessibility)
    */
-  @property() label = '';
+  @property()
+  accessor label = '';
 
   /**
    * The size of the icon in pixels
    */
-  @property({ type: Number }) size?: number;
+  @property({ type: Number })
+  accessor size = 16;
 
   connectedCallback() {
     super.connectedCallback();
@@ -57,12 +60,12 @@ export class UiIcon extends LitElement {
   }
 
   render() {
-    const { label, name, size, iconPath } = this;
+    const { label, name, size = 16, iconPath } = this;
     return html`
       <!-- The icon's base SVG element -->
       <svg part="base"
            viewBox="0 0 24 24"
-           style="${styleMap({ '--icon-size': size })}"
+           style="${styleMap({ '--icon-size': size + 'px' })}"
            aria-label="${label || name}">
         <path d="${iconPath}"></path>
       </svg>

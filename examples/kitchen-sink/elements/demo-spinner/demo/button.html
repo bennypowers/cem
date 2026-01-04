@@ -1,0 +1,84 @@
+<meta itemprop="description"
+      content="Demonstrates demo-spinner inside buttons for loading states.">
+
+<div class="button-demo">
+  <button id="normal-btn">
+    Click to Load
+  </button>
+
+  <button id="loading-btn" class="loading">
+    <demo-spinner style="width: 16px; height: 16px;"></demo-spinner>
+    Loading...
+  </button>
+
+  <button id="success-btn" class="success" disabled>
+    Success!
+  </button>
+</div>
+
+<style>
+  .button-demo {
+    font-family: system-ui, sans-serif;
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.375rem;
+      background: light-dark(#3b82f6, #2563eb);
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+
+      &:not(:disabled):hover {
+        background: light-dark(#2563eb, #1d4ed8);
+      }
+
+      &.loading {
+        background: light-dark(#6b7280, #4b5563);
+        cursor: wait;
+      }
+
+      &.success {
+        background: light-dark(#10b981, #059669);
+        cursor: not-allowed;
+      }
+
+      &:disabled {
+        opacity: 0.7;
+      }
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-spinner/demo-spinner.js';
+
+  const normalBtn = document.querySelector('#normal-btn');
+  normalBtn.addEventListener('click', () => {
+    normalBtn.innerHTML = '<demo-spinner style="width: 16px; height: 16px;"></demo-spinner> Loading...';
+    normalBtn.classList.add('loading');
+
+    setTimeout(() => {
+      normalBtn.innerHTML = 'Success!';
+      normalBtn.classList.remove('loading');
+      normalBtn.classList.add('success');
+      normalBtn.disabled = true;
+
+      setTimeout(() => {
+        normalBtn.innerHTML = 'Click to Load';
+        normalBtn.classList.remove('success');
+        normalBtn.disabled = false;
+      }, 2000);
+    }, 2000);
+  });
+</script>

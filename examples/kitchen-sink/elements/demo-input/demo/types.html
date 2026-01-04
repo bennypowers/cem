@@ -1,0 +1,44 @@
+<meta itemprop="description"
+      content="Demonstrates different input types: text, email, password, number, tel, and url.">
+
+<div class="input-list">
+  <demo-input type="text"
+              label="Full Name"
+              placeholder="John Doe"></demo-input>
+
+  <demo-input type="email"
+              label="Email Address"
+              placeholder="john@example.com"></demo-input>
+
+  <demo-input type="password"
+              label="Password"
+              placeholder="Enter password"></demo-input>
+
+  <demo-input type="number"
+              label="Age"
+              placeholder="25"></demo-input>
+
+  <demo-input type="tel"
+              label="Phone Number"
+              placeholder="(555) 123-4567"></demo-input>
+
+  <demo-input type="url"
+              label="Website"
+              placeholder="https://example.com"></demo-input>
+</div>
+
+<style>
+  .input-list {
+    font-family: system-ui, sans-serif;
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-input/demo-input.js';
+</script>

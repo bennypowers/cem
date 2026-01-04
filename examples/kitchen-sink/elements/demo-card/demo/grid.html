@@ -1,0 +1,52 @@
+<meta itemprop="description"
+      content="Multiple demo-cards arranged in a responsive grid layout.">
+
+<div class="card-grid">
+  <demo-card>
+    <h3 slot="header">Feature One</h3>
+    <p>Comprehensive feature set with advanced capabilities for modern applications.</p>
+  </demo-card>
+
+  <demo-card>
+    <h3 slot="header">Feature Two</h3>
+    <p>Flexible configuration options to meet your specific requirements.</p>
+  </demo-card>
+
+  <demo-card>
+    <h3 slot="header">Feature Three</h3>
+    <p>Built-in accessibility features ensuring your app works for everyone.</p>
+  </demo-card>
+
+  <demo-card>
+    <h3 slot="header">Feature Four</h3>
+    <p>Responsive design that adapts to any screen size seamlessly.</p>
+  </demo-card>
+</div>
+
+<style>
+  .card-grid {
+    font-family: system-ui, sans-serif;
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+
+    demo-card {
+      h3 {
+        margin: 0;
+        font-size: 1.125rem;
+      }
+
+      p {
+        line-height: 1.6;
+        margin: 0.5rem 0;
+      }
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-card/demo-card.js';
+</script>

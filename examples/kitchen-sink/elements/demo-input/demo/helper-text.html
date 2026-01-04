@@ -1,0 +1,36 @@
+<meta itemprop="description"
+      content="Demonstrates helper text and error text in demo-input.">
+
+<div class="input-list">
+  <demo-input label="Username"
+              placeholder="john_doe"
+              helper-text="Must be 3-20 characters long"></demo-input>
+
+  <demo-input label="Password"
+              type="password"
+              placeholder="••••••••"
+              helper-text="At least 8 characters with numbers and symbols"></demo-input>
+
+  <demo-input label="Email"
+              type="email"
+              value="invalid-email"
+              error
+              error-text="Please enter a valid email address"
+              helper-text="This text is hidden when error is shown"></demo-input>
+</div>
+
+<style>
+  .input-list {
+    font-family: system-ui, sans-serif;
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-input/demo-input.js';
+</script>

@@ -1,0 +1,36 @@
+<meta itemprop="description"
+      content="Demonstrates ui-button with icon slots at the start and end positions.">
+
+<div class="button-group">
+  <ui-button variant="primary">
+    <span slot="start">→</span>
+    With Start Icon
+  </ui-button>
+  <ui-button variant="secondary">
+    <span slot="start">←</span>
+    Back
+  </ui-button>
+  <ui-button variant="success">
+    Save
+    <span slot="end">✓</span>
+  </ui-button>
+  <ui-button variant="danger">
+    Delete
+    <span slot="end">×</span>
+  </ui-button>
+</div>
+
+<style>
+  .button-group {
+    font-family: system-ui, sans-serif;
+    max-width: 800px;
+    margin: 1rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/intermediate/elements/ui-button/ui-button.js'
+</script>

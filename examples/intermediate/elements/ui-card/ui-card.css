@@ -4,13 +4,13 @@
 
 #card {
   /** Background color of the card */
-  background: var(--card-bg, white);
+  background: var(--card-bg, light-dark(white, #1f2937));
   /** Border style */
-  border: var(--card-border, 1px solid #e5e5e5);
+  border: var(--card-border, 1px solid light-dark(#e5e5e5, #374151));
   /** Border radius */
   border-radius: var(--card-radius, 8px);
   /** Box shadow for elevation */
-  box-shadow: var(--card-shadow, 0 2px 4px rgba(0, 0, 0, 0.1));
+  box-shadow: var(--card-shadow, light-dark(0 2px 4px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.4)));
   overflow: hidden;
 }
 
@@ -22,7 +22,7 @@
 }
 
 #header {
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid light-dark(#e5e5e5, #374151);
   font-weight: 600;
   &:empty {
     display: none;
@@ -34,8 +34,8 @@
 }
 
 #footer {
-  border-top: 1px solid #e5e5e5;
-  background: #f9f9f9;
+  border-top: 1px solid light-dark(#e5e5e5, #374151);
+  background: light-dark(#f9f9f9, #111827);
   display: flex;
   gap: 0.5rem;
   align-items: center;

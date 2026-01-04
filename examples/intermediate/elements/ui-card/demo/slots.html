@@ -1,0 +1,31 @@
+<meta itemprop="description"
+      content="Demonstrates ui-card with custom header and footer slots for flexible content.">
+
+<ui-card>
+  <strong slot="header">Custom Header</strong>
+  <span slot="header">with custom styling</span>
+  <p>The header slot allows you to provide custom HTML for the card header.</p>
+  <p>This gives you more control over the header content and styling.</p>
+</ui-card>
+
+<ui-card heading="Article Title">
+  <p>This is the main content of the card. It can contain paragraphs, lists, images, or any other HTML content.</p>
+  <span slot="footer">Published on January 4, 2026</span>
+</ui-card>
+
+<style>
+  ui-card {
+    font-family: system-ui, sans-serif;
+    max-width: 600px;
+    margin: 1rem;
+
+    p {
+      line-height: 1.6;
+      margin: 0.5rem 0;
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/intermediate/elements/ui-card/ui-card.js'
+</script>

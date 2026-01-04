@@ -1,0 +1,68 @@
+<meta itemprop="description"
+      content="Demonstrates ui-card for pricing plans with structured content and call-to-action buttons.">
+
+<div class="card-grid">
+  <ui-card heading="Premium Plan">
+    <p><strong>$29</strong>/month</p>
+    <ul>
+      <li>Unlimited projects</li>
+      <li>Priority support</li>
+      <li>Advanced analytics</li>
+      <li>Custom integrations</li>
+    </ul>
+    <ui-button slot="footer"
+               variant="primary">Get Started</ui-button>
+  </ui-card>
+
+  <ui-card heading="Enterprise Plan">
+    <p><strong>$99</strong>/month</p>
+    <ul>
+      <li>Everything in Premium</li>
+      <li>Dedicated support</li>
+      <li>Custom integrations</li>
+      <li>SLA guarantees</li>
+    </ul>
+    <ui-button slot="footer"
+               variant="success">Contact Sales</ui-button>
+  </ui-card>
+</div>
+
+<style>
+  .card-grid {
+    font-family: system-ui, sans-serif;
+    max-width: 800px;
+    margin: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  p {
+    line-height: 1.6;
+    margin: 0.5rem 0;
+  }
+
+  strong {
+    font-size: 2rem;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+  }
+
+  li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid light-dark(#e5e7eb, #374151);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/intermediate/elements/ui-card/ui-card.js'
+  import '@cem-examples/intermediate/elements/ui-button/ui-button.js'
+</script>

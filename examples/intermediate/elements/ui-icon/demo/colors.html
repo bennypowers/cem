@@ -1,0 +1,55 @@
+<meta itemprop="demo-url" content="/elements/ui-icon/demo/colors">
+<meta itemprop="description"
+      content="Demonstrates ui-icon with different colors using inline styles.">
+
+<div class="icon-row">
+  <div class="icon-item">
+    <ui-icon name="check" label="Success" size="32" style="color: #22c55e"></ui-icon>
+    <span>Success</span>
+  </div>
+  <div class="icon-item">
+    <ui-icon name="x" label="Error" size="32" style="color: #ef4444"></ui-icon>
+    <span>Error</span>
+  </div>
+  <div class="icon-item">
+    <ui-icon name="star" label="Warning" size="32" style="color: #f59e0b"></ui-icon>
+    <span>Warning</span>
+  </div>
+  <div class="icon-item">
+    <ui-icon name="heart" label="Info" size="32" style="color: #3b82f6"></ui-icon>
+    <span>Info</span>
+  </div>
+  <div class="icon-item">
+    <ui-icon name="chevron-right" label="Neutral" size="32" style="color: #6b7280"></ui-icon>
+    <span>Neutral</span>
+  </div>
+</div>
+
+<style>
+  .icon-row {
+    font-family: system-ui, sans-serif;
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .icon-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+
+    & span {
+      font-size: 0.875rem;
+      color: light-dark(#666, #9ca3af);
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/intermediate/elements/ui-icon/ui-icon.js'
+</script>

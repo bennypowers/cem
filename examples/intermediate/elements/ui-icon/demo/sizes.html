@@ -1,0 +1,60 @@
+<meta itemprop="description"
+      content="Demonstrates different sizes for the ui-icon component, from small to extra large icons.">
+
+<div class="demo-section">
+  <h2>Icon Sizes</h2>
+  <div class="icon-row">
+    <div class="icon-item">
+      <ui-icon name="star" label="Small star" size="16"></ui-icon>
+      <span>16px</span>
+    </div>
+    <div class="icon-item">
+      <ui-icon name="star" label="Medium star" size="24"></ui-icon>
+      <span>24px</span>
+    </div>
+    <div class="icon-item">
+      <ui-icon name="star" label="Large star" size="32"></ui-icon>
+      <span>32px</span>
+    </div>
+    <div class="icon-item">
+      <ui-icon name="star" label="Extra large star" size="48"></ui-icon>
+      <span>48px</span>
+    </div>
+    <div class="icon-item">
+      <ui-icon name="star" label="Huge star" size="64"></ui-icon>
+      <span>64px</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .demo-section {
+    font-family: system-ui, sans-serif;
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+
+    & .icon-row {
+      display: flex;
+      gap: 2rem;
+      align-items: flex-end;
+      margin: 1rem 0;
+    }
+
+    & .icon-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+
+      & span {
+        font-size: 0.875rem;
+        color: #666;
+      }
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/intermediate/elements/ui-icon/ui-icon.js'
+</script>

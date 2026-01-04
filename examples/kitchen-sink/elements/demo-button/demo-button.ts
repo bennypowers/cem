@@ -4,7 +4,18 @@ import { classMap } from 'lit/directives/class-map.js';
 import styles from './demo-button.css' with { type: 'css' };
 import '../demo-spinner/demo-spinner.js';
 
-type ButtonType = 'button' | 'submit' | 'reset';
+export type ButtonType = 'button' | 'submit' | 'reset';
+
+export type ButtonAppearance = 'filled' | 'outlined' | 'plain';
+
+export type ButtonSize = 'small' | 'medium' | 'large';
+
+export type ButtonVariant =
+  | 'neutral'
+  | 'brand'
+  | 'success'
+  | 'warning'
+  | 'danger';
 
 /**
  * Comprehensive button component demonstrating all CEM features.
@@ -33,60 +44,63 @@ type ButtonType = 'button' | 'submit' | 'reset';
 export class DemoButton extends LitElement {
   static styles = [styles];
 
-  @query('#button') button!: HTMLButtonElement;
+  @query('#button')
+  accessor button!: HTMLButtonElement;
 
-  @state() private hasStartSlot = false;
-  @state() private hasEndSlot = false;
-  @state() private hasDefaultSlot = false;
+  @state() private accessor hasStartSlot = false;
+
+  @state() private accessor hasEndSlot = false;
+
+  @state() private accessor hasDefaultSlot = false;
 
   /**
    * The button's theme variant
    * @type {'neutral' | 'brand' | 'success' | 'warning' | 'danger'}
    */
-  @property({ reflect: true }) variant: 'neutral' | 'brand' | 'success' | 'warning' | 'danger' = 'brand';
+  @property({ reflect: true }) accessor variant: ButtonVariant = 'brand';
 
   /**
    * The button's visual appearance style
    * @type {'filled' | 'outlined' | 'plain'}
    */
-  @property({ reflect: true }) appearance: 'filled' | 'outlined' | 'plain' = 'filled';
+  @property({ reflect: true }) accessor appearance: ButtonAppearance = 'filled';
 
   /**
    * The button's size
    * @type {'small' | 'medium' | 'large'}
    */
-  @property({ reflect: true }) size: 'small' | 'medium' | 'large' = 'medium';
+  @property({ reflect: true }) accessor size: ButtonSize = 'medium';
 
   /**
    * Draws the button with a pill shape (fully rounded)
    */
-  @property({ type: Boolean, reflect: true }) pill = false;
+  @property({ type: Boolean, reflect: true }) accessor pill = false;
 
   /**
    * Disables the button
    */
-  @property({ type: Boolean, reflect: true }) disabled = false;
+  @property({ type: Boolean, reflect: true }) accessor disabled = false;
 
   /**
    * Shows a loading spinner and disables interaction
    */
-  @property({ type: Boolean, reflect: true }) loading = false;
+  @property({ type: Boolean, reflect: true }) accessor loading = false;
 
   /**
    * The button type for form submission
    * @type {'button' | 'submit' | 'reset'}
    */
-  @property() type: ButtonType = 'button';
+  @property() accessor type: ButtonType = 'button';
 
   /**
    * The button's name when used in forms
    */
-  @property() name = '';
+  @property() accessor name = '';
 
   /**
    * The button's value when used in forms
    */
-  @property() value = '';
+  @property() accessor value = '';
 
   private onSlotchange() {
     this.hasStartSlot = this.querySelector('[slot="start"]') !== null;
@@ -100,8 +114,7 @@ export class DemoButton extends LitElement {
           return !(node as Element).hasAttribute('slot');
         }
         return false;
-      }
-    );
+      });
   }
 
   /**

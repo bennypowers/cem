@@ -1,0 +1,36 @@
+<meta itemprop="description"
+      content="Using demo-card to display article content with metadata in the footer.">
+
+<demo-card>
+  <h2 slot="header">Understanding Web Components</h2>
+  <p>Web Components are a suite of different technologies allowing you to create reusable custom elements with their functionality encapsulated away from the rest of your code.</p>
+  <p>They're built on web standards and work across modern browsers without needing any libraries or frameworks.</p>
+  <span slot="footer">Published on January 4, 2026 · 5 min read</span>
+</demo-card>
+
+<style>
+  demo-card {
+    font-family: system-ui, sans-serif;
+    max-width: 700px;
+    margin: 2rem auto;
+
+    p {
+      line-height: 1.6;
+      margin: 0.5rem 0;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    span {
+      font-size: 0.875rem;
+      color: light-dark(#6b7280, #9ca3af);
+    }
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-card/demo-card.js';
+</script>

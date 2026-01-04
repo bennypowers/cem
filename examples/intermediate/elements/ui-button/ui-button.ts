@@ -2,7 +2,7 @@ import { LitElement, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 
-import './ui-spinner.js';
+import '../ui-spinner/ui-spinner.js';
 
 import styles from './ui-button.css' with { type: 'css' };
 
@@ -28,22 +28,26 @@ export class UiButton extends LitElement {
   /**
    * The button variant
    */
-  @property({ reflect: true }) variant: ButtonVariant = 'primary';
+  @property({ reflect: true })
+  accessor variant: ButtonVariant = 'primary';
 
   /**
    * The button size
    */
-  @property({ reflect: true }) size: ButtonSize = 'medium';
+  @property({ reflect: true })
+  accessor size: ButtonSize = 'medium';
 
   /**
    * Whether the button is disabled
    */
-  @property({ type: Boolean, reflect: true }) disabled = false;
+  @property({ type: Boolean, reflect: true })
+  accessor disabled = false;
 
   /**
    * Whether the button is in a loading state
    */
-  @property({ type: Boolean, reflect: true }) loading = false;
+  @property({ type: Boolean, reflect: true })
+  accessor loading = false;
 
   render() {
     const { disabled, loading, size, variant } = this;

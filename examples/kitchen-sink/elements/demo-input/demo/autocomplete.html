@@ -1,0 +1,44 @@
+<meta itemprop="description"
+      content="Demonstrates autocomplete attribute for browser autofill suggestions.">
+
+<form class="autocomplete-form">
+  <demo-input type="text"
+              label="Full Name"
+              name="name"
+              autocomplete="name"
+              helper-text="Browser may suggest your name"></demo-input>
+
+  <demo-input type="email"
+              label="Email"
+              name="email"
+              autocomplete="email"
+              helper-text="Browser may suggest your email"></demo-input>
+
+  <demo-input type="tel"
+              label="Phone"
+              name="phone"
+              autocomplete="tel"
+              helper-text="Browser may suggest your phone number"></demo-input>
+
+  <demo-input type="text"
+              label="Street Address"
+              name="street"
+              autocomplete="street-address"
+              helper-text="Browser may suggest your address"></demo-input>
+</form>
+
+<style>
+  .autocomplete-form {
+    font-family: system-ui, sans-serif;
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-input/demo-input.js';
+</script>
