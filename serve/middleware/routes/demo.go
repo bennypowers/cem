@@ -340,10 +340,12 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 		// Note: filePath is guaranteed to be relative after normalizeAndValidateDemoPath
 		relFilePath := filePath
 
-		// Check if filePath starts with a prefix that duplicates pkg.Path
-		// e.g., if pkg.Path ends with "examples/intermediate" and filePath starts with "examples/intermediate"
-		// This can happen if the manifest paths are relative to workspace root
-		// Normalize both to forward slashes for comparison
+		// Strip workspace-relative prefix from filePath if present
+		// Example: pkg.Path="/home/user/cem/examples/intermediate" (absolute)
+		//          filePath="examples/intermediate/elements/ui-button/demo/sizes.html" (relative)
+		//          We need to strip "examples/intermediate/" to get "elements/ui-button/demo/sizes.html"
+		// We can't compare pkg.Path directly with filePath since one is absolute and one is relative,
+		// so we try increasingly longer suffixes of pkg.Path to find the workspace-relative portion.
 		normalizedFilePath := filepath.ToSlash(filePath)
 		pathParts := strings.Split(filepath.ToSlash(pkg.Path), "/")
 		for i := len(pathParts) - 1; i >= 0; i-- {
