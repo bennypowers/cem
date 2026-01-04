@@ -275,7 +275,7 @@ func (s *Server) regenerateWorkspaceManifests() (int, error) {
 
 	workspaceRoutingTable, err := routes.BuildWorkspaceRoutingTable(pkgContexts)
 	if err != nil {
-		s.logger.Warning("Failed to build workspace routing table: %w", err)
+		s.logger.Warning("Failed to build workspace routing table: %v", err)
 		// Continue anyway - still update packages even if routing fails
 	}
 
