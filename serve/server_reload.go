@@ -373,16 +373,24 @@ func (s *Server) handleFileChanges() {
 		s.logger.Info("File changed: %s", displayPath)
 
 		// Collect affected files from transform cache and module graph
+		s.logger.Debug("About to collect affected files for %s", changedPath)
 		invalidatedFiles := s.collectAffectedFiles(changedPath)
+		s.logger.Debug("Collected %d invalidated files", len(invalidatedFiles))
 
 		// Regenerate manifest if TS/JS files changed
+		s.logger.Debug("About to regenerate manifest if needed (tsJsFiles=%d)", len(tsJsFiles))
 		s.regenerateManifestIfNeeded(tsJsFiles)
+		s.logger.Debug("Manifest regeneration check complete")
 
 		// Regenerate import map if package.json or file structure changed
+		s.logger.Debug("About to regenerate import map if needed")
 		s.regenerateImportMapIfNeeded(event)
+		s.logger.Debug("Import map regeneration check complete")
 
 		// Broadcast smart reload to affected pages
+		s.logger.Debug("Calling broadcastSmartReload for %s (changedPath=%s, invalidatedFiles=%d)", relPath, changedPath, len(invalidatedFiles))
 		s.broadcastSmartReload(changedPath, relPath, invalidatedFiles)
+		s.logger.Debug("broadcastSmartReload completed for %s", relPath)
 	}
 }
 
@@ -470,6 +478,7 @@ func (s *Server) buildAffectedFilesMap(changedPath string, invalidatedFiles []st
 // Returns true if the route's HTML file is affected or if it imports any affected files
 func (s *Server) isRouteAffectedByFile(routePath string, routeEntry *types.DemoRouteEntry, affectedFiles map[string]bool, watchDir string) bool {
 	// First, check if the changed file IS this demo HTML file
+	// In workspace mode, we need to check both the package-relative path and the full workspace-relative path
 	if affectedFiles[routeEntry.FilePath] ||
 		affectedFiles["/"+routeEntry.FilePath] ||
 		affectedFiles[strings.TrimPrefix(routeEntry.FilePath, "/")] {
@@ -477,7 +486,23 @@ func (s *Server) isRouteAffectedByFile(routePath string, routeEntry *types.DemoR
 		return true
 	}
 
-	htmlPath := filepath.Join(watchDir, routeEntry.FilePath)
+	// In workspace mode, use PackagePath; in single-package mode, use watchDir
+	baseDir := watchDir
+	if routeEntry.PackagePath != "" {
+		baseDir = routeEntry.PackagePath
+		// Also check the full workspace-relative path for workspace mode
+		// Construct full path relative to workspace root
+		relToWorkspace, err := filepath.Rel(watchDir, filepath.Join(baseDir, routeEntry.FilePath))
+		if err == nil {
+			if affectedFiles[relToWorkspace] ||
+				affectedFiles["/"+relToWorkspace] ||
+				affectedFiles[strings.TrimPrefix(relToWorkspace, "/")] {
+				s.logger.Debug("Page %s is the changed file itself (workspace-relative match)", routePath)
+				return true
+			}
+		}
+	}
+	htmlPath := filepath.Join(baseDir, routeEntry.FilePath)
 
 	// Extract imports from HTML
 	imports, err := s.extractModuleImports(htmlPath)
@@ -553,6 +578,8 @@ func (s *Server) getAffectedPageURLs(changedPath string, invalidatedFiles []stri
 
 	if len(affectedPages) == 0 {
 		s.logger.Debug("No pages import any of the affected files")
+	} else {
+		s.logger.Debug("Found %d affected pages: %v", len(affectedPages), affectedPages)
 	}
 
 	return affectedPages

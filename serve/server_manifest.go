@@ -196,10 +196,16 @@ func (s *Server) RegenerateManifest() (int, error) {
 	s.mu.RLock()
 	watchDir := s.watchDir
 	sourceControlURL := s.sourceControlRootURL
+	isWorkspace := s.isWorkspace
 	s.mu.RUnlock()
 
 	if watchDir == "" {
 		return 0, fmt.Errorf("no watch directory set")
+	}
+
+	// In workspace mode, regenerate all package manifests
+	if isWorkspace {
+		return s.regenerateWorkspaceManifests()
 	}
 
 	// Perform expensive operations without holding lock
@@ -279,6 +285,7 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, erro
 	watchDir := s.watchDir
 	session := s.generateSession
 	sourceControlURL := s.sourceControlRootURL
+	isWorkspace := s.isWorkspace
 	s.mu.RUnlock()
 
 	if watchDir == "" {
@@ -290,7 +297,13 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, erro
 		return s.RegenerateManifest()
 	}
 
-	// Use incremental processing with existing session (no locks held)
+	// In workspace mode, regenerate all package manifests to ensure consistency
+	// TODO: Optimize this to only regenerate affected packages
+	if isWorkspace {
+		return s.regenerateWorkspaceManifests()
+	}
+
+	// Single-package mode: use incremental processing with existing session (no locks held)
 	ctx := context.Background()
 	pkg, err := session.ProcessChangedFiles(ctx, changedFiles)
 	if err != nil {
@@ -314,7 +327,7 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, erro
 		return 0, fmt.Errorf("marshaling manifest: %w", err)
 	}
 
-	// Build routing table from manifest
+	// Build routing table from manifest (single-package mode)
 	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
