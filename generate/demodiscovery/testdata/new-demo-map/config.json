@@ -1,0 +1,6 @@
+{
+  "elementAliases": {
+    "rh-button": "button",
+    "rh-card": "card"
+  }
+}

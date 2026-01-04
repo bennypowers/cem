@@ -1,0 +1,6 @@
+{
+  "elementAliases": {
+    "rh-button": "button"
+  },
+  "demoPath": "/components/button/demo/primary.html"
+}
