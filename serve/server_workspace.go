@@ -155,6 +155,43 @@ func (s *Server) InitializeWorkspaceMode() error {
 	return nil
 }
 
+// generateManifestForPackage generates a manifest for a single workspace package
+// Returns nil and an error if generation fails at any step.
+func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo) (*middleware.WorkspacePackage, error) {
+	// Create workspace context for this package
+	workspace := W.NewFileSystemWorkspaceContext(pkgInfo.Path)
+	if err := workspace.Init(); err != nil {
+		return nil, fmt.Errorf("initializing workspace for %s: %w", pkgInfo.Name, err)
+	}
+
+	// Create generate session
+	session, err := G.NewGenerateSession(workspace)
+	if err != nil {
+		return nil, fmt.Errorf("creating session for %s: %w", pkgInfo.Name, err)
+	}
+	defer session.Close()
+
+	// Generate manifest with cancellable context (respects shutdown signal)
+	ctx, cancel := s.contextWithShutdown(30 * time.Second)
+	defer cancel()
+	pkg, err := session.GenerateFullManifest(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("generating manifest for %s: %w", pkgInfo.Name, err)
+	}
+
+	// Marshal to JSON
+	manifestBytes, err := json.MarshalIndent(pkg, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("marshaling manifest for %s: %w", pkgInfo.Name, err)
+	}
+
+	return &middleware.WorkspacePackage{
+		Name:     pkgInfo.Name,
+		Path:     pkgInfo.Path,
+		Manifest: manifestBytes,
+	}, nil
+}
+
 // generateInitialWorkspaceManifests generates fresh manifests for all workspace packages
 // Used during server initialization. Returns packages with freshly generated manifests.
 func (s *Server) generateInitialWorkspaceManifests(watchDir string) ([]middleware.WorkspacePackage, error) {
@@ -172,43 +209,12 @@ func (s *Server) generateInitialWorkspaceManifests(watchDir string) ([]middlewar
 	packages := make([]middleware.WorkspacePackage, 0, len(packageDirs))
 
 	for _, pkgInfo := range packageDirs {
-		// Create workspace context for this package
-		workspace := W.NewFileSystemWorkspaceContext(pkgInfo.Path)
-		if err := workspace.Init(); err != nil {
-			s.logger.Warning("Failed to initialize workspace for package %s: %v", pkgInfo.Name, err)
-			continue
-		}
-
-		// Create generate session
-		session, err := G.NewGenerateSession(workspace)
-		if err != nil {
-			s.logger.Warning("Failed to create session for package %s: %v", pkgInfo.Name, err)
-			continue
-		}
-
-		// Generate manifest with cancellable context (respects shutdown signal)
-		ctx, cancel := s.contextWithShutdown(30 * time.Second)
-		pkg, err := session.GenerateFullManifest(ctx)
-		cancel()
+		pkg, err := s.generateManifestForPackage(pkgInfo)
 		if err != nil {
 			s.logger.Warning("Failed to generate manifest for package %s: %v", pkgInfo.Name, err)
-			session.Close()
 			continue
 		}
-
-		// Marshal to JSON
-		manifestBytes, err := json.MarshalIndent(pkg, "", "  ")
-		session.Close()
-		if err != nil {
-			s.logger.Warning("Failed to marshal manifest for package %s: %v", pkgInfo.Name, err)
-			continue
-		}
-
-		packages = append(packages, middleware.WorkspacePackage{
-			Name:     pkgInfo.Name,
-			Path:     pkgInfo.Path,
-			Manifest: manifestBytes,
-		})
+		packages = append(packages, *pkg)
 	}
 
 	return packages, nil
@@ -241,45 +247,13 @@ func (s *Server) regenerateWorkspaceManifests() (int, error) {
 	totalSize := 0
 
 	for _, pkgInfo := range packageDirs {
-		// Create workspace context for this package
-		workspace := W.NewFileSystemWorkspaceContext(pkgInfo.Path)
-		if err := workspace.Init(); err != nil {
-			s.logger.Warning("Failed to initialize workspace for package %s: %v", pkgInfo.Name, err)
-			continue
-		}
-
-		// Create generate session
-		session, err := G.NewGenerateSession(workspace)
-		if err != nil {
-			s.logger.Warning("Failed to create session for package %s: %v", pkgInfo.Name, err)
-			continue
-		}
-
-		// Generate manifest with cancellable context (respects shutdown signal)
-		ctx, cancel := s.contextWithShutdown(30 * time.Second)
-		pkg, err := session.GenerateFullManifest(ctx)
-		cancel()
+		pkg, err := s.generateManifestForPackage(pkgInfo)
 		if err != nil {
 			s.logger.Warning("Failed to generate manifest for package %s: %v", pkgInfo.Name, err)
-			session.Close()
 			continue
 		}
-
-		// Marshal to JSON
-		manifestBytes, err := json.MarshalIndent(pkg, "", "  ")
-		session.Close()
-		if err != nil {
-			s.logger.Warning("Failed to marshal manifest for package %s: %v", pkgInfo.Name, err)
-			continue
-		}
-
-		packages = append(packages, middleware.WorkspacePackage{
-			Name:     pkgInfo.Name,
-			Path:     pkgInfo.Path,
-			Manifest: manifestBytes,
-		})
-
-		totalSize += len(manifestBytes)
+		packages = append(packages, *pkg)
+		totalSize += len(pkg.Manifest)
 	}
 
 	if len(packages) == 0 {
