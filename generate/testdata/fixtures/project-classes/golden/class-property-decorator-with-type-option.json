@@ -7,7 +7,7 @@
       "declarations": [
         {
           "name": "ClassPropertyDecoratorWithTypeOption",
-          "description": "Test class for properties with @property({ type: ... }) decorator options\nthat don't include attribute or reflect options.\n\nThis is a regression test for issue #191 where properties with\n`@property({ type: Number }) were not being detected.`",
+          "description": "Test class for properties with @property({ type: ... }) decorator options\nthat don't include attribute or reflect options.\n\nThis is a regression test for issue #191 where properties with\n`@property({ type: Number })` were not being detected.",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
