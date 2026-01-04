@@ -3,11 +3,17 @@
 
 <div class="icon-row">
   <div class="icon-item">
-    <ui-icon id="favorite" name="heart" label="Toggle favorite" size="48" style="cursor: pointer; color: #ccc"></ui-icon>
+    <ui-icon id="favorite"
+             name="heart"
+             label="Toggle favorite"
+             size="48"></ui-icon>
     <span id="favorite-status">Not favorited</span>
   </div>
   <div class="icon-item">
-    <ui-icon id="rating" name="star" label="Toggle rating" size="48" style="cursor: pointer; color: #ccc"></ui-icon>
+    <ui-icon id="rating"
+             name="star"
+             label="Toggle rating"
+             size="48"></ui-icon>
     <span id="rating-status">Not rated</span>
   </div>
 </div>
@@ -31,6 +37,8 @@
     gap: 0.75rem;
 
     & ui-icon {
+      cursor: pointer;
+      color: #ccc;
       transition: color 0.2s ease, transform 0.1s ease;
 
       &:hover {

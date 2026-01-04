@@ -25,6 +25,7 @@
   // Add click handlers
   document.querySelectorAll('ui-button').forEach(button => {
     button.addEventListener('click', () => {
+      if (button.hasAttribute('disabled') || button.hasAttribute('loading')) return;
       console.log('Button clicked:', button.textContent.trim());
     });
   });
