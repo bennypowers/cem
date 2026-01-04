@@ -36,7 +36,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false",
+              "default": false,
               "kind": "field",
               "attribute": "attr-reflect-bool",
               "reflects": true
@@ -46,7 +46,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "0",
+              "default": 0,
               "kind": "field"
             },
             {

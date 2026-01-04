@@ -54,6 +54,25 @@ var (
 	stringLiteralRe = regexp.MustCompile(`'([^']+)'`)
 )
 
+// defaultToString converts a default value (which may be any type) to a string.
+func defaultToString(defaultVal any) string {
+	if defaultVal == nil {
+		return ""
+	}
+	switch v := defaultVal.(type) {
+	case string:
+		return v
+	case bool:
+		return fmt.Sprintf("%t", v)
+	case int:
+		return fmt.Sprintf("%d", v)
+	case float64:
+		return fmt.Sprintf("%g", v)
+	default:
+		return fmt.Sprint(v)
+	}
+}
+
 // KnobsData represents all knobs for an element
 type KnobsData struct {
 	TagName          string
@@ -182,7 +201,7 @@ func propertyToKnob(field *M.ClassField, currentValues map[string]string) KnobDa
 		Category:     KnobCategoryProperty,
 		Summary:      template.HTML(field.Summary),
 		Description:  template.HTML(field.Description),
-		Default:      field.Default,
+		Default:      defaultToString(field.Default),
 		CurrentValue: currentValues["prop:"+field.Name],
 	}
 
