@@ -494,10 +494,19 @@
               "default": "'Loading'",
               "kind": "field",
               "attribute": "label"
+            },
+            {
+              "name": "size",
+              "description": "The size of the spinner in pixels",
+              "type": {
+                "text": "number"
+              },
+              "kind": "field",
+              "attribute": "size"
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-spinner/ui-spinner.ts#L14"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-spinner/ui-spinner.ts#L13"
           },
           "kind": "class",
           "tagName": "ui-spinner",
@@ -510,6 +519,14 @@
               },
               "default": "'Loading'",
               "fieldName": "label"
+            },
+            {
+              "name": "size",
+              "description": "The size of the spinner in pixels",
+              "type": {
+                "text": "number"
+              },
+              "fieldName": "size"
             }
           ],
           "cssParts": [

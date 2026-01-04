@@ -1,6 +1,6 @@
 import { LitElement, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { styleMap } from 'directives/style-map.js';
+import { styleMap } from 'lit/directives/style-map.js';
 
 import styles from './ui-spinner.css' with { type: 'css' };
 
@@ -8,7 +8,6 @@ import styles from './ui-spinner.css' with { type: 'css' };
  * A loading spinner component for indicating progress.
  *
  * @summary Spinners provide visual feedback that an action is processing
- * @status stable
  */
 @customElement('ui-spinner')
 export class UiSpinner extends LitElement {
@@ -26,6 +25,7 @@ export class UiSpinner extends LitElement {
 
   render() {
     const { size, label } = this;
+    const spinnerSize = size != null ? `${size}px` : undefined;
 
     return html`
       <!-- The spinner's base element -->
@@ -33,7 +33,7 @@ export class UiSpinner extends LitElement {
            part="base"
            role="status"
            aria-label="${label}"
-           style="${styleMap({ '--spinner-size': size })}"></div>
+           style="${styleMap({ '--spinner-size': spinnerSize })}"></div>
     `;
   }
 }

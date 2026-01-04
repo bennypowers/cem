@@ -60,6 +60,12 @@ export class VanillaElement extends HTMLElement {
 
   #message = '';
 
+  #setMessage(value = this.message) {
+    this.#message = this.reversed
+      ? value.split('').reverse().join('')
+      : value;
+  }
+
   /**
    * Gets the message to display
    */
@@ -72,9 +78,7 @@ export class VanillaElement extends HTMLElement {
    */
   set message(value: string) {
     this.setAttribute('message', value);
-    this.#message = this.reversed
-      ? value.split('').reverse().join('')
-      : value;
+    this.#setMessage(value)
     this.connectedCallback();
   }
 
@@ -90,6 +94,7 @@ export class VanillaElement extends HTMLElement {
    */
   set reversed(value: boolean) {
     this.toggleAttribute('reversed', !!value);
+    this.#setMessage();
     this.connectedCallback();
   }
 

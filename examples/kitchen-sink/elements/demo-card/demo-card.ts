@@ -8,6 +8,7 @@ export class DemoCard extends LitElement {
 
   render() {
     return html`
+      <!-- Header slot container -->
       <div id="header" part="header">
         <!--
           summary: Header slot
@@ -17,10 +18,12 @@ export class DemoCard extends LitElement {
         -->
         <slot name="header"></slot>
       </div>
+      <!-- Body slot container -->
       <div id="body" part="body">
         <!-- The main content area of the card -->
         <slot></slot>
       </div>
+      <!-- Footer slot container -->
       <div id="footer" part="footer">
         <!--
           summary: Footer slot
