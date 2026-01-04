@@ -1,0 +1,9 @@
+sourceControlRootUrl: https://github.com/bennypowers/cem/tree/main/examples/intermediate/
+generate:
+  files:
+    - elements/**/*.ts
+  output: custom-elements.json
+  demoDiscovery:
+    fileGlob: elements/**/demo/*.html
+    urlPattern: elements/:tag/demo/:demo.html
+    urlTemplate: https://bennypowers.dev/cem/examples/intermediate/{{.tag}}/{{.demo}}/

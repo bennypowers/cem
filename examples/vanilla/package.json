@@ -1,0 +1,20 @@
+{
+  "name": "@cem-examples/vanilla",
+  "version": "1.0.0",
+  "description": "Vanilla Web Components example (no framework) for CEM",
+  "type": "module",
+  "customElements": "custom-elements.json",
+  "exports": {
+    "./*": "./*"
+  },
+  "scripts": {
+    "analyze": "cem generate",
+    "serve": "cem serve"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.0"
+  },
+  "keywords": ["custom-elements", "web-components", "example", "vanilla"],
+  "author": "Benny Powers",
+  "license": "GPL-3.0-or-later"
+}

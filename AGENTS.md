@@ -47,17 +47,11 @@ Practice TDD. When writing tests, always use the fixture/golden patterns we've e
 
 - **Regression Test Isolation**: Keep regression test fixtures in separate directories (e.g., `testdata-regression/`) to avoid interference with standard test discovery
 
-## LSP
+## Per-package guidelines
 
-When working on LSP features, refer to `lsp/CLAUDE.md` for LSP-specific guidelines.
-
-## MCP
-
-When working on MCP features, refer to `mcp/CLAUDE.md` for MCP-specific guidelines.
-
-## Docs
-
-When working on the docs site, refer to `docs/CLAUDE.md` for docs-specific guidelines.
+- LSP: When working on LSP features, refer to `lsp/CLAUDE.md` for LSP-specific guidelines.
+- MCP: When working on MCP features, refer to `mcp/CLAUDE.md` for MCP-specific guidelines.
+- Docs: When working on the docs site, refer to `docs/CLAUDE.md` for docs-specific guidelines.
 
 ## Git
 
@@ -72,3 +66,23 @@ When writing web components (e.g. for the dev server)
 - don't use `class` on the host as a public api, use attributes instead
 - don't dispatch new CustomEvent with details, instead create custom classes which extend Event, and have class fields for attached state.
 
+## HTML
+
+Format attributes vertically aligned and sort by importance, e.g.:
+
+```html
+<button id="button"
+        part="button"
+        class="${classMap({ loading })}"
+        aria-disabled="${String(disabled)}"
+        @click="${this.#onClick}">
+```
+
+When manipulating HTML via JavaScript, prefer template cloning and the DOM API
+to the innerHTML setter.
+
+## CSS
+- Use native CSS nesting syntax.
+- but don't nest under :host except when using host attrs like `:host([disabled]) { button { ... } }`
+- Prefer `light-dark()` to `prefers-color-scheme`
+- When writing stylesheets for shadow roots, prefer ID selectors to classes

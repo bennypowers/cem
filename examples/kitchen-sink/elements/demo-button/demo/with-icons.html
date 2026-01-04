@@ -1,0 +1,80 @@
+<meta itemprop="demo-for" content="demo-button">
+<meta itemprop="demo-url" content="/elements/demo-button/demo/with-icons/">
+
+<script type="text/markdown" itemprop="description">
+# Buttons with Icons
+
+Cross-component demo showing demo-button with demo-icon integration:
+- Icons before label (start slot)
+- Icons after label (end slot)
+- Icon-only buttons with aria-label
+</script>
+
+<h1>Buttons with Icons</h1>
+
+<section>
+  <h2>Icon Before</h2>
+  <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+    <demo-button>
+      <demo-icon slot="start" name="check"></demo-icon>
+      Confirm
+    </demo-button>
+    <demo-button variant="success">
+      <demo-icon slot="start" name="plus"></demo-icon>
+      Add Item
+    </demo-button>
+    <demo-button variant="danger">
+      <demo-icon slot="start" name="x"></demo-icon>
+      Delete
+    </demo-button>
+  </div>
+</section>
+
+<section>
+  <h2>Icon After</h2>
+  <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+    <demo-button>
+      Next
+      <demo-icon slot="end" name="chevron"></demo-icon>
+    </demo-button>
+    <demo-button variant="brand">
+      Search
+      <demo-icon slot="end" name="search"></demo-icon>
+    </demo-button>
+  </div>
+</section>
+
+<section>
+  <h2>Icon Only</h2>
+  <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+    <demo-button aria-label="Like">
+      <demo-icon name="heart"></demo-icon>
+    </demo-button>
+    <demo-button variant="warning" aria-label="Add to favorites">
+      <demo-icon name="star"></demo-icon>
+    </demo-button>
+    <demo-button variant="success" pill aria-label="Add">
+      <demo-icon name="plus"></demo-icon>
+    </demo-button>
+  </div>
+</section>
+
+<style>
+  section {
+    margin: 2rem 0;
+
+    & h2 {
+      margin: 0 0 1rem;
+      font-size: 1.25rem;
+    }
+  }
+
+  h1 {
+    margin: 0 0 2rem;
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-button/demo-button.js';
+  import '@cem-examples/kitchen-sink/elements/demo-icon/demo-icon.js';
+</script>

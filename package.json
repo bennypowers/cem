@@ -5,7 +5,8 @@
   "description": "Custom Elements Manifest tools and extensions",
   "workspaces": [
     "extensions/vscode",
-    "extensions/vscode/client"
+    "extensions/vscode/client",
+    "examples/*"
   ],
   "scripts": {
     "build": "npm run build --workspaces",
@@ -20,7 +21,7 @@
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
     "eslint": "^8.28.0",
-    "typescript": "^4.9.4"
+    "typescript": "^5.2.0"
   },
   "repository": {
     "type": "git",

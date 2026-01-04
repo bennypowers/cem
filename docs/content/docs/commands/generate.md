@@ -14,7 +14,7 @@ layout: page
 `cem generate` best supports LitElements written in idiomatic style with
 TypeScript decorators. There is rudimentary support for `extends HTMLElement`,
 but it is not a high priority for development. If you need something more
-specific [open an issue](https://github.com/bennypowers/cem/issues/new).
+specific [open an issue][issuenew].
 
 {{</tip>}}
 
@@ -23,17 +23,17 @@ Use JSDoc comments to add metadata to your element classes, similar to other
 tools. Add a description by separating the name of the item with ` - `
 
 - `@attr` / `@attribute` — Custom element attributes
-- `@csspart` — CSS shadow parts. See [Slots and Parts](#slots-and-parts)
+- `@csspart` — CSS shadow parts. See [Slots and Parts][slotsandparts]
 - `@cssprop` / `@cssproperty` — Custom CSS properties
 - `@cssstate` — Custom CSS states
 - `@demo` — Demo URL
 - `@deprecated` — Marks a feature or member as deprecated
 - `@event` — Custom events dispatched by the element
 - `@example` — Code examples with optional captions
-- `@slot` — Named or default slots. See [Slots and Parts](#slots-and-parts)
+- `@slot` — Named or default slots. See [Slots and Parts][slotsandparts]
 - `@summary` — Short summary for documentation
 
-See the [generate test fixtures](https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/) directory for examples
+See the [generate test fixtures][generatetestfixtures] directory for examples
 
 <a id="html-template-analysis-for-slots-and-parts"></a>
 ## Slots and Parts
@@ -417,3 +417,5 @@ Use `--no-default-excludes` if you want to include all matching files and manage
 [issuenew]: https://github.com/bennypowers/cem/issues/new
 [installationdocs]: https://bennypowers.github.io/cem/installation/
 [generatedocs]: https://bennypowers.github.io/cem/commands/generate/
+[generatetestfixtures]: https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/
+[slotsandparts]: #slots-and-parts

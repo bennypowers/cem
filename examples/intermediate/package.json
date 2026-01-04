@@ -1,0 +1,23 @@
+{
+  "name": "@cem-examples/intermediate",
+  "version": "1.0.0",
+  "description": "Intermediate custom elements example with multiple practical components",
+  "type": "module",
+  "customElements": "custom-elements.json",
+  "exports": {
+    "./*": "./*"
+  },
+  "scripts": {
+    "analyze": "cem generate",
+    "serve": "cem serve"
+  },
+  "dependencies": {
+    "lit": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.0"
+  },
+  "keywords": ["custom-elements", "web-components", "example", "intermediate"],
+  "author": "Benny Powers",
+  "license": "GPL-3.0-or-later"
+}

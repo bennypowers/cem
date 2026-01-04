@@ -1,0 +1,13 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+svg {
+  /** Size of the icon (width and height) */
+  width: var(--icon-size, 1em);
+  height: var(--icon-size, 1em);
+  /** Color of the icon */
+  fill: var(--icon-color, currentColor);
+}

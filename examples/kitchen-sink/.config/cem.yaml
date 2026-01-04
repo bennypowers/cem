@@ -1,0 +1,15 @@
+sourceControlRootUrl: https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/
+generate:
+  files:
+    - elements/**/*.ts
+  output: custom-elements.json
+  demoDiscovery:
+    fileGlob: elements/**/demo/*.html
+    urlPattern: elements/:tag/demo/:demo.html
+    urlTemplate: https://bennypowers.dev/cem/examples/kitchen-sink/{{.tag}}/{{.demo}}/
+  designTokens:
+    spec: design-tokens.json
+    prefix: --demo
+serve:
+  importMap:
+    generate: true

@@ -19,7 +19,7 @@ else
     RACE_LDFLAGS :=
 endif
 
-.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-generate bench-lookup bench-lsp bench-lsp-cem bench-lsp-wc setup-wc-toolkit profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major
+.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-generate bench-lookup bench-lsp bench-lsp-cem bench-lsp-wc setup-wc-toolkit profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major examples-analyze examples-verify examples-clean
 
 build: generate
 	@mkdir -p dist
@@ -335,3 +335,29 @@ release:
 		exit 1; \
 	fi
 	@./scripts/release.sh $(VERSION)
+
+## Examples
+# Generate manifests for all examples
+examples-analyze: build
+	@echo "Generating manifests for all examples..."
+	@for dir in examples/*/; do \
+		echo "  Generating $$dir"; \
+		(cd "$$dir" && ../../dist/cem generate) || exit 1; \
+	done
+	@echo "✓ All example manifests generated"
+
+# Verify examples manifests are up-to-date (for CI)
+examples-verify: examples-analyze
+	@echo "Verifying example manifests are up-to-date..."
+	@if git diff --exit-code examples/*/custom-elements.json; then \
+		echo "✓ All example manifests are up-to-date"; \
+	else \
+		echo "✗ Example manifests are out of date. Run 'make examples-analyze' and commit the changes."; \
+		exit 1; \
+	fi
+
+# Clean generated example files
+examples-clean:
+	@echo "Cleaning example outputs..."
+	@rm -f examples/*/custom-elements.json
+	@echo "✓ Example outputs cleaned"

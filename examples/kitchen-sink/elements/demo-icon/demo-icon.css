@@ -1,0 +1,19 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width:
+    /** Width and height of the icon */
+    var(--demo-icon-size, 1em);
+  height:
+    var(--demo-icon-size, 1em);
+  color:
+    /** Color of the icon */
+    var(--demo-icon-color, currentColor);
+}
+
+svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}

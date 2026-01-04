@@ -1,0 +1,121 @@
+<meta itemprop="demo-for" content="demo-button">
+<meta itemprop="demo-url" content="/elements/demo-button/demo/forms/">
+
+<script type="text/markdown" itemprop="description">
+# Form Integration
+
+Full cross-component example demonstrating:
+- Form submission with demo-button (submit/reset types)
+- Input validation with demo-input
+- Layout structure with demo-card (header/footer slots)
+- Loading state during async operations
+</script>
+
+<h1>Form Integration</h1>
+
+<demo-card>
+  <h2 slot="header">Contact Form</h2>
+
+  <form id="contactForm">
+    <demo-input label="Name"
+                name="name"
+                required
+                helper-text="Enter your full name"></demo-input>
+
+    <demo-input label="Email"
+                name="email"
+                type="email"
+                required
+                helper-text="We'll never share your email"></demo-input>
+
+    <demo-input label="Message"
+                name="message"
+                required></demo-input>
+
+    <div class="button-group" slot="footer">
+      <demo-button type="reset" variant="neutral" appearance="outlined">
+        Reset
+      </demo-button>
+      <demo-button type="submit" variant="brand">
+        Submit
+      </demo-button>
+    </div>
+  </form>
+
+  <div id="result"></div>
+</demo-card>
+
+<style>
+  demo-card {
+    max-width: 600px;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    & .button-group {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+  }
+
+  #result {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f3f4f6;
+    border-radius: 4px;
+    display: none;
+    &.show {
+      display: block;
+    }
+  }
+</style>
+
+<template id="result-template">
+  <strong>Form Submitted!</strong><br>
+  Name: <span class="name-value"></span><br>
+  Email: <span class="email-value"></span><br>
+  Message: <span class="message-value"></span>
+</template>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-button/demo-button.js';
+  import '@cem-examples/kitchen-sink/elements/demo-input/demo-input.js';
+  import '@cem-examples/kitchen-sink/elements/demo-card/demo-card.js';
+
+  const form = document.getElementById('contactForm');
+  const result = document.getElementById('result');
+  const submitButton = form.querySelector('[type="submit"]');
+
+  const resultTemplate = document.getElementById('result-template');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    submitButton.loading = true;
+
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    submitButton.loading = false;
+
+    const formData = new FormData(form);
+
+    // Clone template and safely populate with user data
+    const content = resultTemplate.content.cloneNode(true);
+    content.querySelector('.name-value').textContent = formData.get('name');
+    content.querySelector('.email-value').textContent = formData.get('email');
+    content.querySelector('.message-value').textContent = formData.get('message');
+
+    result.innerHTML = '';
+    result.appendChild(content);
+    result.classList.add('show');
+  });
+
+  form.addEventListener('reset', () => {
+    result.classList.remove('show');
+  });
+</script>

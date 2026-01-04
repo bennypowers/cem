@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UI Button Sizes Demo</title>
+
+  <!-- Demo Discovery Metadata -->
+  <meta itemprop="demo-for" content="ui-button">
+  <meta itemprop="demo-url" content="/elements/ui-button/demo/sizes">
+
+  <script type="text/markdown" itemprop="description">
+  # Button Sizes
+
+  Demonstrates the three available sizes for the ui-button component: small, medium, and large.
+  </script>
+
+  <script type="module" src="../ui-button.js"></script>
+
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>UI Button Sizes</h1>
+
+  <div class="button-group">
+    <ui-button size="small">Small Button</ui-button>
+    <ui-button size="medium">Medium Button</ui-button>
+    <ui-button size="large">Large Button</ui-button>
+  </div>
+</body>
+</html>

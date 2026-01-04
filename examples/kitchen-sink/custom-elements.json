@@ -1,0 +1,1101 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "elements/demo-button/demo-button.js",
+      "declarations": [
+        {
+          "name": "DemoButton",
+          "summary": "Buttons represent actions that are available to the user",
+          "description": "Comprehensive button component demonstrating all CEM features.",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "variant",
+              "description": "The button's theme variant",
+              "type": {
+                "text": "'neutral' | 'brand' | 'success' | 'warning' | 'danger'"
+              },
+              "default": "'brand'",
+              "kind": "field",
+              "attribute": "variant",
+              "reflects": true
+            },
+            {
+              "name": "appearance",
+              "description": "The button's visual appearance style",
+              "type": {
+                "text": "'filled' | 'outlined' | 'plain'"
+              },
+              "default": "'filled'",
+              "kind": "field",
+              "attribute": "appearance",
+              "reflects": true
+            },
+            {
+              "name": "size",
+              "description": "The button's size",
+              "type": {
+                "text": "'small' | 'medium' | 'large'"
+              },
+              "default": "'medium'",
+              "kind": "field",
+              "attribute": "size",
+              "reflects": true
+            },
+            {
+              "name": "pill",
+              "description": "Draws the button with a pill shape (fully rounded)",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "pill",
+              "reflects": true
+            },
+            {
+              "name": "disabled",
+              "description": "Disables the button",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "disabled",
+              "reflects": true
+            },
+            {
+              "name": "loading",
+              "description": "Shows a loading spinner and disables interaction",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "loading",
+              "reflects": true
+            },
+            {
+              "name": "type",
+              "description": "The button type for form submission",
+              "type": {
+                "text": "'button' | 'submit' | 'reset'"
+              },
+              "default": "'button'",
+              "kind": "field",
+              "attribute": "type"
+            },
+            {
+              "name": "name",
+              "description": "The button's name when used in forms",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "name"
+            },
+            {
+              "name": "value",
+              "description": "The button's value when used in forms",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "value"
+            },
+            {
+              "name": "onSlotchange",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "name": "click",
+              "description": "Simulates a click on the button",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "options",
+                  "type": {
+                    "text": "FocusOptions"
+                  }
+                }
+              ],
+              "name": "focus",
+              "description": "Sets focus on the button",
+              "kind": "method"
+            },
+            {
+              "name": "blur",
+              "description": "Removes focus from the button",
+              "kind": "method"
+            },
+            {
+              "return": {
+                "type": {
+                  "text": "boolean"
+                }
+              },
+              "name": "checkValidity",
+              "description": "Checks form validity and reports any validation errors",
+              "kind": "method"
+            },
+            {
+              "return": {
+                "type": {
+                  "text": "boolean"
+                }
+              },
+              "name": "reportValidity",
+              "description": "Reports form validity to the user",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo-button.ts#L33"
+          },
+          "kind": "class",
+          "tagName": "demo-button",
+          "attributes": [
+            {
+              "name": "variant",
+              "description": "The button's theme variant",
+              "type": {
+                "text": "'neutral' | 'brand' | 'success' | 'warning' | 'danger'"
+              },
+              "default": "'brand'",
+              "fieldName": "variant"
+            },
+            {
+              "name": "appearance",
+              "description": "The button's visual appearance style",
+              "type": {
+                "text": "'filled' | 'outlined' | 'plain'"
+              },
+              "default": "'filled'",
+              "fieldName": "appearance"
+            },
+            {
+              "name": "size",
+              "description": "The button's size",
+              "type": {
+                "text": "'small' | 'medium' | 'large'"
+              },
+              "default": "'medium'",
+              "fieldName": "size"
+            },
+            {
+              "name": "pill",
+              "description": "Draws the button with a pill shape (fully rounded)",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "pill"
+            },
+            {
+              "name": "disabled",
+              "description": "Disables the button",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "disabled"
+            },
+            {
+              "name": "loading",
+              "description": "Shows a loading spinner and disables interaction",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "loading"
+            },
+            {
+              "name": "type",
+              "description": "The button type for form submission",
+              "type": {
+                "text": "'button' | 'submit' | 'reset'"
+              },
+              "default": "'button'",
+              "fieldName": "type"
+            },
+            {
+              "name": "name",
+              "description": "The button's name when used in forms",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "name"
+            },
+            {
+              "name": "value",
+              "description": "The button's value when used in forms",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "value"
+            }
+          ],
+          "events": [
+            {
+              "name": "click",
+              "description": "Emitted when the button is clicked"
+            },
+            {
+              "name": "focus",
+              "description": "Emitted when the button gains focus"
+            },
+            {
+              "name": "blur",
+              "description": "Emitted when the button loses focus"
+            },
+            {
+              "name": "invalid",
+              "description": "Emitted when form validation fails"
+            }
+          ],
+          "slots": [
+            {
+              "name": "start",
+              "description": "Content placed before the label (e.g., an icon)"
+            },
+            {
+              "name": "",
+              "description": "The button's label"
+            },
+            {
+              "name": "end",
+              "description": "Content placed after the label (e.g., an icon)"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "base",
+              "description": "The component's base wrapper"
+            },
+            {
+              "name": "start",
+              "description": "The container that wraps the start slot"
+            },
+            {
+              "name": "label",
+              "description": "The button's label container"
+            },
+            {
+              "name": "end",
+              "description": "The container that wraps the end slot"
+            },
+            {
+              "name": "spinner",
+              "description": "The loading spinner element"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--demo-button-padding",
+              "summary": "Button padding",
+              "description": "Internal padding of the button",
+              "default": "0.5rem 1rem"
+            },
+            {
+              "name": "--demo-button-border",
+              "summary": "Button border",
+              "description": "Border style of the button",
+              "default": "none"
+            },
+            {
+              "name": "--demo-button-radius",
+              "summary": "Button border radius",
+              "description": "Border radius for rounded corners",
+              "default": "4px"
+            },
+            {
+              "name": "--demo-button-font-size",
+              "summary": "Button font size",
+              "description": "Font size of button text",
+              "default": "1rem"
+            },
+            {
+              "name": "--demo-button-font-weight",
+              "summary": "Button font weight",
+              "description": "Font weight of button text",
+              "default": "500"
+            },
+            {
+              "name": "--demo-button-transition",
+              "summary": "Button transition duration",
+              "description": "Transition duration for animations",
+              "default": "0.2s"
+            },
+            {
+              "name": "--demo-button-color",
+              "summary": "Button text color",
+              "description": "Text color of the button",
+              "default": "white"
+            },
+            {
+              "name": "--demo-button-bg",
+              "summary": "Button background color",
+              "description": "Background color of the button",
+              "default": "#0070f3"
+            }
+          ],
+          "demos": [
+            {
+              "description": "# Form Integration\n\nFull cross-component example demonstrating:\n- Form submission with demo-button (submit/reset types)\n- Input validation with demo-input\n- Layout structure with demo-card (header/footer slots)\n- Loading state during async operations",
+              "url": "/elements/demo-button/demo/forms/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/forms.html"
+              }
+            },
+            {
+              "description": "Loading spinner states across all variants, sizes, and appearances",
+              "url": "/elements/demo-button/demo/loading/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/loading.html"
+              }
+            },
+            {
+              "description": "# Button States\n\nDemonstrates the different interactive states and sizes:\n- **Sizes**: Small, medium, and large variants\n- **Disabled**: Cannot be interacted with\n- **Pill**: Fully rounded corners for alternate styling",
+              "url": "/elements/demo-button/demo/states/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/states.html"
+              }
+            },
+            {
+              "description": "# Button Variants\n\nComprehensive demonstration of all color variants for the demo-button component:\n- **Neutral**: Default gray variant\n- **Brand**: Primary brand color\n- **Success**: Positive actions\n- **Warning**: Caution actions\n- **Danger**: Destructive actions",
+              "url": "/elements/demo-button/demo/variants/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/variants.html"
+              }
+            },
+            {
+              "description": "# Buttons with Icons\n\nCross-component demo showing demo-button with demo-icon integration:\n- Icons before label (start slot)\n- Icons after label (end slot)\n- Icon-only buttons with aria-label",
+              "url": "/elements/demo-button/demo/with-icons/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/with-icons.html"
+              }
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-button",
+          "declaration": {
+            "name": "DemoButton",
+            "module": "elements/demo-button/demo-button.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DemoButton",
+          "declaration": {
+            "name": "DemoButton",
+            "module": "elements/demo-button/demo-button.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "elements/demo-card/demo-card.js",
+      "declarations": [
+        {
+          "name": "DemoCard",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-card/demo-card.ts#L6"
+          },
+          "kind": "class",
+          "tagName": "demo-card",
+          "slots": [
+            {
+              "name": "header",
+              "summary": "Header slot",
+              "description": "Place header content here, such as a title or actions.\nThis section is visually separated from the body."
+            },
+            {
+              "name": "",
+              "description": "The main content area of the card"
+            },
+            {
+              "name": "footer",
+              "summary": "Footer slot",
+              "description": "Place footer content like actions or metadata here"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "header"
+            },
+            {
+              "name": "body"
+            },
+            {
+              "name": "footer"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--demo-card-border-color",
+              "description": "Border color of the card",
+              "default": "#e5e7eb"
+            },
+            {
+              "name": "--demo-card-radius",
+              "description": "Border radius of the card",
+              "default": "8px"
+            },
+            {
+              "name": "--demo-card-bg",
+              "description": "Background color of the card",
+              "default": "white"
+            },
+            {
+              "name": "--demo-card-header-padding",
+              "description": "Padding for the header section",
+              "default": "1rem"
+            },
+            {
+              "name": "--demo-card-body-padding",
+              "description": "Padding for the body section",
+              "default": "1rem"
+            },
+            {
+              "name": "--demo-card-footer-padding",
+              "description": "Padding for the footer section",
+              "default": "1rem"
+            },
+            {
+              "name": "--demo-card-divider-color",
+              "description": "Border color between sections",
+              "default": "#e5e7eb"
+            },
+            {
+              "name": "--demo-card-footer-bg",
+              "description": "Background color of the footer",
+              "default": "#f9fafb"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-card",
+          "declaration": {
+            "name": "DemoCard",
+            "module": "elements/demo-card/demo-card.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DemoCard",
+          "declaration": {
+            "name": "DemoCard",
+            "module": "elements/demo-card/demo-card.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "elements/demo-icon/demo-icon.js",
+      "declarations": [
+        {
+          "name": "DemoIcon",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "name",
+              "type": {
+                "text": "keyof typeof ICONS"
+              },
+              "default": "'check'",
+              "kind": "field",
+              "attribute": "name"
+            },
+            {
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "label"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-icon/demo-icon.ts#L19"
+          },
+          "kind": "class",
+          "tagName": "demo-icon",
+          "attributes": [
+            {
+              "name": "name",
+              "type": {
+                "text": "keyof typeof ICONS"
+              },
+              "default": "'check'",
+              "fieldName": "name"
+            },
+            {
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "label"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "svg"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--demo-icon-size",
+              "description": "Width and height of the icon",
+              "default": "1em"
+            },
+            {
+              "name": "--demo-icon-color",
+              "description": "Color of the icon",
+              "default": "currentColor"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-icon",
+          "declaration": {
+            "name": "DemoIcon",
+            "module": "elements/demo-icon/demo-icon.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DemoIcon",
+          "declaration": {
+            "name": "DemoIcon",
+            "module": "elements/demo-icon/demo-icon.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "elements/demo-input/demo-input.js",
+      "declarations": [
+        {
+          "name": "DemoInputEvent",
+          "superclass": {
+            "name": "Event",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo-input.ts#L7"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "DemoInput",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "label"
+            },
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "value"
+            },
+            {
+              "name": "placeholder",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "placeholder"
+            },
+            {
+              "name": "type",
+              "type": {
+                "text": "'text' | 'email' | 'password' | 'number' | 'tel' | 'url'"
+              },
+              "default": "'text'",
+              "kind": "field",
+              "attribute": "type"
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "disabled",
+              "reflects": true
+            },
+            {
+              "name": "required",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "required",
+              "reflects": true
+            },
+            {
+              "name": "readonly",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "readonly",
+              "reflects": true
+            },
+            {
+              "name": "name",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "name"
+            },
+            {
+              "name": "autocomplete",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "autocomplete"
+            },
+            {
+              "name": "helperText",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "helper-text"
+            },
+            {
+              "name": "errorText",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "error-text"
+            },
+            {
+              "name": "error",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "error",
+              "reflects": true
+            },
+            {
+              "parameters": [
+                {
+                  "name": "e",
+                  "type": {
+                    "text": "Event"
+                  }
+                }
+              ],
+              "name": "handleInput",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "e",
+                  "type": {
+                    "text": "Event"
+                  }
+                }
+              ],
+              "name": "handleChange",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "options",
+                  "type": {
+                    "text": "FocusOptions"
+                  }
+                }
+              ],
+              "name": "focus",
+              "kind": "method"
+            },
+            {
+              "name": "blur",
+              "kind": "method"
+            },
+            {
+              "name": "select",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo-input.ts#L16"
+          },
+          "kind": "class",
+          "tagName": "demo-input",
+          "attributes": [
+            {
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "label"
+            },
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "value"
+            },
+            {
+              "name": "placeholder",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "placeholder"
+            },
+            {
+              "name": "type",
+              "type": {
+                "text": "'text' | 'email' | 'password' | 'number' | 'tel' | 'url'"
+              },
+              "default": "'text'",
+              "fieldName": "type"
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "disabled"
+            },
+            {
+              "name": "required",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "required"
+            },
+            {
+              "name": "readonly",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "readonly"
+            },
+            {
+              "name": "name",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "name"
+            },
+            {
+              "name": "autocomplete",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "autocomplete"
+            },
+            {
+              "name": "helper-text",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "helperText"
+            },
+            {
+              "name": "error-text",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "errorText"
+            },
+            {
+              "name": "error",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "error"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "label"
+            },
+            {
+              "name": "helper-text"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--demo-input-width",
+              "description": "Width of the input field",
+              "default": "200px"
+            },
+            {
+              "name": "--demo-input-label-size",
+              "description": "Font size of the label",
+              "default": "0.875rem"
+            },
+            {
+              "name": "--demo-input-label-weight",
+              "description": "Font weight of the label",
+              "default": "500"
+            },
+            {
+              "name": "--demo-input-label-color",
+              "description": "Color of the label text",
+              "default": "#374151"
+            },
+            {
+              "name": "--demo-input-padding",
+              "description": "Padding inside the input",
+              "default": "0.5rem 0.75rem"
+            },
+            {
+              "name": "--demo-input-border-color",
+              "description": "Border color of the input",
+              "default": "#d1d5db"
+            },
+            {
+              "name": "--demo-input-radius",
+              "description": "Border radius of the input",
+              "default": "4px"
+            },
+            {
+              "name": "--demo-input-font-size",
+              "description": "Font size of input text",
+              "default": "1rem"
+            },
+            {
+              "name": "--demo-input-color",
+              "description": "Text color inside the input",
+              "default": "#111827"
+            },
+            {
+              "name": "--demo-input-bg",
+              "description": "Background color of the input",
+              "default": "white"
+            },
+            {
+              "name": "--demo-input-focus-border-color",
+              "description": "Border color when focused",
+              "default": "#3b82f6"
+            },
+            {
+              "name": "--demo-input-focus-shadow",
+              "description": "Box shadow when focused",
+              "default": "0 0 0 3px rgba(59, 130, 246, 0.1)"
+            },
+            {
+              "name": "--demo-input-disabled-bg",
+              "description": "Background color when disabled",
+              "default": "#f3f4f6"
+            },
+            {
+              "name": "--demo-input-error-border-color",
+              "description": "Border color when in error state",
+              "default": "#ef4444"
+            },
+            {
+              "name": "--demo-input-helper-size",
+              "description": "Font size of helper text",
+              "default": "0.75rem"
+            },
+            {
+              "name": "--demo-input-helper-color",
+              "description": "Color of helper text",
+              "default": "#6b7280"
+            },
+            {
+              "name": "--demo-input-error-color",
+              "description": "Color of error message text",
+              "default": "#ef4444"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "DemoInputEvent",
+          "declaration": {
+            "name": "DemoInputEvent",
+            "module": "elements/demo-input/demo-input.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-input",
+          "declaration": {
+            "name": "DemoInput",
+            "module": "elements/demo-input/demo-input.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DemoInput",
+          "declaration": {
+            "name": "DemoInput",
+            "module": "elements/demo-input/demo-input.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "elements/demo-spinner/demo-spinner.js",
+      "declarations": [
+        {
+          "name": "DemoSpinner",
+          "summary": "Displays an animated loading indicator",
+          "description": "A loading spinner component.",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-spinner/demo-spinner.ts#L15"
+          },
+          "kind": "class",
+          "tagName": "demo-spinner",
+          "cssParts": [
+            {
+              "name": "base",
+              "description": "The spinner's base wrapper"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--demo-spinner-size",
+              "summary": "Spinner size",
+              "description": "Size of the spinner (width and height)",
+              "default": "1em"
+            },
+            {
+              "name": "--demo-spinner-track-color",
+              "summary": "Spinner track color",
+              "description": "Color of the spinner track (background circle)",
+              "default": "rgba(0, 0, 0, 0.1)"
+            },
+            {
+              "name": "--demo-spinner-color",
+              "summary": "Spinner color",
+              "description": "Color of the spinning indicator",
+              "default": "currentColor"
+            },
+            {
+              "name": "--demo-spinner-speed",
+              "summary": "Spinner animation speed",
+              "description": "Animation speed (duration)",
+              "default": "0.6s"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-spinner",
+          "declaration": {
+            "name": "DemoSpinner",
+            "module": "elements/demo-spinner/demo-spinner.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DemoSpinner",
+          "declaration": {
+            "name": "DemoSpinner",
+            "module": "elements/demo-spinner/demo-spinner.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+:host {
+  display: block;
+  border:
+    1px
+    solid
+    /** Border color of the card */
+    var(--demo-card-border-color, #e5e7eb);
+  border-radius:
+    /** Border radius of the card */
+    var(--demo-card-radius, 8px);
+  background:
+    /** Background color of the card */
+    var(--demo-card-bg, white);
+  overflow: hidden;
+}
+
+#header {
+  padding:
+    /** Padding for the header section */
+    var(--demo-card-header-padding, 1rem);
+  border-bottom:
+    1px
+    solid
+    /** Border color between sections */
+    var(--demo-card-divider-color, #e5e7eb);
+
+  &:empty {
+    display: none;
+  }
+}
+
+#body {
+  padding:
+    /** Padding for the body section */
+    var(--demo-card-body-padding, 1rem);
+}
+
+#footer {
+  padding:
+    /** Padding for the footer section */
+    var(--demo-card-footer-padding, 1rem);
+  border-top: 1px solid var(--demo-card-divider-color, #e5e7eb);
+  background:
+    /** Background color of the footer */
+    var(--demo-card-footer-bg, #f9fafb);
+
+  &:empty {
+    display: none;
+  }
+}

@@ -1,0 +1,189 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/components/ts-button.js",
+      "declarations": [
+        {
+          "name": "TsButton",
+          "summary": "Button with TypeScript path mapping demonstration",
+          "description": "A button component demonstrating TypeScript path mappings.\n\nThis component shows how CEM works with TypeScript projects that use:\n- Path mappings in tsconfig.json (@components/*, @utils/*, etc.)\n- src/ directory for source files\n- dist/ directory for compiled output\n- Dev server URL rewrites",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "label",
+              "description": "Button label (alternative to slot)",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "attribute": "label"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/typescript-paths/src/components/ts-button.ts#L25"
+          },
+          "kind": "class",
+          "tagName": "ts-button",
+          "attributes": [
+            {
+              "name": "label",
+              "description": "Button label (alternative to slot)",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "fieldName": "label"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Button label"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "base",
+              "description": "The button element"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--ts-button-bg",
+              "description": "Background color"
+            },
+            {
+              "name": "--ts-button-color",
+              "description": "Text color"
+            },
+            {
+              "name": "--ts-button-bg",
+              "default": "#4f46e5"
+            },
+            {
+              "name": "--ts-button-color",
+              "default": "white"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "ts-button",
+          "declaration": {
+            "name": "TsButton",
+            "module": "src/components/ts-button.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "TsButton",
+          "declaration": {
+            "name": "TsButton",
+            "module": "src/components/ts-button.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/index.js"
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/utils/format.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "str",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "name": "capitalize",
+          "description": "Utility functions for formatting text.\nDemonstrates TypeScript path mapping with @utils/* alias.",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/typescript-paths/src/utils/format.ts#L11"
+          }
+        },
+        {
+          "parameters": [
+            {
+              "name": "str",
+              "description": "- The string to convert",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "return": {
+            "description": "The kebab-cased string"
+          },
+          "name": "kebabCase",
+          "description": "Converts a string to kebab-case",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/typescript-paths/src/utils/format.ts#L21"
+          }
+        },
+        {
+          "parameters": [
+            {
+              "name": "str",
+              "description": "- The string to truncate",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "return": {
+            "description": "The truncated string with ellipsis if needed"
+          },
+          "name": "truncate",
+          "description": "Truncates a string to a maximum length",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/typescript-paths/src/utils/format.ts#L34"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "capitalize",
+          "declaration": {
+            "name": "capitalize",
+            "module": "src/utils/format.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "kebabCase",
+          "declaration": {
+            "name": "kebabCase",
+            "module": "src/utils/format.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "truncate",
+          "declaration": {
+            "name": "truncate",
+            "module": "src/utils/format.js"
+          }
+        }
+      ]
+    }
+  ]
+}
