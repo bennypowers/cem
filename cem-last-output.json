@@ -29,7 +29,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false",
+              "default": false,
               "kind": "field",
               "attribute": "open",
               "reflects": true
@@ -188,7 +188,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "0",
+              "default": 0,
               "kind": "field",
               "attribute": "clicks"
             },
@@ -389,7 +389,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "0",
+              "default": 0,
               "kind": "field",
               "attribute": "count"
             },
@@ -398,7 +398,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "true",
+              "default": true,
               "kind": "field",
               "attribute": "enabled"
             },
@@ -656,7 +656,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false",
+              "default": false,
               "kind": "field",
               "attribute": "dark"
             }
@@ -827,7 +827,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false",
+              "default": false,
               "kind": "field",
               "attribute": "expanded",
               "reflects": true
@@ -892,7 +892,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false",
+              "default": false,
               "kind": "field",
               "attribute": "expanded"
             }
@@ -962,7 +962,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false",
+              "default": false,
               "kind": "field",
               "attribute": "required"
             }
@@ -1095,7 +1095,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "0",
+              "default": 0,
               "kind": "field",
               "attribute": "count"
             }
@@ -1167,7 +1167,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "0",
+              "default": 0,
               "kind": "field",
               "attribute": "current"
             },
@@ -1248,7 +1248,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false",
+              "default": false,
               "kind": "field",
               "attribute": "editing"
             },
@@ -1325,7 +1325,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false",
+              "default": false,
               "kind": "field",
               "attribute": "ctrl"
             },
@@ -1665,7 +1665,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false",
+              "default": false,
               "kind": "field",
               "attribute": "visible"
             }
@@ -1799,7 +1799,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "0",
+              "default": 0,
               "kind": "field",
               "attribute": "progress"
             }
@@ -1854,7 +1854,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "50",
+              "default": 50,
               "kind": "field",
               "attribute": "value"
             },
@@ -1863,7 +1863,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "0",
+              "default": 0,
               "kind": "field",
               "attribute": "min"
             },
@@ -1872,7 +1872,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "100",
+              "default": 100,
               "kind": "field",
               "attribute": "max"
             }
@@ -2129,7 +2129,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "0.5",
+              "default": 0.5,
               "kind": "field",
               "attribute": "ratio"
             }
@@ -2192,7 +2192,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "0",
+              "default": 0,
               "kind": "field",
               "attribute": "rating"
             }
@@ -2247,7 +2247,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "3",
+              "default": 3,
               "kind": "field",
               "attribute": "steps"
             },
@@ -2256,7 +2256,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "1",
+              "default": 1,
               "kind": "field",
               "attribute": "current"
             },
@@ -2330,7 +2330,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "0",
+              "default": 0,
               "kind": "field",
               "attribute": "selected"
             }
@@ -2531,7 +2531,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false",
+              "default": false,
               "kind": "field",
               "attribute": "dark",
               "reflects": true
@@ -2660,7 +2660,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false",
+              "default": false,
               "kind": "field",
               "attribute": "checked",
               "reflects": true
@@ -2889,7 +2889,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "true",
+              "default": true,
               "kind": "field",
               "attribute": "enabled"
             }
