@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/serve/middleware"
@@ -28,6 +29,26 @@ import (
 	"bennypowers.dev/cem/serve/middleware/routes"
 	W "bennypowers.dev/cem/workspace"
 )
+
+// contextWithShutdown creates a context that is cancelled when either:
+// - The provided timeout is reached, or
+// - The server begins shutting down
+// This prevents resource leaks during long-running operations.
+func (s *Server) contextWithShutdown(timeout time.Duration) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+
+	// Spawn goroutine to cancel context if server shuts down
+	go func() {
+		select {
+		case <-s.Done():
+			cancel()
+		case <-ctx.Done():
+			// Context already cancelled/timed out
+		}
+	}()
+
+	return ctx, cancel
+}
 
 // IsWorkspace returns true if server is running in workspace mode
 func (s *Server) IsWorkspace() bool {
@@ -165,9 +186,10 @@ func (s *Server) generateInitialWorkspaceManifests(watchDir string) ([]middlewar
 			continue
 		}
 
-		// Generate manifest
-		ctx := context.Background()
+		// Generate manifest with cancellable context (respects shutdown signal)
+		ctx, cancel := s.contextWithShutdown(30 * time.Second)
 		pkg, err := session.GenerateFullManifest(ctx)
+		cancel()
 		if err != nil {
 			s.logger.Warning("Failed to generate manifest for package %s: %v", pkgInfo.Name, err)
 			session.Close()
@@ -233,9 +255,10 @@ func (s *Server) regenerateWorkspaceManifests() (int, error) {
 			continue
 		}
 
-		// Generate manifest
-		ctx := context.Background()
+		// Generate manifest with cancellable context (respects shutdown signal)
+		ctx, cancel := s.contextWithShutdown(30 * time.Second)
 		pkg, err := session.GenerateFullManifest(ctx)
+		cancel()
 		if err != nil {
 			s.logger.Warning("Failed to generate manifest for package %s: %v", pkgInfo.Name, err)
 			session.Close()

@@ -384,24 +384,19 @@ func (s *Server) handleFileChanges() {
 			s.logger.Info("File changed: %s", displayPath)
 
 			// Collect affected files from transform cache and module graph
-			s.logger.Debug("About to collect affected files for %s", changedPath)
 			invalidatedFiles := s.collectAffectedFiles(changedPath)
-			s.logger.Debug("Collected %d invalidated files", len(invalidatedFiles))
+			if len(invalidatedFiles) > 0 {
+				s.logger.Debug("Collected %d invalidated files for %s", len(invalidatedFiles), displayPath)
+			}
 
 			// Regenerate manifest if TS/JS files changed
-			s.logger.Debug("About to regenerate manifest if needed (tsJsFiles=%d)", len(tsJsFiles))
 			s.regenerateManifestIfNeeded(tsJsFiles)
-			s.logger.Debug("Manifest regeneration check complete")
 
 			// Regenerate import map if package.json or file structure changed
-			s.logger.Debug("About to regenerate import map if needed")
 			s.regenerateImportMapIfNeeded(event)
-			s.logger.Debug("Import map regeneration check complete")
 
 			// Broadcast smart reload to affected pages
-			s.logger.Debug("Calling broadcastSmartReload for %s (changedPath=%s, invalidatedFiles=%d)", relPath, changedPath, len(invalidatedFiles))
 			s.broadcastSmartReload(changedPath, relPath, invalidatedFiles)
-			s.logger.Debug("broadcastSmartReload completed for %s", relPath)
 		}() // End panic recovery function
 	}
 }
