@@ -56,11 +56,7 @@
  &lt;code>cem generate&lt;/code> best supports LitElements written in idiomatic style with
 TypeScript decorators. There is rudimentary support for &lt;code>extends HTMLElement&lt;/code>,
 but it is not a high priority for development. If you need something more
-specific 
-&lt;a href="https://github.com/bennypowers/cem/issues/new" 
- target="_blank" 
- rel="noopener">open an issue
-&lt;/a>.
+specific [open an issue][issuenew].
 &lt;/info-callout>
 
 &lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
