@@ -58,7 +58,7 @@ export class VanillaElement extends HTMLElement {
 
   static readonly observedAttributes = ['message', 'reversed'];
 
-  #message = '';
+  #message = 'Hello from vanilla!';
 
   #setMessage(value = this.message) {
     this.#message = this.reversed
@@ -79,7 +79,6 @@ export class VanillaElement extends HTMLElement {
   set message(value: string) {
     this.setAttribute('message', value);
     this.#setMessage(value)
-    this.connectedCallback();
   }
 
   /**
@@ -95,7 +94,6 @@ export class VanillaElement extends HTMLElement {
   set reversed(value: boolean) {
     this.toggleAttribute('reversed', !!value);
     this.#setMessage();
-    this.connectedCallback();
   }
 
   constructor() {
@@ -109,6 +107,7 @@ export class VanillaElement extends HTMLElement {
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
     if (oldValue !== newValue) {
       if (name === 'message') this.dispatchEvent(new MessageChangedEvent(newValue || ''));
+      this.#setMessage(name === 'message' ? newValue ?? '' : this.message);
       if (this.isConnected) this.connectedCallback();
     }
   }
