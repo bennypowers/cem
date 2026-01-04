@@ -12,7 +12,7 @@
     "serve": "cem serve"
   },
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.2.0"
   },
   "keywords": ["custom-elements", "web-components", "example", "vanilla"],
   "author": "Benny Powers",

@@ -183,7 +183,7 @@ npm run serve    # Start dev server
 
 All examples are tested in CI to ensure they stay current with CEM development.
 
-**TypeScript Version**: Examples require TypeScript 5.0+ because they use Lit 3.0, which requires TypeScript 5.2+ for [standard decorator support](https://lit.dev/docs/tools/requirements/). The entire workspace uses TypeScript ^5.0.0 for consistency.
+**TypeScript Version**: Examples require TypeScript 5.2+ because they use Lit 3.0, which requires TypeScript 5.2+ for [standard decorator support](https://lit.dev/docs/tools/requirements/). The entire workspace uses TypeScript ^5.2.0 for consistency.
 
 ---
 

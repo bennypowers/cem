@@ -14,11 +14,11 @@ Thank you for your interest in contributing to `cem`! This guide will help you s
 
 ## TypeScript Version Policy
 
-The monorepo uses **TypeScript ^5.0.0** across all workspace packages for consistency. This is required because:
+The monorepo uses **TypeScript ^5.2.0** across all workspace packages for consistency. This is required because:
 
 - Example projects use Lit 3.0, which requires TypeScript 5.2+ for [standard decorator support](https://lit.dev/docs/tools/requirements/)
 - Maintaining a single TypeScript version across the workspace ensures consistent builds and IDE behavior
-- All new workspace packages should use TypeScript ^5.0.0 in their `devDependencies`
+- All new workspace packages should use TypeScript ^5.2.0 in their `devDependencies`
 
 The main CEM tool is written in Go and does not require TypeScript, but TypeScript is used for the VSCode extension and example projects.
 
