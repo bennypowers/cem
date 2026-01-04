@@ -343,12 +343,15 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 		// Check if filePath starts with a prefix that duplicates pkg.Path
 		// e.g., if pkg.Path ends with "examples/intermediate" and filePath starts with "examples/intermediate"
 		// This can happen if the manifest paths are relative to workspace root
-		pkgDirName := filepath.Base(pkg.Path)
-		parentDir := filepath.Base(filepath.Dir(pkg.Path))
-		// Check for patterns like "examples/intermediate/elements/..." when pkg is .../examples/intermediate
-		possiblePrefix := filepath.Join(parentDir, pkgDirName)
-		if strings.HasPrefix(filePath, possiblePrefix+string(filepath.Separator)) {
-			relFilePath = strings.TrimPrefix(filePath, possiblePrefix+string(filepath.Separator))
+		// Normalize both to forward slashes for comparison
+		normalizedFilePath := filepath.ToSlash(filePath)
+		pathParts := strings.Split(filepath.ToSlash(pkg.Path), "/")
+		for i := len(pathParts) - 1; i >= 0; i-- {
+			possiblePrefix := strings.Join(pathParts[i:], "/")
+			if strings.HasPrefix(normalizedFilePath, possiblePrefix+"/") {
+				relFilePath = strings.TrimPrefix(normalizedFilePath, possiblePrefix+"/")
+				break
+			}
 		}
 
 		// Check for duplicate routes before assignment
