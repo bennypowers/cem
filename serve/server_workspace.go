@@ -57,26 +57,6 @@ func (s *Server) SourceControlRootURL() string {
 	return s.sourceControlRootURL
 }
 
-// discoverWorkspacePackages finds all packages in workspace with manifests
-func discoverWorkspacePackages(rootDir string) ([]middleware.WorkspacePackage, error) {
-	packages, err := W.LoadWorkspaceManifests(rootDir)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert workspace.PackageWithManifest to middleware.WorkspacePackage
-	contexts := make([]middleware.WorkspacePackage, len(packages))
-	for i, pkg := range packages {
-		contexts[i] = middleware.WorkspacePackage{
-			Name:     pkg.Name,
-			Path:     pkg.Path,
-			Manifest: pkg.Manifest,
-		}
-	}
-
-	return contexts, nil
-}
-
 // InitializeWorkspaceMode detects and initializes workspace mode if applicable
 func (s *Server) InitializeWorkspaceMode() error {
 	s.mu.Lock()
