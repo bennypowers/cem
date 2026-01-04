@@ -12,7 +12,6 @@
     "serve": "cem serve"
   },
   "devDependencies": {
-    "@pwrs/cem": "workspace:*",
     "typescript": "^5.0.0"
   },
   "keywords": ["custom-elements", "web-components", "example", "vanilla"],

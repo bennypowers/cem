@@ -1,0 +1,28 @@
+{
+  "scopes": {
+    "/": {
+      "@lit/reactive-element": "../../node_modules/@lit/reactive-element/reactive-element.js",
+      "@lit/reactive-element/css-tag.js": "../../node_modules/@lit/reactive-element/css-tag.js",
+      "@lit/reactive-element/decorators.js": "../../node_modules/@lit/reactive-element/decorators.js",
+      "@lit/reactive-element/decorators/base.js": "../../node_modules/@lit/reactive-element/decorators/base.js",
+      "@lit/reactive-element/decorators/custom-element.js": "../../node_modules/@lit/reactive-element/decorators/custom-element.js",
+      "@lit/reactive-element/decorators/event-options.js": "../../node_modules/@lit/reactive-element/decorators/event-options.js",
+      "@lit/reactive-element/decorators/property.js": "../../node_modules/@lit/reactive-element/decorators/property.js",
+      "@lit/reactive-element/decorators/query-all.js": "../../node_modules/@lit/reactive-element/decorators/query-all.js",
+      "@lit/reactive-element/decorators/query-assigned-elements.js": "../../node_modules/@lit/reactive-element/decorators/query-assigned-elements.js",
+      "@lit/reactive-element/decorators/query-assigned-nodes.js": "../../node_modules/@lit/reactive-element/decorators/query-assigned-nodes.js",
+      "@lit/reactive-element/decorators/query-async.js": "../../node_modules/@lit/reactive-element/decorators/query-async.js",
+      "@lit/reactive-element/decorators/query.js": "../../node_modules/@lit/reactive-element/decorators/query.js",
+      "@lit/reactive-element/decorators/state.js": "../../node_modules/@lit/reactive-element/decorators/state.js",
+      "@lit/reactive-element/polyfill-support.js": "../../node_modules/@lit/reactive-element/polyfill-support.js",
+      "@lit/reactive-element/reactive-controller.js": "../../node_modules/@lit/reactive-element/reactive-controller.js",
+      "lit": "../../node_modules/lit/index.js",
+      "lit/decorators.js": "../../node_modules/lit/decorators.js",
+      "lit/directives/class-map.js": "../../node_modules/lit/directives/class-map.js",
+      "lit-element": "../../node_modules/lit-element/index.js",
+      "lit-html": "../../node_modules/lit-html/lit-html.js",
+      "lit-html/directive.js": "../../node_modules/lit-html/directive.js",
+      "lit-html/directives/class-map.js": "../../node_modules/lit-html/directives/class-map.js"
+    }
+  }
+}

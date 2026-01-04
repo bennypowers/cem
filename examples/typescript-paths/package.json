@@ -13,9 +13,10 @@
     "build": "tsc",
     "clean": "rm -rf dist"
   },
+  "dependencies": {
+    "lit": "^3.0.0"
+  },
   "devDependencies": {
-    "@pwrs/cem": "workspace:*",
-    "lit": "^3.0.0",
     "typescript": "^5.0.0"
   },
   "keywords": ["custom-elements", "web-components", "example", "typescript", "build"],

@@ -13,7 +13,3 @@ generate:
 serve:
   importMap:
     generate: true
-    override:
-      imports:
-        lit: https://cdn.jsdelivr.net/npm/lit@3/+esm
-        lit/: https://cdn.jsdelivr.net/npm/lit@3/
