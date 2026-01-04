@@ -12,7 +12,7 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css-jsdoc-duplicates/src/button-with-duplicates.ts#L12"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-css-jsdoc-duplicates/src/button-with-duplicates.ts#L12"
           },
           "kind": "class",
           "tagName": "button-with-duplicates",
