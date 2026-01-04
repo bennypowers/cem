@@ -51,25 +51,11 @@
     align-items: center;
     gap: 0.5rem;
 
-    &:nth-child(1) ui-icon {
-      color: light-dark(#22c55e, #4ade80);
-    }
-
-    &:nth-child(2) ui-icon {
-      color: light-dark(#ef4444, #f87171);
-    }
-
-    &:nth-child(3) ui-icon {
-      color: light-dark(#f59e0b, #fbbf24);
-    }
-
-    &:nth-child(4) ui-icon {
-      color: light-dark(#3b82f6, #60a5fa);
-    }
-
-    &:nth-child(5) ui-icon {
-      color: light-dark(#6b7280, #9ca3af);
-    }
+    &:nth-child(1) ui-icon { --icon-color: light-dark(#22c55e, #4ade80); }
+    &:nth-child(2) ui-icon { --icon-color: light-dark(#ef4444, #f87171); }
+    &:nth-child(3) ui-icon { --icon-color: light-dark(#f59e0b, #fbbf24); }
+    &:nth-child(4) ui-icon { --icon-color: light-dark(#3b82f6, #60a5fa); }
+    &:nth-child(5) ui-icon { --icon-color: light-dark(#6b7280, #9ca3af); }
 
     & span {
       font-size: 0.875rem;
