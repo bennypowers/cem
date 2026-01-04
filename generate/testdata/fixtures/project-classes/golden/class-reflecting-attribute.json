@@ -17,7 +17,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": "false",
+              "default": false,
               "kind": "field",
               "attribute": "reflecting-attribute",
               "reflects": true

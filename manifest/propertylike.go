@@ -24,7 +24,7 @@ type PropertyLike struct {
 	FullyQualified
 	StartByte  uint       `json:"-"`
 	Type       *Type      `json:"type,omitempty"`
-	Default    string     `json:"default,omitempty"`
+	Default    any        `json:"default,omitempty"`
 	Deprecated Deprecated `json:"deprecated,omitempty"`
 	Readonly   bool       `json:"readonly,omitempty"`
 }
