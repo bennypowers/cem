@@ -3,10 +3,9 @@
   align-items: center;
   justify-content: center;
   width:
-    /** Width of the icon */
+    /** Width and height of the icon */
     var(--demo-icon-size, 1em);
   height:
-    /** Height of the icon */
     var(--demo-icon-size, 1em);
   color:
     /** Color of the icon */

@@ -1,0 +1,27 @@
+:host {
+  display: inline-block;
+}
+
+:host([hidden]) {
+  display: none !important;
+}
+
+#spinner {
+  /** Size of the spinner (width and height) */
+  width: var(--spinner-size, 1em);
+  height: var(--spinner-size, 1em);
+  /** Border thickness of the spinner */
+  border-width: var(--spinner-thickness, 2px);
+  border-style: solid;
+  /** Color of the spinner */
+  border-color: var(--spinner-color, currentColor);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

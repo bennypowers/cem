@@ -159,6 +159,9 @@
               "kind": "method"
             }
           ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo-button.ts#L33"
+          },
           "kind": "class",
           "tagName": "demo-button",
           "attributes": [
@@ -417,6 +420,9 @@
             "name": "LitElement",
             "package": "lit"
           },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-card/demo-card.ts#L6"
+          },
           "kind": "class",
           "tagName": "demo-card",
           "slots": [
@@ -540,6 +546,9 @@
               "attribute": "label"
             }
           ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-icon/demo-icon.ts#L19"
+          },
           "kind": "class",
           "tagName": "demo-icon",
           "attributes": [
@@ -568,7 +577,7 @@
           "cssProperties": [
             {
               "name": "--demo-icon-size",
-              "description": "Width of the iconHeight of the icon",
+              "description": "Width and height of the icon",
               "default": "1em"
             },
             {
@@ -618,6 +627,9 @@
               "kind": "field"
             }
           ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo-input.ts#L7"
+          },
           "kind": "class"
         },
         {
@@ -786,6 +798,9 @@
               "kind": "method"
             }
           ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo-input.ts#L16"
+          },
           "kind": "class",
           "tagName": "demo-input",
           "attributes": [
@@ -1022,6 +1037,9 @@
           "superclass": {
             "name": "LitElement",
             "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-spinner/demo-spinner.ts#L15"
           },
           "kind": "class",
           "tagName": "demo-spinner",

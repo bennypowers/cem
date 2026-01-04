@@ -1,0 +1,45 @@
+:host {
+  display: block;
+}
+
+#card {
+  /** Background color of the card */
+  background: var(--card-bg, white);
+  /** Border style */
+  border: var(--card-border, 1px solid #e5e5e5);
+  /** Border radius */
+  border-radius: var(--card-radius, 8px);
+  /** Box shadow for elevation */
+  box-shadow: var(--card-shadow, 0 2px 4px rgba(0, 0, 0, 0.1));
+  overflow: hidden;
+}
+
+#header,
+#body,
+#footer {
+  /** Internal padding */
+  padding: var(--card-padding, 1rem);
+}
+
+#header {
+  border-bottom: 1px solid #e5e5e5;
+  font-weight: 600;
+  &:empty {
+    display: none;
+  }
+}
+
+#body {
+  flex: 1;
+}
+
+#footer {
+  border-top: 1px solid #e5e5e5;
+  background: #f9f9f9;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  &:empty {
+    display: none;
+  }
+}

@@ -18,7 +18,13 @@
               "name": "variant",
               "description": "The button variant",
               "type": {
-                "text": "'primary' | 'secondary' | 'success' | 'danger'"
+                "text": "'primary' | 'secondary' | 'success' | 'danger'",
+                "references": [
+                  {
+                    "name": "ButtonVariant",
+                    "module": "elements/ui-button/ui-button.js"
+                  }
+                ]
               },
               "default": "'primary'",
               "kind": "field",
@@ -29,7 +35,13 @@
               "name": "size",
               "description": "The button size",
               "type": {
-                "text": "'small' | 'medium' | 'large'"
+                "text": "'small' | 'medium' | 'large'",
+                "references": [
+                  {
+                    "name": "ButtonSize",
+                    "module": "elements/ui-button/ui-button.js"
+                  }
+                ]
               },
               "default": "'medium'",
               "kind": "field",
@@ -60,7 +72,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-button/ui-button.ts#L33"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-button/ui-button.ts#L25"
           },
           "kind": "class",
           "tagName": "ui-button",
@@ -69,7 +81,13 @@
               "name": "variant",
               "description": "The button variant",
               "type": {
-                "text": "'primary' | 'secondary' | 'success' | 'danger'"
+                "text": "'primary' | 'secondary' | 'success' | 'danger'",
+                "references": [
+                  {
+                    "name": "ButtonVariant",
+                    "module": "elements/ui-button/ui-button.js"
+                  }
+                ]
               },
               "default": "'primary'",
               "fieldName": "variant"
@@ -78,7 +96,13 @@
               "name": "size",
               "description": "The button size",
               "type": {
-                "text": "'small' | 'medium' | 'large'"
+                "text": "'small' | 'medium' | 'large'",
+                "references": [
+                  {
+                    "name": "ButtonSize",
+                    "module": "elements/ui-button/ui-button.js"
+                  }
+                ]
               },
               "default": "'medium'",
               "fieldName": "size"
@@ -119,15 +143,15 @@
           "slots": [
             {
               "name": "start",
-              "description": "Content placed before the label (e.g., an icon)"
+              "summary": "Content placed before the label (e.g., an icon)"
             },
             {
               "name": "",
-              "description": "The button's label"
+              "summary": "The button's label"
             },
             {
               "name": "end",
-              "description": "Content placed after the label (e.g., an icon)"
+              "summary": "Content placed after the label (e.g., an icon)"
             }
           ],
           "cssParts": [
@@ -137,27 +161,27 @@
             },
             {
               "name": "start",
-              "description": "The start slot container"
+              "summary": "The start slot container"
             },
             {
               "name": "label",
-              "description": "The button's label"
+              "summary": "The button's label"
             },
             {
               "name": "end",
-              "description": "The end slot container"
+              "summary": "The end slot container"
             }
           ],
           "cssProperties": [
             {
+              "name": "--button-padding",
+              "description": "Internal padding",
+              "default": "0.5rem 1rem"
+            },
+            {
               "name": "--button-bg",
               "description": "Background color of the button",
               "default": "#0070f3"
-            },
-            {
-              "name": "--button-color",
-              "description": "Text color",
-              "default": "white"
             },
             {
               "name": "--button-border",
@@ -170,9 +194,9 @@
               "default": "4px"
             },
             {
-              "name": "--button-padding",
-              "description": "Internal padding",
-              "default": "0.5rem 1rem"
+              "name": "--button-color",
+              "description": "Text color",
+              "default": "white"
             }
           ],
           "demos": [
@@ -228,7 +252,7 @@
           "members": [
             {
               "name": "heading",
-              "description": "The card heading text (alternative to header slot)",
+              "summary": "The card heading text\nThe heading attribute's value is overrides by the `header` slot",
               "type": {
                 "text": "string"
               },
@@ -237,14 +261,14 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-card/ui-card.ts#L26"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-card/ui-card.ts#L12"
           },
           "kind": "class",
           "tagName": "ui-card",
           "attributes": [
             {
               "name": "heading",
-              "description": "The card heading text (alternative to header slot)",
+              "summary": "The card heading text\nThe heading attribute's value is overrides by the `header` slot",
               "type": {
                 "text": "string"
               },
@@ -300,14 +324,14 @@
               "default": "8px"
             },
             {
-              "name": "--card-padding",
-              "description": "Internal padding",
-              "default": "1rem"
-            },
-            {
               "name": "--card-shadow",
               "description": "Box shadow for elevation",
               "default": "0 2px 4px rgba(0, 0, 0, 0.1)"
+            },
+            {
+              "name": "--card-padding",
+              "description": "Internal padding",
+              "default": "1rem"
             }
           ],
           "customElement": true
@@ -346,6 +370,23 @@
           },
           "members": [
             {
+              "name": "ICONS",
+              "default": "{\\n    check: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z',\\n    'chevron-right': 'M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z',\\n    heart: 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z',\\n    star: 'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z',\\n    x: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z',\\n  }",
+              "readonly": true,
+              "kind": "field",
+              "static": true,
+              "privacy": "private"
+            },
+            {
+              "name": "iconPath",
+              "type": {
+                "text": "string"
+              },
+              "readonly": true,
+              "kind": "field",
+              "privacy": "private"
+            },
+            {
               "name": "name",
               "description": "The name of the icon to display",
               "type": {
@@ -364,19 +405,10 @@
               "default": "''",
               "kind": "field",
               "attribute": "label"
-            },
-            {
-              "name": "iconPath",
-              "type": {
-                "text": "string"
-              },
-              "readonly": true,
-              "kind": "field",
-              "privacy": "private"
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-icon/ui-icon.ts#L16"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-icon/ui-icon.ts#L20"
           },
           "kind": "class",
           "tagName": "ui-icon",
@@ -408,14 +440,14 @@
           ],
           "cssProperties": [
             {
-              "name": "--icon-color",
-              "description": "Color of the icon",
-              "default": "currentColor"
-            },
-            {
               "name": "--icon-size",
               "description": "Size of the icon (width and height)",
               "default": "1em"
+            },
+            {
+              "name": "--icon-color",
+              "description": "Color of the icon",
+              "default": "currentColor"
             }
           ],
           "customElement": true
@@ -436,6 +468,100 @@
           "declaration": {
             "name": "UiIcon",
             "module": "elements/ui-icon/ui-icon.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "elements/ui-spinner/ui-spinner.js",
+      "declarations": [
+        {
+          "name": "UiSpinner",
+          "summary": "Spinners provide visual feedback that an action is processing",
+          "description": "A loading spinner component for indicating progress.",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "label",
+              "description": "Accessible label for the spinner",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Loading'",
+              "kind": "field",
+              "attribute": "label"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-spinner/ui-spinner.ts#L14"
+          },
+          "kind": "class",
+          "tagName": "ui-spinner",
+          "attributes": [
+            {
+              "name": "label",
+              "description": "Accessible label for the spinner",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Loading'",
+              "fieldName": "label"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "base",
+              "description": "The spinner's base element"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--spinner-size",
+              "description": "Size of the spinner (width and height)",
+              "default": "1em"
+            },
+            {
+              "name": "--spinner-thickness",
+              "description": "Border thickness of the spinner",
+              "default": "2px"
+            },
+            {
+              "name": "--spinner-color",
+              "description": "Color of the spinner",
+              "default": "currentColor"
+            }
+          ],
+          "demos": [
+            {
+              "description": "# Loading Spinner\n\nDemonstrates the ui-spinner component in various sizes and colors.",
+              "url": "/elements/ui-spinner/demo/basic/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-spinner/demo/basic.html"
+              }
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "ui-spinner",
+          "declaration": {
+            "name": "UiSpinner",
+            "module": "elements/ui-spinner/ui-spinner.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "UiSpinner",
+          "declaration": {
+            "name": "UiSpinner",
+            "module": "elements/ui-spinner/ui-spinner.js"
           }
         }
       ]

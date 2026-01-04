@@ -32,6 +32,10 @@ export function kebabCase(str: string): string {
  * @returns The truncated string with ellipsis if needed
  */
 export function truncate(str: string, maxLength: number): string {
-  if (str.length <= maxLength) return str;
-  return str.slice(0, maxLength - 3) + '...';
+  if (str.length <= maxLength)
+    return str;
+  if (maxLength < 3)
+    return str.slice(0, Math.max(0, maxLength));
+  else
+    return str.slice(0, maxLength - 3) + '...';
 }

@@ -20,7 +20,6 @@ export class MessageChangedEvent extends Event {
  *
  * @slot - Default slot for additional content
  *
- * @csspart container - The container div element
  * @csspart message - The message paragraph element
  *
  * @cssprop --vanilla-bg - Background color of the container
@@ -29,27 +28,37 @@ export class MessageChangedEvent extends Event {
  */
 export class VanillaElement extends HTMLElement {
   private static template = document.createElement('template');
-  static get observedAttributes() {
-    return ['message', 'reversed'];
+
+  static is = 'vanilla-element';
+
+  static {
+    this.template.innerHTML = `
+      <style>
+        :host {
+          display: block;
+        }
+        div {
+          background: var(--vanilla-bg, #f5f5f5);
+          color: var(--vanilla-color, #333);
+          padding: var(--vanilla-padding, 1rem);
+          border-radius: 4px;
+        }
+        #message {
+          margin: 0 0 0.5rem 0;
+          font-size: 1.1em;
+        }
+      </style>
+      <div>
+        <p id="message" part="message"></p>
+        <slot></slot>
+      </div>
+    `;
+    customElements.define(this.is, this);
   }
 
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-  }
+  static readonly observedAttributes = ['message', 'reversed'];
 
-  connectedCallback() {
-    this.render();
-  }
-
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
-    if (oldValue !== newValue) {
-      if (name === 'message') {
-        this.dispatchEvent(new MessageChangedEvent(newValue || ''));
-      }
-      this.render();
-    }
-  }
+  #message = '';
 
   /**
    * Gets the message to display
@@ -63,6 +72,10 @@ export class VanillaElement extends HTMLElement {
    */
   set message(value: string) {
     this.setAttribute('message', value);
+    this.#message = this.reversed
+      ? value.split('').reverse().join('')
+      : value;
+    this.connectedCallback();
   }
 
   /**
@@ -76,48 +89,31 @@ export class VanillaElement extends HTMLElement {
    * Sets whether the message should be reversed
    */
   set reversed(value: boolean) {
-    if (value) {
-      this.setAttribute('reversed', '');
-    } else {
-      this.removeAttribute('reversed');
+    this.toggleAttribute('reversed', !!value);
+    this.connectedCallback();
+  }
+
+  constructor() {
+    super();
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: 'open' })
+        .append(VanillaElement.template.content.cloneNode(true));
     }
   }
 
-  render() {
-    const message = this.reversed
-      ? this.message.split('').reverse().join('')
-      : this.message;
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+    if (oldValue !== newValue) {
+      if (name === 'message') this.dispatchEvent(new MessageChangedEvent(newValue || ''));
+      if (this.isConnected) this.connectedCallback();
+    }
+  }
 
-    if (!this.shadowRoot) return;
-
-    VanillaElement.template.innerHTML = `
-      <style>
-        :host {
-          display: block;
-        }
-        [part="container"] {
-          background: var(--vanilla-bg, #f5f5f5);
-          color: var(--vanilla-color, #333);
-          padding: var(--vanilla-padding, 1rem);
-          border-radius: 4px;
-        }
-        [part="message"] {
-          margin: 0 0 0.5rem 0;
-          font-size: 1.1em;
-        }
-      </style>
-      <div part="container">
-        <p part="message">${message}</p>
-        <slot></slot>
-      </div>
-    `;
-
-    this.shadowRoot.innerHTML = '';
-    this.shadowRoot.appendChild(VanillaElement.template.content.cloneNode(true));
+  connectedCallback() {
+    const node =
+      this.shadowRoot?.getElementById('message');
+    if (node) node.textContent = this.#message;
   }
 }
-
-customElements.define('vanilla-element', VanillaElement);
 
 declare global {
   interface HTMLElementTagNameMap {

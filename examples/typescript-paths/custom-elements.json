@@ -8,7 +8,7 @@
         {
           "name": "TsButton",
           "summary": "Button with TypeScript path mapping demonstration",
-          "description": "A button component demonstrating TypeScript path mappings.\n* This component shows how CEM works with TypeScript projects that use:\n- Path mappings in tsconfig.json (@components/*, @utils/*, etc.)\n- src/ directory for source files\n- dist/ directory for compiled output\n- Dev server URL rewrites",
+          "description": "A button component demonstrating TypeScript path mappings.\n\nThis component shows how CEM works with TypeScript projects that use:\n- Path mappings in tsconfig.json (@components/*, @utils/*, etc.)\n- src/ directory for source files\n- dist/ directory for compiled output\n- Dev server URL rewrites",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
@@ -25,6 +25,9 @@
               "attribute": "label"
             }
           ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/typescript-paths/src/components/ts-button.ts#L25"
+          },
           "kind": "class",
           "tagName": "ts-button",
           "attributes": [
@@ -109,7 +112,10 @@
           ],
           "name": "capitalize",
           "description": "Utility functions for formatting text.\nDemonstrates TypeScript path mapping with @utils/* alias.",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/typescript-paths/src/utils/format.ts#L11"
+          }
         },
         {
           "parameters": [
@@ -126,7 +132,10 @@
           },
           "name": "kebabCase",
           "description": "Converts a string to kebab-case",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/typescript-paths/src/utils/format.ts#L21"
+          }
         },
         {
           "parameters": [
@@ -143,7 +152,10 @@
           },
           "name": "truncate",
           "description": "Truncates a string to a maximum length",
-          "kind": "function"
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/typescript-paths/src/utils/format.ts#L34"
+          }
         }
       ],
       "exports": [

@@ -6,6 +6,26 @@
       "path": "elements/vanilla-element/vanilla-element.js",
       "declarations": [
         {
+          "name": "MessageChangedEvent",
+          "superclass": {
+            "name": "Event",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "message",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/vanilla/elements/vanilla-element/vanilla-element.ts#L1"
+          },
+          "kind": "class"
+        },
+        {
           "name": "VanillaElement",
           "description": "A vanilla custom element demonstrating Web Components without a framework.\n\nThis component shows how to create custom elements using only native Web APIs,\nwith proper JSDoc annotations for CEM manifest generation.",
           "superclass": {
@@ -13,6 +33,38 @@
             "package": "global:"
           },
           "members": [
+            {
+              "name": "template",
+              "default": "document.createElement('template')",
+              "kind": "field",
+              "static": true,
+              "privacy": "private"
+            },
+            {
+              "name": "is",
+              "type": {
+                "text": "string"
+              },
+              "default": "'vanilla-element'",
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "message",
+              "description": "Gets the message to display",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "reversed",
+              "description": "Gets whether the message should be reversed",
+              "type": {
+                "text": "boolean"
+              },
+              "kind": "field"
+            },
             {
               "parameters": [
                 {
@@ -36,30 +88,10 @@
               ],
               "name": "attributeChangedCallback",
               "kind": "method"
-            },
-            {
-              "name": "message",
-              "description": "Gets the message to display",
-              "type": {
-                "text": "string"
-              },
-              "kind": "field"
-            },
-            {
-              "name": "reversed",
-              "description": "Gets whether the message should be reversed",
-              "type": {
-                "text": "boolean"
-              },
-              "kind": "field"
-            },
-            {
-              "name": "render",
-              "kind": "method"
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/vanilla/elements/vanilla-element/vanilla-element.ts#L22"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/vanilla/elements/vanilla-element/vanilla-element.ts#L29"
           },
           "kind": "class",
           "attributes": [
@@ -76,6 +108,21 @@
               "type": {
                 "text": "boolean"
               }
+            },
+            {
+              "name": "message"
+            },
+            {
+              "name": "reversed"
+            }
+          ],
+          "events": [
+            {
+              "name": "message-changed",
+              "description": "Dispatched when the message attribute changes",
+              "type": {
+                "text": "MessageChangedEvent"
+              }
             }
           ],
           "slots": [
@@ -88,10 +135,6 @@
             {
               "name": "message",
               "description": "The message paragraph element"
-            },
-            {
-              "name": "container",
-              "description": "The container div element"
             }
           ],
           "cssProperties": [
@@ -113,8 +156,16 @@
       ],
       "exports": [
         {
+          "kind": "js",
+          "name": "MessageChangedEvent",
+          "declaration": {
+            "name": "MessageChangedEvent",
+            "module": "elements/vanilla-element/vanilla-element.js"
+          }
+        },
+        {
           "kind": "custom-element-definition",
-          "name": "vanilla-element",
+          "name": "",
           "declaration": {
             "name": "VanillaElement",
             "module": "elements/vanilla-element/vanilla-element.js"

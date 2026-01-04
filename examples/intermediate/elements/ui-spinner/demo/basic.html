@@ -1,0 +1,86 @@
+<meta itemprop="demo-for" content="ui-spinner">
+<meta itemprop="demo-url" content="/elements/ui-spinner/demo/basic/">
+
+<script type="text/markdown" itemprop="description">
+# Loading Spinner
+
+Demonstrates the ui-spinner component in various sizes and colors.
+</script>
+
+<script type="module">
+  import '@cem-examples/intermediate/elements/ui-spinner/ui-spinner.js';
+</script>
+
+<h1>UI Spinner</h1>
+
+<section>
+  <h2>Default Spinner</h2>
+  <ui-spinner></ui-spinner>
+</section>
+
+<section>
+  <h2>Sizes</h2>
+  <div style="display: flex; gap: 2rem; align-items: center; margin: 1rem 0;">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+      <ui-spinner size="16"></ui-spinner>
+      <span style="font-size: 0.875rem; color: #666;">16px</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+      <ui-spinner size="24"></ui-spinner>
+      <span style="font-size: 0.875rem; color: #666;">24px</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+      <ui-spinner size="32"></ui-spinner>
+      <span style="font-size: 0.875rem; color: #666;">32px</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+      <ui-spinner size="48"></ui-spinner>
+      <span style="font-size: 0.875rem; color: #666;">48px</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Custom Colors</h2>
+  <div style="display: flex; gap: 2rem; align-items: center; margin: 1rem 0;">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+      <ui-spinner style="--spinner-color: #0070f3;"></ui-spinner>
+      <span style="font-size: 0.875rem; color: #666;">Blue</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+      <ui-spinner style="--spinner-color: #10b981;"></ui-spinner>
+      <span style="font-size: 0.875rem; color: #666;">Green</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+      <ui-spinner style="--spinner-color: #ef4444;"></ui-spinner>
+      <span style="font-size: 0.875rem; color: #666;">Red</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+      <ui-spinner style="--spinner-color: #f59e0b;"></ui-spinner>
+      <span style="font-size: 0.875rem; color: #666;">Orange</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Custom Thickness</h2>
+  <div style="display: flex; gap: 2rem; align-items: center; margin: 1rem 0;">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+      <ui-spinner size="32" style="--spinner-thickness: 1px;"></ui-spinner>
+      <span style="font-size: 0.875rem; color: #666;">Thin (1px)</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+      <ui-spinner size="32" style="--spinner-thickness: 3px;"></ui-spinner>
+      <span style="font-size: 0.875rem; color: #666;">Medium (3px)</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+      <ui-spinner size="32" style="--spinner-thickness: 5px;"></ui-spinner>
+      <span style="font-size: 0.875rem; color: #666;">Thick (5px)</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>With Label</h2>
+  <ui-spinner label="Processing request"></ui-spinner>
+</section>
