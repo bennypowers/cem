@@ -18,8 +18,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package serve
 
 import (
+	"encoding/json"
 	"fmt"
 	"maps"
+	"os"
 	"path/filepath"
 
 	"bennypowers.dev/cem/cmd/config"
@@ -27,6 +29,49 @@ import (
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
 	"bennypowers.dev/cem/serve/middleware/transform"
 )
+
+// packageJSON represents the structure we need from package.json for workspace detection
+type packageJSON struct {
+	Workspaces any `json:"workspaces"` // Can be []string or object with "packages" field
+}
+
+// findWorkspaceRootForServe walks up the directory tree to find the workspace root
+// Returns the directory containing node_modules or workspace configuration
+// Stops at git repository boundaries to avoid breaking out of submodules
+func findWorkspaceRootForServe(startDir string) string {
+	dir := startDir
+	for {
+		// Check if node_modules exists in this directory
+		nodeModulesPath := filepath.Join(dir, "node_modules")
+		if stat, err := os.Stat(nodeModulesPath); err == nil && stat.IsDir() {
+			return dir
+		}
+
+		// Check if there's a package.json with workspaces field
+		pkgPath := filepath.Join(dir, "package.json")
+		if data, err := os.ReadFile(pkgPath); err == nil {
+			var pkg packageJSON
+			if json.Unmarshal(data, &pkg) == nil && pkg.Workspaces != nil {
+				return dir
+			}
+		}
+
+		// Stop if we've reached a git repository root (don't go higher)
+		gitDir := filepath.Join(dir, ".git")
+		if stat, err := os.Stat(gitDir); err == nil && stat.IsDir() {
+			// Hit git boundary without finding workspace root, return start dir
+			return startDir
+		}
+
+		// Move up one directory
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			// Reached filesystem root, return original directory
+			return startDir
+		}
+		dir = parent
+	}
+}
 
 // URLRewrites returns the configured URL rewrites for request path resolution
 func (s *Server) URLRewrites() []config.URLRewrite {
@@ -199,7 +244,23 @@ func (s *Server) SetWatchDir(dir string) error {
 	if err != nil {
 		return fmt.Errorf("converting to absolute path: %w", err)
 	}
+
 	s.watchDir = absDir
+
+	// Detect workspace root for monorepo support (only in single-package mode)
+	// In workspace mode, server already runs from workspace root
+	// In single-package mode, store workspace root separately so /node_modules/
+	// can be served from workspace root while keeping package isolation
+	if !s.isWorkspace {
+		workspaceRoot := findWorkspaceRootForServe(absDir)
+		if workspaceRoot != absDir {
+			s.logger.Debug("Detected workspace root at %s", workspaceRoot)
+			s.logger.Debug("Will serve /node_modules/ from workspace root while keeping package isolation")
+			s.workspaceRoot = workspaceRoot
+		} else {
+			s.workspaceRoot = ""
+		}
+	}
 
 	// Parse config file for URL rewrites (if config file path was set)
 	configURLRewrites, configSourceFiles := s.parseConfigFileRewrites()

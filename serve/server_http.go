@@ -138,6 +138,7 @@ func (s *Server) setupMiddleware() {
 func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 	s.mu.RLock()
 	watchDir := s.watchDir
+	workspaceRoot := s.workspaceRoot
 	fs := s.fs
 	s.mu.RUnlock()
 
@@ -152,11 +153,18 @@ func (s *Server) serveStaticFiles(w http.ResponseWriter, r *http.Request) {
 		requestPath = "/"
 	}
 
+	// Special handling for /node_modules/ in workspace mode
+	// Serve from workspace root instead of package directory
+	baseDir := watchDir
+	if workspaceRoot != "" && strings.HasPrefix(requestPath, "/node_modules/") {
+		baseDir = workspaceRoot
+	}
+
 	// Build full file path
-	fullPath := filepath.Join(watchDir, strings.TrimPrefix(requestPath, "/"))
+	fullPath := filepath.Join(baseDir, strings.TrimPrefix(requestPath, "/"))
 
 	// Reject path traversal attempts
-	if rel, err := filepath.Rel(watchDir, fullPath); err != nil || strings.HasPrefix(rel, "..") {
+	if rel, err := filepath.Rel(baseDir, fullPath); err != nil || strings.HasPrefix(rel, "..") {
 		http.NotFound(w, r)
 		return
 	}
