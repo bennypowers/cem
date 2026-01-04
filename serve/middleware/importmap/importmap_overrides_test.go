@@ -22,6 +22,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"bennypowers.dev/cem/serve/middleware"
 )
 
 // TestImportMap_ConfigOverrideImportsOnly verifies config override with imports only
@@ -673,5 +675,109 @@ func TestImportMap_ConfigOverrideValidation(t *testing.T) {
 	}
 	if !foundInvalidScope {
 		t.Errorf("Expected warning about invalid scope key, got warnings: %v", warnings)
+	}
+}
+
+// TestImportMap_WorkspaceModeFileOverrides verifies file overrides work in workspace mode
+func TestImportMap_WorkspaceModeFileOverrides(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create workspace root package.json with workspaces
+	rootPackageJSON := `{
+  "name": "workspace-root",
+  "workspaces": ["packages/*"]
+}`
+	err := os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(rootPackageJSON), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write root package.json: %v", err)
+	}
+
+	// Create a workspace package
+	pkgDir := filepath.Join(tmpDir, "packages", "example")
+	err = os.MkdirAll(pkgDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create package directory: %v", err)
+	}
+
+	pkgJSON := `{
+  "name": "@workspace/example",
+  "customElements": "custom-elements.json",
+  "dependencies": {
+    "lit": "^3.0.0"
+  }
+}`
+	err = os.WriteFile(filepath.Join(pkgDir, "package.json"), []byte(pkgJSON), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write package package.json: %v", err)
+	}
+
+	// Create node_modules in workspace root
+	nodeModules := filepath.Join(tmpDir, "node_modules", "lit")
+	err = os.MkdirAll(nodeModules, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create node_modules: %v", err)
+	}
+
+	litPackageJSON := `{
+  "name": "lit",
+  "exports": {
+    ".": "./index.js"
+  }
+}`
+	err = os.WriteFile(filepath.Join(nodeModules, "package.json"), []byte(litPackageJSON), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write lit package.json: %v", err)
+	}
+
+	// Create import map override file with custom mappings
+	overrideFile := `{
+  "imports": {
+    "@components/ts-button.js": "/src/components/ts-button.ts",
+    "@utils/format.js": "/src/utils/format.ts"
+  }
+}`
+	overridePath := filepath.Join(tmpDir, "importmap.json")
+	err = os.WriteFile(overridePath, []byte(overrideFile), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write override file: %v", err)
+	}
+
+	// Generate workspace import map with override file
+	config := &Config{
+		InputMapPath: overridePath,
+		WorkspacePackages: []middleware.WorkspacePackage{
+			{
+				Name: "@workspace/example",
+				Path: pkgDir,
+			},
+		},
+	}
+
+	importMap, err := Generate(tmpDir, config)
+	if err != nil {
+		t.Fatalf("Generate returned error: %v", err)
+	}
+
+	if importMap == nil {
+		t.Fatal("Expected import map, got nil")
+	}
+
+	// Should have auto-generated workspace package
+	if _, exists := importMap.Imports["@workspace/example/"]; !exists {
+		t.Error("Expected auto-generated workspace package import")
+	}
+
+	// Should have auto-generated lit dependency
+	if _, exists := importMap.Imports["lit"]; !exists {
+		t.Error("Expected auto-generated lit import")
+	}
+
+	// Should have custom overrides from override file
+	if importMap.Imports["@components/ts-button.js"] != "/src/components/ts-button.ts" {
+		t.Errorf("Expected @components/ts-button.js override from file, got: %s", importMap.Imports["@components/ts-button.js"])
+	}
+
+	if importMap.Imports["@utils/format.js"] != "/src/utils/format.ts" {
+		t.Errorf("Expected @utils/format.js override from file, got: %s", importMap.Imports["@utils/format.js"])
 	}
 }
