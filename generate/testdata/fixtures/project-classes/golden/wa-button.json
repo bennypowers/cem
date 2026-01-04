@@ -94,6 +94,15 @@
               "kind": "field"
             },
             {
+              "name": "disabled",
+              "description": "Disables the button. Does not apply to link buttons.",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field"
+            },
+            {
               "name": "loading",
               "description": "Draws the button in a loading state.",
               "type": {

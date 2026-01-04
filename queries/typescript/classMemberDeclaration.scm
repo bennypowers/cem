@@ -66,6 +66,41 @@
     type: (type_annotation (_) @field.type)?
     !value) @field @member)
 
+( ; class field with initializer and @property decorator (fallback for any decorator options)
+  ; @examples:
+  ; @property({ type: Number }) size = 16
+  ; @property({ converter: customConverter }) value = 0
+  (public_field_definition
+    (decorator)*
+    (decorator
+      (call_expression
+        function: (identifier) @decorator.name (#eq? @decorator.name "property")))?
+    (decorator)*
+    (accessibility_modifier)? @member.privacy
+    "static"? @member.static
+    "readonly"? @field.readonly
+    name: (property_identifier) @member.name
+    type: (type_annotation (_) @field.type)?
+    value: (_)? @field.initializer
+      (#not-match? @field.initializer "\\(.*\\) \\=\\> "))) @field @member
+
+( ; class field without initializer and @property decorator (fallback for any decorator options)
+  ; @examples:
+  ; @property({ type: Number }) size?
+  ; @property({ converter: customConverter }) value!
+  (public_field_definition
+    (decorator)*
+    (decorator
+      (call_expression
+        function: (identifier) @decorator.name (#eq? @decorator.name "property")))?
+    (decorator)*
+    (accessibility_modifier)? @member.privacy
+    "static"? @member.static
+    "readonly"? @field.readonly
+    name: (property_identifier) @member.name
+    type: (type_annotation (_) @field.type)?
+    !value) @field @member)
+
 ; class constructor properties (typescript only)
 (method_definition
   ; example : constructor (public field: Type) {}

@@ -405,6 +405,15 @@
               "default": "''",
               "kind": "field",
               "attribute": "label"
+            },
+            {
+              "name": "size",
+              "description": "The size of the icon in pixels",
+              "type": {
+                "text": "number"
+              },
+              "kind": "field",
+              "attribute": "size"
             }
           ],
           "source": {
@@ -430,6 +439,14 @@
               },
               "default": "''",
               "fieldName": "label"
+            },
+            {
+              "name": "size",
+              "description": "The size of the icon in pixels",
+              "type": {
+                "text": "number"
+              },
+              "fieldName": "size"
             }
           ],
           "cssParts": [
@@ -494,6 +511,15 @@
               "default": "'Loading'",
               "kind": "field",
               "attribute": "label"
+            },
+            {
+              "name": "size",
+              "description": "The size of the spinner in pixels",
+              "type": {
+                "text": "number"
+              },
+              "kind": "field",
+              "attribute": "size"
             }
           ],
           "source": {
@@ -510,6 +536,14 @@
               },
               "default": "'Loading'",
               "fieldName": "label"
+            },
+            {
+              "name": "size",
+              "description": "The size of the spinner in pixels",
+              "type": {
+                "text": "number"
+              },
+              "fieldName": "size"
             }
           ],
           "cssParts": [

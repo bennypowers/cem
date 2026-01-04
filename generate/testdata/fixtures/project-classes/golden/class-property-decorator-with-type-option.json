@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-property-decorator-with-type-option.js",
+      "declarations": [
+        {
+          "name": "ClassPropertyDecoratorWithTypeOption",
+          "description": "Test class for properties with @property({ type: ... }) decorator options\nthat don't include attribute or reflect options.\n\nThis is a regression test for issue #191 where properties with",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "size",
+              "description": "Property with type option only (no initializer)\nThis was previously not detected",
+              "type": {
+                "text": "number"
+              },
+              "kind": "field",
+              "attribute": "size"
+            },
+            {
+              "name": "enabled",
+              "description": "Property with type option and initializer\nThis should also be detected",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "enabled"
+            },
+            {
+              "name": "label",
+              "description": "Property with type option only (required)",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "label"
+            },
+            {
+              "name": "name",
+              "description": "Property with bare decorator (for comparison, this works)",
+              "type": {
+                "text": "string"
+              },
+              "default": "'default'",
+              "kind": "field",
+              "attribute": "name"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-property-decorator-with-type-option.ts#L12"
+          },
+          "kind": "class",
+          "tagName": "class-property-decorator-with-type-option",
+          "attributes": [
+            {
+              "name": "size",
+              "description": "Property with type option only (no initializer)\nThis was previously not detected",
+              "type": {
+                "text": "number"
+              },
+              "fieldName": "size"
+            },
+            {
+              "name": "enabled",
+              "description": "Property with type option and initializer\nThis should also be detected",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "enabled"
+            },
+            {
+              "name": "label",
+              "description": "Property with type option only (required)",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "label"
+            },
+            {
+              "name": "name",
+              "description": "Property with bare decorator (for comparison, this works)",
+              "type": {
+                "text": "string"
+              },
+              "default": "'default'",
+              "fieldName": "name"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-property-decorator-with-type-option",
+          "declaration": {
+            "name": "ClassPropertyDecoratorWithTypeOption",
+            "module": "src/class-property-decorator-with-type-option.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ClassPropertyDecoratorWithTypeOption",
+          "declaration": {
+            "name": "ClassPropertyDecoratorWithTypeOption",
+            "module": "src/class-property-decorator-with-type-option.js"
+          }
+        }
+      ]
+    }
+  ]
+}
