@@ -531,7 +531,7 @@
           ],
           "demos": [
             {
-              "description": "Demonstrates ui-icon with different colors using inline styles.",
+              "description": "Demonstrates ui-icon with different colors using CSS.",
               "url": "https://bennypowers.dev/cem/examples/intermediate/ui-icon/colors/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-icon/demo/colors.html"
