@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/button-with-duplicates.js",
+      "declarations": [
+        {
+          "name": "ButtonWithDuplicates",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css-jsdoc-duplicates/src/button-with-duplicates.ts#L12"
+          },
+          "kind": "class",
+          "tagName": "button-with-duplicates",
+          "cssProperties": [
+            {
+              "name": "--button-bg",
+              "description": "Background color of the button",
+              "default": "#0070f3"
+            },
+            {
+              "name": "--button-color",
+              "description": "Text color",
+              "default": "white"
+            },
+            {
+              "name": "--button-border",
+              "description": "Border style",
+              "default": "none"
+            },
+            {
+              "name": "--button-radius",
+              "description": "Border radius",
+              "default": "4px"
+            },
+            {
+              "name": "--button-padding",
+              "description": "Internal padding",
+              "default": "0.5rem 1rem"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "button-with-duplicates",
+          "declaration": {
+            "name": "ButtonWithDuplicates",
+            "module": "src/button-with-duplicates.js"
+          }
+        }
+      ]
+    }
+  ]
+}

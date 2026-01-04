@@ -342,7 +342,30 @@ func (mp *ModuleProcessor) processClasses() error {
 			})
 			parsed.CssProperties = slices.Collect(maps.Values(props))
 			slices.SortStableFunc(parsed.CssProperties, sortCustomProperty)
-			ce.CustomElement.CssProperties = append(ce.CustomElement.CssProperties, parsed.CssProperties...)
+
+			// Merge CSS properties instead of blindly appending
+			// Create a map of existing properties (from JSDoc) by name
+			existingProps := make(map[string]*M.CssCustomProperty)
+			for i := range ce.CustomElement.CssProperties {
+				prop := &ce.CustomElement.CssProperties[i]
+				existingProps[prop.Name] = prop
+			}
+
+			// Merge new properties from parsed CSS
+			for _, newProp := range parsed.CssProperties {
+				if existing, exists := existingProps[newProp.Name]; exists {
+					// Merge: prefer JSDoc description, add CSS default value
+					if existing.Default == "" && newProp.Default != "" {
+						existing.Default = newProp.Default
+					}
+					if existing.Syntax == "" && newProp.Syntax != "" {
+						existing.Syntax = newProp.Syntax
+					}
+				} else {
+					// New property not in JSDoc, append it
+					ce.CustomElement.CssProperties = append(ce.CustomElement.CssProperties, newProp)
+				}
+			}
 		}
 
 		processed[className] = parsed
