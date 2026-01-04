@@ -20,6 +20,7 @@ package serve
 import (
 	"encoding/json"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -292,6 +293,7 @@ func (s *Server) broadcastSmartReload(changedPath, relPath string, invalidatedFi
 	}
 
 	// Broadcast reload only to affected pages
+	s.logger.Debug("Broadcasting reload to %d affected pages: %v", len(affectedPageURLs), affectedPageURLs)
 	files := []string{relPath}
 	msgBytes, err := s.CreateReloadMessage(files, "file-change")
 	if err != nil {
@@ -337,60 +339,70 @@ func (s *Server) handleFileChanges() {
 			return
 		}
 
-		// Process all files in the batched event
-		filesToProcess := event.Paths
-		if len(filesToProcess) == 0 {
-			filesToProcess = []string{event.Path}
-		}
+		// Recover from panics to prevent server crash
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					s.logger.Error("Panic in file change handler: %v", r)
+					s.logger.Debug("Stack trace: %s", string(debug.Stack()))
+				}
+			}()
 
-		// Check if path resolver needs rebuild (tsconfig.json, config files changed)
-		if s.shouldRebuildPathResolver(filesToProcess) {
-			s.logger.Info("Rebuilding path resolver due to source file change")
-			if err := s.rebuildPathResolver(); err != nil {
-				s.logger.Error("Failed to rebuild path resolver: %v", err)
-				// Continue processing - don't block other hot-reload logic
+			// Process all files in the batched event
+			filesToProcess := event.Paths
+			if len(filesToProcess) == 0 {
+				filesToProcess = []string{event.Path}
 			}
-			// Note: rebuildPathResolver() handles broadcasting reload message
-		}
 
-		// Filter to only relevant source files and collect TS/JS files
-		relevantFiles, tsJsFiles := s.filterRelevantFiles(filesToProcess)
-		if len(relevantFiles) == 0 {
-			continue
-		}
-
-		// Use first file for display/logging purposes
-		changedPath := relevantFiles[0]
-		relPath := changedPath
-		if s.watchDir != "" {
-			if rel, err := filepath.Rel(s.watchDir, changedPath); err == nil {
-				relPath = rel
+			// Check if path resolver needs rebuild (tsconfig.json, config files changed)
+			if s.shouldRebuildPathResolver(filesToProcess) {
+				s.logger.Info("Rebuilding path resolver due to source file change")
+				if err := s.rebuildPathResolver(); err != nil {
+					s.logger.Error("Failed to rebuild path resolver: %v", err)
+					// Continue processing - don't block other hot-reload logic
+				}
+				// Note: rebuildPathResolver() handles broadcasting reload message
 			}
-		}
 
-		// Resolve .js to .ts if source exists and log
-		displayPath := s.resolveSourceFile(relPath)
-		s.logger.Info("File changed: %s", displayPath)
+			// Filter to only relevant source files and collect TS/JS files
+			relevantFiles, tsJsFiles := s.filterRelevantFiles(filesToProcess)
+			if len(relevantFiles) == 0 {
+				return
+			}
 
-		// Collect affected files from transform cache and module graph
-		s.logger.Debug("About to collect affected files for %s", changedPath)
-		invalidatedFiles := s.collectAffectedFiles(changedPath)
-		s.logger.Debug("Collected %d invalidated files", len(invalidatedFiles))
+			// Use first file for display/logging purposes
+			changedPath := relevantFiles[0]
+			relPath := changedPath
+			if s.watchDir != "" {
+				if rel, err := filepath.Rel(s.watchDir, changedPath); err == nil {
+					relPath = rel
+				}
+			}
 
-		// Regenerate manifest if TS/JS files changed
-		s.logger.Debug("About to regenerate manifest if needed (tsJsFiles=%d)", len(tsJsFiles))
-		s.regenerateManifestIfNeeded(tsJsFiles)
-		s.logger.Debug("Manifest regeneration check complete")
+			// Resolve .js to .ts if source exists and log
+			displayPath := s.resolveSourceFile(relPath)
+			s.logger.Info("File changed: %s", displayPath)
 
-		// Regenerate import map if package.json or file structure changed
-		s.logger.Debug("About to regenerate import map if needed")
-		s.regenerateImportMapIfNeeded(event)
-		s.logger.Debug("Import map regeneration check complete")
+			// Collect affected files from transform cache and module graph
+			s.logger.Debug("About to collect affected files for %s", changedPath)
+			invalidatedFiles := s.collectAffectedFiles(changedPath)
+			s.logger.Debug("Collected %d invalidated files", len(invalidatedFiles))
 
-		// Broadcast smart reload to affected pages
-		s.logger.Debug("Calling broadcastSmartReload for %s (changedPath=%s, invalidatedFiles=%d)", relPath, changedPath, len(invalidatedFiles))
-		s.broadcastSmartReload(changedPath, relPath, invalidatedFiles)
-		s.logger.Debug("broadcastSmartReload completed for %s", relPath)
+			// Regenerate manifest if TS/JS files changed
+			s.logger.Debug("About to regenerate manifest if needed (tsJsFiles=%d)", len(tsJsFiles))
+			s.regenerateManifestIfNeeded(tsJsFiles)
+			s.logger.Debug("Manifest regeneration check complete")
+
+			// Regenerate import map if package.json or file structure changed
+			s.logger.Debug("About to regenerate import map if needed")
+			s.regenerateImportMapIfNeeded(event)
+			s.logger.Debug("Import map regeneration check complete")
+
+			// Broadcast smart reload to affected pages
+			s.logger.Debug("Calling broadcastSmartReload for %s (changedPath=%s, invalidatedFiles=%d)", relPath, changedPath, len(invalidatedFiles))
+			s.broadcastSmartReload(changedPath, relPath, invalidatedFiles)
+			s.logger.Debug("broadcastSmartReload completed for %s", relPath)
+		}() // End panic recovery function
 	}
 }
 
