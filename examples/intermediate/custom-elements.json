@@ -360,14 +360,14 @@
             },
             {
               "description": "Demonstrates multiple ui-card components arranged in a responsive grid layout.",
-              "url": "/elements/ui-card/demo/grid",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-card/grid/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-card/demo/grid.html"
               }
             },
             {
               "description": "Demonstrates ui-card with the heading attribute to set header text.",
-              "url": "/elements/ui-card/demo/heading",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-card/heading/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-card/demo/heading.html"
               }
@@ -532,21 +532,21 @@
           "demos": [
             {
               "description": "Demonstrates ui-icon with different colors using inline styles.",
-              "url": "/elements/ui-icon/demo/colors",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-icon/colors/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-icon/demo/colors.html"
               }
             },
             {
               "description": "Showcases all available icon names: check, x, chevron-right, heart, and star.",
-              "url": "/elements/ui-icon/demo/icons",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-icon/icons/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-icon/demo/icons.html"
               }
             },
             {
               "description": "Interactive demo showing clickable icons that toggle between states.",
-              "url": "/elements/ui-icon/demo/interactive",
+              "url": "https://bennypowers.dev/cem/examples/intermediate/ui-icon/interactive/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/intermediate/elements/ui-icon/demo/interactive.html"
               }
