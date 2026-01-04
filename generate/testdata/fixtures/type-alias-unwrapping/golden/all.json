@@ -267,7 +267,7 @@
               "type": {
                 "text": "number"
               },
-              "default": "0",
+              "default": 0,
               "kind": "field"
             },
             {
