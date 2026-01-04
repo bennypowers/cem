@@ -6,7 +6,7 @@ import { customElement, property } from 'lit/decorators.js';
  * that don't include attribute or reflect options.
  *
  * This is a regression test for issue #191 where properties with
- * @property({ type: Number }) were not being detected.
+ * `@property({ type: Number }) were not being detected.`
  */
 @customElement('class-property-decorator-with-type-option')
 export class ClassPropertyDecoratorWithTypeOption extends LitElement {
