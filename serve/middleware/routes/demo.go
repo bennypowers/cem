@@ -337,24 +337,18 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 
 		// Make filePath relative to package path for workspace mode
 		// This prevents path duplication when joining with PackagePath later
+		// Note: filePath is guaranteed to be relative after normalizeAndValidateDemoPath
 		relFilePath := filePath
-		if filepath.IsAbs(filePath) {
-			// If filePath is absolute, make it relative to pkg.Path
-			relFilePath, err = filepath.Rel(pkg.Path, filePath)
-			if err != nil {
-				return nil, fmt.Errorf("making demo path relative: %w", err)
-			}
-		} else {
-			// If filePath is relative, check if it starts with a prefix that duplicates pkg.Path
-			// e.g., if pkg.Path ends with "examples/intermediate" and filePath starts with "examples/intermediate"
-			// This can happen if the manifest paths are relative to workspace root
-			pkgDirName := filepath.Base(pkg.Path)
-			parentDir := filepath.Base(filepath.Dir(pkg.Path))
-			// Check for patterns like "examples/intermediate/elements/..." when pkg is .../examples/intermediate
-			possiblePrefix := filepath.Join(parentDir, pkgDirName)
-			if strings.HasPrefix(filePath, possiblePrefix+string(filepath.Separator)) {
-				relFilePath = strings.TrimPrefix(filePath, possiblePrefix+string(filepath.Separator))
-			}
+
+		// Check if filePath starts with a prefix that duplicates pkg.Path
+		// e.g., if pkg.Path ends with "examples/intermediate" and filePath starts with "examples/intermediate"
+		// This can happen if the manifest paths are relative to workspace root
+		pkgDirName := filepath.Base(pkg.Path)
+		parentDir := filepath.Base(filepath.Dir(pkg.Path))
+		// Check for patterns like "examples/intermediate/elements/..." when pkg is .../examples/intermediate
+		possiblePrefix := filepath.Join(parentDir, pkgDirName)
+		if strings.HasPrefix(filePath, possiblePrefix+string(filepath.Separator)) {
+			relFilePath = strings.TrimPrefix(filePath, possiblePrefix+string(filepath.Separator))
 		}
 
 		// Check for duplicate routes before assignment

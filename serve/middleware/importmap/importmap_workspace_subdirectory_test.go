@@ -74,21 +74,8 @@ func TestImportMap_WorkspaceSubdirectoryPaths(t *testing.T) {
 		t.Fatalf("Failed to create @lit/reactive-element package: %v", err)
 	}
 
+	// Include lit as a dependency of @lit/reactive-element (for transitive dependency testing)
 	reactiveElementPackageJSON := `{
-  "name": "@lit/reactive-element",
-  "version": "2.0.0",
-  "exports": {
-    ".": "./reactive-element.js",
-    "./decorators/custom-element.js": "./decorators/custom-element.js"
-  }
-}`
-	err = os.WriteFile(filepath.Join(reactiveElementPath, "package.json"), []byte(reactiveElementPackageJSON), 0644)
-	if err != nil {
-		t.Fatalf("Failed to write reactive-element package.json: %v", err)
-	}
-
-	// Add lit as a dependency of @lit/reactive-element (for transitive dependency testing)
-	reactiveElementPackageJSONWithDeps := `{
   "name": "@lit/reactive-element",
   "version": "2.0.0",
   "dependencies": {
@@ -99,9 +86,9 @@ func TestImportMap_WorkspaceSubdirectoryPaths(t *testing.T) {
     "./decorators/custom-element.js": "./decorators/custom-element.js"
   }
 }`
-	err = os.WriteFile(filepath.Join(reactiveElementPath, "package.json"), []byte(reactiveElementPackageJSONWithDeps), 0644)
+	err = os.WriteFile(filepath.Join(reactiveElementPath, "package.json"), []byte(reactiveElementPackageJSON), 0644)
 	if err != nil {
-		t.Fatalf("Failed to write reactive-element package.json with deps: %v", err)
+		t.Fatalf("Failed to write reactive-element package.json: %v", err)
 	}
 
 	// Create workspace package subdirectory (examples/kitchen-sink)

@@ -38,6 +38,11 @@ type packageJSON struct {
 // findWorkspaceRootForServe walks up the directory tree to find the workspace root
 // Returns the directory containing node_modules or workspace configuration
 // Stops at git repository boundaries to avoid breaking out of submodules
+//
+// Note: This is a simplified version of workspace.FindWorkspaceRoot that only looks for
+// node_modules or workspace config without the VCS preference logic. It shares logic with
+// serve/middleware/importmap/generate.go:findWorkspaceRoot (which accepts FileSystem for testing).
+// Consider consolidating these implementations in the future.
 func findWorkspaceRootForServe(startDir string) string {
 	dir := startDir
 	for {
