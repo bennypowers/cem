@@ -1,339 +1,55 @@
 ---
-title: Examples Overview
+title: Example Projects
 weight: 30
 ---
 
-The CEM repository includes several example projects to help you get started. Each demonstrates different patterns and complexity levels.
+The `cem` repository includes several example projects that demonstrate different approaches and complexity levels. Each example is a complete, working project you can explore, copy, and adapt to your needs. Don't overthink which one to start with—pick one that sounds interesting, run `npm install && npm run serve`, and start experimenting.
 
-## Decision Matrix
+## Available Examples
 
-Choose the right example based on your needs:
+**[minimal][minimal]** — The simplest possible custom element with one property, one slot, and basic JSDoc. Perfect for your first `cem` project or when you just want to see how the manifest workflow works. If you're brand new to `cem`, start here.
 
-| Example | Best For | Components | Complexity | Features |
-|---------|----------|------------|------------|----------|
-| **[Minimal](#minimal)** | First-time users, learning basics | 1 simple | ⭐ | Basic JSDoc, single property, slot, CSS part |
-| **[Intermediate](#intermediate)** | Realistic projects, multiple components | 3 related | ⭐⭐ | Component composition, events, demo discovery |
-| **[Kitchen Sink](#kitchen-sink)** | Reference implementation, all features | 1 comprehensive | ⭐⭐⭐⭐ | Forms, design tokens, all CSS APIs, microdata |
-| **[Vanilla](#vanilla)** | Framework-free approach | 1 simple | ⭐⭐ | No Lit, pure Web Components API |
-| **[TypeScript Paths](#typescript-paths)** | Advanced build setups | 1 simple | ⭐⭐⭐ | Path aliases, complex tsconfig |
+**[intermediate][intermediate]** — Multiple components that work together, showing realistic patterns like component composition and custom events. Use this as a template when building actual component libraries.
 
-## Minimal
+**[kitchen-sink][kitchensink]** — A production-ready button component demonstrating every `cem` feature: properties, slots, events, CSS parts, CSS custom properties, design tokens, form integration, and comprehensive documentation. Reference this when you need to see how a specific feature is documented.
 
-**Location**: `examples/minimal/`
-**Best for**: First-time CEM users
+**[ai-friendly-docs][aifriendlydocs]** — Comprehensive JSDoc documentation patterns for AI-friendly component descriptions, demonstrating RFC 2119 keywords, detailed event documentation, slot descriptions, and CSS property guidance. Use this as a reference for writing effective component documentation that works well with AI assistants.
 
-The simplest possible custom element demonstrating the absolute minimum needed.
+**[vanilla][vanilla]** — Pure Web Components without Lit or any framework, using only native browser APIs. Choose this if you prefer framework-free development or want to understand how `cem` works with vanilla JavaScript.
 
-### What's Included
+**[typescript-paths][typescriptpaths]** — Demonstrates TypeScript path aliases and complex compiler configurations. Use this if your project has custom import resolution or monorepo setup.
 
-- Single `hello-world` component
-- One reactive property (`name`)
-- Default slot for content projection
-- One CSS custom property (`--hello-world-color`)
-- One CSS part (`greeting`)
-- Basic JSDoc documentation
+## Quick Start
 
-### Project Structure
+Clone the repository and run any example:
 
-```
-minimal/
-├── .config/
-│   └── cem.yaml              # CEM configuration
-├── elements/
-│   └── hello-world/
-│       └── hello-world.ts    # The component
-├── package.json
-├── tsconfig.json
-└── README.md
-```
-
-### Quick Start
-
-```bash
-cd examples/minimal
+```shell
+git clone https://github.com/bennypowers/cem.git
+cd cem/examples/minimal  # or any other example
 npm install
-npm run analyze    # Generate manifest
-npm run serve      # Start dev server
+npm run serve            # Start dev server
 ```
 
-### When to Use
+Each example includes its own README with details about what it demonstrates and how to use it.
 
-- ✅ Learning CEM for the first time
-- ✅ Understanding manifest basics
-- ✅ Quick prototyping
-- ✅ Teaching custom elements
+## Which One Should I Use?
 
-### Next Steps From Here
+If you're learning `cem`, start with **minimal**. If you're building something real, use **intermediate** as your template. If you need to see how a specific feature works, check **kitchen-sink**. If you want to write AI-friendly documentation, see **ai-friendly-docs**. If you prefer vanilla JavaScript, try **vanilla**. If you have complex TypeScript setup, see **typescript-paths**.
 
-After mastering minimal, explore **[Intermediate](#intermediate)** for multi-component patterns.
-
-## Intermediate
-
-**Location**: `examples/intermediate/`
-**Best for**: Realistic multi-component projects
-
-Demonstrates realistic patterns with multiple related components that work together.
-
-### What's Included
-
-- Three related components (e.g., card, card-header, card-body)
-- Component composition patterns
-- Custom events between components
-- Multiple properties per component
-- Demo file discovery
-- Practical JSDoc examples
-
-### Project Structure
-
-```
-intermediate/
-├── .config/
-│   └── cem.yaml
-├── elements/
-│   ├── my-card/
-│   │   ├── my-card.ts
-│   │   └── demo/
-│   │       └── index.html
-│   ├── my-card-header/
-│   │   └── my-card-header.ts
-│   └── my-card-body/
-│       └── my-card-body.ts
-├── package.json
-└── README.md
-```
-
-### Quick Start
-
-```bash
-cd examples/intermediate
-npm install
-npm run analyze
-npm run serve
-```
-
-### When to Use
-
-- ✅ Building component libraries
-- ✅ Learning component composition
-- ✅ Understanding event patterns
-- ✅ Realistic project structure
-
-### Next Steps From Here
-
-For advanced features, see **[Kitchen Sink](#kitchen-sink)**. For framework-free approach, try **[Vanilla](#vanilla)**.
-
-## Kitchen Sink
-
-**Location**: `examples/kitchen-sink/`
-**Best for**: Reference implementation, exploring all CEM features
-
-Comprehensive demonstration of EVERY Custom Elements Manifest feature in one production-ready component.
-
-### What's Included
-
-The `demo-button` component showcases:
-
-- **15+ properties** - All attribute types (string, boolean, enum, union)
-- **3 slots** - Default, start, end with conditional rendering
-- **4+ events** - Click, focus, blur, invalid
-- **5 CSS parts** - Comprehensive styling API
-- **8 CSS custom properties** - Complete theming system
-- **3 public methods** - Click, focus, blur
-- **Design tokens** - Integration with design token spec
-- **Form integration** - Submit, reset, validation
-- **Link mode** - Renders as `<a>` when href provided
-- **Demo discovery** - HTML microdata patterns
-- **Comprehensive docs** - Production-quality JSDoc
-
-### Project Structure
-
-```
-kitchen-sink/
-├── .config/
-│   └── cem.yaml              # Config with tokens & demos
-├── elements/
-│   └── demo-button/
-│       ├── demo-button.ts    # Comprehensive component
-│       └── demo/
-│           ├── variants.html # All color variants
-│           └── states.html   # Interactive states
-├── design-tokens.json        # Design token specification
-├── package.json
-└── README.md
-```
-
-### Quick Start
-
-```bash
-cd examples/kitchen-sink
-npm install
-npm run analyze
-npm run serve
-```
-
-### When to Use
-
-- ✅ Reference for production components
-- ✅ Understanding all CEM features
-- ✅ Design system integration
-- ✅ Form components
-- ✅ Complex component APIs
-
-### Features Comparison
-
-| Feature | Minimal | Intermediate | **Kitchen Sink** |
-|---------|---------|--------------|------------------|
-| Properties | 1 | 5-7 | **15+** |
-| Slots | 1 | 2-3 | **3** |
-| CSS Parts | 1 | 2-4 | **5** |
-| Events | 0 | 1-2 | **4** |
-| Design Tokens | ❌ | ❌ | **✅** |
-| Demo Discovery | ❌ | ✅ | **✅** |
-| Forms | ❌ | ❌ | **✅** |
-| Public Methods | 0 | 0 | **3** |
-
-## Vanilla
-
-**Location**: `examples/vanilla/`
-**Best for**: Framework-free Web Components
-
-Pure Web Components without Lit or any framework, using only native browser APIs.
-
-### What's Included
-
-- `vanilla-counter` component
-- Pure JavaScript (no framework)
-- Native Shadow DOM API
-- Direct template manipulation
-- Event handling
-- Reactive updates without decorators
-
-### Project Structure
-
-```
-vanilla/
-├── .config/
-│   └── cem.yaml
-├── elements/
-│   └── vanilla-counter/
-│       ├── vanilla-counter.js
-│       └── demo/
-│           └── index.html
-├── package.json
-└── README.md
-```
-
-### Quick Start
-
-```bash
-cd examples/vanilla
-npm install
-npm run analyze
-npm run serve
-```
-
-### When to Use
-
-- ✅ Learning native Web Components API
-- ✅ Framework-free projects
-- ✅ Minimal dependencies
-- ✅ Maximum control over implementation
-
-### Next Steps From Here
-
-Compare with **[Minimal](#minimal)** to see how Lit simplifies component development.
-
-## TypeScript Paths
-
-**Location**: `examples/typescript-paths/`
-**Best for**: Projects with complex TypeScript configurations
-
-Demonstrates CEM's support for TypeScript path aliases and advanced compiler configurations.
-
-### What's Included
-
-- TypeScript path mapping (`@/elements/*`)
-- Complex tsconfig.json setup
-- Import alias resolution
-- Build tool integration patterns
-
-### Project Structure
-
-```
-typescript-paths/
-├── .config/
-│   └── cem.yaml
-├── src/
-│   └── elements/
-│       └── path-demo/
-│           └── path-demo.ts
-├── tsconfig.json             # Advanced configuration
-├── package.json
-└── README.md
-```
-
-### Quick Start
-
-```bash
-cd examples/typescript-paths
-npm install
-npm run analyze
-npm run serve
-```
-
-### When to Use
-
-- ✅ Using TypeScript path aliases
-- ✅ Complex monorepo setups
-- ✅ Advanced build configurations
-- ✅ Custom import resolution
-
-## Running All Examples
-
-From the repository root:
-
-```bash
-# Install dependencies for all examples
-npm install
-
-# Run an example
-cd examples/minimal
-npm run analyze
-npm run serve
-```
-
-Each example is self-contained with its own `package.json` and configuration.
-
-## Common Patterns Across Examples
-
-All examples demonstrate:
-
-- **CEM configuration** - `.config/cem.yaml`
-- **Manifest generation** - `npm run analyze`
-- **Dev server** - `npm run serve`
-- **TypeScript** - Modern ES modules
-- **JSDoc** - Component documentation
-
-## Choosing Your Starting Point
-
-**Never used CEM?**
-→ Start with **[Minimal](#minimal)**
-
-**Building a component library?**
-→ Use **[Intermediate](#intermediate)** as template
-
-**Need all features documented?**
-→ Reference **[Kitchen Sink](#kitchen-sink)**
-
-**Prefer vanilla JavaScript?**
-→ Try **[Vanilla](#vanilla)**
-
-**Complex build setup?**
-→ See **[TypeScript Paths](#typescript-paths)**
+The examples are meant to be copied and modified. Take what works, remove what doesn't, and adapt them to your project's needs.
 
 ## See Also
 
-- **[Getting Started](../getting-started/)** - Step-by-step first project
-- **[Development Workflow](../workflow/)** - Understanding the dev cycle
-- **[Working with Demos](../demos/)** - Demo organization strategies
-- **[Configuration Reference](/docs/reference/configuration/)** - Complete config options
+- **[Getting Started][gettingstarted]** - Complete walkthrough for your first project
+- **[Development Workflow][developmentworkflow]** - Understanding the write-generate-serve-test cycle
+- **[Configuration Reference][configurationreference]** - All config options explained
+
+[minimal]: https://github.com/bennypowers/cem/tree/main/examples/minimal
+[intermediate]: https://github.com/bennypowers/cem/tree/main/examples/intermediate
+[kitchensink]: https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink
+[aifriendlydocs]: https://github.com/bennypowers/cem/tree/main/examples/ai-friendly-docs
+[vanilla]: https://github.com/bennypowers/cem/tree/main/examples/vanilla
+[typescriptpaths]: https://github.com/bennypowers/cem/tree/main/examples/typescript-paths
+[gettingstarted]: ../getting-started/
+[developmentworkflow]: ../workflow/
+[configurationreference]: /docs/reference/configuration/

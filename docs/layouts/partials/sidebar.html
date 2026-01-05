@@ -5,13 +5,22 @@
   <div>
     <label class="toggle" title="Docs menu" role="button">Docs menu {{ partial "sprite" (dict "icon" "carly") }}</label>
   </div>
-  {{- template "tree" (dict "page" . "section" .FirstSection)  }}
+  {{- $docsRoot := .Site.GetPage "/docs" }}
+  {{- range $docsRoot.Sections.ByWeight }}
+    {{- template "tree" (dict "page" $ "section" .) }}
+  {{- end }}
+  {{- range $docsRoot.Pages.ByWeight }}
+    {{- if .IsPage }}
+      <h3 class="section-link{{ if eq .RelPermalink $.RelPermalink }} active{{ end }}"><a id="docs-{{ anchorize .Title }}" href="{{ .Permalink }}">{{ .Title }}</a></h3>
+    {{- end }}
+  {{- end }}
   {{- define "tree" }}
   {{- $section := .section }}
   {{- $page := .page }}
   {{- $permalink := $page.RelPermalink }}
+  {{- $isTopLevel := or (not $section.Parent) (eq $section.Parent.Section "") (strings.HasSuffix $section.Parent.RelPermalink "/docs/") }}
   <section class="section inner">
-    <h2 class="section-title{{ if or (eq $section.RelPermalink $permalink) ($page.IsDescendant $section) }} active{{ end }}"><a href="{{ $section.Permalink }}" class="group">{{ $section.Title }}</a></h2>
+    {{ if $isTopLevel }}<h2 class="section-title{{ if or (eq $section.RelPermalink $permalink) ($page.IsDescendant $section) }} active{{ end }}"><a href="{{ $section.Permalink }}" class="group">{{ $section.Title }}</a></h2>{{ else }}<h3 class="section-link{{ if or (eq $section.RelPermalink $permalink) ($page.IsDescendant $section) }} active{{ end }}"><a id="docs-{{ anchorize $section.Title }}" href="{{ $section.Permalink }}">{{ $section.Title }}</a></h3>{{ end }}
     {{- if eq $section.RelPermalink $permalink }}
       {{- $scratch := .page.Content -}}
       {{- if ne (print .page.TableOfContents) "" }}
@@ -24,7 +33,12 @@
       <section class="" id="docs-{{ anchorize $section.Title }}">
         {{- range . }}
           {{- if .IsPage }}
-            <h3 class="section-link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a id="docs-{{ anchorize .Title }}" href="{{ .Permalink }}">{{ .Title }}</a></h3>
+            {{- $parentIsTopLevel := or (not .Parent.Parent) (eq .Parent.Parent.Section "") (strings.HasSuffix .Parent.Parent.RelPermalink "/docs/") }}
+            {{- if $parentIsTopLevel }}
+              <h3 class="section-link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a id="docs-{{ anchorize .Title }}" href="{{ .Permalink }}">{{ .Title }}</a></h3>
+            {{- else }}
+              <h4 class="section-link{{ if eq .RelPermalink $permalink }} active{{ end }}"><a id="docs-{{ anchorize .Title }}" href="{{ .Permalink }}">{{ .Title }}</a></h4>
+            {{- end }}
             {{- if eq .RelPermalink $permalink }}
               {{ $toc_id := printf "toc-%s" (replace (urlize .Title) "." "-") }}
               {{- if ne (print .TableOfContents) "" }}

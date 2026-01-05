@@ -1,346 +1,58 @@
 ---
 title: Using LSP Features
-weight: 90
+weight: 80
 ---
 
-Once you've set up the [LSP integration](/docs/installation/lsp/), you can leverage powerful editor features for working with custom elements.
+The [Language Server Protocol][lspspec] integration provides editor features like autocomplete, hover documentation, and go-to-definition for custom elements in HTML and TypeScript files. After [setting up the LSP][lspsetup], your editor reads your [Custom Elements Manifest][customelementsjson] to power intelligent code completion for tag names, attributes, slot names, and enum values. This complements the [development workflow][workflow] by catching typos and invalid attributes as you write code, reducing the time spent switching between editor and browser during the [test phase][testphase].
 
-## Prerequisites
-
-- CEM LSP configured in your editor (see [LSP Integration](/docs/installation/lsp/))
-- A `custom-elements.json` manifest in your project (`cem generate`)
+The LSP uses your manifest as the source of truth, so [running `cem generate`][generate] after documenting components makes those APIs immediately available in your editor. Features work in plain HTML files, Lit template literals, and anywhere custom elements appear in your code.
 
 ## Autocomplete
 
-The LSP provides intelligent autocomplete for custom elements in HTML and TypeScript files.
+Press <kbd>Ctrl</kbd>+<kbd>Space</kbd> (or your editor's autocomplete trigger) after typing `<my-bu` to see custom element suggestions like `my-button` and `my-button-group` with their descriptions. Type a space after a tag name to see available attributes with type information and descriptions. For attributes with enum values like `variant`, autocomplete suggests valid options like `primary`, `secondary`, and `danger`. When adding `slot=""` attributes, autocomplete suggests valid slot names based on the parent element's documented slots.
 
-### Tag Name Completion
-
-Start typing a tag name and see suggestions for your custom elements:
-
-```html
-<my-bu|
-```
-
-Press Ctrl+Space (or your editor's autocomplete trigger) to see:
-- `my-button` - A clickable button component
-- `my-button-group` - Container for related buttons
-
-### Attribute Completion
-
-Type a space after a tag name to see available attributes:
-
-```html
-<my-button |
-```
-
-Suggestions include:
-- `variant` - Button style variant
-- `size` - Button size
-- `disabled` - Disable the button
-- `loading` - Show loading state
-
-### Attribute Value Completion
-
-For attributes with known values (like enums), get value suggestions:
-
-```html
-<my-button variant="|"
-```
-
-Suggestions show:
-- `primary` - Primary action button
-- `secondary` - Secondary action button
-- `danger` - Destructive action button
-
-### Slot Attribute Completion
-
-When elements have named slots, autocomplete suggests valid slot names:
-
-```html
-<my-card>
-  <div slot="|">
-```
-
-Suggestions:
-- `header` - Card header content
-- `footer` - Card footer content
-- `media` - Card media content
-
-### In Lit Templates
-
-The LSP works in Lit `html` template literals:
-
-```typescript
-render() {
-  return html`
-    <my-button variant="primary">
-      <span slot="start">📝</span>
-      Click Me
-    </my-button>
-  `;
-}
-```
-
-Get autocomplete for:
-- Tag names
-- Attributes
-- Slot names
-- Event names (with `@` prefix)
-- Properties (with `.` prefix)
-- Boolean attributes (with `?` prefix)
+The LSP works in Lit template literals with special syntax support—use `@eventName` for events, `.propertyName` for properties, and `?booleanAttr` for boolean attributes. All completions include inline documentation from your manifest.
 
 ## Hover Documentation
 
-Hover over custom elements and attributes to see inline documentation.
-
-### Element Hover
-
-Hover over a tag name to see:
-
-```html
-<my-button>
-     ↑ hover here
-```
-
-**Documentation shows**:
-- Element summary and description
-- Complete API (properties, attributes, slots, events)
-- CSS custom properties and parts
-- Links to source code
-
-### Attribute Hover
-
-Hover over an attribute to see:
-
-```html
-<my-button variant="primary">
-           ↑ hover here
-```
-
-**Documentation shows**:
-- Attribute description
-- Type information
-- Default value
-- Valid values (for enums)
-- Deprecation warnings
-
-### CSS Part Hover
-
-Hover over `::part()` selectors to see styling guidance:
-
-```css
-my-button::part(label) {
-                ↑ hover here
-  font-weight: bold;
-}
-```
+Hover over tag names to see element summaries, complete API documentation (properties, attributes, slots, events), CSS custom properties and parts, and links to source code. Hover over attributes to see descriptions, type information, default values, and valid enum values. In CSS files, hover over `::part()` selectors to see styling guidance for that shadow part.
 
 ## Go-to-Definition
 
-Jump to the source code of custom elements.
-
-### From Tag Names
-
-1. **Position cursor** on a tag name: `<my-button>`
-2. **Trigger go-to-definition** (F12 in VS Code, `gd` in Neovim)
-3. **Jump to source** - Opens the component source file
-
-### From Attributes
-
-1. **Position cursor** on an attribute: `variant="primary"`
-2. **Trigger go-to-definition**
-3. **Jump to property definition** in the component class
-
-Works for:
-- Properties
-- Attributes
-- Reflected properties
-- Custom events (future)
-- Slots (future)
+Position your cursor on a tag name like `<my-button>` and press <kbd>F12</kbd> (VS Code) or <kbd>ctrl</kbd>-<kbd>]</kbd> (Neovim) to jump to the component source file. Works from attributes too—trigger go-to-definition on `variant="primary"` to jump to the property definition in the component class.
 
 ## Find References
 
-Find all usages of a custom element across your workspace.
-
-### How to Use
-
-1. **Position cursor** anywhere on a custom element tag
-2. **Trigger find-references** (Shift+F12 in VS Code, `gr` in Neovim)
-3. **See all usages** across HTML, TypeScript, and JavaScript files
-
-### What You Get
-
-- Workspace-wide search
-- Filtered by `.gitignore` (excludes `node_modules/`, etc.)
-- Shows only start tags (avoids duplicates)
-- Works in template literals
-
-**Example results**:
-```
-elements/my-app/demo/index.html (3 matches)
-elements/my-dashboard/my-dashboard.ts (1 match)
-docs/examples/buttons.html (2 matches)
-```
+Position your cursor on a custom element tag and press <kbd>Shift</kbd>+<kbd>F12</kbd> (VS Code) or <kbd>gr</kbd> (Neovim) to see all usages across HTML, TypeScript, and JavaScript files. Results are filtered by `.gitignore` to exclude `node_modules/`, show only start tags to avoid duplicates, and work in template literals.
 
 ## Workspace Symbols
 
-Search for custom elements across your entire workspace.
-
-### How to Use
-
-1. **Open symbol search** (Ctrl+T in VS Code, `:Telescope lsp_workspace_symbols` in Neovim)
-2. **Type element name** (fuzzy matching)
-3. **Jump to definition**
-
-**Example**:
-- Search: `btn`
-- Finds: `my-button`, `icon-button`, `button-group`
+Press <kbd>Ctrl</kbd>+<kbd>T</kbd> (VS Code) or use `:Telescope lsp_workspace_symbols` (Neovim) to search for custom elements across your entire workspace with fuzzy matching. Typing `btn` finds `my-button`, `icon-button`, and `button-group`.
 
 ## Error Detection & Quick Fixes
 
-The LSP validates your HTML and provides one-click fixes.
+The LSP validates HTML and provides one-click fixes for common errors. Position your cursor on red squiggles and press <kbd>Ctrl</kbd>+<kbd>.</kbd> (VS Code) or <kbd>&lt;leader&gt;ca</kbd> (Neovim) to see available fixes.
 
-### Invalid Slot Names
-
-```html
-<my-card>
-  <div slot="heade">Title</div>
-  <!-- ❌ Red squiggles appear -->
-</my-card>
-```
-
-**Quick fix available**:
-1. Position cursor on the error
-2. Trigger quick fix (Ctrl+. in VS Code, `<leader>ca` in Neovim)
-3. Select "Change 'heade' to 'header'"
-4. Fixed automatically!
-
-### Typos in Tag Names
-
-```html
-<my-buttom>Click</my-buttom>
-<!-- ❌ Typo detected -->
-```
-
-**Quick fixes**:
-- "Change 'my-buttom' to 'my-button'"
-- "Add import for my-button"
-
-### Invalid Attribute Names
-
-```html
-<my-button varient="primary">
-<!-- ❌ Attribute typo -->
-```
-
-**Quick fix**:
-- "Change 'varient' to 'variant'"
-
-### Invalid Attribute Values
-
-```html
-<my-button variant="primar">
-<!-- ❌ Invalid value (should be "primary") -->
-```
-
-**Quick fix**:
-- "Change 'primar' to 'primary'"
-
-### Missing Imports
-
-```html
-<my-button>Click</my-button>
-<!-- ❌ Element exists but not imported -->
-```
-
-**Quick fix**:
-- "Add import for my-button from '@my-lib/button'"
-
-## Tips & Tricks
-
-### Enable Verbose Logging
-
-See what the LSP is doing:
-
-**VS Code**: Set `"cem.lsp.trace.server": "verbose"`
-**Neovim**: Set `trace = 'verbose'` in LSP config
-
-Logs show:
-- Manifest loading
-- File parsing
-- Completion requests
-- Validation results
-
-### Regenerate Manifest for Fresh Data
-
-The LSP watches your manifest file, but you may need to regenerate:
-
-```sh
-cem generate
-```
-
-The LSP picks up changes automatically.
-
-### Use in Monorepos
-
-The LSP discovers manifests from:
-- Local `custom-elements.json`
-- Dependencies in `package.json`
-- Workspace packages
-
-No special configuration needed.
-
-### Combine with Dev Server
-
-Run both together for the best experience:
-
-**Terminal 1**:
-```sh
-cem serve
-```
-
-**Terminal 2** (optional, for manifest regeneration):
-```sh
-cem generate --watch
-```
-
-Now you have:
-- Live preview in browser
-- Autocomplete and validation in editor
-- Auto-regenerating manifest
+Detected errors include invalid slot names (`slot="heade"` suggests `"header"`), typos in tag names (`<my-buttom>` suggests `<my-button>`), invalid attribute names (`varient` suggests `variant`), invalid enum values (`variant="primar"` suggests `"primary"`), and missing imports (suggests adding `import` statements for undeclared elements).
 
 ## Troubleshooting
 
-### No Autocomplete
+If autocomplete doesn't work, check that `custom-elements.json` exists, verify the LSP is running in your editor's status bar, regenerate the manifest with `cem generate`, and restart your editor if needed.
 
-1. **Check manifest exists**: `ls custom-elements.json`
-2. **Verify LSP is running**: Check editor's LSP status
-3. **Regenerate manifest**: `cem generate`
-4. **Restart editor**: Reload window
+If suggestions are outdated, regenerate the manifest—the LSP watches for changes and reloads automatically. For validation errors that don't appear, check that diagnostics are enabled in your editor and that your manifest contains element schemas.
 
-### Outdated Suggestions
-
-1. **Regenerate manifest**: `cem generate`
-2. **Check file watcher**: Ensure manifest changes are detected
-3. **Restart LSP**: Reload editor or restart LSP client
-
-### Validation Errors Don't Appear
-
-1. **Check diagnostics are enabled** in your editor
-2. **Verify manifest has element schemas**
-3. **Enable verbose logging** to see validation results
-
-### Performance Issues
-
-For large projects:
-- Limit workspace scope
-- Exclude build directories in `.gitignore`
-- Disable features you don't use
+For large projects with performance issues, limit workspace scope, exclude build directories in `.gitignore`, or enable verbose logging (`"cem.lsp.trace.server": "verbose"` in VS Code, `trace = 'verbose'` in Neovim) to diagnose what's happening.
 
 ## See Also
 
-- **[LSP Integration](/docs/installation/lsp/)** - Setup instructions
-- **[LSP Protocol Reference](/docs/reference/lsp/)** - Technical details
-- **[Development Workflow](/docs/usage/workflow/)** - How LSP fits into the dev cycle
-- **[Editor Configuration](/docs/installation/editors/)** - Editor-specific tips
+- **[LSP Integration][lspsetup]** - Setup instructions for editors
+- **[LSP Protocol Reference][lspprotocol]** - Technical implementation details
+- **[Development Workflow][workflow]** - How LSP fits into the dev cycle
+
+[lspspec]: https://microsoft.github.io/language-server-protocol/
+[lspsetup]: /docs/installation/lsp/
+[customelementsjson]: https://github.com/webcomponents/custom-elements-json
+[workflow]: ../workflow/
+[testphase]: ../workflow/#4-test
+[generate]: /docs/reference/commands/generate/
+[lspprotocol]: /docs/reference/lsp/

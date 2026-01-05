@@ -3,48 +3,78 @@ title: Development Workflow
 weight: 20
 ---
 
-Understanding the complete CEM development workflow will help you work efficiently with custom elements.
+`cem` uses a manifest-driven development approach where you write custom
+elements with JSDoc documentation, generate a JSON manifest from your source
+code, and use that manifest to power developer tooling. The manifest enables 
+[LSP features][lspfeatures] like autocomplete and validation in your editor, 
+provides AI assistants with component information through [MCP][mcp], and drives 
+the dev server's automatic documentation and [interactive 
+controls][interactivecontrols]. This means your documentation isn't just 
+comments—it becomes the foundation for your entire development experience.
+
+The workflow follows a continuous cycle: write components with JSDoc, generate
+the manifest to capture their APIs, serve them with hot reload for rapid
+iteration, test with [interactive knobs][interactiveknobs] and manual 
+validation, then edit based on feedback. For quick styling or implementation 
+tweaks you can skip regenerating the manifest, but when you change public APIs 
+(properties, slots, events, CSS parts) you'll regenerate to keep tooling in 
+sync. The dev server provides [buildless TypeScript 
+transformation][buildlesstypescripttransformation], automatic [import 
+maps][importmaps] from package.json, and live reload, making the edit-test loop 
+nearly instantaneous.
 
 ## The Core Cycle
 
-CEM follows a manifest-driven development workflow with five key phases:
+`cem` follows a manifest-driven development workflow with five key phases:
 
-```
-┌─────────────────────────────────────────────────────┐
-│                                                     │
-│  Write → Generate → Serve → Test → Edit            │
-│    ↑                                       ↓        │
-│    └───────────────────────────────────────┘        │
-│                                                     │
-└─────────────────────────────────────────────────────┘
-```
+{{< mermaid >}}
+graph LR
+    A[Write] --> B[Generate]
+    B --> C[Serve]
+    C --> D[Test]
+    D --> E[Edit]
+    E --> A
+{{< /mermaid >}}
 
 ### 1. Write
 
 Create your custom element with JSDoc documentation:
 
 ```typescript
+import { LitElement, html, css } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
+
 /**
- * A simple greeting component
+ * Displays a personalized greeting message
  *
- * @summary Displays a personalized greeting message
- * @slot - Default slot for custom content
- * @csspart greeting - The greeting text container
- * @cssprop --greeting-color - Text color
+ * @summary A simple greeting component
  */
 @customElement('hello-world')
 export class HelloWorld extends LitElement {
+  static styles = css`
+    :host {
+      display: block;
+      font-family: sans-serif;
+    }
+
+    #greeting {
+      /** Text color (default: currentColor) */
+      color: var(--greeting-color, currentColor);
+      padding: 1rem;
+    }
+  `;
+
   /**
    * The name to greet
-   * @type {string}
-   * @attr name
    */
   @property() name = 'World';
 
   render() {
     return html`
-      <div part="greeting">
+      <!-- The greeting text container -->
+      <div id="greeting" part="greeting">
         Hello, ${this.name}!
+        <!-- Default slot for custom content -->
         <slot></slot>
       </div>
     `;
@@ -52,11 +82,7 @@ export class HelloWorld extends LitElement {
 }
 ```
 
-**Key points**:
-- Use JSDoc for all public APIs
-- Document attributes, properties, slots, events, CSS parts, and CSS custom properties
-- Include examples and usage guidance
-- Follow your design system's documentation standards
+Use JSDoc to document all public APIs: attributes, properties, slots, events, CSS parts, and CSS custom properties. See [Documenting Components][documenting] for complete JSDoc tag reference and examples.
 
 ### 2. Generate
 
@@ -66,19 +92,9 @@ Run `cem generate` to create or update your manifest:
 cem generate
 ```
 
-This analyzes your code and produces `custom-elements.json` with metadata about your components.
+This analyzes your code and produces `custom-elements.json` with metadata about your components. Regenerate after adding new components or changing public APIs (properties, attributes, slots, events, CSS APIs), and before committing to keep the manifest in sync. For quick styling or implementation tweaks during development, you can skip regeneration since `cem serve` works without it.
 
-**When to generate**:
-- ✅ **After adding new components** - So they appear in tooling
-- ✅ **After changing APIs** - When you add/remove properties, attributes, slots, etc.
-- ✅ **Before committing** - Keep manifest in sync with code
-- ⚠️ **Optional during dev** - `cem serve` can work without regenerating if you're just tweaking implementation
-
-The manifest enables:
-- LSP features (autocomplete, hover, validation)
-- MCP integration (AI assistant access)
-- Dev server component listing
-- Documentation generation
+The manifest powers LSP features like autocomplete and validation, enables MCP integration for AI assistants, drives the dev server's component listing, and supports documentation generation.
 
 ### 3. Serve
 
@@ -88,69 +104,15 @@ Start the development server:
 cem serve
 ```
 
-The server provides:
-- **Component listing** - Browse all elements
-- **Live demos** - See components in action
-- **Hot reload** - Changes refresh automatically
-- **Buildless dev** - Write TypeScript without build steps
-- **Import maps** - Use npm packages without bundling
-
-The server runs at `http://localhost:8000` by default.
+The server provides a component listing to browse all elements, live demos to see components in action, hot reload for automatic refresh, buildless TypeScript development, and import maps for using npm packages without bundling. It runs at `http://localhost:8000` by default.
 
 ### 4. Test
 
-Interact with your components in the browser:
-
-**Manual Testing**:
-- Try different property values
-- Test user interactions (clicks, typing, etc.)
-- Verify responsive behavior
-- Check accessibility with screen readers
-- Test in different browsers
-
-**Interactive Knobs**:
-Add knobs to your demos for easy property testing:
-
-```html
-<hello-world name="{{name}}"></hello-world>
-
-<script type="module">
-  import '@pwrs/cem/knobs';
-</script>
-```
-
-See [Interactive Knobs](../knobs/) for details.
-
-**Automated Testing**:
-While the dev server is great for manual testing, also write automated tests:
-
-```typescript
-import { fixture, expect } from '@open-wc/testing';
-import './hello-world.js';
-
-it('displays greeting', async () => {
-  const el = await fixture('<hello-world name="Test"></hello-world>');
-  expect(el.shadowRoot.textContent).to.include('Hello, Test!');
-});
-```
+Interact with your components in the browser by trying different property values, testing user interactions like clicks and typing, verifying responsive behavior, checking accessibility with screen readers, and testing across browsers. Use [interactive knobs][interactiveknobs] to tweak element attributes and properties in real-time.
 
 ### 5. Edit
 
-Based on testing, make changes to your component:
-
-**Quick fixes** (no manifest update needed):
-- Styling changes
-- Implementation details
-- Internal logic
-- Performance optimizations
-
-**API changes** (requires manifest update):
-- New properties, attributes, or slots
-- Changed property types or defaults
-- New events or CSS APIs
-- Updated documentation
-
-After API changes, regenerate the manifest:
+Based on testing, make changes to your component. Quick fixes like styling changes, implementation details, internal logic, and performance optimizations don't need a manifest update. API changes—adding properties, attributes, slots, events, or CSS APIs, changing types or defaults, or updating documentation—require regenerating the manifest:
 
 ```bash
 cem generate
@@ -162,27 +124,11 @@ The dev server will detect the change and reload automatically.
 
 ### LSP Integration
 
-The Language Server Protocol uses your manifest to provide editor features:
-
-**During Write phase**:
-- Autocomplete when using your elements in HTML
-- Hover documentation for attributes
-- Validation of slot names and attribute values
-- Go-to-definition from usage to source
-
-**Setup**: See [LSP Integration](/docs/installation/lsp/)
+The Language Server Protocol uses your manifest to provide autocomplete when using elements in HTML, hover documentation for attributes, validation of slot names and attribute values, and go-to-definition from usage to source. See [LSP Integration][lspintegration] for setup.
 
 ### MCP Integration
 
-The Model Context Protocol gives AI assistants access to your components:
-
-**AI can**:
-- Understand your component APIs
-- Generate correct HTML with proper slots
-- Suggest appropriate attribute values
-- Validate component usage
-
-**Setup**: See [MCP Integration](/docs/installation/mcp/)
+The Model Context Protocol gives AI assistants access to your components, allowing them to understand component APIs, generate correct HTML with proper slots, suggest appropriate attribute values, and validate component usage. See [MCP Integration][mcpintegration] for setup.
 
 ### CI/CD Integration
 
@@ -215,23 +161,16 @@ This ensures documentation drives implementation, not the other way around.
 
 You don't need to regenerate the manifest after every change:
 
-**Skip regeneration when**:
-- Tweaking styles
-- Fixing implementation bugs
-- Refactoring internal code
-- Adding private methods
-
-**Regenerate when**:
-- Public API changes
-- Documentation updates
-- Before committing
-- Before publishing
+Skip regeneration when tweaking styles, fixing implementation bugs, refactoring internal code, or adding private methods. Regenerate for public API changes, documentation updates, before committing, and before publishing.
 
 The `--watch` flag can help during active development:
 
 ```bash
 cem generate --watch
 ```
+
+{{< tip "info">}} you don't need to run `cem generate --watch` alongside the dev server, it 
+rebuilds the manifest itself in-memory when your sources change.{{</ tip >}}
 
 ### Demo-Driven Development
 
@@ -246,7 +185,7 @@ Demos become living documentation and test cases.
 
 ### Workspace Organization
 
-Structure your project for efficient workflows:
+Structure your project with our recommended layout for efficient workflows:
 
 ```
 my-components/
@@ -262,16 +201,12 @@ my-components/
 │       └── demo/
 │           └── index.html
 ├── .config/
-│   └── cem.yaml               # CEM configuration
+│   └── cem.yaml               # `cem` configuration
 ├── custom-elements.json       # Generated manifest
 └── package.json
 ```
 
-This structure:
-- Keeps components self-contained
-- Co-locates demos with components
-- Makes navigation easy
-- Works well with monorepos
+This structure keeps components self-contained, co-locates demos with components, makes navigation easy, and works well with monorepos.
 
 ## Common Workflows
 
@@ -279,7 +214,7 @@ This structure:
 
 ```bash
 # 1. Create component file
-mkdir -p elements/my-button
+mkdir -p elements/my-button/demo/
 touch elements/my-button/my-button.ts
 
 # 2. Write component with JSDoc
@@ -288,7 +223,6 @@ touch elements/my-button/my-button.ts
 cem generate
 
 # 4. Create demo
-mkdir elements/my-button/demo
 touch elements/my-button/demo/index.html
 
 # 5. Start dev server
@@ -331,33 +265,23 @@ npm publish
 
 The manifest is included in your package and enables LSP/MCP for consumers.
 
-## Troubleshooting
-
-### LSP Features Not Working
-
-1. **Check manifest exists**: `ls custom-elements.json`
-2. **Verify manifest content**: `cem list`
-3. **Regenerate if stale**: `cem generate`
-4. **Check LSP logs** in your editor
-
-### Dev Server Not Showing Components
-
-1. **Regenerate manifest**: `cem generate`
-2. **Check file patterns**: Verify `fileGlob` in config
-3. **Verify package.json**: Ensure `customElements` field exists
-4. **Check demos**: Ensure demo files exist and are discoverable
-
-### Changes Not Refreshing
-
-1. **Check live reload** is enabled (default)
-2. **Look for errors** in browser console
-3. **Verify source maps** for TypeScript
-4. **Clear browser cache** if needed
-
 ## See Also
 
 - **[Getting Started](../getting-started/)** - First project walkthrough
+- **[Documenting Components][documenting]** - JSDoc usage guide and examples
 - **[Examples Overview](../examples/)** - Starter project templates
 - **[Working with Demos](../demos/)** - Demo organization strategies
 - **[Buildless Development](../buildless-development/)** - TypeScript without builds
 - **[Using LSP Features](../using-lsp/)** - Editor integration tips
+- **[Troubleshooting](../troubleshooting/)** - Common issues and solutions
+
+[documenting]: ../documenting-components/
+[interactiveknobs]: ../knobs/
+[lspintegration]: /docs/installation/lsp/
+[mcpintegration]: /docs/installation/mcp/
+[lspfeatures]: /docs/installation/lsp/
+[mcp]: /docs/installation/mcp/
+[interactivecontrols]: ../knobs/
+[interactiveknobs]: ../knobs/
+[buildlesstypescripttransformation]: ../buildless-development/
+[importmaps]: ../import-maps/

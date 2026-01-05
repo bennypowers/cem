@@ -1,7 +1,7 @@
 ---
 title: Contributing
 description: How to contribute to cem cli
-weight: 22.5
+weight: 110
 ---
 # Contributing to cem
 

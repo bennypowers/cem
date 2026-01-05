@@ -1,24 +1,42 @@
 ---
-title: Working with Demos
+title: Element Demos
 weight: 40
 ---
 
-Demos are HTML files that showcase your custom elements in action. CEM provides powerful demo discovery and organization features.
+Demos are HTML files that showcase your custom elements in action. They serve as
+living documentation, manual test cases, and interactive examples for users
+exploring your components. The `cem` dev server discovers demos from `@demo`
+JSDoc tags (always works) or by file pattern matching (requires `demoDiscovery`
+configuration), then wraps them in minimal chrome with live reload and
+navigation UI. You can organize demos [by component][bycomponent], [by
+feature][byfeature], or use a [hybrid approach][hybridapproach]—whatever makes
+sense for your project.
+
+Demos are HTML partials, not full documents. You write just the content you want 
+to showcase, and the dev server handles the document wrapper, import maps, 
+TypeScript transformation, and error overlay. Demos fit naturally into the 
+[development workflow][developmentworkflow]—create them as you build components, 
+use them during the [test phase][testphase], and update them when you edit APIs. 
+Use [HTML5 microdata][html5microdata] to add descriptions, control URLs, and 
+explicitly associate demos with elements. For advanced URL generation and 
+path-based discovery, configure [URLPattern matching][urlpatternmatching] and 
+[URL templates][urltemplates] in your `cem.yaml`.
 
 ## Demo Discovery
 
-`cem serve` discovers demos in two ways:
+`cem` discovers demos in two ways: via JSDoc, and by configuring automatic demo
+discovery in [cem.yaml][configurationreference].
 
-### 1. Manifest Demos Field
+### Manifest Demos Field
 
-**Recommended approach**: Explicitly list demos in your manifest using the `@demo` JSDoc tag:
+Explicitly list demos in your manifest using the `@demo` JSDoc tag:
 
 ```typescript
 /**
  * My awesome button component
  *
- * @demo demos/basic.html Basic usage
- * @demo demos/variants.html All variants
+ * @demo elements/my-button/demos/basic.html Basic usage
+ * @demo elements/my-button/demos/variants.html All variants
  */
 @customElement('my-button')
 export class MyButton extends LitElement {
@@ -26,57 +44,92 @@ export class MyButton extends LitElement {
 }
 ```
 
-When you run `cem generate`, these demos are added to the manifest and automatically linked to your component.
+When you run `cem generate`, these demos are added to the manifest and automatically linked to your component. This approach gives you explicit control over demo ordering and descriptions, provides clear documentation of available demos, and works seamlessly in published packages.
 
-**Benefits**:
-- Explicit control over demo ordering
-- Custom descriptions for each demo
-- Clear documentation of available demos
-- Works in published packages
+**Important**: Paths in `@demo` tags are relative to your project root, not to the component file.
 
-### 2. File Pattern Matching
+### File Pattern Matching
 
-**Automatic discovery**: CEM finds demo files matching these patterns:
+**Recommended approach**: Configure `cem` to discover demos by glob pattern.
 
-- Files in `demo/` or `demos/` directories
-- Files named `*.demo.html`
+**Required configuration** in `.config/cem.yaml`:
 
-**Example structures**:
+```yaml
+generate:
+  demoDiscovery:
+    fileGlob: elements/**/demo/*.html
+```
+
+Without this configuration, file-based discovery won't happen—only `@demo` JSDoc tags will work.
+
+**Common patterns**:
+
+```yaml
+# Demos in demos/ subdirectories (recommended)
+fileGlob: elements/**/demo/*.html
+
+# Demos named *.demo.html
+fileGlob: elements/**/*.demo.html
+```
+
+**Example structure with `fileGlob: "elements/**/demo/*.html"`**:
 
 ```
 elements/
 └── my-button/
     ├── my-button.ts
-    └── demo/
-        ├── index.html        # ✅ Discovered
-        ├── variants.html     # ✅ Discovered
-        └── advanced.html     # ✅ Discovered
+    └── demos/
+        ├── index.html        # ✅ Matched by fileGlob
+        ├── variants.html     # ✅ Matched by fileGlob
+        └── advanced.html     # ✅ Matched by fileGlob
 ```
 
-```
-elements/
-└── my-card/
-    ├── my-card.ts
-    ├── basic.demo.html       # ✅ Discovered
-    └── advanced.demo.html    # ✅ Discovered
-```
+See [Configuration Reference][configurationreference] for all options.
 
-**Configure patterns** in `.config/cem.yaml`:
+### URL Generation with URLPattern
+
+For advanced demo URL generation, configure [URLPattern][urlpattern] matching 
+and URL templates. The `urlTemplate` uses Go template syntax to generate URLs 
+from those captured parameters. See the [example projects][examples] for more.
 
 ```yaml
-demoDiscovery:
-  fileGlob: "elements/**/demo/*.html"  # Custom pattern
+generate:
+  demoDiscovery:
+    fileGlob: elements/**/demo/*.html
+    urlPattern: /elements/:element/demo/:demo.html
+    urlTemplate: https://example.com/{{.element | alias}}/{{.demo | slug}}/
 ```
 
-See [Configuration Reference](/docs/reference/configuration/) for all options.
+**Available template functions**:
 
-## Demo File Format
+| Function | Description | Example |
+|----------|-------------|---------|
+| `alias` | Apply element alias mapping | `{{.tag \| alias}}` |
+| `slug` | Convert to URL-friendly slug | `{{.demo \| slug}}` |
+| `lower` | Convert to lowercase | `{{.component \| lower}}` |
+| `upper` | Convert to uppercase | `{{.section \| upper}}` |
+
+**Template examples**:
+
+```yaml
+# Basic interpolation
+urlTemplate: https://example.com/{{.component}}/{{.demo}}/
+
+# With alias transformation
+urlTemplate: https://example.com/{{.component | alias}}/{{.demo}}/
+
+# Chain multiple functions
+urlTemplate: https://example.com/{{.component | alias | slug}}/{{.demo | lower}}/
+```
+
+URLPattern also enables precise path-based demo association, preventing false matches when element aliases are substrings of each other (e.g., preventing "accordion" from matching "accordion-header").
+
+## Writing Demos
 
 Demos are **HTML partials** (not full HTML documents). The dev server wraps them in demo chrome automatically.
 
-### Basic Demo
+**`demos/index.html`**:
 
-**`demo/index.html`**:
 ```html
 <my-button>Click Me</my-button>
 
@@ -85,14 +138,7 @@ Demos are **HTML partials** (not full HTML documents). The dev server wraps them
 </script>
 ```
 
-The server adds:
-- HTML document wrapper
-- Viewport meta tag
-- Live reload script
-- Error overlay
-- Navigation UI
-
-### Demo with Styles
+The server automatically wraps this partial in a full HTML document with viewport meta tag, live reload script, error overlay, and navigation UI. Include styles in your demo with an inline `<style>` element. We recommend scoping styles using CSS nesting to avoid your styles leaking out into the rest of the demo page.
 
 ```html
 <style>
@@ -108,84 +154,47 @@ The server adds:
 </script>
 ```
 
-### Demo with Multiple Elements
+You can include as many elements as you want in your demos:
 
 ```html
 <my-card>
-  <my-card-header slot="header">
-    Card Title
-  </my-card-header>
-  <my-card-body>
-    Card content goes here
-  </my-card-body>
+  <my-icon slot="header" icon="star"></my-icon>
+  <h2 slot="header">Card Title</h2>
+  <p>Card content goes here</p>
+  <my-button slot="footer"></my-button>
 </my-card>
 
 <script type="module">
   import '../my-card.js';
-  import '../my-card-header.js';
-  import '../my-card-body.js';
+  import '../my-button.js';
+  import '../my-icon.js';
 </script>
 ```
 
-## HTML5 Microdata
+## Documenting Your Demos
 
-Use HTML5 microdata to control demo metadata and association.
+Use HTML5 microdata to control demo metadata and association. You can modify the demo's URL, add a description, or explicitly associate that demo with a tag name.
 
-### Explicit URLs
-
-Declare the canonical URL for your demo:
 
 ```html
 <meta itemprop="demo-url" content="/elements/my-button/demo/">
-
-<my-button>Click Me</my-button>
-
-<script type="module">
-  import '../my-button.js';
-</script>
+<meta itemprop="demo-for" content="my-button my-card">
+<meta itemprop="description" content="Basic button demonstration">
 ```
+
+The `demo-for` property is useful when the demo file path doesn't indicate which element it's for, when a demo showcases multiple elements, or when you need to prevent incorrect auto-association.
 
 ### Rich Descriptions
 
-Provide description with simple meta tag:
-
-```html
-<meta itemprop="description" content="Basic button demonstration">
-
-<my-button>Click Me</my-button>
-```
-
-Or use markdown for rich descriptions:
-
+You can also add Markdown scripts to add rich content to your demo's description
 ```html
 <script type="text/markdown" itemprop="description">
-# Button Variants Demo
-
 Showcases all button variants:
 - **Primary** - Call to action buttons
 - **Secondary** - Less prominent actions
 - **Danger** - Destructive actions
 </script>
-
-<my-button variant="primary">Save</my-button>
-<my-button variant="secondary">Cancel</my-button>
-<my-button variant="danger">Delete</my-button>
 ```
-
-### Explicit Element Association
-
-Tell CEM which elements this demo showcases:
-
-```html
-<meta itemprop="demo-for" content="my-button pf-button">
-
-<!-- Demo content -->
-```
-
-Useful when:
-- Demo file path doesn't indicate element
-- Demo showcases multiple elements
-- Preventing incorrect auto-association
 
 ## Demo Association Logic
 
@@ -197,265 +206,42 @@ CEM uses this priority order to associate demos with elements:
 
 ### Path-Based Association
 
-When elements have configured aliases:
+When elements use the `@alias` JSDoc tag, or have configured aliases in `cem.yaml`:
 
 ```yaml
 aliases:
-  my-button: "button"
-  my-card: "card"
+  my-button: button
+  my-card: card
 ```
 
 These paths match:
 
 ```
-✅ elements/button/demo/basic.html  → my-button
-✅ elements/card/demos/index.html   → my-card
-❌ elements/btn/demo/index.html     → No match (alias is "button", not "btn")
-```
-
-### URLPattern-Based Matching
-
-For precise path matching, configure a URL pattern:
-
-```yaml
-demoDiscovery:
-  fileGlob: "shop/**/demos/*.html"
-  urlPattern: "/shop/:element/:demo.html"
-  urlTemplate: "https://mysite.com/shop/{{.element | alias}}/{{.demo}}/"
-```
-
-**Element Aliases**:
-```yaml
-aliases:
-  my-shop-button: "shop-button"
-  my-accordion: "accordion"
-  my-accordion-header: "accordion-header"
-```
-
-**Matching behavior**:
-
-```
-✅ shop/shop-button/basic.html       → my-shop-button (alias in :element position)
-❌ shop/my-shop-button/basic.html    → No match (literal name doesn't match alias)
-✅ shop/accordion-header/demo.html   → my-accordion-header only
-❌ shop/accordion-header/demo.html   → Does NOT match my-accordion (prevents false positives)
-```
-
-The URLPattern ensures aliases only match in their designated path positions, preventing shorter aliases from incorrectly matching longer path segments.
-
-## URL Generation
-
-Demo URLs are generated using this priority:
-
-1. **Explicit microdata** - `<meta itemprop="demo-url">`
-2. **URLPattern fallback** - Using `urlPattern` and `urlTemplate`
-3. **No URL** - Demo is skipped if no pattern matches
-
-### URL Templates
-
-The `urlTemplate` uses Go template syntax with transformation functions:
-
-```yaml
-demoDiscovery:
-  urlPattern: "/elements/:element/demo/:demo.html"
-  urlTemplate: "https://example.com/{{.element | alias}}/{{.demo | slug}}/"
-```
-
-**Available functions**:
-
-| Function | Description | Example |
-|----------|-------------|---------|
-| `alias` | Apply element alias mapping | `{{.tag \| alias}}` |
-| `slug` | Convert to URL-friendly slug | `{{.demo \| slug}}` |
-| `lower` | Convert to lowercase | `{{.component \| lower}}` |
-| `upper` | Convert to uppercase | `{{.section \| upper}}` |
-
-**Template examples**:
-
-```yaml
-# Basic interpolation
-urlTemplate: "https://example.com/{{.component}}/{{.demo}}/"
-
-# With alias transformation
-urlTemplate: "https://example.com/{{.component | alias}}/{{.demo}}/"
-
-# Chain multiple functions
-urlTemplate: "https://example.com/{{.component | alias | slug}}/{{.demo | lower}}/"
-
-# Function call syntax (alternative)
-urlTemplate: "https://example.com/{{alias .component}}/{{slug .demo}}/"
-```
-
-**Important**: All transformations must be explicit. No automatic aliasing or slugification is applied unless requested in the template.
-
-## Configuration Examples
-
-### Minimal (Microdata-Driven)
-
-```yaml
-demoDiscovery:
-  fileGlob: elements/**/demo/*.html
-```
-
-All URLs and descriptions come from microdata in demo files.
-
-### URLPattern with Explicit Configuration
-
-```yaml
-demoDiscovery:
-  fileGlob: elements/**/demo/*.html
-  urlPattern: "/elements/:element/demo/:demo.html"
-  urlTemplate: "https://site.com/components/{{.element | alias}}/demo/{{.demo | slug}}/"
-```
-
-Generates URLs from file paths using the template.
-
-### Complex Multi-Site Example
-
-```yaml
-demoDiscovery:
-  fileGlob: src/components/**/demos/*.html
-  urlPattern: "/src/components/:component/demos/:variant.html"
-  urlTemplate: "https://{{.component | alias | lower}}.examples.com/{{.variant | slug}}/"
-```
-
-Supports complex URL generation with multiple transformations.
-
-## Demo Organization Strategies
-
-### By Component (Recommended)
-
-```
-elements/
-├── my-button/
-│   ├── my-button.ts
-│   └── demo/
-│       ├── basic.html
-│       ├── variants.html
-│       └── states.html
-└── my-card/
-    ├── my-card.ts
-    └── demo/
-        ├── simple.html
-        └── complex.html
-```
-
-**Benefits**:
-- Co-located with component
-- Easy to find and maintain
-- Works well with automatic discovery
-
-### By Feature
-
-```
-demos/
-├── buttons/
-│   ├── primary.html
-│   ├── secondary.html
-│   └── icon-buttons.html
-└── forms/
-    ├── login.html
-    ├── registration.html
-    └── validation.html
-```
-
-**Benefits**:
-- Groups related demos
-- Good for showcasing patterns
-- Useful for design system documentation
-
-Requires explicit association via microdata.
-
-### Hybrid Approach
-
-```
-elements/
-└── my-button/
-    ├── my-button.ts
-    └── demo/
-        └── basic.html        # Component-specific
-
-demos/
-└── patterns/
-    └── cta-buttons.html      # Cross-component pattern
-```
-
-**Benefits**:
-- Component demos co-located
-- Pattern demos separate
-- Flexibility for different use cases
-
-## Best Practices
-
-### Write Focused Demos
-
-Each demo should showcase one thing:
-
-```html
-<!-- ✅ Good: Focused on variants -->
-<h2>Button Variants</h2>
-<my-button variant="primary">Primary</my-button>
-<my-button variant="secondary">Secondary</my-button>
-<my-button variant="danger">Danger</my-button>
-```
-
-```html
-<!-- ❌ Too much: Variants, sizes, states all mixed -->
-<my-button variant="primary" size="large">Large Primary</my-button>
-<my-button variant="secondary" size="small" disabled>Small Disabled</my-button>
-<!-- Confusing: too many variables -->
-```
-
-### Use Descriptive Filenames
-
-```
-✅ variants.html
-✅ loading-states.html
-✅ form-integration.html
-
-❌ demo1.html
-❌ test.html
-❌ example.html
-```
-
-### Add Context with Descriptions
-
-```html
-<script type="text/markdown" itemprop="description">
-## When to Use This Pattern
-
-Use primary buttons for the main call-to-action on a page.
-Only use one primary button per section to avoid confusion.
-</script>
-```
-
-### Include Usage Instructions
-
-```html
-<script type="text/markdown" itemprop="description">
-## Interactive Demo
-
-Try clicking the button to see the loading state.
-The button is disabled while loading.
-</script>
-
-<my-button id="demo">Click Me</my-button>
-
-<script type="module">
-  import '../my-button.js';
-
-  const button = document.getElementById('demo');
-  button.addEventListener('click', async () => {
-    button.loading = true;
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    button.loading = false;
-  });
-</script>
+✅ elements/button/demo/basic.html → my-button
+✅ elements/card/demo/index.html   → my-card
+❌ elements/btn/demo/index.html    → No match (alias is "button", not "btn")
 ```
 
 ## See Also
 
-- **[Rendering Modes](../rendering-modes/)** - Light DOM, shadow DOM, iframe options
-- **[Interactive Knobs](../knobs/)** - Add controls to demos
-- **[Configuration Reference](/docs/reference/configuration/)** - Complete demo discovery config
-- **[Development Workflow](../workflow/)** - How demos fit into the dev cycle
+- **[Rendering Modes][renderingmodes]** - Light DOM, shadow DOM, iframe options
+- **[Interactive Knobs][interactiveknobs]** - Add controls to demos
+- **[Configuration Reference][configurationreference]** - Complete demo discovery config workflow
+- **[Development Workflow][developmentworkflow]** - How demos fit into the dev cycle
+
+[devserver]: ../workflow/#3-serve
+[bycomponent]: #by-component-recommended
+[hybridapproach]: #hybrid-approach
+[byfeature]: #by-feature
+[developmentworkflow]: ../workflow/
+[testphase]: ../workflow/#4-test
+[html5microdata]: #html5-microdata
+[urlpatternmatching]: #urlpattern-based-matching
+[urltemplates]: #url-templates
+[configurationreference]: /docs/reference/configuration/
+[renderingmodes]: ../rendering-modes/
+[interactiveknobs]: ../knobs/
+[configurationreference]: /docs/reference/configuration/
+[developmentworkflow]: ../workflow/
+[urlpattern]: https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API
+[examples]: https://github.com/bennypowers/cem/tree/main/examples/

@@ -1,7 +1,7 @@
 ---
 title: Benchmarks
 description: Performance benchmarks for CEM generate tool and LSP server implementations.
-weight: 22
+weight: 100
 ---
 
 ## Overview

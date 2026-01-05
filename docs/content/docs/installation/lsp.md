@@ -13,6 +13,20 @@ Configure the CEM Language Server Protocol integration for your editor to get in
 
 The Language Server Protocol provides a standard way to add language-specific features to any editor. The CEM language server analyzes your custom elements manifests to offer contextual autocomplete, hover documentation, go-to-definition, and other IDE enhancements for HTML and TypeScript files.
 
+## Features
+
+All editors with LSP support get the same core features:
+
+- ✅ **Autocomplete** - Tag names, attributes, slot names, and values
+- ✅ **Hover Documentation** - Element and attribute documentation on hover
+- ✅ **Go-to-Definition** - Jump to element source code
+- ✅ **Go-to-References** - Find all usages of elements across your workspace
+- ✅ **Validation** - Real-time error detection for slots, attributes, and tag names
+- ✅ **Quick Fixes** - One-click typo corrections and import suggestions
+- ✅ **Workspace Symbols** - Search and navigate elements project-wide
+
+See [Using LSP Features](/docs/usage/using-lsp/) for detailed usage guides.
+
 ## Editor Configuration
 
 ### Neovim
@@ -132,4 +146,4 @@ Consult your editor's LSP plugin documentation for how to set trace levels.
 
 - **[Using LSP Features](/docs/usage/using-lsp/)** - Learn how to use autocomplete, hover, and validation
 - **[LSP Protocol Reference](/docs/reference/lsp/)** - Technical API details
-- **[Editor Configuration](../editors/)** - Advanced editor-specific configurations
+- **[Getting Started](/docs/usage/getting-started/)** - Create your first project

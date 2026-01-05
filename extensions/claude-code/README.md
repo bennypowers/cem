@@ -39,7 +39,7 @@ go install bennypowers.dev/cem@latest
 
 Verify installation:
 ```bash
-cem --version
+cem version
 ```
 
 ### 2. Install Claude Code Plugin

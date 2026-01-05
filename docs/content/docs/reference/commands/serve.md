@@ -17,6 +17,8 @@ cem serve [flags]
 | `--rendering` | Demo rendering mode: `light` (full UI), `shadow` (Shadow DOM), or `chromeless` (minimal, no UI) (default: `light`) |
 | `--no-reload` | Disable live reload |
 | `--target` | TypeScript/JavaScript transform target: `es2015`, `es2016`, `es2017`, `es2018`, `es2019`, `es2020`, `es2021`, `es2022`, `es2023`, `esnext` (default: `es2022`) |
+| `--no-import-map-generate` | Disable automatic import map generation from package.json |
+| `--import-map-override-file` | Path to JSON file with custom import map entries (merged with auto-generated map) |
 | `--css-transform` | Glob patterns for CSS files to transform to JavaScript modules (opt-in, e.g., `src/**/*.css,elements/**/*.css`) |
 | `--css-transform-exclude` | Glob patterns for CSS files to exclude from transformation (e.g., `demo/**/*.css`) |
 | `--watch-ignore` | Glob patterns to ignore in file watcher (comma-separated, e.g., `_site/**,dist/**`) |

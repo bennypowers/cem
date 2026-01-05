@@ -1,10 +1,14 @@
 ---
 title: Buildless Development
 layout: docs
-weight: 20
+weight: 50
 ---
 
-Write TypeScript and import CSS directly in your browser - no build step required. `cem serve` lets you develop without running `tsc`, CSS watchers, or bundlers.
+The `cem` dev server transforms TypeScript and CSS on-demand, letting you write modern code without running build tools. [Write TypeScript directly][writetypescriptdirectly] in your demos with full source map support, [import CSS as modules][importcssasmodules] using constructable stylesheets, and configure [automatic path rewrites][automaticpathrewrites] for projects with separate source and output directories. The server respects your `tsconfig.json` settings and provides [browser compatibility control][browsercompatibilitycontrol] through esbuild targets.
+
+This buildless approach eliminates `tsc --watch`, CSS preprocessors, and bundlers from your development workflow. You write TypeScript and CSS, import them directly in demos, and the dev server handles transformation transparently with full debugging support.
+
+The dev server handles TypeScript files (`.ts`), CSS files as modules (with opt-in patterns), ES modules from npm via import maps, and modern JavaScript syntax. JavaScript files (`.js`, `.mjs`), HTML files, and JSON files work as-is without building them ahead-of-time.
 
 ## Write TypeScript Directly
 
@@ -15,13 +19,7 @@ Import TypeScript files directly in your demos without compilation:
 <script type="module" src="../src/my-element.ts"></script>
 ```
 
-No need to:
-- Run `tsc --watch`
-- Set up a build pipeline
-- Wait for compilation before testing
-- Manage separate source and output directories
-
-The dev server handles TypeScript on-demand with full source map support for debugging.
+The dev server handles TypeScript transformation on-demand with full source map support for debugging. You don't need to run `tsc --watch`, set up build pipelines, wait for compilation before testing, or manage separate source and output directories.
 
 ### Browser Compatibility
 
@@ -31,19 +29,11 @@ Control which browsers your code supports using the `--target` flag:
 cem serve --target es2020
 ```
 
-The default target is `es2022`. See [esbuild's target documentation](https://esbuild.github.io/api/#target) for all available targets.
+The default target is `es2022`. See [esbuild's target documentation][esbuildstargetdocumentation] for all available targets.
 
 ### Your tsconfig.json Works
 
-The dev server respects your existing TypeScript configuration:
-- `compilerOptions.target`
-- `compilerOptions.module`
-- `compilerOptions.rootDir` and `compilerOptions.outDir` (for src/dist separation)
-- `include` and `exclude` patterns
-
-{{<tip "info">}}
-Command-line `--target` flag overrides `tsconfig.json` settings.
-{{</tip>}}
+The dev server respects your existing TypeScript configuration including `compilerOptions.target`, `compilerOptions.module`, `compilerOptions.rootDir` and `compilerOptions.outDir` for src/dist separation, and `include` and `exclude` patterns. The command-line `--target` flag overrides `tsconfig.json` settings if provided.
 
 ### Separate `dist` Directory
 
@@ -67,16 +57,9 @@ If your project uses separate source and output directories (e.g., `src/` and `d
 }
 ```
 
-With this configuration:
-- Request: `/dist/components/button.js`
-- Resolves to: `/src/components/button.ts`
-- Server transforms and serves the TypeScript source
+With this configuration, a request to `/dist/components/button.js` resolves to `/src/components/button.ts`, which the server transforms and serves as TypeScript source.
 
-**Benefits:**
-- Write demos using the same paths your production build uses
-- No need to change import paths between development and production
-- Works seamlessly with TypeScript's project references
-- Supports monorepo/workspace setups with per-package `tsconfig.json` files
+This lets you write demos using the same paths your production build uses without changing import paths between development and production. It works seamlessly with TypeScript's project references and supports monorepo/workspace setups with per-package `tsconfig.json` files.
 
 **Fallback behavior:**
 
@@ -104,7 +87,7 @@ serve:
 
 **Pattern syntax:**
 
-URL patterns use [URLPattern](https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API) syntax:
+URL patterns use [URLPattern][urlpattern] syntax:
 - `:param` - Matches a single path segment and captures it as a named parameter
 - `**` - Matches any number of path segments (wildcard)
 - `*` - Matches characters within a single segment
@@ -137,11 +120,15 @@ serve:
 
 This resolves `/elements/card/demo/my-card-lightdom.css` → `elements/my-card/my-card-lightdom.css` ✓
 
-See **[Configuration](/docs/reference/configuration/)** for details.
+See **[Configuration][configuration]** for details.
 
 ## Import CSS as Modules
 
-Import CSS files directly in your components using modern CSS module syntax:
+The dev server supports two ways to import CSS files as constructable stylesheets. Import attributes with `with { type: 'css' }` work automatically without configuration, while plain imports require glob pattern configuration.
+
+### Import Attributes
+
+Use the standard [import attributes][importattributes] syntax for automatic CSS transformation:
 
 ```js
 import styles from './my-element.css' with { type: 'css' };
@@ -155,89 +142,12 @@ class MyElement extends HTMLElement {
 }
 ```
 
-No need to:
-- Run CSS preprocessors or watchers
-- Bundle stylesheets separately
-- Use inline `<style>` tags
-- Write CSS-in-JS template literals
+This modern, standards-based syntax always transforms CSS to modules—no configuration needed. The dev server rewrites `with { type: 'css' }` to query parameters during TypeScript transformation, then transforms the CSS file to a JavaScript module that exports a `CSSStyleSheet` object.
 
-Your imported CSS becomes a [Constructable Stylesheet](https://web.dev/constructable-stylesheets/) automatically, giving you better performance than inline styles.
+### Plain Imports (Requires Configuration)
 
-### Import Attributes (Modern Syntax)
+Alternatively, use plain imports without the `with` keyword:
 
-Use the standard [import attributes](https://github.com/tc39/proposal-import-attributes) syntax with the `with` keyword:
-
-```js
-import styles from './my-element.css' with { type: 'css' };
-
-class MyElement extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot.adoptedStyleSheets = [styles];
-  }
-}
-```
-
-This is the modern, standards-based syntax for importing CSS as modules. The dev server automatically handles this syntax during TypeScript transformation - import attributes are preserved and CSS files are transformed to JavaScript modules that export `CSSStyleSheet` objects.
-
-{{<tip "info">}}
-Import attributes with `with { type: 'css' }` **bypass** include/exclude patterns. When you use this syntax, the dev server knows you want that CSS file transformed to a module, regardless of glob patterns.
-{{</tip>}}
-
-**How it works:**
-
-1. You write: `import styles from './foo.css' with { type: 'css' }`
-2. The dev server rewrites it to: `import styles from './foo.css?__cem-import-attrs[type]=css'`
-3. When the browser requests the CSS file with those query parameters, the server transforms it to a JavaScript module
-4. Your code receives a ready-to-use `CSSStyleSheet` object
-
-This approach works around esbuild's current limitation with CSS import attributes while preserving the standard syntax in your source code.
-
-### Opt-In for Safety
-
-CSS module transformation is opt-in to protect traditional `<link>` stylesheets. Specify which CSS files to transform:
-
-**Via command line:**
-```sh
-# Transform component CSS only
-cem serve --css-transform 'src/**/*.css' --css-transform 'elements/**/*.css'
-```
-
-**Via config file:**
-```yaml
-serve:
-  transforms:
-    css:
-      include:
-        - 'src/**/*.css'
-        - 'elements/**/*.css'
-      exclude:
-        - 'demo/**/*.css'
-```
-
-**Via import attributes:**
-```js
-// This CSS file will be transformed regardless of include/exclude patterns
-import styles from './my-styles.css' with { type: 'css' };
-```
-
-{{<tip "warning">}}
-Without include patterns or import attributes, **no CSS files are transformed**. This prevents `<link rel="stylesheet">` tags from breaking unexpectedly.
-{{</tip>}}
-
-### Example: CSS Module Import
-
-**Your CSS file:**
-```css
-/* my-element.css */
-:host {
-  display: block;
-  color: var(--text-color, #333);
-}
-```
-
-**Import it:**
 ```js
 import styles from './my-element.css';
 
@@ -250,28 +160,32 @@ class MyElement extends HTMLElement {
 }
 ```
 
-**What you get:**
-A `CSSStyleSheet` object ready to use with `adoptedStyleSheets` - no build step, no runtime CSS parsing.
+Plain imports only transform CSS files matching glob patterns that you configure via command line or config file:
 
-## What Works Without Building
+**Via command line:**
+```sh
+cem serve --css-transform 'src/**/*.css' --css-transform 'elements/**/*.css'
+```
 
-You can use directly:
-- TypeScript files (`.ts`, `.tsx`)
-- CSS files as modules (with opt-in patterns)
-- ES modules from npm via import maps
-- Modern JavaScript syntax
+**Via config file:**
+```yaml
+serve:
+  transforms:
+    css:
+      include:
+        - src/**/*.css
+        - elements/**/*.css
+      exclude:
+        - demo/**/*.css
+```
 
-You still write as-is:
-- JavaScript files (`.js`, `.mjs`)
-- HTML files
-- JSON files
+{{<tip "warning">}}
+Without glob patterns, plain CSS imports won't transform—only imports with `with { type: 'css' }` work. This prevents `<link rel="stylesheet">` tags from breaking unexpectedly.
+{{</tip>}}
 
 ## Debugging
 
-Source maps work automatically:
-- **Stack traces** point to your original TypeScript
-- **Browser DevTools** show your source files
-- **Breakpoints** work in TypeScript, not generated JavaScript
+Source maps work automatically, so stack traces point to your original TypeScript, browser DevTools show your source files, and breakpoints work in TypeScript rather than generated JavaScript.
 
 ## Configuration
 
@@ -292,10 +206,21 @@ serve:
         - 'src/**/*.css'
 ```
 
-See **[Configuration](/docs/reference/configuration/)** for all options.
+See **[Configuration][configuration]** for all options.
 
 ## What's Next?
 
-- **[Import Maps](../import-maps/)** - Use npm packages without bundling
-- **[Configuration](/docs/reference/configuration/)** - Configuration reference
-- **[Getting Started](../getting-started/)** - Set up your first demo
+- **[Import Maps][importmaps]** - Use npm packages without bundling
+- **[Configuration][configuration]** - Configuration reference
+- **[Getting Started][gettingstarted]** - Set up your first demo
+
+[importattributes]: https://github.com/tc39/proposal-import-attributes
+[configuration]: /docs/reference/configuration/
+[urlpattern]: https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API
+[esbuildstargetdocumentation]: https://esbuild.github.io/api/#target
+[writetypescriptdirectly]: #write-typescript-directly
+[importcssasmodules]: #import-css-as-modules
+[automaticpathrewrites]: #separate-dist-directory
+[browsercompatibilitycontrol]: #browser-compatibility
+[importmaps]: ../import-maps/
+[gettingstarted]: ../getting-started/

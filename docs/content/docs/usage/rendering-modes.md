@@ -1,101 +1,33 @@
 ---
 title: Rendering Modes
-weight: 15
+weight: 100
 ---
 
-The dev server supports three rendering modes for serving demos, allowing you to choose the right environment for your workflow.
+The [dev server][workflow] supports three rendering modes that control how your [demos][demos] are presented: light mode (full development UI), shadow mode (demos in [shadow DOM][shadowdom]), and chromeless mode (minimal standalone pages). Choose the mode that fits your workflow—light for interactive development with [knobs][knobs] and live monitoring, shadow for testing CSS encapsulation, or chromeless for [automated testing](#chromeless-mode) and clean demo sharing.
+
+All modes include [live reload][websocket] with smart dependency tracking and support [query parameter overrides](#query-parameter-override) for quick testing. The rendering mode affects UI presentation and error handling but preserves core functionality like TypeScript transforms, [import map][importmaps] injection, and file watching across all modes.
 
 ## Light Mode (Default)
 
-Full development UI with all features enabled. This is the standard mode for component development.
+Light mode provides the full development experience with a PatternFly-based UI that includes sidebar navigation, header with theme toggle and debug info, interactive knobs for attributes and properties, real-time event monitoring, server logs with filtering, manifest browser, and visual live reload status. Error overlays appear for transform failures, making debugging straightforward. This is the standard mode for component development.
 
-**Features:**
-- PatternFly-based UI with sidebar navigation
-- Header with branding, theme toggle, and debug info
-- Interactive knobs for attributes, properties, and CSS custom properties
-- Real-time event monitoring tab
-- Server logs viewer with filtering
-- Manifest browser
-- Live reload with visual connection status
-- Error overlays for transform failures
-
-**Usage:**
-```bash
-cem serve
-# or explicitly:
-cem serve --rendering=light
-```
-
-**Config:**
-```yaml
-serve:
-  demos:
-    rendering: light
-```
+Use `cem serve` (light mode is the default) or configure it explicitly with `serve.demos.rendering: light` in `.config/cem.yaml`.
 
 ## Shadow Mode
 
-Same UI as light mode, but renders demo content in a Shadow DOM. Use this when testing components that need to be encapsulated in a shadow root.
+Shadow mode provides the same full UI as light mode but renders demo content inside a shadow root, letting you test components in encapsulated contexts. Use this when verifying CSS encapsulation, testing `:host` selectors and shadow piercing, or debugging shadow DOM-specific behaviors.
 
-**Use cases:**
-- Testing components inside Shadow DOM contexts
-- Verifying CSS encapsulation
-- Testing `:host` selectors and shadow piercing
-- Debugging shadow DOM-specific behaviors
-
-**Usage:**
-```bash
-cem serve --rendering=shadow
-```
-
-**Config:**
-```yaml
-serve:
-  demos:
-    rendering: shadow
-```
+Start the server with `cem serve --rendering=shadow` or configure it with `serve.demos.rendering: shadow`.
 
 ## Chromeless Mode
 
-Minimal rendering with no dev server UI. Demos are served as standalone pages with only live reload functionality.
+Chromeless mode strips away all dev server UI, serving demos as clean standalone pages ideal for automated testing with [Playwright][playwright] or Puppeteer, embedding in documentation sites, sharing clean demo URLs, or capturing screenshots. Core functionality remains—live reload, file watching, TypeScript/CSS transforms, and import map injection—but errors log to the console instead of showing overlays, and there's no visual chrome, knobs panel, or connection status indicators.
 
-**Features:**
-- ✅ Live reload (silent, console-only)
-- ✅ File watching with smart dependency tracking
-- ✅ TypeScript/CSS transforms
-- ✅ Import map injection
-- ❌ No visual UI chrome (header, sidebar, drawer)
-- ❌ No knobs panel
-- ❌ No error overlays (errors logged to console)
-- ❌ No connection status indicators
+Start with `cem serve --rendering=chromeless` or configure `serve.demos.rendering: chromeless`. Override per-demo with the `?rendering=chromeless` query parameter.
 
-**Use cases:**
-- **Automated testing**: Run Playwright/Puppeteer tests without UI interference
-- **Isolated development**: Focus on component behavior without distractions
-- **Embedding**: Embed demos in documentation sites or other applications
-- **Simple demos**: Share clean demo URLs without dev tooling visible
-- **Screenshots**: Capture component demos without chrome UI elements
+### Playwright Integration
 
-**Usage:**
-```bash
-cem serve --rendering=chromeless
-```
-
-**Config:**
-```yaml
-serve:
-  demos:
-    rendering: chromeless
-```
-
-**Per-demo override:**
-```
-http://localhost:8000/elements/button/demo/?rendering=chromeless
-```
-
-## Playwright Integration Example
-
-Chromeless mode is ideal for end-to-end testing with Playwright:
+Configure Playwright to use chromeless mode for clean component testing without UI interference:
 
 ```javascript
 // playwright.config.js
@@ -105,18 +37,14 @@ export default {
     port: 8000,
     reuseExistingServer: !process.env.CI,
   },
-  use: {
-    baseURL: 'http://localhost:8000',
-  },
+  use: { baseURL: 'http://localhost:8000' },
 };
 
 // tests/button.spec.js
 import { test, expect } from '@playwright/test';
 
-test('button component renders correctly', async ({ page }) => {
+test('button component', async ({ page }) => {
   await page.goto('/elements/my-button/demo/');
-
-  // Test the component directly without UI chrome interference
   const button = page.locator('my-button');
   await expect(button).toBeVisible();
   await button.click();
@@ -126,44 +54,27 @@ test('button component renders correctly', async ({ page }) => {
 
 ## Query Parameter Override
 
-You can override the default rendering mode for any demo using the `?rendering=` query parameter:
+Override the default rendering mode for any demo with the `?rendering=` query parameter—useful for testing different contexts without restarting the server, sharing clean demo links, or quick mode comparisons:
 
 ```
-# Use chromeless for a specific demo
 http://localhost:8000/elements/button/demo/?rendering=chromeless
-
-# Test in shadow mode temporarily
 http://localhost:8000/elements/button/demo/?rendering=shadow
 ```
 
-This is useful for:
-- Testing different rendering contexts without restarting the server
-- Sharing clean demo links
-- Quick comparisons between modes
+## Live Reload and Error Handling
 
-## Live Reload Behavior
+All modes use [WebSocket][websocket]-based live reload with smart dependency tracking that only triggers reloads when relevant imported files change. Light and shadow modes show visual connection status with reconnection modals and toasts, while chromeless mode reloads silently with console-only logging.
 
-All rendering modes support live reload with smart dependency tracking:
-
-- **Light & Shadow**: Visual connection status with reconnection modals and toasts
-- **Chromeless**: Silent reload with console logging only
-
-The WebSocket client tracks which files the demo imports and only triggers reloads when relevant files change.
-
-## Error Handling
-
-Error handling varies by mode:
-
-**Light & Shadow:**
-- Full-screen error overlays for TypeScript/CSS transform errors
-- Visual error indicators in the UI
-- Error details in the logs tab
-
-**Chromeless:**
-- Errors logged to browser console with `[CEM]` prefix
-- No visual overlays
-- Clean demo presentation even during errors
+Error handling adapts to each mode: light and shadow display full-screen overlays for TypeScript/CSS transform errors with visual indicators and detailed logs in the UI, while chromeless logs errors to the browser console with a `[CEM]` prefix to maintain clean demo presentation even during errors.
 
 {{<tip "info">}}
-Check the browser console when using chromeless mode - all dev server messages and errors are logged there.
+Check the browser console when using chromeless mode—all dev server messages and errors are logged there.
 {{</tip>}}
+
+[workflow]: ../workflow/
+[demos]: ../demos/
+[shadowdom]: https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM
+[knobs]: ../knobs/
+[websocket]: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
+[importmaps]: ../import-maps/
+[playwright]: https://playwright.dev/

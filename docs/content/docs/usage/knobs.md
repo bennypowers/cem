@@ -1,14 +1,14 @@
 ---
 title: Knobs
 layout: docs
-weight: 30
+weight: 70
 ---
 
-Knobs are interactive controls that let you test your custom elements by manipulating their attributes, properties, and CSS custom properties in real-time.
+The dev server generates interactive controls (knobs) that let you test custom elements by manipulating their attributes, properties, and CSS custom properties in real-time. Knobs are automatically generated from your [Custom Elements Manifest][customelementsjson], so the type information and documentation you write with JSDoc directly determines which controls appear in the sidebar. This complements the [development workflow][developmentworkflow] by providing immediate visual feedback during the [test phase][testphase], letting you verify component behavior across different states without writing test HTML for each variation.
 
-## How Knobs Work
+Knobs derive entirely from your manifest—when you [run `cem generate`][generate], your JSDoc type annotations determine the control type. Boolean attributes become checkboxes, union types become select dropdowns, numbers get increment/decrement controls, and CSS color properties get color pickers. The dev server scans your [demo HTML][demos] for custom elements, looks up each element's manifest entry, and creates labeled control groups in the sidebar.
 
-Knobs are automatically generated from your **Custom Elements Manifest**. The dev server reads your component's API documentation and creates appropriate controls for each attribute, property, and CSS variable.
+![Screenshot of dev server with knobs shown](/images/knobs.png)
 
 ### The Workflow
 
@@ -32,182 +32,71 @@ Knobs are automatically generated from your **Custom Elements Manifest**. The de
 
 Everything derives from your component documentation - the manifest is the single source of truth.
 
-## Manifest to Knobs Mapping
+## How Knobs Map to Controls
 
-Knobs are generated from the manifest entries for each element. The dev server looks at:
+The dev server reads your manifest's `attributes` array (DOM attributes like `disabled`), `members` array (JavaScript properties like `data`), and `cssProperties` array (CSS variables like `--bg-color`). Each entry's type information determines which control appears—boolean types become checkboxes, union types become select dropdowns, numbers get increment/decrement controls, and CSS color values get color pickers with hex input.
 
-**Attributes** (`attributes` array in manifest):
-- Each attribute becomes a knob based on its `type` field
-- `type: { text: "boolean" }` → Switch control
-- `type: { text: "string" }` → Text input
-- `type: { text: "'a' | 'b' | 'c'" }` → Select dropdown
+| Type | Control | Example |
+| ---- | ------- | ------- |
+| `boolean` | Checkbox | `@attr {boolean} disabled` |
+| `string` | Text input | `@attr {string} label` |
+| `number` | Number input | `@property {number} count` |
+| `'a' \| 'b' \| 'c'` | Select dropdown | `@attr {'primary' \| 'secondary'} variant` |
+| CSS color | Color picker | `@cssprop --bg-color` |
 
-**Properties** (`members` array where `kind: "field"`):
-- JavaScript properties not reflected to attributes
-- Same type-to-control mapping as attributes
-- Useful for complex data that doesn't serialize to strings
+## TypeScript and Lit Support
 
-**CSS Custom Properties** (`cssProperties` array):
-- CSS variables defined on the element
-- Color values get a color picker
-- Other values get text input
+If you're using [Lit][lit] with TypeScript, `cem generate` automatically infers type information from decorators and TypeScript annotations—no JSDoc required. The `@property()` decorator with TypeScript types provides everything needed for knobs generation:
 
-To document your components for knobs, see the **[Generate documentation](/docs/reference/commands/generate/)** which covers JSDoc syntax for `@attr`, `@property`, `@cssprop`, and other tags.
+```typescript
+import { LitElement, html } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
 
-## Knob Types
+@customElement('my-element')
+export class MyElement extends LitElement {
+  // Boolean type → checkbox knob
+  @property({ type: Boolean }) disabled = false;
 
-The dev server generates different controls based on the type information in your manifest:
+  // String type → text input knob
+  @property() name = 'World';
 
-| Type | Control | Notes |
-| ---- | ------- | ----- |
-| `boolean` | Switch | Toggle on/off for boolean values |
-| `string` | Text input | Single-line text entry |
-| `number` | Number input | Numeric entry with increment/decrement |
-| `'a' \| 'b' \| 'c'` | Select dropdown | Dropdown with defined options |
-| CSS color value | Color picker | Visual color selector with hex input |
+  // Number type → number input knob
+  @property({ type: Number }) count = 0;
 
-### Boolean Knobs
-
-For boolean attributes/properties:
-
-```js
-/**
- * @attr {boolean} disabled
- */
+  // Union type → select dropdown knob
+  @property() variant: 'primary' | 'secondary' | 'danger' = 'primary';
+}
 ```
 
-Generates a checkbox. When checked, the attribute is added; unchecked, it's removed.
+CSS custom properties can be documented either with `@cssprop` JSDoc tags in your component class or with JSDoc-style comments directly in your CSS (recommended):
 
-### Enum Knobs
+```typescript
+static styles = css`
+  :host {
+    /** --button-bg: Background color (default: #0066cc) */
+    background: var(--button-bg, #0066cc);
 
-For union types (enums):
-
-```js
-/**
- * @attr {'primary' | 'secondary' | 'danger'} variant
- */
+    /** --button-padding: Internal padding (default: 8px 16px) */
+    padding: var(--button-padding, 8px 16px);
+  }
+`;
 ```
 
-Generates a select dropdown with options: primary, secondary, danger.
+For detailed descriptions, usage examples, or additional metadata beyond what TypeScript provides, add JSDoc comments to supplement the type information.
 
-### Number Knobs
+## Multiple Element Instances
 
-For numeric types:
+The dev server generates knobs for every custom element in your demo that's documented in the manifest. When you have multiple instances of the same element, each gets a unique label based on its `id` attribute, text content (first 20 characters), `aria-label`, or a fallback like "tag-name No. N". Each instance's knobs are independent—changing a knob updates only that specific element.
 
-```js
-/**
- * @property {number} count
- */
-```
-
-Generates a number input with increment/decrement controls.
-
-### Color Knobs
-
-CSS custom properties with color values:
-
-```js
-/**
- * @cssprop --bg-color - Background color (default: #ff0000)
- */
-```
-
-Generates a dual control: color picker + text input for precise hex values.
-
-## Knob Categories
-
-Knobs are organized into three collapsible sections:
-
-1. **Attributes** - DOM attributes (e.g., `disabled`, `variant`)
-2. **Properties** - JavaScript properties (e.g., `value`, `data`)
-3. **CSS Properties** - CSS custom properties (e.g., `--bg-color`)
-
-You can expand/collapse each section in the UI.
-
-## Knobs for All Elements
-
-The dev server generates knobs for every custom element in your demo that's documented in the manifest. Each element gets its own labeled group of controls.
-
-**Element detection:**
-1. The dev server scans your demo HTML for custom elements
-2. For each element found, it looks up the manifest documentation
-3. If documented, a knob group is created with controls for that element's API
-
-**Instance labeling:**
-When you have multiple instances of the same element, each gets a unique label using:
-- `#id` (if element has an `id` attribute)
-- Text content (first 20 characters)
-- `aria-label`
-- Fallback: "tag-name No. N"
-
-**Example:**
-
-```html
-<my-card id="card-1">
-  <h2 slot="title">First Card</h2>
-</my-card>
-
-<my-card id="card-2">
-  <h2 slot="title">Second Card</h2>
-</my-card>
-
-<my-button variant="primary">Click Me</my-button>
-```
-
-The sidebar shows:
-- **my-card** section:
-  - **#card-1** (knobs for first card)
-  - **#card-2** (knobs for second card)
-- **my-button** section:
-  - **my-button No. 1** (knobs for button)
-
-Each element's knobs are independent - changing a knob updates only that specific instance.
-
-## State Synchronization
-
-Knobs stay synchronized with your elements:
-
-- **Initial values** come from demo HTML attributes
-- **Changing a knob** updates the element immediately
-- **Manual changes** (via DevTools) don't update knobs (one-way binding)
-
-## How to Use Knobs
-
-1. **Run your demo** in `cem serve`
-2. **Open the sidebar** (desktop) or menu (mobile)
-3. **Find your element** in the knobs section
-4. **Adjust controls** to test different states
-5. **See live updates** in the demo
+Knobs are organized into collapsible categories: Attributes for DOM attributes like `disabled`, Properties for JavaScript properties like `data`, and CSS Properties for custom properties like `--bg-color`.
 
 ## Troubleshooting
 
-### No knobs appearing
+If knobs don't appear, verify your manifest has API documentation by running `cem generate` and checking that `custom-elements.json` contains attributes, properties, or cssProperties for your element. Make sure the element appears in your demo HTML and uses proper JSDoc tags like `@attr`, `@property`, and `@cssprop`.
 
-Check:
-1. **Manifest has API docs** - Run `cem generate` and verify `custom-elements.json` has attributes/properties/cssProperties
-2. **Component is in demo** - The element must be present in your demo HTML
-3. **Documentation syntax** - Use proper JSDoc tags (`@attr`, `@property`, `@cssprop`)
+If a knob shows the wrong control type (checkbox instead of text input), check that your JSDoc type annotation matches the actual type—`@attr {boolean}` for booleans, `@attr {string}` for strings. Regenerate the manifest with `cem generate` after fixing JSDoc, then restart the dev server.
 
-### Wrong control type
-
-If a string shows a checkbox or vice versa:
-1. **Check type annotation** - Ensure `@attr {boolean}` or `@attr {string}` is correct
-2. **Regenerate manifest** - Run `cem generate` after fixing JSDoc
-3. **Restart serve** - Changes to manifest require server restart
-
-### Knob doesn't update element
-
-If changing a knob has no effect:
-1. **Check attribute reflection** - Ensure your component responds to attribute changes
-2. **Use attributeChangedCallback** - For reactive attributes
-3. **Check console** - Look for JavaScript errors
-
-### Multiple instances not working
-
-If multi-instance detection fails:
-1. **Add IDs** - Give elements unique `id` attributes for better labels
-2. **Check HTML structure** - Elements must be at same level or nested consistently
-3. **Verify tag names** - All instances must have the same tag name
+If a knob doesn't update your element, ensure your component responds to attribute changes using `attributeChangedCallback` or property setters that trigger rendering. Check the browser console for JavaScript errors that might prevent updates.
 
 ## Example: Complete Component
 
@@ -240,6 +129,13 @@ This generates:
 
 ## What's Next?
 
-- **[Generate Docs](/docs/reference/commands/generate/)** - Learn JSDoc syntax for documentation
-- **[Buildless Development](../buildless-development/)** - Write TypeScript and import CSS without build steps
-- **[Getting Started](../getting-started/)** - Set up your first demo
+- **[Generate Command][generate]** - JSDoc syntax for documenting components
+- **[Development Workflow][developmentworkflow]** - How knobs fit into the write-generate-serve-test cycle
+- **[Demos][demos]** - Organize demo HTML files
+
+[customelementsjson]: https://github.com/webcomponents/custom-elements-json
+[developmentworkflow]: ../workflow/
+[testphase]: ../workflow/#4-test
+[generate]: /docs/reference/commands/generate/
+[demos]: ../demos/
+[lit]: https://lit.dev

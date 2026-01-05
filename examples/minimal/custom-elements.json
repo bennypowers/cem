@@ -26,7 +26,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/minimal/elements/hello-world/hello-world.ts#L14"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/minimal/elements/hello-world/hello-world.ts#L16"
           },
           "kind": "class",
           "tagName": "hello-world",
@@ -56,7 +56,14 @@
           "cssProperties": [
             {
               "name": "--hello-world-color",
-              "description": "Color of the greeting text"
+              "description": "Color of the greeting text",
+              "default": "inherit",
+              "syntax": "color"
+            }
+          ],
+          "demos": [
+            {
+              "url": "elements/hello-world/demos/basic.html"
             }
           ],
           "customElement": true

@@ -27,9 +27,9 @@ npm install --save-dev @pwrs/cem
 
 [logo]: /images/logo.svg
 [schema]: https://github.com/webcomponents/custom-elements-manifest/
-[generate]: ./docs/commands/generate/
-[validate]: ./docs/commands/validate/
-[search]: ./docs/commands/search/
-[serve]: ./docs/serve/
-[lsp]: ./docs/lsp/
-[mcp]: ./docs/mcp/
+[generate]: /docs/reference/commands/generate/
+[validate]: /docs/reference/commands/validate/
+[search]: /docs/reference/commands/search/
+[serve]: /docs/reference/commands/serve/
+[lsp]: /docs/reference/lsp/
+[mcp]: /docs/reference/mcp/

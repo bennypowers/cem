@@ -512,6 +512,11 @@ del {
   font-weight: 400;
 }
 
+h4.section-link {
+  padding-inline-start: 1.5rem;
+  font-size: 0.95rem;
+}
+
 /* Sidebar */
 .sidebar-link {
   display: grid;
@@ -1045,14 +1050,64 @@ code-highlighter {
 
 /* Mermaid Diagrams */
 .mermaid {
-  --theme: light-dark(darkgoldenrod, darkgoldenrod);
   background-color: transparent !important;
-  margin-bottom: 2.5rem;
+  margin: 1.5rem 0 2.5rem 0;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: var(--color-accent) !important;
 }
 
 .mermaid svg {
   margin: 0 auto;
   display: block;
+  max-width: 100%;
+
+  /* Style all text elements */
+  text {
+    fill: var(--color-text) !important;
+    font-family: var(--font-family);
+  }
+
+  /* Style node backgrounds */
+  .node rect,
+  .node circle,
+  .node ellipse,
+  .node polygon {
+    fill: var(--color-bg) !important;
+    stroke: var(--color-theme) !important;
+    stroke-width: 2px;
+  }
+
+  /* Style edges/arrows */
+  .edgePath path,
+  .flowchart-link {
+    stroke: var(--color-text-muted) !important;
+    stroke-width: 2px;
+  }
+
+  /* Style arrowheads */
+  marker path {
+    fill: var(--color-text-muted) !important;
+    stroke: var(--color-text-muted) !important;
+  }
+
+  /* Style labels */
+  .edgeLabel,
+  .label,
+  .nodeLabel {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    & text,
+    & span,
+    & p {
+      fill: var(--color-text) !important;
+      color: var(--color-text) !important;
+    }
+  }
+
+  .label-container {
+    fill: var(--color-bg);
+  }
 }
 
 .goat svg {

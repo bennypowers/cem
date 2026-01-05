@@ -1,22 +1,12 @@
 ---
 title: Import Maps
 layout: docs
-weight: 40
+weight: 60
 ---
 
-`cem serve` automatically generates [import maps](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap) from your `package.json`, enabling bare module specifiers in your demos.
+The dev server automatically generates [import maps][importmaps] from your package.json, letting you use npm packages in demos without bundling. Import maps enable standard bare specifiers like `import { LitElement } from 'lit'` instead of relative paths to node_modules, supporting both single packages and [npm workspaces][npmworkspaces] monorepos. This complements [buildless TypeScript development][buildlessdevelopment] by eliminating the need for bundlers while preserving the same import syntax you'd use in production code.
 
-## What Are Import Maps?
-
-Import maps let you use package names in imports instead of full paths:
-
-```js
-// With import maps:
-import { LitElement } from 'lit';
-
-// Without import maps:
-import { LitElement } from '../node_modules/lit/index.js';
-```
+Import maps work by mapping package names to file paths, so `import { LitElement } from 'lit'` resolves to `/node_modules/lit/index.js`. The dev server reads your package.json dependencies, resolves entry points from each package's exports or main field, and injects the generated import map into demo HTML automatically.
 
 ## Automatic Generation
 
@@ -44,25 +34,10 @@ The dev server reads your `package.json` and generates an import map for all dep
 }
 ```
 
-## How It Works
+## NPM Workspaces Support
 
-### Single Package Repo
+For npm workspaces monorepos, the dev server discovers all workspace packages, generates import maps for each package's dependencies, then aggregates them into a single import map. Workspace packages become importable by name, so `import { MyButton } from '@my-org/button'` works across packages in your monorepo just like external dependencies:
 
-For a single package, the dev server:
-1. Reads `package.json` dependencies
-2. Resolves entry points from `node_modules/*/package.json`
-3. Generates import map
-4. Injects it into demo HTML
-
-### NPM Workspaces Monorepo
-
-For npm workspaces, the dev server:
-1. Discovers all workspace packages
-2. Generates import map for each package's dependencies
-3. Aggregates into a single import map
-4. Makes workspace packages importable by name
-
-**Example workspace import map:**
 ```json
 {
   "imports": {
@@ -142,52 +117,10 @@ Look for log entries like:
 
 ## Custom Overrides
 
-The dev server provides multiple ways to customize import map entries, allowing you to override auto-generated mappings for specific packages.
+You can customize import map entries to point packages to CDNs, fix broken package exports, or use local development builds. The dev server resolves entries with this priority: auto-generated from package.json (lowest), override file entries (medium), and config overrides (highest priority wins).
 
-### Overview
+Specify overrides directly in `.config/cem.yaml` using the full [import map format][importmaps]:
 
-Import map entries are resolved with the following priority (highest priority wins):
-
-1. **Auto-generated** - Automatically created from `package.json` dependencies
-2. **Override file** - Custom JSON file with import map entries
-3. **Config overrides** - Individual overrides specified in `.config/cem.yaml`
-
-### Using an Override File
-
-Create a JSON file containing custom import map entries. This file follows the standard [import map format](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap).
-
-**.config/importmap.json:**
-```json
-{
-  "imports": {
-    "lit": "https://cdn.jsdelivr.net/npm/lit@3/+esm",
-    "lit/": "https://cdn.jsdelivr.net/npm/lit@3/",
-    "@patternfly/elements/": "/node_modules/@patternfly/elements/"
-  },
-  "scopes": {
-    "/demos/": {
-      "lit": "/node_modules/lit/index.js"
-    }
-  }
-}
-```
-
-Then reference it in your config:
-
-**.config/cem.yaml:**
-```yaml
-serve:
-  importMap:
-    overrideFile: '.config/importmap.json'
-```
-
-The entries in this file will be deep-merged with the auto-generated import map, with your entries taking precedence.
-
-### Using Config Overrides
-
-You can specify overrides directly in your config using the full import map structure:
-
-**.config/cem.yaml:**
 ```yaml
 serve:
   importMap:
@@ -195,133 +128,30 @@ serve:
       imports:
         'lit': 'https://cdn.jsdelivr.net/npm/lit@3/+esm'
         'lit/': 'https://cdn.jsdelivr.net/npm/lit@3/'
-        '@custom/library': '/vendor/custom-library.js'
+        '@my-org/components': '/dist/components.js'
       scopes:
         '/demos/legacy/':
           'lit': 'https://cdn.jsdelivr.net/npm/lit@2/+esm'
 ```
 
-Config overrides have the highest priority and will override both auto-generated and file-based entries. They support both `imports` and `scopes`.
-
-### Common Use Cases
-
-#### Use CDN for Specific Packages
-
-Useful for testing against different versions or reducing local bundle size:
+Alternatively, use an override file for complex mappings. Create `.config/importmap.json` with standard import map format, then reference it in your config:
 
 ```yaml
 serve:
   importMap:
-    override:
-      imports:
-        'lit': 'https://cdn.jsdelivr.net/npm/lit@3/+esm'
-        'lit/': 'https://cdn.jsdelivr.net/npm/lit@3/'
-```
-
-#### Point to Local Development Build
-
-Override a workspace package to use a built version:
-
-```yaml
-serve:
-  importMap:
-    override:
-      imports:
-        '@my-org/components': '/dist/components.js'
-```
-
-#### Fix Broken Package Exports
-
-Some packages have incorrect or missing `package.json` exports. Override them:
-
-```yaml
-serve:
-  importMap:
-    override:
-      imports:
-        'some-lib/utils': '/node_modules/some-lib/src/utils/index.js'
-```
-
-#### Use Scoped Overrides
-
-For scenarios where different paths need different resolutions, you can use scopes in either the override file or config:
-
-**.config/cem.yaml:**
-```yaml
-serve:
-  importMap:
-    override:
-      imports:
-        'react': 'https://esm.sh/react@18'
-      scopes:
-        '/demos/legacy/':
-          'react': 'https://esm.sh/react@17'
-```
-
-Or via override file:
-
-**.config/importmap.json:**
-```json
-{
-  "imports": {
-    "react": "https://esm.sh/react@18"
-  },
-  "scopes": {
-    "/demos/legacy/": {
-      "react": "https://esm.sh/react@17"
-    }
-  }
-}
-```
-
-#### Disable Automatic Generation
-
-If you want complete control via an override file:
-
-```yaml
-serve:
-  importMap:
-    generate: false
     overrideFile: '.config/importmap.json'
 ```
 
-Use the `--no-import-map-generate` flag to disable temporarily:
-```sh
-cem serve --no-import-map-generate --import-map-override-file .config/importmap.json
-```
-
-### Debugging Overrides
-
-To verify your overrides are applied correctly:
-
-1. **View the generated import map** in your browser's DevTools:
-   - Open any demo page
-   - View source (Ctrl+U or Cmd+U)
-   - Find the `<script type="importmap">` tag
-   - Verify your overrides appear in the `imports` or `scopes` sections
-
-2. **Check server logs** with the `--verbose` flag:
-   ```sh
-   cem serve --verbose
-   ```
-
-   Look for entries like:
-   ```
-   [DEBUG] Applied 2 import map overrides
-   [DEBUG] Import map entry: lit -> https://cdn.jsdelivr.net/npm/lit@3/+esm
-   ```
-
-For complete configuration reference, see **[Configuration](/docs/reference/configuration/)**.
-
-## Benefits
-
-- **No bundler needed** - Use npm packages directly in browser
-- **Fast development** - No build step for dependencies
-- **Standard syntax** - Same import statements as bundled apps
-- **Workspace-aware** - Cross-package imports work automatically
+To disable automatic generation and use only your override file, set `generate: false` or use the `--no-import-map-generate` flag.
 
 ## What's Next?
 
-- **[Configuration](/docs/reference/configuration/)** - Configuration reference
-- **[Buildless Development](../buildless-development/)** - Write TypeScript and import CSS without build steps
-- **[Getting Started](../getting-started/)** - Set up your first demo
+- **[Buildless Development][buildlessdevelopment]** - TypeScript and CSS without build steps
+- **[Configuration][configuration]** - Complete configuration reference
+- **[Getting Started][gettingstarted]** - Set up your first demo
+
+[importmaps]: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap
+[npmworkspaces]: https://docs.npmjs.com/cli/using-npm/workspaces
+[buildlessdevelopment]: ../buildless-development/
+[configuration]: /docs/reference/configuration/
+[gettingstarted]: ../getting-started/

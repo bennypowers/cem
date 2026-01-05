@@ -1,0 +1,53 @@
+<meta itemprop="demo-for" content="multi-select">
+<meta itemprop="description" content="Basic multi-select usage with various configurations">
+
+<h2>Basic Multi-Select</h2>
+<multi-select placeholder="Select fruits...">
+  <option value="apple">Apple</option>
+  <option value="banana">Banana</option>
+  <option value="orange">Orange</option>
+  <option value="grape">Grape</option>
+  <option value="mango">Mango</option>
+</multi-select>
+
+<h2>With Search</h2>
+<multi-select searchable placeholder="Search and select...">
+  <option value="js">JavaScript</option>
+  <option value="ts">TypeScript</option>
+  <option value="py">Python</option>
+  <option value="rb">Ruby</option>
+  <option value="go">Go</option>
+  <option value="rs">Rust</option>
+  <option value="java">Java</option>
+  <option value="cpp">C++</option>
+</multi-select>
+
+<h2>With Max Selections</h2>
+<multi-select max-selections="3" placeholder="Select up to 3 items...">
+  <option value="red">Red</option>
+  <option value="blue">Blue</option>
+  <option value="green">Green</option>
+  <option value="yellow">Yellow</option>
+  <option value="purple">Purple</option>
+  <option value="orange">Orange</option>
+</multi-select>
+
+<h2>Required Field</h2>
+<multi-select required placeholder="Please select at least one...">
+  <option value="html">HTML</option>
+  <option value="css">CSS</option>
+  <option value="js">JavaScript</option>
+</multi-select>
+
+<h2>Compact Variant with Count Display</h2>
+<multi-select variant="compact" selection-display="count" placeholder="Select team members...">
+  <option value="alice">Alice Johnson</option>
+  <option value="bob">Bob Smith</option>
+  <option value="carol">Carol Williams</option>
+  <option value="david">David Brown</option>
+  <option value="eve">Eve Davis</option>
+</multi-select>
+
+<script type="module">
+  import '../multi-select.js';
+</script>

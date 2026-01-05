@@ -1,4 +1,4 @@
-import { LitElement, html } from 'lit';
+import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 /**
@@ -7,11 +7,19 @@ import { customElement, property } from 'lit/decorators.js';
  * @summary A minimal custom element example
  * @slot - Default slot for additional content after the greeting
  *
- * @cssprop --hello-world-color - Color of the greeting text
+ * @cssprop {<color>} --hello-world-color - Color of the greeting text
  * @csspart greeting - The paragraph element containing the greeting
+ *
+ * @demo elements/hello-world/demos/basic.html Basic usage
  */
 @customElement('hello-world')
 export class HelloWorld extends LitElement {
+  static styles = css`
+    p {
+      color: var(--hello-world-color, inherit);
+    }
+  `;
+
   /**
    * The name to greet
    */
