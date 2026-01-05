@@ -311,7 +311,7 @@ To verify your overrides are applied correctly:
    [DEBUG] Import map entry: lit -> https://cdn.jsdelivr.net/npm/lit@3/+esm
    ```
 
-For complete configuration reference, see **[Configuration](/docs/configuration/)**.
+For complete configuration reference, see **[Configuration](/docs/reference/configuration/)**.
 
 ## Benefits
 
@@ -322,6 +322,6 @@ For complete configuration reference, see **[Configuration](/docs/configuration/
 
 ## What's Next?
 
-- **[Configuration](/docs/configuration/)** - Configuration reference
-- **[Buildless Development](/docs/serve/buildless/)** - Write TypeScript and import CSS without build steps
-- **[Getting Started](/docs/serve/getting-started/)** - Set up your first demo
+- **[Configuration](/docs/reference/configuration/)** - Configuration reference
+- **[Buildless Development](../buildless-development/)** - Write TypeScript and import CSS without build steps
+- **[Getting Started](../getting-started/)** - Set up your first demo

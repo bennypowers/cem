@@ -290,4 +290,4 @@ arranged into dedicated go packages for ease of maintenance.
 
 [manifest]: https://github.com/webcomponents/custom-elements-manifest/
 [vscode]: https://marketplace.visualstudio.com/items?itemName=pwrs.cem-language-server-vscode
-[mcpdocs]: https://bennypowers.dev/cem/docs/mcp/
+[mcpdocs]: https://bennypowers.dev/cem/docs/reference/mcp/

@@ -19,7 +19,7 @@ The MCP server transforms your custom elements manifests into a structured, type
 
 For security and optimal AI performance, the server enforces a **2000 character limit** on description fields. Descriptions exceeding this limit are automatically truncated. This limit can be customized via configuration file or command line flags.
 
-For best practices on writing effective descriptions within this limit, see [Writing Effective Descriptions](/docs/mcp/writing-descriptions/).
+For best practices on writing effective descriptions within this limit, see [Writing Effective Descriptions](/docs/usage/effective-mcp-descriptions/).
 
 ## Quick Start
 
@@ -215,6 +215,4 @@ mcp-inspector cem mcp --package ./path/to/project
 
 ## See Also
 
-- [Writing Effective Descriptions](/docs/mcp/writing-descriptions/) - Guidelines for AI-friendly component documentation
-- [Usage Examples](/docs/mcp/examples/) - Comprehensive usage examples
-- [API Reference](/docs/mcp/api/) - Complete API documentation
+- [Writing Effective Descriptions](/docs/usage/effective-mcp-descriptions/) - Guidelines for AI-friendly component documentation

@@ -52,7 +52,7 @@ Knobs are generated from the manifest entries for each element. The dev server l
 - Color values get a color picker
 - Other values get text input
 
-To document your components for knobs, see the **[Generate documentation](/docs/commands/generate/)** which covers JSDoc syntax for `@attr`, `@property`, `@cssprop`, and other tags.
+To document your components for knobs, see the **[Generate documentation](/docs/reference/commands/generate/)** which covers JSDoc syntax for `@attr`, `@property`, `@cssprop`, and other tags.
 
 ## Knob Types
 
@@ -240,6 +240,6 @@ This generates:
 
 ## What's Next?
 
-- **[Generate Docs](/docs/commands/generate/)** - Learn JSDoc syntax for documentation
-- **[Buildless Development](/docs/serve/buildless/)** - Write TypeScript and import CSS without build steps
-- **[Getting Started](/docs/serve/getting-started/)** - Set up your first demo
+- **[Generate Docs](/docs/reference/commands/generate/)** - Learn JSDoc syntax for documentation
+- **[Buildless Development](../buildless-development/)** - Write TypeScript and import CSS without build steps
+- **[Getting Started](../getting-started/)** - Set up your first demo

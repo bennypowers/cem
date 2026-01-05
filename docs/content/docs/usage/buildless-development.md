@@ -137,7 +137,7 @@ serve:
 
 This resolves `/elements/card/demo/my-card-lightdom.css` → `elements/my-card/my-card-lightdom.css` ✓
 
-See **[Configuration](/docs/configuration/)** for details.
+See **[Configuration](/docs/reference/configuration/)** for details.
 
 ## Import CSS as Modules
 
@@ -292,10 +292,10 @@ serve:
         - 'src/**/*.css'
 ```
 
-See **[Configuration](/docs/configuration/)** for all options.
+See **[Configuration](/docs/reference/configuration/)** for all options.
 
 ## What's Next?
 
-- **[Import Maps](/docs/serve/import-maps/)** - Use npm packages without bundling
-- **[Configuration](/docs/configuration/)** - Configuration reference
-- **[Getting Started](/docs/serve/getting-started/)** - Set up your first demo
+- **[Import Maps](../import-maps/)** - Use npm packages without bundling
+- **[Configuration](/docs/reference/configuration/)** - Configuration reference
+- **[Getting Started](../getting-started/)** - Set up your first demo

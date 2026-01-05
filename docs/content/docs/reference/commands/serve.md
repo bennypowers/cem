@@ -1,7 +1,6 @@
 ---
-title: Command Reference
-layout: docs
-weight: 100
+title: Serve
+weight: 20
 ---
 
 The `cem serve` command starts a development server specifically designed for custom element development.
@@ -67,7 +66,7 @@ cem serve --target es2020
 cem serve --css-transform 'src/**/*.css' --css-transform 'elements/**/*.css'
 ```
 
-See **[Buildless Development](buildless/)** for details on CSS module imports.
+See **[Buildless Development](/docs/usage/buildless-development/)** for details on CSS module imports.
 
 ### Ignore build directories in watcher
 
@@ -102,7 +101,7 @@ The dev server supports multiple rendering modes for demo pages, affecting both 
 | `chromeless` | Minimal HTML with live reload, no UI chrome | Automated testing, embedding, clean screenshots, isolated development |
 | `iframe` | *(Not yet implemented)* Full UI with demo in iframe | Future support for complete document isolation |
 
-See **[Rendering Modes](rendering-modes/)** for detailed documentation.
+See **[Rendering Modes](/docs/usage/rendering-modes/)** for detailed documentation.
 
 ### Configuring Default Mode
 
@@ -199,15 +198,15 @@ serve:
     "/lib/": "/sources/"
 ```
 
-See **[Configuration > Path Mappings](/docs/configuration/#path-mappings)** for detailed documentation including:
+See **[Configuration > Path Mappings](/docs/reference/configuration/#path-mappings)** for detailed documentation including:
 - tsconfig.json inheritance
 - Workspace/monorepo support
 - Edge cases and debugging
 
 ## See Also
 
-- **[Getting Started](getting-started/)** - Set up your first demo
-- **[Buildless Development](buildless/)** - Write TypeScript and import CSS without build steps
-- **[Knobs](knobs/)** - Interactive testing controls
-- **[Import Maps](import-maps/)** - Use npm packages without bundling
-- **[Configuration](/docs/configuration/)** - Configuration reference
+- **[Getting Started](/docs/usage/getting-started/)** - Set up your first demo
+- **[Buildless Development](/docs/usage/buildless-development/)** - Write TypeScript and import CSS without build steps
+- **[Knobs](/docs/usage/knobs/)** - Interactive testing controls
+- **[Import Maps](/docs/usage/import-maps/)** - Use npm packages without bundling
+- **[Configuration](/docs/reference/configuration/)** - Configuration reference
