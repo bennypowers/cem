@@ -39,7 +39,7 @@ go install bennypowers.dev/cem@latest
 
 Verify installation:
 ```bash
-cem --version
+cem version
 ```
 
 ### 2. Install Claude Code Plugin
@@ -160,10 +160,10 @@ exclude:
 
 ## Support
 
-- **LSP Documentation**: https://cem.bennypowers.dev/docs/lsp
-- **MCP Documentation**: https://cem.bennypowers.dev/docs/mcp
-- **Issues**: https://github.com/bennypowers/cem/issues
-- **Discussions**: https://github.com/bennypowers/cem/discussions
+- [LSP Documentation](https://bennypowers.dev/cem/docs/reference/lsp)
+- [MCP Documentation](https://bennypowers.dev/cem/docs/reference/mcp)
+- [Issues](https://github.com/bennypowers/cem/issues)
+- [Discussions](https://github.com/bennypowers/cem/discussions)
 
 ## License
 

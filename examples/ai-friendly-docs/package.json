@@ -1,0 +1,19 @@
+{
+  "name": "@cem-examples/ai-friendly-docs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example demonstrating AI-friendly JSDoc documentation for custom elements",
+  "type": "module",
+  "customElements": "custom-elements.json",
+  "scripts": {
+    "analyze": "cem generate",
+    "serve": "cem serve",
+    "mcp": "cem mcp"
+  },
+  "dependencies": {
+    "lit": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

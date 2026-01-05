@@ -3,31 +3,25 @@ title: Documentation
 layout: docs
 ---
 
+## Getting Started
+
 {{< card-grid >}}
   {{< card title="Installation" href="./installation/" icon="/images/sections/installation.svg" >}}
-  Get `cem` up and running on your system.
+  Install CEM and configure LSP, MCP, and editor integrations.
   {{< /card >}}
 
-  {{< card title="Language Server Protocol" href="./lsp/" icon="/images/sections/lsp.svg" >}}
-  IDE features for custom elements with intelligent autocomplete and hover documentation.
+  {{< card title="Usage Guides" href="./usage/" icon="/images/sections/serve.svg" >}}
+  Learn the development workflow, explore examples, and use CEM effectively.
   {{< /card >}}
 
-  {{< card title="Development Server" href="./serve/" icon="/images/sections/serve.svg" >}}
-  Local dev server with live reload and interactive knobs.
+  {{< card title="Reference" href="./reference/" icon="/images/sections/commands.svg" >}}
+  Technical documentation for commands, configuration, LSP, and MCP protocols.
   {{< /card >}}
+{{< /card-grid >}}
 
-  {{< card title="MCP Server" href="./mcp/" icon="/images/sections/mcp.svg" >}}
-  Model Context Protocol server for AI assistants.
-  {{< /card >}}
+## Additional Resources
 
-  {{< card title="Commands" href="./commands/" icon="/images/sections/commands.svg" >}}
-  Command-line interface reference.
-  {{< /card >}}
-
-  {{< card title="Configuration" href="./configuration/" icon="/images/sections/configuration.svg" >}}
-  Configuration file reference.
-  {{< /card >}}
-
+{{< card-grid >}}
   {{< card title="Benchmarks" href="./benchmarks/" icon="/images/sections/benchmarks.svg" >}}
   Performance metrics for the analyzer.
   {{< /card >}}

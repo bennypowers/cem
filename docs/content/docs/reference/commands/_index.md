@@ -1,6 +1,6 @@
 ---
 title: Commands
-weight: 40
+weight: 10
 ---
 
 The `cem` command-line tool has several commands to help you generate and query Custom Elements Manifests.
@@ -8,6 +8,10 @@ The `cem` command-line tool has several commands to help you generate and query 
 {{< card-grid >}}
   {{< card title="Generate" href="generate" icon="/images/sections/generate.svg" >}}
   Analyze your source code and automatically create a comprehensive custom-elements.json manifest file that documents all your custom elements and their APIs.
+  {{< /card >}}
+
+  {{< card title="Serve" href="serve" icon="/images/sections/serve.svg" >}}
+  Start a development server with live reload, buildless TypeScript, and interactive demos.
   {{< /card >}}
 
   {{< card title="List" href="list" icon="/images/sections/list.svg" >}}

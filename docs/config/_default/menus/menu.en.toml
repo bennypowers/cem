@@ -1,10 +1,128 @@
 [[main]]
   name = "Installation"
   pageRef = "/docs/installation/"
+  identifier = "installation"
+  weight = 10
+
+[[main]]
+  name = "Usage Guides"
+  pageRef = "/docs/usage/"
+  identifier = "usage"
+  weight = 20
+
+[[main]]
+  name = "Reference"
+  pageRef = "/docs/reference/"
+  identifier = "reference"
+  weight = 30
+
+# Installation submenu
+[[main]]
+  name = "Setup"
+  pageRef = "/docs/installation/setup/"
+  parent = "installation"
+  weight = 10
+
+[[main]]
+  name = "LSP Integration"
+  pageRef = "/docs/installation/lsp/"
+  parent = "installation"
+  weight = 20
+
+[[main]]
+  name = "MCP Integration"
+  pageRef = "/docs/installation/mcp/"
+  parent = "installation"
+  weight = 30
+
+# Usage submenu
+[[main]]
+  name = "Getting Started"
+  pageRef = "/docs/usage/getting-started/"
+  parent = "usage"
+  weight = 10
+
+[[main]]
+  name = "Workflow"
+  pageRef = "/docs/usage/workflow/"
+  parent = "usage"
+  weight = 20
+
+[[main]]
+  name = "Examples"
+  pageRef = "/docs/usage/examples/"
+  parent = "usage"
+  weight = 30
+
+[[main]]
+  name = "Working with Demos"
+  pageRef = "/docs/usage/demos/"
+  parent = "usage"
+  weight = 40
+
+[[main]]
+  name = "Buildless Development"
+  pageRef = "/docs/usage/buildless-development/"
+  parent = "usage"
+  weight = 50
+
+[[main]]
+  name = "Import Maps"
+  pageRef = "/docs/usage/import-maps/"
+  parent = "usage"
+  weight = 60
+
+[[main]]
+  name = "Interactive Knobs"
+  pageRef = "/docs/usage/knobs/"
+  parent = "usage"
+  weight = 70
+
+[[main]]
+  name = "Using LSP Features"
+  pageRef = "/docs/usage/using-lsp/"
+  parent = "usage"
+  weight = 80
+
+[[main]]
+  name = "Effective MCP Descriptions"
+  pageRef = "/docs/usage/effective-mcp-descriptions/"
+  parent = "usage"
+  weight = 90
+
+[[main]]
+  name = "Rendering Modes"
+  pageRef = "/docs/usage/rendering-modes/"
+  parent = "usage"
+  weight = 100
+
+[[main]]
+  name = "Troubleshooting"
+  pageRef = "/docs/usage/troubleshooting/"
+  parent = "usage"
+  weight = 110
+
+# Reference submenu
 [[main]]
   name = "Commands"
-  pageRef = "/docs/commands/"
-  identifier = "commands"
+  pageRef = "/docs/reference/commands/"
+  parent = "reference"
+  weight = 10
+
 [[main]]
   name = "Configuration"
-  pageRef = "/docs/configuration/"
+  pageRef = "/docs/reference/configuration/"
+  parent = "reference"
+  weight = 20
+
+[[main]]
+  name = "LSP Protocol"
+  pageRef = "/docs/reference/lsp/"
+  parent = "reference"
+  weight = 30
+
+[[main]]
+  name = "MCP Protocol"
+  pageRef = "/docs/reference/mcp/"
+  parent = "reference"
+  weight = 40
