@@ -1,0 +1,2 @@
+{{- $parent := . -}}
+{{- or (not $parent) (eq $parent.Section "") (strings.HasSuffix $parent.RelPermalink "/docs/") -}}

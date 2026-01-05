@@ -27,11 +27,11 @@ generation.
 
 ## Description Length Limits
 
-The CEM MCP server enforces a 2000 character limit on all description fields 
-(elements, attributes, slots, CSS properties, events, and parts) to ensure 
-optimal AI performance. Descriptions exceeding this limit are automatically 
-truncated with "..." appended. Most effective descriptions are much shorter—aim 
-for 200-400 characters for core information, using the full limit only for 
+The CEM MCP server enforces a 2000-character limit on all description fields
+(elements, attributes, slots, CSS properties, events, and parts) to ensure
+optimal AI performance. Descriptions exceeding this limit are automatically
+truncated with "..." appended. Most effective descriptions are much shorter—aim
+for 200-400 characters for core information, using the full limit only for
 complex components requiring extensive guidance.
 
 Configure custom limits in `.config/cem.yaml` with `mcp.maxDescriptionLength: 
@@ -218,7 +218,7 @@ Event descriptions should explain when the event fires and what data it provides
 
 ## CSS Parts and States
 
-CSS parts descriptions should explain the styling purpose, inheritance behavior, and accessibility requirements for color contrast. CSS states descriptions should explain behavioral context, when the state is applied, and how to provide visual feedback while maintaining accessibility.
+CSS parts descriptions should explain the styling purpose, inheritance behavior, and accessibility requirements for color contrast. For CSS states, describe the behavioral context, when the state is applied, and how to provide visual feedback while maintaining accessibility.
 
 <figure class="do">
   <blockquote>

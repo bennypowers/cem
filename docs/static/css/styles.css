@@ -1050,7 +1050,6 @@ code-highlighter {
 
 /* Mermaid Diagrams */
 .mermaid {
-  background-color: transparent !important;
   margin: 1.5rem 0 2.5rem 0;
   padding: 1rem;
   border-radius: 0.5rem;

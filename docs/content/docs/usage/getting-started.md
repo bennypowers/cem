@@ -64,8 +64,6 @@ The dev server provides:
 - **[Error Overlay][developmentworkflow]** - Developer-friendly error messages with source maps
 - **[Rendering Modes][renderingmodes]** - Test in light DOM, shadow DOM, or chromeless mode
 
-[renderingmodes]: /docs/usage/rendering-modes/
-
 ## Next Steps
 
 ### Reference Documentation
@@ -81,18 +79,14 @@ Need help? See **[Troubleshooting][troubleshooting]** for common issues and solu
 [kitchensinkexample]: /docs/usage/examples/#kitchen-sink
 [examplesoverview]: /docs/usage/examples/
 [installation]: /docs/installation/
-[configurationreference]: /docs/reference/configuration/
 [developmentworkflow]: /docs/usage/workflow/
 [buildlessdevelopment]: /docs/usage/buildless-development/
 [importmaps]: /docs/usage/import-maps/
 [interactiveknobs]: /docs/usage/knobs/
+[renderingmodes]: /docs/usage/rendering-modes/
 [lspintegration]: /docs/installation/lsp/
 [mcpintegration]: /docs/installation/mcp/
-[developmentworkflow]: /docs/usage/workflow/
-[workingwithdemos]: /docs/usage/demos/
-[examplesoverview]: /docs/usage/examples/
 [commands]: /docs/reference/commands/
 [configuration]: /docs/reference/configuration/
 [servecommand]: /docs/reference/commands/serve/
-[workingwithdemos]: /docs/usage/demos/
 [troubleshooting]: /docs/usage/troubleshooting/

@@ -46,7 +46,7 @@ If your project uses separate source and output directories (e.g., `src/` and `d
 **How it works:**
 
 1. The dev server reads your `tsconfig.json` to detect `rootDir` and `outDir`
-2. It creates path mappings automatically (e.g., `"/dist/" → "/src/"`)
+2. It creates URL rewrites automatically (e.g., `"/dist/:path*" → "/src/{{.path}}"`)
 3. Requests to `/dist/components/button.js` resolve to `/src/components/button.ts`
 4. Your demos can reference the output path, but the server serves the source
 
@@ -67,7 +67,7 @@ This lets you write demos using the same paths your production build uses withou
 
 **Fallback behavior:**
 
-If the dev server can't find a source file via path mappings, it tries co-located files (in-place compilation). This ensures backward compatibility with projects that compile TypeScript in the same directory as source files.
+If the dev server can't find a source file via URL rewrites, it tries co-located files (in-place compilation). This ensures backward compatibility with projects that compile TypeScript in the same directory as source files.
 
 **Manual configuration:**
 

@@ -191,7 +191,7 @@ Demos become living documentation and test cases.
 
 Structure your project with our recommended layout for efficient workflows:
 
-```
+```text
 my-components/
 ├── elements/
 │   ├── hello-world/
@@ -286,6 +286,5 @@ The manifest is included in your package and enables LSP/MCP for consumers.
 [lspfeatures]: /docs/installation/lsp/
 [mcp]: /docs/installation/mcp/
 [interactivecontrols]: ../knobs/
-[interactiveknobs]: ../knobs/
 [buildlesstypescripttransformation]: ../buildless-development/
 [importmaps]: ../import-maps/

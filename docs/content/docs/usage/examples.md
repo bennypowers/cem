@@ -34,7 +34,7 @@ Each example includes its own README with details about what it demonstrates and
 
 ## Which One Should I Use?
 
-If you're learning `cem`, start with **minimal**. If you're building something real, use **intermediate** as your template. If you need to see how a specific feature works, check **kitchen-sink**. If you want to write AI-friendly documentation, see **ai-friendly-docs**. If you prefer vanilla JavaScript, try **vanilla**. If you have complex TypeScript setup, see **typescript-paths**.
+Start with **minimal** if you're learning `cem`. Use **intermediate** as a template for real projects. Check **kitchen-sink** to see specific features in action. Refer to **ai-friendly-docs** for comprehensive JSDoc patterns. Try **vanilla** if you prefer framework-free code. See **typescript-paths** for complex TypeScript setups.
 
 The examples are meant to be copied and modified. Take what works, remove what doesn't, and adapt them to your project's needs.
 

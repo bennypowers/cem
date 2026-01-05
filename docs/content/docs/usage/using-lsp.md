@@ -19,7 +19,7 @@ The LSP works in Lit template literals with special syntax support—use `@event
 
 ## Hover Documentation
 
-Hover over tag names to see element summaries, complete API documentation (properties, attributes, slots, events), CSS custom properties and parts, and links to source code. Hover over attributes to see descriptions, type information, default values, and valid enum values. In CSS files, hover over `::part()` selectors to see styling guidance for that shadow part.
+Hover over tag names to see element summaries, complete API documentation (properties, attributes, slots, events), CSS custom properties and parts, and links to source code. Attributes show descriptions, type information, default values, and valid enum values when hovered. In CSS files, hovering over `::part()` selectors displays styling guidance for that shadow part.
 
 ## Go-to-Definition
 

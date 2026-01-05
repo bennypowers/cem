@@ -87,13 +87,15 @@ serve:
     # Note: "iframe" mode is not yet implemented
     rendering: light
 
-  # Path mappings for src/dist separation
-  # Maps URL prefixes to source directories for TypeScript resolution
+  # URL rewrites for src/dist separation
+  # Rewrites request URLs to source file paths for TypeScript resolution
   # Automatically detected from tsconfig.json (rootDir/outDir)
-  # Manual mappings override automatic detection
-  pathMappings:
-    "/dist/": "/src/"
-    "/lib/": "/sources/"
+  # Manual rewrites override automatic detection
+  urlRewrites:
+    - urlPattern: "/dist/:path*"
+      urlTemplate: "/src/{{.path}}"
+    - urlPattern: "/lib/:path*"
+      urlTemplate: "/sources/{{.path}}"
 
   # Import map configuration
   importMap:
@@ -243,13 +245,13 @@ serve:
     overrideFile: '.config/importmap.json'
 ```
 
-## Path Mappings
+## URL Rewrites
 
-Path mappings enable buildless TypeScript development with src/dist separation. The dev server automatically resolves requests to compiled output paths (e.g., `/dist/foo.js`) to their TypeScript source files (e.g., `/src/foo.ts`).
+URL rewrites enable buildless TypeScript development with src/dist separation. The dev server automatically resolves requests to compiled output paths (e.g., `/dist/foo.js`) to their TypeScript source files (e.g., `/src/foo.ts`).
 
 ### Automatic Detection from tsconfig.json
 
-The dev server automatically reads your `tsconfig.json` and creates path mappings based on `rootDir` and `outDir`:
+The dev server automatically reads your `tsconfig.json` and creates URL rewrites based on `rootDir` and `outDir`:
 
 **tsconfig.json:**
 ```json
@@ -261,29 +263,39 @@ The dev server automatically reads your `tsconfig.json` and creates path mapping
 }
 ```
 
-This automatically creates the mapping: `"/dist/" → "/src/"`
+This automatically creates the rewrite:
+```yaml
+serve:
+  urlRewrites:
+    - urlPattern: "/dist/:path*"
+      urlTemplate: "/src/{{.path}}"
+```
 
 **How it works:**
 
 1. Request arrives: `GET /dist/components/button.js`
-2. Dev server checks path mappings: `/dist/` maps to `/src/`
-3. Resolves to source file: `/src/components/button.ts`
-4. Transforms TypeScript to JavaScript on-demand
-5. Serves transformed code with source maps
+2. Dev server matches URL pattern: `/dist/:path*` captures `path=components/button.js`
+3. Applies URL template: `/src/{{.path}}` → `/src/components/button.js`
+4. Resolves to source file: `/src/components/button.ts`
+5. Transforms TypeScript to JavaScript on-demand
+6. Serves transformed code with source maps
 
 ### Manual Configuration
 
-Override or extend automatic mappings in your config:
+Override or extend automatic rewrites in your config:
 
 ```yaml
 serve:
-  pathMappings:
-    "/dist/": "/src/"
-    "/lib/": "/sources/"
-    "/build/": "/typescript/"
+  urlRewrites:
+    - urlPattern: "/dist/:path*"
+      urlTemplate: "/src/{{.path}}"
+    - urlPattern: "/lib/:path*"
+      urlTemplate: "/sources/{{.path}}"
+    - urlPattern: "/build/:path*"
+      urlTemplate: "/typescript/{{.path}}"
 ```
 
-Manual mappings take precedence over automatic detection from `tsconfig.json`.
+Manual rewrites take precedence over automatic detection from `tsconfig.json`. URL patterns use dynamic segments (`:path*`, `:name`) and templates use Go template syntax (`{{.path}}`).
 
 ### Resolution Strategy
 
@@ -293,15 +305,16 @@ The dev server uses a multi-strategy approach to find source files:
    - Tries `/dist/button.ts` alongside `/dist/button.js`
    - Supports in-place compilation workflows
 
-2. **Path mappings** (src/dist separation)
-   - Applies configured mappings: `/dist/` → `/src/`
+2. **URL rewrites** (src/dist separation)
+   - Matches URL pattern: `/dist/:path*`
+   - Applies template: `/src/{{.path}}`
    - Resolves `/dist/button.js` to `/src/button.ts`
 
 If neither strategy finds a source file, the request falls through to static file serving.
 
 ### tsconfig.json Inheritance
 
-Path mappings work with TypeScript's `extends` feature:
+URL rewrites work with TypeScript's `extends` feature:
 
 **tsconfig.base.json:**
 ```json
@@ -322,11 +335,11 @@ Path mappings work with TypeScript's `extends` feature:
 }
 ```
 
-The dev server correctly merges inherited values and creates the mapping `"/dist/" → "/src/"`.
+The dev server correctly merges inherited values and creates the rewrite pattern `"/dist/:path*"` → `"/src/{{.path}}"`.
 
 ### Workspace Mode
 
-In workspace/monorepo setups, each package can have its own `tsconfig.json` with different path mappings:
+In workspace/monorepo setups, each package can have its own `tsconfig.json` with different URL rewrites:
 
 ```
 packages/
@@ -340,7 +353,7 @@ packages/
     build/
 ```
 
-Each package's mappings are discovered independently and applied to requests within that package's path.
+Each package's rewrites are discovered independently and applied to requests within that package's path.
 
 ### Edge Cases
 
@@ -355,7 +368,7 @@ Each package's mappings are discovered independently and applied to requests wit
 }
 ```
 
-Creates mapping: `"/dist/" → "/./"`
+Creates rewrite: `"/dist/:path*"` → `"/./{{.path}}"`
 
 The dev server normalizes this correctly via `filepath.Join()`, resolving `/dist/foo.js` to `/foo.ts` at the project root.
 
@@ -370,7 +383,7 @@ The dev server normalizes this correctly via `filepath.Join()`, resolving `/dist
 }
 ```
 
-No path mapping is created (in-place compilation). The dev server falls back to co-located file resolution.
+No URL rewrite is created (in-place compilation). The dev server falls back to co-located file resolution.
 
 ### Use Cases
 
@@ -383,21 +396,26 @@ No path mapping is created (in-place compilation). The dev server falls back to 
 **Custom build output directories:**
 ```yaml
 serve:
-  pathMappings:
-    "/lib/": "/src/"
-    "/esm/": "/src/"
-    "/cjs/": "/src/"
+  urlRewrites:
+    - urlPattern: "/lib/:path*"
+      urlTemplate: "/src/{{.path}}"
+    - urlPattern: "/esm/:path*"
+      urlTemplate: "/src/{{.path}}"
+    - urlPattern: "/cjs/:path*"
+      urlTemplate: "/src/{{.path}}"
 ```
 
 **Legacy projects with non-standard structure:**
 ```yaml
 serve:
-  pathMappings:
-    "/compiled/": "/source/typescript/"
-    "/js/": "/ts/"
+  urlRewrites:
+    - urlPattern: "/compiled/:path*"
+      urlTemplate: "/source/typescript/{{.path}}"
+    - urlPattern: "/js/:path*"
+      urlTemplate: "/ts/{{.path}}"
 ```
 
-### Debugging Path Mappings
+### Debugging URL Rewrites
 
 Use verbose logging to see path resolution in action:
 
@@ -406,8 +424,8 @@ cem serve --verbose
 ```
 
 Look for log messages like:
-```
-PathResolver: mapped source found: /dist/button.js -> /src/button.ts (mapping: /dist/ -> /src/)
+```text
+PathResolver: mapped source found: /dist/button.js -> /src/button.ts (pattern: /dist/:path* -> /src/{{.path}})
 ```
 
 ## Demo Discovery Features
@@ -438,12 +456,14 @@ Showcases primary variant with styling, accessibility, and interaction states.
 The system uses the following priority order to associate demos with elements:
 
 1. **Explicit microdata**: `<meta itemprop="demo-for" content="element-name">`
-2. **Path-based**: Elements whose aliases appear in demo file paths
+2. **Path-based** (only when `urlPattern` is configured): Elements whose tag names appear in demo file paths
 3. **Content-based**: Custom elements found in the demo HTML
+
+**Note**: Path-based association is disabled when `urlPattern` is not configured. In that case, the system uses only explicit microdata (priority 1) and content-based discovery (priority 3).
 
 #### Path-Based Association with URLPattern
 
-When a `urlPattern` is configured, path-based association becomes **parameter-position aware**. Element aliases only match when they appear in path positions that correspond to URLPattern parameters.
+When a `urlPattern` is configured, the system extracts parameter values from demo file paths and looks up matching elements by tag name. **Important**: The system matches extracted parameter values against element tag names directly, not aliases.
 
 **Example Configuration:**
 ```yaml
@@ -453,25 +473,22 @@ demoDiscovery:
   urlTemplate: "https://mysite.com/shop/{{.element | alias}}/{{.demo}}/"
 ```
 
-**Element Aliases:**
+**Elements in manifest:**
 ```yaml
-aliases:
-  my-shop-button: "shop-button"
-  my-accordion: "accordion"
-  my-accordion-header: "accordion-header"
+# Element tag names
+- my-shop-button
+- my-accordion
+- my-accordion-header
 ```
 
 **Path Matching Behavior:**
 
-- ✅ `/shop/shop-button/basic.html` → matches `my-shop-button` (alias "shop-button" in `:element` position)
-- ❌ `/shop/my-shop-button/basic.html` → no match (alias "shop-button" ≠ "my-shop-button")
-- ✅ `/shop/accordion-header/demo.html` → matches `my-accordion-header` only
-- ❌ `/shop/accordion-header/demo.html` → does NOT match `my-accordion` (prevents false positives)
+- ✅ `/shop/my-shop-button/basic.html` → matches `my-shop-button` (tag name in `:element` position)
+- ❌ `/shop/shop-button/basic.html` → no match (looks for element with tag name "shop-button")
+- ✅ `/shop/my-accordion-header/demo.html` → matches `my-accordion-header` only
+- ❌ `/shop/my-accordion-header/demo.html` → does NOT match `my-accordion` (exact match required)
 
-This precision matching prevents issues where shorter aliases (like "accordion") incorrectly match longer path segments (like "my-accordion-header").
-
-**Legacy Behavior (no URLPattern):**
-When `urlPattern` is not configured, the system falls back to compatibility mode with improved substring matching that prioritizes longer, more specific aliases over shorter ones.
+**Note on URL Generation**: While the `urlTemplate` uses `{{.element | alias}}` to transform tag names into aliases for generated URLs (e.g., `my-shop-button` → `shop-button`), the reverse transformation (alias → tag name) is not performed during path-based demo association. Always use tag names in file paths for path-based matching to work correctly.
 
 ### Description Sources
 

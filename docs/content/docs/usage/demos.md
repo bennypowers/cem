@@ -12,19 +12,18 @@ living documentation, manual test cases, and interactive examples for users
 exploring your components. The `cem` dev server discovers demos from `@demo`
 JSDoc tags (always works) or by file pattern matching (requires `demoDiscovery`
 configuration), then wraps them in minimal chrome with live reload and
-navigation UI. You can organize demos [by component][bycomponent], [by
-feature][byfeature], or use a [hybrid approach][hybridapproach]—whatever makes
-sense for your project.
+navigation UI. You can organize demos by component, by feature, or use a hybrid
+approach—whatever makes sense for your project.
 
-Demos are HTML partials, not full documents. You write just the content you want 
-to showcase, and the dev server handles the document wrapper, import maps, 
-TypeScript transformation, and error overlay. Demos fit naturally into the 
-[development workflow][developmentworkflow]—create them as you build components, 
-use them during the [test phase][testphase], and update them when you edit APIs. 
-Use [HTML5 microdata][html5microdata] to add descriptions, control URLs, and 
-explicitly associate demos with elements. For advanced URL generation and 
-path-based discovery, configure [URLPattern matching][urlpatternmatching] and 
-[URL templates][urltemplates] in your `cem.yaml`.
+Demos are HTML partials, not full documents. You write just the content you want
+to showcase, and the dev server handles the document wrapper, import maps,
+TypeScript transformation, and error overlay. Demos fit naturally into the
+[development workflow][developmentworkflow]—create them as you build components,
+use them during the [test phase][testphase], and update them when you edit APIs.
+Use [HTML5 microdata][documenting-your-demos] to add descriptions, control URLs,
+and explicitly associate demos with elements. For advanced URL generation and
+path-based discovery, configure [URLPattern matching][url-generation-with-urlpattern]
+and [URL templates][url-generation-with-urlpattern] in your `cem.yaml`.
 
 ## Demo Discovery
 
@@ -78,7 +77,7 @@ fileGlob: elements/**/*.demo.html
 
 **Example structure with `fileGlob: "elements/**/demo/*.html"`**:
 
-```
+```text
 elements/
 └── my-button/
     ├── my-button.ts
@@ -220,7 +219,7 @@ aliases:
 
 These paths match:
 
-```
+```text
 ✅ elements/button/demo/basic.html → my-button
 ✅ elements/card/demo/index.html   → my-card
 ❌ elements/btn/demo/index.html    → No match (alias is "button", not "btn")
@@ -233,19 +232,12 @@ These paths match:
 - **[Configuration Reference][configurationreference]** - Complete demo discovery config workflow
 - **[Development Workflow][developmentworkflow]** - How demos fit into the dev cycle
 
-[devserver]: ../workflow/#3-serve
-[bycomponent]: #by-component-recommended
-[hybridapproach]: #hybrid-approach
-[byfeature]: #by-feature
 [developmentworkflow]: ../workflow/
 [testphase]: ../workflow/#4-test
-[html5microdata]: #html5-microdata
-[urlpatternmatching]: #urlpattern-based-matching
-[urltemplates]: #url-templates
+[documenting-your-demos]: #documenting-your-demos
+[url-generation-with-urlpattern]: #url-generation-with-urlpattern
 [configurationreference]: /docs/reference/configuration/
 [renderingmodes]: ../rendering-modes/
 [interactiveknobs]: ../knobs/
-[configurationreference]: /docs/reference/configuration/
-[developmentworkflow]: ../workflow/
 [urlpattern]: https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API
 [examples]: https://github.com/bennypowers/cem/tree/main/examples/

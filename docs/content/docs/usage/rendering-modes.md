@@ -56,7 +56,7 @@ test('button component', async ({ page }) => {
 
 Override the default rendering mode for any demo with the `?rendering=` query parameter—useful for testing different contexts without restarting the server, sharing clean demo links, or quick mode comparisons:
 
-```
+```text
 http://localhost:8000/elements/button/demo/?rendering=chromeless
 http://localhost:8000/elements/button/demo/?rendering=shadow
 ```

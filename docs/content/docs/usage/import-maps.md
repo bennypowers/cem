@@ -110,7 +110,7 @@ cem serve --verbose
 ```
 
 Look for log entries like:
-```
+```text
 [INFO] Generated import map with 23 entries
 [DEBUG] Import map entry: lit -> /node_modules/lit/index.js
 ```

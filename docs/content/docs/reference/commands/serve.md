@@ -171,7 +171,7 @@ Then override specific demos back to light mode when needed:
 /demos/integration-test.html?rendering=light
 ```
 
-## Path Mappings
+## URL Rewrites
 
 The dev server automatically resolves TypeScript source files from compiled output paths when using src/dist separation.
 
@@ -188,23 +188,26 @@ If your project has a `tsconfig.json` with `rootDir` and `outDir`:
 }
 ```
 
-The server automatically maps `/dist/` requests to `/src/` source files:
+The server automatically rewrites `/dist/` requests to `/src/` source files:
 - Request: `/dist/components/button.js`
-- Resolves to: `/src/components/button.ts`
+- URL pattern matches: `/dist/:path*` with `path=components/button.js`
+- Rewrites to: `/src/components/button.ts`
 - Transforms and serves on-demand
 
 ### Manual Configuration
 
-Override or extend automatic mappings in `.config/cem.yaml`:
+Override or extend automatic rewrites in `.config/cem.yaml`:
 
 ```yaml
 serve:
-  pathMappings:
-    "/dist/": "/src/"
-    "/lib/": "/sources/"
+  urlRewrites:
+    - urlPattern: "/dist/:path*"
+      urlTemplate: "/src/{{.path}}"
+    - urlPattern: "/lib/:path*"
+      urlTemplate: "/sources/{{.path}}"
 ```
 
-See **[Configuration > Path Mappings](/docs/reference/configuration/#path-mappings)** for detailed documentation including:
+See **[Configuration > URL Rewrites](/docs/reference/configuration/#url-rewrites)** for detailed documentation including:
 - tsconfig.json inheritance
 - Workspace/monorepo support
 - Edge cases and debugging
