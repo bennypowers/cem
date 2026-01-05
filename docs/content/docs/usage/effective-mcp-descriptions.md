@@ -78,7 +78,7 @@ anti-patterns from AVOID statements.
 `cem mcp` provides AI agents with your content in the form of resources.
 Each resource combines your descriptions with relevant schema information:
 
-```
+```text
 Your Description + Type Information + Schema Context = Rich AI Guidance
 ```
 

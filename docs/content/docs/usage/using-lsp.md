@@ -45,7 +45,21 @@ If autocomplete doesn't work, check that `custom-elements.json` exists, verify t
 
 If suggestions are outdated, regenerate the manifest—the LSP watches for changes and reloads automatically. For validation errors that don't appear, check that diagnostics are enabled in your editor and that your manifest contains element schemas.
 
-For large projects with performance issues, limit workspace scope, exclude build directories in `.gitignore`, or enable verbose logging (`"cem.lsp.trace.server": "verbose"` in VS Code, `trace = 'verbose'` in Neovim) to diagnose what's happening.
+For large projects with performance issues, limit workspace scope, exclude build directories in `.gitignore`, or enable verbose logging to diagnose what's happening.
+
+### Debug Logging
+
+Debug logging is controlled via the LSP standard `$/setTrace` notification. Most editors expose this through trace level settings:
+
+- **`"off"`** - No debug logging (default)
+- **`"messages"`** - Basic debug logging
+- **`"verbose"`** - Detailed debug logging
+
+Enable verbose logging to troubleshoot issues:
+
+**VS Code**: Set `"cem.lsp.trace.server": "verbose"` in `settings.json`
+**Neovim**: Set `trace = 'verbose'` in your LSP configuration
+**Other editors**: Consult your LSP client documentation for trace level settings
 
 ## See Also
 

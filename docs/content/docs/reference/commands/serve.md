@@ -74,6 +74,32 @@ cem serve --css-transform 'src/**/*.css' --css-transform 'elements/**/*.css'
 
 See **[Buildless Development](/docs/usage/buildless-development/)** for details on CSS module imports.
 
+### Disable automatic import map generation
+
+```sh
+# Skip import map generation from package.json
+cem serve --no-import-map-generate
+```
+
+### Override import map entries
+
+```sh
+# Merge custom import map with auto-generated entries
+cem serve --import-map-override-file custom-imports.json
+```
+
+Example `custom-imports.json`:
+```json
+{
+  "imports": {
+    "lit": "https://cdn.skypack.dev/lit@3.0.0",
+    "@my-scope/": "/node_modules/@my-scope/"
+  }
+}
+```
+
+See **[Import Maps](/docs/usage/import-maps/)** for detailed documentation on configuring import maps.
+
 ### Ignore build directories in watcher
 
 ```sh

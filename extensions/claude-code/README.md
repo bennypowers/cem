@@ -160,10 +160,10 @@ exclude:
 
 ## Support
 
-- **LSP Documentation**: https://bennypowers.dev/cem/docs/reference/lsp
-- **MCP Documentation**: https://bennypowers.dev/cem/docs/reference/mcp
-- **Issues**: https://github.com/bennypowers/cem/issues
-- **Discussions**: https://github.com/bennypowers/cem/discussions
+- [LSP Documentation](https://bennypowers.dev/cem/docs/reference/lsp)
+- [MCP Documentation](https://bennypowers.dev/cem/docs/reference/mcp)
+- [Issues](https://github.com/bennypowers/cem/issues)
+- [Discussions](https://github.com/bennypowers/cem/discussions)
 
 ## License
 

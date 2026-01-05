@@ -11,7 +11,7 @@ Configure the CEM Language Server Protocol integration for your editor to get in
 
 ## Prerequisites
 
-[Install CEM](../setup/) first if you haven't already.
+[Install CEM](/docs/installation/) first if you haven't already.
 
 ## What is LSP?
 

@@ -58,7 +58,7 @@
               "name": "--hello-world-color",
               "description": "Color of the greeting text",
               "default": "inherit",
-              "syntax": "color"
+              "syntax": "<color>"
             }
           ],
           "demos": [
