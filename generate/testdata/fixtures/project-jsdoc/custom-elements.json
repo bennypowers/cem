@@ -1,0 +1,945 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-attr.js",
+      "declarations": [
+        {
+          "name": "JsdocAttr",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "classAttr",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "classattr"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-attr.ts#L19"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-attr",
+          "attributes": [
+            {
+              "name": "attr"
+            },
+            {
+              "name": "attr-description",
+              "description": "attr description"
+            },
+            {
+              "name": "attr-description-multiline",
+              "description": "multiline\nattr description"
+            },
+            {
+              "name": "attr-typed",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "attr-typed-description",
+              "description": "attr typed description",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "attr-typed-description-multiline",
+              "description": "multiline\nattr typed description",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "attribute"
+            },
+            {
+              "name": "attribute-description",
+              "description": "attribute description"
+            },
+            {
+              "name": "attribute-description-multiline",
+              "description": "multiline\nattribute description"
+            },
+            {
+              "name": "attribute-typed",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "attribute-typed-description",
+              "description": "attribute typed description",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "attribute-typed-description-multiline",
+              "description": "multiline\nattribute typed description",
+              "type": {
+                "text": "number"
+              }
+            },
+            {
+              "name": "classattr",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "classAttr"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-attr",
+          "declaration": {
+            "name": "JsdocAttr",
+            "module": "src/jsdoc-attr.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-css-part.js",
+      "declarations": [
+        {
+          "name": "JsdocCssPart",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-css-part.ts#L7"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-css-part",
+          "cssParts": [
+            {
+              "name": "part"
+            },
+            {
+              "name": "part-description",
+              "description": "part description"
+            },
+            {
+              "name": "part-description-multiline",
+              "description": "multiline\npart with description"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-css-part",
+          "declaration": {
+            "name": "JsdocCssPart",
+            "module": "src/jsdoc-css-part.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-css-property.js",
+      "declarations": [
+        {
+          "name": "JsdocCssProp",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-css-property.ts#L35"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-css-prop",
+          "cssProperties": [
+            {
+              "name": "--prop"
+            },
+            {
+              "name": "--prop-description",
+              "description": "prop description"
+            },
+            {
+              "name": "--prop-description-multiline",
+              "description": "multiline\nprop description"
+            },
+            {
+              "name": "--prop-default",
+              "default": "none"
+            },
+            {
+              "name": "--prop-default-description",
+              "description": "prop default description",
+              "default": "none"
+            },
+            {
+              "name": "--prop-default-description-multiline",
+              "description": "multiline\nprop default description",
+              "default": "none"
+            },
+            {
+              "name": "--prop-typed",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--prop-typed-description",
+              "description": "prop typed description",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--prop-typed-description-multiline",
+              "description": "multiline\nprop typed description",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--prop-typed-default",
+              "default": "none",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--prop-typed-default-description",
+              "description": "prop typed default description",
+              "default": "none",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--prop-typed-default-description-multiline",
+              "description": "multiline\nprop typed default description",
+              "default": "none",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--property"
+            },
+            {
+              "name": "--property-description",
+              "description": "property description"
+            },
+            {
+              "name": "--property-description-multiline",
+              "description": "multiline\nproperty description"
+            },
+            {
+              "name": "--property-default",
+              "default": "none"
+            },
+            {
+              "name": "--property-default-description",
+              "description": "property default description",
+              "default": "none"
+            },
+            {
+              "name": "--property-typed-default-description-multiline",
+              "description": "multiline\nproperty typed default description",
+              "default": "none",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--property-typed",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--property-typed-description",
+              "description": "property typed description",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--property-typed-description-multiline",
+              "description": "multiline\nproperty typed description",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--property-typed-default",
+              "default": "none",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--property-typed-default-description",
+              "description": "property typed default description",
+              "default": "none",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--property-typed-default-description-multiline",
+              "description": "multiline\nproperty typed default description",
+              "default": "none",
+              "syntax": "\u003ccolor\u003e"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-css-prop",
+          "declaration": {
+            "name": "JsdocCssProp",
+            "module": "src/jsdoc-css-property.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-css-state.js",
+      "declarations": [
+        {
+          "name": "JsdocCssState",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-css-state.ts#L7"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-css-state",
+          "cssStates": [
+            {
+              "name": "state"
+            },
+            {
+              "name": "state-description",
+              "description": "state description"
+            },
+            {
+              "name": "state-description-multiline",
+              "description": "multiline\nstate description"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-css-state",
+          "declaration": {
+            "name": "JsdocCssState",
+            "module": "src/jsdoc-css-state.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-demo.js",
+      "declarations": [
+        {
+          "name": "JsdocDemo",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-demo.ts#L5"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-demo",
+          "demos": [
+            {
+              "url": "https://example.com/jsdoc-alias"
+            },
+            {
+              "description": "markdown description",
+              "url": "https://example.com/jsdoc-alias-description"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-demo",
+          "declaration": {
+            "name": "JsdocDemo",
+            "module": "src/jsdoc-demo.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-deprecated-flag.js",
+      "declarations": [
+        {
+          "name": "JsdocDeprecatedFlag",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-deprecated-flag.ts#L4"
+          },
+          "kind": "class",
+          "deprecated": true,
+          "tagName": "jsdoc-deprecated-flag",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-deprecated-flag",
+          "declaration": {
+            "name": "JsdocDeprecatedFlag",
+            "module": "src/jsdoc-deprecated-flag.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-deprecated-reason-multiline.js",
+      "declarations": [
+        {
+          "name": "JsdocDeprecatedReasonMultiline",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-deprecated-reason-multiline.ts#L5"
+          },
+          "kind": "class",
+          "deprecated": "multiline\ndeprecation reason",
+          "tagName": "jsdoc-deprecated-reason-multiline",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-deprecated-reason-multiline",
+          "declaration": {
+            "name": "JsdocDeprecatedReasonMultiline",
+            "module": "src/jsdoc-deprecated-reason-multiline.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-deprecated-reason.js",
+      "declarations": [
+        {
+          "name": "JsdocDeprecatedReason",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-deprecated-reason.ts#L4"
+          },
+          "kind": "class",
+          "deprecated": "deprecation reason",
+          "tagName": "jsdoc-deprecated-reason",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-deprecated-reason",
+          "declaration": {
+            "name": "JsdocDeprecatedReason",
+            "module": "src/jsdoc-deprecated-reason.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-description-markdown.js",
+      "declarations": [
+        {
+          "name": "JsdocDescriptionMarkdown",
+          "description": "description\n\nthe description contains:\n- markdown list\n- inline code\n- multiple lines\n- markdown headings\n\n## Heading\nmarkdown heading follows `list`.",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-description-markdown.ts#L13"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-description-markdown",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-description-markdown",
+          "declaration": {
+            "name": "JsdocDescriptionMarkdown",
+            "module": "src/jsdoc-description-markdown.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-description-multiline.js",
+      "declarations": [
+        {
+          "name": "JsdocDescriptionMultiline",
+          "description": "multiline\ndescription",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-description-multiline.ts#L5"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-description-multiline",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-description-multiline",
+          "declaration": {
+            "name": "JsdocDescriptionMultiline",
+            "module": "src/jsdoc-description-multiline.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-description.js",
+      "declarations": [
+        {
+          "name": "JsdocDescription",
+          "description": "description",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-description.ts#L4"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-description",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-description",
+          "declaration": {
+            "name": "JsdocDescription",
+            "module": "src/jsdoc-description.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-event.js",
+      "declarations": [
+        {
+          "name": "JsdocEvents",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-event.ts#L19"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-events",
+          "events": [
+            {
+              "name": "event"
+            },
+            {
+              "name": "event-description",
+              "description": "event description"
+            },
+            {
+              "name": "event-description-multiline",
+              "description": "multiline\nevent description"
+            },
+            {
+              "name": "event-typed",
+              "type": {
+                "text": "Event"
+              }
+            },
+            {
+              "name": "event-typed-description",
+              "description": "event typed description",
+              "type": {
+                "text": "Event"
+              }
+            },
+            {
+              "name": "event-typed-description-multiline",
+              "description": "multiline\nevent typed description",
+              "type": {
+                "text": "Event"
+              }
+            },
+            {
+              "name": "fires"
+            },
+            {
+              "name": "fires-description",
+              "description": "fires description"
+            },
+            {
+              "name": "fires-description-multiline",
+              "description": "multiline\nfires description"
+            },
+            {
+              "name": "fires-typed",
+              "type": {
+                "text": "Event"
+              }
+            },
+            {
+              "name": "fires-typed-description",
+              "description": "fires typed description",
+              "type": {
+                "text": "Event"
+              }
+            },
+            {
+              "name": "fires-typed-description-multiline",
+              "description": "multiline\nfires typed description",
+              "type": {
+                "text": "Event"
+              }
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-events",
+          "declaration": {
+            "name": "JsdocEvents",
+            "module": "src/jsdoc-event.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-example.js",
+      "declarations": [
+        {
+          "name": "ExampleInline",
+          "description": "Class with inline caption example\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eBasic usage\u003c/figcaption\u003e\n\n```html\n\u003cexample-inline\u003e\u003c/example-inline\u003e\n```\n\u003c/figure\u003e",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L8"
+          },
+          "kind": "class",
+          "tagName": "example-inline",
+          "customElement": true
+        },
+        {
+          "name": "ExampleExplicit",
+          "description": "Class with explicit caption tag\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eAdvanced example with caption tag\u003c/figcaption\u003e\n\n```html\n\u003cexample-explicit\u003e\u003c/example-explicit\u003e\n```\n\u003c/figure\u003e",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L19"
+          },
+          "kind": "class",
+          "tagName": "example-explicit",
+          "customElement": true
+        },
+        {
+          "name": "ExampleNoCaption",
+          "description": "Class with no caption (code-only)\n\n```html\n\u003cexample-no-caption\u003e\u003c/example-no-caption\u003e\n```",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L29"
+          },
+          "kind": "class",
+          "tagName": "example-no-caption",
+          "customElement": true
+        },
+        {
+          "name": "ExampleMultiple",
+          "description": "Class with multiple examples\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eSimple case\u003c/figcaption\u003e\n\n```html\n\u003cexample-multiple\u003e\u003c/example-multiple\u003e\n```\n\u003c/figure\u003e\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eComplex case with attributes\u003c/figcaption\u003e\n\n```html\n\u003cexample-multiple foo=\"bar\" baz=\"qux\"\u003e\u003c/example-multiple\u003e\n```\n\u003c/figure\u003e",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L43"
+          },
+          "kind": "class",
+          "tagName": "example-multiple",
+          "customElement": true
+        },
+        {
+          "name": "ExampleMultiline",
+          "description": "Class with multi-line caption\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eThis example demonstrates\nadvanced usage patterns\nwith multiple lines\u003c/figcaption\u003e\n\n```html\n\u003cexample-multiline\u003e\u003c/example-multiline\u003e\n```\n\u003c/figure\u003e",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L56"
+          },
+          "kind": "class",
+          "tagName": "example-multiline",
+          "customElement": true
+        },
+        {
+          "name": "ExampleWithMethods",
+          "description": "Class with description and example",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "doSomething",
+              "description": "Method with example\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eBasic method call\u003c/figcaption\u003e\n\n```typescript\nelement.doSomething();\n```\n\u003c/figure\u003e",
+              "kind": "method"
+            },
+            {
+              "name": "value",
+              "description": "Property with example\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eSetting the value\u003c/figcaption\u003e\n\n```typescript\nelement.value = 'hello';\n```\n\u003c/figure\u003e",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field",
+              "attribute": "value"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L62"
+          },
+          "kind": "class",
+          "tagName": "example-with-methods",
+          "attributes": [
+            {
+              "name": "value",
+              "description": "Property with example\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eSetting the value\u003c/figcaption\u003e\n\n```typescript\nelement.value = 'hello';\n```\n\u003c/figure\u003e",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "value"
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "ExampleNoLang",
+          "description": "Class with example without language specifier\n\n```\n\u003cexample-no-lang\u003e\u003c/example-no-lang\u003e\n```",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L90"
+          },
+          "kind": "class",
+          "tagName": "example-no-lang",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "example-inline",
+          "declaration": {
+            "name": "ExampleInline",
+            "module": "src/jsdoc-example.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "example-explicit",
+          "declaration": {
+            "name": "ExampleExplicit",
+            "module": "src/jsdoc-example.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "example-no-caption",
+          "declaration": {
+            "name": "ExampleNoCaption",
+            "module": "src/jsdoc-example.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "example-multiple",
+          "declaration": {
+            "name": "ExampleMultiple",
+            "module": "src/jsdoc-example.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "example-multiline",
+          "declaration": {
+            "name": "ExampleMultiline",
+            "module": "src/jsdoc-example.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "example-with-methods",
+          "declaration": {
+            "name": "ExampleWithMethods",
+            "module": "src/jsdoc-example.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "example-no-lang",
+          "declaration": {
+            "name": "ExampleNoLang",
+            "module": "src/jsdoc-example.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-slot.js",
+      "declarations": [
+        {
+          "name": "JsdocSlot",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-slot.ts#L6"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-slot",
+          "slots": [
+            {
+              "name": "",
+              "description": "anon description"
+            },
+            {
+              "name": "slot",
+              "description": "slot"
+            },
+            {
+              "name": "slot-description",
+              "description": "slot description"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-slot",
+          "declaration": {
+            "name": "JsdocSlot",
+            "module": "src/jsdoc-slot.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-summary-multiline.js",
+      "declarations": [
+        {
+          "name": "JsdocSummary",
+          "summary": "multiline\nsummary",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-summary-multiline.ts#L5"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-summary",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-summary",
+          "declaration": {
+            "name": "JsdocSummary",
+            "module": "src/jsdoc-summary-multiline.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-summary.js",
+      "declarations": [
+        {
+          "name": "JsdocSummary",
+          "summary": "summary",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-summary.ts#L4"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-summary",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-summary",
+          "declaration": {
+            "name": "JsdocSummary",
+            "module": "src/jsdoc-summary.js"
+          }
+        }
+      ]
+    }
+  ]
+}

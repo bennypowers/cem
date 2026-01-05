@@ -216,8 +216,38 @@ func propertyToKnob(field *M.ClassField, currentValues map[string]string) KnobDa
 	return knob
 }
 
+// parseCSSPropertySyntax converts a CSS syntax string (e.g., "<color>") to a KnobType
+func parseCSSPropertySyntax(syntax string) KnobType {
+	if syntax == "" {
+		return ""
+	}
+
+	// Strip angle brackets
+	normalized := strings.Trim(syntax, "<>")
+
+	// Map CSS syntax types to KnobTypes
+	switch normalized {
+	case "color":
+		return KnobTypeColor
+	case "number", "integer":
+		return KnobTypeNumber
+	default:
+		// All other CSS types (length, percentage, etc.) map to string
+		return KnobTypeString
+	}
+}
+
 // cssPropertyToKnob converts a CSS custom property to a knob
 func cssPropertyToKnob(cssProp M.CssCustomProperty, currentValues map[string]string) KnobData {
+	// Determine knob type from syntax field first, then fall back to auto-detection
+	syntax := KnobType("")
+	if cssProp.Syntax != "" {
+		syntax = parseCSSPropertySyntax(cssProp.Syntax)
+	}
+	if syntax == "" {
+		syntax = detectCSSPropertyType(cssProp.Default)
+	}
+
 	knob := KnobData{
 		Name:         cssProp.Name,
 		Category:     KnobCategoryCSSProperty,
@@ -225,7 +255,7 @@ func cssPropertyToKnob(cssProp M.CssCustomProperty, currentValues map[string]str
 		Description:  template.HTML(cssProp.Description),
 		Default:      cssProp.Default,
 		CurrentValue: currentValues["css:"+cssProp.Name],
-		Type:         detectCSSPropertyType(cssProp.Default),
+		Type:         syntax,
 	}
 
 	return knob

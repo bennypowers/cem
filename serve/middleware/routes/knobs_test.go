@@ -636,6 +636,111 @@ func TestGenerateMultiInstanceKnobs(t *testing.T) {
 	}
 }
 
+// TestCSSPropertyToKnob tests CSS property to knob conversion with syntax field parsing
+func TestCSSPropertyToKnob(t *testing.T) {
+	tests := []struct {
+		name          string
+		cssProp       M.CssCustomProperty
+		currentValues map[string]string
+		wantType      KnobType
+	}{
+		{
+			name: "syntax field with color",
+			cssProp: M.CssCustomProperty{
+				FullyQualified: M.FullyQualified{
+					Name: "--button-color",
+				},
+				Syntax:  "<color>",
+				Default: "blue",
+			},
+			currentValues: map[string]string{},
+			wantType:      KnobTypeColor,
+		},
+		{
+			name: "syntax field with length",
+			cssProp: M.CssCustomProperty{
+				FullyQualified: M.FullyQualified{
+					Name: "--button-size",
+				},
+				Syntax:  "<length>",
+				Default: "16px",
+			},
+			currentValues: map[string]string{},
+			wantType:      KnobTypeString, // length maps to string
+		},
+		{
+			name: "empty syntax falls back to detection from hex color default",
+			cssProp: M.CssCustomProperty{
+				FullyQualified: M.FullyQualified{
+					Name: "--bg-color",
+				},
+				Syntax:  "",
+				Default: "#ff0000",
+			},
+			currentValues: map[string]string{},
+			wantType:      KnobTypeColor,
+		},
+		{
+			name: "empty syntax falls back to detection from rgb color default",
+			cssProp: M.CssCustomProperty{
+				FullyQualified: M.FullyQualified{
+					Name: "--text-color",
+				},
+				Syntax:  "",
+				Default: "rgb(255, 0, 0)",
+			},
+			currentValues: map[string]string{},
+			wantType:      KnobTypeColor,
+		},
+		{
+			name: "empty syntax with non-color default",
+			cssProp: M.CssCustomProperty{
+				FullyQualified: M.FullyQualified{
+					Name: "--spacing",
+				},
+				Syntax:  "",
+				Default: "8px",
+			},
+			currentValues: map[string]string{},
+			wantType:      KnobTypeString,
+		},
+		{
+			name: "syntax field takes precedence over default value",
+			cssProp: M.CssCustomProperty{
+				FullyQualified: M.FullyQualified{
+					Name: "--custom-prop",
+				},
+				Syntax:  "<color>",
+				Default: "8px", // Not a color value, but syntax says it's a color
+			},
+			currentValues: map[string]string{},
+			wantType:      KnobTypeColor,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			knob := cssPropertyToKnob(tt.cssProp, tt.currentValues)
+
+			if knob.Type != tt.wantType {
+				t.Errorf("Expected type %s, got %s", tt.wantType, knob.Type)
+			}
+
+			if knob.Name != tt.cssProp.Name {
+				t.Errorf("Expected name %s, got %s", tt.cssProp.Name, knob.Name)
+			}
+
+			if knob.Default != tt.cssProp.Default {
+				t.Errorf("Expected default %s, got %s", tt.cssProp.Default, knob.Default)
+			}
+
+			if knob.Category != KnobCategoryCSSProperty {
+				t.Errorf("Expected category %s, got %s", KnobCategoryCSSProperty, knob.Category)
+			}
+		})
+	}
+}
+
 // TestRenderMultiInstanceKnobsHTML tests rendering of knob groups with <details> structure
 func TestRenderMultiInstanceKnobsHTML(t *testing.T) {
 	// Create sample multi-instance knobs data
