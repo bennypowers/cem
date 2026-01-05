@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Installation on cem</title><link>https://bennypowers.dev/cem/docs/installation/</link><description>Recent content in Installation on cem</description><generator>Hugo</generator><language>en</language><atom:link href="https://bennypowers.dev/cem/docs/installation/index.xml" rel="self" type="application/rss+xml"/><item><title>LSP Integration</title><link>https://bennypowers.dev/cem/docs/installation/lsp/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/installation/lsp/</guid><description>&lt;info-callout type="info">
+ &lt;template shadowrootmode="open">
+ &lt;style>
+ #content {
+ display: block;
+ margin: 1rem 0;
+ border-radius: 0.5rem;
+ background: var(--color-accent);
+ border-left: 4px solid var(--callout-color);
+ overflow: hidden;
+
+ &amp;.info { --callout-color: var(--color-theme); }
+ &amp;.warning { --callout-color: #fbbf24; }
+ &amp;.error { --callout-color: #ef4444; }
+ &amp;.success { --callout-color: #10b981; }
+
+ .inner {
+ padding: 1rem;
+ color: var(--color-text);
+
+ ::slotted(*:first-child) {
+ margin-top: 0;
+ }
+
+ ::slotted(*:last-child) {
+ margin-bottom: 0;
+ }
+ }
+ }
+ &lt;/style>
+
+ &lt;div id="content" class="info" part="callout">
+ &lt;div class="inner" part="content">
+ &lt;slot>&lt;/slot>
+ &lt;/div>
+ &lt;/div>
+ &lt;/template>
+
+ &lt;strong>TL;DR&lt;/strong>: Install CEM, then configure your editor to run &lt;code>cem lsp&lt;/code>. VS Code users can install the extension. Neovim/Zed users configure their LSP client to start &lt;code>cem lsp&lt;/code> for HTML/TypeScript files.
+&lt;/info-callout>
+
+&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
+
+&lt;p>Configure the CEM Language Server Protocol integration for your editor to get intelligent autocomplete, hover documentation, and validation for custom elements.&lt;/p></description></item><item><title>MCP Integration</title><link>https://bennypowers.dev/cem/docs/installation/mcp/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/installation/mcp/</guid><description>&lt;p>Configure the CEM Model Context Protocol (MCP) server to give AI assistants intelligent access to your custom elements manifests.&lt;/p>
+&lt;h2 id="prerequisites">Prerequisites&lt;/h2>
+&lt;p>
+&lt;a href="../setup/">Install CEM
+&lt;/a> first if you haven&amp;rsquo;t already.&lt;/p>
+&lt;h2 id="what-is-mcp">What is MCP?&lt;/h2>
+&lt;p>The Model Context Protocol enables AI assistants to access structured data about your custom elements. The CEM MCP server transforms your manifests into an AI-accessible interface for:&lt;/p>
+&lt;ul>
+&lt;li>Generating correct HTML with proper slots and attributes&lt;/li>
+&lt;li>Understanding component APIs and relationships&lt;/li>
+&lt;li>Providing CSS integration guidance&lt;/li>
+&lt;li>Validating custom element usage patterns&lt;/li>
+&lt;/ul>
+&lt;h2 id="quick-start">Quick Start&lt;/h2>
+&lt;p>Test that MCP is working:&lt;/p></description></item></channel></rss>

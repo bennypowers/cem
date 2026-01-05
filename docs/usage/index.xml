@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Usage Guides on cem</title><link>https://bennypowers.dev/cem/docs/usage/</link><description>Recent content in Usage Guides on cem</description><generator>Hugo</generator><language>en</language><atom:link href="https://bennypowers.dev/cem/docs/usage/index.xml" rel="self" type="application/rss+xml"/><item><title>Getting Started</title><link>https://bennypowers.dev/cem/docs/usage/getting-started/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/getting-started/</guid><description>&lt;p>This guide will walk you through creating your first custom element project with
+&lt;code>cem&lt;/code>.&lt;/p>
+&lt;h2 id="prerequisites">Prerequisites&lt;/h2>
+&lt;ul>
+&lt;li>Node.js 24+ or Go 1.24+&lt;/li>
+&lt;li>A code editor (VS Code, Neovim, etc.)&lt;/li>
+&lt;li>Basic familiarity with custom elements / web components&lt;/li>
+&lt;/ul>
+&lt;h2 id="quick-start">Quick Start&lt;/h2>
+&lt;ol>
+&lt;li>&lt;strong>
+&lt;a href="https://bennypowers.dev/cem/docs/installation/">Install &lt;code>cem&lt;/code>
+&lt;/a>&lt;/strong> - Get the tool installed&lt;/li>
+&lt;li>&lt;strong>Write&lt;/strong> your component with JSDoc documentation&lt;/li>
+&lt;li>&lt;strong>Generate&lt;/strong> the manifest: &lt;code>cem generate&lt;/code>&lt;/li>
+&lt;li>&lt;strong>Create&lt;/strong> a demo HTML file&lt;/li>
+&lt;li>&lt;strong>Serve&lt;/strong> and test: &lt;code>cem serve&lt;/code>&lt;/li>
+&lt;/ol>
+&lt;p>The &lt;strong>
+&lt;a href="https://bennypowers.dev/cem/docs/usage/workflow/">Development Workflow
+&lt;/a>&lt;/strong> guide provides detailed
+examples and explanations for each step.&lt;/p></description></item><item><title>Development Workflow</title><link>https://bennypowers.dev/cem/docs/usage/workflow/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/workflow/</guid><description>&lt;info-callout type="info">
+ &lt;template shadowrootmode="open">
+ &lt;style>
+ #content {
+ display: block;
+ margin: 1rem 0;
+ border-radius: 0.5rem;
+ background: var(--color-accent);
+ border-left: 4px solid var(--callout-color);
+ overflow: hidden;
+
+ &amp;.info { --callout-color: var(--color-theme); }
+ &amp;.warning { --callout-color: #fbbf24; }
+ &amp;.error { --callout-color: #ef4444; }
+ &amp;.success { --callout-color: #10b981; }
+
+ .inner {
+ padding: 1rem;
+ color: var(--color-text);
+
+ ::slotted(*:first-child) {
+ margin-top: 0;
+ }
+
+ ::slotted(*:last-child) {
+ margin-bottom: 0;
+ }
+ }
+ }
+ &lt;/style>
+
+ &lt;div id="content" class="info" part="callout">
+ &lt;div class="inner" part="content">
+ &lt;slot>&lt;/slot>
+ &lt;/div>
+ &lt;/div>
+ &lt;/template>
+
+ &lt;strong>TL;DR&lt;/strong>: The workflow is &lt;strong>Write → Generate → Serve → Test → Edit&lt;/strong>. Write components with JSDoc, run &lt;code>cem generate&lt;/code> when APIs change, use &lt;code>cem serve&lt;/code> for live development. Skip regenerating for styling/implementation tweaks.
+&lt;/info-callout>
+
+&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
+
+&lt;p>&lt;code>cem&lt;/code> uses a manifest-driven development approach where you write custom
+elements with JSDoc documentation, generate a JSON manifest from your source
+code, and use that manifest to power developer tooling. The manifest enables
+
+&lt;a href="https://bennypowers.dev/cem/docs/installation/lsp/">LSP features
+&lt;/a> like autocomplete and validation in your editor,
+provides AI assistants with component information through 
+&lt;a href="https://bennypowers.dev/cem/docs/installation/mcp/">MCP
+&lt;/a>, and drives
+the dev server&amp;rsquo;s automatic documentation and 
+&lt;a href="../knobs/">interactive
+controls
+&lt;/a>. This means your documentation isn&amp;rsquo;t just
+comments—it becomes the foundation for your entire development experience.&lt;/p></description></item><item><title>Documenting Components</title><link>https://bennypowers.dev/cem/docs/usage/documenting-components/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/documenting-components/</guid><description>&lt;info-callout type="info">
+ &lt;template shadowrootmode="open">
+ &lt;style>
+ #content {
+ display: block;
+ margin: 1rem 0;
+ border-radius: 0.5rem;
+ background: var(--color-accent);
+ border-left: 4px solid var(--callout-color);
+ overflow: hidden;
+
+ &amp;.info { --callout-color: var(--color-theme); }
+ &amp;.warning { --callout-color: #fbbf24; }
+ &amp;.error { --callout-color: #ef4444; }
+ &amp;.success { --callout-color: #10b981; }
+
+ .inner {
+ padding: 1rem;
+ color: var(--color-text);
+
+ ::slotted(*:first-child) {
+ margin-top: 0;
+ }
+
+ ::slotted(*:last-child) {
+ margin-bottom: 0;
+ }
+ }
+ }
+ &lt;/style>
+
+ &lt;div id="content" class="info" part="callout">
+ &lt;div class="inner" part="content">
+ &lt;slot>&lt;/slot>
+ &lt;/div>
+ &lt;/div>
+ &lt;/template>
+
+ &lt;strong>TL;DR&lt;/strong>: Use JSDoc tags (&lt;code>@slot&lt;/code>, &lt;code>@csspart&lt;/code>, &lt;code>@cssprop&lt;/code>, &lt;code>@fires&lt;/code>, &lt;code>@attr&lt;/code>) to document your components. These power autocomplete, validation, AI assistants, and interactive controls. See examples below.
+&lt;/info-callout>
+
+&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
+
+&lt;p>Use JSDoc comments to document your custom elements for the 
+&lt;a href="../workflow/">manifest
+&lt;/a>. The manifest powers 
+&lt;a href="https://bennypowers.dev/cem/docs/installation/lsp/">LSP features
+&lt;/a> like autocomplete and validation, enables 
+&lt;a href="https://bennypowers.dev/cem/docs/installation/mcp/">AI assistants
+&lt;/a> to understand your components, and drives the dev server&amp;rsquo;s 
+&lt;a href="../knobs/">interactive controls
+&lt;/a>.&lt;/p></description></item><item><title>Example Projects</title><link>https://bennypowers.dev/cem/docs/usage/examples/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/examples/</guid><description>&lt;p>The &lt;code>cem&lt;/code> repository includes several example projects that demonstrate different approaches and complexity levels. Each example is a complete, working project you can explore, copy, and adapt to your needs. Don&amp;rsquo;t overthink which one to start with—pick one that sounds interesting, run &lt;code>npm install &amp;amp;&amp;amp; npm run serve&lt;/code>, and start experimenting.&lt;/p>
+&lt;h2 id="available-examples">Available Examples&lt;/h2>
+&lt;p>&lt;strong>
+&lt;a href="https://github.com/bennypowers/cem/tree/main/examples/minimal" 
+ target="_blank" 
+ rel="noopener">minimal
+&lt;/a>&lt;/strong> — The simplest possible custom element with one property, one slot, and basic JSDoc. Perfect for your first &lt;code>cem&lt;/code> project or when you just want to see how the manifest workflow works. If you&amp;rsquo;re brand new to &lt;code>cem&lt;/code>, start here.&lt;/p></description></item><item><title>Element Demos</title><link>https://bennypowers.dev/cem/docs/usage/demos/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/demos/</guid><description>&lt;info-callout type="info">
+ &lt;template shadowrootmode="open">
+ &lt;style>
+ #content {
+ display: block;
+ margin: 1rem 0;
+ border-radius: 0.5rem;
+ background: var(--color-accent);
+ border-left: 4px solid var(--callout-color);
+ overflow: hidden;
+
+ &amp;.info { --callout-color: var(--color-theme); }
+ &amp;.warning { --callout-color: #fbbf24; }
+ &amp;.error { --callout-color: #ef4444; }
+ &amp;.success { --callout-color: #10b981; }
+
+ .inner {
+ padding: 1rem;
+ color: var(--color-text);
+
+ ::slotted(*:first-child) {
+ margin-top: 0;
+ }
+
+ ::slotted(*:last-child) {
+ margin-bottom: 0;
+ }
+ }
+ }
+ &lt;/style>
+
+ &lt;div id="content" class="info" part="callout">
+ &lt;div class="inner" part="content">
+ &lt;slot>&lt;/slot>
+ &lt;/div>
+ &lt;/div>
+ &lt;/template>
+
+ &lt;strong>TL;DR&lt;/strong>: Create HTML files showcasing your components. Add &lt;code>@demo&lt;/code> JSDoc tags for automatic discovery, or configure &lt;code>demoDiscovery&lt;/code> patterns in &lt;code>cem.yaml&lt;/code>. Demos are HTML partials—the server adds the wrapper, import maps, and live reload.
+&lt;/info-callout>
+
+&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
+
+&lt;p>Demos are HTML files that showcase your custom elements in action. They serve as
+living documentation, manual test cases, and interactive examples for users
+exploring your components. The &lt;code>cem&lt;/code> dev server discovers demos from &lt;code>@demo&lt;/code>
+JSDoc tags (always works) or by file pattern matching (requires &lt;code>demoDiscovery&lt;/code>
+configuration), then wraps them in minimal chrome with live reload and
+navigation UI. You can organize demos by component, by feature, or use a hybrid
+approach—whatever makes sense for your project.&lt;/p></description></item><item><title>Buildless Development</title><link>https://bennypowers.dev/cem/docs/usage/buildless-development/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/buildless-development/</guid><description>&lt;info-callout type="info">
+ &lt;template shadowrootmode="open">
+ &lt;style>
+ #content {
+ display: block;
+ margin: 1rem 0;
+ border-radius: 0.5rem;
+ background: var(--color-accent);
+ border-left: 4px solid var(--callout-color);
+ overflow: hidden;
+
+ &amp;.info { --callout-color: var(--color-theme); }
+ &amp;.warning { --callout-color: #fbbf24; }
+ &amp;.error { --callout-color: #ef4444; }
+ &amp;.success { --callout-color: #10b981; }
+
+ .inner {
+ padding: 1rem;
+ color: var(--color-text);
+
+ ::slotted(*:first-child) {
+ margin-top: 0;
+ }
+
+ ::slotted(*:last-child) {
+ margin-bottom: 0;
+ }
+ }
+ }
+ &lt;/style>
+
+ &lt;div id="content" class="info" part="callout">
+ &lt;div class="inner" part="content">
+ &lt;slot>&lt;/slot>
+ &lt;/div>
+ &lt;/div>
+ &lt;/template>
+
+ &lt;strong>TL;DR&lt;/strong>: Import &lt;code>.ts&lt;/code> files directly in demos—no build step needed. The dev server transforms TypeScript on-demand with source maps. Use &lt;code>--target es2020&lt;/code> to control browser compatibility and &lt;code>--css-transform&lt;/code> patterns to import CSS as JavaScript modules.
+&lt;/info-callout>
+
+&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
+
+&lt;p>The &lt;code>cem&lt;/code> dev server transforms TypeScript and CSS on-demand, letting you write modern code without running build tools. 
+&lt;a href="#write-typescript-directly">Write TypeScript directly
+&lt;/a> in your demos with full source map support, 
+&lt;a href="#import-css-as-modules">import CSS as modules
+&lt;/a> using constructable stylesheets, and configure 
+&lt;a href="#separate-dist-directory">automatic path rewrites
+&lt;/a> for projects with separate source and output directories. The server respects your &lt;code>tsconfig.json&lt;/code> settings and provides 
+&lt;a href="#browser-compatibility">browser compatibility control
+&lt;/a> through esbuild targets.&lt;/p></description></item><item><title>Import Maps</title><link>https://bennypowers.dev/cem/docs/usage/import-maps/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/import-maps/</guid><description>&lt;p>The dev server automatically generates 
+&lt;a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap" 
+ target="_blank" 
+ rel="noopener">import maps
+&lt;/a> from your package.json, letting you use npm packages in demos without bundling. Import maps enable standard bare specifiers like &lt;code>import { LitElement } from 'lit'&lt;/code> instead of relative paths to node_modules, supporting both single packages and 
+&lt;a href="https://docs.npmjs.com/cli/using-npm/workspaces" 
+ target="_blank" 
+ rel="noopener">npm workspaces
+&lt;/a> monorepos. This complements 
+&lt;a href="../buildless-development/">buildless TypeScript development
+&lt;/a> by eliminating the need for bundlers while preserving the same import syntax you&amp;rsquo;d use in production code.&lt;/p>
+&lt;p>Import maps work by mapping package names to file paths, so &lt;code>import { LitElement } from 'lit'&lt;/code> resolves to &lt;code>/node_modules/lit/index.js&lt;/code>. The dev server reads your package.json dependencies, resolves entry points from each package&amp;rsquo;s exports or main field, and injects the generated import map into demo HTML automatically.&lt;/p></description></item><item><title>Knobs</title><link>https://bennypowers.dev/cem/docs/usage/knobs/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/knobs/</guid><description>&lt;info-callout type="info">
+ &lt;template shadowrootmode="open">
+ &lt;style>
+ #content {
+ display: block;
+ margin: 1rem 0;
+ border-radius: 0.5rem;
+ background: var(--color-accent);
+ border-left: 4px solid var(--callout-color);
+ overflow: hidden;
+
+ &amp;.info { --callout-color: var(--color-theme); }
+ &amp;.warning { --callout-color: #fbbf24; }
+ &amp;.error { --callout-color: #ef4444; }
+ &amp;.success { --callout-color: #10b981; }
+
+ .inner {
+ padding: 1rem;
+ color: var(--color-text);
+
+ ::slotted(*:first-child) {
+ margin-top: 0;
+ }
+
+ ::slotted(*:last-child) {
+ margin-bottom: 0;
+ }
+ }
+ }
+ &lt;/style>
+
+ &lt;div id="content" class="info" part="callout">
+ &lt;div class="inner" part="content">
+ &lt;slot>&lt;/slot>
+ &lt;/div>
+ &lt;/div>
+ &lt;/template>
+
+ &lt;strong>TL;DR&lt;/strong>: Knobs are auto-generated controls in the dev server sidebar based on your JSDoc types. Booleans become checkboxes, unions become dropdowns, numbers get steppers. Run &lt;code>cem generate&lt;/code> with proper type annotations to get better controls.
+&lt;/info-callout>
+
+&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
+
+&lt;p>The dev server generates interactive controls (knobs) that let you test custom elements by manipulating their attributes, properties, and CSS custom properties in real-time. Knobs are automatically generated from your 
+&lt;a href="https://github.com/webcomponents/custom-elements-json" 
+ target="_blank" 
+ rel="noopener">Custom Elements Manifest
+&lt;/a>, so the type information and documentation you write with JSDoc directly determines which controls appear in the sidebar. This complements the 
+&lt;a href="../workflow/">development workflow
+&lt;/a> by providing immediate visual feedback during the 
+&lt;a href="../workflow/#4-test">test phase
+&lt;/a>, letting you verify component behavior across different states without writing test HTML for each variation.&lt;/p></description></item><item><title>Using LSP Features</title><link>https://bennypowers.dev/cem/docs/usage/using-lsp/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/using-lsp/</guid><description>&lt;info-callout type="info">
+ &lt;template shadowrootmode="open">
+ &lt;style>
+ #content {
+ display: block;
+ margin: 1rem 0;
+ border-radius: 0.5rem;
+ background: var(--color-accent);
+ border-left: 4px solid var(--callout-color);
+ overflow: hidden;
+
+ &amp;.info { --callout-color: var(--color-theme); }
+ &amp;.warning { --callout-color: #fbbf24; }
+ &amp;.error { --callout-color: #ef4444; }
+ &amp;.success { --callout-color: #10b981; }
+
+ .inner {
+ padding: 1rem;
+ color: var(--color-text);
+
+ ::slotted(*:first-child) {
+ margin-top: 0;
+ }
+
+ ::slotted(*:last-child) {
+ margin-bottom: 0;
+ }
+ }
+ }
+ &lt;/style>
+
+ &lt;div id="content" class="info" part="callout">
+ &lt;div class="inner" part="content">
+ &lt;slot>&lt;/slot>
+ &lt;/div>
+ &lt;/div>
+ &lt;/template>
+
+ &lt;strong>TL;DR&lt;/strong>: The LSP provides autocomplete for tag names and attributes, hover docs on elements, and go-to-definition (&lt;kbd>F12&lt;/kbd>) to jump to source code. Run &lt;code>cem generate&lt;/code> to update your manifest and refresh editor features.
+&lt;/info-callout>
+
+&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
+
+&lt;p>The 
+&lt;a href="https://microsoft.github.io/language-server-protocol/" 
+ target="_blank" 
+ rel="noopener">Language Server Protocol
+&lt;/a> integration provides editor features like autocomplete, hover documentation, and go-to-definition for custom elements in HTML and TypeScript files. After 
+&lt;a href="https://bennypowers.dev/cem/docs/installation/lsp/">setting up the LSP
+&lt;/a>, your editor reads your 
+&lt;a href="https://github.com/webcomponents/custom-elements-json" 
+ target="_blank" 
+ rel="noopener">Custom Elements Manifest
+&lt;/a> to power intelligent code completion for tag names, attributes, slot names, and enum values. This complements the 
+&lt;a href="../workflow/">development workflow
+&lt;/a> by catching typos and invalid attributes as you write code, reducing the time spent switching between editor and browser during the 
+&lt;a href="../workflow/#4-test">test phase
+&lt;/a>.&lt;/p></description></item><item><title>Effective Writing for AI</title><link>https://bennypowers.dev/cem/docs/usage/effective-mcp-descriptions/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/effective-mcp-descriptions/</guid><description>&lt;info-callout type="info">
+ &lt;template shadowrootmode="open">
+ &lt;style>
+ #content {
+ display: block;
+ margin: 1rem 0;
+ border-radius: 0.5rem;
+ background: var(--color-accent);
+ border-left: 4px solid var(--callout-color);
+ overflow: hidden;
+
+ &amp;.info { --callout-color: var(--color-theme); }
+ &amp;.warning { --callout-color: #fbbf24; }
+ &amp;.error { --callout-color: #ef4444; }
+ &amp;.success { --callout-color: #10b981; }
+
+ .inner {
+ padding: 1rem;
+ color: var(--color-text);
+
+ ::slotted(*:first-child) {
+ margin-top: 0;
+ }
+
+ ::slotted(*:last-child) {
+ margin-bottom: 0;
+ }
+ }
+ }
+ &lt;/style>
+
+ &lt;div id="content" class="info" part="callout">
+ &lt;div class="inner" part="content">
+ &lt;slot>&lt;/slot>
+ &lt;/div>
+ &lt;/div>
+ &lt;/template>
+
+ &lt;strong>TL;DR&lt;/strong>: Write JSDoc descriptions that explain &lt;em>what something is for&lt;/em> and &lt;em>how to use it&lt;/em>. Use RFC 2119 keywords (MUST, SHOULD, AVOID) for validation rules. Keep descriptions under 400 characters for best AI performance (2000 char hard limit).
+&lt;/info-callout>
+
+&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
+
+&lt;p>The 
+&lt;a href="https://modelcontextprotocol.io/" 
+ target="_blank" 
+ rel="noopener">Model Context Protocol
+&lt;/a> integration uses your 
+&lt;a href="https://github.com/webcomponents/custom-elements-json" 
+ target="_blank" 
+ rel="noopener">Custom Elements
+Manifest
+&lt;/a> descriptions to help AI systems generate correct
+HTML, suggest appropriate component usage, validate accessibility compliance,
+and provide contextual recommendations. After 
+&lt;a href="https://bennypowers.dev/cem/docs/installation/mcp/">setting up MCP
+&lt;/a>, AI
+assistants read your manifest to understand component relationships and
+hierarchies, so well-written descriptions enable intelligent code generation
+while poor descriptions lead to incorrect or suboptimal output. This complements
+the 
+&lt;a href="../workflow/">development workflow
+&lt;/a> by providing AI assistants with the same
+component knowledge you document for humans.&lt;/p></description></item><item><title>Rendering Modes</title><link>https://bennypowers.dev/cem/docs/usage/rendering-modes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/rendering-modes/</guid><description>&lt;p>The 
+&lt;a href="../workflow/">dev server
+&lt;/a> supports three rendering modes that control how your 
+&lt;a href="../demos/">demos
+&lt;/a> are presented: light mode (full development UI), shadow mode (demos in 
+&lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM" 
+ target="_blank" 
+ rel="noopener">shadow DOM
+&lt;/a>), and chromeless mode (minimal standalone pages). Choose the mode that fits your workflow—light for interactive development with 
+&lt;a href="../knobs/">knobs
+&lt;/a> and live monitoring, shadow for testing CSS encapsulation, or chromeless for 
+&lt;a href="#chromeless-mode">automated testing
+&lt;/a> and clean demo sharing.&lt;/p>
+&lt;p>All modes include 
+&lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/WebSocket" 
+ target="_blank" 
+ rel="noopener">live reload
+&lt;/a> with smart dependency tracking and support 
+&lt;a href="#query-parameter-override">query parameter overrides
+&lt;/a> for quick testing. The rendering mode affects UI presentation and error handling but preserves core functionality like TypeScript transforms, 
+&lt;a href="../import-maps/">import map
+&lt;/a> injection, and file watching across all modes.&lt;/p></description></item><item><title>Troubleshooting</title><link>https://bennypowers.dev/cem/docs/usage/troubleshooting/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/troubleshooting/</guid><description>&lt;p>Common issues and solutions when working with CEM.&lt;/p>
+&lt;h2 id="manifest-is-empty">Manifest is empty&lt;/h2>
+&lt;p>Make sure your glob pattern matches your files:&lt;/p>
+
+&lt;code-highlighter>
+ &lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">cem generate --verbose&lt;/span>&lt;/span>&lt;/code>&lt;/pre>
+&lt;/code-highlighter>&lt;p>Check the &lt;code>.config/cem.yaml&lt;/code> &lt;code>generate.files&lt;/code> glob pattern matches your source files.&lt;/p>
+&lt;h2 id="component-not-showing-in-dev-server">Component not showing in dev server&lt;/h2>
+&lt;ol>
+&lt;li>&lt;strong>Regenerate manifest&lt;/strong>: &lt;code>cem generate&lt;/code>&lt;/li>
+&lt;li>&lt;strong>Check file patterns&lt;/strong>: Verify &lt;code>generate.files&lt;/code> glob in &lt;code>.config/cem.yaml&lt;/code>&lt;/li>
+&lt;li>&lt;strong>Verify package.json&lt;/strong>: Ensure &lt;code>customElements&lt;/code> field exists&lt;/li>
+&lt;li>&lt;strong>Verify manifest content&lt;/strong>: &lt;code>cem list&lt;/code>&lt;/li>
+&lt;li>&lt;strong>Check demos&lt;/strong>: Ensure demo files exist and are discoverable&lt;/li>
+&lt;li>&lt;strong>Restart the server&lt;/strong>: &lt;code>cem serve&lt;/code>&lt;/li>
+&lt;/ol>
+&lt;h2 id="demos-not-discovered">Demos not discovered&lt;/h2>
+&lt;p>Check demo file location matches discovery patterns:&lt;/p></description></item></channel></rss>

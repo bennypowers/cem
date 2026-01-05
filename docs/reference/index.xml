@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Reference on cem</title><link>https://bennypowers.dev/cem/docs/reference/</link><description>Recent content in Reference on cem</description><generator>Hugo</generator><language>en</language><atom:link href="https://bennypowers.dev/cem/docs/reference/index.xml" rel="self" type="application/rss+xml"/><item><title>Configuration</title><link>https://bennypowers.dev/cem/docs/reference/configuration/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/configuration/</guid><description>&lt;info-callout type="info">
+ &lt;template shadowrootmode="open">
+ &lt;style>
+ #content {
+ display: block;
+ margin: 1rem 0;
+ border-radius: 0.5rem;
+ background: var(--color-accent);
+ border-left: 4px solid var(--callout-color);
+ overflow: hidden;
+
+ &amp;.info { --callout-color: var(--color-theme); }
+ &amp;.warning { --callout-color: #fbbf24; }
+ &amp;.error { --callout-color: #ef4444; }
+ &amp;.success { --callout-color: #10b981; }
+
+ .inner {
+ padding: 1rem;
+ color: var(--color-text);
+
+ ::slotted(*:first-child) {
+ margin-top: 0;
+ }
+
+ ::slotted(*:last-child) {
+ margin-bottom: 0;
+ }
+ }
+ }
+ &lt;/style>
+
+ &lt;div id="content" class="info" part="callout">
+ &lt;div class="inner" part="content">
+ &lt;slot>&lt;/slot>
+ &lt;/div>
+ &lt;/div>
+ &lt;/template>
+
+ &lt;strong>TL;DR&lt;/strong>: Create &lt;code>.config/cem.yaml&lt;/code> to configure file patterns, output paths, and dev server options. Most users only need &lt;code>generate.files&lt;/code> and &lt;code>generate.output&lt;/code>. See the 
+&lt;a href="#configuration-file">complete example
+&lt;/a> below for all options.
+&lt;/info-callout>
+
+&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
+
+&lt;p>You can configure &lt;code>cem&lt;/code> via a &lt;code>cem.yaml&lt;/code> file in your project&amp;rsquo;s &lt;code>.config&lt;/code> directory, or by using command-line flags.&lt;/p></description></item></channel></rss>
