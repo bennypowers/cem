@@ -3,6 +3,10 @@ title: Validate
 description: Validate your custom-elements.json against the official schema
 ---
 
+{{< tip >}}
+**TL;DR**: Run `cem validate` to check your manifest for errors and get warnings about exposed lifecycle methods, private members in public APIs, and implementation details. Use `--disable lifecycle` to turn off specific warning categories.
+{{< /tip >}}
+
 The `cem validate` command validates your `custom-elements.json` file against its corresponding JSON schema and provides intelligent warnings for potentially inappropriate manifest content.
 
 ```bash

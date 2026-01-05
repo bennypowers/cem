@@ -3,6 +3,10 @@ title: Development Workflow
 weight: 20
 ---
 
+{{< tip >}}
+**TL;DR**: The workflow is **Write → Generate → Serve → Test → Edit**. Write components with JSDoc, run `cem generate` when APIs change, use `cem serve` for live development. Skip regenerating for styling/implementation tweaks.
+{{< /tip >}}
+
 `cem` uses a manifest-driven development approach where you write custom
 elements with JSDoc documentation, generate a JSON manifest from your source
 code, and use that manifest to power developer tooling. The manifest enables 

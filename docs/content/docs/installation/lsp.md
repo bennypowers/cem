@@ -3,6 +3,10 @@ title: LSP Integration
 weight: 20
 ---
 
+{{< tip >}}
+**TL;DR**: Install CEM, then configure your editor to run `cem lsp`. VS Code users can install the extension. Neovim/Zed users configure their LSP client to start `cem lsp` for HTML/TypeScript files.
+{{< /tip >}}
+
 Configure the CEM Language Server Protocol integration for your editor to get intelligent autocomplete, hover documentation, and validation for custom elements.
 
 ## Prerequisites

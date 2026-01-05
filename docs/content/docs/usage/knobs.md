@@ -4,6 +4,10 @@ layout: docs
 weight: 70
 ---
 
+{{< tip >}}
+**TL;DR**: Knobs are auto-generated controls in the dev server sidebar based on your JSDoc types. Booleans become checkboxes, unions become dropdowns, numbers get steppers. Run `cem generate` with proper type annotations to get better controls.
+{{< /tip >}}
+
 The dev server generates interactive controls (knobs) that let you test custom elements by manipulating their attributes, properties, and CSS custom properties in real-time. Knobs are automatically generated from your [Custom Elements Manifest][customelementsjson], so the type information and documentation you write with JSDoc directly determines which controls appear in the sidebar. This complements the [development workflow][developmentworkflow] by providing immediate visual feedback during the [test phase][testphase], letting you verify component behavior across different states without writing test HTML for each variation.
 
 Knobs derive entirely from your manifest—when you [run `cem generate`][generate], your JSDoc type annotations determine the control type. Boolean attributes become checkboxes, union types become select dropdowns, numbers get increment/decrement controls, and CSS color properties get color pickers. The dev server scans your [demo HTML][demos] for custom elements, looks up each element's manifest entry, and creates labeled control groups in the sidebar.

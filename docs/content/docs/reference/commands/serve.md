@@ -3,6 +3,10 @@ title: Serve
 weight: 20
 ---
 
+{{< tip >}}
+**TL;DR**: Run `cem serve` to start the dev server on port 8000 with live reload and TypeScript transformation. Use `--port 3000` to change port, `--rendering=chromeless` for testing, and `--css-transform 'src/**/*.css'` to import CSS as modules.
+{{< /tip >}}
+
 The `cem serve` command starts a development server specifically designed for custom element development.
 
 ```sh

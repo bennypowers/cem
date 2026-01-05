@@ -4,6 +4,10 @@ description: Performance benchmarks for CEM generate tool and LSP server impleme
 weight: 100
 ---
 
+{{< tip >}}
+**TL;DR**: CEM's Go implementation is significantly faster than JavaScript-based tools. Generate benchmarks show ~10x speedup over web-component-analyzer. LSP benchmarks demonstrate sub-millisecond response times for autocomplete and validation.
+{{< /tip >}}
+
 ## Overview
 
 CEM provides two types of benchmarks for comprehensive performance analysis:

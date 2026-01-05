@@ -3,9 +3,13 @@ title: Effective Writing for AI
 weight: 90
 ---
 
-The [Model Context Protocol][mcp] integration uses your [Custom Elements 
-Manifest][customelementsjson] descriptions to help AI systems generate correct 
-HTML, suggest appropriate component usage, validate accessibility compliance, 
+{{< tip >}}
+**TL;DR**: Write JSDoc descriptions that explain *what something is for* and *how to use it*. Use RFC 2119 keywords (MUST, SHOULD, AVOID) for validation rules. Keep descriptions under 400 characters for best AI performance (2000 char hard limit).
+{{< /tip >}}
+
+The [Model Context Protocol][mcp] integration uses your [Custom Elements
+Manifest][customelementsjson] descriptions to help AI systems generate correct
+HTML, suggest appropriate component usage, validate accessibility compliance,
 and provide contextual recommendations. After [setting up MCP][mcpsetup], AI 
 assistants read your manifest to understand component relationships and 
 hierarchies, so well-written descriptions enable intelligent code generation 

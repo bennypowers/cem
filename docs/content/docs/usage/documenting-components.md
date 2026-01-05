@@ -3,6 +3,10 @@ title: Documenting Components
 weight: 25
 ---
 
+{{< tip >}}
+**TL;DR**: Use JSDoc tags (`@slot`, `@csspart`, `@cssprop`, `@fires`, `@attr`) to document your components. These power autocomplete, validation, AI assistants, and interactive controls. See examples below.
+{{< /tip >}}
+
 Use JSDoc comments to document your custom elements for the [manifest][workflow]. The manifest powers [LSP features][lsp] like autocomplete and validation, enables [AI assistants][mcp] to understand your components, and drives the dev server's [interactive controls][knobs].
 
 ## JSDoc Tags

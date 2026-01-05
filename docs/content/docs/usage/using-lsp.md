@@ -3,6 +3,10 @@ title: Using LSP Features
 weight: 80
 ---
 
+{{< tip >}}
+**TL;DR**: The LSP provides autocomplete for tag names and attributes, hover docs on elements, and go-to-definition (<kbd>F12</kbd>) to jump to source code. Run `cem generate` to update your manifest and refresh editor features.
+{{< /tip >}}
+
 The [Language Server Protocol][lspspec] integration provides editor features like autocomplete, hover documentation, and go-to-definition for custom elements in HTML and TypeScript files. After [setting up the LSP][lspsetup], your editor reads your [Custom Elements Manifest][customelementsjson] to power intelligent code completion for tag names, attributes, slot names, and enum values. This complements the [development workflow][workflow] by catching typos and invalid attributes as you write code, reducing the time spent switching between editor and browser during the [test phase][testphase].
 
 The LSP uses your manifest as the source of truth, so [running `cem generate`][generate] after documenting components makes those APIs immediately available in your editor. Features work in plain HTML files, Lit template literals, and anywhere custom elements appear in your code.

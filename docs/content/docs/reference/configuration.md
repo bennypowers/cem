@@ -4,6 +4,10 @@ layout: docs
 weight: 20
 ---
 
+{{< tip >}}
+**TL;DR**: Create `.config/cem.yaml` to configure file patterns, output paths, and dev server options. Most users only need `generate.files` and `generate.output`. See the [complete example](#configuration-file) below for all options.
+{{< /tip >}}
+
 You can configure `cem` via a `cem.yaml` file in your project's `.config` directory, or by using command-line flags.
 
 ## Configuration File

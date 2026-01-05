@@ -80,7 +80,7 @@ Need help? See **[Troubleshooting][troubleshooting]** for common issues and solu
 [intermediateexample]: /docs/usage/examples/#intermediate
 [kitchensinkexample]: /docs/usage/examples/#kitchen-sink
 [examplesoverview]: /docs/usage/examples/
-[installation]: /docs/installation/setup/
+[installation]: /docs/installation/
 [configurationreference]: /docs/reference/configuration/
 [developmentworkflow]: /docs/usage/workflow/
 [buildlessdevelopment]: /docs/usage/buildless-development/

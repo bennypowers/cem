@@ -3,6 +3,10 @@ title: Element Demos
 weight: 40
 ---
 
+{{< tip >}}
+**TL;DR**: Create HTML files showcasing your components. Add `@demo` JSDoc tags for automatic discovery, or configure `demoDiscovery` patterns in `cem.yaml`. Demos are HTML partials—the server adds the wrapper, import maps, and live reload.
+{{< /tip >}}
+
 Demos are HTML files that showcase your custom elements in action. They serve as
 living documentation, manual test cases, and interactive examples for users
 exploring your components. The `cem` dev server discovers demos from `@demo`

@@ -4,6 +4,10 @@ layout: docs
 weight: 50
 ---
 
+{{< tip >}}
+**TL;DR**: Import `.ts` files directly in demos—no build step needed. The dev server transforms TypeScript on-demand with source maps. Use `--target es2020` to control browser compatibility and `--css-transform` patterns to import CSS as JavaScript modules.
+{{< /tip >}}
+
 The `cem` dev server transforms TypeScript and CSS on-demand, letting you write modern code without running build tools. [Write TypeScript directly][writetypescriptdirectly] in your demos with full source map support, [import CSS as modules][importcssasmodules] using constructable stylesheets, and configure [automatic path rewrites][automaticpathrewrites] for projects with separate source and output directories. The server respects your `tsconfig.json` settings and provides [browser compatibility control][browsercompatibilitycontrol] through esbuild targets.
 
 This buildless approach eliminates `tsc --watch`, CSS preprocessors, and bundlers from your development workflow. You write TypeScript and CSS, import them directly in demos, and the dev server handles transformation transparently with full debugging support.
