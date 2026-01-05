@@ -23,6 +23,7 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
 )
 
@@ -680,25 +681,17 @@ func TestImportMap_ConfigOverrideValidation(t *testing.T) {
 
 // TestImportMap_WorkspaceModeFileOverrides verifies file overrides work in workspace mode
 func TestImportMap_WorkspaceModeFileOverrides(t *testing.T) {
-	tmpDir := t.TempDir()
+	// Create in-memory filesystem
+	mfs := platform.NewMapFileSystem(nil)
 
 	// Create workspace root package.json with workspaces
 	rootPackageJSON := `{
   "name": "workspace-root",
   "workspaces": ["packages/*"]
 }`
-	err := os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(rootPackageJSON), 0644)
-	if err != nil {
-		t.Fatalf("Failed to write root package.json: %v", err)
-	}
+	mfs.AddFile("/test/package.json", rootPackageJSON, 0644)
 
 	// Create a workspace package
-	pkgDir := filepath.Join(tmpDir, "packages", "example")
-	err = os.MkdirAll(pkgDir, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create package directory: %v", err)
-	}
-
 	pkgJSON := `{
   "name": "@workspace/example",
   "customElements": "custom-elements.json",
@@ -706,28 +699,16 @@ func TestImportMap_WorkspaceModeFileOverrides(t *testing.T) {
     "lit": "^3.0.0"
   }
 }`
-	err = os.WriteFile(filepath.Join(pkgDir, "package.json"), []byte(pkgJSON), 0644)
-	if err != nil {
-		t.Fatalf("Failed to write package package.json: %v", err)
-	}
+	mfs.AddFile("/test/packages/example/package.json", pkgJSON, 0644)
 
 	// Create node_modules in workspace root
-	nodeModules := filepath.Join(tmpDir, "node_modules", "lit")
-	err = os.MkdirAll(nodeModules, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create node_modules: %v", err)
-	}
-
 	litPackageJSON := `{
   "name": "lit",
   "exports": {
     ".": "./index.js"
   }
 }`
-	err = os.WriteFile(filepath.Join(nodeModules, "package.json"), []byte(litPackageJSON), 0644)
-	if err != nil {
-		t.Fatalf("Failed to write lit package.json: %v", err)
-	}
+	mfs.AddFile("/test/node_modules/lit/package.json", litPackageJSON, 0644)
 
 	// Create import map override file with custom mappings
 	overrideFile := `{
@@ -736,24 +717,21 @@ func TestImportMap_WorkspaceModeFileOverrides(t *testing.T) {
     "@utils/format.js": "/src/utils/format.ts"
   }
 }`
-	overridePath := filepath.Join(tmpDir, "importmap.json")
-	err = os.WriteFile(overridePath, []byte(overrideFile), 0644)
-	if err != nil {
-		t.Fatalf("Failed to write override file: %v", err)
-	}
+	mfs.AddFile("/test/importmap.json", overrideFile, 0644)
 
 	// Generate workspace import map with override file
 	config := &Config{
-		InputMapPath: overridePath,
+		InputMapPath: "/test/importmap.json",
 		WorkspacePackages: []middleware.WorkspacePackage{
 			{
 				Name: "@workspace/example",
-				Path: pkgDir,
+				Path: "/test/packages/example",
 			},
 		},
+		FS: mfs,
 	}
 
-	importMap, err := Generate(tmpDir, config)
+	importMap, err := Generate("/test", config)
 	if err != nil {
 		t.Fatalf("Generate returned error: %v", err)
 	}
