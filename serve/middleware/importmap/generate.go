@@ -97,7 +97,17 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 
 	// Workspace mode: generate flattened import map from packages
 	if len(config.WorkspacePackages) > 0 {
-		return generateWorkspaceImportMap(rootDir, config.WorkspacePackages, config.Logger, fs)
+		result, err := generateWorkspaceImportMap(rootDir, config.WorkspacePackages, config.Logger, fs)
+		if err != nil {
+			return nil, err
+		}
+
+		// Apply user overrides and CLI overrides
+		if err := applyOverrides(result, config, fs); err != nil {
+			return nil, err
+		}
+
+		return result, nil
 	}
 
 	// Single-package mode: generate import map with scopes
