@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package serve
 
 import (
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -63,8 +64,13 @@ func isLocalOrigin(r *http.Request) bool {
 	// This allows connections through Cloudflare tunnels, reverse proxies, etc.
 	// where Origin might be "https://my-app.example.com" and Host is "my-app.example.com"
 	requestHost := r.Host
-	if colonIndex := strings.IndexByte(requestHost, ':'); colonIndex != -1 {
-		requestHost = requestHost[:colonIndex] // Strip port from Host header
+	// Use net.SplitHostPort to safely handle IPv6 addresses like [2001:db8::1]:8000
+	if host, _, err := net.SplitHostPort(requestHost); err == nil {
+		requestHost = host // Strip port from Host header
+	} else {
+		// If SplitHostPort fails (no port present), strip brackets from IPv6 addresses
+		// e.g., "[2001:db8::1]" -> "2001:db8::1"
+		requestHost = strings.Trim(requestHost, "[]")
 	}
 	if originHost == requestHost {
 		return true
@@ -81,14 +87,9 @@ func isLocalOrigin(r *http.Request) bool {
 	}
 
 	// Allow 127.0.0.0/8 range (127.0.0.1 - 127.255.255.255)
-	// Must check it's in the form 127.X.X.X, not just starts with "127"
-	if strings.HasPrefix(originHost, "127.") {
-		// Validate it's a proper 127.x.x.x address, not something like "127.evil.com"
-		parts := strings.Split(originHost, ".")
-		if len(parts) == 4 && parts[0] == "127" {
-			// Basic validation that it looks like an IP (has 4 parts starting with 127)
-			return true
-		}
+	// Use net.ParseIP to ensure it's a valid IP address, not a hostname like "127.evil.com"
+	if ip := net.ParseIP(originHost); ip != nil && ip.IsLoopback() {
+		return true
 	}
 
 	return false

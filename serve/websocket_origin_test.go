@@ -73,6 +73,8 @@ func TestIsLocalOrigin_SameOriginAllowed(t *testing.T) {
 		{"custom domain", "https://my-project.dev", "my-project.dev"},
 		{"ngrok tunnel", "https://abc123.ngrok.io", "abc123.ngrok.io"},
 		{"host with port", "http://example.com:8080", "example.com:8080"},
+		{"IPv6 same-origin with port", "http://[2001:db8::1]:8000", "[2001:db8::1]:8000"},
+		{"IPv6 same-origin no port", "http://[2001:db8::1]", "[2001:db8::1]"},
 	}
 
 	for _, tt := range tests {
