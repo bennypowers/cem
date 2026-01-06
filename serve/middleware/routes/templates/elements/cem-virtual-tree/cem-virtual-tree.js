@@ -766,6 +766,7 @@ export class CemVirtualTree extends CemElement {
       let current = match;
       while (current.parentId !== undefined) {
         const parent = this.#flatItems.find(i => i.id === current.parentId);
+        if (!parent) break; // Parent not found in tree
         if (parent === item) return true;
         current = parent;
       }
@@ -790,6 +791,7 @@ export class CemVirtualTree extends CemElement {
     let current = item;
     while (current.parentId !== undefined) {
       const parent = this.#flatItems.find(i => i.id === current.parentId);
+      if (!parent) return false; // Parent not found in tree
       if (parent === ancestor) return true;
       current = parent;
     }
