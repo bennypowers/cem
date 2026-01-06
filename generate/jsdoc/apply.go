@@ -1,6 +1,8 @@
 package jsdoc
 
 import (
+	"slices"
+
 	M "bennypowers.dev/cem/manifest"
 )
 
@@ -50,8 +52,16 @@ func applyToCustomElementDeclaration(info *classInfo, declaration *M.CustomEleme
 		}
 	}
 
-	for _, jsdocAttr := range jsdocAttrs {
-		declaration.CustomElement.Attributes = append(declaration.CustomElement.Attributes, jsdocAttr)
+	// Collect remaining attribute names and sort for deterministic output
+	remainingAttrNames := make([]string, 0, len(jsdocAttrs))
+	for name := range jsdocAttrs {
+		remainingAttrNames = append(remainingAttrNames, name)
+	}
+	slices.Sort(remainingAttrNames)
+
+	// Append remaining JSDoc-only attributes in sorted order
+	for _, name := range remainingAttrNames {
+		declaration.CustomElement.Attributes = append(declaration.CustomElement.Attributes, jsdocAttrs[name])
 	}
 
 	jsdocSlots := make(map[string]M.Slot)
@@ -74,8 +84,16 @@ func applyToCustomElementDeclaration(info *classInfo, declaration *M.CustomEleme
 		}
 	}
 
-	for _, jsdocSlot := range jsdocSlots {
-		declaration.CustomElement.Slots = append(declaration.CustomElement.Slots, jsdocSlot)
+	// Collect remaining slot names and sort for deterministic output
+	remainingSlotNames := make([]string, 0, len(jsdocSlots))
+	for name := range jsdocSlots {
+		remainingSlotNames = append(remainingSlotNames, name)
+	}
+	slices.Sort(remainingSlotNames)
+
+	// Append remaining JSDoc-only slots in sorted order
+	for _, name := range remainingSlotNames {
+		declaration.CustomElement.Slots = append(declaration.CustomElement.Slots, jsdocSlots[name])
 	}
 
 	declaration.CustomElement.Events = info.Events
@@ -101,8 +119,16 @@ func applyToCustomElementDeclaration(info *classInfo, declaration *M.CustomEleme
 		}
 	}
 
-	for _, jsdocPart := range jsdocParts {
-		declaration.CustomElement.CssParts = append(declaration.CustomElement.CssParts, jsdocPart)
+	// Collect remaining CSS part names and sort for deterministic output
+	remainingPartNames := make([]string, 0, len(jsdocParts))
+	for name := range jsdocParts {
+		remainingPartNames = append(remainingPartNames, name)
+	}
+	slices.Sort(remainingPartNames)
+
+	// Append remaining JSDoc-only CSS parts in sorted order
+	for _, name := range remainingPartNames {
+		declaration.CustomElement.CssParts = append(declaration.CustomElement.CssParts, jsdocParts[name])
 	}
 
 	declaration.CustomElement.CssStates = info.CssStates
