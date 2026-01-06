@@ -75,6 +75,47 @@ export class CemServeChrome extends CemElement {
     'sidebar',
   ];
 
+  /**
+   * Handle attribute changes and apply to child components
+   * This is critical for SSR/DSR path where attributes are set on host but need to propagate to children
+   */
+  attributeChangedCallback(name, oldValue, newValue) {
+    // Only apply after shadow root is populated (handles both SSR/DSR and client-side paths)
+    if (!this.shadowRoot?.firstChild) return;
+
+    const drawer = this.shadowRoot.querySelector('cem-drawer');
+    const tabs = this.shadowRoot.querySelector('pf-v6-tabs');
+
+    switch (name) {
+      case 'drawer':
+        if (drawer) {
+          // Convert drawer="expanded" to open attribute, drawer="collapsed" removes it
+          if (newValue === 'expanded') {
+            drawer.setAttribute('open', '');
+          } else {
+            drawer.removeAttribute('open');
+          }
+        }
+        break;
+
+      case 'drawer-height':
+        if (drawer && newValue) {
+          drawer.setAttribute('drawer-height', newValue);
+        }
+        break;
+
+      case 'tabs-selected':
+        if (tabs && newValue !== null) {
+          tabs.setAttribute('selected', newValue);
+        }
+        break;
+
+      case 'sidebar':
+        // Sidebar handling would go here if needed
+        break;
+    }
+  }
+
   // Static templates for demo URL display
   static #demoInfoTemplate = document.createElement('template');
   static #demoGroupTemplate = document.createElement('template');
@@ -280,6 +321,15 @@ export class CemServeChrome extends CemElement {
   get sourceURL() { return this.getAttribute('source-url') || ''; }
 
   async afterTemplateLoaded() {
+    // Apply initial attributes to child components (critical for SSR/DSR state restoration)
+    // This ensures that state from cookies is properly applied before any setup code runs
+    for (const attr of this.attributes) {
+      const attrName = attr.name;
+      if (['drawer', 'drawer-height', 'tabs-selected', 'sidebar'].includes(attrName)) {
+        this.attributeChangedCallback(attrName, null, attr.value);
+      }
+    }
+
     // Check if we need to migrate from localStorage
     this.#migrateFromLocalStorageIfNeeded();
 
@@ -656,7 +706,7 @@ export class CemServeChrome extends CemElement {
       return;
     }
 
-    // Track drawer open state for logs scrolling (state already restored in afterTemplateLoaded)
+    // Track drawer open state for logs scrolling (state applied via attributeChangedCallback)
     this.#drawerOpen = drawer.open;
 
     // Listen for drawer changes and update tracked state
