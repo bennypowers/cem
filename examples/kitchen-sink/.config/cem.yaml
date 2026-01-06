@@ -2,6 +2,8 @@ sourceControlRootUrl: https://github.com/bennypowers/cem/tree/main/examples/kitc
 generate:
   files:
     - elements/**/*.ts
+    - base/**/*.ts
+    - mixins/**/*.ts
   output: custom-elements.json
   demoDiscovery:
     fileGlob: elements/**/demo/*.html
