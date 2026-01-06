@@ -47,7 +47,7 @@
       "id": "superclass-builtin-modules",
       "module": "lifecycle-warnings.js",
       "declaration": "class VanillaElement",
-      "message": "superclass HTMLElement is a built-in type but missing module field, should be \"module\": \"global:\"",
+      "message": "superclass HTMLElement is a built-in type but missing package field, should be \"package\": \"global:\"",
       "category": "superclass"
     }
   ]

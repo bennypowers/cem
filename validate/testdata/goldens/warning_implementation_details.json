@@ -60,12 +60,26 @@
       "category": "lifecycle"
     },
     {
+      "id": "superclass-builtin-modules",
+      "module": "implementation-details.js",
+      "declaration": "class FormAssociatedElement",
+      "message": "superclass HTMLElement is a built-in type but missing package field, should be \"package\": \"global:\"",
+      "category": "superclass"
+    },
+    {
       "id": "implementation-form-associated",
       "module": "implementation-details.js",
       "declaration": "class FormAssociatedElement",
       "member": "static field formAssociated",
       "message": "formAssociated is implementation detail, should not be documented in public API",
       "category": "implementation"
+    },
+    {
+      "id": "superclass-builtin-modules",
+      "module": "implementation-details.js",
+      "declaration": "class CleanElement",
+      "message": "superclass HTMLElement is a built-in type but missing package field, should be \"package\": \"global:\"",
+      "category": "superclass"
     }
   ]
 }

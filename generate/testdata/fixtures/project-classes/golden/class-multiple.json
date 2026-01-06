@@ -9,7 +9,7 @@
           "name": "ClassA",
           "superclass": {
             "name": "Event",
-            "module": "global:"
+            "package": "global:"
           },
           "members": [
             {

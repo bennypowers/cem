@@ -9,7 +9,7 @@
           "name": "MessageChangedEvent",
           "superclass": {
             "name": "Event",
-            "module": "global:"
+            "package": "global:"
           },
           "members": [
             {
@@ -30,7 +30,7 @@
           "description": "A vanilla custom element demonstrating Web Components without a framework.\n\nThis component shows how to create custom elements using only native Web APIs,\nwith proper JSDoc annotations for CEM manifest generation.",
           "superclass": {
             "name": "HTMLElement",
-            "module": "global:"
+            "package": "global:"
           },
           "members": [
             {
