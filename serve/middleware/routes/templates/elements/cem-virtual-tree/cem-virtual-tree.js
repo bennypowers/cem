@@ -128,8 +128,7 @@ export class CemVirtualTree extends CemElement {
         if (!pkg.modules) continue;
 
         // Add modules under this package at depth 1
-        this.#buildModulesForPackage(pkg.modules, packageId, 1, id);
-        id = this.#flatItems[this.#flatItems.length - 1].id + 1;
+        id = this.#buildModulesForPackage(pkg.modules, packageId, 1, id);
       }
     } else {
       // Single package mode OR workspace with 1 package: show modules at top level
@@ -150,6 +149,7 @@ export class CemVirtualTree extends CemElement {
    * @param {number|null} parentId - ID of parent package (null if no package level)
    * @param {number} depth - Depth level for modules
    * @param {number} startId - Starting ID for items
+   * @returns {number} Next available ID after items are added
    */
   #buildModulesForPackage(modules, parentId, depth, startId) {
     let id = startId;
@@ -560,6 +560,7 @@ export class CemVirtualTree extends CemElement {
     }
 
     this.#updateVisibleItems();
+    return id;
   }
 
   /**
