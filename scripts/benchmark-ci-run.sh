@@ -2,12 +2,12 @@
 mkdir -p docs/data
 bench_stdout="${1}_bench.txt"
 # prewarm the benchmarks
-make bench
+make bench-generate
 # run for realsies
 start=$(date +%s.%N)
-if ! make bench > $bench_stdout 2>&1; then
+if ! make bench-generate > $bench_stdout 2>&1; then
   cat $bench_stdout
-  echo "::error::Benchmarking (make bench) failed on $1 branch"
+  echo "::error::Benchmarking (make bench-generate) failed on $1 branch"
   exit 1
 fi
 cat $bench_stdout

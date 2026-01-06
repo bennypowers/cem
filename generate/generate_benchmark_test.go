@@ -22,12 +22,17 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/logging"
 	W "bennypowers.dev/cem/workspace"
 	DS "github.com/bmatcuk/doublestar"
 )
 
 // BenchmarkGenerate runs the Generate function on all test fixtures to measure performance.
 func BenchmarkGenerate(b *testing.B) {
+	// Enable quiet mode to suppress INFO and DEBUG logs during benchmarking
+	logging.SetQuietEnabled(true)
+	defer logging.SetQuietEnabled(false)
+
 	path, err := filepath.Abs("testdata/fixtures/")
 	if err != nil {
 		b.Fatalf("BenchmarkGenerate failed to resolve project dir: %v", err)

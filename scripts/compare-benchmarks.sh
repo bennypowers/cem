@@ -20,7 +20,7 @@ done
 
 if [ ${#missing_files[@]} -gt 0 ]; then
   cat << EOF > bench_report.md
-### Benchmark Summary
+### Generate Benchmarks
 
 ⚠️ **First Run**: Benchmark comparison requires both PR and base branch results.
 
@@ -108,7 +108,7 @@ run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
 # Output markdown
 if [ "$base_missing" = true ]; then
   cat << EOF > bench_report.md
-### Benchmark Summary
+### Generate Benchmarks
 
 |        | Branch    | Total Time (s) | # Runs | Avg Time/run (s) | Output Size (kb) | Perf/kb (s/kb) |
 |--------|-----------|----------------|--------|------------------|------------------|----------------|
@@ -124,7 +124,7 @@ _💡 Tip: Raw JSON outputs are available in [workflow artifacts]($run_url) if n
 EOF
 else
   cat << EOF > bench_report.md
-### Benchmark Summary
+### Generate Benchmarks
 
 |        | Branch    | Total Time (s) | # Runs | Avg Time/run (s) | Output Size (kb) | Perf/kb (s/kb) |
 |--------|-----------|----------------|--------|------------------|------------------|----------------|
