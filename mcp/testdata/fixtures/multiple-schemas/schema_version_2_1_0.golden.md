@@ -3,42 +3,23 @@
 Test context for schema version 2.1.0 from fixture file with 1 elements.
 
 
-*Using Custom Elements Manifest Schema (2.1.0)*
+*Using Custom Elements Manifest Schema 2.1.1-speculative (2.1.0)*
 
 
-The top-level interface of a custom elements manifest file.
-
-Because custom elements are JavaScript classes, describing a custom element
-may require describing arbitrary JavaScript concepts like modules, classes,
-functions, etc. So custom elements manifests are capable of documenting
-the elements in a package, as well as those JavaScript concepts.
-
-The modules described in a package should be the public entrypoints that
-other packages may import from. Multiple modules may export the same object
-via re-exports, but in most cases a package should document the single
-canonical export that should be used.
+This is a speculative schema for 2.1.1 based on 2.1.0, with workarounds for known issues. See: https://github.com/webcomponents/custom-elements-manifest/issues/138 and https://github.com/vega/ts-json-schema-generator/pull/2323
 
 
 
 ## Custom Elements in Your Project
 Custom elements are JavaScript classes that extend HTML with new functionality. A description of a custom element class.
 
-Custom elements are JavaScript classes, so this extends from
-`ClassDeclaration` and adds custom-element-specific features like
-attributes, events, and slots.
+Custom elements are JavaScript classes, so this extends from `ClassDeclaration` and adds custom-element-specific features like attributes, events, and slots.
 
-Note that `tagName` in this interface is optional. Tag names are not
-neccessarily part of a custom element class, but belong to the definition
-(often called the "registration") or the `customElements.define()` call.
+Note that `tagName` in this interface is optional. Tag names are not neccessarily part of a custom element class, but belong to the definition (often called the "registration") or the `customElements.define()` call.
 
-Because classes and tag names can only be registered once, there's a
-one-to-one relationship between classes and tag names. For ease of use,
-we allow the tag name here.
+Because classes and tag names can only be registered once, there's a one-to-one relationship between classes and tag names. For ease of use, we allow the tag name here.
 
-Some packages define and register custom elements in separate modules. In
-these cases one `Module` should contain the `CustomElement` without a
-tagName, and another `Module` should contain the
-`CustomElementExport`.
+Some packages define and register custom elements in separate modules. In these cases one `Module` should contain the `CustomElement` without a tagName, and another `Module` should contain the `CustomElementExport`.
 *No custom elements found in your manifests.*
 
 ## Schema Reference
