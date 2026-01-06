@@ -9,7 +9,7 @@
           "name": "VanillaElement",
           "superclass": {
             "name": "HTMLElement",
-            "package": "global:"
+            "module": "global:"
           },
           "source": {
             "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-vanilla/src/vanilla-declare.ts#L1"

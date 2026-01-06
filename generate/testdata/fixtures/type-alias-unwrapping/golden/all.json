@@ -9,7 +9,7 @@
           "name": "MyElement",
           "superclass": {
             "name": "HTMLElement",
-            "package": "global:"
+            "module": "global:"
           },
           "members": [
             {
@@ -62,7 +62,7 @@
           "name": "MyComponent",
           "superclass": {
             "name": "HTMLElement",
-            "package": "global:"
+            "module": "global:"
           },
           "members": [
             {
@@ -125,7 +125,7 @@
           "name": "MyElement",
           "superclass": {
             "name": "HTMLElement",
-            "package": "global:"
+            "module": "global:"
           },
           "members": [
             {
@@ -202,7 +202,7 @@
           "name": "MyButton",
           "superclass": {
             "name": "HTMLElement",
-            "package": "global:"
+            "module": "global:"
           },
           "members": [
             {
@@ -259,7 +259,7 @@
           "name": "MyElement",
           "superclass": {
             "name": "HTMLElement",
-            "package": "global:"
+            "module": "global:"
           },
           "members": [
             {
@@ -318,7 +318,7 @@
           "name": "MyButton",
           "superclass": {
             "name": "HTMLElement",
-            "package": "global:"
+            "module": "global:"
           },
           "members": [
             {
@@ -371,7 +371,7 @@
           "name": "MyButton",
           "superclass": {
             "name": "HTMLElement",
-            "package": "global:"
+            "module": "global:"
           },
           "members": [
             {

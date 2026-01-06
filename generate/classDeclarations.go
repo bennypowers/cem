@@ -156,9 +156,9 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 				"Event",
 				"CustomEvent",
 				"ErrorEvent":
-				pkg = "global:"
+				module = "global:"
 			case "HTMLElement":
-				pkg = "global:"
+				module = "global:"
 				isCustomElement = true
 			case "LitElement":
 				pkg = "lit"

@@ -43,6 +43,7 @@ var ignoredStaticFieldsLit = S.NewSet(
 
 var ignoredInstanceMethodsHTML = S.NewSet(
 	"adoptedCallback",
+	"attributeChangedCallback",
 	"connectedCallback",
 	"connectedMoveCallback",
 	"disconnectedCallback",

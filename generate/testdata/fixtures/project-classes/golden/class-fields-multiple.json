@@ -9,7 +9,7 @@
           "name": "DupeEvent",
           "superclass": {
             "name": "Event",
-            "package": "global:"
+            "module": "global:"
           },
           "members": [
             {

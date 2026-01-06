@@ -102,7 +102,9 @@ func parseForClass(source string, queryManager *Q.QueryManager) (*classInfo, err
 					"@attribute":
 					attr := tagInfo.toAttribute()
 					info.Attrs = append(info.Attrs, attr)
-				case "@customElement":
+				case "@customElement",
+					"@element",
+					"@tagName":
 					info.TagName = tagInfo.Description
 				case "@csspart":
 					part := tagInfo.toCssPart()

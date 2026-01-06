@@ -1,8 +1,6 @@
 package jsdoc
 
 import (
-	"slices"
-
 	M "bennypowers.dev/cem/manifest"
 )
 
@@ -25,10 +23,36 @@ func applyToClassDeclaration(info *classInfo, declaration *M.ClassDeclaration) {
 
 func applyToCustomElementDeclaration(info *classInfo, declaration *M.CustomElementDeclaration) {
 	applyToClassDeclaration(info, &declaration.ClassDeclaration)
-	declaration.CustomElement.Attributes = slices.Concat(
-		info.Attrs,
-		declaration.CustomElement.Attributes,
-	)
+
+	jsdocAttrs := make(map[string]M.Attribute)
+	for _, jsdocAttr := range info.Attrs {
+		jsdocAttrs[jsdocAttr.Name] = jsdocAttr
+	}
+
+	for i := range declaration.CustomElement.Attributes {
+		if jsdocAttr, ok := jsdocAttrs[declaration.CustomElement.Attributes[i].Name]; ok {
+			if declaration.CustomElement.Attributes[i].Description == "" {
+				declaration.CustomElement.Attributes[i].Description = jsdocAttr.Description
+			}
+			if declaration.CustomElement.Attributes[i].Summary == "" {
+				declaration.CustomElement.Attributes[i].Summary = jsdocAttr.Summary
+			}
+			if declaration.CustomElement.Attributes[i].Type == nil {
+				declaration.CustomElement.Attributes[i].Type = jsdocAttr.Type
+			}
+			if declaration.CustomElement.Attributes[i].Default == "" {
+				declaration.CustomElement.Attributes[i].Default = jsdocAttr.Default
+			}
+			if declaration.CustomElement.Attributes[i].Deprecated == nil {
+				declaration.CustomElement.Attributes[i].Deprecated = jsdocAttr.Deprecated
+			}
+			delete(jsdocAttrs, jsdocAttr.Name)
+		}
+	}
+
+	for _, jsdocAttr := range jsdocAttrs {
+		declaration.CustomElement.Attributes = append(declaration.CustomElement.Attributes, jsdocAttr)
+	}
 
 	jsdocSlots := make(map[string]M.Slot)
 	for _, jsdocSlot := range info.Slots {
