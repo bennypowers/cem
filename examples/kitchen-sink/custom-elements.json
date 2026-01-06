@@ -8,7 +8,7 @@
         {
           "name": "FormAssociatedElement",
           "summary": "Form-associated base class for custom elements",
-          "description": "Base class for form-associated custom elements (FACE).\n\nProvides form integration capabilities for custom elements,\nallowing them to participate in HTML form submission and validation.\n\n```typescript",
+          "description": "Base class for form-associated custom elements (FACE).\n\nProvides form integration capabilities for custom elements,\nallowing them to participate in HTML form submission and validation.",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
@@ -125,7 +125,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/base/form-associated-element.ts#L18"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/base/form-associated-element.ts#L11"
           },
           "kind": "class"
         }
@@ -1862,10 +1862,10 @@
           ],
           "name": "LoggingMixin",
           "summary": "Provides lifecycle logging and debug utilities",
-          "description": "Mixin that adds logging capabilities to custom elements.\n\n```typescript",
+          "description": "Mixin that adds logging capabilities to custom elements.",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/mixins/logging-mixin.ts#L21"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/mixins/logging-mixin.ts#L13"
           }
         }
       ],

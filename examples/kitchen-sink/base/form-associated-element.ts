@@ -7,13 +7,6 @@ import { LitElement } from 'lit';
  * allowing them to participate in HTML form submission and validation.
  *
  * @summary Form-associated base class for custom elements
- * @example
- * ```typescript
- * @customElement('demo-field')
- * class DemoField extends FormAssociatedElement {
- *   static formAssociated = true;
- * }
- * ```
  */
 export class FormAssociatedElement extends LitElement {
   /**

@@ -1,5 +1,7 @@
-import type { LitElement } from 'lit';
-import { property } from 'lit/decorators.js';
+interface CustomElement extends HTMLElement {
+  connectedCallback?(): void
+  disconnectedCallback?(): void
+}
 
 export type Constructor<T = object> = new (...args: any[]) => T;
 
@@ -7,23 +9,16 @@ export type Constructor<T = object> = new (...args: any[]) => T;
  * Mixin that adds logging capabilities to custom elements.
  *
  * @summary Provides lifecycle logging and debug utilities
- * @example
- * ```typescript
- * @customElement('my-element')
- * class MyElement extends LoggingMixin(LitElement) {
- *   connectedCallback() {
- *     super.connectedCallback();
- *     this.log('Element connected');
- *   }
- * }
- * ```
  */
-export function LoggingMixin<T extends Constructor<LitElement>>(Base: T) {
+export function LoggingMixin<T extends Constructor<CustomElement>>(Base: T) {
   return class LoggingMixinClass extends Base {
+    static properties = {
+      enableLogging: { type: Boolean, attribute: 'enable-logging' }
+    };
+
     /**
      * Enable or disable logging for this element
      */
-    @property({ type: Boolean, attribute: 'enable-logging' })
     enableLogging = false;
 
     /**
@@ -63,12 +58,12 @@ export function LoggingMixin<T extends Constructor<LitElement>>(Base: T) {
     }
 
     connectedCallback() {
-      super.connectedCallback();
+      super.connectedCallback?.();
       this.log('Connected to DOM');
     }
 
     disconnectedCallback() {
-      super.disconnectedCallback();
+      super.disconnectedCallback?.();
       this.log('Disconnected from DOM');
     }
   };
