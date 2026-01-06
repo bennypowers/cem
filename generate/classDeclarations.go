@@ -36,10 +36,23 @@ func (mp *ModuleProcessor) generateClassDeclarationParsed(
 ) (*ParsedClass, error) {
 	_, hasCustomElementDecorator := captures["customElement"]
 	isHTMLElement := false
-	superClassNameNodes, hasSuperClass := captures["superclass.name"]
-	if hasSuperClass {
-		isHTMLElement = superClassNameNodes[0].Text == "HTMLElement"
+
+	// Check if superclass is HTMLElement - try new expression capture first
+	exprNodes, hasExpr := captures["superclass.expression"]
+	if hasExpr && len(exprNodes) > 0 {
+		exprNode := Q.GetDescendantById(mp.root, exprNodes[0].NodeId)
+		if exprNode != nil {
+			superclassName, _ := mp.parseHeritageExpression(exprNode)
+			isHTMLElement = superclassName == "HTMLElement"
+		}
+	} else {
+		// Fallback to old superclass.name capture
+		superClassNameNodes, hasSuperClass := captures["superclass.name"]
+		if hasSuperClass {
+			isHTMLElement = superClassNameNodes[0].Text == "HTMLElement"
+		}
 	}
+
 	isCustomElement := hasCustomElementDecorator || isHTMLElement
 	classDeclarationCaptures, hasClassDeclaration := captures["class.declaration"]
 	if !hasClassDeclaration || len(classDeclarationCaptures) <= 0 {
@@ -125,10 +138,24 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 	}
 
 	var superclassName string
+	var mixins []M.Reference
 	err := mp.step("Processing heritage", 1, func() error {
-		superClassNameNodes, ok := captures["superclass.name"]
-		if ok && len(superClassNameNodes) > 0 {
-			superclassName = superClassNameNodes[0].Text
+		// Try new superclass.expression capture first (for mixin support)
+		exprNodes, hasExpr := captures["superclass.expression"]
+		if hasExpr && len(exprNodes) > 0 {
+			exprNode := Q.GetDescendantById(mp.root, exprNodes[0].NodeId)
+			if exprNode != nil {
+				superclassName, mixins = mp.parseHeritageExpression(exprNode)
+			}
+		} else {
+			// Fallback to old superclass.name capture (for backwards compatibility)
+			nameNodes, ok := captures["superclass.name"]
+			if ok && len(nameNodes) > 0 {
+				superclassName = nameNodes[0].Text
+			}
+		}
+
+		if superclassName != "" {
 			pkg := ""
 			module := ""
 			switch superclassName {
@@ -152,6 +179,12 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 			}
 			declaration.Superclass = M.NewReference(superclassName, pkg, module)
 		}
+
+		// Store mixins if present
+		if len(mixins) > 0 {
+			declaration.Mixins = mixins
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -362,4 +395,65 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 	})
 
 	return declaration, alias, errs
+}
+
+// parseHeritageExpression walks a heritage expression to extract the base superclass
+// and any mixins applied. Handles patterns like:
+// - LitElement → returns ("LitElement", nil)
+// - LoggingMixin(LitElement) → returns ("LitElement", [LoggingMixin])
+// - Mixin1(Mixin2(Base)) → returns ("Base", [Mixin2, Mixin1])
+func (mp *ModuleProcessor) parseHeritageExpression(node *ts.Node) (superclass string, mixins []M.Reference) {
+	if node == nil {
+		return "", nil
+	}
+
+	nodeKind := node.Kind()
+
+	switch nodeKind {
+	case "identifier":
+		// Simple case: just an identifier like "LitElement"
+		return node.Utf8Text(mp.code), nil
+
+	case "call_expression":
+		// Mixin pattern: MixinName(Base)
+		// Extract the function name as the mixin
+		functionNode := node.ChildByFieldName("function")
+		if functionNode != nil && functionNode.Kind() == "identifier" {
+			mixinName := functionNode.Utf8Text(mp.code)
+
+			// Create reference for the mixin
+			var mixinRef M.Reference
+			mixinRef.Name = mixinName
+
+			// Check if mixin is imported
+			if imp, found := mp.importBindingToSpecMap[mixinName]; found {
+				module := mp.resolveImportSpec(imp.spec)
+				mixinRef.Module = module
+			}
+
+			// Recursively process the first argument to get base and any nested mixins
+			argsNode := node.ChildByFieldName("arguments")
+			if argsNode != nil {
+				cursor := argsNode.Walk()
+				defer cursor.Close()
+				for _, child := range argsNode.NamedChildren(cursor) {
+					baseSuperclass, nestedMixins := mp.parseHeritageExpression(&child)
+					// Mixins are applied inner-to-outer, so nested mixins come first
+					allMixins := append(nestedMixins, mixinRef)
+					return baseSuperclass, allMixins
+				}
+			}
+
+			// If no arguments found, treat the mixin itself as the base
+			return mixinName, nil
+		}
+	}
+
+	// Fallback: try to get text content
+	text := node.Utf8Text(mp.code)
+	if text != "" {
+		return text, nil
+	}
+
+	return "", nil
 }
