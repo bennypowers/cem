@@ -22,6 +22,7 @@ import (
 	"testing/synctest"
 	"time"
 
+	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/workspace"
@@ -477,6 +478,10 @@ func TestMergeModulesIntoManifest_WithIndex(t *testing.T) {
 }
 
 func BenchmarkGenerateSession_SingleGeneration(b *testing.B) {
+	// Enable quiet mode to suppress INFO and DEBUG logs during benchmarking
+	logging.SetQuietEnabled(true)
+	defer logging.SetQuietEnabled(false)
+
 	ctx := W.NewFileSystemWorkspaceContext("../examples/minimal")
 	require.NoError(b, ctx.Init())
 
@@ -582,6 +587,10 @@ func TestSetMaxWorkers_ZeroValue(t *testing.T) {
 }
 
 func BenchmarkGenerateSession_ReusedSession(b *testing.B) {
+	// Enable quiet mode to suppress INFO and DEBUG logs during benchmarking
+	logging.SetQuietEnabled(true)
+	defer logging.SetQuietEnabled(false)
+
 	ctx := W.NewFileSystemWorkspaceContext("../examples/minimal")
 	require.NoError(b, ctx.Init())
 
