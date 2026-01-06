@@ -130,10 +130,10 @@ jobs:
 
       - name: Prewarm benchmarks on base branch
         run: |
-          if make -n bench >/dev/null 2>&1; then
-            make bench || true
+          if make -n bench-generate >/dev/null 2>&1; then
+            make bench-generate || true
           else
-            echo "::warning::Base branch does not have 'make bench' target"
+            echo "::warning::Base branch does not have 'make bench-generate' target"
           fi
 
       - name: Run benchmarks on base branch
@@ -189,7 +189,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "github-actions[bot]"
-          body-includes: "### Benchmark Summary"
+          body-includes: "### Generate Benchmarks"
 
       - name: Create or update sticky benchmark comment
         uses: peter-evans/create-or-update-comment@v4

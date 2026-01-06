@@ -66,6 +66,7 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 
 	local result = {
 		success = false, -- Will be set to true only if diagnostics work correctly
+		success_rate = 0.0, -- Will be set to 1.0 if diagnostics work correctly
 		server_name = server_name,
 		duration_ms = diagnostics_duration,
 		diagnostics_count = #received_diagnostics,
@@ -106,6 +107,7 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 			hints = hint_count,
 		}
 		result.success = true
+		result.success_rate = 1.0
 	end
 
 	-- Clean up

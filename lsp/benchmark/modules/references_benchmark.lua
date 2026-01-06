@@ -245,6 +245,7 @@ function M.run_references_benchmark(_, fixture_dir)
 
 	local results = {
 		success = false,
+		success_rate = 0.0,
 		server_name = _G.BENCHMARK_LSP_NAME,
 		error = nil,
 		reference_tests = {},
@@ -442,6 +443,7 @@ function M.run_references_benchmark(_, fixture_dir)
 
 		-- Success requires both completing tests AND finding references
 		results.success = total_references >= 10 and total_tests >= 8
+		results.success_rate = results.success and 1.0 or 0.0
 
 		-- Set error message if criteria not met
 		if not results.success then
