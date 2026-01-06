@@ -209,9 +209,16 @@ func serveManifest(
 	var manifestBytes []byte
 
 	if config.Context.IsWorkspace() {
-		// Workspace mode: aggregate manifests from all packages
+		// Workspace mode: create workspace manifest with packages array
 		middlewarePackages := config.Context.WorkspacePackages()
-		var aggregatedManifest *M.Package
+
+		// Parse each package manifest and add package name
+		type PackageWithName struct {
+			Name string `json:"name"`
+			M.Package
+		}
+
+		packages := make([]PackageWithName, 0, len(middlewarePackages))
 
 		for _, pkg := range middlewarePackages {
 			if len(pkg.Manifest) == 0 {
@@ -224,24 +231,27 @@ func serveManifest(
 				continue
 			}
 
-			if aggregatedManifest == nil {
-				aggregatedManifest = &parsed
-			} else {
-				// Merge modules from this package into the aggregated manifest
-				aggregatedManifest.Modules = append(aggregatedManifest.Modules, parsed.Modules...)
-			}
+			packages = append(packages, PackageWithName{
+				Name:    pkg.Name,
+				Package: parsed,
+			})
 		}
 
-		if aggregatedManifest == nil {
+		if len(packages) == 0 {
 			http.Error(w, "No manifests available in workspace", http.StatusNotFound)
 			return
 		}
 
-		// Serialize aggregated manifest
+		// Create workspace manifest structure
+		workspaceManifest := map[string]any{
+			"packages": packages,
+		}
+
+		// Serialize workspace manifest
 		var err error
-		manifestBytes, err = M.SerializeToBytes(aggregatedManifest)
+		manifestBytes, err = json.Marshal(workspaceManifest)
 		if err != nil {
-			config.Context.Logger().Error("Failed to serialize aggregated manifest: %v", err)
+			config.Context.Logger().Error("Failed to serialize workspace manifest: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}

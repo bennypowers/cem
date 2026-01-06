@@ -105,18 +105,66 @@ export class CemVirtualTree extends CemElement {
     this.#flatItems = [];
     let id = 0;
 
-    if (!this.#manifest.modules) return;
+    // Check if this is a workspace manifest with multiple packages
+    const hasMultiplePackages = this.#manifest.packages && this.#manifest.packages.length > 1;
 
-    for (const module of this.#manifest.modules) {
+    if (hasMultiplePackages) {
+      // Workspace mode with multiple packages: show packages at top level
+      for (const pkg of this.#manifest.packages) {
+        const packageId = id++;
+        const packageItem = {
+          id: packageId,
+          type: 'package',
+          label: pkg.name,
+          depth: 0,
+          hasChildren: pkg.modules?.length > 0,
+          expanded: false,
+          visible: true,
+          packageName: pkg.name,
+          badge: pkg.modules?.length || 0,
+        };
+        this.#flatItems.push(packageItem);
+
+        if (!pkg.modules) continue;
+
+        // Add modules under this package at depth 1
+        this.#buildModulesForPackage(pkg.modules, packageId, 1, id);
+        id = this.#flatItems[this.#flatItems.length - 1].id + 1;
+      }
+    } else {
+      // Single package mode OR workspace with 1 package: show modules at top level
+      const modules = this.#manifest.packages?.[0]?.modules || this.#manifest.modules;
+
+      if (!modules) return;
+
+      // Add modules at depth 0 (no package level)
+      this.#buildModulesForPackage(modules, null, 0, id);
+    }
+
+    this.#updateVisibleItems();
+  }
+
+  /**
+   * Build modules and their declarations for a package
+   * @param {Array} modules - Array of modules
+   * @param {number|null} parentId - ID of parent package (null if no package level)
+   * @param {number} depth - Depth level for modules
+   * @param {number} startId - Starting ID for items
+   */
+  #buildModulesForPackage(modules, parentId, depth, startId) {
+    let id = startId;
+
+    for (const module of modules) {
       const moduleId = id++;
       const moduleItem = {
         id: moduleId,
         type: 'module',
         label: module.path,
-        depth: 0,
+        depth: depth,
+        parentId: parentId,
         hasChildren: module.declarations?.length > 0,
         expanded: false,
-        visible: true,
+        visible: parentId === null, // Visible if no parent, otherwise hidden until parent expands
         modulePath: module.path,
         badge: module.declarations?.length || 0,
       };
@@ -125,24 +173,30 @@ export class CemVirtualTree extends CemElement {
       if (!module.declarations) continue;
 
       for (const decl of module.declarations) {
-        // Custom Element
-        if (decl.kind === 'class' && decl.customElement) {
+        // Custom Element - must have both customElement flag and tagName
+        if (decl.kind === 'class' && decl.customElement && decl.tagName) {
           const ceId = id++;
 
           // Compute hasChildren based on presence of any child arrays
           const properties = decl.members?.filter(m => m.kind === 'field') || [];
           const methods = decl.members?.filter(m => m.kind === 'method') || [];
-          const hasChildren = (decl.attributes?.length > 0) ||
-                              (properties.length > 0) ||
-                              (methods.length > 0) ||
-                              (decl.events?.length > 0) ||
-                              (decl.slots?.length > 0);
+          const hasChildren = [
+            decl.attributes,
+            properties,
+            methods,
+            decl.events,
+            decl.slots,
+            decl.cssProperties,
+            decl.cssParts,
+            decl.cssStates,
+            decl.demos,
+          ].some(x => x?.length > 0)
 
           const ceItem = {
             id: ceId,
             type: 'custom-element',
             label: `<${decl.tagName}>`,
-            depth: 1,
+            depth: depth + 1,
             parentId: moduleId,
             hasChildren,
             expanded: false,
@@ -159,7 +213,7 @@ export class CemVirtualTree extends CemElement {
               id: attrCatId,
               type: 'category',
               label: 'Attributes',
-              depth: 2,
+              depth: depth + 2,
               parentId: ceId,
               hasChildren: true,
               expanded: false,
@@ -173,7 +227,7 @@ export class CemVirtualTree extends CemElement {
                 id: id++,
                 type: 'attribute',
                 label: attr.name,
-                depth: 3,
+                depth: depth + 3,
                 parentId: attrCatId,
                 hasChildren: false,
                 expanded: false,
@@ -192,7 +246,7 @@ export class CemVirtualTree extends CemElement {
               id: propCatId,
               type: 'category',
               label: 'Properties',
-              depth: 2,
+              depth: depth + 2,
               parentId: ceId,
               hasChildren: true,
               expanded: false,
@@ -206,7 +260,7 @@ export class CemVirtualTree extends CemElement {
                 id: id++,
                 type: 'property',
                 label: prop.name,
-                depth: 3,
+                depth: depth + 3,
                 parentId: propCatId,
                 hasChildren: false,
                 expanded: false,
@@ -225,7 +279,7 @@ export class CemVirtualTree extends CemElement {
               id: methodCatId,
               type: 'category',
               label: 'Methods',
-              depth: 2,
+              depth: depth + 2,
               parentId: ceId,
               hasChildren: true,
               expanded: false,
@@ -239,7 +293,7 @@ export class CemVirtualTree extends CemElement {
                 id: id++,
                 type: 'method',
                 label: `${method.name}()`,
-                depth: 3,
+                depth: depth + 3,
                 parentId: methodCatId,
                 hasChildren: false,
                 expanded: false,
@@ -258,7 +312,7 @@ export class CemVirtualTree extends CemElement {
               id: eventCatId,
               type: 'category',
               label: 'Events',
-              depth: 2,
+              depth: depth + 2,
               parentId: ceId,
               hasChildren: true,
               expanded: false,
@@ -272,7 +326,7 @@ export class CemVirtualTree extends CemElement {
                 id: id++,
                 type: 'event',
                 label: event.name,
-                depth: 3,
+                depth: depth + 3,
                 parentId: eventCatId,
                 hasChildren: false,
                 expanded: false,
@@ -291,7 +345,7 @@ export class CemVirtualTree extends CemElement {
               id: slotCatId,
               type: 'category',
               label: 'Slots',
-              depth: 2,
+              depth: depth + 2,
               parentId: ceId,
               hasChildren: true,
               expanded: false,
@@ -305,7 +359,7 @@ export class CemVirtualTree extends CemElement {
                 id: id++,
                 type: 'slot',
                 label: slot.name || '(default)',
-                depth: 3,
+                depth: depth + 3,
                 parentId: slotCatId,
                 hasChildren: false,
                 expanded: false,
@@ -316,13 +370,145 @@ export class CemVirtualTree extends CemElement {
               });
             }
           }
+
+          // CSS Properties
+          if (decl.cssProperties?.length) {
+            const cssPropCatId = id++;
+            this.#flatItems.push({
+              id: cssPropCatId,
+              type: 'category',
+              label: 'CSS Properties',
+              depth: depth + 2,
+              parentId: ceId,
+              hasChildren: true,
+              expanded: false,
+              visible: false,
+              badge: decl.cssProperties.length,
+              category: 'css-properties',
+            });
+
+            for (const cssProp of decl.cssProperties) {
+              this.#flatItems.push({
+                id: id++,
+                type: 'css-property',
+                label: cssProp.name,
+                depth: depth + 3,
+                parentId: cssPropCatId,
+                hasChildren: false,
+                expanded: false,
+                visible: false,
+                modulePath: module.path,
+                tagName: decl.tagName,
+                name: cssProp.name,
+              });
+            }
+          }
+
+          // CSS Parts
+          if (decl.cssParts?.length) {
+            const cssPartCatId = id++;
+            this.#flatItems.push({
+              id: cssPartCatId,
+              type: 'category',
+              label: 'CSS Parts',
+              depth: depth + 2,
+              parentId: ceId,
+              hasChildren: true,
+              expanded: false,
+              visible: false,
+              badge: decl.cssParts.length,
+              category: 'css-parts',
+            });
+
+            for (const cssPart of decl.cssParts) {
+              this.#flatItems.push({
+                id: id++,
+                type: 'css-part',
+                label: cssPart.name,
+                depth: depth + 3,
+                parentId: cssPartCatId,
+                hasChildren: false,
+                expanded: false,
+                visible: false,
+                modulePath: module.path,
+                tagName: decl.tagName,
+                name: cssPart.name,
+              });
+            }
+          }
+
+          // CSS States
+          if (decl.cssStates?.length) {
+            const cssStateCatId = id++;
+            this.#flatItems.push({
+              id: cssStateCatId,
+              type: 'category',
+              label: 'CSS States',
+              depth: depth + 2,
+              parentId: ceId,
+              hasChildren: true,
+              expanded: false,
+              visible: false,
+              badge: decl.cssStates.length,
+              category: 'css-states',
+            });
+
+            for (const cssState of decl.cssStates) {
+              this.#flatItems.push({
+                id: id++,
+                type: 'css-state',
+                label: cssState.name,
+                depth: depth + 3,
+                parentId: cssStateCatId,
+                hasChildren: false,
+                expanded: false,
+                visible: false,
+                modulePath: module.path,
+                tagName: decl.tagName,
+                name: cssState.name,
+              });
+            }
+          }
+
+          // Demos
+          if (decl.demos?.length) {
+            const demoCatId = id++;
+            this.#flatItems.push({
+              id: demoCatId,
+              type: 'category',
+              label: 'Demos',
+              depth: depth + 2,
+              parentId: ceId,
+              hasChildren: true,
+              expanded: false,
+              visible: false,
+              badge: decl.demos.length,
+              category: 'demos',
+            });
+
+            for (const demo of decl.demos) {
+              this.#flatItems.push({
+                id: id++,
+                type: 'demo',
+                label: demo.name || demo.url || '(demo)',
+                depth: depth + 3,
+                parentId: demoCatId,
+                hasChildren: false,
+                expanded: false,
+                visible: false,
+                modulePath: module.path,
+                tagName: decl.tagName,
+                url: demo.url,
+              });
+            }
+          }
         } else if (decl.kind === 'class') {
           // Regular class
           this.#flatItems.push({
             id: id++,
             type: 'class',
             label: decl.name,
-            depth: 1,
+            depth: depth + 1,
             parentId: moduleId,
             hasChildren: false,
             expanded: false,
@@ -335,7 +521,7 @@ export class CemVirtualTree extends CemElement {
             id: id++,
             type: 'function',
             label: `${decl.name}()`,
-            depth: 1,
+            depth: depth + 1,
             parentId: moduleId,
             hasChildren: false,
             expanded: false,
@@ -348,7 +534,7 @@ export class CemVirtualTree extends CemElement {
             id: id++,
             type: 'variable',
             label: decl.name,
-            depth: 1,
+            depth: depth + 1,
             parentId: moduleId,
             hasChildren: false,
             expanded: false,
@@ -361,7 +547,7 @@ export class CemVirtualTree extends CemElement {
             id: id++,
             type: 'mixin',
             label: `${decl.name}()`,
-            depth: 1,
+            depth: depth + 1,
             parentId: moduleId,
             hasChildren: false,
             expanded: false,

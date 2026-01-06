@@ -56,10 +56,16 @@ export class CemDetailPanel extends CemElement {
     const type = item.type;
 
     switch (type) {
+      case 'package':
+        return this.#buildPackageDetails(item, manifest);
       case 'module':
         return this.#buildModuleDetails(item, manifest);
       case 'custom-element':
         return this.#buildCustomElementDetails(item, manifest);
+      case 'category':
+      case 'group':
+        // Categories/groups are organizational only - show a simple message
+        return `<div class="empty-state">Select an item to view details</div>`;
       case 'attribute':
         return this.#buildAttributeDetails(item, manifest);
       case 'property':
@@ -70,6 +76,14 @@ export class CemDetailPanel extends CemElement {
         return this.#buildEventDetails(item, manifest);
       case 'slot':
         return this.#buildSlotDetails(item, manifest);
+      case 'css-property':
+        return this.#buildCSSPropertyDetails(item, manifest);
+      case 'css-part':
+        return this.#buildCSSPartDetails(item, manifest);
+      case 'css-state':
+        return this.#buildCSSStateDetails(item, manifest);
+      case 'demo':
+        return this.#buildDemoDetails(item, manifest);
       case 'class':
         return this.#buildClassDetails(item, manifest);
       case 'function':
@@ -81,6 +95,20 @@ export class CemDetailPanel extends CemElement {
       default:
         return `<div class="empty-state">No details available for ${type}</div>`;
     }
+  }
+
+  async #buildPackageDetails(item, manifest) {
+    const pkg = manifest.packages?.find(p => p.name === item.packageName);
+    if (!pkg) return '<div class="empty-state">Package not found</div>';
+
+    return `
+      <h3>${this.#escapeHtml(pkg.name)}</h3>
+      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Package</dd></div>
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Modules</dt><dd class="pf-v6-c-description-list__description">${pkg.modules?.length || 0}</dd></div>
+        ${pkg.schemaVersion ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Schema Version</dt><dd class="pf-v6-c-description-list__description">${this.#escapeHtml(pkg.schemaVersion)}</dd></div>` : ''}
+      </dl>
+    `;
   }
 
   async #buildModuleDetails(item, manifest) {
@@ -105,6 +133,11 @@ export class CemDetailPanel extends CemElement {
   }
 
   async #buildCustomElementDetails(item, manifest) {
+    // Defensive check - if no tagName, this isn't a valid custom element
+    if (!item.tagName) {
+      return '<div class="empty-state">Invalid custom element (missing tagName)</div>';
+    }
+
     const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
     if (!ce) return '<div class="empty-state">Custom element not found</div>';
 
@@ -269,6 +302,110 @@ export class CemDetailPanel extends CemElement {
     `;
   }
 
+  async #buildCSSPropertyDetails(item, manifest) {
+    const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
+    if (!ce) return '<div class="empty-state">Custom element not found</div>';
+
+    const cssProp = ce.cssProperties?.find(p => p.name === item.name);
+    if (!cssProp) return '<div class="empty-state">CSS property not found</div>';
+
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const summaryPath = cssProp.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssProperties.#(name=="${escapedName}").summary` : '';
+    const descriptionPath = cssProp.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssProperties.#(name=="${escapedName}").description` : '';
+
+    const summary = await this.#renderMarkdown(summaryPath);
+    const description = await this.#renderMarkdown(descriptionPath);
+
+    return `
+      <h3>${this.#escapeHtml(cssProp.name)}</h3>
+      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName)}&gt;</code></dd></div>
+        ${cssProp.syntax ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Syntax</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(cssProp.syntax)}</code></dd></div>` : ''}
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        ${cssProp.default ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(cssProp.default)}</code></dd></div>` : ''}
+      </dl>
+    `;
+  }
+
+  async #buildCSSPartDetails(item, manifest) {
+    const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
+    if (!ce) return '<div class="empty-state">Custom element not found</div>';
+
+    const cssPart = ce.cssParts?.find(p => p.name === item.name);
+    if (!cssPart) return '<div class="empty-state">CSS part not found</div>';
+
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const summaryPath = cssPart.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssParts.#(name=="${escapedName}").summary` : '';
+    const descriptionPath = cssPart.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssParts.#(name=="${escapedName}").description` : '';
+
+    const summary = await this.#renderMarkdown(summaryPath);
+    const description = await this.#renderMarkdown(descriptionPath);
+
+    return `
+      <h3>${this.#escapeHtml(cssPart.name)}</h3>
+      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName)}&gt;</code></dd></div>
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+      </dl>
+    `;
+  }
+
+  async #buildCSSStateDetails(item, manifest) {
+    const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
+    if (!ce) return '<div class="empty-state">Custom element not found</div>';
+
+    const cssState = ce.cssStates?.find(s => s.name === item.name);
+    if (!cssState) return '<div class="empty-state">CSS state not found</div>';
+
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const summaryPath = cssState.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssStates.#(name=="${escapedName}").summary` : '';
+    const descriptionPath = cssState.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssStates.#(name=="${escapedName}").description` : '';
+
+    const summary = await this.#renderMarkdown(summaryPath);
+    const description = await this.#renderMarkdown(descriptionPath);
+
+    return `
+      <h3>:--${this.#escapeHtml(cssState.name)}</h3>
+      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName)}&gt;</code></dd></div>
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+      </dl>
+    `;
+  }
+
+  async #buildDemoDetails(item, manifest) {
+    const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
+    if (!ce) return '<div class="empty-state">Custom element not found</div>';
+
+    const demo = ce.demos?.find(d => d.url === item.url);
+    if (!demo) return '<div class="empty-state">Demo not found</div>';
+
+    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedUrl = demo.url.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const descriptionPath = demo.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").demos.#(url=="${escapedUrl}").description` : '';
+
+    const description = await this.#renderMarkdown(descriptionPath);
+
+    return `
+      <h3>Demo</h3>
+      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName)}&gt;</code></dd></div>
+        ${demo.url ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">URL</dt><dd class="pf-v6-c-description-list__description"><a href="${this.#escapeHtml(demo.url)}" target="_blank" rel="noopener noreferrer">${this.#escapeHtml(demo.url)}</a></dd></div>` : ''}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+      </dl>
+    `;
+  }
+
   async #buildClassDetails(item, manifest) {
     const cls = this.#findDeclaration(manifest, item.modulePath, item.name, 'class');
     if (!cls) return '<div class="empty-state">Class not found</div>';
@@ -389,9 +526,25 @@ export class CemDetailPanel extends CemElement {
 
   /**
    * Find a module in the manifest
+   * Handles both single-package format (manifest.modules) and
+   * workspace format (manifest.packages[*].modules)
    */
   #findModule(manifest, modulePath) {
-    return manifest.modules?.find(m => m.path === modulePath);
+    // Try single-package format first
+    if (manifest.modules) {
+      const module = manifest.modules.find(m => m.path === modulePath);
+      if (module) return module;
+    }
+
+    // Try workspace format with packages array
+    if (manifest.packages) {
+      for (const pkg of manifest.packages) {
+        const module = pkg.modules?.find(m => m.path === modulePath);
+        if (module) return module;
+      }
+    }
+
+    return null;
   }
 
   /**

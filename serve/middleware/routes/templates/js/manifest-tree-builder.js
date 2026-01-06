@@ -17,17 +17,61 @@ export class ManifestTreeBuilder {
 
     const roots = [];
 
-    // Build module nodes
-    if (manifest.modules && manifest.modules.length > 0) {
-      manifest.modules.forEach(module => {
+    // Check if this is a workspace manifest with multiple packages
+    const hasMultiplePackages = manifest.packages && manifest.packages.length > 1;
+
+    if (hasMultiplePackages) {
+      // Workspace mode with multiple packages: show packages at top level
+      manifest.packages.forEach(pkg => {
+        const packageNode = this.#buildPackage(pkg);
+        if (packageNode) {
+          roots.push(packageNode);
+        }
+      });
+    } else {
+      // Single package mode OR workspace with 1 package: show modules at top level
+      const modules = manifest.packages?.[0]?.modules || manifest.modules;
+
+      if (modules && modules.length > 0) {
+        modules.forEach(module => {
+          const moduleNode = this.#buildModule(module);
+          if (moduleNode) {
+            roots.push(moduleNode);
+          }
+        });
+      }
+    }
+
+    return roots;
+  }
+
+  /**
+   * Build a package node
+   * @param {Object} pkg - Package from manifest
+   * @returns {TreeNode}
+   */
+  #buildPackage(pkg) {
+    const children = [];
+
+    // Build module nodes under this package
+    if (pkg.modules && pkg.modules.length > 0) {
+      pkg.modules.forEach(module => {
         const moduleNode = this.#buildModule(module);
         if (moduleNode) {
-          roots.push(moduleNode);
+          children.push(moduleNode);
         }
       });
     }
 
-    return roots;
+    return {
+      id: `package-${pkg.name}`,
+      type: 'package',
+      name: pkg.name,
+      icon: getIconForType('package'),
+      badge: children.length,
+      expanded: false,
+      children,
+    };
   }
 
   /**
@@ -49,7 +93,7 @@ export class ManifestTreeBuilder {
       module.declarations.forEach(decl => {
         switch (decl.kind) {
           case 'class':
-            if (decl.customElement || decl.tagName) {
+            if (decl.customElement && decl.tagName) {
               elements.push(decl);
             } else {
               classes.push(decl);
@@ -217,6 +261,32 @@ export class ManifestTreeBuilder {
         badge: element.cssParts.length,
         expanded: false,
         children: element.cssParts.map(part => this.#buildCSSPart(part)),
+      });
+    }
+
+    // CSS States group
+    if (element.cssStates && element.cssStates.length > 0) {
+      children.push({
+        id: `${element.name || element.tagName}-css-states`,
+        type: 'group',
+        name: 'CSS States',
+        icon: getFolderIcon(),
+        badge: element.cssStates.length,
+        expanded: false,
+        children: element.cssStates.map(state => this.#buildCSSState(state)),
+      });
+    }
+
+    // Demos group
+    if (element.demos && element.demos.length > 0) {
+      children.push({
+        id: `${element.name || element.tagName}-demos`,
+        type: 'group',
+        name: 'Demos',
+        icon: getFolderIcon(),
+        badge: element.demos.length,
+        expanded: false,
+        children: element.demos.map(demo => this.#buildDemo(demo)),
       });
     }
 
@@ -461,6 +531,43 @@ export class ManifestTreeBuilder {
   }
 
   /**
+   * Build a CSS state node
+   * @param {Object} cssState - CSS custom state
+   * @returns {TreeNode}
+   */
+  #buildCSSState(cssState) {
+    return {
+      id: `css-state-${cssState.name}-${this.#nodeIdCounter++}`,
+      type: 'css-state',
+      name: cssState.name || 'Unknown CSS State',
+      summary: cssState.summary,
+      description: cssState.description,
+      icon: getIconForType('css-state'),
+      metadata: {
+        deprecated: cssState.deprecated,
+      },
+    };
+  }
+
+  /**
+   * Build a demo node
+   * @param {Object} demo - Demo
+   * @returns {TreeNode}
+   */
+  #buildDemo(demo) {
+    return {
+      id: `demo-${demo.url}-${this.#nodeIdCounter++}`,
+      type: 'demo',
+      name: demo.name || demo.url || 'Demo',
+      description: demo.description,
+      icon: getIconForType('demo'),
+      metadata: {
+        url: demo.url,
+      },
+    };
+  }
+
+  /**
    * Calculate total API count for an element
    * @param {Object} element - Element declaration
    * @returns {number} Total API surface count
@@ -473,6 +580,8 @@ export class ManifestTreeBuilder {
     if (element.slots) count += element.slots.length;
     if (element.cssProperties) count += element.cssProperties.length;
     if (element.cssParts) count += element.cssParts.length;
+    if (element.cssStates) count += element.cssStates.length;
+    if (element.demos) count += element.demos.length;
 
     if (element.members) {
       count += element.members.filter(m => m.kind === 'field').length;
