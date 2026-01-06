@@ -4,6 +4,7 @@
   "private": true,
   "description": "Example demonstrating AI-friendly JSDoc documentation for custom elements",
   "type": "module",
+  "exports": "./elements/multi-select/multi-select.js",
   "customElements": "custom-elements.json",
   "scripts": {
     "analyze": "cem generate",
