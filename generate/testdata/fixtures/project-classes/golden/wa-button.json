@@ -90,7 +90,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field"
             },
             {
@@ -99,7 +99,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field"
             },
             {
@@ -108,7 +108,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field"
             },
             {
@@ -117,7 +117,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field"
             },
             {

@@ -29,26 +29,6 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-// defaultToString converts a default value (which may be any type for members)
-// to a string representation for HTML attributes (which are always strings).
-func defaultToString(defaultVal any) string {
-	if defaultVal == nil {
-		return ""
-	}
-	switch v := defaultVal.(type) {
-	case string:
-		return v
-	case bool:
-		return fmt.Sprintf("%t", v)
-	case int:
-		return fmt.Sprintf("%d", v)
-	case float64:
-		return fmt.Sprintf("%g", v)
-	default:
-		return fmt.Sprint(v)
-	}
-}
-
 // --- Main entry: Generate a class declaration as ParsedClass ---
 func (mp *ModuleProcessor) generateClassDeclarationParsed(
 	captures Q.CaptureMap,
@@ -299,7 +279,7 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		if ok && field.Attribute != "" {
 			return []M.Attribute{{
 				Deprecated: field.Deprecated,
-				Default:    defaultToString(field.Default),
+				Default:    field.Default,
 				Type:       field.Type,
 				FieldName:  field.Name,
 				StartByte:  field.StartByte,

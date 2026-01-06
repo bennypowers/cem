@@ -18,7 +18,6 @@ package generate
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
 	"slices"
 	"strings"
@@ -63,35 +62,6 @@ var (
 	numberLiteralRegexp = regexp.MustCompile(`^[\d._]+$`)
 	stringLiteralRegexp = regexp.MustCompile(`^('|")`)
 )
-
-// parseDefaultValue converts a string representation of a default value
-// to the appropriate Go type for JSON serialization:
-// - "true"/"false" -> bool
-// - numeric literals -> float64
-// - everything else -> string (as-is)
-func parseDefaultValue(defaultStr string) any {
-	switch {
-	case defaultStr == "true":
-		return true
-	case defaultStr == "false":
-		return false
-	case numberLiteralRegexp.MatchString(defaultStr):
-		// Try to parse as number
-		// Use strconv to parse the number
-		var result float64
-		if _, err := fmt.Sscanf(defaultStr, "%f", &result); err == nil {
-			// If it's a whole number, return as int for cleaner JSON
-			if result == float64(int(result)) {
-				return int(result)
-			}
-			return result
-		}
-		// If parsing fails, return as string
-		return defaultStr
-	default:
-		return defaultStr
-	}
-}
 
 func isIgnoredMember(memberName string, superclass string, isStatic bool) bool {
 	switch superclass {
@@ -305,8 +275,8 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 			}
 		}
 
-		// Parse default value to appropriate JSON type
-		field.Default = parseDefaultValue(defaultStr)
+		// Store default value as string per CEM schema
+		field.Default = defaultStr
 	}
 
 	isCustomElement := superclass == "HTMLElement" || superclass == "LitElement"

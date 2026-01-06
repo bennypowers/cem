@@ -193,7 +193,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field",
               "attribute": "pill",
               "reflects": true
@@ -204,7 +204,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field",
               "attribute": "disabled",
               "reflects": true
@@ -215,7 +215,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field",
               "attribute": "loading",
               "reflects": true
@@ -737,7 +737,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field"
             },
             {
@@ -917,7 +917,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field"
             },
             {
@@ -926,7 +926,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field"
             },
             {
@@ -1252,7 +1252,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field",
               "attribute": "disabled",
               "reflects": true
@@ -1263,7 +1263,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field",
               "attribute": "required",
               "reflects": true
@@ -1274,7 +1274,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field",
               "attribute": "readonly",
               "reflects": true
@@ -1325,7 +1325,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field",
               "attribute": "error",
               "reflects": true
