@@ -7,10 +7,10 @@
       "declarations": [
         {
           "kind": "class",
-          "name": "MissingGlobalModule",
+          "name": "MissingGlobalPackage",
           "customElement": true,
-          "tagName": "missing-global-module",
-          "summary": "HTMLElement without proper module field",
+          "tagName": "missing-global-package",
+          "summary": "HTMLElement without proper package field",
           "superclass": {
             "name": "HTMLElement"
           },
@@ -42,13 +42,13 @@
         },
         {
           "kind": "class",
-          "name": "CorrectGlobalModule", 
+          "name": "CorrectGlobalPackage",
           "customElement": true,
-          "tagName": "correct-global-module",
-          "summary": "HTMLElement with correct module field",
+          "tagName": "correct-global-package",
+          "summary": "HTMLElement with correct package field",
           "superclass": {
             "name": "HTMLElement",
-            "module": "global:"
+            "package": "global:"
           },
           "members": [
             {

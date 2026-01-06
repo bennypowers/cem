@@ -337,6 +337,8 @@ func (r *SuperclassRule) Check(ctx *WarningContext) []ValidationWarning {
 	}
 
 	name := superclass.Name()
+	// Only check Package() for "global:" - per the CEM spec, "global:" is exclusively
+	// a package value, never a module value. Module is used for intra-package references.
 	pkg := superclass.Package()
 
 	builtInTypes := []string{
