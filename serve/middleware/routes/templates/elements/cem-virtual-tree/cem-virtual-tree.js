@@ -559,7 +559,6 @@ export class CemVirtualTree extends CemElement {
       }
     }
 
-    this.#updateVisibleItems();
     return id;
   }
 

@@ -21,6 +21,24 @@ describe('cem-virtual-tree', () => {
         events: [
           { name: 'expand', type: { text: 'Event' } },
         ],
+        cssProperties: [
+          { name: '--header-background', description: 'Background color' },
+          { name: '--header-padding', description: 'Padding value' },
+        ],
+        cssParts: [
+          { name: 'header', description: 'The header element' },
+          { name: 'icon', description: 'The expand/collapse icon' },
+        ],
+        cssStates: [
+          { name: 'expanded', description: 'When the accordion is expanded' },
+        ],
+        slots: [
+          { name: '', description: 'Default slot for header content' },
+          { name: 'icon', description: 'Custom icon slot' },
+        ],
+        demos: [
+          { url: './demo/basic.html', description: 'Basic usage' },
+        ],
       }]
     }]
   };
@@ -378,6 +396,157 @@ describe('cem-virtual-tree', () => {
 
       expect(moduleItem.expanded).to.be.false;
       expect(moduleItem.querySelector('pf-v6-tree-item')).to.not.exist;
+    });
+  });
+
+  describe('additional coverage', () => {
+    it('handles item-select event', async () => {
+      let selectedItem = null;
+      el.addEventListener('item-select', (e) => {
+        selectedItem = e.item;
+      });
+
+      const viewport = el.shadowRoot.getElementById('viewport');
+      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+
+      // Simulate selection
+      moduleItem.dispatchEvent(new CustomEvent('select', {
+        bubbles: true,
+        detail: { item: { type: 'module', label: moduleItem.getAttribute('label') } }
+      }));
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      expect(selectedItem).to.not.be.null;
+    });
+
+    it('maintains visibility through expand/collapse cycle', async () => {
+      const viewport = el.shadowRoot.getElementById('viewport');
+      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+
+      // Initially not expanded
+      expect(moduleItem.expanded).to.be.false;
+
+      // Expand
+      moduleItem.expanded = true;
+      moduleItem.dispatchEvent(new Event('change', { bubbles: true }));
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      expect(moduleItem.expanded).to.be.true;
+
+      // Collapse
+      moduleItem.expanded = false;
+      moduleItem.dispatchEvent(new Event('change', { bubbles: true }));
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      expect(moduleItem.expanded).to.be.false;
+    });
+
+    it('clears search when empty string is provided', async () => {
+      // First do a search
+      el.search('accordion');
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Then clear it
+      el.search('');
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const viewport = el.shadowRoot.getElementById('viewport');
+      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+
+      expect(moduleItem).to.exist;
+    });
+
+    it('handles expand and search combination', async () => {
+      const viewport = el.shadowRoot.getElementById('viewport');
+      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+
+      // Expand first
+      moduleItem.expanded = true;
+      moduleItem.dispatchEvent(new Event('change', { bubbles: true }));
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Then search
+      el.search('header');
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Module should still be expanded and visible
+      expect(moduleItem.expanded).to.be.true;
+    });
+  });
+
+  describe('category rendering', () => {
+    it('renders CSS Properties category', async () => {
+      // First expand all to ensure everything is visible
+      el.expandAll();
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const viewport = el.shadowRoot.getElementById('viewport');
+
+      // Find CSS Properties category directly
+      const categories = viewport.querySelectorAll('pf-v6-tree-item[data-type="category"]');
+      const cssPropsCategory = Array.from(categories).find(
+        cat => cat.getAttribute('label') === 'CSS Properties'
+      );
+
+      expect(cssPropsCategory).to.exist;
+      expect(cssPropsCategory.getAttribute('badge')).to.equal('2');
+    });
+
+    it('renders CSS Parts category', async () => {
+      el.expandAll();
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const viewport = el.shadowRoot.getElementById('viewport');
+      const categories = viewport.querySelectorAll('pf-v6-tree-item[data-type="category"]');
+      const cssPartsCategory = Array.from(categories).find(
+        cat => cat.getAttribute('label') === 'CSS Parts'
+      );
+
+      expect(cssPartsCategory).to.exist;
+      expect(cssPartsCategory.getAttribute('badge')).to.equal('2');
+    });
+
+    it('renders CSS States category', async () => {
+      el.expandAll();
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const viewport = el.shadowRoot.getElementById('viewport');
+      const categories = viewport.querySelectorAll('pf-v6-tree-item[data-type="category"]');
+      const cssStatesCategory = Array.from(categories).find(
+        cat => cat.getAttribute('label') === 'CSS States'
+      );
+
+      expect(cssStatesCategory).to.exist;
+      expect(cssStatesCategory.getAttribute('badge')).to.equal('1');
+    });
+
+    it('renders Slots category', async () => {
+      el.expandAll();
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const viewport = el.shadowRoot.getElementById('viewport');
+      const categories = viewport.querySelectorAll('pf-v6-tree-item[data-type="category"]');
+      const slotsCategory = Array.from(categories).find(
+        cat => cat.getAttribute('label') === 'Slots'
+      );
+
+      expect(slotsCategory).to.exist;
+      expect(slotsCategory.getAttribute('badge')).to.equal('2');
+    });
+
+    it('renders Demos category', async () => {
+      el.expandAll();
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const viewport = el.shadowRoot.getElementById('viewport');
+      const categories = viewport.querySelectorAll('pf-v6-tree-item[data-type="category"]');
+      const demosCategory = Array.from(categories).find(
+        cat => cat.getAttribute('label') === 'Demos'
+      );
+
+      expect(demosCategory).to.exist;
+      expect(demosCategory.getAttribute('badge')).to.equal('1');
     });
   });
 });
