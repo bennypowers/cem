@@ -12,7 +12,7 @@ export class MessageChangedEvent extends Event {
  * This component shows how to create custom elements using only native Web APIs,
  * with proper JSDoc annotations for CEM manifest generation.
  *
- * @customElement vanilla-element
+ * @element vanilla-element
  * @fires {MessageChangedEvent} message-changed - Dispatched when the message attribute changes
  *
  * @attr {string} message - The message to display
