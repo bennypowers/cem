@@ -9,7 +9,7 @@
           "name": "MessageChangedEvent",
           "superclass": {
             "name": "Event",
-            "package": "global:"
+            "module": "global:"
           },
           "members": [
             {
@@ -30,7 +30,7 @@
           "description": "A vanilla custom element demonstrating Web Components without a framework.\n\nThis component shows how to create custom elements using only native Web APIs,\nwith proper JSDoc annotations for CEM manifest generation.",
           "superclass": {
             "name": "HTMLElement",
-            "package": "global:"
+            "module": "global:"
           },
           "members": [
             {
@@ -64,36 +64,13 @@
                 "text": "boolean"
               },
               "kind": "field"
-            },
-            {
-              "parameters": [
-                {
-                  "name": "name",
-                  "type": {
-                    "text": "string"
-                  }
-                },
-                {
-                  "name": "oldValue",
-                  "type": {
-                    "text": "string | null"
-                  }
-                },
-                {
-                  "name": "newValue",
-                  "type": {
-                    "text": "string | null"
-                  }
-                }
-              ],
-              "name": "attributeChangedCallback",
-              "kind": "method"
             }
           ],
           "source": {
             "href": "https://github.com/bennypowers/cem/tree/main/examples/vanilla/elements/vanilla-element/vanilla-element.ts#L29"
           },
           "kind": "class",
+          "tagName": "vanilla-element",
           "attributes": [
             {
               "name": "message",
@@ -108,12 +85,6 @@
               "type": {
                 "text": "boolean"
               }
-            },
-            {
-              "name": "message"
-            },
-            {
-              "name": "reversed"
             }
           ],
           "events": [
@@ -165,7 +136,7 @@
         },
         {
           "kind": "custom-element-definition",
-          "name": "",
+          "name": "vanilla-element",
           "declaration": {
             "name": "VanillaElement",
             "module": "elements/vanilla-element/vanilla-element.js"

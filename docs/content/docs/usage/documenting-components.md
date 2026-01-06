@@ -45,9 +45,41 @@ export class HelloWorld extends LitElement {
 }
 ```
 
+### Specifying Tag Names
+
+When the tag name can't be detected automatically, use `@customElement`, `@element`, or `@tagName`:
+
+```typescript
+/**
+ * A vanilla custom element
+ *
+ * @customElement vanilla-element
+ */
+class MyElement extends HTMLElement {
+  static is = 'vanilla-element';
+
+  static {
+    customElements.define(this.is, this);
+  }
+}
+```
+
+All three tags are aliases and work identically:
+- `@customElement vanilla-element` (recommended)
+- `@element vanilla-element`
+- `@tagName vanilla-element`
+
+The generator automatically detects tag names from the `@customElement` 
+decorator and `customElements.define('tag-name', Class)` calls with static 
+strings. However, when using dynamic patterns like 
+`customElements.define(this.is, this)` where the tag name is stored in a 
+variable, you must use one of the JSDoc tags above to specify the tag name 
+explicitly.
+
 ## Documenting Slots and Parts
 
-`cem` automatically detects `<slot>` elements and `part` attributes in your template. You can add descriptions using JSDoc tags or inline HTML comments.
+`cem` automatically detects `<slot>` elements and `part` attributes in your 
+template. You can add descriptions using JSDoc tags or inline HTML comments.
 
 ### HTML Comment Documentation
 
@@ -218,6 +250,33 @@ Multiple examples:
 ```
 
 Examples with captions are wrapped in `<figure>/<figcaption>` elements in the generated manifest.
+
+## Documenting Methods
+
+Document public methods using `@param` and `@returns` tags:
+
+```typescript
+/**
+ * Updates the element's theme
+ *
+ * @summary Apply a new theme
+ * @param {string} themeName - Name of the theme to apply
+ * @param {boolean} [persist=false] - Whether to save theme preference
+ * @returns {boolean} True if theme was applied successfully
+ * @example
+ * ```typescript
+ * element.setTheme('dark', true);
+ * ```
+ */
+setTheme(themeName: string, persist = false): boolean {
+  // implementation
+}
+```
+
+**Parameter syntax:**
+- Required: `@param {type} name - description`
+- Optional: `@param {type} [name] - description`
+- With default: `@param {type} [name=default] - description`
 
 ## Monorepo Setup
 

@@ -51,26 +51,54 @@ By default, `.d.ts` TypeScript declaration files are excluded. Use `--no-default
 
 Document your custom elements using these JSDoc tags. See [Documenting Components][documenting] for examples.
 
-### Element and Member Tags
+### Class/Element Level Tags
 
+These tags apply to the custom element class:
+
+- `@alias` — Alternative name for the element
 - `@attr` / `@attribute` — Custom element attributes
-- `@deprecated` — Marks a feature or member as deprecated
-- `@event` — Custom events dispatched by the element
-- `@example` — Code examples with optional captions
-- `@summary` — Short summary for documentation
-
-### CSS and Shadow DOM Tags
-
 - `@csspart` — CSS shadow parts
 - `@cssprop` / `@cssproperty` — Custom CSS properties
 - `@cssstate` — Custom CSS states
-- `@slot` — Named or default slots
-
-### Demo and Documentation Tags
-
+- `@customElement` / `@element` / `@tagName` — Tag name (when `@customElement` decorator or `customElements.define` are not in use)
 - `@demo` — Demo URL with optional description
+- `@deprecated` — Marks element as deprecated
+- `@event` / `@fires` — Custom events dispatched by the element
+- `@example` — Code examples with optional captions
+- `@slot` — Named or default slots
+- `@summary` — Short summary for documentation
+
+### Property Level Tags
+
+These tags apply to class properties:
+
+- `@deprecated` — Marks property as deprecated
+- `@example` — Code examples for property usage
+- `@summary` — Short summary for the property
+- `@type` — Property type annotation
+
+### Method Level Tags
+
+These tags apply to class methods:
+
+- `@deprecated` — Marks method as deprecated
+- `@example` — Code examples for method usage
+- `@param` / `@parameter` — Method parameter documentation
+- `@return` / `@returns` — Return value documentation
+- `@summary` — Short summary for the method
+
+### CSS Property Level Tags
+
+These tags apply to CSS custom properties in stylesheets:
+
+- `@deprecated` — Marks CSS property as deprecated
+- `@example` — Code examples for CSS property usage
+- `@summary` — Short summary for the CSS property
+- `@syntax` — CSS syntax/type definition
 
 ### Usage Examples
+
+#### Element Level
 
 ```typescript
 /**
@@ -88,6 +116,26 @@ Document your custom elements using these JSDoc tags. See [Documenting Component
  */
 @customElement('my-button')
 class MyButton extends LitElement { }
+```
+
+#### Method Level
+
+```typescript
+/**
+ * Calculates the sum of two numbers
+ *
+ * @summary Add two numbers
+ * @param {number} a - First number
+ * @param {number} b - Second number
+ * @returns {number} The sum of a and b
+ * @example
+ * ```typescript
+ * element.add(2, 3); // returns 5
+ * ```
+ */
+add(a: number, b: number): number {
+  return a + b;
+}
 ```
 
 See the [generate test fixtures][fixtures] for comprehensive examples.
