@@ -433,16 +433,14 @@ func (mp *ModuleProcessor) parseHeritageExpression(node *ts.Node) (superclass st
 
 			// Recursively process the first argument to get base and any nested mixins
 			argsNode := node.ChildByFieldName("arguments")
-			if argsNode != nil && argsNode.ChildCount() > 0 {
-				// Get first argument (skip opening paren)
-				for i := uint(0); i < argsNode.ChildCount(); i++ {
-					child := argsNode.Child(i)
-					if child != nil && child.Kind() != "(" && child.Kind() != ")" && child.Kind() != "," {
-						baseSuperclass, nestedMixins := mp.parseHeritageExpression(child)
-						// Mixins are applied inner-to-outer, so nested mixins come first
-						allMixins := append(nestedMixins, mixinRef)
-						return baseSuperclass, allMixins
-					}
+			if argsNode != nil {
+				cursor := argsNode.Walk()
+				defer cursor.Close()
+				for _, child := range argsNode.NamedChildren(cursor) {
+					baseSuperclass, nestedMixins := mp.parseHeritageExpression(&child)
+					// Mixins are applied inner-to-outer, so nested mixins come first
+					allMixins := append(nestedMixins, mixinRef)
+					return baseSuperclass, allMixins
 				}
 			}
 
