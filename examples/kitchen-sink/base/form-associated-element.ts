@@ -22,6 +22,7 @@ export class FormAssociatedElement extends LitElement {
   static formAssociated = true;
 
   private internals: ElementInternals;
+  private _value: string = '';
 
   constructor() {
     super();
@@ -39,7 +40,7 @@ export class FormAssociatedElement extends LitElement {
    * Get the current form value
    */
   get value(): string {
-    return this.internals.form?.value ?? '';
+    return this._value;
   }
 
   /**
@@ -48,6 +49,7 @@ export class FormAssociatedElement extends LitElement {
    * @param value - The new form value
    */
   set value(value: string) {
+    this._value = value;
     this.internals.setFormValue(value);
   }
 
@@ -96,14 +98,19 @@ export class FormAssociatedElement extends LitElement {
    * @param message - The validation message
    */
   setCustomValidity(message: string): void {
-    this.internals.setValidity({ customError: true }, message);
+    if (message) {
+      this.internals.setValidity({ customError: true }, message);
+    } else {
+      this.internals.setValidity({});
+    }
   }
 
   /**
    * Called when the form is reset
    */
   formResetCallback(): void {
-    this.value = '';
+    this._value = '';
+    this.internals.setFormValue(this._value);
   }
 
   /**

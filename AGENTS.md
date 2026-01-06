@@ -13,7 +13,10 @@ Run `go vet` to surface gopls suggestions. Common examples:
 ## Debugging
 
 When debugging Go code, always use the logger `logger.Debug`, etc. Don't use `fmt.Printf`, which pollutes stdio, breaking the LSP and MCP commands.
+
 To print debug logs to the console, pass `-vvv`
+
+When running cem commands against the example projects, you don't need to `cd`, you can `cem ${cmd} -p examples/${example}`.
 
 ## Testing
 

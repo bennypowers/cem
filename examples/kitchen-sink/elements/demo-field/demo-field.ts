@@ -1,5 +1,6 @@
 import { html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { FormAssociatedElement } from '../../base/form-associated-element.js';
 
 /**
@@ -120,9 +121,9 @@ export class DemoField extends FormAssociatedElement {
           .placeholder=${this.placeholder}
           ?required=${this.required}
           ?disabled=${this.disabled}
-          .minLength=${this.minlength ?? 0}
-          .maxLength=${this.maxlength ?? 524288}
-          .pattern=${this.pattern ?? ''}
+          minlength=${ifDefined(this.minlength)}
+          maxlength=${ifDefined(this.maxlength)}
+          pattern=${ifDefined(this.pattern)}
           @input=${this.handleInput}
           @change=${this.handleChange}
         />

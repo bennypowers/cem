@@ -23,6 +23,15 @@
               "privacy": "private"
             },
             {
+              "name": "_value",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "privacy": "private"
+            },
+            {
               "name": "form",
               "description": "Get the form this element is associated with",
               "type": {
@@ -976,7 +985,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-field/demo-field.ts#L20"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-field/demo-field.ts#L21"
           },
           "kind": "class",
           "tagName": "demo-field",
@@ -1172,7 +1181,7 @@
           "description": "Custom event for demo-input component value changes.",
           "superclass": {
             "name": "Event",
-            "module": "global:"
+            "package": "global:"
           },
           "members": [
             {
@@ -1855,7 +1864,7 @@
           "description": "Mixin that adds logging capabilities to custom elements.\n\n```typescript",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/mixins/logging-mixin.ts#L20"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/mixins/logging-mixin.ts#L21"
           }
         }
       ],

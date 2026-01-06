@@ -1,4 +1,5 @@
 import type { LitElement } from 'lit';
+import { property } from 'lit/decorators.js';
 
 export type Constructor<T = object> = new (...args: any[]) => T;
 
@@ -22,6 +23,7 @@ export function LoggingMixin<T extends Constructor<LitElement>>(Base: T) {
     /**
      * Enable or disable logging for this element
      */
+    @property({ type: Boolean, attribute: 'enable-logging' })
     enableLogging = false;
 
     /**
