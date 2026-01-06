@@ -18,8 +18,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package serve
 
 import (
+	"net"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,12 +29,70 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const (
+	// maxWebSocketReadSize is the maximum size of messages the server will accept from clients
+	// Clients shouldn't be sending us data, but if they do, limit it to prevent DoS attacks
+	maxWebSocketReadSize = 64 * 1024 // 64 KB
+)
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all origins for dev server
-	},
+	WriteBufferSize: 64 * 1024, // 64KB to handle large error messages with stack traces
+	CheckOrigin:     isLocalOrigin,
+}
+
+// isLocalOrigin checks if the WebSocket connection is from a localhost origin
+// or from the same origin as the request (for Cloudflare tunnels, reverse proxies, etc.)
+// This prevents cross-origin WebSocket connections from untrusted domains
+func isLocalOrigin(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		// No origin header - allow (some WebSocket clients don't send Origin)
+		return true
+	}
+
+	originURL, err := url.Parse(origin)
+	if err != nil {
+		// Invalid origin - reject
+		return false
+	}
+
+	// Extract hostname, removing port if present
+	originHost := originURL.Hostname()
+
+	// Check if origin matches the request's Host header
+	// This allows connections through Cloudflare tunnels, reverse proxies, etc.
+	// where Origin might be "https://my-app.example.com" and Host is "my-app.example.com"
+	requestHost := r.Host
+	// Use net.SplitHostPort to safely handle IPv6 addresses like [2001:db8::1]:8000
+	if host, _, err := net.SplitHostPort(requestHost); err == nil {
+		requestHost = host // Strip port from Host header
+	} else {
+		// If SplitHostPort fails (no port present), strip brackets from IPv6 addresses
+		// e.g., "[2001:db8::1]" -> "2001:db8::1"
+		requestHost = strings.Trim(requestHost, "[]")
+	}
+	if originHost == requestHost {
+		return true
+	}
+
+	// Allow localhost, 127.0.0.0/8, and IPv6 localhost
+	if originHost == "localhost" || originHost == "127.0.0.1" || originHost == "[::1]" || originHost == "::1" {
+		return true
+	}
+
+	// Allow *.localhost subdomains (e.g., app.localhost)
+	if strings.HasSuffix(originHost, ".localhost") {
+		return true
+	}
+
+	// Allow 127.0.0.0/8 range (127.0.0.1 - 127.255.255.255)
+	// Use net.ParseIP to ensure it's a valid IP address, not a hostname like "127.evil.com"
+	if ip := net.ParseIP(originHost); ip != nil && ip.IsLoopback() {
+		return true
+	}
+
+	return false
 }
 
 // connWrapper wraps a WebSocket connection with a write mutex
@@ -236,6 +296,10 @@ func (wm *websocketManager) HandleConnection(w http.ResponseWriter, r *http.Requ
 		}
 		return
 	}
+
+	// Set maximum read size to prevent DoS attacks via large messages
+	// Clients shouldn't be sending us data, but if they do, limit it
+	conn.SetReadLimit(maxWebSocketReadSize)
 
 	// Remove HTTP server timeouts for WebSocket connections
 	// WebSockets are long-lived connections that should not be subject to write/read timeouts
