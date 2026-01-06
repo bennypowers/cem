@@ -3,6 +3,146 @@
   "modules": [
     {
       "kind": "javascript-module",
+      "path": "base/form-associated-element.js",
+      "declarations": [
+        {
+          "name": "FormAssociatedElement",
+          "summary": "Form-associated base class for custom elements",
+          "description": "Base class for form-associated custom elements (FACE).\n\nProvides form integration capabilities for custom elements,\nallowing them to participate in HTML form submission and validation.",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "internals",
+              "type": {
+                "text": "ElementInternals"
+              },
+              "kind": "field",
+              "privacy": "private"
+            },
+            {
+              "name": "_value",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field",
+              "privacy": "private"
+            },
+            {
+              "name": "form",
+              "description": "Get the form this element is associated with",
+              "type": {
+                "text": "HTMLFormElement | null"
+              },
+              "readonly": true,
+              "kind": "field"
+            },
+            {
+              "name": "value",
+              "description": "Get the current form value",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "validationMessage",
+              "description": "Get the current validation message",
+              "type": {
+                "text": "string"
+              },
+              "readonly": true,
+              "kind": "field"
+            },
+            {
+              "name": "validity",
+              "description": "Get the validity state",
+              "type": {
+                "text": "ValidityState"
+              },
+              "readonly": true,
+              "kind": "field"
+            },
+            {
+              "name": "willValidate",
+              "description": "Check if the element will be validated",
+              "type": {
+                "text": "boolean"
+              },
+              "readonly": true,
+              "kind": "field"
+            },
+            {
+              "return": {
+                "type": {
+                  "text": "boolean"
+                }
+              },
+              "name": "checkValidity",
+              "description": "Check if the form is valid",
+              "kind": "method"
+            },
+            {
+              "return": {
+                "type": {
+                  "text": "boolean"
+                }
+              },
+              "name": "reportValidity",
+              "description": "Report form validity to the user",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "message",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "name": "setCustomValidity",
+              "description": "Set a custom validation message",
+              "kind": "method"
+            },
+            {
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "name": "formResetCallback",
+              "description": "Called when the form is reset",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/base/form-associated-element.ts#L11"
+          },
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "FormAssociatedElement",
+          "declaration": {
+            "name": "FormAssociatedElement",
+            "module": "base/form-associated-element.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "elements/demo-button/demo-button.js",
       "declarations": [
         {
@@ -160,7 +300,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo-button.ts#L33"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo-button.ts#L44"
           },
           "kind": "class",
           "tagName": "demo-button",
@@ -353,36 +493,36 @@
           ],
           "demos": [
             {
-              "description": "# Form Integration\n\nFull cross-component example demonstrating:\n- Form submission with demo-button (submit/reset types)\n- Input validation with demo-input\n- Layout structure with demo-card (header/footer slots)\n- Loading state during async operations",
-              "url": "/elements/demo-button/demo/forms/",
+              "description": "Full cross-component example demonstrating:\n- Form submission with demo-button (submit/reset types)\n- Input validation with demo-input\n- Layout structure with demo-card (header/footer slots)\n- Loading state during async operations",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-button/forms/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/forms.html"
               }
             },
             {
               "description": "Loading spinner states across all variants, sizes, and appearances",
-              "url": "/elements/demo-button/demo/loading/",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-button/loading/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/loading.html"
               }
             },
             {
-              "description": "# Button States\n\nDemonstrates the different interactive states and sizes:\n- **Sizes**: Small, medium, and large variants\n- **Disabled**: Cannot be interacted with\n- **Pill**: Fully rounded corners for alternate styling",
-              "url": "/elements/demo-button/demo/states/",
+              "description": "Demonstrates the different interactive states and sizes:\n- **Sizes**: Small, medium, and large variants\n- **Disabled**: Cannot be interacted with\n- **Pill**: Fully rounded corners for alternate styling",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-button/states/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/states.html"
               }
             },
             {
-              "description": "# Button Variants\n\nComprehensive demonstration of all color variants for the demo-button component:\n- **Neutral**: Default gray variant\n- **Brand**: Primary brand color\n- **Success**: Positive actions\n- **Warning**: Caution actions\n- **Danger**: Destructive actions",
-              "url": "/elements/demo-button/demo/variants/",
+              "description": "Comprehensive demonstration of all color variants for the demo-button component:\n- **Neutral**: Default gray variant\n- **Brand**: Primary brand color\n- **Success**: Positive actions\n- **Warning**: Caution actions\n- **Danger**: Destructive actions",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-button/variants/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/variants.html"
               }
             },
             {
-              "description": "# Buttons with Icons\n\nCross-component demo showing demo-button with demo-icon integration:\n- Icons before label (start slot)\n- Icons after label (end slot)\n- Icon-only buttons with aria-label",
-              "url": "/elements/demo-button/demo/with-icons/",
+              "description": "Cross-component demo showing demo-button with demo-icon integration:\n- Icons before label (start slot)\n- Icons after label (end slot)\n- Icon-only buttons with aria-label",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-button/with-icons/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/with-icons.html"
               }
@@ -416,40 +556,43 @@
       "declarations": [
         {
           "name": "DemoCard",
+          "summary": "Cards contain content and actions about a single subject",
+          "description": "A card component for grouping related content.",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-card/demo-card.ts#L6"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-card/demo-card.ts#L11"
           },
           "kind": "class",
           "tagName": "demo-card",
           "slots": [
             {
               "name": "header",
-              "summary": "Header slot",
-              "description": "Place header content here, such as a title or actions.\nThis section is visually separated from the body."
+              "summary": "Content for the card header (e.g., title, actions)"
             },
             {
               "name": "",
-              "description": "The main content area of the card"
+              "summary": "The card's main content"
             },
             {
               "name": "footer",
-              "summary": "Footer slot",
-              "description": "Place footer content like actions or metadata here"
+              "summary": "Content for the card footer (e.g., actions, metadata)"
             }
           ],
           "cssParts": [
             {
-              "name": "header"
+              "name": "header",
+              "description": "The header container"
             },
             {
-              "name": "body"
+              "name": "body",
+              "description": "The body/content container"
             },
             {
-              "name": "footer"
+              "name": "footer",
+              "description": "The footer container"
             }
           ],
           "cssProperties": [
@@ -494,6 +637,36 @@
               "default": "#f9fafb"
             }
           ],
+          "demos": [
+            {
+              "description": "Using demo-card to display article content with metadata in the footer.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-card/article/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-card/demo/article.html"
+              }
+            },
+            {
+              "description": "A simple demo-card with header and body content.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-card/basic/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-card/demo/basic.html"
+              }
+            },
+            {
+              "description": "Multiple demo-cards arranged in a responsive grid layout.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-card/grid/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-card/demo/grid.html"
+              }
+            },
+            {
+              "description": "Demonstrates demo-card with header, body, and footer slots.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-card/slots/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-card/demo/slots.html"
+              }
+            }
+          ],
           "customElement": true
         }
       ],
@@ -518,10 +691,367 @@
     },
     {
       "kind": "javascript-module",
+      "path": "elements/demo-debug-field/demo-debug-field.js",
+      "declarations": [
+        {
+          "name": "DemoDebugField",
+          "summary": "Debuggable form field combining FACE and mixin patterns",
+          "description": "A form-associated element with logging capabilities.\n\nDemonstrates combining a base class (FormAssociatedElement) with a\nmixin (LoggingMixin) to create an element with both form integration\nand debug logging capabilities.",
+          "members": [
+            {
+              "name": "styles",
+              "default": "css`\\n    :host {\\n      display: block;\\n      margin-bottom: 1rem;\\n    }\\n\\n    #container {\\n      padding: 1rem;\\n      background: var(--debug-field-bg, #fff);\\n      border: 1px solid var(--debug-field-border, #ccc);\\n      border-radius: 4px;\\n    }\\n\\n    .input-wrapper {\\n      display: flex;\\n      align-items: center;\\n      gap: 0.5rem;\\n      margin-bottom: 0.5rem;\\n    }\\n\\n    input {\\n      flex: 1;\\n      padding: 0.5rem;\\n      border: 1px solid #ddd;\\n      border-radius: 4px;\\n    }\\n\\n    input:focus {\\n      outline: none;\\n      border-color: #0066cc;\\n    }\\n\\n    #debug {\\n      margin-top: 0.5rem;\\n      padding: 0.5rem;\\n      background: #f5f5f5;\\n      border-radius: 4px;\\n      font-family: monospace;\\n      font-size: 0.75rem;\\n    }\\n\\n    .debug-row {\\n      display: flex;\\n      gap: 0.5rem;\\n    }\\n\\n    .debug-label {\\n      font-weight: 600;\\n      min-width: 100px;\\n    }\\n  `",
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "label",
+              "description": "The field label",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field"
+            },
+            {
+              "name": "name",
+              "description": "The field name",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field"
+            },
+            {
+              "name": "placeholder",
+              "description": "The placeholder text",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field"
+            },
+            {
+              "name": "showDebug",
+              "description": "Whether to show debug information",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "e",
+                  "type": {
+                    "text": "Event"
+                  }
+                }
+              ],
+              "name": "handleInput",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "e",
+                  "type": {
+                    "text": "Event"
+                  }
+                }
+              ],
+              "name": "handleChange",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "name": "handleFocus",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "name": "handleBlur",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "name": "connectedCallback",
+              "kind": "method"
+            },
+            {
+              "name": "render",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-debug-field/demo-debug-field.ts#L27"
+          },
+          "kind": "class",
+          "tagName": "demo-debug-field",
+          "events": [
+            {
+              "name": "input",
+              "description": "Emitted when the value changes"
+            },
+            {
+              "name": "change",
+              "description": "Emitted when the input loses focus"
+            },
+            {
+              "name": "focus",
+              "description": "Emitted when the field gains focus"
+            },
+            {
+              "name": "blur",
+              "description": "Emitted when the field loses focus"
+            }
+          ],
+          "slots": [
+            {
+              "name": "prefix",
+              "description": "Content before the input"
+            },
+            {
+              "name": "suffix",
+              "description": "Content after the input"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "input",
+              "description": "The native input element"
+            },
+            {
+              "name": "container",
+              "description": "The outer container"
+            },
+            {
+              "name": "debug",
+              "description": "The debug info panel"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--debug-field-bg",
+              "description": "Background color (default: #fff)",
+              "default": "#fff"
+            },
+            {
+              "name": "--debug-field-border",
+              "description": "Border color (default: #ccc)",
+              "default": "#ccc"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-debug-field",
+          "declaration": {
+            "name": "DemoDebugField",
+            "module": "elements/demo-debug-field/demo-debug-field.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DemoDebugField",
+          "declaration": {
+            "name": "DemoDebugField",
+            "module": "elements/demo-debug-field/demo-debug-field.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "elements/demo-field/demo-field.js",
+      "declarations": [
+        {
+          "name": "DemoField",
+          "summary": "Form-associated text field",
+          "description": "A form-associated custom element demonstrating FACE pattern.\n\nThis element extends FormAssociatedElement to participate in HTML forms,\nproviding form validation, submission, and reset capabilities.",
+          "superclass": {
+            "name": "FormAssociatedElement",
+            "module": "base/form-associated-element.js"
+          },
+          "members": [
+            {
+              "name": "styles",
+              "default": "css`\\n    :host {\\n      display: block;\\n      margin-bottom: 1rem;\\n    }\\n\\n    .field {\\n      display: flex;\\n      flex-direction: column;\\n      gap: 0.5rem;\\n    }\\n\\n    label {\\n      font-weight: 600;\\n      font-size: 0.875rem;\\n    }\\n\\n    input {\\n      padding: 0.5rem;\\n      border: 1px solid var(--field-border-color, #ddd);\\n      border-radius: 4px;\\n      font-size: 1rem;\\n    }\\n\\n    input:focus {\\n      outline: none;\\n      border-color: var(--field-focus-color, #0066cc);\\n    }\\n\\n    input:disabled {\\n      background: #f5f5f5;\\n      cursor: not-allowed;\\n    }\\n\\n    .error {\\n      color: #d32f2f;\\n      font-size: 0.75rem;\\n    }\\n  `",
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "label",
+              "description": "The field label",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field"
+            },
+            {
+              "name": "name",
+              "description": "The field name for form submission",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field"
+            },
+            {
+              "name": "placeholder",
+              "description": "The placeholder text",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field"
+            },
+            {
+              "name": "required",
+              "description": "Whether the field is required",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field"
+            },
+            {
+              "name": "disabled",
+              "description": "Whether the field is disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field"
+            },
+            {
+              "name": "minlength",
+              "description": "The minimum length",
+              "type": {
+                "text": "number"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "maxlength",
+              "description": "The maximum length",
+              "type": {
+                "text": "number"
+              },
+              "kind": "field"
+            },
+            {
+              "name": "pattern",
+              "description": "The input pattern",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "e",
+                  "type": {
+                    "text": "Event"
+                  }
+                }
+              ],
+              "name": "handleInput",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "e",
+                  "type": {
+                    "text": "Event"
+                  }
+                }
+              ],
+              "name": "handleChange",
+              "kind": "method",
+              "privacy": "private"
+            },
+            {
+              "name": "render",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-field/demo-field.ts#L21"
+          },
+          "kind": "class",
+          "tagName": "demo-field",
+          "events": [
+            {
+              "name": "input",
+              "description": "Emitted when the value changes"
+            },
+            {
+              "name": "change",
+              "description": "Emitted when the input loses focus"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "input",
+              "description": "The native input element"
+            },
+            {
+              "name": "label",
+              "description": "The label element"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--field-border-color",
+              "description": "Border color (default: #ddd)",
+              "default": "#ddd"
+            },
+            {
+              "name": "--field-focus-color",
+              "description": "Focus border color (default: #0066cc)",
+              "default": "#0066cc"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-field",
+          "declaration": {
+            "name": "DemoField",
+            "module": "elements/demo-field/demo-field.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DemoField",
+          "declaration": {
+            "name": "DemoField",
+            "module": "elements/demo-field/demo-field.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "elements/demo-icon/demo-icon.js",
       "declarations": [
         {
           "name": "DemoIcon",
+          "summary": "Displays SVG icons with customizable appearance",
+          "description": "An icon component for displaying simple SVG icons.",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
@@ -529,8 +1059,9 @@
           "members": [
             {
               "name": "name",
+              "description": "The name of the icon to display",
               "type": {
-                "text": "keyof typeof ICONS"
+                "text": "'alert' | 'check' | 'chevron' | 'heart' | 'info' | 'minus' | 'plus' | 'search' | 'star' | 'x'"
               },
               "default": "'check'",
               "kind": "field",
@@ -538,6 +1069,7 @@
             },
             {
               "name": "label",
+              "description": "Accessible label for the icon (required for accessibility)",
               "type": {
                 "text": "string"
               },
@@ -547,21 +1079,23 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-icon/demo-icon.ts#L19"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-icon/demo-icon.ts#L40"
           },
           "kind": "class",
           "tagName": "demo-icon",
           "attributes": [
             {
               "name": "name",
+              "description": "The name of the icon to display",
               "type": {
-                "text": "keyof typeof ICONS"
+                "text": "'alert' | 'check' | 'chevron' | 'heart' | 'info' | 'minus' | 'plus' | 'search' | 'star' | 'x'"
               },
               "default": "'check'",
               "fieldName": "name"
             },
             {
               "name": "label",
+              "description": "Accessible label for the icon (required for accessibility)",
               "type": {
                 "text": "string"
               },
@@ -571,7 +1105,8 @@
           ],
           "cssParts": [
             {
-              "name": "svg"
+              "name": "svg",
+              "description": "The icon's base SVG element"
             }
           ],
           "cssProperties": [
@@ -584,6 +1119,36 @@
               "name": "--demo-icon-color",
               "description": "Color of the icon",
               "default": "currentColor"
+            }
+          ],
+          "demos": [
+            {
+              "description": "Demonstrates demo-icon with different colors using CSS color property.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-icon/colors/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-icon/demo/colors.html"
+              }
+            },
+            {
+              "description": "Showcases all available icon names in demo-icon component.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-icon/icons/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-icon/demo/icons.html"
+              }
+            },
+            {
+              "description": "Interactive demo-icon elements that respond to user interaction.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-icon/interactive/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-icon/demo/interactive.html"
+              }
+            },
+            {
+              "description": "Demonstrates demo-icon at different sizes using CSS.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-icon/sizes/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-icon/demo/sizes.html"
+              }
             }
           ],
           "customElement": true
@@ -614,6 +1179,7 @@
       "declarations": [
         {
           "name": "DemoInputEvent",
+          "description": "Custom event for demo-input component value changes.",
           "superclass": {
             "name": "Event",
             "package": "global:"
@@ -628,12 +1194,14 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo-input.ts#L7"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo-input.ts#L18"
           },
           "kind": "class"
         },
         {
           "name": "DemoInput",
+          "summary": "Text input with label, validation, and accessibility features",
+          "description": "A comprehensive text input component with validation and helper text.",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
@@ -641,6 +1209,7 @@
           "members": [
             {
               "name": "label",
+              "description": "The input's label text",
               "type": {
                 "text": "string"
               },
@@ -650,6 +1219,7 @@
             },
             {
               "name": "value",
+              "description": "The current value of the input",
               "type": {
                 "text": "string"
               },
@@ -659,6 +1229,7 @@
             },
             {
               "name": "placeholder",
+              "description": "Placeholder text shown when the input is empty",
               "type": {
                 "text": "string"
               },
@@ -668,6 +1239,7 @@
             },
             {
               "name": "type",
+              "description": "The input type",
               "type": {
                 "text": "'text' | 'email' | 'password' | 'number' | 'tel' | 'url'"
               },
@@ -677,6 +1249,7 @@
             },
             {
               "name": "disabled",
+              "description": "Disables the input",
               "type": {
                 "text": "boolean"
               },
@@ -687,6 +1260,7 @@
             },
             {
               "name": "required",
+              "description": "Marks the input as required for form validation",
               "type": {
                 "text": "boolean"
               },
@@ -697,6 +1271,7 @@
             },
             {
               "name": "readonly",
+              "description": "Makes the input read-only",
               "type": {
                 "text": "boolean"
               },
@@ -707,6 +1282,7 @@
             },
             {
               "name": "name",
+              "description": "The input's name when used in forms",
               "type": {
                 "text": "string"
               },
@@ -716,6 +1292,7 @@
             },
             {
               "name": "autocomplete",
+              "description": "Autocomplete hint for the browser",
               "type": {
                 "text": "string"
               },
@@ -725,6 +1302,7 @@
             },
             {
               "name": "helperText",
+              "description": "Helper text displayed below the input",
               "type": {
                 "text": "string"
               },
@@ -734,6 +1312,7 @@
             },
             {
               "name": "errorText",
+              "description": "Error text displayed when the input is in an error state",
               "type": {
                 "text": "string"
               },
@@ -743,6 +1322,7 @@
             },
             {
               "name": "error",
+              "description": "Shows the input in an error state",
               "type": {
                 "text": "boolean"
               },
@@ -750,32 +1330,6 @@
               "kind": "field",
               "attribute": "error",
               "reflects": true
-            },
-            {
-              "parameters": [
-                {
-                  "name": "e",
-                  "type": {
-                    "text": "Event"
-                  }
-                }
-              ],
-              "name": "handleInput",
-              "kind": "method",
-              "privacy": "private"
-            },
-            {
-              "parameters": [
-                {
-                  "name": "e",
-                  "type": {
-                    "text": "Event"
-                  }
-                }
-              ],
-              "name": "handleChange",
-              "kind": "method",
-              "privacy": "private"
             },
             {
               "parameters": [
@@ -799,13 +1353,14 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo-input.ts#L16"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo-input.ts#L35"
           },
           "kind": "class",
           "tagName": "demo-input",
           "attributes": [
             {
               "name": "label",
+              "description": "The input's label text",
               "type": {
                 "text": "string"
               },
@@ -814,6 +1369,7 @@
             },
             {
               "name": "value",
+              "description": "The current value of the input",
               "type": {
                 "text": "string"
               },
@@ -822,6 +1378,7 @@
             },
             {
               "name": "placeholder",
+              "description": "Placeholder text shown when the input is empty",
               "type": {
                 "text": "string"
               },
@@ -830,6 +1387,7 @@
             },
             {
               "name": "type",
+              "description": "The input type",
               "type": {
                 "text": "'text' | 'email' | 'password' | 'number' | 'tel' | 'url'"
               },
@@ -838,6 +1396,7 @@
             },
             {
               "name": "disabled",
+              "description": "Disables the input",
               "type": {
                 "text": "boolean"
               },
@@ -846,6 +1405,7 @@
             },
             {
               "name": "required",
+              "description": "Marks the input as required for form validation",
               "type": {
                 "text": "boolean"
               },
@@ -854,6 +1414,7 @@
             },
             {
               "name": "readonly",
+              "description": "Makes the input read-only",
               "type": {
                 "text": "boolean"
               },
@@ -862,6 +1423,7 @@
             },
             {
               "name": "name",
+              "description": "The input's name when used in forms",
               "type": {
                 "text": "string"
               },
@@ -870,6 +1432,7 @@
             },
             {
               "name": "autocomplete",
+              "description": "Autocomplete hint for the browser",
               "type": {
                 "text": "string"
               },
@@ -878,6 +1441,7 @@
             },
             {
               "name": "helper-text",
+              "description": "Helper text displayed below the input",
               "type": {
                 "text": "string"
               },
@@ -886,6 +1450,7 @@
             },
             {
               "name": "error-text",
+              "description": "Error text displayed when the input is in an error state",
               "type": {
                 "text": "string"
               },
@@ -894,6 +1459,7 @@
             },
             {
               "name": "error",
+              "description": "Shows the input in an error state",
               "type": {
                 "text": "boolean"
               },
@@ -901,9 +1467,24 @@
               "fieldName": "error"
             }
           ],
+          "events": [
+            {
+              "name": "demo-input",
+              "description": "Emitted when the input value changes (on input event)"
+            },
+            {
+              "name": "demo-change",
+              "description": "Emitted when the input value is committed (on change event)"
+            }
+          ],
           "cssParts": [
             {
-              "name": "label"
+              "name": "label",
+              "description": "The input's label element"
+            },
+            {
+              "name": "input",
+              "description": "The native input element"
             },
             {
               "name": "helper-text"
@@ -996,6 +1577,50 @@
               "default": "#ef4444"
             }
           ],
+          "demos": [
+            {
+              "description": "Demonstrates autocomplete attribute for browser autofill suggestions.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-input/autocomplete/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo/autocomplete.html"
+              }
+            },
+            {
+              "description": "A simple demo-input with label and placeholder.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-input/basic/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo/basic.html"
+              }
+            },
+            {
+              "description": "Demonstrates helper text and error text in demo-input.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-input/helper-text/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo/helper-text.html"
+              }
+            },
+            {
+              "description": "Demonstrates disabled and readonly states of demo-input.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-input/states/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo/states.html"
+              }
+            },
+            {
+              "description": "Demonstrates different input types: text, email, password, number, tel, and url.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-input/types/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo/types.html"
+              }
+            },
+            {
+              "description": "Demonstrates form validation with required fields and error states.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-input/validation/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo/validation.html"
+              }
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1022,6 +1647,101 @@
           "declaration": {
             "name": "DemoInput",
             "module": "elements/demo-input/demo-input.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "elements/demo-logger/demo-logger.js",
+      "declarations": [
+        {
+          "name": "DemoLogger",
+          "summary": "Debug element demonstrating mixin pattern",
+          "description": "A debug utility element that demonstrates mixin usage.\n\nThis element uses the LoggingMixin to add lifecycle logging\nand debug utilities to track element behavior.",
+          "members": [
+            {
+              "name": "styles",
+              "default": "css`\\n    :host {\\n      display: block;\\n      padding: 1rem;\\n      border: 2px solid var(--logger-border-color, #ccc);\\n      background: var(--logger-bg-color, #f5f5f5);\\n      border-radius: 4px;\\n    }\\n\\n    #container {\\n      font-family: monospace;\\n    }\\n\\n    .actions {\\n      margin-top: 1rem;\\n      display: flex;\\n      gap: 0.5rem;\\n    }\\n\\n    button {\\n      padding: 0.5rem 1rem;\\n      cursor: pointer;\\n    }\\n  `",
+              "kind": "field",
+              "static": true
+            },
+            {
+              "name": "message",
+              "description": "Message to display",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Logger initialized'",
+              "kind": "field"
+            },
+            {
+              "name": "logMessage",
+              "description": "Log a test message to demonstrate logging",
+              "kind": "method"
+            },
+            {
+              "name": "logWarning",
+              "description": "Log a test warning",
+              "kind": "method"
+            },
+            {
+              "name": "logError",
+              "description": "Log a test error",
+              "kind": "method"
+            },
+            {
+              "name": "render",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-logger/demo-logger.ts#L18"
+          },
+          "kind": "class",
+          "tagName": "demo-logger",
+          "slots": [
+            {
+              "name": "",
+              "description": "Content to display"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "container",
+              "description": "The main container"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--logger-border-color",
+              "description": "Border color (default: #ccc)",
+              "default": "#ccc"
+            },
+            {
+              "name": "--logger-bg-color",
+              "description": "Background color (default: #f5f5f5)",
+              "default": "#f5f5f5"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-logger",
+          "declaration": {
+            "name": "DemoLogger",
+            "module": "elements/demo-logger/demo-logger.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DemoLogger",
+          "declaration": {
+            "name": "DemoLogger",
+            "module": "elements/demo-logger/demo-logger.js"
           }
         }
       ]
@@ -1075,6 +1795,36 @@
               "default": "0.6s"
             }
           ],
+          "demos": [
+            {
+              "description": "A basic loading spinner demonstration.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-spinner/basic/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-spinner/demo/basic.html"
+              }
+            },
+            {
+              "description": "Demonstrates demo-spinner inside buttons for loading states.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-spinner/button/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-spinner/demo/button.html"
+              }
+            },
+            {
+              "description": "Demonstrates demo-spinner with different colors using CSS.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-spinner/colors/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-spinner/demo/colors.html"
+              }
+            },
+            {
+              "description": "Demonstrates demo-spinner at different sizes using CSS.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-spinner/sizes/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-spinner/demo/sizes.html"
+              }
+            }
+          ],
           "customElement": true
         }
       ],
@@ -1093,6 +1843,39 @@
           "declaration": {
             "name": "DemoSpinner",
             "module": "elements/demo-spinner/demo-spinner.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "mixins/logging-mixin.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "Base",
+              "type": {
+                "text": "T"
+              }
+            }
+          ],
+          "name": "LoggingMixin",
+          "summary": "Provides lifecycle logging and debug utilities",
+          "description": "Mixin that adds logging capabilities to custom elements.",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/mixins/logging-mixin.ts#L13"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "LoggingMixin",
+          "declaration": {
+            "name": "LoggingMixin",
+            "module": "mixins/logging-mixin.js"
           }
         }
       ]

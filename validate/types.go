@@ -198,6 +198,13 @@ func (s RawSuperclass) Name() string {
 	return ""
 }
 
+func (s RawSuperclass) Package() string {
+	if pkg, ok := s["package"].(string); ok {
+		return pkg
+	}
+	return ""
+}
+
 func (s RawSuperclass) Module() string {
 	if module, ok := s["module"].(string); ok {
 		return module

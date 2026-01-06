@@ -337,7 +337,9 @@ func (r *SuperclassRule) Check(ctx *WarningContext) []ValidationWarning {
 	}
 
 	name := superclass.Name()
-	module := superclass.Module()
+	// Only check Package() for "global:" - per the CEM spec, "global:" is exclusively
+	// a package value, never a module value. Module is used for intra-package references.
+	pkg := superclass.Package()
 
 	builtInTypes := []string{
 		"HTMLElement", "Element", "Node", "EventTarget", "Document", "Window",
@@ -348,17 +350,17 @@ func (r *SuperclassRule) Check(ctx *WarningContext) []ValidationWarning {
 		"Error", "TypeError", "ReferenceError", "SyntaxError",
 	}
 
-	if slices.Contains(builtInTypes, name) && module != "global:" {
-		moduleInfo := "missing module field"
-		if module != "" {
-			moduleInfo = fmt.Sprintf("module is %q", module)
+	if slices.Contains(builtInTypes, name) && pkg != "global:" {
+		packageInfo := "missing package field"
+		if pkg != "" {
+			packageInfo = fmt.Sprintf("package is %q", pkg)
 		}
 
 		warnings = append(warnings, ValidationWarning{
 			ID:          "superclass-builtin-modules",
 			Module:      ctx.ModulePath,
 			Declaration: fmt.Sprintf("%s %s", ctx.DeclKind, ctx.DeclName),
-			Message:     fmt.Sprintf("superclass %s is a built-in type but %s, should be \"module\": \"global:\"", name, moduleInfo),
+			Message:     fmt.Sprintf("superclass %s is a built-in type but %s, should be \"package\": \"global:\"", name, packageInfo),
 			Category:    r.Category(),
 		})
 	}

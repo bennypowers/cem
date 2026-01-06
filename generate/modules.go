@@ -21,8 +21,10 @@ import (
 	"fmt"
 	"maps"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	M "bennypowers.dev/cem/manifest"
@@ -523,4 +525,30 @@ func (mp *ModuleProcessor) processDeclarations() error {
 	})
 
 	return err
+}
+
+// resolveImportSpec resolves an import specifier relative to the current module's path.
+// For example, if the current module is "elements/demo-field/demo-field.js" and
+// the import spec is "../../base/form-associated-element.js", this resolves to
+// "base/form-associated-element.js".
+func (mp *ModuleProcessor) resolveImportSpec(importSpec string) string {
+	// Handle package-scoped imports (e.g., "@scope/package/path.js")
+	if len(importSpec) > 0 && importSpec[0] == '@' {
+		// For package-scoped imports within the same package, strip the scope/name
+		// "@scope/package/lib/types.js" -> "lib/types.js"
+		parts := strings.SplitN(importSpec, "/", 3)
+		if len(parts) >= 3 {
+			// Return everything after "@scope/package/"
+			return parts[2]
+		}
+		// If we don't have enough parts, return as-is
+		return importSpec
+	}
+
+	// Relative import - resolve relative to current module directory
+	currentDir := path.Dir(mp.module.Path)
+	resolvedPath := path.Join(currentDir, importSpec)
+
+	// Clean the path (remove . and .. segments)
+	return path.Clean(resolvedPath)
 }

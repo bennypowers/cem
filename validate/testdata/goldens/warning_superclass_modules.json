@@ -6,15 +6,15 @@
     {
       "id": "superclass-builtin-modules",
       "module": "superclass-warnings.js",
-      "declaration": "class MissingGlobalModule",
-      "message": "superclass HTMLElement is a built-in type but missing module field, should be \"module\": \"global:\"",
+      "declaration": "class MissingGlobalPackage",
+      "message": "superclass HTMLElement is a built-in type but missing package field, should be \"package\": \"global:\"",
       "category": "superclass"
     },
     {
       "id": "superclass-builtin-modules",
       "module": "superclass-warnings.js",
       "declaration": "class WrongModule",
-      "message": "superclass Event is a built-in type but module is \"dom\", should be \"module\": \"global:\"",
+      "message": "superclass Event is a built-in type but missing package field, should be \"package\": \"global:\"",
       "category": "superclass"
     }
   ]

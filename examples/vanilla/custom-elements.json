@@ -64,36 +64,13 @@
                 "text": "boolean"
               },
               "kind": "field"
-            },
-            {
-              "parameters": [
-                {
-                  "name": "name",
-                  "type": {
-                    "text": "string"
-                  }
-                },
-                {
-                  "name": "oldValue",
-                  "type": {
-                    "text": "string | null"
-                  }
-                },
-                {
-                  "name": "newValue",
-                  "type": {
-                    "text": "string | null"
-                  }
-                }
-              ],
-              "name": "attributeChangedCallback",
-              "kind": "method"
             }
           ],
           "source": {
             "href": "https://github.com/bennypowers/cem/tree/main/examples/vanilla/elements/vanilla-element/vanilla-element.ts#L29"
           },
           "kind": "class",
+          "tagName": "vanilla-element",
           "attributes": [
             {
               "name": "message",
@@ -108,12 +85,6 @@
               "type": {
                 "text": "boolean"
               }
-            },
-            {
-              "name": "message"
-            },
-            {
-              "name": "reversed"
             }
           ],
           "events": [
@@ -165,7 +136,7 @@
         },
         {
           "kind": "custom-element-definition",
-          "name": "",
+          "name": "vanilla-element",
           "declaration": {
             "name": "VanillaElement",
             "module": "elements/vanilla-element/vanilla-element.js"

@@ -1,3 +1,14 @@
+## cem binary usage
+
+When running cem commands against the example projects, you don't need to `cd`, you can `cem ${cmd} -p examples/${example}`.
+
+example:
+
+```shell
+$ make
+$ dist/cem -p examples/kitchen-sink validate
+```
+
 ## Go
 
 Getter methods should be named `Foo()`, not `GetFoo()`.
@@ -13,6 +24,7 @@ Run `go vet` to surface gopls suggestions. Common examples:
 ## Debugging
 
 When debugging Go code, always use the logger `logger.Debug`, etc. Don't use `fmt.Printf`, which pollutes stdio, breaking the LSP and MCP commands.
+
 To print debug logs to the console, pass `-vvv`
 
 ## Testing
@@ -52,6 +64,7 @@ Practice TDD. When writing tests, always use the fixture/golden patterns we've e
 - LSP: When working on LSP features, refer to `lsp/CLAUDE.md` for LSP-specific guidelines.
 - MCP: When working on MCP features, refer to `mcp/CLAUDE.md` for MCP-specific guidelines.
 - Docs: When working on the docs site, refer to `docs/CLAUDE.md` for docs-specific guidelines.
+- Generate and Validate: When touching code related to the custom-elements manifest schema, double-check with the canonical TypeScript schema.d.ts at https://github.com/webcomponents/custom-elements-manifest/. This is to avoid hallucinations. Note that different schema versions may have different types, and we'll have to deal with that if they do.
 
 ## Git
 

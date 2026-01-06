@@ -17,7 +17,7 @@
               "type": {
                 "text": "number"
               },
-              "default": 0,
+              "default": "0",
               "readonly": true,
               "kind": "field",
               "static": true
@@ -27,7 +27,7 @@
               "type": {
                 "text": "number"
               },
-              "default": 0,
+              "default": "0",
               "readonly": true,
               "kind": "field",
               "static": true
@@ -37,7 +37,7 @@
               "type": {
                 "text": "Float"
               },
-              "default": 0.1,
+              "default": "0.1",
               "readonly": true,
               "kind": "field",
               "static": true,
@@ -48,7 +48,7 @@
               "type": {
                 "text": "number"
               },
-              "default": 0,
+              "default": "0",
               "readonly": true,
               "kind": "field",
               "static": true,
@@ -59,7 +59,7 @@
               "type": {
                 "text": "number"
               },
-              "default": 0,
+              "default": "0",
               "kind": "field",
               "static": true,
               "privacy": "private"
@@ -69,7 +69,7 @@
               "type": {
                 "text": "number"
               },
-              "default": 0,
+              "default": "0",
               "kind": "field",
               "static": true,
               "privacy": "protected"
@@ -79,7 +79,7 @@
               "type": {
                 "text": "number"
               },
-              "default": 0,
+              "default": "0",
               "kind": "field",
               "static": true
             },
@@ -88,7 +88,7 @@
               "type": {
                 "text": "number"
               },
-              "default": 0,
+              "default": "0",
               "kind": "field"
             }
           ],

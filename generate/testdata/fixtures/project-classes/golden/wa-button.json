@@ -9,7 +9,8 @@
           "name": "WaButton",
           "summary": "Buttons represent actions that are available to the user.",
           "superclass": {
-            "name": "WebAwesomeFormAssociatedElement"
+            "name": "WebAwesomeFormAssociatedElement",
+            "module": "../internal/webawesome-form-associated-element.js"
           },
           "members": [
             {
@@ -90,7 +91,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field"
             },
             {
@@ -99,7 +100,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field"
             },
             {
@@ -108,7 +109,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field"
             },
             {
@@ -117,7 +118,7 @@
               "type": {
                 "text": "boolean"
               },
-              "default": false,
+              "default": "false",
               "kind": "field"
             },
             {

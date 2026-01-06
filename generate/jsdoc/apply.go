@@ -25,10 +25,44 @@ func applyToClassDeclaration(info *classInfo, declaration *M.ClassDeclaration) {
 
 func applyToCustomElementDeclaration(info *classInfo, declaration *M.CustomElementDeclaration) {
 	applyToClassDeclaration(info, &declaration.ClassDeclaration)
-	declaration.CustomElement.Attributes = slices.Concat(
-		info.Attrs,
-		declaration.CustomElement.Attributes,
-	)
+
+	jsdocAttrs := make(map[string]M.Attribute)
+	for _, jsdocAttr := range info.Attrs {
+		jsdocAttrs[jsdocAttr.Name] = jsdocAttr
+	}
+
+	for i := range declaration.CustomElement.Attributes {
+		if jsdocAttr, ok := jsdocAttrs[declaration.CustomElement.Attributes[i].Name]; ok {
+			if declaration.CustomElement.Attributes[i].Description == "" {
+				declaration.CustomElement.Attributes[i].Description = jsdocAttr.Description
+			}
+			if declaration.CustomElement.Attributes[i].Summary == "" {
+				declaration.CustomElement.Attributes[i].Summary = jsdocAttr.Summary
+			}
+			if declaration.CustomElement.Attributes[i].Type == nil {
+				declaration.CustomElement.Attributes[i].Type = jsdocAttr.Type
+			}
+			if declaration.CustomElement.Attributes[i].Default == "" {
+				declaration.CustomElement.Attributes[i].Default = jsdocAttr.Default
+			}
+			if declaration.CustomElement.Attributes[i].Deprecated == nil {
+				declaration.CustomElement.Attributes[i].Deprecated = jsdocAttr.Deprecated
+			}
+			delete(jsdocAttrs, jsdocAttr.Name)
+		}
+	}
+
+	// Collect remaining attribute names and sort for deterministic output
+	remainingAttrNames := make([]string, 0, len(jsdocAttrs))
+	for name := range jsdocAttrs {
+		remainingAttrNames = append(remainingAttrNames, name)
+	}
+	slices.Sort(remainingAttrNames)
+
+	// Append remaining JSDoc-only attributes in sorted order
+	for _, name := range remainingAttrNames {
+		declaration.CustomElement.Attributes = append(declaration.CustomElement.Attributes, jsdocAttrs[name])
+	}
 
 	jsdocSlots := make(map[string]M.Slot)
 	for _, jsdocSlot := range info.Slots {
@@ -50,8 +84,16 @@ func applyToCustomElementDeclaration(info *classInfo, declaration *M.CustomEleme
 		}
 	}
 
-	for _, jsdocSlot := range jsdocSlots {
-		declaration.CustomElement.Slots = append(declaration.CustomElement.Slots, jsdocSlot)
+	// Collect remaining slot names and sort for deterministic output
+	remainingSlotNames := make([]string, 0, len(jsdocSlots))
+	for name := range jsdocSlots {
+		remainingSlotNames = append(remainingSlotNames, name)
+	}
+	slices.Sort(remainingSlotNames)
+
+	// Append remaining JSDoc-only slots in sorted order
+	for _, name := range remainingSlotNames {
+		declaration.CustomElement.Slots = append(declaration.CustomElement.Slots, jsdocSlots[name])
 	}
 
 	declaration.CustomElement.Events = info.Events
@@ -77,8 +119,16 @@ func applyToCustomElementDeclaration(info *classInfo, declaration *M.CustomEleme
 		}
 	}
 
-	for _, jsdocPart := range jsdocParts {
-		declaration.CustomElement.CssParts = append(declaration.CustomElement.CssParts, jsdocPart)
+	// Collect remaining CSS part names and sort for deterministic output
+	remainingPartNames := make([]string, 0, len(jsdocParts))
+	for name := range jsdocParts {
+		remainingPartNames = append(remainingPartNames, name)
+	}
+	slices.Sort(remainingPartNames)
+
+	// Append remaining JSDoc-only CSS parts in sorted order
+	for _, name := range remainingPartNames {
+		declaration.CustomElement.CssParts = append(declaration.CustomElement.CssParts, jsdocParts[name])
 	}
 
 	declaration.CustomElement.CssStates = info.CssStates
