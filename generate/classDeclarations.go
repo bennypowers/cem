@@ -144,6 +144,11 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 				pkg = "lit"
 			case "ReactiveElement":
 				pkg = "@lit/reactive-element"
+			default:
+				// Check if superclass is imported from another module
+				if imp, found := mp.importBindingToSpecMap[superclassName]; found {
+					module = mp.resolveImportSpec(imp.spec)
+				}
 			}
 			declaration.Superclass = M.NewReference(superclassName, pkg, module)
 		}

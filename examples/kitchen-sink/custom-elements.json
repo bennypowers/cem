@@ -875,7 +875,8 @@
           "summary": "Form-associated text field",
           "description": "A form-associated custom element demonstrating FACE pattern.\n\nThis element extends FormAssociatedElement to participate in HTML forms,\nproviding form validation, submission, and reset capabilities.",
           "superclass": {
-            "name": "FormAssociatedElement"
+            "name": "FormAssociatedElement",
+            "module": "base/form-associated-element.js"
           },
           "members": [
             {
