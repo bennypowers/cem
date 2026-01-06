@@ -208,7 +208,7 @@ func (s *Server) regenerateManifestIfNeeded(tsJsFiles []string) {
 		s.logger.Error("Failed to regenerate manifest incrementally: %v", err)
 		// Continue anyway - we still want to reload the page
 	} else {
-		s.logger.Info("Manifest regenerated incrementally (%d bytes) in %v", manifestSize, manifestDuration)
+		s.logger.Debug("Manifest regenerated incrementally (%d bytes) in %v", manifestSize, manifestDuration)
 	}
 }
 
@@ -262,7 +262,7 @@ func (s *Server) regenerateImportMapIfNeeded(event FileEvent) {
 		s.logger.Warning("Failed to regenerate import map: %v", err)
 	} else {
 		s.importMap = importMap
-		s.logger.Info("Regenerated import map in %v", importMapDuration)
+		s.logger.Debug("Regenerated import map in %v", importMapDuration)
 	}
 	s.mu.Unlock()
 }
@@ -356,7 +356,7 @@ func (s *Server) handleFileChanges() {
 
 			// Check if path resolver needs rebuild (tsconfig.json, config files changed)
 			if s.shouldRebuildPathResolver(filesToProcess) {
-				s.logger.Info("Rebuilding path resolver due to source file change")
+				s.logger.Debug("Rebuilding path resolver due to source file change")
 				if err := s.rebuildPathResolver(); err != nil {
 					s.logger.Error("Failed to rebuild path resolver: %v", err)
 					// Continue processing - don't block other hot-reload logic
