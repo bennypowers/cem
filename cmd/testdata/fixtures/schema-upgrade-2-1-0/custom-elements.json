@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "my-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyElement",
+          "tagName": "my-element",
+          "customElement": true,
+          "members": [
+            {
+              "kind": "field",
+              "name": "myField",
+              "default": "false"
+            },
+            {
+              "kind": "field",
+              "name": "myAttr",
+              "attribute": "my-attr",
+              "reflects": true
+            }
+          ],
+          "attributes": [
+            {
+              "name": "my-attr",
+              "default": "false"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "MyElement",
+          "declaration": {
+            "name": "MyElement",
+            "module": "my-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

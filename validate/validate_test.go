@@ -47,6 +47,7 @@ func TestValidateGolden(t *testing.T) {
 		{"warning-implementation-details", "warning_implementation_details"},
 		{"warning-superclass-modules", "warning_superclass_modules"},
 		{"warning-css-verbose", "warning_css_verbose"},
+		{"schema-upgrade-2-1-0", "schema_upgrade_2_1_0"},
 	}
 
 	for _, tc := range testCases {
@@ -127,5 +128,58 @@ func TestValidateWithDisabledWarnings(t *testing.T) {
 
 	if len(result2.Warnings) >= len(originalResult.Warnings) {
 		t.Errorf("Expected fewer warnings when disabling specific rule, got %d vs %d", len(result2.Warnings), len(originalResult.Warnings))
+	}
+}
+
+// TestGetSchemaUpgrade210 verifies that 2.1.0 and 2.1.1 manifests are
+// automatically upgraded to use the 2.1.1-speculative schema to work around
+// discriminated union issues in the upstream CEM schema.
+// See: https://github.com/webcomponents/custom-elements-manifest/issues/138
+func TestGetSchemaUpgrade210(t *testing.T) {
+	testCases := []struct {
+		version    string
+		expected   string
+		checkTitle bool // Only 2.1.x schemas have title field
+	}{
+		{"2.1.0", "2.1.1-speculative", true},
+		{"2.1.1", "2.1.1-speculative", true},
+		{"2.1.1-speculative", "2.1.1-speculative", true},
+		{"2.0.0", "2.0.0", false},
+		{"1.0.0", "1.0.0", false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.version, func(t *testing.T) {
+			schemaData, err := getSchema(tc.version)
+			if err != nil {
+				t.Fatalf("getSchema(%q) returned error: %v", tc.version, err)
+			}
+
+			if !tc.checkTitle {
+				// For older schemas, just verify we got valid JSON
+				var schema map[string]interface{}
+				if err := json.Unmarshal(schemaData, &schema); err != nil {
+					t.Fatalf("Failed to parse schema JSON: %v", err)
+				}
+				return
+			}
+
+			// Parse the schema to verify which version was actually loaded
+			var schema map[string]interface{}
+			if err := json.Unmarshal(schemaData, &schema); err != nil {
+				t.Fatalf("Failed to parse schema JSON: %v", err)
+			}
+
+			// Check the title field which contains the schema version (2.1.x only)
+			title, ok := schema["title"].(string)
+			if !ok {
+				t.Fatalf("Schema missing 'title' field")
+			}
+
+			expectedTitle := "Custom Elements Manifest Schema " + tc.expected
+			if title != expectedTitle {
+				t.Errorf("getSchema(%q) loaded schema with title %q, expected %q", tc.version, title, expectedTitle)
+			}
+		})
 	}
 }
