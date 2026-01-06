@@ -216,9 +216,21 @@ local function test_template_literal_references(positions_map)
 	return results
 end
 
-function M.run_references_benchmark(_, fixture_dir)
+function M.run_references_benchmark(config, fixture_dir)
+	local benchmark = require("utils.benchmark")
 	local start_time = vim.fn.reltime()
 	local max_time_seconds = 45
+
+	-- Setup LSP client for references testing
+	local client, err = benchmark.setup_client(config, fixture_dir)
+	if not client then
+		return {
+			success = false,
+			success_rate = 0.0,
+			server_name = _G.BENCHMARK_LSP_NAME or "unknown",
+			error = err,
+		}
+	end
 
 	-- Pre-compute element positions using tree-sitter (before any LSP timing)
 	local position_finder = require("utils.position_finder")
@@ -246,7 +258,7 @@ function M.run_references_benchmark(_, fixture_dir)
 	local results = {
 		success = false,
 		success_rate = 0.0,
-		server_name = _G.BENCHMARK_LSP_NAME,
+		server_name = _G.BENCHMARK_LSP_NAME or "unknown",
 		error = nil,
 		reference_tests = {},
 		total_references_found = 0,
@@ -264,20 +276,23 @@ function M.run_references_benchmark(_, fixture_dir)
 
 		-- Open test document and find references to common elements
 		vim.cmd("edit " .. fixture_dir .. "/large-page.html")
-		vim.wait(1000, function()
-			return false
-		end) -- Wait for LSP initialization
-
-		-- Check if any client supports references
 		local bufnr = vim.api.nvim_get_current_buf()
-		local clients = vim.lsp.get_clients({ bufnr = bufnr })
-		local supports_references = false
-		for _, client in ipairs(clients) do
-			if client.server_capabilities and client.server_capabilities.referencesProvider then
-				supports_references = true
-				break
-			end
-		end
+		vim.bo[bufnr].filetype = "html"
+
+		-- Wait for LSP client to attach to buffer
+		vim.wait(1000, function()
+			local clients = vim.lsp.get_clients({ bufnr = bufnr })
+			return #clients > 0
+		end, 100)
+
+		-- Wait longer for workspace indexing (critical for references to work)
+		vim.wait(2000, function()
+			return false
+		end)
+
+		-- Check if client supports references
+		local supports_references = client.server_capabilities
+			and client.server_capabilities.referencesProvider
 		results.references_supported = supports_references
 		results.not_supported = not supports_references
 
@@ -336,6 +351,8 @@ function M.run_references_benchmark(_, fixture_dir)
 
 		for _, file in ipairs(files_to_open) do
 			vim.cmd("edit " .. file)
+			local file_bufnr = vim.api.nvim_get_current_buf()
+			vim.bo[file_bufnr].filetype = "html"
 			vim.wait(200, function()
 				return false
 			end) -- Brief pause for file processing
@@ -343,6 +360,8 @@ function M.run_references_benchmark(_, fixture_dir)
 
 		-- Set active file back to large-page for reference testing
 		vim.cmd("edit " .. fixture_dir .. "/large-page.html")
+		local active_bufnr = vim.api.nvim_get_current_buf()
+		vim.bo[active_bufnr].filetype = "html"
 
 		-- Build medium scale test list using dynamic positions
 		local medium_scale_tests = {}
@@ -409,6 +428,8 @@ function M.run_references_benchmark(_, fixture_dir)
 
 		-- Test references within TypeScript template literals
 		vim.cmd("edit " .. fixture_dir .. "/lit-template.ts")
+		local ts_bufnr = vim.api.nvim_get_current_buf()
+		vim.bo[ts_bufnr].filetype = "typescript"
 		vim.wait(500, function()
 			return false
 		end)
@@ -494,6 +515,12 @@ function M.run_references_benchmark(_, fixture_dir)
 	if not success then
 		results.error = error_msg
 		results.success = false
+		results.success_rate = 0.0
+	end
+
+	-- Clean up LSP client
+	if client and not client:is_stopped() then
+		client:stop()
 	end
 
 	local total_time = vim.fn.reltime(start_time)

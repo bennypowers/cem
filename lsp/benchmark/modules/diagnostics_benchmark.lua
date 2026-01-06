@@ -9,9 +9,10 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 	local server_name = _G.BENCHMARK_LSP_NAME or "unknown"
 	local DIAGNOSTICS_TIMEOUT_MS = 3000
 
-	-- Track diagnostics
+	-- Track diagnostics - store bufnr for use in handler
 	local received_diagnostics = {}
 	local diagnostics_received = false
+	local test_bufnr = nil
 
 	-- Add client-specific diagnostics handler to config
 	-- This avoids modifying global handlers and prevents collisions with other LSP usage
@@ -22,9 +23,12 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 					received_diagnostics = result.diagnostics
 					diagnostics_received = true
 					-- Update diagnostics state using modern API
-					-- Create namespace from client ID (vim.diagnostic.set expects namespace, not client_id)
-					local namespace = vim.api.nvim_create_namespace(("lsp_%d"):format(ctx.client_id))
-					vim.diagnostic.set(namespace, ctx.bufnr, result.diagnostics)
+					-- Use stored bufnr if ctx.bufnr is nil (root cause fix)
+					local bufnr = ctx.bufnr or test_bufnr
+					if bufnr and vim.api.nvim_buf_is_valid(bufnr) then
+						local namespace = vim.api.nvim_create_namespace(("lsp_%d"):format(ctx.client_id))
+						vim.diagnostic.set(namespace, bufnr, result.diagnostics)
+					end
 				end
 			end,
 		},
@@ -35,6 +39,7 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 	if not client then
 		return {
 			success = false,
+			success_rate = 0.0,
 			error = err,
 		}
 	end
@@ -47,9 +52,13 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 		benchmark.cleanup_test(nil, nil, client)
 		return {
 			success = false,
+			success_rate = 0.0,
 			error = test_file, -- test_file contains error message on failure
 		}
 	end
+
+	-- Store bufnr for handler to use (root cause fix)
+	test_bufnr = bufnr
 
 	-- Wait for diagnostics to be published (if not already received)
 	local diagnostics_success = diagnostics_received
@@ -82,21 +91,27 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 	elseif not diagnostics_success then
 		result.error = string.format("Timeout waiting for diagnostics (%gs)", DIAGNOSTICS_TIMEOUT_MS / 1000)
 	else
-		-- Analyze diagnostics by severity
+		-- Validate that we received real diagnostics with proper structure
+		local has_valid_diagnostics = false
 		local error_count = 0
 		local warning_count = 0
 		local info_count = 0
 		local hint_count = 0
 
 		for _, diagnostic in ipairs(received_diagnostics) do
-			if diagnostic.severity == vim.diagnostic.severity.ERROR then
-				error_count = error_count + 1
-			elseif diagnostic.severity == vim.diagnostic.severity.WARN then
-				warning_count = warning_count + 1
-			elseif diagnostic.severity == vim.diagnostic.severity.INFO then
-				info_count = info_count + 1
-			elseif diagnostic.severity == vim.diagnostic.severity.HINT then
-				hint_count = hint_count + 1
+			-- Check that diagnostic has required fields
+			if diagnostic.range and diagnostic.message and #diagnostic.message > 0 then
+				has_valid_diagnostics = true
+
+				if diagnostic.severity == vim.diagnostic.severity.ERROR then
+					error_count = error_count + 1
+				elseif diagnostic.severity == vim.diagnostic.severity.WARN then
+					warning_count = warning_count + 1
+				elseif diagnostic.severity == vim.diagnostic.severity.INFO then
+					info_count = info_count + 1
+				elseif diagnostic.severity == vim.diagnostic.severity.HINT then
+					hint_count = hint_count + 1
+				end
 			end
 		end
 
@@ -106,8 +121,15 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 			info = info_count,
 			hints = hint_count,
 		}
-		result.success = true
-		result.success_rate = 1.0
+
+		-- Only mark as success if we got valid diagnostics with content
+		if has_valid_diagnostics then
+			result.success = true
+			result.success_rate = 1.0
+		else
+			result.error = "No valid diagnostics received (missing range or message)"
+			result.success_rate = 0.0
+		end
 	end
 
 	-- Clean up
