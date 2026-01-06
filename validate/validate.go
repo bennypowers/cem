@@ -353,15 +353,14 @@ func GetSchema(version string) ([]byte, error) {
 }
 
 func getSchema(version string) ([]byte, error) {
-	// First try to use embedded schema
-	if schemaData, err := getEmbeddedSchema(version); err == nil {
-		return schemaData, nil
+	// Upgrade known problematic versions to speculative schema first
+	if version == "2.1.0" || version == "2.1.1" {
+		return getEmbeddedSchema("2.1.1-speculative")
 	}
 
-	// If embedded schema loading fails, apply fallback logic
-	if version == "2.1.0" || version == "2.1.1" {
-		// Use speculative fallback for known problematic versions
-		return getEmbeddedSchema("2.1.1-speculative")
+	// Try to use embedded schema
+	if schemaData, err := getEmbeddedSchema(version); err == nil {
+		return schemaData, nil
 	}
 
 	// For other versions, try fetching from CDN
