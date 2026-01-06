@@ -24,6 +24,7 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	M "bennypowers.dev/cem/manifest"
@@ -535,18 +536,12 @@ func (mp *ModuleProcessor) resolveImportSpec(importSpec string) string {
 	if len(importSpec) > 0 && importSpec[0] == '@' {
 		// For package-scoped imports within the same package, strip the scope/name
 		// "@scope/package/lib/types.js" -> "lib/types.js"
-		segments := []rune(importSpec)
-		slashCount := 0
-		for i, r := range segments {
-			if r == '/' {
-				slashCount++
-				if slashCount == 2 {
-					// Return everything after the second slash
-					return string(segments[i+1:])
-				}
-			}
+		parts := strings.SplitN(importSpec, "/", 3)
+		if len(parts) >= 3 {
+			// Return everything after "@scope/package/"
+			return parts[2]
 		}
-		// If we don't have enough slashes, return as-is
+		// If we don't have enough parts, return as-is
 		return importSpec
 	}
 
