@@ -697,6 +697,16 @@
           "name": "DemoDebugField",
           "summary": "Debuggable form field combining FACE and mixin patterns",
           "description": "A form-associated element with logging capabilities.\n\nDemonstrates combining a base class (FormAssociatedElement) with a\nmixin (LoggingMixin) to create an element with both form integration\nand debug logging capabilities.",
+          "superclass": {
+            "name": "FormAssociatedElement",
+            "module": "base/form-associated-element.js"
+          },
+          "mixins": [
+            {
+              "name": "LoggingMixin",
+              "module": "mixins/logging-mixin.js"
+            }
+          ],
           "members": [
             {
               "name": "styles",
@@ -1659,13 +1669,17 @@
           "name": "DemoLogger",
           "summary": "Debug element demonstrating mixin pattern",
           "description": "A debug utility element that demonstrates mixin usage.\n\nThis element uses the LoggingMixin to add lifecycle logging\nand debug utilities to track element behavior.",
-          "members": [
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "mixins": [
             {
-              "name": "styles",
-              "default": "css`\\n    :host {\\n      display: block;\\n      padding: 1rem;\\n      border: 2px solid var(--logger-border-color, #ccc);\\n      background: var(--logger-bg-color, #f5f5f5);\\n      border-radius: 4px;\\n    }\\n\\n    #container {\\n      font-family: monospace;\\n    }\\n\\n    .actions {\\n      margin-top: 1rem;\\n      display: flex;\\n      gap: 0.5rem;\\n    }\\n\\n    button {\\n      padding: 0.5rem 1rem;\\n      cursor: pointer;\\n    }\\n  `",
-              "kind": "field",
-              "static": true
-            },
+              "name": "LoggingMixin",
+              "module": "mixins/logging-mixin.js"
+            }
+          ],
+          "members": [
             {
               "name": "message",
               "description": "Message to display",
@@ -1673,7 +1687,8 @@
                 "text": "string"
               },
               "default": "'Logger initialized'",
-              "kind": "field"
+              "kind": "field",
+              "attribute": "message"
             },
             {
               "name": "logMessage",
@@ -1689,10 +1704,6 @@
               "name": "logError",
               "description": "Log a test error",
               "kind": "method"
-            },
-            {
-              "name": "render",
-              "kind": "method"
             }
           ],
           "source": {
@@ -1700,6 +1711,17 @@
           },
           "kind": "class",
           "tagName": "demo-logger",
+          "attributes": [
+            {
+              "name": "message",
+              "description": "Message to display",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Logger initialized'",
+              "fieldName": "message"
+            }
+          ],
           "slots": [
             {
               "name": "",

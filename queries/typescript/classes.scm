@@ -11,7 +11,7 @@
       (#not-eq? @class.name "LitElement")
       (class_heritage
         (extends_clause
-          value: (identifier) @superclass.name))?
+          value: (_) @superclass.expression))?
       body: (class_body
         ; static observedAttributes = ['a', 'b']
         (public_field_definition
@@ -45,7 +45,7 @@
     (#not-eq? @class.name "LitElement")
     (class_heritage
       (extends_clause
-        value: (identifier) @superclass.name))?
+        value: (_) @superclass.expression))?
     body: (class_body
       ; static observedAttributes = ['a', 'b']
       (public_field_definition
@@ -87,7 +87,7 @@
       name: (type_identifier) @class.name
       (class_heritage
         (extends_clause
-          value: (identifier) @superclass.name))?
+          value: (_) @superclass.expression))?
       body: (class_body
               (public_field_definition
                 "static"
@@ -170,7 +170,7 @@
     name: (type_identifier) @class.name
     (class_heritage
       (extends_clause
-        value: (identifier) @superclass.name))?
+        value: (_) @superclass.expression))?
     body: (class_body
             (method_definition ; render method
                 name: (_) @_method_name (#eq? @_method_name "render")
