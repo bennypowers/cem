@@ -28,7 +28,7 @@ Custom elements are JavaScript classes, so this extends from
 attributes, events, and slots.
 
 Note that `tagName` in this interface is optional. Tag names are not
-neccessarily part of a custom element class, but belong to the definition
+necessarily part of a custom element class, but belong to the definition
 (often called the "registration") or the `customElements.define()` call.
 
 Because classes and tag anmes can only be registered once, there's a
