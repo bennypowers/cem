@@ -868,8 +868,7 @@
         }
       },
       "required": [
-        "name",
-        "type"
+        "name"
       ],
       "type": "object"
     },

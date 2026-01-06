@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "event-without-type.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "EventWithoutType",
+          "tagName": "event-without-type",
+          "customElement": true,
+          "events": [
+            {
+              "name": "input",
+              "description": "Fired when input changes"
+            },
+            {
+              "name": "change",
+              "description": "Fired when value is committed"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

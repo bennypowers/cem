@@ -38,6 +38,7 @@ func TestValidateGolden(t *testing.T) {
 		{"invalid-field", "invalid_field"},
 		{"invalid-method", "invalid_method"},
 		{"invalid-event", "invalid_event"},
+		{"event-without-type", "event_without_type"},
 		{"invalid-attribute", "invalid_attribute"},
 		{"invalid-slot", "invalid_slot"},
 		{"invalid-css-part", "invalid_css_part"},
