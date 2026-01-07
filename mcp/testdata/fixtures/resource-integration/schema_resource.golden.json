@@ -866,7 +866,8 @@
         }
       },
       "required": [
-        "name"
+        "name",
+        "type"
       ],
       "type": "object"
     },
