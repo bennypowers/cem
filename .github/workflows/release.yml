@@ -308,11 +308,22 @@ jobs:
           path: zed-extensions
           token: ${{ secrets.ZED_COMMITTER_TOKEN }}
 
-      - name: Update Zed Extension
+      - name: Sync fork with upstream
         working-directory: zed-extensions
         run: |
           git config user.name "Benny Powers"
           git config user.email "web@bennypowers.com"
+          # Add upstream remote and sync
+          git remote set-url upstream https://github.com/zed-industries/extensions.git 2>/dev/null || \
+            git remote add upstream https://github.com/zed-industries/extensions.git
+          git fetch upstream
+          git checkout main
+          git reset --hard upstream/main
+          git push origin main --force
+
+      - name: Update Zed Extension
+        working-directory: zed-extensions
+        run: |
           # Initialize only the cem submodule
           git submodule update --init extensions/cem
           # Update submodule to latest release tag
@@ -324,7 +335,7 @@ jobs:
           sed -i '/^\[cem\]/,/^\[/ s/^version = .*/version = "${{ steps.version.outputs.version }}"/' extensions.toml
           git add extensions/cem extensions.toml
           BRANCH="update-cem-${{ steps.version.outputs.version }}"
-          git checkout -b "$BRANCH"
+          git checkout -B "$BRANCH"
           git commit -m "Update cem to v${{ steps.version.outputs.version }}"
           git push -f -u origin "$BRANCH"
 
@@ -333,6 +344,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.ZED_COMMITTER_TOKEN }}
         run: |
+          BRANCH="update-cem-${{ steps.version.outputs.version }}"
+          # Check if PR already exists
+          existing_pr=$(gh pr list --repo zed-industries/extensions --head "bennypowers:$BRANCH" --json number --jq '.[0].number')
+          if [ -n "$existing_pr" ]; then
+            echo "PR #$existing_pr already exists for branch $BRANCH"
+            exit 0
+          fi
           gh pr create \
             --repo zed-industries/extensions \
             --title "Update cem to v${{ steps.version.outputs.version }}" \
