@@ -108,7 +108,30 @@ Start the development server:
 cem serve
 ```
 
-The server provides a component listing to browse all elements, live demos to see components in action, hot reload for automatic refresh, buildless TypeScript development, and import maps for using npm packages without bundling. It runs at `http://localhost:8000` by default.
+The server runs at `http://localhost:8000` by default and automatically opens your browser to the element listing page. It provides:
+
+- **Component listing** - Browse all elements discovered from your manifest
+- **Live demos** - See components in action with interactive controls
+- **Hot reload** - Automatic refresh when source files change
+- **Buildless TypeScript** - Import `.ts` files directly without compilation
+- **Import maps** - Use npm packages without bundling
+
+The server watches your source files and automatically reloads the browser when changes are detected. For implementation tweaks and styling changes, you'll see updates immediately without regenerating the manifest.
+
+**Common dev server options:**
+
+```sh
+# Use a different port
+cem serve --port 3000
+
+# Start in chromeless mode for testing
+cem serve --rendering=chromeless
+
+# Disable live reload
+cem serve --no-reload
+```
+
+See **[Serve Command Reference](/docs/reference/commands/serve/)** for all available options.
 
 ### 4. Test
 

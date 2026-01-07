@@ -11,19 +11,41 @@ All modes include [live reload][websocket] with smart dependency tracking and su
 
 Light mode provides the full development experience with a PatternFly-based UI that includes sidebar navigation, header with theme toggle and debug info, interactive knobs for attributes and properties, real-time event monitoring, server logs with filtering, manifest browser, and visual live reload status. Error overlays appear for transform failures, making debugging straightforward. This is the standard mode for component development.
 
-Use `cem serve` (light mode is the default) or configure it explicitly with `serve.demos.rendering: light` in `.config/cem.yaml`.
+Use `cem serve` (light mode is the default) or configure it explicitly in `.config/cem.yaml`:
+
+```yaml
+serve:
+  demos:
+    rendering: light
+```
+
+If the `rendering` option is omitted or empty, demos default to `light` mode.
 
 ## Shadow Mode
 
 Shadow mode provides the same full UI as light mode but renders demo content inside a shadow root, letting you test components in encapsulated contexts. Use this when verifying CSS encapsulation, testing `:host` selectors and shadow piercing, or debugging shadow DOM-specific behaviors.
 
-Start the server with `cem serve --rendering=shadow` or configure it with `serve.demos.rendering: shadow`.
+Start the server with `cem serve --rendering=shadow` or configure it in `.config/cem.yaml`:
+
+```yaml
+serve:
+  demos:
+    rendering: shadow
+```
 
 ## Chromeless Mode
 
 Chromeless mode strips away all dev server UI, serving demos as clean standalone pages ideal for automated testing with [Playwright][playwright] or Puppeteer, embedding in documentation sites, sharing clean demo URLs, or capturing screenshots. Core functionality remains—live reload, file watching, TypeScript/CSS transforms, and import map injection—but errors log to the console instead of showing overlays, and there's no visual chrome, knobs panel, or connection status indicators.
 
-Start with `cem serve --rendering=chromeless` or configure `serve.demos.rendering: chromeless`. Override per-demo with the `?rendering=chromeless` query parameter.
+Start with `cem serve --rendering=chromeless` or configure it in `.config/cem.yaml`:
+
+```yaml
+serve:
+  demos:
+    rendering: chromeless
+```
+
+Override per-demo with the `?rendering=chromeless` query parameter.
 
 ### Playwright Integration
 
@@ -59,6 +81,21 @@ Override the default rendering mode for any demo with the `?rendering=` query pa
 ```text
 http://localhost:8000/elements/button/demo/?rendering=chromeless
 http://localhost:8000/elements/button/demo/?rendering=shadow
+http://localhost:8000/elements/button/demo/?rendering=light
+```
+
+Valid values are `light`, `shadow`, and `chromeless`. Invalid values are ignored and the configured default is used.
+
+{{<tip "warning">}}
+**Iframe mode not yet implemented:** Specifying `iframe` mode in the config will cause the server to fail at startup. If `iframe` is requested via query parameter, the server logs a warning, broadcasts an error overlay, and falls back to `shadow` mode.
+{{</tip>}}
+
+### Backward Compatibility
+
+The legacy `?shadow=true` query parameter is still supported and will override to shadow mode:
+
+```text
+http://localhost:8000/elements/button/demo/?shadow=true
 ```
 
 ## Live Reload and Error Handling
@@ -70,6 +107,56 @@ Error handling adapts to each mode: light and shadow display full-screen overlay
 {{<tip "info">}}
 Check the browser console when using chromeless mode—all dev server messages and errors are logged there.
 {{</tip>}}
+
+## Use Cases by Mode
+
+**Light DOM (default):**
+- General component testing with full dev UI
+- Demos that rely on global styles
+- Testing how components integrate with the parent page
+- Interactive development with knobs and event monitoring
+
+**Shadow DOM:**
+- Testing encapsulation behavior
+- Verifying CSS custom properties penetrate shadow boundaries
+- Testing `::part()` and `::slotted()` selectors
+- Ensuring styles don't leak in or out
+
+**Chromeless:**
+- Automated testing with Playwright/Puppeteer
+- Embedding demos in documentation sites
+- Sharing clean demo URLs without dev UI
+- Capturing screenshots for documentation
+
+## Configuration Examples
+
+**Default all demos to shadow mode:**
+
+```yaml
+serve:
+  demos:
+    rendering: shadow
+```
+
+Then override specific demos back to light mode when needed:
+
+```text
+http://localhost:8000/elements/integration-test/demo/?rendering=light
+```
+
+**Use chromeless for CI testing:**
+
+```yaml
+# .config/cem.ci.yaml
+serve:
+  demos:
+    rendering: chromeless
+```
+
+```sh
+# In CI pipeline
+cem serve --config .config/cem.ci.yaml
+```
 
 [workflow]: ../workflow/
 [demos]: ../demos/
