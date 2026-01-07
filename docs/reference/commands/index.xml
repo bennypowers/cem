@@ -1,47 +1,91 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Commands on cem</title><link>https://bennypowers.dev/cem/docs/reference/commands/</link><description>Recent content in Commands on cem</description><generator>Hugo</generator><language>en</language><atom:link href="https://bennypowers.dev/cem/docs/reference/commands/index.xml" rel="self" type="application/rss+xml"/><item><title>Serve</title><link>https://bennypowers.dev/cem/docs/reference/commands/serve/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/serve/</guid><description>&lt;info-callout type="info">
- &lt;template shadowrootmode="open">
- &lt;style>
- #content {
- display: block;
- margin: 1rem 0;
- border-radius: 0.5rem;
- background: var(--color-accent);
- border-left: 4px solid var(--callout-color);
- overflow: hidden;
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Commands on cem</title><link>https://bennypowers.dev/cem/docs/reference/commands/</link><description>Recent content in Commands on cem</description><generator>Hugo</generator><language>en</language><atom:link href="https://bennypowers.dev/cem/docs/reference/commands/index.xml" rel="self" type="application/rss+xml"/><item><title>Serve</title><link>https://bennypowers.dev/cem/docs/reference/commands/serve/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/serve/</guid><description>&lt;p>The &lt;code>cem serve&lt;/code> command starts a development server for custom element development with live reload, TypeScript transformation, and automatic import map generation.&lt;/p>
 
- &amp;.info { --callout-color: var(--color-theme); }
- &amp;.warning { --callout-color: #fbbf24; }
- &amp;.error { --callout-color: #ef4444; }
- &amp;.success { --callout-color: #10b981; }
+&lt;code-highlighter>
+ &lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">cem serve &lt;span class="o">[&lt;/span>flags&lt;span class="o">]&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>
+&lt;/code-highlighter>&lt;h2 id="command-flags">Command Flags&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Flag&lt;/th>
+ &lt;th>Description&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;code>--port&lt;/code>&lt;/td>
+ &lt;td>Port to listen on (default: &lt;code>8000&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--rendering&lt;/code>&lt;/td>
+ &lt;td>Demo rendering mode: &lt;code>light&lt;/code> (full UI), &lt;code>shadow&lt;/code> (Shadow DOM), or &lt;code>chromeless&lt;/code> (minimal, no UI) (default: &lt;code>light&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--no-reload&lt;/code>&lt;/td>
+ &lt;td>Disable live reload&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--target&lt;/code>&lt;/td>
+ &lt;td>TypeScript/JavaScript transform target: &lt;code>es2015&lt;/code>, &lt;code>es2016&lt;/code>, &lt;code>es2017&lt;/code>, &lt;code>es2018&lt;/code>, &lt;code>es2019&lt;/code>, &lt;code>es2020&lt;/code>, &lt;code>es2021&lt;/code>, &lt;code>es2022&lt;/code>, &lt;code>es2023&lt;/code>, &lt;code>esnext&lt;/code> (default: &lt;code>es2022&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--no-import-map-generate&lt;/code>&lt;/td>
+ &lt;td>Disable automatic import map generation from package.json&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--import-map-override-file&lt;/code>&lt;/td>
+ &lt;td>Path to JSON file with custom import map entries (merged with auto-generated map)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--css-transform&lt;/code>&lt;/td>
+ &lt;td>Glob patterns for CSS files to transform to JavaScript modules (opt-in, e.g., &lt;code>src/**/*.css,elements/**/*.css&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--css-transform-exclude&lt;/code>&lt;/td>
+ &lt;td>Glob patterns for CSS files to exclude from transformation (e.g., &lt;code>demo/**/*.css&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--watch-ignore&lt;/code>&lt;/td>
+ &lt;td>Glob patterns to ignore in file watcher (comma-separated, e.g., &lt;code>_site/**,dist/**&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;h3 id="global-flags">Global Flags&lt;/h3>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Flag&lt;/th>
+ &lt;th>Description&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;code>--config&lt;/code>&lt;/td>
+ &lt;td>Path to config file (default: &lt;code>.config/cem.yaml&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--package&lt;/code>, &lt;code>-p&lt;/code>&lt;/td>
+ &lt;td>Deno-style package specifier (e.g., &lt;code>npm:@scope/package&lt;/code>) or path to package directory&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--source-control-root-url&lt;/code>&lt;/td>
+ &lt;td>Canonical public source control URL for primary branch (e.g., &lt;code>https://github.com/user/repo/tree/main/&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--quiet&lt;/code>, &lt;code>-q&lt;/code>&lt;/td>
+ &lt;td>Quiet output (only warnings and errors)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--verbose&lt;/code>, &lt;code>-v&lt;/code>&lt;/td>
+ &lt;td>Verbose logging output&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;h2 id="examples">Examples&lt;/h2>
+&lt;h3 id="basic-usage">Basic usage&lt;/h3>
 
- .inner {
- padding: 1rem;
- color: var(--color-text);
-
- ::slotted(*:first-child) {
- margin-top: 0;
- }
-
- ::slotted(*:last-child) {
- margin-bottom: 0;
- }
- }
- }
- &lt;/style>
-
- &lt;div id="content" class="info" part="callout">
- &lt;div class="inner" part="content">
- &lt;slot>&lt;/slot>
- &lt;/div>
- &lt;/div>
- &lt;/template>
-
- &lt;strong>TL;DR&lt;/strong>: Run &lt;code>cem serve&lt;/code> to start the dev server on port 8000 with live reload and TypeScript transformation. Use &lt;code>--port 3000&lt;/code> to change port, &lt;code>--rendering=chromeless&lt;/code> for testing, and &lt;code>--css-transform 'src/**/*.css'&lt;/code> to import CSS as modules.
-&lt;/info-callout>
-
-&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
-
-&lt;p>The &lt;code>cem serve&lt;/code> command starts a development server specifically designed for custom element development.&lt;/p></description></item><item><title>Generate</title><link>https://bennypowers.dev/cem/docs/reference/commands/generate/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/generate/</guid><description>&lt;p>Generates custom elements manifest from source code using 
+&lt;code-highlighter>
+ &lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">cem serve&lt;/span>&lt;/span>&lt;/code>&lt;/pre>
+&lt;/code-highlighter>&lt;p>Starts the server on &lt;code>http://localhost:8000&lt;/code>.&lt;/p></description></item><item><title>Generate</title><link>https://bennypowers.dev/cem/docs/reference/commands/generate/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/generate/</guid><description>&lt;p>Generates custom elements manifest from source code using 
 &lt;a href="https://tree-sitter.github.io/tree-sitter/" 
  target="_blank" 
  rel="noopener">tree-sitter
