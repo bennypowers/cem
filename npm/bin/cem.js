@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { platform, arch } from "node:os";
 import { createRequire } from "node:module";
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 
 const require = createRequire(import.meta.url);
 const supportedTargets = new Set([
@@ -28,5 +28,5 @@ try {
   process.exit(1);
 }
 
-const result = spawnSync(binPath, process.argv.slice(2), { stdio: "inherit" });
-process.exit(result.status ?? 1);
+const child = spawn(binPath, process.argv.slice(2), { stdio: "inherit" });
+child.on('exit', (code) => process.exit(code ?? 1));
