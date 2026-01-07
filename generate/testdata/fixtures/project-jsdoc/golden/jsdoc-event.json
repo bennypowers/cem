@@ -18,65 +18,155 @@
           "tagName": "jsdoc-events",
           "events": [
             {
-              "name": "event"
+              "name": "event",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             },
             {
               "name": "event-description",
-              "description": "event description"
+              "description": "event description",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             },
             {
               "name": "event-description-multiline",
-              "description": "multiline\nevent description"
+              "description": "multiline\nevent description",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             },
             {
               "name": "event-typed",
               "type": {
-                "text": "Event"
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
               }
             },
             {
               "name": "event-typed-description",
               "description": "event typed description",
               "type": {
-                "text": "Event"
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
               }
             },
             {
               "name": "event-typed-description-multiline",
               "description": "multiline\nevent typed description",
               "type": {
-                "text": "Event"
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
               }
             },
             {
-              "name": "fires"
+              "name": "fires",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             },
             {
               "name": "fires-description",
-              "description": "fires description"
+              "description": "fires description",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             },
             {
               "name": "fires-description-multiline",
-              "description": "multiline\nfires description"
+              "description": "multiline\nfires description",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             },
             {
               "name": "fires-typed",
               "type": {
-                "text": "Event"
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
               }
             },
             {
               "name": "fires-typed-description",
               "description": "fires typed description",
               "type": {
-                "text": "Event"
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
               }
             },
             {
               "name": "fires-typed-description-multiline",
               "description": "multiline\nfires typed description",
               "type": {
-                "text": "Event"
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
               }
             }
           ],

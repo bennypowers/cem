@@ -422,9 +422,23 @@ func (info tagInfo) toEvent() M.Event {
 			Description: normalizeJsdocLines(matches["description"]),
 		},
 	}
-	if matches["type"] != "" {
-		event.Type = &M.Type{
-			Text: matches["type"],
+	// Default to "Event" if type is not specified, as required by the CEM schema
+	eventType := matches["type"]
+	if eventType == "" {
+		eventType = "Event"
+	}
+	event.Type = &M.Type{
+		Text: eventType,
+	}
+	// Add global package reference for Event, CustomEvent, and ErrorEvent types
+	if eventType == "Event" || eventType == "CustomEvent" || eventType == "ErrorEvent" {
+		event.Type.References = []M.TypeReference{
+			{
+				Reference: M.Reference{
+					Name:    eventType,
+					Package: "global:",
+				},
+			},
 		}
 	}
 	return event
