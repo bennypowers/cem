@@ -308,11 +308,21 @@ jobs:
           path: zed-extensions
           token: ${{ secrets.ZED_COMMITTER_TOKEN }}
 
-      - name: Update Zed Extension
+      - name: Sync fork with upstream
         working-directory: zed-extensions
         run: |
           git config user.name "Benny Powers"
           git config user.email "web@bennypowers.com"
+          # Add upstream remote and sync
+          git remote add upstream https://github.com/zed-industries/extensions.git
+          git fetch upstream
+          git checkout main
+          git reset --hard upstream/main
+          git push origin main --force
+
+      - name: Update Zed Extension
+        working-directory: zed-extensions
+        run: |
           # Initialize only the cem submodule
           git submodule update --init extensions/cem
           # Update submodule to latest release tag
