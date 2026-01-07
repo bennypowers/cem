@@ -29,4 +29,8 @@ try {
 }
 
 const child = spawn(binPath, process.argv.slice(2), { stdio: "inherit" });
+child.on('error', (err) => {
+  console.error(`cem: Failed to spawn binary: ${err.message}`);
+  process.exit(1);
+});
 child.on('exit', (code) => process.exit(code ?? 1));
