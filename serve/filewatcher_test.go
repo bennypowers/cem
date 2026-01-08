@@ -241,3 +241,117 @@ func TestFileWatcher_IgnorePatterns(t *testing.T) {
 	// The test passes if the server started successfully and logs show ignored dirs
 	t.Logf("Server successfully started with ignore patterns for: _site, node_modules, ignored/**")
 }
+
+// TestFileWatcher_ConfigFileHotReload verifies config file changes trigger automatic path resolver rebuild
+func TestFileWatcher_ConfigFileHotReload(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create .config directory and cem.yaml config file
+	configDir := filepath.Join(tmpDir, ".config")
+	err := os.MkdirAll(configDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create .config directory: %v", err)
+	}
+
+	configFile := filepath.Join(configDir, "cem.yaml")
+	initialConfig := `serve:
+  urlRewrites:
+    - urlPattern: "/dist/:path*"
+      urlTemplate: "/src/{{.path}}"
+`
+	err = os.WriteFile(configFile, []byte(initialConfig), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write config file: %v", err)
+	}
+
+	// Create a source file for the rewrite to work
+	srcDir := filepath.Join(tmpDir, "src")
+	err = os.MkdirAll(srcDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create src directory: %v", err)
+	}
+	err = os.WriteFile(filepath.Join(srcDir, "test.ts"), []byte("export class Test {}"), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write source file: %v", err)
+	}
+
+	// Create package.json
+	err = os.WriteFile(filepath.Join(tmpDir, "package.json"), []byte(`{"name": "test"}`), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write package.json: %v", err)
+	}
+
+	config := serve.Config{
+		Port:       9104,
+		Reload:     true,
+		ConfigFile: configFile,
+	}
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer server.Close()
+
+	err = server.SetWatchDir(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	// Verify initial rewrites
+	urlRewrites := server.URLRewrites()
+	if len(urlRewrites) != 1 {
+		t.Fatalf("Expected 1 URL rewrite initially, got %d", len(urlRewrites))
+	}
+	if urlRewrites[0].URLPattern != "/dist/:path*" {
+		t.Errorf("Expected initial URLPattern '/dist/:path*', got %q", urlRewrites[0].URLPattern)
+	}
+
+	err = server.Start()
+	if err != nil {
+		t.Fatalf("Failed to start server: %v", err)
+	}
+
+	time.Sleep(100 * time.Millisecond)
+
+	// Connect WebSocket to receive reload events
+	wsClient := testutil.NewWebSocketTestClient(t, "ws://localhost:9104/__cem/reload")
+
+	time.Sleep(200 * time.Millisecond) // Let watcher initialize
+
+	// Modify the config file with different URL rewrites
+	updatedConfig := `serve:
+  urlRewrites:
+    - urlPattern: "/build/:path*"
+      urlTemplate: "/source/{{.path}}"
+`
+	err = os.WriteFile(configFile, []byte(updatedConfig), 0644)
+	if err != nil {
+		t.Fatalf("Failed to modify config file: %v", err)
+	}
+
+	// Should receive reload event with url-rewrites-changed reason
+	msg := wsClient.ReceiveMessage(t, 3*time.Second)
+	msgStr := string(msg)
+
+	if !strings.Contains(msgStr, "reload") {
+		t.Errorf("Expected reload event, got: %s", msgStr)
+	}
+
+	if !strings.Contains(msgStr, "url-rewrites-changed") {
+		t.Errorf("Expected url-rewrites-changed reason in message, got: %s", msgStr)
+	}
+
+	// Give server time to process the rebuild
+	time.Sleep(100 * time.Millisecond)
+
+	// Verify URL rewrites were actually updated
+	urlRewritesAfter := server.URLRewrites()
+	if len(urlRewritesAfter) != 1 {
+		t.Fatalf("Expected 1 URL rewrite after update, got %d", len(urlRewritesAfter))
+	}
+
+	if urlRewritesAfter[0].URLPattern != "/build/:path*" {
+		t.Errorf("Expected updated URLPattern '/build/:path*', got %q", urlRewritesAfter[0].URLPattern)
+	}
+}

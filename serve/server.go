@@ -277,6 +277,15 @@ func (s *Server) Start() error {
 			return fmt.Errorf("failed to watch directory: %w", err)
 		}
 
+		// Explicitly watch config files (cem.yaml, tsconfig.json) that affect path resolution
+		// These bypass ignore patterns to ensure config hot-reload always works
+		if len(s.pathResolverSourceFiles) > 0 {
+			if err := fw.WatchPaths(s.pathResolverSourceFiles); err != nil {
+				s.logger.Warning("Failed to watch some config files: %v", err)
+				// Continue anyway - main watch is set up
+			}
+		}
+
 		s.watcher = fw
 
 		// Start file change handler
