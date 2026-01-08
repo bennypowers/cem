@@ -17,10 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package resources
 
 import (
+	"embed"
 	"fmt"
-	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -29,29 +27,29 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
+//go:embed *.md
+var resourceDefinitions embed.FS
+
 // Using ResourceDefinition and ResourceFrontmatter from types package
 
 // Resources returns all available resource definitions with their handlers
 func Resources(registry types.MCPContext) ([]types.ResourceDefinition, error) {
-	// Get the directory where this source file is located
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		return nil, fmt.Errorf("failed to get current file path")
-	}
-	resourcesDir := filepath.Dir(filename)
-
 	var resourceDefs []types.ResourceDefinition
 
-	// Find all markdown files in the resources directory
-	files, err := filepath.Glob(filepath.Join(resourcesDir, "*.md"))
+	// Read all markdown files from embedded filesystem
+	entries, err := resourceDefinitions.ReadDir(".")
 	if err != nil {
-		return nil, fmt.Errorf("failed to find resource markdown files: %w", err)
+		return nil, fmt.Errorf("failed to read embedded resource definitions: %w", err)
 	}
 
-	for _, file := range files {
-		resourceDef, err := parseResourceDefinition(file, registry)
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+
+		resourceDef, err := parseResourceDefinition(entry.Name(), registry)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse resource definition from %s: %w", file, err)
+			return nil, fmt.Errorf("failed to parse resource definition from %s: %w", entry.Name(), err)
 		}
 		resourceDefs = append(resourceDefs, resourceDef)
 	}
@@ -61,7 +59,7 @@ func Resources(registry types.MCPContext) ([]types.ResourceDefinition, error) {
 
 // parseResourceDefinition parses a markdown file with frontmatter into a ResourceDefinition
 func parseResourceDefinition(filename string, registry types.MCPContext) (types.ResourceDefinition, error) {
-	content, err := os.ReadFile(filename)
+	content, err := resourceDefinitions.ReadFile(filename)
 	if err != nil {
 		return types.ResourceDefinition{}, fmt.Errorf("failed to read file: %w", err)
 	}
