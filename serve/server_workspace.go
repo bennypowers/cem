@@ -220,36 +220,83 @@ func (s *Server) generateInitialWorkspaceManifests(watchDir string) ([]middlewar
 	return packages, nil
 }
 
-// regenerateWorkspaceManifests regenerates manifests for all workspace packages
-// and rebuilds the routing table. Used during file change events in workspace mode.
-func (s *Server) regenerateWorkspaceManifests() (int, error) {
+// regenerateAffectedWorkspacePackages regenerates manifests only for packages
+// affected by the changed files. Preserves cached manifests for unchanged packages.
+// If changedFiles is nil, regenerates all packages (used for full regeneration).
+// Returns the total manifest size in bytes and any error.
+func (s *Server) regenerateAffectedWorkspacePackages(changedFiles []string) (int, error) {
 	s.mu.RLock()
 	watchDir := s.watchDir
+	existingPackages := s.workspacePackages
 	s.mu.RUnlock()
 
 	if watchDir == "" {
 		return 0, fmt.Errorf("no watch directory set")
 	}
 
-	// Find all workspace packages
-	packageDirs, err := W.FindPackagesWithManifests(watchDir)
-	if err != nil {
-		return 0, fmt.Errorf("finding workspace packages: %w", err)
+	// Determine which packages to regenerate
+	var affectedPkgInfos []W.PackageInfo
+	var err error
+
+	if changedFiles == nil {
+		// Full regeneration: get all packages
+		affectedPkgInfos, err = W.FindPackagesWithManifests(watchDir)
+		if err != nil {
+			return 0, fmt.Errorf("finding workspace packages: %w", err)
+		}
+		if len(affectedPkgInfos) == 0 {
+			s.logger.Warning("No packages found in workspace during regeneration")
+			return 0, nil
+		}
+	} else {
+		// Incremental: only affected packages
+		affectedPkgInfos, err = W.FindPackagesForFiles(watchDir, changedFiles)
+		if err != nil {
+			return 0, fmt.Errorf("finding affected packages: %w", err)
+		}
+		if len(affectedPkgInfos) == 0 {
+			s.logger.Debug("No packages affected by changed files, skipping regeneration")
+			totalSize := 0
+			for _, pkg := range existingPackages {
+				totalSize += len(pkg.Manifest)
+			}
+			return totalSize, nil
+		}
+		s.logger.Debug("Regenerating %d affected package(s) out of %d total",
+			len(affectedPkgInfos), len(existingPackages))
 	}
 
-	if len(packageDirs) == 0 {
-		s.logger.Warning("No packages found in workspace during regeneration")
-		return 0, nil
+	// Build a set of affected package paths for quick lookup
+	affectedPaths := make(map[string]bool)
+	for _, pkg := range affectedPkgInfos {
+		affectedPaths[pkg.Path] = true
 	}
 
-	// Generate fresh manifests for each package
-	packages := make([]middleware.WorkspacePackage, 0, len(packageDirs))
+	// Create new packages slice, preserving unaffected packages and regenerating affected ones
+	packages := make([]middleware.WorkspacePackage, 0, max(len(existingPackages), len(affectedPkgInfos)))
 	totalSize := 0
 
-	for _, pkgInfo := range packageDirs {
+	// Copy over unaffected packages from the cache
+	for _, existingPkg := range existingPackages {
+		if !affectedPaths[existingPkg.Path] {
+			packages = append(packages, existingPkg)
+			totalSize += len(existingPkg.Manifest)
+		}
+	}
+
+	// Regenerate affected packages
+	for _, pkgInfo := range affectedPkgInfos {
 		pkg, err := s.generateManifestForPackage(pkgInfo)
 		if err != nil {
-			s.logger.Warning("Failed to generate manifest for package %s: %v", pkgInfo.Name, err)
+			s.logger.Warning("Failed to regenerate manifest for package %s: %v", pkgInfo.Name, err)
+			// Try to preserve the old manifest if regeneration fails
+			for _, existingPkg := range existingPackages {
+				if existingPkg.Path == pkgInfo.Path {
+					packages = append(packages, existingPkg)
+					totalSize += len(existingPkg.Manifest)
+					break
+				}
+			}
 			continue
 		}
 		packages = append(packages, *pkg)
@@ -260,7 +307,7 @@ func (s *Server) regenerateWorkspaceManifests() (int, error) {
 		return 0, fmt.Errorf("failed to regenerate any package manifests")
 	}
 
-	// Build routing table from regenerated packages
+	// Build routing table from updated packages
 	pkgContexts := make([]routes.PackageContext, len(packages))
 	for i, pkg := range packages {
 		pkgContexts[i] = routes.PackageContext{
@@ -273,7 +320,6 @@ func (s *Server) regenerateWorkspaceManifests() (int, error) {
 	workspaceRoutingTable, err := routes.BuildWorkspaceRoutingTable(pkgContexts)
 	if err != nil {
 		s.logger.Warning("Failed to build workspace routing table: %v", err)
-		// Continue anyway - still update packages even if routing fails
 	}
 
 	// Update server state under write lock
@@ -282,8 +328,20 @@ func (s *Server) regenerateWorkspaceManifests() (int, error) {
 
 	s.workspacePackages = packages
 	s.demoRoutes = workspaceRoutingTable
-	s.logger.Debug("Regenerated %d workspace package manifests, built routing table with %d demo routes",
-		len(packages), len(workspaceRoutingTable))
+
+	preserved := len(packages) - len(affectedPkgInfos)
+	if preserved > 0 {
+		s.logger.Debug("Regenerated %d package(s), preserved %d cached, routing table has %d routes",
+			len(affectedPkgInfos), preserved, len(workspaceRoutingTable))
+	} else {
+		s.logger.Debug("Regenerated %d package(s), routing table has %d routes",
+			len(affectedPkgInfos), len(workspaceRoutingTable))
+	}
 
 	return totalSize, nil
+}
+
+// regenerateWorkspaceManifests regenerates manifests for all workspace packages.
+func (s *Server) regenerateWorkspaceManifests() (int, error) {
+	return s.regenerateAffectedWorkspacePackages(nil)
 }
