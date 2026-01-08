@@ -10,7 +10,7 @@ import { customElement, property } from 'lit/decorators.js';
  * @cssprop {<color>} --hello-world-color - Color of the greeting text
  * @csspart greeting - The paragraph element containing the greeting
  *
- * @demo elements/hello-world/demos/basic.html Basic usage
+ * @demo elements/hello-world/demo/ Basic usage
  */
 @customElement('hello-world')
 export class HelloWorld extends LitElement {
@@ -23,7 +23,7 @@ export class HelloWorld extends LitElement {
   /**
    * The name to greet
    */
-  @property() name = 'World';
+  @property() accessor name = 'World';
 
   render() {
     return html`<p part="greeting">Hello, ${this.name}! <slot></slot></p>`;

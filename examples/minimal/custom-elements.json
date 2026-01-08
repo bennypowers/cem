@@ -63,7 +63,7 @@
           ],
           "demos": [
             {
-              "url": "elements/hello-world/demos/basic.html"
+              "url": "elements/hello-world/demos/"
             }
           ],
           "customElement": true
