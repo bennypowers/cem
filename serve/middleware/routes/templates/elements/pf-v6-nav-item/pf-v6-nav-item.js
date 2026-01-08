@@ -21,6 +21,11 @@ class PfV6NavItem extends CemElement {
   afterTemplateLoaded() {
     this.setAttribute('role', 'listitem');
     this.addEventListener('pf-nav-toggle', this.#handleToggle);
+    // Hydrate: sync nav-item expanded state from direct child nav-link (SSR sets it there)
+    const navLink = this.querySelector(':scope > pf-v6-nav-link[expandable]');
+    if (navLink?.hasAttribute('expanded') && !this.hasAttribute('expanded')) {
+      this.setAttribute('expanded', '');
+    }
     this.#updateExpandedState();
   }
 
@@ -43,13 +48,13 @@ class PfV6NavItem extends CemElement {
   #updateExpandedState() {
     const isExpanded = this.hasAttribute('expanded');
 
-    // Update child nav-group
-    this.querySelector('pf-v6-nav-group')
+    // Update direct child nav-group only (not nested ones)
+    this.querySelector(':scope > pf-v6-nav-group')
       ?.toggleAttribute('hidden', !isExpanded);
 
-    // Update child nav-link expanded state
+    // Update direct child nav-link expanded state only
     // The nav-link will forward this to aria-expanded on its internal element
-    this.querySelector('pf-v6-nav-link[expandable]')
+    this.querySelector(':scope > pf-v6-nav-link[expandable]')
       ?.toggleAttribute('expanded', isExpanded);
   }
 

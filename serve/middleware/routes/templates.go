@@ -101,7 +101,9 @@ func (registry *TemplateRegistry) getTemplateFuncs() template.FuncMap {
 		"asMixin":           declarationAsKind[*M.MixinDeclaration],
 		"asVariable":        declarationAsKind[*M.VariableDeclaration],
 		"contains":          strings.Contains,
+		"elementHasDemo":    elementHasDemo,
 		"extractLocalRoute": extractLocalRoute,
+		"packageHasDemo":    packageHasDemo,
 		"hasMethodMembers":  hasMethodMembers,
 		"markdown":          markdown,
 		"prettifyRoute":     prettifyRoute,
@@ -124,6 +126,26 @@ func hasMethodMembers(members []M.ClassMember) bool {
 	// Check if any member is a method
 	for _, member := range members {
 		if _, ok := member.(*M.ClassMethod); ok {
+			return true
+		}
+	}
+	return false
+}
+
+// elementHasDemo checks if an element has a demo matching the current path
+func elementHasDemo(element ElementListing, currentPath string) bool {
+	for _, demo := range element.Demos {
+		if demo.URL == currentPath {
+			return true
+		}
+	}
+	return false
+}
+
+// packageHasDemo checks if any element in a package has a demo matching the current path
+func packageHasDemo(pkg PackageNavigation, currentPath string) bool {
+	for _, element := range pkg.Elements {
+		if elementHasDemo(element, currentPath) {
 			return true
 		}
 	}

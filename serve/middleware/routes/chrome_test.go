@@ -181,7 +181,7 @@ func TestChromeRendering_WithNavigation(t *testing.T) {
 	manifestBytes := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "manifest-with-navigation.json"))
 
 	// Build navigation HTML using the same function as production code
-	navigationHTML, packageName, err := BuildSinglePackageNavigation(testTemplates(), manifestBytes, "test-package")
+	navigationHTML, packageName, err := BuildSinglePackageNavigation(testTemplates(), manifestBytes, "test-package", "")
 	if err != nil {
 		t.Fatalf("Failed to build navigation: %v", err)
 	}
