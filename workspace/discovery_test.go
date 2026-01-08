@@ -266,3 +266,47 @@ func TestFindPackagesForFiles(t *testing.T) {
 		})
 	}
 }
+
+// TestFindPackagesForFiles_MultiplePackages tests that files in different packages
+// correctly returns all affected packages
+func TestFindPackagesForFiles_MultiplePackages(t *testing.T) {
+	rootDir := filepath.Join("testdata", "multi-package-workspace")
+	absRootDir, err := filepath.Abs(rootDir)
+	if err != nil {
+		t.Fatalf("Failed to get absolute path: %v", err)
+	}
+
+	// Files in two different packages
+	filePaths := []string{
+		filepath.Join(absRootDir, "packages", "alpha", "src", "component.ts"),
+		filepath.Join(absRootDir, "packages", "beta", "src", "component.ts"),
+	}
+
+	packages, err := FindPackagesForFiles(rootDir, filePaths)
+	if err != nil {
+		t.Fatalf("FindPackagesForFiles failed: %v", err)
+	}
+
+	if len(packages) != 2 {
+		t.Fatalf("Expected 2 packages, got %d: %v", len(packages), packages)
+	}
+
+	// Verify both packages are returned
+	foundAlpha := false
+	foundBeta := false
+	for _, pkg := range packages {
+		if pkg.Name == "@test/alpha" {
+			foundAlpha = true
+		}
+		if pkg.Name == "@test/beta" {
+			foundBeta = true
+		}
+	}
+
+	if !foundAlpha {
+		t.Error("Expected to find @test/alpha package")
+	}
+	if !foundBeta {
+		t.Error("Expected to find @test/beta package")
+	}
+}
