@@ -188,61 +188,7 @@ func TestIsWorkspaceMode_MultiplePackages(t *testing.T) {
 	}
 }
 
-// TestFindPackageForFile tests that files are correctly mapped to packages
-func TestFindPackageForFile(t *testing.T) {
-	rootDir := filepath.Join("testdata", "workspace-mode-single-package")
-	absRootDir, err := filepath.Abs(rootDir)
-	if err != nil {
-		t.Fatalf("Failed to get absolute path: %v", err)
-	}
-
-	tests := []struct {
-		name          string
-		filePath      string
-		expectedCount int
-		expectedName  string
-	}{
-		{
-			name:          "file in package",
-			filePath:      filepath.Join(absRootDir, "packages", "elements", "src", "my-element.ts"),
-			expectedCount: 1,
-			expectedName:  "@test/elements",
-		},
-		{
-			name:          "file outside all packages",
-			filePath:      filepath.Join(absRootDir, "some-other-file.ts"),
-			expectedCount: 0,
-			expectedName:  "",
-		},
-		{
-			name:          "file in root node_modules",
-			filePath:      filepath.Join(absRootDir, "node_modules", "some-dep", "index.js"),
-			expectedCount: 0,
-			expectedName:  "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			packages, err := FindPackageForFile(rootDir, tt.filePath)
-			if err != nil {
-				t.Fatalf("FindPackageForFile failed: %v", err)
-			}
-
-			if len(packages) != tt.expectedCount {
-				t.Errorf("Expected %d packages, got %d: %v", tt.expectedCount, len(packages), packages)
-			}
-
-			if tt.expectedCount > 0 && len(packages) > 0 {
-				if packages[0].Name != tt.expectedName {
-					t.Errorf("Expected package name %s, got %s", tt.expectedName, packages[0].Name)
-				}
-			}
-		})
-	}
-}
-
-// TestFindPackagesForFiles tests that multiple files are correctly mapped to packages
+// TestFindPackagesForFiles tests that files are correctly mapped to packages
 func TestFindPackagesForFiles(t *testing.T) {
 	rootDir := filepath.Join("testdata", "workspace-mode-single-package")
 	absRootDir, err := filepath.Abs(rootDir)
@@ -254,7 +200,16 @@ func TestFindPackagesForFiles(t *testing.T) {
 		name          string
 		filePaths     []string
 		expectedCount int
+		expectedName  string // Optional: check first package name
 	}{
+		{
+			name: "single file in package",
+			filePaths: []string{
+				filepath.Join(absRootDir, "packages", "elements", "src", "my-element.ts"),
+			},
+			expectedCount: 1,
+			expectedName:  "@test/elements",
+		},
 		{
 			name: "multiple files in same package",
 			filePaths: []string{
@@ -264,10 +219,16 @@ func TestFindPackagesForFiles(t *testing.T) {
 			expectedCount: 1, // Both files in same package, should deduplicate
 		},
 		{
-			name: "files outside packages",
+			name: "file outside all packages",
 			filePaths: []string{
-				filepath.Join(absRootDir, "some-file.ts"),
-				filepath.Join(absRootDir, "another-file.ts"),
+				filepath.Join(absRootDir, "some-other-file.ts"),
+			},
+			expectedCount: 0,
+		},
+		{
+			name: "file in root node_modules",
+			filePaths: []string{
+				filepath.Join(absRootDir, "node_modules", "some-dep", "index.js"),
 			},
 			expectedCount: 0,
 		},
@@ -295,6 +256,12 @@ func TestFindPackagesForFiles(t *testing.T) {
 
 			if len(packages) != tt.expectedCount {
 				t.Errorf("Expected %d packages, got %d: %v", tt.expectedCount, len(packages), packages)
+			}
+
+			if tt.expectedName != "" && len(packages) > 0 {
+				if packages[0].Name != tt.expectedName {
+					t.Errorf("Expected package name %s, got %s", tt.expectedName, packages[0].Name)
+				}
 			}
 		})
 	}
