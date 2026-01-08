@@ -18,10 +18,8 @@ package tools
 
 import (
 	"context"
+	"embed"
 	"fmt"
-	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -30,27 +28,27 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
+//go:embed *.md
+var toolDefinitions embed.FS
+
 // Tools returns all available tool definitions with their handlers
 func Tools(registry types.MCPContext) ([]types.ToolDefinition, error) {
-	// Get the directory where this source file is located
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		return nil, fmt.Errorf("failed to get current file path")
-	}
-	toolsDir := filepath.Dir(filename)
-
 	var toolDefs []types.ToolDefinition
 
-	// Find all markdown files in the tools directory
-	files, err := filepath.Glob(filepath.Join(toolsDir, "*.md"))
+	// Read all markdown files from embedded filesystem
+	entries, err := toolDefinitions.ReadDir(".")
 	if err != nil {
-		return nil, fmt.Errorf("failed to find tool markdown files: %w", err)
+		return nil, fmt.Errorf("failed to read embedded tool definitions: %w", err)
 	}
 
-	for _, file := range files {
-		toolDef, err := parseToolDefinition(file, registry)
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+
+		toolDef, err := parseToolDefinition(entry.Name(), registry)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse tool definition from %s: %w", file, err)
+			return nil, fmt.Errorf("failed to parse tool definition from %s: %w", entry.Name(), err)
 		}
 		toolDefs = append(toolDefs, toolDef)
 	}
@@ -60,7 +58,7 @@ func Tools(registry types.MCPContext) ([]types.ToolDefinition, error) {
 
 // parseToolDefinition parses a markdown file with frontmatter into a ToolDefinition
 func parseToolDefinition(filename string, registry types.MCPContext) (types.ToolDefinition, error) {
-	content, err := os.ReadFile(filename)
+	content, err := toolDefinitions.ReadFile(filename)
 	if err != nil {
 		return types.ToolDefinition{}, fmt.Errorf("failed to read file: %w", err)
 	}
