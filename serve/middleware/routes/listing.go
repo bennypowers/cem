@@ -77,7 +77,8 @@ func RenderElementListing(templates *TemplateRegistry, ctx middleware.DevServerC
 	}
 
 	// Build navigation (this also extracts elements and sorts them)
-	navigationHTML, title, err := BuildSinglePackageNavigation(templates, manifestBytes, packageName)
+	// Pass empty path since this is the listing page, not a specific demo
+	navigationHTML, title, err := BuildSinglePackageNavigation(templates, manifestBytes, packageName, "")
 	if err != nil {
 		return "", fmt.Errorf("building navigation: %w", err)
 	}
@@ -292,7 +293,8 @@ type PackageNavigation struct {
 }
 
 // BuildSinglePackageNavigation builds navigation HTML for single-package mode
-func BuildSinglePackageNavigation(templates *TemplateRegistry, manifestBytes []byte, packageName string) (template.HTML, string, error) {
+// currentPath is used to expand the nav item containing the current demo
+func BuildSinglePackageNavigation(templates *TemplateRegistry, manifestBytes []byte, packageName string, currentPath string) (template.HTML, string, error) {
 	if len(manifestBytes) == 0 {
 		return "", packageName, nil
 	}
@@ -329,7 +331,7 @@ func BuildSinglePackageNavigation(templates *TemplateRegistry, manifestBytes []b
 		},
 	}
 
-	return renderNavigationHTML(templates, packages), title, nil
+	return renderNavigationHTML(templates, packages, currentPath), title, nil
 }
 
 // buildPackageListingsFromRoutes groups routes by package and element, extracting
@@ -412,7 +414,8 @@ func buildPackageListingsFromRoutes(routes map[string]*DemoRouteEntry) ([]Packag
 }
 
 // BuildWorkspaceNavigation builds navigation HTML for workspace mode
-func BuildWorkspaceNavigation(templates *TemplateRegistry, packages []PackageContext) (template.HTML, error) {
+// currentPath is used to expand the nav item containing the current demo
+func BuildWorkspaceNavigation(templates *TemplateRegistry, packages []PackageContext, currentPath string) (template.HTML, error) {
 	if len(packages) == 0 {
 		return "", nil
 	}
@@ -429,11 +432,12 @@ func BuildWorkspaceNavigation(templates *TemplateRegistry, packages []PackageCon
 		return "", err
 	}
 
-	return renderNavigationHTML(templates, packageNav), nil
+	return renderNavigationHTML(templates, packageNav, currentPath), nil
 }
 
 // renderNavigationHTML generates navigation drawer HTML from package navigation data
-func renderNavigationHTML(templates *TemplateRegistry, packages []PackageNavigation) template.HTML {
+// currentPath is used to expand the nav item containing the current demo
+func renderNavigationHTML(templates *TemplateRegistry, packages []PackageNavigation, currentPath string) template.HTML {
 	// Return empty if no packages
 	if len(packages) == 0 {
 		return template.HTML("")
@@ -444,6 +448,7 @@ func renderNavigationHTML(templates *TemplateRegistry, packages []PackageNavigat
 	data := map[string]any{
 		"Packages":      packages,
 		"SinglePackage": len(packages) == 1,
+		"CurrentPath":   currentPath,
 	}
 
 	if err := templates.NavigationTemplate.Execute(&buf, data); err != nil {
@@ -491,7 +496,8 @@ func RenderWorkspaceListing(templates *TemplateRegistry, ctx middleware.DevServe
 	}
 
 	// Build navigation HTML from package listings
-	navigationHTML := renderNavigationHTML(templates, packageListings)
+	// Pass empty path since this is the listing page, not a specific demo
+	navigationHTML := renderNavigationHTML(templates, packageListings, "")
 
 	// Render with template
 	var buf bytes.Buffer

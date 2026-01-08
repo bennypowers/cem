@@ -506,14 +506,14 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 				Manifest: pkg.Manifest,
 			}
 		}
-		navigationHTML, _ = BuildWorkspaceNavigation(config.Templates, packages)
+		navigationHTML, _ = BuildWorkspaceNavigation(config.Templates, packages, r.URL.Path)
 		// Keep packageName from package.json, don't override with "Workspace"
 	} else {
 		// Single-package mode: build navigation from manifest
 		manifestBytes, err := config.Context.Manifest()
 		if err == nil && len(manifestBytes) > 0 {
 			var navErr error
-			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(config.Templates, manifestBytes, packageName)
+			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(config.Templates, manifestBytes, packageName, r.URL.Path)
 			if navErr != nil {
 				config.Context.Logger().Error("Failed to build navigation: %v", navErr)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -885,7 +885,7 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 				Manifest: pkg.Manifest,
 			}
 		}
-		navigationHTML, _ = BuildWorkspaceNavigation(config.Templates, packages)
+		navigationHTML, _ = BuildWorkspaceNavigation(config.Templates, packages, r.URL.Path)
 		packageName = "Workspace"
 	} else {
 		manifestBytes, err := config.Context.Manifest()
@@ -895,7 +895,7 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 				pkgName = pkg.Name
 			}
 			var navErr error
-			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(config.Templates, manifestBytes, pkgName)
+			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(config.Templates, manifestBytes, pkgName, r.URL.Path)
 			if navErr != nil {
 				config.Context.Logger().Error("Failed to build navigation: %v", navErr)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)

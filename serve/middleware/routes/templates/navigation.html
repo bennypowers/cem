@@ -4,11 +4,14 @@
     {{if $.SinglePackage}}
     {{/* Single package: show elements directly without package disclosure */}}
     {{range .Elements}}
+    {{$expanded := elementHasDemo . $.CurrentPath}}
     <pf-v6-nav-item>
-      <pf-v6-nav-link expandable aria-expanded="false">
+      <pf-v6-nav-link expandable
+                      aria-expanded="{{$expanded}}"{{if $expanded}}
+                      expanded{{end}}>
         <code>&lt;{{.TagName}}&gt;</code>
       </pf-v6-nav-link>
-      <pf-v6-nav-group hidden>
+      <pf-v6-nav-group{{if not $expanded}} hidden{{end}}>
         <pf-v6-nav-list>
           {{range .Demos}}
           <pf-v6-nav-item>
@@ -23,18 +26,24 @@
     {{end}}
     {{else}}
     {{/* Multiple packages: show package disclosure */}}
+    {{$packageExpanded := packageHasDemo . $.CurrentPath}}
     <pf-v6-nav-item>
-      <pf-v6-nav-link expandable aria-expanded="false">
+      <pf-v6-nav-link expandable
+                      aria-expanded="{{$packageExpanded}}"{{if $packageExpanded}}
+                      expanded{{end}}>
         {{.Name}}
       </pf-v6-nav-link>
-      <pf-v6-nav-group hidden>
+      <pf-v6-nav-group{{if not $packageExpanded}} hidden{{end}}>
         <pf-v6-nav-list>
           {{range .Elements}}
+          {{$elementExpanded := elementHasDemo . $.CurrentPath}}
           <pf-v6-nav-item>
-            <pf-v6-nav-link expandable aria-expanded="false">
+            <pf-v6-nav-link expandable
+                            aria-expanded="{{$elementExpanded}}"{{if $elementExpanded}}
+                            expanded{{end}}>
               <code>&lt;{{.TagName}}&gt;</code>
             </pf-v6-nav-link>
-            <pf-v6-nav-group hidden>
+            <pf-v6-nav-group{{if not $elementExpanded}} hidden{{end}}>
               <pf-v6-nav-list>
                 {{range .Demos}}
                 <pf-v6-nav-item>
