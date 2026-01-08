@@ -121,7 +121,6 @@ export class CemServeChrome extends CemElement {
   static #demoGroupTemplate = document.createElement('template');
   static #demoListTemplate = document.createElement('template');
   static #logEntryTemplate = document.createElement('template');
-  static #connectionAlertTemplate = document.createElement('template');
   static #eventEntryTemplate = document.createElement('template');
   static {
     this.#demoInfoTemplate.innerHTML = `
@@ -172,9 +171,6 @@ export class CemServeChrome extends CemElement {
         <span class="log-message" data-field="message"></span>
       </div>
     `;
-    this.#connectionAlertTemplate.innerHTML = `
-      <pf-v6-alert dismissable data-field="alert"></pf-v6-alert>
-    `;
     this.#eventEntryTemplate.innerHTML = `
       <button class="event-list-item" data-field="container">
         <pf-v6-label compact data-field="label"></pf-v6-label>
@@ -192,8 +188,6 @@ export class CemServeChrome extends CemElement {
   #initialLogsFetched = false;
   #isInitialLoad = true;
   #debugData = null;
-  // Track ws connection state
-  #hasConnected = false;
 
   // Element event tracking
   #elementEventMap = null;           // Map<tagName, {eventNames: Set, events: []}>
@@ -256,14 +250,6 @@ export class CemServeChrome extends CemElement {
     /* c8 ignore start - WebSocket callbacks tested via integration */
     callbacks: {
       onOpen: () => {
-        // Clear any reconnecting/restarting alerts
-        this.#clearConnectionAlerts();
-
-        // Only show "connected" toast if this is a reconnection
-        if (this.#hasConnected) {
-          this.#showConnectionAlert('success', 'Connected');
-        }
-        this.#hasConnected = true;
         this.#$('#reconnection-modal')?.close();
       },
       onError: (errorData) => {
@@ -278,7 +264,6 @@ export class CemServeChrome extends CemElement {
         }
       },
       onReconnecting: ({ attempt, delay }) => {
-        this.#showConnectionAlert('warning', 'Reconnecting');
         // Show modal after threshold
         if (attempt >= 15) {
           this.#$('#reconnection-modal')?.showModal();
@@ -294,7 +279,6 @@ export class CemServeChrome extends CemElement {
         window.location.reload();
       },
       onShutdown: () => {
-        this.#showConnectionAlert('info', 'Server Restarting');
         this.#$('#reconnection-modal')?.showModal();
         this.#$('#reconnection-content')?.updateRetryInfo(30, 30000);
       },
@@ -372,11 +356,6 @@ export class CemServeChrome extends CemElement {
 
     // Initialize WebSocket connection
     this.#wsClient.init();
-
-    // Pre-cache connection alert template in idle time
-    requestIdleCallback(() => {
-      CemServeChrome.#connectionAlertTemplate.content.cloneNode(true);
-    });
   }
 
   async #fetchDebugInfo() {
@@ -1268,80 +1247,6 @@ Generated: ${new Date().toISOString()}`;
     }
 
     return parts.join(':');
-  }
-
-  #showConnectionAlert(variant, title) {
-    const alertGroup = this.#$('#connection-alerts');
-    if (!alertGroup) return;
-
-    // Clone template
-    const fragment = CemServeChrome.#connectionAlertTemplate.content.cloneNode(true);
-    const alert = fragment.querySelector('[data-field="alert"]');
-
-    // Set variant and title
-    alert.setAttribute('variant', variant);
-    alert.dataset.connectionAlert = variant;
-    alert.textContent = title;
-
-    // Auto-remove timeouts per PatternFly guidelines
-    let timeout;
-    let isHovered = false;
-    let timeoutExpired = false;
-
-    const remove = () => {
-      alert.remove();
-    };
-
-    const scheduleTimeout = (duration) => {
-      timeout = setTimeout(() => {
-        timeoutExpired = true;
-        // If user is hovering, delay removal
-        if (!isHovered) {
-          remove();
-        }
-      }, duration);
-    };
-
-    // Hover handling - pause removal while hovering
-    alert.addEventListener('mouseenter', () => {
-      isHovered = true;
-    });
-
-    alert.addEventListener('mouseleave', () => {
-      isHovered = false;
-      // If timeout already expired while hovering, remove after hover delay
-      if (timeoutExpired) {
-        setTimeout(remove, 3000); // 3s hover delay per PF
-      }
-    });
-
-    // Set timeout for all variants
-    if (variant === 'success') {
-      scheduleTimeout(8000); // 8s for success
-    } else if (variant === 'warning') {
-      scheduleTimeout(15000); // 15s for warning
-    } else if (variant === 'info') {
-      scheduleTimeout(15000); // 15s for info
-    }
-
-    // Clear any existing alerts of the same type
-    const existingAlerts = alertGroup.querySelectorAll(`[data-connection-alert="${variant}"]`);
-    existingAlerts.forEach(existing => {
-      existing.remove();
-    });
-
-    alertGroup.addAlert(alert);
-  }
-
-  #clearConnectionAlerts() {
-    const alertGroup = this.#$('#connection-alerts');
-    if (!alertGroup) return;
-
-    // Clear warning and info alerts (not success - let those auto-remove)
-    const alerts = alertGroup.querySelectorAll('[data-connection-alert="warning"], [data-connection-alert="info"]');
-    alerts.forEach(alert => {
-      alert.remove();
-    });
   }
 
   // Event Discovery & Capture Methods
