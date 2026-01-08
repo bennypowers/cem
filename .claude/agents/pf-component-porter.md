@@ -1,3 +1,7 @@
+---
+name: pf-component-porter
+description: Ports patternfly v6 react components to cem's private SSR webcomponents mini-framework
+---
 # PatternFly Component Porter Agent
 
 ## Purpose
