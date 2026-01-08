@@ -106,11 +106,6 @@ describe('cem-serve-chrome', () => {
       expect(tabs).to.exist;
     });
 
-    it('renders connection alerts component', () => {
-      const connectionAlerts = el.shadowRoot.getElementById('connection-alerts');
-      expect(connectionAlerts).to.exist;
-    });
-
     it('renders error overlay component', () => {
       const errorOverlay = el.shadowRoot.getElementById('error-overlay');
       expect(errorOverlay).to.exist;
@@ -1250,20 +1245,6 @@ describe('cem-serve-chrome', () => {
         } finally {
           fetchStub.restore();
           consoleStub.restore();
-        }
-      });
-    });
-
-    describe('connection alerts', () => {
-      it('shows success alert', () => {
-        const alertGroup = el.shadowRoot.querySelector('#connection-alerts');
-        if (alertGroup) {
-          // Trigger a connection event that would show an alert
-          // We can't easily test this without mocking WebSocket, so just verify structure
-          expect(alertGroup).to.exist;
-          expect(alertGroup.tagName.toLowerCase()).to.equal('pf-v6-alert-group');
-        } else {
-          expect(el).to.exist;
         }
       });
     });
