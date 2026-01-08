@@ -297,10 +297,9 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, erro
 		return s.RegenerateManifest()
 	}
 
-	// In workspace mode, regenerate all package manifests to ensure consistency
-	// TODO: Optimize this to only regenerate affected packages
+	// In workspace mode, only regenerate affected packages for better performance
 	if isWorkspace {
-		return s.regenerateWorkspaceManifests()
+		return s.regenerateAffectedWorkspacePackages(changedFiles)
 	}
 
 	// Single-package mode: use incremental processing with existing session (no locks held)

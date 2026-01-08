@@ -187,3 +187,126 @@ func TestIsWorkspaceMode_MultiplePackages(t *testing.T) {
 		t.Error("Expected IsWorkspaceMode to return true for workspace with multiple packages")
 	}
 }
+
+// TestFindPackagesForFiles tests that files are correctly mapped to packages
+func TestFindPackagesForFiles(t *testing.T) {
+	rootDir := filepath.Join("testdata", "workspace-mode-single-package")
+	absRootDir, err := filepath.Abs(rootDir)
+	if err != nil {
+		t.Fatalf("Failed to get absolute path: %v", err)
+	}
+
+	tests := []struct {
+		name          string
+		filePaths     []string
+		expectedCount int
+		expectedName  string // Optional: check first package name
+	}{
+		{
+			name: "single file in package",
+			filePaths: []string{
+				filepath.Join(absRootDir, "packages", "elements", "src", "my-element.ts"),
+			},
+			expectedCount: 1,
+			expectedName:  "@test/elements",
+		},
+		{
+			name: "multiple files in same package",
+			filePaths: []string{
+				filepath.Join(absRootDir, "packages", "elements", "src", "my-element.ts"),
+				filepath.Join(absRootDir, "packages", "elements", "src", "another-element.ts"),
+			},
+			expectedCount: 1, // Both files in same package, should deduplicate
+		},
+		{
+			name: "file outside all packages",
+			filePaths: []string{
+				filepath.Join(absRootDir, "some-other-file.ts"),
+			},
+			expectedCount: 0,
+		},
+		{
+			name: "file in root node_modules",
+			filePaths: []string{
+				filepath.Join(absRootDir, "node_modules", "some-dep", "index.js"),
+			},
+			expectedCount: 0,
+		},
+		{
+			name: "mixed files in and outside packages",
+			filePaths: []string{
+				filepath.Join(absRootDir, "packages", "elements", "src", "my-element.ts"),
+				filepath.Join(absRootDir, "some-file.ts"),
+			},
+			expectedCount: 1, // Only one file is in a package
+		},
+		{
+			name:          "empty file list",
+			filePaths:     []string{},
+			expectedCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			packages, err := FindPackagesForFiles(rootDir, tt.filePaths)
+			if err != nil {
+				t.Fatalf("FindPackagesForFiles failed: %v", err)
+			}
+
+			if len(packages) != tt.expectedCount {
+				t.Errorf("Expected %d packages, got %d: %v", tt.expectedCount, len(packages), packages)
+			}
+
+			if tt.expectedName != "" && len(packages) > 0 {
+				if packages[0].Name != tt.expectedName {
+					t.Errorf("Expected package name %s, got %s", tt.expectedName, packages[0].Name)
+				}
+			}
+		})
+	}
+}
+
+// TestFindPackagesForFiles_MultiplePackages tests that files in different packages
+// correctly returns all affected packages
+func TestFindPackagesForFiles_MultiplePackages(t *testing.T) {
+	rootDir := filepath.Join("testdata", "multi-package-workspace")
+	absRootDir, err := filepath.Abs(rootDir)
+	if err != nil {
+		t.Fatalf("Failed to get absolute path: %v", err)
+	}
+
+	// Files in two different packages
+	filePaths := []string{
+		filepath.Join(absRootDir, "packages", "alpha", "src", "component.ts"),
+		filepath.Join(absRootDir, "packages", "beta", "src", "component.ts"),
+	}
+
+	packages, err := FindPackagesForFiles(rootDir, filePaths)
+	if err != nil {
+		t.Fatalf("FindPackagesForFiles failed: %v", err)
+	}
+
+	if len(packages) != 2 {
+		t.Fatalf("Expected 2 packages, got %d: %v", len(packages), packages)
+	}
+
+	// Verify both packages are returned
+	foundAlpha := false
+	foundBeta := false
+	for _, pkg := range packages {
+		if pkg.Name == "@test/alpha" {
+			foundAlpha = true
+		}
+		if pkg.Name == "@test/beta" {
+			foundBeta = true
+		}
+	}
+
+	if !foundAlpha {
+		t.Error("Expected to find @test/alpha package")
+	}
+	if !foundBeta {
+		t.Error("Expected to find @test/beta package")
+	}
+}

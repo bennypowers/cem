@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	C "bennypowers.dev/cem/cmd/config"
 	"gopkg.in/yaml.v3"
@@ -290,6 +291,42 @@ func findWorkspaceRootWithWorkspaces(startDir string) string {
 		}
 		dir = parent
 	}
+}
+
+// FindPackagesForFiles determines which workspace packages are affected by a set of changed files.
+// Returns a deduplicated list of PackageInfo for all affected packages.
+func FindPackagesForFiles(rootDir string, filePaths []string) ([]PackageInfo, error) {
+	// Get all packages with manifests
+	packages, err := FindPackagesWithManifests(rootDir)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build a set of affected package paths to deduplicate
+	affectedSet := make(map[string]PackageInfo)
+
+	for _, filePath := range filePaths {
+		// Make file path absolute for comparison
+		absFilePath, err := filepath.Abs(filePath)
+		if err != nil {
+			absFilePath = filePath
+		}
+
+		for _, pkg := range packages {
+			// Check if the file is under this package's directory
+			if strings.HasPrefix(absFilePath, pkg.Path+string(filepath.Separator)) {
+				affectedSet[pkg.Path] = pkg
+			}
+		}
+	}
+
+	// Convert map to slice
+	result := make([]PackageInfo, 0, len(affectedSet))
+	for _, pkg := range affectedSet {
+		result = append(result, pkg)
+	}
+
+	return result, nil
 }
 
 // IsWorkspaceMode determines if a directory is a monorepo workspace
