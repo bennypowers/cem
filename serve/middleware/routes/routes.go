@@ -506,7 +506,13 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 				Manifest: pkg.Manifest,
 			}
 		}
-		navigationHTML, _ = BuildWorkspaceNavigation(config.Templates, packages, r.URL.Path)
+		var navErr error
+		navigationHTML, navErr = BuildWorkspaceNavigation(config.Templates, packages, r.URL.Path)
+		if navErr != nil {
+			config.Context.Logger().Error("Failed to build workspace navigation for %s: %v", r.URL.Path, navErr)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return true
+		}
 		// Keep packageName from package.json, don't override with "Workspace"
 	} else {
 		// Single-package mode: build navigation from manifest
@@ -885,7 +891,13 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 				Manifest: pkg.Manifest,
 			}
 		}
-		navigationHTML, _ = BuildWorkspaceNavigation(config.Templates, packages, r.URL.Path)
+		var navErr error
+		navigationHTML, navErr = BuildWorkspaceNavigation(config.Templates, packages, r.URL.Path)
+		if navErr != nil {
+			config.Context.Logger().Error("Failed to build workspace navigation for %s: %v", r.URL.Path, navErr)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		packageName = "Workspace"
 	} else {
 		manifestBytes, err := config.Context.Manifest()
