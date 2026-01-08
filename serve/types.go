@@ -106,6 +106,7 @@ type WebSocketManager interface {
 // FileWatcher watches files for changes
 type FileWatcher interface {
 	Watch(path string) error
+	WatchPaths(paths []string) error // Watch specific file paths (for config files)
 	Events() <-chan FileEvent
 	Close() error
 	SetIgnorePatterns(watchDir string, patterns []string)

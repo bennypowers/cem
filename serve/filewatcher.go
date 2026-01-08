@@ -29,18 +29,20 @@ import (
 
 // fileWatcher implements FileWatcher interface
 type fileWatcher struct {
-	watcher        *fsnotify.Watcher
-	events         chan FileEvent
-	debounceWindow time.Duration
-	debouncedFiles map[string]time.Time
-	fileEventTypes map[string]string // Track event type (create/delete/modify) for each file
-	debounceTimer  *time.Timer
-	mu             sync.Mutex
-	logger         Logger
-	done           chan struct{}
-	wg             sync.WaitGroup
-	ignorePatterns []string // Glob patterns to ignore
-	watchDir       string   // Root watch directory for relative path resolution
+	watcher            *fsnotify.Watcher
+	events             chan FileEvent
+	debounceWindow     time.Duration
+	debouncedFiles     map[string]time.Time
+	fileEventTypes     map[string]string // Track event type (create/delete/modify) for each file
+	debounceTimer      *time.Timer
+	mu                 sync.Mutex
+	logger             Logger
+	done               chan struct{}
+	wg                 sync.WaitGroup
+	ignorePatterns     []string        // Glob patterns to ignore
+	watchDir           string          // Root watch directory for relative path resolution
+	explicitWatchPaths map[string]bool // Files to watch explicitly (bypass ignore patterns)
+	explicitWatchDirs  map[string]bool // Parent directories of explicit watch paths
 }
 
 // getDefaultIgnorePatterns returns the default list of glob patterns to ignore
@@ -89,6 +91,61 @@ func (fw *fileWatcher) SetIgnorePatterns(watchDir string, patterns []string) {
 	if len(patterns) > 0 {
 		fw.ignorePatterns = patterns
 	}
+}
+
+// WatchPaths adds specific file paths to the watch list.
+// Unlike Watch(), these paths bypass ignore patterns and are watched explicitly.
+// This is used for config files that must always be watched (e.g., cem.yaml, tsconfig.json).
+func (fw *fileWatcher) WatchPaths(paths []string) error {
+	if len(paths) == 0 {
+		return nil
+	}
+
+	fw.mu.Lock()
+	if fw.explicitWatchPaths == nil {
+		fw.explicitWatchPaths = make(map[string]bool)
+	}
+	if fw.explicitWatchDirs == nil {
+		fw.explicitWatchDirs = make(map[string]bool)
+	}
+
+	// Collect parent directories that need to be watched
+	dirsToWatch := make(map[string]bool)
+	for _, path := range paths {
+		// Normalize to absolute path
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			absPath = path
+		}
+
+		// Track the file itself for explicit matching
+		fw.explicitWatchPaths[absPath] = true
+
+		// Track the parent directory
+		parentDir := filepath.Dir(absPath)
+		if !fw.explicitWatchDirs[parentDir] {
+			dirsToWatch[parentDir] = true
+			fw.explicitWatchDirs[parentDir] = true
+		}
+	}
+	fw.mu.Unlock()
+
+	// Add parent directories to the watcher
+	for dir := range dirsToWatch {
+		// Check if directory exists before watching
+		if info, err := os.Stat(dir); err == nil && info.IsDir() {
+			if err := fw.watcher.Add(dir); err != nil {
+				if fw.logger != nil {
+					fw.logger.Debug("Failed to watch config directory %s: %v", dir, err)
+				}
+				// Continue with other directories
+			} else if fw.logger != nil {
+				fw.logger.Debug("Watching config directory: %s", dir)
+			}
+		}
+	}
+
+	return nil
 }
 
 // Watch adds a path to watch (recursively if directory)
@@ -350,7 +407,14 @@ func (fw *fileWatcher) shouldIgnore(path string) bool {
 	fw.mu.Lock()
 	patterns := fw.ignorePatterns
 	watchDir := fw.watchDir
+	explicitPaths := fw.explicitWatchPaths
 	fw.mu.Unlock()
+
+	// Never ignore explicitly watched files (config files like cem.yaml, tsconfig.json)
+	absPath, err := filepath.Abs(path)
+	if err == nil && explicitPaths[absPath] {
+		return false
+	}
 
 	// Convert path to relative if we have a watch directory
 	relPath := path
