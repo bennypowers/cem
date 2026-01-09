@@ -19,6 +19,8 @@ package security
 import (
 	"regexp"
 	"strings"
+
+	"bennypowers.dev/cem/mcp/chunking"
 )
 
 // Maximum safe description length to prevent abuse and ensure good AI performance.
@@ -36,20 +38,27 @@ func SanitizeDescription(description string) string {
 	return SanitizeDescriptionWithLength(description, maxDescriptionLength)
 }
 
-// SanitizeDescriptionWithLength sanitizes with a custom max length
+// SanitizeDescriptionWithLength sanitizes with a custom max length.
+// Uses semantic chunking to preserve sentence boundaries and prioritize
+// RFC 2119 keywords (MUST, SHOULD, etc.) when truncating long descriptions.
 func SanitizeDescriptionWithLength(description string, maxLength int) string {
 	if description == "" {
 		return ""
 	}
 
-	// Limit length to prevent abuse
-	if len(description) > maxLength {
-		description = description[:maxLength] + "..."
-	}
-
-	// Clean up excessive whitespace
+	// Clean up excessive whitespace first
 	description = strings.TrimSpace(description)
 	description = whitespaceRegex.ReplaceAllString(description, " ")
+
+	// Use semantic chunking for length limiting
+	// This preserves sentence boundaries and prioritizes important content
+	if len(description) > maxLength {
+		description = chunking.Chunk(description, chunking.Options{
+			MaxLength:        maxLength,
+			PriorityKeywords: chunking.RFC2119Keywords,
+			PreserveFirst:    true,
+		})
+	}
 
 	return description
 }

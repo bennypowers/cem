@@ -29,6 +29,7 @@ import (
 	lspTypes "bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/mcp/constants"
+	"bennypowers.dev/cem/mcp/relationships"
 	"bennypowers.dev/cem/mcp/security"
 	MCPTypes "bennypowers.dev/cem/mcp/types"
 	"bennypowers.dev/cem/types"
@@ -38,10 +39,11 @@ import (
 // MCPContext manages custom elements manifests for MCP context
 // This is a lightweight wrapper around the LSP registry for reuse
 type MCPContext struct {
-	workspace       types.WorkspaceContext
-	lspRegistry     *LSP.Registry
-	documentManager lspTypes.DocumentManager
-	mcpCache        map[string]MCPTypes.ElementInfo // Cache for converted MCP elements
+	workspace            types.WorkspaceContext
+	lspRegistry          *LSP.Registry
+	documentManager      lspTypes.DocumentManager
+	mcpCache             map[string]MCPTypes.ElementInfo // Cache for converted MCP elements
+	relationshipDetector *relationships.Detector         // Detects relationships between elements
 
 	// Lazy-computed cached values for performance
 	commonPrefixes     []string // Common element tag name prefixes
@@ -132,10 +134,63 @@ func (ctx *MCPContext) LoadManifests() error {
 	ctx.commonPrefixes = nil
 	ctx.allCSSProperties = nil
 
+	// Reset relationship detector
+	ctx.relationshipDetector = relationships.NewDetector()
+
 	if err := ctx.lspRegistry.LoadFromWorkspace(ctx.workspace); err != nil {
 		return fmt.Errorf("failed to load manifests from workspace %q: %w", ctx.workspace.Root(), err)
 	}
+
+	// Build relationship detector with all elements
+	ctx.buildRelationshipDetector()
+
 	return nil
+}
+
+// buildRelationshipDetector populates the relationship detector with all elements
+func (ctx *MCPContext) buildRelationshipDetector() {
+	// Iterate through manifests to get full declarations with class info
+	for _, pkg := range ctx.lspRegistry.Manifests {
+		if pkg == nil {
+			continue
+		}
+		for i := range pkg.Modules {
+			mod := &pkg.Modules[i]
+			for _, decl := range mod.Declarations {
+				ced, ok := decl.(*M.CustomElementDeclaration)
+				if !ok || ced == nil {
+					continue
+				}
+
+				data := relationships.ElementData{
+					TagName:     ced.TagName,
+					ClassName:   ced.Name(),
+					ModulePath:  mod.Path,
+					PackageName: pkg.SchemaVersion, // Use schema version as package identifier for now
+				}
+
+				// Extract superclass if available from ClassLike
+				if ced.Superclass != nil {
+					data.Superclass = ced.Superclass
+				}
+
+				// Extract mixins from ClassLike
+				data.Mixins = ced.Mixins
+
+				ctx.relationshipDetector.AddElement(data)
+			}
+		}
+	}
+}
+
+// RelationshipsFor returns relationships for the given element
+func (ctx *MCPContext) RelationshipsFor(tagName string) []relationships.Relationship {
+	ctx.mu.RLock()
+	defer ctx.mu.RUnlock()
+	if ctx.relationshipDetector == nil {
+		return nil
+	}
+	return ctx.relationshipDetector.DetectRelationships(tagName)
 }
 
 // CommonPrefixes returns common element tag name prefixes (lazy-computed and cached)
@@ -439,6 +494,7 @@ func (ctx *MCPContext) convertElement(element *M.CustomElement, tagName string) 
 
 	return &MCPElementInfoAdapter{
 		MCPCustomElementDeclaration: mcpElement,
+		relationshipsFunc:           ctx.RelationshipsFor,
 	}
 }
 
@@ -504,6 +560,7 @@ func (ctx *MCPContextAdapter) DocumentManager() lspTypes.DocumentManager {
 // MCPElementInfoAdapter implements MCPTypes.ElementInfo interface for MCP-specific behavior
 type MCPElementInfoAdapter struct {
 	*MCPCustomElementDeclaration
+	relationshipsFunc func(tagName string) []relationships.Relationship
 }
 
 // Declaration returns the underlying manifest declaration
@@ -677,4 +734,11 @@ func (e *MCPElementInfoAdapter) Examples() []MCPTypes.Example {
 	}
 
 	return examples
+}
+
+func (e *MCPElementInfoAdapter) Relationships() []relationships.Relationship {
+	if e.relationshipsFunc == nil {
+		return nil
+	}
+	return e.relationshipsFunc(e.TagName())
 }

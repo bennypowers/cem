@@ -24,6 +24,7 @@ import (
 
 	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/mcp/constants"
+	"bennypowers.dev/cem/mcp/relationships"
 	"bennypowers.dev/cem/mcp/types"
 	V "bennypowers.dev/cem/validate"
 )
@@ -91,6 +92,7 @@ func (p *DataSourceProvider) createRegistryDataSource() (map[string]any, error) 
 			"cssProperties": convertCssProperties(element.CssProperties()),
 			"cssParts":      convertCssParts(element.CssParts()),
 			"cssStates":     convertCssStates(element.CssStates()),
+			"relationships": convertRelationships(element.Relationships()),
 		}
 		elementsMap[tagName] = elementData
 	}
@@ -399,6 +401,19 @@ func convertCssStates(states []manifest.CssCustomState) []map[string]any {
 		result[i] = map[string]any{
 			"name":        state.Name,
 			"description": state.Description,
+		}
+	}
+	return result
+}
+
+func convertRelationships(rels []relationships.Relationship) []map[string]any {
+	result := make([]map[string]any, len(rels))
+	for i, rel := range rels {
+		result[i] = map[string]any{
+			"target": rel.TargetTagName,
+			"type":   string(rel.Type),
+			"via":    rel.Via,
+			"label":  rel.Label(),
 		}
 	}
 	return result

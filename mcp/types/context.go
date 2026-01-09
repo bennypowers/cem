@@ -19,6 +19,7 @@ package types
 import (
 	"bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/mcp/relationships"
 )
 
 // MCPContext interface for accessing custom elements manifest data
@@ -59,6 +60,7 @@ type ElementInfo interface {
 	// MCP-specific extensions
 	Guidelines() []string
 	Examples() []Example
+	Relationships() []relationships.Relationship
 }
 
 // Legacy type aliases - use manifest types directly instead

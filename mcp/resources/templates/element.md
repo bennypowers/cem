@@ -17,7 +17,13 @@ This element comes loaded with:
 {{if gt (len .Element.CssParts) 0}}• **{{len .Element.CssParts}} CSS parts** for precise styling{{end}}
 {{if gt (len .Element.CssStates) 0}}• **{{len .Element.CssStates}} CSS states** for conditional styling{{end}}
 
-## Ready to Use It? 🚀
+{{if gt (len .Element.Relationships) 0}}
+## Related Elements
+
+{{range .Element.Relationships}}• [{{.TargetTagName}}](cem://element/{{.TargetTagName}}) — {{.Label}}
+{{end}}{{end}}
+
+## Ready to Use It?
 
 {{if .Element.Module}}**First, bring it into your project:**
 ```javascript
