@@ -15,7 +15,13 @@ This element comes loaded with:
 • **1 CSS parts** for precise styling
 
 
-## Ready to Use It? 🚀
+
+## Related Elements
+
+• [card-element](cem://element/card-element) — same package
+
+
+## Ready to Use It?
 
 This element is ready to use right out of the box — no imports needed!
 

@@ -24,6 +24,7 @@ import (
 
 	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/mcp/constants"
+	"bennypowers.dev/cem/mcp/relationships"
 	"bennypowers.dev/cem/mcp/types"
 	V "bennypowers.dev/cem/validate"
 )
@@ -91,6 +92,7 @@ func (p *DataSourceProvider) createRegistryDataSource() (map[string]any, error) 
 			"cssProperties": convertCssProperties(element.CssProperties()),
 			"cssParts":      convertCssParts(element.CssParts()),
 			"cssStates":     convertCssStates(element.CssStates()),
+			"relationships": convertRelationships(element.Relationships()),
 		}
 		elementsMap[tagName] = elementData
 	}
@@ -400,6 +402,34 @@ func convertCssStates(states []manifest.CssCustomState) []map[string]any {
 			"name":        state.Name,
 			"description": state.Description,
 		}
+	}
+	return result
+}
+
+func convertRelationships(rels []relationships.Relationship) []map[string]any {
+	// Copy to avoid mutating caller's slice
+	sorted := make([]relationships.Relationship, len(rels))
+	copy(sorted, rels)
+
+	// Sort for deterministic output: by type, then by target
+	sort.Slice(sorted, func(i, j int) bool {
+		if sorted[i].Type != sorted[j].Type {
+			return sorted[i].Type < sorted[j].Type
+		}
+		return sorted[i].TargetTagName < sorted[j].TargetTagName
+	})
+
+	result := make([]map[string]any, len(sorted))
+	for i, rel := range sorted {
+		m := map[string]any{
+			"target": rel.TargetTagName,
+			"type":   string(rel.Type),
+			"label":  rel.Label(),
+		}
+		if rel.Via != "" {
+			m["via"] = rel.Via
+		}
+		result[i] = m
 	}
 	return result
 }

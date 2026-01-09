@@ -19,11 +19,14 @@ package security
 import (
 	"regexp"
 	"strings"
+
+	"bennypowers.dev/cem/mcp/chunking"
 )
 
 // Maximum safe description length to prevent abuse and ensure good AI performance.
 // This limit balances comprehensive documentation with processing efficiency.
-// Descriptions longer than this are truncated with "..." appended.
+// Descriptions longer than this are semantically chunked to preserve sentence
+// boundaries and prioritize RFC 2119 keywords, with a hard safety cap enforced.
 // Can be customized via config file or --max-description-length flag.
 const maxDescriptionLength = 2000
 
@@ -36,20 +39,39 @@ func SanitizeDescription(description string) string {
 	return SanitizeDescriptionWithLength(description, maxDescriptionLength)
 }
 
-// SanitizeDescriptionWithLength sanitizes with a custom max length
+// SanitizeDescriptionWithLength sanitizes with a custom max length.
+// Uses semantic chunking to preserve sentence boundaries and prioritize
+// RFC 2119 keywords (MUST, SHOULD, etc.) when truncating long descriptions.
+// Non-positive maxLength values result in an empty string.
 func SanitizeDescriptionWithLength(description string, maxLength int) string {
 	if description == "" {
 		return ""
 	}
 
-	// Limit length to prevent abuse
-	if len(description) > maxLength {
-		description = description[:maxLength] + "..."
+	// Guard against non-positive maxLength
+	if maxLength <= 0 {
+		return ""
 	}
 
-	// Clean up excessive whitespace
+	// Clean up excessive whitespace first
 	description = strings.TrimSpace(description)
 	description = whitespaceRegex.ReplaceAllString(description, " ")
+
+	// Use semantic chunking for length limiting
+	// This preserves sentence boundaries and prioritizes important content
+	if len(description) > maxLength {
+		description = chunking.Chunk(description, chunking.Options{
+			MaxLength:        maxLength,
+			PriorityKeywords: chunking.RFC2119Keywords(),
+			PreserveFirst:    true,
+		})
+		// Hard safety cap: ensure we never exceed maxLength bytes.
+		// Chunking can exceed the limit in edge cases (e.g., long single sentence
+		// with ellipsis). Use shared rune-aware truncation helper.
+		if len(description) > maxLength {
+			description = chunking.TruncateToByteLimit(description, maxLength)
+		}
+	}
 
 	return description
 }

@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/mcp/helpers"
@@ -164,8 +165,9 @@ func generateHTMLStructure(element types.ElementInfo, args GenerateHtmlArgs) (st
 	// Sort attributes according to HTML conventions
 	templateData.SortedAttributes = sortAttributesForHTML(templateData.OptionalAttributes, element.Attributes())
 
-	// Prepare slot data with example content
-	for _, slot := range element.Slots() {
+	// Infer relevant slots based on context and prepare slot data with example content
+	relevantSlots := inferRelevantSlots(element.Slots(), args.Context)
+	for _, slot := range relevantSlots {
 		slotName := slot.Name
 		var exampleContent, defaultContent string
 
@@ -295,6 +297,66 @@ func sortAttributesForHTML(attributes []AttributeWithValue, manifestAttrs []type
 	}
 	result = append(result, nativeAttrs...)
 	result = append(result, customAttrs...)
+
+	return result
+}
+
+// inferRelevantSlots returns slots sorted by relevance to the given context.
+// Slots whose name or description contains context keywords are prioritized.
+func inferRelevantSlots(slots []manifest.Slot, contextStr string) []manifest.Slot {
+	if contextStr == "" || len(slots) == 0 {
+		return slots
+	}
+
+	// Extract keywords from context (split on whitespace and common punctuation)
+	contextLower := strings.ToLower(contextStr)
+	keywords := strings.FieldsFunc(contextLower, func(r rune) bool {
+		return r == ' ' || r == ',' || r == '.' || r == ';' || r == ':' || r == '-' || r == '_'
+	})
+
+	// Score each slot based on keyword matches
+	type scoredSlot struct {
+		slot  manifest.Slot
+		score int
+	}
+
+	scored := make([]scoredSlot, len(slots))
+	for i, slot := range slots {
+		score := 0
+		slotNameLower := strings.ToLower(slot.Name)
+		slotDescLower := strings.ToLower(slot.Description)
+
+		for _, kw := range keywords {
+			if len(kw) < 3 {
+				continue // Skip short keywords to reduce noise
+			}
+			// Name match is worth more than description match
+			if strings.Contains(slotNameLower, kw) {
+				score += 3
+			}
+			if strings.Contains(slotDescLower, kw) {
+				score += 1
+			}
+		}
+
+		// Default slot (empty name) gets a small boost as it's often most relevant
+		if slot.Name == "" {
+			score += 1
+		}
+
+		scored[i] = scoredSlot{slot: slot, score: score}
+	}
+
+	// Sort by score (descending), then by original order for ties
+	sort.SliceStable(scored, func(i, j int) bool {
+		return scored[i].score > scored[j].score
+	})
+
+	// Extract sorted slots
+	result := make([]manifest.Slot, len(scored))
+	for i, s := range scored {
+		result[i] = s.slot
+	}
 
 	return result
 }

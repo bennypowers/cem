@@ -57,14 +57,20 @@ func TestSanitizeDescription(t *testing.T) {
 		{
 			name:        "very long description",
 			input:       strings.Repeat("A", 3000),
-			expected:    strings.Repeat("A", 2000) + "...",
-			description: "Very long descriptions should be truncated",
+			expected:    strings.Repeat("A", 2000),
+			description: "Very long descriptions should be hard-capped at maxLength",
 		},
 		{
 			name:        "excessive whitespace",
 			input:       "A   button    component\n\n\twith    whitespace",
 			expected:    "A button component with whitespace",
 			description: "Excessive whitespace should be normalized",
+		},
+		{
+			name:        "utf8 safe truncation",
+			input:       strings.Repeat("日本語", 1000),       // 9 bytes per repetition, 9000 bytes total
+			expected:    strings.Repeat("日本語", 222) + "..", // 222*9 = 1998 bytes + ".." = 2000 bytes
+			description: "UTF-8 truncation should not cut in middle of multi-byte character",
 		},
 	}
 

@@ -15,7 +15,13 @@ This element comes loaded with:
 • **4 CSS parts** for precise styling
 
 
-## Ready to Use It? 🚀
+
+## Related Elements
+
+• [button-element](cem://element/button-element) — same package
+
+
+## Ready to Use It?
 
 This element is ready to use right out of the box — no imports needed!
 
