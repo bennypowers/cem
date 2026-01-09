@@ -21,7 +21,6 @@ package chunking
 
 import (
 	"regexp"
-	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -66,7 +65,7 @@ type Options struct {
 func DefaultOptions() Options {
 	return Options{
 		MaxLength:        DefaultMaxLength,
-		PriorityKeywords: rfc2119Keywords,
+		PriorityKeywords: RFC2119Keywords(),
 		PreserveFirst:    true,
 	}
 }
@@ -110,38 +109,55 @@ func splitSentences(text string) []string {
 	return sentences
 }
 
+// isWordChar returns true if the rune is considered part of a word
+// (letter, digit, or underscore).
+func isWordChar(r rune) bool {
+	return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_'
+}
+
 // containsKeyword checks if a sentence contains any of the given keywords.
 // Keywords are matched case-insensitively as whole words.
+// A word boundary is defined as start/end of string or a non-word character
+// (where word characters are letters, digits, and underscores).
 func containsKeyword(sentence string, keywords []string) bool {
 	upper := strings.ToUpper(sentence)
 	for _, kw := range keywords {
 		kwUpper := strings.ToUpper(kw)
-		// Check for whole word match
-		idx := strings.Index(upper, kwUpper)
-		if idx == -1 {
-			continue
-		}
-		// Verify it's a whole word (not part of a larger word)
-		// Use proper UTF-8 decoding to handle multi-byte characters
-		var beforeOK bool
-		if idx == 0 {
-			beforeOK = true
-		} else {
-			r, _ := utf8.DecodeLastRuneInString(upper[:idx])
-			beforeOK = r == utf8.RuneError || !unicode.IsLetter(r)
-		}
+		// Iterate over all occurrences of the keyword
+		offset := 0
+		for offset < len(upper) {
+			idx := strings.Index(upper[offset:], kwUpper)
+			if idx == -1 {
+				break
+			}
+			// Adjust idx to be relative to the full string
+			idx += offset
 
-		afterIdx := idx + len(kwUpper)
-		var afterOK bool
-		if afterIdx >= len(upper) {
-			afterOK = true
-		} else {
-			r, _ := utf8.DecodeRuneInString(upper[afterIdx:])
-			afterOK = r == utf8.RuneError || !unicode.IsLetter(r)
-		}
+			// Verify it's a whole word (not part of a larger word)
+			// Use proper UTF-8 decoding to handle multi-byte characters
+			var beforeOK bool
+			if idx == 0 {
+				beforeOK = true
+			} else {
+				r, _ := utf8.DecodeLastRuneInString(upper[:idx])
+				beforeOK = r == utf8.RuneError || !isWordChar(r)
+			}
 
-		if beforeOK && afterOK {
-			return true
+			afterIdx := idx + len(kwUpper)
+			var afterOK bool
+			if afterIdx >= len(upper) {
+				afterOK = true
+			} else {
+				r, _ := utf8.DecodeRuneInString(upper[afterIdx:])
+				afterOK = r == utf8.RuneError || !isWordChar(r)
+			}
+
+			if beforeOK && afterOK {
+				return true
+			}
+
+			// Move past this occurrence to check for more
+			offset = idx + len(kwUpper)
 		}
 	}
 	return false
@@ -194,12 +210,32 @@ func Chunk(text string, opts Options) string {
 		}
 	}
 
-	// Build result: priority sentences first
+	// Build result
 	var result []string
 	currentLen := 0
 
-	// Add priority sentences
+	// When PreserveFirst is true, always start with the first sentence to ensure
+	// it's included even when priority sentences would otherwise consume all space.
+	firstSentenceIncluded := false
+	if opts.PreserveFirst && firstSentence != "" {
+		if len(firstSentence) <= opts.MaxLength {
+			result = append(result, firstSentence)
+			currentLen = len(firstSentence)
+			firstSentenceIncluded = true
+		} else {
+			// First sentence is too long - truncate it
+			truncated := truncateAtWord(firstSentence, opts.MaxLength)
+			result = append(result, truncated)
+			currentLen = len(truncated)
+			firstSentenceIncluded = true
+		}
+	}
+
+	// Add priority sentences that fit (skipping first sentence if already included)
 	for _, s := range prioritySentences {
+		if firstSentenceIncluded && s == firstSentence {
+			continue // Already included as first sentence
+		}
 		// Account for space delimiter only when joining with existing sentences
 		spaceNeeded := 0
 		if len(result) > 0 {
@@ -212,24 +248,16 @@ func Chunk(text string, opts Options) string {
 		currentLen += spaceNeeded + len(s)
 	}
 
-	// Add first sentence if not already included and PreserveFirst is true
-	if opts.PreserveFirst && firstSentence != "" {
-		if !slices.Contains(result, firstSentence) {
-			// Insert first sentence at the beginning
-			// Space needed after first sentence if result has content
-			spaceNeeded := 0
-			if len(result) > 0 {
-				spaceNeeded = 1
-			}
-			if currentLen+spaceNeeded+len(firstSentence) <= opts.MaxLength {
-				result = append([]string{firstSentence}, result...)
-				currentLen += spaceNeeded + len(firstSentence)
-			} else if len(result) == 0 {
-				// No content yet and first sentence is too long - truncate it
-				truncated := truncateAtWord(firstSentence, opts.MaxLength)
-				result = append(result, truncated)
-				currentLen = len(truncated)
-			}
+	// If PreserveFirst was false and we have no content yet, try priority sentences
+	if !opts.PreserveFirst && len(result) == 0 && len(prioritySentences) > 0 {
+		s := prioritySentences[0]
+		if len(s) <= opts.MaxLength {
+			result = append(result, s)
+			currentLen = len(s)
+		} else {
+			truncated := truncateAtWord(s, opts.MaxLength)
+			result = append(result, truncated)
+			currentLen = len(truncated)
 		}
 	}
 
@@ -262,13 +290,27 @@ func Chunk(text string, opts Options) string {
 // The maxLen parameter specifies the maximum content length before the ellipsis.
 // Note: The returned string may exceed maxLen by up to 3 bytes due to the "..." suffix.
 // Callers requiring a strict byte limit should apply an additional hard cap.
+// Uses rune-aware truncation to avoid splitting multi-byte UTF-8 characters.
 func truncateAtWord(text string, maxLen int) string {
 	if len(text) <= maxLen {
 		return text
 	}
 
-	// Find last space before maxLen
-	truncated := text[:maxLen]
+	// Find a rune-safe prefix that fits in maxLen bytes using binary search.
+	runes := []rune(text)
+	left, right := 0, len(runes)
+	for left < right {
+		mid := (left + right + 1) / 2
+		candidate := string(runes[:mid])
+		if len(candidate) <= maxLen {
+			left = mid
+		} else {
+			right = mid - 1
+		}
+	}
+	truncated := string(runes[:left])
+
+	// Find last space within the safe prefix for word boundary
 	lastSpace := strings.LastIndex(truncated, " ")
 	if lastSpace > 0 {
 		truncated = truncated[:lastSpace]

@@ -147,9 +147,12 @@ func (ctx *MCPContext) LoadManifests() error {
 	return nil
 }
 
-// findDeclaration finds the full CustomElementDeclaration for a tag name.
-// Returns nil if not found. Must be called while holding ctx.mu lock.
-func (ctx *MCPContext) findDeclaration(tagName string) *M.CustomElementDeclaration {
+// buildRelationshipDetector populates the relationship detector with all elements.
+// This method must be called while holding ctx.mu lock.
+func (ctx *MCPContext) buildRelationshipDetector() {
+	// Build a lookup map once to avoid O(N×M) manifest scans.
+	// Maps tag name to declaration for O(1) lookup per element.
+	declByTag := make(map[string]*M.CustomElementDeclaration)
 	for _, pkg := range ctx.lspRegistry.Manifests {
 		if pkg == nil {
 			continue
@@ -157,26 +160,24 @@ func (ctx *MCPContext) findDeclaration(tagName string) *M.CustomElementDeclarati
 		for i := range pkg.Modules {
 			mod := &pkg.Modules[i]
 			for _, decl := range mod.Declarations {
-				if ceDecl, ok := decl.(*M.CustomElementDeclaration); ok && ceDecl.TagName == tagName {
-					return ceDecl
+				if ceDecl, ok := decl.(*M.CustomElementDeclaration); ok && ceDecl.TagName != "" {
+					// First writer wins; keeps consistent behavior with original findDeclaration
+					if _, exists := declByTag[ceDecl.TagName]; !exists {
+						declByTag[ceDecl.TagName] = ceDecl
+					}
 				}
 			}
 		}
 	}
-	return nil
-}
 
-// buildRelationshipDetector populates the relationship detector with all elements.
-// This method must be called while holding ctx.mu lock.
-func (ctx *MCPContext) buildRelationshipDetector() {
 	// Use ElementDefinitions which has the correct package name for each element
 	for tagName, elemDef := range ctx.lspRegistry.ElementDefinitions {
 		if elemDef == nil {
 			continue
 		}
 
-		// Find the full declaration in the manifests for class info (superclass, mixins)
-		ced := ctx.findDeclaration(tagName)
+		// Find the full declaration for class info (superclass, mixins)
+		ced := declByTag[tagName]
 
 		data := relationships.ElementData{
 			TagName:     tagName,
@@ -197,14 +198,19 @@ func (ctx *MCPContext) buildRelationshipDetector() {
 	}
 }
 
-// RelationshipsFor returns relationships for the given element
+// RelationshipsFor returns relationships for the given element.
+// Always returns an empty slice instead of nil to avoid null in JSON/UI.
 func (ctx *MCPContext) RelationshipsFor(tagName string) []relationships.Relationship {
 	ctx.mu.RLock()
 	defer ctx.mu.RUnlock()
 	if ctx.relationshipDetector == nil {
-		return nil
+		return []relationships.Relationship{}
 	}
-	return ctx.relationshipDetector.DetectRelationships(tagName)
+	rels := ctx.relationshipDetector.DetectRelationships(tagName)
+	if rels == nil {
+		return []relationships.Relationship{}
+	}
+	return rels
 }
 
 // CommonPrefixes returns common element tag name prefixes (lazy-computed and cached)
@@ -752,7 +758,11 @@ func (e *MCPElementInfoAdapter) Examples() []MCPTypes.Example {
 
 func (e *MCPElementInfoAdapter) Relationships() []relationships.Relationship {
 	if e.relationshipsFunc == nil {
-		return nil
+		return []relationships.Relationship{}
 	}
-	return e.relationshipsFunc(e.TagName())
+	rels := e.relationshipsFunc(e.TagName())
+	if rels == nil {
+		return []relationships.Relationship{}
+	}
+	return rels
 }

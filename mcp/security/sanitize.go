@@ -42,8 +42,14 @@ func SanitizeDescription(description string) string {
 // SanitizeDescriptionWithLength sanitizes with a custom max length.
 // Uses semantic chunking to preserve sentence boundaries and prioritize
 // RFC 2119 keywords (MUST, SHOULD, etc.) when truncating long descriptions.
+// Non-positive maxLength values result in an empty string.
 func SanitizeDescriptionWithLength(description string, maxLength int) string {
 	if description == "" {
+		return ""
+	}
+
+	// Guard against non-positive maxLength
+	if maxLength <= 0 {
 		return ""
 	}
 
@@ -77,6 +83,8 @@ func SanitizeDescriptionWithLength(description string, maxLength int) string {
 			}
 			if left > 0 {
 				description = string(runes[:left])
+			} else {
+				description = ""
 			}
 		}
 	}

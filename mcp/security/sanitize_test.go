@@ -69,7 +69,7 @@ func TestSanitizeDescription(t *testing.T) {
 		{
 			name:        "utf8 safe truncation",
 			input:       strings.Repeat("日本語", 1000), // 9 bytes per repetition, 9000 bytes total
-			expected:    strings.Repeat("日本語", 222),  // 222*9 = 1998 bytes, fits in 2000
+			expected:    strings.Repeat("日本語", 222) + "..",  // 222*9 = 1998 bytes + ".." = 2000 bytes
 			description: "UTF-8 truncation should not cut in middle of multi-byte character",
 		},
 	}
