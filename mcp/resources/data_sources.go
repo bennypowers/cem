@@ -407,14 +407,25 @@ func convertCssStates(states []manifest.CssCustomState) []map[string]any {
 }
 
 func convertRelationships(rels []relationships.Relationship) []map[string]any {
+	// Sort for deterministic output: by type, then by target
+	sort.Slice(rels, func(i, j int) bool {
+		if rels[i].Type != rels[j].Type {
+			return rels[i].Type < rels[j].Type
+		}
+		return rels[i].TargetTagName < rels[j].TargetTagName
+	})
+
 	result := make([]map[string]any, len(rels))
 	for i, rel := range rels {
-		result[i] = map[string]any{
+		m := map[string]any{
 			"target": rel.TargetTagName,
 			"type":   string(rel.Type),
-			"via":    rel.Via,
 			"label":  rel.Label(),
 		}
+		if rel.Via != "" {
+			m["via"] = rel.Via
+		}
+		result[i] = m
 	}
 	return result
 }

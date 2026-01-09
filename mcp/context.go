@@ -147,7 +147,8 @@ func (ctx *MCPContext) LoadManifests() error {
 	return nil
 }
 
-// buildRelationshipDetector populates the relationship detector with all elements
+// buildRelationshipDetector populates the relationship detector with all elements.
+// This method must be called while holding ctx.mu lock.
 func (ctx *MCPContext) buildRelationshipDetector() {
 	// Iterate through manifests to get full declarations with class info
 	for _, pkg := range ctx.lspRegistry.Manifests {

@@ -229,7 +229,7 @@ func (r Relationship) Label() string {
 	case Superclass:
 		return "extends " + r.Via
 	case Subclass:
-		return "extended by"
+		return "extended by " + r.TargetTagName
 	case Mixin:
 		return "shares " + r.Via
 	case Module:

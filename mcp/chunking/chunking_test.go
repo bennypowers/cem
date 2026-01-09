@@ -85,25 +85,25 @@ func TestContainsKeyword(t *testing.T) {
 		{
 			name:     "contains MUST",
 			sentence: "You MUST provide a value.",
-			keywords: RFC2119Keywords,
+			keywords: rfc2119Keywords,
 			expected: true,
 		},
 		{
 			name:     "contains SHOULD lowercase",
 			sentence: "You should provide a value.",
-			keywords: RFC2119Keywords,
+			keywords: rfc2119Keywords,
 			expected: true,
 		},
 		{
 			name:     "contains MUST NOT",
 			sentence: "You MUST NOT use this deprecated API.",
-			keywords: RFC2119Keywords,
+			keywords: rfc2119Keywords,
 			expected: true,
 		},
 		{
 			name:     "no keywords",
 			sentence: "This is a regular sentence.",
-			keywords: RFC2119Keywords,
+			keywords: rfc2119Keywords,
 			expected: false,
 		},
 		{
@@ -115,13 +115,13 @@ func TestContainsKeyword(t *testing.T) {
 		{
 			name:     "keyword at start",
 			sentence: "MUST be provided.",
-			keywords: RFC2119Keywords,
+			keywords: rfc2119Keywords,
 			expected: true,
 		},
 		{
 			name:     "keyword at end",
 			sentence: "This is OPTIONAL",
-			keywords: RFC2119Keywords,
+			keywords: rfc2119Keywords,
 			expected: true,
 		},
 	}
@@ -230,19 +230,19 @@ func TestExtractPriorityContent(t *testing.T) {
 		{
 			name:     "no priority content",
 			input:    "Regular sentence. Another one.",
-			keywords: RFC2119Keywords,
+			keywords: rfc2119Keywords,
 			expected: 0,
 		},
 		{
 			name:     "one priority sentence",
 			input:    "Regular sentence. You MUST do this. Another regular.",
-			keywords: RFC2119Keywords,
+			keywords: rfc2119Keywords,
 			expected: 1,
 		},
 		{
 			name:     "multiple priority sentences",
 			input:    "You MUST do this. Regular. You SHOULD also do that. You MAY do this.",
-			keywords: RFC2119Keywords,
+			keywords: rfc2119Keywords,
 			expected: 3,
 		},
 	}

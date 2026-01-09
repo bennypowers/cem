@@ -29,8 +29,8 @@ import (
 // DefaultMaxLength is the default maximum length for chunked descriptions.
 const DefaultMaxLength = 2000
 
-// RFC2119Keywords are the standard RFC 2119 requirement level keywords.
-var RFC2119Keywords = []string{
+// rfc2119Keywords are the standard RFC 2119 requirement level keywords.
+var rfc2119Keywords = []string{
 	"MUST", "MUST NOT",
 	"REQUIRED",
 	"SHALL", "SHALL NOT",
@@ -39,6 +39,12 @@ var RFC2119Keywords = []string{
 	"MAY",
 	"OPTIONAL",
 	"AVOID",
+}
+
+// RFC2119Keywords returns a copy of the standard RFC 2119 keywords.
+// Returns a copy to prevent accidental mutation of the shared slice.
+func RFC2119Keywords() []string {
+	return append([]string(nil), rfc2119Keywords...)
 }
 
 // Options configures semantic chunking behavior.
@@ -59,7 +65,7 @@ type Options struct {
 func DefaultOptions() Options {
 	return Options{
 		MaxLength:        DefaultMaxLength,
-		PriorityKeywords: RFC2119Keywords,
+		PriorityKeywords: rfc2119Keywords,
 		PreserveFirst:    true,
 	}
 }
@@ -137,7 +143,7 @@ func Chunk(text string, opts Options) string {
 		opts.MaxLength = DefaultMaxLength
 	}
 	if opts.PriorityKeywords == nil {
-		opts.PriorityKeywords = RFC2119Keywords
+		opts.PriorityKeywords = rfc2119Keywords
 	}
 
 	// If text is already short enough, return as-is
@@ -208,7 +214,10 @@ func Chunk(text string, opts Options) string {
 	return strings.Join(result, " ")
 }
 
-// truncateAtWord truncates text at a word boundary, not exceeding maxLen.
+// truncateAtWord truncates text at a word boundary, then appends "...".
+// The maxLen parameter specifies the maximum content length before the ellipsis.
+// Note: The returned string may exceed maxLen by up to 3 bytes due to the "..." suffix.
+// Callers requiring a strict byte limit should apply an additional hard cap.
 func truncateAtWord(text string, maxLen int) string {
 	if len(text) <= maxLen {
 		return text
@@ -227,7 +236,7 @@ func truncateAtWord(text string, maxLen int) string {
 // ExtractPriorityContent extracts sentences containing priority keywords.
 func ExtractPriorityContent(text string, keywords []string) []string {
 	if keywords == nil {
-		keywords = RFC2119Keywords
+		keywords = rfc2119Keywords
 	}
 
 	sentences := splitSentences(text)

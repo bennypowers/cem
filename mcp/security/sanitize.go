@@ -19,13 +19,15 @@ package security
 import (
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"bennypowers.dev/cem/mcp/chunking"
 )
 
 // Maximum safe description length to prevent abuse and ensure good AI performance.
 // This limit balances comprehensive documentation with processing efficiency.
-// Descriptions longer than this are truncated with "..." appended.
+// Descriptions longer than this are semantically chunked to preserve sentence
+// boundaries and prioritize RFC 2119 keywords, with a hard safety cap enforced.
 // Can be customized via config file or --max-description-length flag.
 const maxDescriptionLength = 2000
 
@@ -55,9 +57,18 @@ func SanitizeDescriptionWithLength(description string, maxLength int) string {
 	if len(description) > maxLength {
 		description = chunking.Chunk(description, chunking.Options{
 			MaxLength:        maxLength,
-			PriorityKeywords: chunking.RFC2119Keywords,
+			PriorityKeywords: chunking.RFC2119Keywords(),
 			PreserveFirst:    true,
 		})
+		// Hard safety cap: ensure we never exceed maxLength bytes.
+		// Chunking can exceed the limit in edge cases (e.g., long single sentence).
+		if len(description) > maxLength {
+			cut := maxLength
+			for cut > 0 && !utf8.ValidString(description[:cut]) {
+				cut--
+			}
+			description = description[:cut]
+		}
 	}
 
 	return description

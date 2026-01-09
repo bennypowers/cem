@@ -227,8 +227,8 @@ func TestDetector_UnknownElement(t *testing.T) {
 
 	rels := d.DetectRelationships("unknown-element")
 
-	if rels != nil {
-		t.Errorf("expected nil for unknown element, got %v", rels)
+	if len(rels) != 0 {
+		t.Errorf("expected no relationships for unknown element, got %v", rels)
 	}
 }
 
@@ -238,7 +238,7 @@ func TestRelationship_Label(t *testing.T) {
 		expected string
 	}{
 		{Relationship{Type: Superclass, Via: "BaseClass"}, "extends BaseClass"},
-		{Relationship{Type: Subclass}, "extended by"},
+		{Relationship{Type: Subclass, TargetTagName: "child-element"}, "extended by child-element"},
 		{Relationship{Type: Mixin, Via: "InteractiveMixin"}, "shares InteractiveMixin"},
 		{Relationship{Type: Module}, "same module"},
 		{Relationship{Type: Package}, "same package"},
