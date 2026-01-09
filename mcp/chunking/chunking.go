@@ -24,6 +24,7 @@ import (
 	"slices"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 // DefaultMaxLength is the default maximum length for chunked descriptions.
@@ -121,9 +122,24 @@ func containsKeyword(sentence string, keywords []string) bool {
 			continue
 		}
 		// Verify it's a whole word (not part of a larger word)
-		beforeOK := idx == 0 || !unicode.IsLetter(rune(upper[idx-1]))
+		// Use proper UTF-8 decoding to handle multi-byte characters
+		var beforeOK bool
+		if idx == 0 {
+			beforeOK = true
+		} else {
+			r, _ := utf8.DecodeLastRuneInString(upper[:idx])
+			beforeOK = r == utf8.RuneError || !unicode.IsLetter(r)
+		}
+
 		afterIdx := idx + len(kwUpper)
-		afterOK := afterIdx >= len(upper) || !unicode.IsLetter(rune(upper[afterIdx]))
+		var afterOK bool
+		if afterIdx >= len(upper) {
+			afterOK = true
+		} else {
+			r, _ := utf8.DecodeRuneInString(upper[afterIdx:])
+			afterOK = r == utf8.RuneError || !unicode.IsLetter(r)
+		}
+
 		if beforeOK && afterOK {
 			return true
 		}
@@ -133,6 +149,11 @@ func containsKeyword(sentence string, keywords []string) bool {
 
 // Chunk returns semantically-chunked text respecting sentence boundaries.
 // Priority order: RFC 2119 keywords > first sentence > remaining sentences.
+//
+// Note: If a priority sentence exceeds MaxLength, it will still be included
+// to ensure meaningful content is retained. For strict length enforcement,
+// use the hard cap in sanitize.go. When no priority keywords exist and
+// PreserveFirst is false, may return empty string if all sentences exceed MaxLength.
 func Chunk(text string, opts Options) string {
 	if text == "" {
 		return ""
@@ -214,7 +235,19 @@ func Chunk(text string, opts Options) string {
 
 	// Fill remaining space with other sentences
 	for _, s := range otherSentences {
-		// Always need a space since we have at least priority or first sentence
+		// Need a space if we have existing content
+		if len(result) == 0 {
+			// Edge case: no priority, PreserveFirst false, all sentences too long
+			// Add first other sentence with truncation if needed
+			if len(s) <= opts.MaxLength {
+				result = append(result, s)
+				currentLen = len(s)
+			} else {
+				result = append(result, truncateAtWord(s, opts.MaxLength))
+				break
+			}
+			continue
+		}
 		if currentLen+1+len(s) > opts.MaxLength {
 			break
 		}

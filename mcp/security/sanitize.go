@@ -62,14 +62,21 @@ func SanitizeDescriptionWithLength(description string, maxLength int) string {
 		// Hard safety cap: ensure we never exceed maxLength bytes.
 		// Chunking can exceed the limit in edge cases (e.g., long single sentence).
 		// Use rune-aware truncation to avoid cutting multi-byte characters.
+		// Binary search reduces complexity from O(n²) to O(n log n).
 		if len(description) > maxLength {
 			runes := []rune(description)
-			for i := len(runes); i > 0; i-- {
-				candidate := string(runes[:i])
+			left, right := 0, len(runes)
+			for left < right {
+				mid := (left + right + 1) / 2
+				candidate := string(runes[:mid])
 				if len(candidate) <= maxLength {
-					description = candidate
-					break
+					left = mid
+				} else {
+					right = mid - 1
 				}
+			}
+			if left > 0 {
+				description = string(runes[:left])
 			}
 		}
 	}

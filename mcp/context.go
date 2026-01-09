@@ -147,6 +147,25 @@ func (ctx *MCPContext) LoadManifests() error {
 	return nil
 }
 
+// findDeclaration finds the full CustomElementDeclaration for a tag name.
+// Returns nil if not found. Must be called while holding ctx.mu lock.
+func (ctx *MCPContext) findDeclaration(tagName string) *M.CustomElementDeclaration {
+	for _, pkg := range ctx.lspRegistry.Manifests {
+		if pkg == nil {
+			continue
+		}
+		for i := range pkg.Modules {
+			mod := &pkg.Modules[i]
+			for _, decl := range mod.Declarations {
+				if ceDecl, ok := decl.(*M.CustomElementDeclaration); ok && ceDecl.TagName == tagName {
+					return ceDecl
+				}
+			}
+		}
+	}
+	return nil
+}
+
 // buildRelationshipDetector populates the relationship detector with all elements.
 // This method must be called while holding ctx.mu lock.
 func (ctx *MCPContext) buildRelationshipDetector() {
@@ -157,27 +176,7 @@ func (ctx *MCPContext) buildRelationshipDetector() {
 		}
 
 		// Find the full declaration in the manifests for class info (superclass, mixins)
-		var ced *M.CustomElementDeclaration
-		for _, pkg := range ctx.lspRegistry.Manifests {
-			if pkg == nil {
-				continue
-			}
-			for i := range pkg.Modules {
-				mod := &pkg.Modules[i]
-				for _, decl := range mod.Declarations {
-					if ceDecl, ok := decl.(*M.CustomElementDeclaration); ok && ceDecl.TagName == tagName {
-						ced = ceDecl
-						break
-					}
-				}
-				if ced != nil {
-					break
-				}
-			}
-			if ced != nil {
-				break
-			}
-		}
+		ced := ctx.findDeclaration(tagName)
 
 		data := relationships.ElementData{
 			TagName:     tagName,
