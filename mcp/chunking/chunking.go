@@ -286,6 +286,32 @@ func Chunk(text string, opts Options) string {
 	return strings.Join(result, " ")
 }
 
+// TruncateToByteLimit truncates text to fit within maxLen bytes,
+// using rune-aware truncation to avoid splitting multi-byte UTF-8 characters.
+// Does not append any suffix. Returns empty string if maxLen <= 0.
+func TruncateToByteLimit(text string, maxLen int) string {
+	if maxLen <= 0 {
+		return ""
+	}
+	if len(text) <= maxLen {
+		return text
+	}
+	runes := []rune(text)
+	left, right := 0, len(runes)
+	for left < right {
+		mid := (left + right + 1) / 2
+		if len(string(runes[:mid])) <= maxLen {
+			left = mid
+		} else {
+			right = mid - 1
+		}
+	}
+	if left > 0 {
+		return string(runes[:left])
+	}
+	return ""
+}
+
 // truncateAtWord truncates text at a word boundary, then appends "...".
 // The maxLen parameter specifies the maximum content length before the ellipsis.
 // Note: The returned string may exceed maxLen by up to 3 bytes due to the "..." suffix.
@@ -296,19 +322,8 @@ func truncateAtWord(text string, maxLen int) string {
 		return text
 	}
 
-	// Find a rune-safe prefix that fits in maxLen bytes using binary search.
-	runes := []rune(text)
-	left, right := 0, len(runes)
-	for left < right {
-		mid := (left + right + 1) / 2
-		candidate := string(runes[:mid])
-		if len(candidate) <= maxLen {
-			left = mid
-		} else {
-			right = mid - 1
-		}
-	}
-	truncated := string(runes[:left])
+	// Find a rune-safe prefix that fits in maxLen bytes
+	truncated := TruncateToByteLimit(text, maxLen)
 
 	// Find last space within the safe prefix for word boundary
 	lastSpace := strings.LastIndex(truncated, " ")

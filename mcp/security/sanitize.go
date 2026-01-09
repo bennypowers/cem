@@ -66,26 +66,10 @@ func SanitizeDescriptionWithLength(description string, maxLength int) string {
 			PreserveFirst:    true,
 		})
 		// Hard safety cap: ensure we never exceed maxLength bytes.
-		// Chunking can exceed the limit in edge cases (e.g., long single sentence).
-		// Use rune-aware truncation to avoid cutting multi-byte characters.
-		// Binary search reduces complexity from O(n²) to O(n log n).
+		// Chunking can exceed the limit in edge cases (e.g., long single sentence
+		// with ellipsis). Use shared rune-aware truncation helper.
 		if len(description) > maxLength {
-			runes := []rune(description)
-			left, right := 0, len(runes)
-			for left < right {
-				mid := (left + right + 1) / 2
-				candidate := string(runes[:mid])
-				if len(candidate) <= maxLength {
-					left = mid
-				} else {
-					right = mid - 1
-				}
-			}
-			if left > 0 {
-				description = string(runes[:left])
-			} else {
-				description = ""
-			}
+			description = chunking.TruncateToByteLimit(description, maxLength)
 		}
 	}
 
