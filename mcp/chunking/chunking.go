@@ -57,7 +57,7 @@ type Options struct {
 	PriorityKeywords []string
 
 	// PreserveFirst ensures the first sentence is always included.
-	// Default is true.
+	// Set to true when using DefaultOptions(). Zero value (false) disables this behavior.
 	PreserveFirst bool
 }
 
@@ -179,20 +179,30 @@ func Chunk(text string, opts Options) string {
 
 	// Add priority sentences
 	for _, s := range prioritySentences {
-		if currentLen+len(s)+1 > opts.MaxLength && len(result) > 0 {
+		// Account for space delimiter only when joining with existing sentences
+		spaceNeeded := 0
+		if len(result) > 0 {
+			spaceNeeded = 1
+		}
+		if currentLen+spaceNeeded+len(s) > opts.MaxLength && len(result) > 0 {
 			break
 		}
 		result = append(result, s)
-		currentLen += len(s) + 1 // +1 for space
+		currentLen += spaceNeeded + len(s)
 	}
 
 	// Add first sentence if not already included and PreserveFirst is true
 	if opts.PreserveFirst && firstSentence != "" {
 		if !slices.Contains(result, firstSentence) {
 			// Insert first sentence at the beginning
-			if currentLen+len(firstSentence)+1 <= opts.MaxLength {
+			// Space needed after first sentence if result has content
+			spaceNeeded := 0
+			if len(result) > 0 {
+				spaceNeeded = 1
+			}
+			if currentLen+spaceNeeded+len(firstSentence) <= opts.MaxLength {
 				result = append([]string{firstSentence}, result...)
-				currentLen += len(firstSentence) + 1
+				currentLen += spaceNeeded + len(firstSentence)
 			} else if len(result) == 0 {
 				// No content yet and first sentence is too long - truncate it
 				truncated := truncateAtWord(firstSentence, opts.MaxLength)
@@ -204,11 +214,12 @@ func Chunk(text string, opts Options) string {
 
 	// Fill remaining space with other sentences
 	for _, s := range otherSentences {
-		if currentLen+len(s)+1 > opts.MaxLength {
+		// Always need a space since we have at least priority or first sentence
+		if currentLen+1+len(s) > opts.MaxLength {
 			break
 		}
 		result = append(result, s)
-		currentLen += len(s) + 1
+		currentLen += 1 + len(s)
 	}
 
 	return strings.Join(result, " ")

@@ -19,7 +19,6 @@ package security
 import (
 	"regexp"
 	"strings"
-	"unicode/utf8"
 
 	"bennypowers.dev/cem/mcp/chunking"
 )
@@ -62,12 +61,16 @@ func SanitizeDescriptionWithLength(description string, maxLength int) string {
 		})
 		// Hard safety cap: ensure we never exceed maxLength bytes.
 		// Chunking can exceed the limit in edge cases (e.g., long single sentence).
+		// Use rune-aware truncation to avoid cutting multi-byte characters.
 		if len(description) > maxLength {
-			cut := maxLength
-			for cut > 0 && !utf8.ValidString(description[:cut]) {
-				cut--
+			runes := []rune(description)
+			for i := len(runes); i > 0; i-- {
+				candidate := string(runes[:i])
+				if len(candidate) <= maxLength {
+					description = candidate
+					break
+				}
 			}
-			description = description[:cut]
 		}
 	}
 

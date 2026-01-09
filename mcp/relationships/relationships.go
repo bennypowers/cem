@@ -65,6 +65,8 @@ type Detector struct {
 	elements map[string]ElementData
 	// classToTag maps class names to tag names
 	classToTag map[string]string
+	// classToSubclasses maps class names to tag names of elements that extend them
+	classToSubclasses map[string][]string
 	// moduleToTags maps module paths to tag names
 	moduleToTags map[string][]string
 	// packageToTags maps package names to tag names
@@ -76,16 +78,24 @@ type Detector struct {
 // NewDetector creates a new relationship detector.
 func NewDetector() *Detector {
 	return &Detector{
-		elements:      make(map[string]ElementData),
-		classToTag:    make(map[string]string),
-		moduleToTags:  make(map[string][]string),
-		packageToTags: make(map[string][]string),
-		mixinToTags:   make(map[string][]string),
+		elements:          make(map[string]ElementData),
+		classToTag:        make(map[string]string),
+		classToSubclasses: make(map[string][]string),
+		moduleToTags:      make(map[string][]string),
+		packageToTags:     make(map[string][]string),
+		mixinToTags:       make(map[string][]string),
 	}
 }
 
 // AddElement adds an element to the detector for relationship analysis.
+// If an element with the same TagName already exists, it will be replaced
+// and all stale index entries will be removed.
 func (d *Detector) AddElement(data ElementData) {
+	// If element already exists, remove stale index entries first
+	if existing, exists := d.elements[data.TagName]; exists {
+		d.removeFromIndices(existing)
+	}
+
 	d.elements[data.TagName] = data
 
 	// Index by class name
@@ -108,6 +118,56 @@ func (d *Detector) AddElement(data ElementData) {
 		mixinName := mixin.Name
 		d.mixinToTags[mixinName] = append(d.mixinToTags[mixinName], data.TagName)
 	}
+
+	// Index for reverse subclass lookup
+	if data.Superclass != nil && data.Superclass.Name != "" {
+		d.classToSubclasses[data.Superclass.Name] = append(
+			d.classToSubclasses[data.Superclass.Name],
+			data.TagName,
+		)
+	}
+}
+
+// removeFromIndices removes an element's entries from all indices.
+func (d *Detector) removeFromIndices(data ElementData) {
+	// Remove from classToTag
+	if data.ClassName != "" {
+		delete(d.classToTag, data.ClassName)
+	}
+
+	// Remove from moduleToTags
+	if data.ModulePath != "" {
+		d.moduleToTags[data.ModulePath] = removeFromSlice(d.moduleToTags[data.ModulePath], data.TagName)
+	}
+
+	// Remove from packageToTags
+	if data.PackageName != "" {
+		d.packageToTags[data.PackageName] = removeFromSlice(d.packageToTags[data.PackageName], data.TagName)
+	}
+
+	// Remove from mixinToTags
+	for _, mixin := range data.Mixins {
+		mixinName := mixin.Name
+		d.mixinToTags[mixinName] = removeFromSlice(d.mixinToTags[mixinName], data.TagName)
+	}
+
+	// Remove from classToSubclasses
+	if data.Superclass != nil && data.Superclass.Name != "" {
+		d.classToSubclasses[data.Superclass.Name] = removeFromSlice(
+			d.classToSubclasses[data.Superclass.Name],
+			data.TagName,
+		)
+	}
+}
+
+// removeFromSlice removes the first occurrence of value from slice.
+func removeFromSlice(slice []string, value string) []string {
+	for i, v := range slice {
+		if v == value {
+			return append(slice[:i], slice[i+1:]...)
+		}
+	}
+	return slice
 }
 
 // DetectRelationships returns all relationships for the given element.
@@ -130,14 +190,14 @@ func (d *Detector) DetectRelationships(tagName string) []Relationship {
 		}
 	}
 
-	// Check for elements that inherit from this element (subclass)
-	for _, otherData := range d.elements {
-		if otherData.TagName == tagName {
-			continue
-		}
-		if otherData.Superclass != nil && otherData.Superclass.Name == data.ClassName {
+	// Check for elements that inherit from this element (subclass) using reverse index
+	if data.ClassName != "" {
+		for _, subclassTag := range d.classToSubclasses[data.ClassName] {
+			if subclassTag == tagName {
+				continue
+			}
 			rels = append(rels, Relationship{
-				TargetTagName: otherData.TagName,
+				TargetTagName: subclassTag,
 				Type:          Subclass,
 				Via:           data.ClassName,
 			})

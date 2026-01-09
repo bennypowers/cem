@@ -150,37 +150,51 @@ func (ctx *MCPContext) LoadManifests() error {
 // buildRelationshipDetector populates the relationship detector with all elements.
 // This method must be called while holding ctx.mu lock.
 func (ctx *MCPContext) buildRelationshipDetector() {
-	// Iterate through manifests to get full declarations with class info
-	for _, pkg := range ctx.lspRegistry.Manifests {
-		if pkg == nil {
+	// Use ElementDefinitions which has the correct package name for each element
+	for tagName, elemDef := range ctx.lspRegistry.ElementDefinitions {
+		if elemDef == nil {
 			continue
 		}
-		for i := range pkg.Modules {
-			mod := &pkg.Modules[i]
-			for _, decl := range mod.Declarations {
-				ced, ok := decl.(*M.CustomElementDeclaration)
-				if !ok || ced == nil {
-					continue
+
+		// Find the full declaration in the manifests for class info (superclass, mixins)
+		var ced *M.CustomElementDeclaration
+		for _, pkg := range ctx.lspRegistry.Manifests {
+			if pkg == nil {
+				continue
+			}
+			for i := range pkg.Modules {
+				mod := &pkg.Modules[i]
+				for _, decl := range mod.Declarations {
+					if ceDecl, ok := decl.(*M.CustomElementDeclaration); ok && ceDecl.TagName == tagName {
+						ced = ceDecl
+						break
+					}
 				}
-
-				data := relationships.ElementData{
-					TagName:     ced.TagName,
-					ClassName:   ced.Name(),
-					ModulePath:  mod.Path,
-					PackageName: pkg.SchemaVersion, // Use schema version as package identifier for now
+				if ced != nil {
+					break
 				}
-
-				// Extract superclass if available from ClassLike
-				if ced.Superclass != nil {
-					data.Superclass = ced.Superclass
-				}
-
-				// Extract mixins from ClassLike
-				data.Mixins = ced.Mixins
-
-				ctx.relationshipDetector.AddElement(data)
+			}
+			if ced != nil {
+				break
 			}
 		}
+
+		data := relationships.ElementData{
+			TagName:     tagName,
+			ClassName:   elemDef.GetClassName(),
+			ModulePath:  elemDef.ModulePath(),
+			PackageName: elemDef.PackageName(),
+		}
+
+		// Extract superclass and mixins if we found the full declaration
+		if ced != nil {
+			if ced.Superclass != nil {
+				data.Superclass = ced.Superclass
+			}
+			data.Mixins = ced.Mixins
+		}
+
+		ctx.relationshipDetector.AddElement(data)
 	}
 }
 

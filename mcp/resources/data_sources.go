@@ -407,16 +407,20 @@ func convertCssStates(states []manifest.CssCustomState) []map[string]any {
 }
 
 func convertRelationships(rels []relationships.Relationship) []map[string]any {
+	// Copy to avoid mutating caller's slice
+	sorted := make([]relationships.Relationship, len(rels))
+	copy(sorted, rels)
+
 	// Sort for deterministic output: by type, then by target
-	sort.Slice(rels, func(i, j int) bool {
-		if rels[i].Type != rels[j].Type {
-			return rels[i].Type < rels[j].Type
+	sort.Slice(sorted, func(i, j int) bool {
+		if sorted[i].Type != sorted[j].Type {
+			return sorted[i].Type < sorted[j].Type
 		}
-		return rels[i].TargetTagName < rels[j].TargetTagName
+		return sorted[i].TargetTagName < sorted[j].TargetTagName
 	})
 
-	result := make([]map[string]any, len(rels))
-	for i, rel := range rels {
+	result := make([]map[string]any, len(sorted))
+	for i, rel := range sorted {
 		m := map[string]any{
 			"target": rel.TargetTagName,
 			"type":   string(rel.Type),
