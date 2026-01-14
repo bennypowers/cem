@@ -129,7 +129,12 @@ func decodeJSON[T any](rc io.ReadCloser) (*T, error) {
 	return &out, nil
 }
 
-// IsPackageSpecifier checks if a string is an npm package specifier.
+// IsPackageSpecifier checks if a string is an npm or jsr package specifier.
 func IsPackageSpecifier(spec string) bool {
 	return strings.HasPrefix(spec, "npm:") || strings.HasPrefix(spec, "jsr:")
+}
+
+// IsURLSpecifier checks if a string is an HTTP(S) URL.
+func IsURLSpecifier(spec string) bool {
+	return strings.HasPrefix(spec, "https://") || strings.HasPrefix(spec, "http://")
 }

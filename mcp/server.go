@@ -40,6 +40,8 @@ type ServerInfo struct {
 // ServerConfig contains configuration options for the MCP server
 type ServerConfig struct {
 	MaxDescriptionLength int
+	// Additional packages to load manifests from (URLs, npm:, or jsr: specifiers)
+	AdditionalPackages []string
 }
 
 // Server implements an MCP server for custom elements
@@ -115,6 +117,14 @@ func (s *Server) Run(ctx context.Context) error {
 	err := s.registry.LoadManifests()
 	if err != nil {
 		return fmt.Errorf("failed to load manifests: %w", err)
+	}
+
+	// Load additional packages from CLI args (merged with config)
+	if len(s.config.AdditionalPackages) > 0 {
+		helpers.SafeDebugLog("Loading %d additional packages from CLI args", len(s.config.AdditionalPackages))
+		if err := s.registry.LSPRegistry().LoadAdditionalPackages(s.config.AdditionalPackages); err != nil {
+			helpers.SafeDebugLog("Warning: Error loading additional packages: %v", err)
+		}
 	}
 
 	// Run the MCP server

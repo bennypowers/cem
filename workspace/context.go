@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 
 	"bennypowers.dev/cem/types"
+	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -80,12 +81,26 @@ func GetWorkspaceContext(cmd *cobra.Command) (types.WorkspaceContext, error) {
 	}
 }
 
+// GetContextForSpec creates the appropriate WorkspaceContext for a given package specifier.
+// It accepts URLs (https://...), npm specifiers (npm:@scope/pkg), jsr specifiers (jsr:...),
+// and local file paths. The returned context must be Init()'d before use.
+func GetContextForSpec(spec string) (types.WorkspaceContext, error) {
+	return getAppropriateContextForSpec(spec, "")
+}
+
 func getAppropriateContextForSpec(spec, cmdName string) (ctx types.WorkspaceContext, err error) {
-	if !IsPackageSpecifier(spec) {
-		// if it's a file path, use it
-		return NewFileSystemWorkspaceContext(spec), nil
-	} else {
-		// if it's a specifier, try to get it from node_modules
+	// Check for URL specifiers first (https://...)
+	if IsURLSpecifier(spec) {
+		if cmdName == "generate" {
+			return nil, errors.New("generate command cannot be used with a remote URL")
+		}
+		cacheDir := filepath.Join(xdg.CacheHome, "cem", "urls")
+		return NewURLWorkspaceContext(spec, cacheDir), nil
+	}
+
+	// Check for npm/jsr package specifiers (npm:..., jsr:...)
+	if IsPackageSpecifier(spec) {
+		// Try to get it from node_modules first
 		name, _, err := parseNpmSpecifier(spec)
 		if err != nil {
 			return nil, err
@@ -94,13 +109,15 @@ func getAppropriateContextForSpec(spec, cmdName string) (ctx types.WorkspaceCont
 		if stat, err := os.Stat(localPath); err == nil && stat.IsDir() {
 			return NewFileSystemWorkspaceContext(localPath), nil
 		}
-		// finally, we fetch from the network
+		// Fetch from the network
 		if cmdName == "generate" {
 			return nil, errors.New("generate command cannot be used with a remote package specifier")
 		}
-		ctx := NewRemoteWorkspaceContext(spec)
-		return ctx, nil
+		return NewRemoteWorkspaceContext(spec), nil
 	}
+
+	// Otherwise, it's a file path
+	return NewFileSystemWorkspaceContext(spec), nil
 }
 
 func fileExists(path string) bool {

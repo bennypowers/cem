@@ -76,6 +76,28 @@ cem mcp [flags]
 ```
 
 **Flags:**
-- `--package <path>` - Specify project directory
+- `--package <path>` - Specify project directory or package specifier (npm:, jsr:, or URL)
+- `--additional-packages <specs>` - Load additional packages alongside local project (repeatable)
 - `--max-description-length <num>` - Override 2000 character description limit
 - `--verbose` - Enable detailed logging
+
+### Loading Additional Packages
+
+Load elements from external packages that aren't in your local project:
+
+```bash
+# Single additional package
+cem mcp --additional-packages npm:@rhds/elements@2.0.0
+
+# Multiple packages
+cem mcp --additional-packages npm:@vaadin/button@24.3.5 \
+        --additional-packages https://cdn.jsdelivr.net/npm/@example/components/
+```
+
+Or configure in `.config/cem.yaml`:
+
+```yaml
+additionalPackages:
+  - npm:@rhds/elements@2.0.0
+  - https://cdn.jsdelivr.net/npm/@shortfuse/materialdesignweb/
+```

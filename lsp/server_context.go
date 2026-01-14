@@ -57,6 +57,15 @@ func (s *Server) InitializeManifests() error {
 		return fmt.Errorf("failed to load manifests: %w", err)
 	}
 
+	// Load additional packages from initializationOptions
+	if len(s.additionalPackages) > 0 {
+		helpers.SafeDebugLog("Loading %d additional packages from initializationOptions", len(s.additionalPackages))
+		if err := s.registry.LoadAdditionalPackages(s.additionalPackages); err != nil {
+			helpers.SafeDebugLog("Warning: Error loading additional packages: %v", err)
+			// Don't fail startup if additional package loading fails
+		}
+	}
+
 	// Start file watching for manifest changes
 	if err := s.registry.StartFileWatching(s.handleManifestReload); err != nil {
 		helpers.SafeDebugLog("Warning: Could not start file watching: %v", err)
@@ -71,6 +80,11 @@ func (s *Server) InitializeManifests() error {
 	}
 
 	return nil
+}
+
+// SetAdditionalPackages sets the additional packages to load during manifest initialization
+func (s *Server) SetAdditionalPackages(packages []string) {
+	s.additionalPackages = packages
 }
 
 // Document operations

@@ -169,6 +169,10 @@ func (m *MockServerContext) UpdateWorkspaceFromLSP(rootURI *string, workspaceFol
 	return nil
 }
 
+func (m *MockServerContext) SetAdditionalPackages(packages []string) {
+	// Mock implementation - no-op for tests
+}
+
 func (m *MockServerContext) Close() error {
 	// Mock implementation - nothing to clean up
 	return nil

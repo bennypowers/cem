@@ -126,6 +126,9 @@ type CemConfig struct {
 	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl" yaml:"sourceControlRootUrl"`
 	// Verbose logging output
 	Verbose bool `mapstructure:"verbose" yaml:"verbose"`
+	// Additional packages to load manifests from.
+	// Accepts URLs (https://cdn.example.com/pkg/), npm specifiers (npm:@scope/pkg), or jsr specifiers.
+	AdditionalPackages []string `mapstructure:"additionalPackages" yaml:"additionalPackages"`
 }
 
 // Validate validates the configuration and returns an error if invalid

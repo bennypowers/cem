@@ -27,6 +27,11 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
+// cemInitializationOptions represents the custom initialization options for CEM LSP
+type cemInitializationOptions struct {
+	AdditionalPackages []string `json:"additionalPackages,omitempty"`
+}
+
 // Initialize handles the LSP initialize request
 func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol.InitializeParams) (any, error) {
 	// Configure centralized logger for LSP mode
@@ -55,6 +60,15 @@ func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol
 	if err := ctx.UpdateWorkspaceFromLSP(params.RootURI, params.WorkspaceFolders); err != nil {
 		helpers.SafeDebugLog("[INITIALIZE] Warning: Failed to update workspace from LSP parameters: %v", err)
 		// Don't fail initialization, just log the warning
+	}
+
+	// Parse initializationOptions for additional packages
+	if params.InitializationOptions != nil {
+		options := parseInitializationOptions(params.InitializationOptions)
+		if len(options.AdditionalPackages) > 0 {
+			helpers.SafeDebugLog("[INITIALIZE] Found %d additional packages in initializationOptions", len(options.AdditionalPackages))
+			ctx.SetAdditionalPackages(options.AdditionalPackages)
+		}
 	}
 
 	// Define server capabilities
@@ -95,4 +109,39 @@ func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol
 			Version: &serverVersion,
 		},
 	}, nil
+}
+
+// parseInitializationOptions attempts to parse the initializationOptions into our expected format.
+// It handles various formats that editors might send (map, struct, etc.)
+func parseInitializationOptions(options any) cemInitializationOptions {
+	result := cemInitializationOptions{}
+
+	// The options could come in various forms depending on the editor
+	switch opts := options.(type) {
+	case map[string]any:
+		// Most common: a JSON object decoded as map[string]any
+		if additionalPackages, ok := opts["additionalPackages"]; ok {
+			result.AdditionalPackages = parseStringSlice(additionalPackages)
+		}
+	}
+
+	return result
+}
+
+// parseStringSlice attempts to convert various formats to []string
+func parseStringSlice(v any) []string {
+	switch arr := v.(type) {
+	case []string:
+		return arr
+	case []any:
+		// JSON arrays are typically decoded as []interface{}
+		result := make([]string, 0, len(arr))
+		for _, item := range arr {
+			if s, ok := item.(string); ok {
+				result = append(result, s)
+			}
+		}
+		return result
+	}
+	return nil
 }
