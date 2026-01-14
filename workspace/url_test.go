@@ -281,6 +281,8 @@ func TestURLWorkspaceContext_Cleanup(t *testing.T) {
 				"schemaVersion": "1.0.0",
 				"modules":       []any{},
 			})
+		default:
+			http.NotFound(w, r)
 		}
 	}))
 	defer server.Close()

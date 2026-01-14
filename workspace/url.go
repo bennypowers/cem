@@ -113,7 +113,7 @@ func (c *URLWorkspaceContext) Config() (*C.CemConfig, error) {
 
 func (c *URLWorkspaceContext) PackageJSON() (*M.PackageJSON, error) {
 	if c.packageJSON == nil {
-		return nil, ErrNoManifest
+		return nil, ErrNoPackageJSON
 	}
 	return c.packageJSON, nil
 }

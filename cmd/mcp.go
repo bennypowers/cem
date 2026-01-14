@@ -97,6 +97,6 @@ Tools provided:
 
 func init() {
 	mcpCmd.Flags().IntP("max-description-length", "", 2000, "Maximum length for description fields before truncation")
-	mcpCmd.Flags().StringSliceP("additional-packages", "a", nil, "Additional packages to load (URLs, npm:, or jsr: specifiers)")
+	mcpCmd.Flags().StringSliceP("additional-packages", "a", nil, "Additional packages to load (URLs, npm:, or jsr: specifiers). Failures are logged as warnings; server continues with available packages.")
 	rootCmd.AddCommand(mcpCmd)
 }

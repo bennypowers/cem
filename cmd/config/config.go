@@ -184,5 +184,10 @@ func (c *CemConfig) Clone() *CemConfig {
 		clone.Serve.URLRewrites = make([]URLRewrite, len(c.Serve.URLRewrites))
 		copy(clone.Serve.URLRewrites, c.Serve.URLRewrites)
 	}
+	// Deep copy additional packages
+	if c.AdditionalPackages != nil {
+		clone.AdditionalPackages = make([]string, len(c.AdditionalPackages))
+		copy(clone.AdditionalPackages, c.AdditionalPackages)
+	}
 	return &clone
 }

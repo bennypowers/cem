@@ -31,20 +31,21 @@ import (
 
 // MockServerContext provides a unified mock implementation of ServerContext for all tests
 type MockServerContext struct {
-	mu               sync.RWMutex
-	Documents        map[string]types.Document
-	TagNames         []string
-	Elements         map[string]*M.CustomElement
-	AttributesMap    map[string]map[string]*M.Attribute
-	SlotsMap         map[string][]M.Slot
-	ElementDefsMap   map[string]types.ElementDefinition
-	DescriptionsMap  map[string]string
-	Manifests        []*M.Package
-	WorkspaceRootStr string
-	DocumentMgr      types.DocumentManager
-	QueryMgr         *queries.QueryManager
-	ModuleGraphInst  *modulegraph.ModuleGraph
-	FS               platform.FileSystem
+	mu                 sync.RWMutex
+	Documents          map[string]types.Document
+	TagNames           []string
+	Elements           map[string]*M.CustomElement
+	AttributesMap      map[string]map[string]*M.Attribute
+	SlotsMap           map[string][]M.Slot
+	ElementDefsMap     map[string]types.ElementDefinition
+	DescriptionsMap    map[string]string
+	Manifests          []*M.Package
+	WorkspaceRootStr   string
+	DocumentMgr        types.DocumentManager
+	QueryMgr           *queries.QueryManager
+	ModuleGraphInst    *modulegraph.ModuleGraph
+	FS                 platform.FileSystem
+	AdditionalPackages []string
 	types.Registry
 }
 
@@ -170,7 +171,9 @@ func (m *MockServerContext) UpdateWorkspaceFromLSP(rootURI *string, workspaceFol
 }
 
 func (m *MockServerContext) SetAdditionalPackages(packages []string) {
-	// Mock implementation - no-op for tests
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.AdditionalPackages = packages
 }
 
 func (m *MockServerContext) Close() error {
