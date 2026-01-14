@@ -225,7 +225,7 @@ func TestURLWorkspaceContext_CustomElementsManifestPath(t *testing.T) {
 
 	// Should return the path to the manifest
 	manifestPath := ctx.CustomElementsManifestPath()
-	assert.Contains(t, manifestPath, "custom-elements.json")
+	assert.Equal(t, "dist/custom-elements.json", manifestPath)
 }
 
 func TestURLWorkspaceContext_Caching(t *testing.T) {

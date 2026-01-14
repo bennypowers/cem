@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package workspace
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -136,12 +137,12 @@ func (c *URLWorkspaceContext) ReadFile(filePath string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return io.NopCloser(strings.NewReader(string(content))), nil
+	return io.NopCloser(bytes.NewReader(content)), nil
 }
 
 func (c *URLWorkspaceContext) Glob(pattern string) ([]string, error) {
 	// Glob is not supported for URL contexts
-	return nil, nil
+	return nil, ErrRemoteUnsupported
 }
 
 func (c *URLWorkspaceContext) OutputWriter(filePath string) (io.WriteCloser, error) {

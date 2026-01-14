@@ -94,9 +94,7 @@ func getAppropriateContextForSpec(spec, cmdName string) (ctx types.WorkspaceCont
 		if cmdName == "generate" {
 			return nil, errors.New("generate command cannot be used with a remote URL")
 		}
-		if xdg.CacheHome == "" {
-			return nil, errors.New("could not determine cache directory: XDG_CACHE_HOME not set")
-		}
+		// xdg.CacheHome defaults to ~/.cache on Unix or appropriate location on other platforms
 		cacheDir := filepath.Join(xdg.CacheHome, "cem", "urls")
 		return NewURLWorkspaceContext(spec, cacheDir), nil
 	}
