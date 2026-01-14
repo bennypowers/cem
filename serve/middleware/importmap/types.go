@@ -56,3 +56,32 @@ type Config struct {
 	WorkspacePackages []middleware.WorkspacePackage // If set, generate workspace-mode import map (flattened scopes)
 	FS                platform.FileSystem           // Filesystem abstraction (defaults to OS filesystem if nil)
 }
+
+// DependencyGraph tracks package dependencies for incremental updates.
+// This is an opaque wrapper around mappa's DependencyGraph.
+type DependencyGraph struct {
+	graph any // *resolve.DependencyGraph from mappa
+}
+
+// IncrementalResult contains both the import map and dependency graph.
+// Use this for initial resolution when you plan to do incremental updates.
+type IncrementalResult struct {
+	// ImportMap is the generated import map.
+	ImportMap *ImportMap
+
+	// Graph tracks package dependencies for future incremental updates.
+	Graph *DependencyGraph
+}
+
+// IncrementalUpdate describes which packages changed for incremental resolution.
+type IncrementalUpdate struct {
+	// ChangedPackages lists the package names that were modified.
+	// Can be package names from node_modules (e.g., "lit") or workspace packages.
+	ChangedPackages []string
+
+	// PreviousMap is the import map from the last resolution.
+	PreviousMap *ImportMap
+
+	// PreviousGraph is the dependency graph from the last resolution.
+	PreviousGraph *DependencyGraph
+}

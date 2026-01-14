@@ -321,8 +321,9 @@ func (s *Server) SetWatchDir(dir string) error {
 
 	// Generate import map for single-package mode
 	// (Workspace mode generates in InitializeWorkspaceMode instead)
+	// Use GenerateWithGraph to enable incremental updates on hot-reload
 	if !s.isWorkspace && s.config.ImportMap.Generate {
-		importMap, err := importmappkg.Generate(dir, &importmappkg.Config{
+		result, err := importmappkg.GenerateWithGraph(dir, &importmappkg.Config{
 			InputMapPath:   s.config.ImportMap.OverrideFile,
 			ConfigOverride: s.buildConfigOverride(),
 			Logger:         s.logger,
@@ -331,8 +332,10 @@ func (s *Server) SetWatchDir(dir string) error {
 		if err != nil {
 			s.logger.Warning("Failed to generate import map: %v", err)
 			s.importMap = nil
+			s.importMapGraph = nil
 		} else {
-			s.importMap = importMap
+			s.importMap = result.ImportMap
+			s.importMapGraph = result.Graph
 			s.logger.Debug("Generated import map for single-package mode")
 		}
 	} else if !s.config.ImportMap.Generate {
