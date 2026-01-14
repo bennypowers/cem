@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package importmap
 
 import (
+	"fmt"
 	"maps"
 
 	"bennypowers.dev/cem/internal/platform"
@@ -234,7 +235,11 @@ func resolveIncrementalWithMappa(
 	// Extract mappa's dependency graph from our wrapper
 	var mappaGraph *resolve.DependencyGraph
 	if update.PreviousGraph != nil && update.PreviousGraph.graph != nil {
-		mappaGraph = update.PreviousGraph.graph.(*resolve.DependencyGraph)
+		var ok bool
+		mappaGraph, ok = update.PreviousGraph.graph.(*resolve.DependencyGraph)
+		if !ok {
+			return nil, fmt.Errorf("invalid dependency graph type: expected *resolve.DependencyGraph")
+		}
 	}
 
 	// Build mappa's incremental update

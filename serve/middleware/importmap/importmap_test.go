@@ -628,8 +628,10 @@ func TestImportMap_MissingDependencyWarning(t *testing.T) {
 	}
 }
 
-// TestImportMap_NoExportsOrMainWarning verifies warnings for packages without exports/main
-func TestImportMap_NoExportsOrMainWarning(t *testing.T) {
+// TestImportMap_NoExportsOrMainFallback verifies fallback behavior for packages without exports/main
+// TODO(mappa#4): Rename/extend test once mappa supports warnings for missing exports/main
+// See: https://github.com/bennypowers/mappa/issues/4
+func TestImportMap_NoExportsOrMainFallback(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	packageJSON := `{
@@ -659,9 +661,8 @@ func TestImportMap_NoExportsOrMainWarning(t *testing.T) {
 		t.Fatalf("Failed to write broken-lib package.json: %v", err)
 	}
 
-	warnings := []string{}
 	config := &Config{
-		Logger: &testLogger{warnings: &warnings},
+		Logger: &testLogger{},
 	}
 
 	importMap, err := Generate(tmpDir, config)
@@ -674,8 +675,6 @@ func TestImportMap_NoExportsOrMainWarning(t *testing.T) {
 	}
 
 	// Verify import map was generated with trailing slash mapping
-	// TODO(mappa#4): mappa should warn when package has no exports/main
-	// See: https://github.com/bennypowers/mappa/issues/4
 	if _, exists := importMap.Imports["broken-lib/"]; !exists {
 		t.Errorf("Expected trailing slash mapping for broken-lib, got: %v", importMap.Imports)
 	}
