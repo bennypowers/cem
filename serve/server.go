@@ -67,12 +67,13 @@ type Server struct {
 	workspacePackages []middleware.WorkspacePackage // Discovered packages with manifests
 	// Cached routing table for demo routes (both workspace and single-package mode)
 	demoRoutes              map[string]*types.DemoRouteEntry
-	importMap               *importmappkg.ImportMap  // Cached import map (workspace or single-package)
-	sourceControlRootURL    string                   // Source control root URL for demo routing
-	templates               *routes.TemplateRegistry // Template registry for HTML rendering
-	urlRewrites             []config.URLRewrite      // URL rewrites for request path mapping
-	pathResolver            *transform.PathResolver  // Cached path resolver (initialized once)
-	pathResolverSourceFiles []string                 // Files that pathResolver depends on (for hot-reload)
+	importMap               *importmappkg.ImportMap       // Cached import map (workspace or single-package)
+	importMapGraph          *importmappkg.DependencyGraph // Dependency graph for incremental updates
+	sourceControlRootURL    string                        // Source control root URL for demo routing
+	templates               *routes.TemplateRegistry      // Template registry for HTML rendering
+	urlRewrites             []config.URLRewrite           // URL rewrites for request path mapping
+	pathResolver            *transform.PathResolver       // Cached path resolver (initialized once)
+	pathResolverSourceFiles []string                      // Files that pathResolver depends on (for hot-reload)
 }
 
 // NewServer creates a new server with the given port

@@ -231,13 +231,21 @@ func (s *Server) regenerateImportMapIfNeeded(event FileEvent) {
 	workspacePackages := s.workspacePackages
 	watchDir := s.watchDir
 	configOverride := s.buildConfigOverride()
+	previousMap := s.importMap
+	previousGraph := s.importMapGraph
 	s.mu.RUnlock()
 
-	// Perform I/O without lock to avoid blocking other operations
+	// Determine if we can use incremental resolution
+	// Requirements: not workspace mode with explicit packages, have previous state, only package.json changed
+	canUseIncremental := !isWorkspace && previousMap != nil && previousGraph != nil &&
+		event.HasPackageJSON && !event.HasCreates && !event.HasDeletes
+
 	var importMap *importmappkg.ImportMap
+	var importMapGraph *importmappkg.DependencyGraph
 	var err error
+
 	if isWorkspace {
-		// Workspace mode: regenerate workspace import map
+		// Workspace mode with explicit packages: full regeneration (incremental not supported)
 		importMap, err = importmappkg.Generate(workspaceRoot, &importmappkg.Config{
 			InputMapPath:      s.config.ImportMap.OverrideFile,
 			ConfigOverride:    configOverride,
@@ -245,14 +253,44 @@ func (s *Server) regenerateImportMapIfNeeded(event FileEvent) {
 			Logger:            s.logger,
 			FS:                s.fs,
 		})
-	} else {
-		// Single-package mode: regenerate import map
-		importMap, err = importmappkg.Generate(watchDir, &importmappkg.Config{
+	} else if canUseIncremental {
+		// Try incremental resolution
+		changedPackages := s.extractChangedPackages(event.Paths, watchDir)
+		if len(changedPackages) > 0 {
+			result, incErr := importmappkg.GenerateIncremental(watchDir, &importmappkg.Config{
+				InputMapPath:   s.config.ImportMap.OverrideFile,
+				ConfigOverride: configOverride,
+				Logger:         s.logger,
+				FS:             s.fs,
+			}, importmappkg.IncrementalUpdate{
+				ChangedPackages: changedPackages,
+				PreviousMap:     previousMap,
+				PreviousGraph:   previousGraph,
+			})
+			if incErr == nil {
+				importMap = result.ImportMap
+				importMapGraph = result.Graph
+				s.logger.Debug("Incremental import map update for packages: %v", changedPackages)
+			} else {
+				s.logger.Debug("Incremental update failed, falling back to full resolution: %v", incErr)
+			}
+		}
+	}
+
+	// Fall back to full resolution if incremental didn't work or wasn't applicable
+	if importMap == nil && !isWorkspace {
+		result, genErr := importmappkg.GenerateWithGraph(watchDir, &importmappkg.Config{
 			InputMapPath:   s.config.ImportMap.OverrideFile,
 			ConfigOverride: configOverride,
 			Logger:         s.logger,
 			FS:             s.fs,
 		})
+		if genErr == nil {
+			importMap = result.ImportMap
+			importMapGraph = result.Graph
+		} else {
+			err = genErr
+		}
 	}
 
 	// Update state under write lock
@@ -260,11 +298,72 @@ func (s *Server) regenerateImportMapIfNeeded(event FileEvent) {
 	s.mu.Lock()
 	if err != nil {
 		s.logger.Warning("Failed to regenerate import map: %v", err)
-	} else {
+	} else if importMap != nil {
 		s.importMap = importMap
+		s.importMapGraph = importMapGraph
 		s.logger.Debug("Regenerated import map in %v", importMapDuration)
 	}
 	s.mu.Unlock()
+}
+
+// extractChangedPackages extracts package names from changed file paths.
+// For files in node_modules, extracts the package name.
+// For workspace package.json files, extracts the package directory name.
+func (s *Server) extractChangedPackages(paths []string, watchDir string) []string {
+	packages := make(map[string]bool)
+	for _, p := range paths {
+		if !strings.HasSuffix(p, "package.json") {
+			continue
+		}
+
+		// Normalize path and compute relative path from watchDir
+		cleanPath := filepath.Clean(p)
+		rel, err := filepath.Rel(watchDir, cleanPath)
+		if err != nil {
+			rel = cleanPath // Fall back to original if Rel fails
+		}
+
+		// Convert to forward slashes for consistent splitting across platforms
+		relSlash := filepath.ToSlash(rel)
+		parts := strings.Split(relSlash, "/")
+
+		// Find "node_modules" component in path
+		nodeModulesIdx := -1
+		for i, part := range parts {
+			if part == "node_modules" {
+				nodeModulesIdx = i
+				break
+			}
+		}
+
+		if nodeModulesIdx >= 0 && nodeModulesIdx+1 < len(parts) {
+			// Extract package name from node_modules path
+			// e.g., "node_modules/lit/package.json" -> "lit"
+			// e.g., "node_modules/@lit/reactive-element/package.json" -> "@lit/reactive-element"
+			afterNodeModules := parts[nodeModulesIdx+1:]
+			if len(afterNodeModules) >= 2 {
+				if strings.HasPrefix(afterNodeModules[0], "@") && len(afterNodeModules) >= 3 {
+					// Scoped package: @scope/name
+					packages[afterNodeModules[0]+"/"+afterNodeModules[1]] = true
+				} else {
+					packages[afterNodeModules[0]] = true
+				}
+			}
+		} else {
+			// Workspace package.json (not under node_modules)
+			// Use the containing directory name as the package identifier
+			pkgDir := filepath.Dir(cleanPath)
+			pkgName := filepath.Base(pkgDir)
+			if pkgName != "." && pkgName != "/" {
+				packages[pkgName] = true
+			}
+		}
+	}
+	result := make([]string, 0, len(packages))
+	for pkg := range packages {
+		result = append(result, pkg)
+	}
+	return result
 }
 
 // broadcastSmartReload sends reload messages to affected pages or all clients
