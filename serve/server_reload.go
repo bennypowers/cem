@@ -315,18 +315,47 @@ func (s *Server) extractChangedPackages(paths []string, watchDir string) []strin
 		if !strings.HasSuffix(p, "package.json") {
 			continue
 		}
-		// Check if it's in node_modules
-		if idx := strings.Index(p, "node_modules/"); idx >= 0 {
-			// Extract package name from path like "node_modules/lit/package.json"
-			rest := p[idx+len("node_modules/"):]
-			parts := strings.Split(rest, "/")
-			if len(parts) >= 2 {
-				if strings.HasPrefix(parts[0], "@") && len(parts) >= 3 {
+
+		// Normalize path and compute relative path from watchDir
+		cleanPath := filepath.Clean(p)
+		rel, err := filepath.Rel(watchDir, cleanPath)
+		if err != nil {
+			rel = cleanPath // Fall back to original if Rel fails
+		}
+
+		// Convert to forward slashes for consistent splitting across platforms
+		relSlash := filepath.ToSlash(rel)
+		parts := strings.Split(relSlash, "/")
+
+		// Find "node_modules" component in path
+		nodeModulesIdx := -1
+		for i, part := range parts {
+			if part == "node_modules" {
+				nodeModulesIdx = i
+				break
+			}
+		}
+
+		if nodeModulesIdx >= 0 && nodeModulesIdx+1 < len(parts) {
+			// Extract package name from node_modules path
+			// e.g., "node_modules/lit/package.json" -> "lit"
+			// e.g., "node_modules/@lit/reactive-element/package.json" -> "@lit/reactive-element"
+			afterNodeModules := parts[nodeModulesIdx+1:]
+			if len(afterNodeModules) >= 2 {
+				if strings.HasPrefix(afterNodeModules[0], "@") && len(afterNodeModules) >= 3 {
 					// Scoped package: @scope/name
-					packages[parts[0]+"/"+parts[1]] = true
+					packages[afterNodeModules[0]+"/"+afterNodeModules[1]] = true
 				} else {
-					packages[parts[0]] = true
+					packages[afterNodeModules[0]] = true
 				}
+			}
+		} else {
+			// Workspace package.json (not under node_modules)
+			// Use the containing directory name as the package identifier
+			pkgDir := filepath.Dir(cleanPath)
+			pkgName := filepath.Base(pkgDir)
+			if pkgName != "." && pkgName != "/" {
+				packages[pkgName] = true
 			}
 		}
 	}
