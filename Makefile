@@ -19,7 +19,7 @@ else
     RACE_LDFLAGS :=
 endif
 
-.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-generate bench-lookup bench-lsp bench-lsp-cem bench-lsp-wc setup-wc-toolkit profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major examples-analyze examples-verify examples-clean linux-x64 linux-arm64 darwin-x64 darwin-arm64 win32-x64 win32-arm64
+.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-generate bench-lookup bench-lsp bench-lsp-cem bench-lsp-wc setup-wc-toolkit profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image build-shared-windows-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major examples-analyze examples-verify examples-clean linux-x64 linux-arm64 darwin-x64 darwin-arm64 win32-x64 win32-arm64
 
 build: generate
 	@mkdir -p dist
@@ -88,16 +88,32 @@ darwin-arm64: generate
 	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CC=clang \
 		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-darwin-arm64 .
 
-# Windows targets (cross-compile via podman container)
-win32-x64: build-windows-cc-image
-	@mkdir -p dist/bin
-	podman run --rm -v $(PWD):/app:Z -w /app \
-		-e GOARCH=amd64 -e OUTPUT_DIR=dist/bin $(WINDOWS_CC_IMAGE)
+# Windows targets for go-release-workflows (use shared Containerfile.windows)
+SHARED_WINDOWS_CC_IMAGE := cem-shared-windows-cc
 
-win32-arm64: build-windows-cc-image
+build-shared-windows-image:
+	@if [ ! -f Containerfile.windows ]; then \
+		echo "Error: Containerfile.windows not found. Run setup-windows-build action first."; \
+		exit 1; \
+	fi
+	@if ! podman image exists $(SHARED_WINDOWS_CC_IMAGE); then \
+		echo "Building shared Windows cross-compile image..."; \
+		podman build -t $(SHARED_WINDOWS_CC_IMAGE) -f Containerfile.windows . ; \
+	else \
+		echo "Image $(SHARED_WINDOWS_CC_IMAGE) already exists, skipping build."; \
+	fi
+
+win32-x64: build-shared-windows-image
 	@mkdir -p dist/bin
 	podman run --rm -v $(PWD):/app:Z -w /app \
-		-e GOARCH=arm64 -e OUTPUT_DIR=dist/bin $(WINDOWS_CC_IMAGE)
+		-e GOARCH=amd64 -e BINARY_NAME=cem $(SHARED_WINDOWS_CC_IMAGE)
+	@mv dist/bin/cem-windows-amd64.exe dist/bin/cem-win32-x64.exe
+
+win32-arm64: build-shared-windows-image
+	@mkdir -p dist/bin
+	podman run --rm -v $(PWD):/app:Z -w /app \
+		-e GOARCH=arm64 -e BINARY_NAME=cem $(SHARED_WINDOWS_CC_IMAGE)
+	@mv dist/bin/cem-windows-arm64.exe dist/bin/cem-win32-arm64.exe
 
 ## Code generation and dependencies
 generate:
