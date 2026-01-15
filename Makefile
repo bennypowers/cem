@@ -19,7 +19,7 @@ else
     RACE_LDFLAGS :=
 endif
 
-.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-generate bench-lookup bench-lsp bench-lsp-cem bench-lsp-wc setup-wc-toolkit profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major examples-analyze examples-verify examples-clean
+.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-generate bench-lookup bench-lsp bench-lsp-cem bench-lsp-wc setup-wc-toolkit profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image build-shared-windows-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major examples-analyze examples-verify examples-clean linux-x64 linux-arm64 darwin-x64 darwin-arm64 win32-x64 win32-arm64
 
 build: generate
 	@mkdir -p dist
@@ -34,7 +34,7 @@ install: build
 all: windows
 
 clean:
-	rm -rf dist/ cpu.out cover.out coverage/ cmd/coverage.e2e/ artifacts platforms
+	rm -rf dist/ cpu.out cover.out coverage/ cmd/coverage.e2e/ artifacts platforms existing-binaries
 
 # Convenience target to build both Windows variants
 windows: windows-x64 windows-arm64
@@ -54,11 +54,71 @@ rebuild-windows-cc-image:
 
 windows-x64: build-windows-cc-image
 	mkdir -p dist
-	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=amd64 $(WINDOWS_CC_IMAGE)
+	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=amd64 -e GOEXPERIMENT=$(GOEXPERIMENT) $(WINDOWS_CC_IMAGE)
 
 windows-arm64: build-windows-cc-image
 	mkdir -p dist
-	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=arm64 $(WINDOWS_CC_IMAGE)
+	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=arm64 -e GOEXPERIMENT=$(GOEXPERIMENT) $(WINDOWS_CC_IMAGE)
+
+## Cross-platform build targets for go-release-workflows compatibility
+## These targets output to dist/bin/<binary>-<platform>[.exe] as required by
+## bennypowers/go-release-workflows
+
+LDFLAGS := $(shell ./scripts/ldflags.sh)
+
+# Linux targets (native or cross-compile)
+linux-x64: generate
+	@mkdir -p dist/bin
+	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 CC=gcc \
+		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-linux-x64 .
+
+linux-arm64: generate
+	@mkdir -p dist/bin
+	CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc \
+		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-linux-arm64 .
+
+# Darwin targets (must run on macOS)
+# Explicit -arch flags ensure correct architecture when cross-compiling on macOS
+darwin-x64: generate
+	@mkdir -p dist/bin
+	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 \
+		CC="clang -arch x86_64" \
+		CGO_CFLAGS="-arch x86_64" CGO_LDFLAGS="-arch x86_64" \
+		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-darwin-x64 .
+
+darwin-arm64: generate
+	@mkdir -p dist/bin
+	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 \
+		CC="clang -arch arm64" \
+		CGO_CFLAGS="-arch arm64" CGO_LDFLAGS="-arch arm64" \
+		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-darwin-arm64 .
+
+# Windows targets for go-release-workflows (use shared Containerfile.windows)
+SHARED_WINDOWS_CC_IMAGE := cem-shared-windows-cc
+
+build-shared-windows-image:
+	@if [ ! -f Containerfile.windows ]; then \
+		echo "Error: Containerfile.windows not found. Run setup-windows-build action first."; \
+		exit 1; \
+	fi
+	@if ! podman image exists $(SHARED_WINDOWS_CC_IMAGE); then \
+		echo "Building shared Windows cross-compile image..."; \
+		podman build -t $(SHARED_WINDOWS_CC_IMAGE) -f Containerfile.windows . ; \
+	else \
+		echo "Image $(SHARED_WINDOWS_CC_IMAGE) already exists, skipping build."; \
+	fi
+
+win32-x64: build-shared-windows-image
+	@mkdir -p dist/bin
+	podman run --rm -v $(PWD):/app:Z -w /app \
+		-e GOARCH=amd64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(SHARED_WINDOWS_CC_IMAGE)
+	@mv dist/bin/cem-windows-amd64.exe dist/bin/cem-win32-x64.exe
+
+win32-arm64: build-shared-windows-image
+	@mkdir -p dist/bin
+	podman run --rm -v $(PWD):/app:Z -w /app \
+		-e GOARCH=arm64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(SHARED_WINDOWS_CC_IMAGE)
+	@mv dist/bin/cem-windows-arm64.exe dist/bin/cem-win32-arm64.exe
 
 ## Code generation and dependencies
 generate:
@@ -294,20 +354,20 @@ vscode-publish:
 	mkdir -p extensions/vscode/dist/bin && \
 	echo "Downloading binaries from GitHub release..." && \
 	gh release download $$LATEST_TAG \
-		--pattern "cem-linux-amd64" \
+		--pattern "cem-linux-x64" \
 		--pattern "cem-linux-arm64" \
-		--pattern "cem-darwin-amd64" \
+		--pattern "cem-darwin-x64" \
 		--pattern "cem-darwin-arm64" \
-		--pattern "cem-windows-amd64" \
-		--pattern "cem-windows-arm64" \
+		--pattern "cem-win32-x64.exe" \
+		--pattern "cem-win32-arm64.exe" \
 		--dir temp-binaries && \
 	echo "Renaming binaries..." && \
-	mv temp-binaries/cem-linux-amd64 extensions/vscode/dist/bin/cem-x86_64-unknown-linux-gnu && \
+	mv temp-binaries/cem-linux-x64 extensions/vscode/dist/bin/cem-x86_64-unknown-linux-gnu && \
 	mv temp-binaries/cem-linux-arm64 extensions/vscode/dist/bin/cem-aarch64-unknown-linux-gnu && \
-	mv temp-binaries/cem-darwin-amd64 extensions/vscode/dist/bin/cem-x86_64-apple-darwin && \
+	mv temp-binaries/cem-darwin-x64 extensions/vscode/dist/bin/cem-x86_64-apple-darwin && \
 	mv temp-binaries/cem-darwin-arm64 extensions/vscode/dist/bin/cem-aarch64-apple-darwin && \
-	mv temp-binaries/cem-windows-amd64 extensions/vscode/dist/bin/cem-x86_64-pc-windows-msvc.exe && \
-	mv temp-binaries/cem-windows-arm64 extensions/vscode/dist/bin/cem-aarch64-pc-windows-msvc.exe && \
+	mv temp-binaries/cem-win32-x64.exe extensions/vscode/dist/bin/cem-x86_64-pc-windows-msvc.exe && \
+	mv temp-binaries/cem-win32-arm64.exe extensions/vscode/dist/bin/cem-aarch64-pc-windows-msvc.exe && \
 	chmod +x extensions/vscode/dist/bin/cem-* && \
 	rm -rf temp-binaries && \
 	cd extensions/vscode && \

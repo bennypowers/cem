@@ -6,204 +6,22 @@ on:
       - published
 
 jobs:
-  release:
-    strategy:
-      matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-            cc: gcc
-            node_platform: linux
-            node_arch: x64
-            runner: ubuntu-latest
-          - goos: linux
-            goarch: arm64
-            cc: aarch64-linux-gnu-gcc
-            node_platform: linux
-            node_arch: arm64
-            runner: ubuntu-latest
-          - goos: windows
-            goarch: amd64
-            cc: x86_64-w64-mingw32-gcc
-            node_platform: win32
-            node_arch: x64
-            runner: ubuntu-latest
-          - goos: windows
-            goarch: arm64
-            cc: aarch64-w64-mingw32-gcc
-            node_platform: win32
-            node_arch: arm64
-            runner: ubuntu-latest
-          - goos: darwin
-            goarch: amd64
-            cc: clang
-            node_platform: darwin
-            node_arch: x64
-            runner: macos-latest
-          - goos: darwin
-            goarch: arm64
-            cc: clang
-            node_platform: darwin
-            node_arch: arm64
-            runner: macos-latest
-      fail-fast: false
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
-        env:
-          GOTOOLCHAIN: auto
-          GOEXPERIMENT: jsonv2
-
-      - name: Install cross-compilers for CGO (Linux/Windows only) with retry
-        if: runner.os == 'Linux'
-        run: |
-          for i in {1..5}; do
-            sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu gcc-mingw-w64 mingw-w64 && break || sleep 10
-          done
-
-      - name: Generate code
-        run: make generate
-
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
-        if: ${{ !(matrix.goos == 'windows' && matrix.goarch == 'arm64') }}
-        with:
-          version: "~> v2"
-          args: build --single-target
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CGO_ENABLED: 1
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CC: ${{ matrix.cc }}
-
-      - name: Build with special toolchain for windows/arm
-        if: ${{ (matrix.goos == 'windows' && matrix.goarch == 'arm64') }}
-        run: |
-          make windows-arm64
-          mkdir -p dist/windows-arm64
-          cp dist/*.exe dist/windows-arm64/cem.exe
-        env:
-          CGO_CFLAGS: -Wno-dll-attribute-on-redeclaration
-
-      - name: Prepare npm platform package
-        run: |
-          mkdir -p platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
-          cp dist/*/cem* platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}/
-          node scripts/gen-platform-package-jsons.js
-          cp README.md platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}/README.md
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Set up Git identity
-        run: |
-          git config --global user.email "web@bennypowers.com"
-          git config --global user.name "Benny Powers"
-          git config set advice.addIgnoredFile false
-
-      - name: Prepare npm version
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          set -o pipefail
-          cd platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
-          echo "!package.json" >> .gitignore
-          echo "" > .npmignore
-          npm version from-git --no-git-tag-version
-          git add package.json
-
-      - name: Publish platform package to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          cd platforms/cem-${{ matrix.node_platform }}-${{ matrix.node_arch }}
-          npm_output=$(mktemp)
-          set +e
-          npm publish --access public > "$npm_output" 2>&1
-          publish_exit_code=$?
-          set -e
-          cat "$npm_output"
-
-          if [ $publish_exit_code -eq 0 ]; then
-            echo "Successfully published platform package"
-            exit 0
-          elif grep -qE 'You cannot publish over the previously published versions' "$npm_output"; then
-            echo "::warning::NPM package was already published"
-            exit 0
-          else
-            echo "::error::NPM publish failed. See output above."
-            exit 1
-          fi
-
-      - name: Get Release Upload URL
-        if: always()
-        id: get_path
-        run: echo "asset_path=$(ls dist/**/cem*)" >> $GITHUB_OUTPUT
-
-      - name: Upload all binaries to GitHub Release
-        if: always()
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ steps.get_path.outputs.asset_path }}
-          asset_name: cem-${{ matrix.goos }}-${{ matrix.goarch }}
-          asset_content_type: application/octet-stream
+  build:
+    uses: bennypowers/go-release-workflows/.github/workflows/build-binaries.yml@main
+    with:
+      binary-name: cem
+      release-tag: ${{ github.event.release.tag_name }}
 
   npm:
-    name: Package and publish npm
-    runs-on: ubuntu-latest
-    needs: release
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Prepare npm package
-        run: |
-          echo "Copying README"
-          cp README.md npm/README.md
-          echo "Setting up Git ID"
-          git config --global user.email "web@bennypowers.com"
-          git config --global user.name "Benny Powers"
-
-      - name: Version npm package
-        run: |
-          npm version from-git --no-git-tag-version
-          node ../scripts/update-platform-package-versions.js
-        working-directory: ./npm
-
-      - name: Publish to npm
-        working-directory: ./npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          npm_output=$(mktemp)
-          set +e
-          npm publish --access public > "$npm_output" 2>&1
-          publish_exit_code=$?
-          set -e
-          cat "$npm_output"
-
-          if [ $publish_exit_code -eq 0 ]; then
-            echo "Successfully published main package"
-            exit 0
-          elif grep -qE 'You cannot publish over the previously published versions' "$npm_output"; then
-            echo "::warning::NPM package was already published"
-            exit 0
-          else
-            echo "::error::NPM publish failed. See output above."
-            exit 1
-          fi
+    needs: build
+    uses: bennypowers/go-release-workflows/.github/workflows/npm-publish.yml@main
+    with:
+      binary-name: cem
+      npm-package-name: "@pwrs/cem"
+      release-tag: ${{ github.event.release.tag_name }}
+      pre-main-publish-script: 'node ../scripts/update-platform-package-versions.js'
+    secrets:
+      npm-token: ${{ secrets.NPM_TOKEN }}
 
   vscode-extension:
     name: Build and publish VSCode extension
@@ -227,25 +45,26 @@ jobs:
       - name: Download release binaries
         run: |
           mkdir -p extensions/vscode/dist/bin
-          
+
           # Download all platform binaries from the GitHub release
+          # go-release-workflows uses: cem-<platform>[.exe]
           gh release download ${{ github.event.release.tag_name }} \
-            --pattern "cem-linux-amd64" \
+            --pattern "cem-linux-x64" \
             --pattern "cem-linux-arm64" \
-            --pattern "cem-darwin-amd64" \
+            --pattern "cem-darwin-x64" \
             --pattern "cem-darwin-arm64" \
-            --pattern "cem-windows-amd64" \
-            --pattern "cem-windows-arm64" \
+            --pattern "cem-win32-x64.exe" \
+            --pattern "cem-win32-arm64.exe" \
             --dir temp-binaries
-          
+
           # Rename to match VSCode extension naming convention
-          mv temp-binaries/cem-linux-amd64 extensions/vscode/dist/bin/cem-x86_64-unknown-linux-gnu
+          mv temp-binaries/cem-linux-x64 extensions/vscode/dist/bin/cem-x86_64-unknown-linux-gnu
           mv temp-binaries/cem-linux-arm64 extensions/vscode/dist/bin/cem-aarch64-unknown-linux-gnu
-          mv temp-binaries/cem-darwin-amd64 extensions/vscode/dist/bin/cem-x86_64-apple-darwin
+          mv temp-binaries/cem-darwin-x64 extensions/vscode/dist/bin/cem-x86_64-apple-darwin
           mv temp-binaries/cem-darwin-arm64 extensions/vscode/dist/bin/cem-aarch64-apple-darwin
-          mv temp-binaries/cem-windows-amd64 extensions/vscode/dist/bin/cem-x86_64-pc-windows-msvc.exe
-          mv temp-binaries/cem-windows-arm64 extensions/vscode/dist/bin/cem-aarch64-pc-windows-msvc.exe
-          
+          mv temp-binaries/cem-win32-x64.exe extensions/vscode/dist/bin/cem-x86_64-pc-windows-msvc.exe
+          mv temp-binaries/cem-win32-arm64.exe extensions/vscode/dist/bin/cem-aarch64-pc-windows-msvc.exe
+
           chmod +x extensions/vscode/dist/bin/cem-*
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
