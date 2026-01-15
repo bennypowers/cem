@@ -137,16 +137,22 @@ jobs:
   validate:
     name: Validate (${{ matrix.platform }})
     needs: [build-existing, build-new]
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
-        platform:
-          - linux-x64
-          - linux-arm64
-          - darwin-x64
-          - darwin-arm64
-          - win32-x64
-          - win32-arm64
+        include:
+          - platform: linux-x64
+            runner: ubuntu-latest
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm64
+          - platform: darwin-x64
+            runner: macos-13        # Last x64 macOS runner
+          - platform: darwin-arm64
+            runner: macos-latest    # ARM64
+          - platform: win32-x64
+            runner: windows-latest
+          - platform: win32-arm64
+            runner: windows-11-arm64
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -163,7 +169,8 @@ jobs:
           name: cem-${{ matrix.platform }}
           path: actual/
 
-      - name: List artifacts
+      - name: List artifacts (Unix)
+        if: runner.os != 'Windows'
         run: |
           echo "=== Expected (existing) ==="
           ls -la expected/
@@ -173,11 +180,22 @@ jobs:
           ls -la actual/
           file actual/* || true
 
+      - name: List artifacts (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Write-Host "=== Expected (existing) ==="
+          Get-ChildItem expected/
+          Write-Host ""
+          Write-Host "=== Actual (new) ==="
+          Get-ChildItem actual/
+
       - name: Validate build outputs
         uses: bennypowers/go-release-workflows/.github/actions/validate-build@main
         with:
           expected-dir: expected
           actual-dir: actual
+          health-check: 'version'
 
   # ==========================================================================
   # SUMMARY
