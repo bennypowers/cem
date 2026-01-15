@@ -19,6 +19,7 @@ jobs:
       binary-name: cem
       npm-package-name: "@pwrs/cem"
       release-tag: ${{ github.event.release.tag_name }}
+      pre-main-publish-script: 'node ../scripts/update-platform-package-versions.js'
     secrets:
       npm-token: ${{ secrets.NPM_TOKEN }}
 
