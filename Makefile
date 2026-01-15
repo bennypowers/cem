@@ -349,20 +349,20 @@ vscode-publish:
 	mkdir -p extensions/vscode/dist/bin && \
 	echo "Downloading binaries from GitHub release..." && \
 	gh release download $$LATEST_TAG \
-		--pattern "cem-linux-amd64" \
+		--pattern "cem-linux-x64" \
 		--pattern "cem-linux-arm64" \
-		--pattern "cem-darwin-amd64" \
+		--pattern "cem-darwin-x64" \
 		--pattern "cem-darwin-arm64" \
-		--pattern "cem-windows-amd64" \
-		--pattern "cem-windows-arm64" \
+		--pattern "cem-win32-x64.exe" \
+		--pattern "cem-win32-arm64.exe" \
 		--dir temp-binaries && \
 	echo "Renaming binaries..." && \
-	mv temp-binaries/cem-linux-amd64 extensions/vscode/dist/bin/cem-x86_64-unknown-linux-gnu && \
+	mv temp-binaries/cem-linux-x64 extensions/vscode/dist/bin/cem-x86_64-unknown-linux-gnu && \
 	mv temp-binaries/cem-linux-arm64 extensions/vscode/dist/bin/cem-aarch64-unknown-linux-gnu && \
-	mv temp-binaries/cem-darwin-amd64 extensions/vscode/dist/bin/cem-x86_64-apple-darwin && \
+	mv temp-binaries/cem-darwin-x64 extensions/vscode/dist/bin/cem-x86_64-apple-darwin && \
 	mv temp-binaries/cem-darwin-arm64 extensions/vscode/dist/bin/cem-aarch64-apple-darwin && \
-	mv temp-binaries/cem-windows-amd64 extensions/vscode/dist/bin/cem-x86_64-pc-windows-msvc.exe && \
-	mv temp-binaries/cem-windows-arm64 extensions/vscode/dist/bin/cem-aarch64-pc-windows-msvc.exe && \
+	mv temp-binaries/cem-win32-x64.exe extensions/vscode/dist/bin/cem-x86_64-pc-windows-msvc.exe && \
+	mv temp-binaries/cem-win32-arm64.exe extensions/vscode/dist/bin/cem-aarch64-pc-windows-msvc.exe && \
 	chmod +x extensions/vscode/dist/bin/cem-* && \
 	rm -rf temp-binaries && \
 	cd extensions/vscode && \
