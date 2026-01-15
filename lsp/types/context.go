@@ -60,6 +60,7 @@ type ServerContext interface {
 	// Server lifecycle
 	InitializeManifests() error
 	UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []protocol.WorkspaceFolder) error
+	SetAdditionalPackages(packages []string)
 	Close() error
 
 	// Document operations

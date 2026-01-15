@@ -657,9 +657,67 @@ func (r *Registry) generateInMemoryManifest(packagePath string, packageName stri
 }
 
 // loadConfigManifests loads manifests specified in the config
-func (r *Registry) loadConfigManifests(_ types.WorkspaceContext) error {
-	// TODO: Add config support for specifying additional manifest paths
-	// This would allow users to specify manifests from non-npm sources
+func (r *Registry) loadConfigManifests(workspace types.WorkspaceContext) error {
+	config, err := workspace.Config()
+	if err != nil || config == nil {
+		return nil // No config is fine
+	}
+
+	if len(config.AdditionalPackages) == 0 {
+		return nil
+	}
+
+	return r.LoadAdditionalPackages(config.AdditionalPackages)
+}
+
+// LoadAdditionalPackages loads manifests from additional package specifiers.
+// Accepts URLs (https://...), npm specifiers (npm:@scope/pkg), and jsr specifiers (jsr:...).
+// Packages that fail to load are logged as warnings; loading continues with remaining packages.
+func (r *Registry) LoadAdditionalPackages(packages []string) error {
+	var failed int
+	for _, spec := range packages {
+		if err := r.loadAdditionalPackage(spec); err != nil {
+			helpers.SafeDebugLog("Warning: Could not load additional package %s: %v", spec, err)
+			failed++
+			// Continue loading other packages
+		}
+	}
+	if failed > 0 {
+		helpers.SafeDebugLog("Loaded %d/%d additional packages (%d failed)", len(packages)-failed, len(packages), failed)
+	}
+	return nil
+}
+
+func (r *Registry) loadAdditionalPackage(spec string) error {
+	helpers.SafeDebugLog("Loading additional package: %s", spec)
+
+	// Create the appropriate workspace context based on the specifier type
+	ctx, err := workspace.GetContextForSpec(spec)
+	if err != nil {
+		return fmt.Errorf("failed to get context for spec %q: %w", spec, err)
+	}
+
+	if err := ctx.Init(); err != nil {
+		return fmt.Errorf("failed to init context for %q: %w", spec, err)
+	}
+	defer func() { _ = ctx.Cleanup() }()
+
+	// Load the manifest
+	manifest, err := ctx.Manifest()
+	if err != nil {
+		return fmt.Errorf("failed to load manifest for %q: %w", spec, err)
+	}
+
+	// Get the package name
+	pkgJSON, err := ctx.PackageJSON()
+	if err != nil {
+		return fmt.Errorf("failed to load package.json for %q: %w", spec, err)
+	}
+
+	// Register the elements from this manifest
+	r.addManifest(manifest, pkgJSON.Name)
+
+	helpers.SafeDebugLog("Loaded additional package %s with %d modules", pkgJSON.Name, len(manifest.Modules))
 	return nil
 }
 

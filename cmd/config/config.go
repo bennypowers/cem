@@ -126,6 +126,9 @@ type CemConfig struct {
 	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl" yaml:"sourceControlRootUrl"`
 	// Verbose logging output
 	Verbose bool `mapstructure:"verbose" yaml:"verbose"`
+	// Additional packages to load manifests from.
+	// Accepts URLs (https://cdn.example.com/pkg/), npm specifiers (npm:@scope/pkg), or jsr specifiers.
+	AdditionalPackages []string `mapstructure:"additionalPackages" yaml:"additionalPackages"`
 }
 
 // Validate validates the configuration and returns an error if invalid
@@ -180,6 +183,11 @@ func (c *CemConfig) Clone() *CemConfig {
 	if c.Serve.URLRewrites != nil {
 		clone.Serve.URLRewrites = make([]URLRewrite, len(c.Serve.URLRewrites))
 		copy(clone.Serve.URLRewrites, c.Serve.URLRewrites)
+	}
+	// Deep copy additional packages
+	if c.AdditionalPackages != nil {
+		clone.AdditionalPackages = make([]string, len(c.AdditionalPackages))
+		copy(clone.AdditionalPackages, c.AdditionalPackages)
 	}
 	return &clone
 }

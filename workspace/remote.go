@@ -94,10 +94,11 @@ func (c *RemoteWorkspaceContext) Init() error {
 		}
 	}()
 
-	// Try fetching from CDNs first
+	// Try fetching from CDNs first (jsdelivr preferred, then esm.sh, then unpkg as fallback)
 	cdnFetchers := []func(string, string) error{
-		c.fetchFromUnpkg,
+		c.fetchFromJsdelivr,
 		c.fetchFromEsmsh,
+		c.fetchFromUnpkg,
 	}
 
 	var lastCdnError error
@@ -168,12 +169,16 @@ func (c *RemoteWorkspaceContext) fetchFromCDN(name, version, cdnName, baseUrlPat
 	return nil
 }
 
-func (c *RemoteWorkspaceContext) fetchFromUnpkg(name, version string) error {
-	return c.fetchFromCDN(name, version, "unpkg", "https://unpkg.com/%s@%s/")
+func (c *RemoteWorkspaceContext) fetchFromJsdelivr(name, version string) error {
+	return c.fetchFromCDN(name, version, "jsdelivr", "https://cdn.jsdelivr.net/npm/%s@%s/")
 }
 
 func (c *RemoteWorkspaceContext) fetchFromEsmsh(name, version string) error {
 	return c.fetchFromCDN(name, version, "esm.sh", "https://esm.sh/%s@%s/")
+}
+
+func (c *RemoteWorkspaceContext) fetchFromUnpkg(name, version string) error {
+	return c.fetchFromCDN(name, version, "unpkg", "https://unpkg.com/%s@%s/")
 }
 
 func (c *RemoteWorkspaceContext) fetchFromNpm(name, version string) error {

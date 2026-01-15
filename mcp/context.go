@@ -363,6 +363,11 @@ func (ctx *MCPContext) DocumentManager() lspTypes.DocumentManager {
 	return ctx.documentManager
 }
 
+// LSPRegistry returns the underlying LSP registry for additional package loading
+func (ctx *MCPContext) LSPRegistry() *LSP.Registry {
+	return ctx.lspRegistry
+}
+
 // GetElementInfo returns enhanced element information for MCP context
 func (ctx *MCPContext) GetElementInfo(tagName string) (MCPTypes.ElementInfo, error) {
 	ctx.mu.RLock()

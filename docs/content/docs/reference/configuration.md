@@ -19,6 +19,13 @@ Here is a complete example of a `.config/cem.yaml` file with all available optio
 # Used for generating source links in the manifest.
 sourceControlRootUrl: "https://github.com/your/repo/tree/main/"
 
+# Additional packages to load for MCP and LSP.
+# Accepts URLs, npm:, or jsr: specifiers.
+additionalPackages:
+  - "https://cdn.jsdelivr.net/npm/@example/components/"
+  - "npm:@vaadin/button@24.3.5"
+  - "jsr:@example/elements"
+
 # Configuration for the `generate` command.
 generate:
   # A list of glob patterns for files to include in the analysis.
@@ -565,9 +572,25 @@ These flags can be used with any `cem` command.
 | Flag            | Description                                                           |
 | --------------- | --------------------------------------------------------------------- |
 | `--config`      | Path to a custom config file.                                         |
-| `--package`     | deno-style package specifier, or path to the local package directory. |
+| `--package`     | Package specifier: `npm:@scope/package`, URL (`https://cdn.example.com/pkg/`), or local path. |
 | `--verbose`, -v | Enable verbose logging output.                                        |
 | `--help`, -h    | Show help for a command.                                              |
+
+### Package Specifier Examples
+
+```bash
+# Local project directory
+cem list -p ./my-components
+
+# npm package (fetched from CDN)
+cem list -p npm:@rhds/elements@2.0.0
+
+# Direct URL to package root
+cem list -p https://cdn.jsdelivr.net/npm/@shortfuse/materialdesignweb/
+
+# jsr package
+cem list -p jsr:@example/elements
+```
 
 ## Command-Line Flags
 

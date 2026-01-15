@@ -32,6 +32,7 @@ type contextKey string
 const WorkspaceContextKey = contextKey("workspaceContext")
 
 var ErrNoManifest = errors.New("no package.json found, could not derive custom-elements.json")
+var ErrNoPackageJSON = errors.New("package.json not loaded")
 var ErrRemoteUnsupported = fmt.Errorf("remote workspace context is not yet supported: %w", errors.ErrUnsupported)
 var ErrNoPackageCustomElements = errors.New("package does not specify a custom elements manifest")
 var ErrManifestNotFound = errors.New("manifest not found")
@@ -129,7 +130,12 @@ func decodeJSON[T any](rc io.ReadCloser) (*T, error) {
 	return &out, nil
 }
 
-// IsPackageSpecifier checks if a string is an npm package specifier.
+// IsPackageSpecifier checks if a string is an npm or jsr package specifier.
 func IsPackageSpecifier(spec string) bool {
 	return strings.HasPrefix(spec, "npm:") || strings.HasPrefix(spec, "jsr:")
+}
+
+// IsURLSpecifier checks if a string is an HTTP(S) URL.
+func IsURLSpecifier(spec string) bool {
+	return strings.HasPrefix(spec, "https://") || strings.HasPrefix(spec, "http://")
 }

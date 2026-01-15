@@ -66,6 +66,9 @@ Tools provided:
 		if err := viper.BindPFlag("mcp.maxDescriptionLength", cmd.Flags().Lookup("max-description-length")); err != nil {
 			return fmt.Errorf("failed to bind max-description-length flag: %w", err)
 		}
+		if err := viper.BindPFlag("additionalPackages", cmd.Flags().Lookup("additional-packages")); err != nil {
+			return fmt.Errorf("failed to bind additional-packages flag: %w", err)
+		}
 
 		ctx := cmd.Context()
 		wctx := ctx.Value(workspace.WorkspaceContextKey).(types.WorkspaceContext)
@@ -76,9 +79,13 @@ Tools provided:
 			maxDescriptionLength = 2000 // default
 		}
 
+		// Get additional packages from config and/or flag (union them)
+		additionalPackages := viper.GetStringSlice("additionalPackages")
+
 		// Create and run the MCP server with stdio transport
 		server, err := MCP.NewServerWithConfig(wctx, MCP.ServerConfig{
 			MaxDescriptionLength: maxDescriptionLength,
+			AdditionalPackages:   additionalPackages,
 		})
 		if err != nil {
 			return err
@@ -90,5 +97,6 @@ Tools provided:
 
 func init() {
 	mcpCmd.Flags().IntP("max-description-length", "", 2000, "Maximum length for description fields before truncation")
+	mcpCmd.Flags().StringSliceP("additional-packages", "a", nil, "Additional packages to load (URLs, npm:, or jsr: specifiers). Failures are logged as warnings; server continues with available packages.")
 	rootCmd.AddCommand(mcpCmd)
 }

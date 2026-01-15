@@ -48,6 +48,33 @@ Add CEM to your Claude Desktop configuration file:
 }
 ```
 
+#### Loading Additional Packages
+
+To include elements from external packages (npm, CDN URLs, or jsr specifiers):
+
+```json
+{
+  "mcpServers": {
+    "cem": {
+      "command": "cem",
+      "args": [
+        "mcp",
+        "--additional-packages", "npm:@rhds/elements@2.0.0",
+        "--additional-packages", "https://cdn.jsdelivr.net/npm/@shortfuse/materialdesignweb/"
+      ]
+    }
+  }
+}
+```
+
+Alternatively, configure additional packages in your project's `.config/cem.yaml`:
+
+```yaml
+additionalPackages:
+  - npm:@rhds/elements@2.0.0
+  - https://cdn.jsdelivr.net/npm/@shortfuse/materialdesignweb/
+```
+
 Restart Claude Desktop for changes to take effect.
 
 ### Claude Code

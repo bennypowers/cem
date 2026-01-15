@@ -49,11 +49,12 @@ const (
 
 // Server represents the CEM LSP server
 type Server struct {
-	workspace types.WorkspaceContext
-	registry  *Registry
-	documents lspTypes.Manager
-	server    *server.Server
-	transport TransportKind
+	workspace          types.WorkspaceContext
+	registry           *Registry
+	documents          lspTypes.Manager
+	server             *server.Server
+	transport          TransportKind
+	additionalPackages []string
 }
 
 // NewServer creates a new CEM LSP server
