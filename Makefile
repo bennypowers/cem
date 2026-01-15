@@ -54,11 +54,11 @@ rebuild-windows-cc-image:
 
 windows-x64: build-windows-cc-image
 	mkdir -p dist
-	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=amd64 $(WINDOWS_CC_IMAGE)
+	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=amd64 -e GOEXPERIMENT=$(GOEXPERIMENT) $(WINDOWS_CC_IMAGE)
 
 windows-arm64: build-windows-cc-image
 	mkdir -p dist
-	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=arm64 $(WINDOWS_CC_IMAGE)
+	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=arm64 -e GOEXPERIMENT=$(GOEXPERIMENT) $(WINDOWS_CC_IMAGE)
 
 ## Cross-platform build targets for go-release-workflows compatibility
 ## These targets output to dist/bin/<binary>-<platform>[.exe] as required by
@@ -106,13 +106,13 @@ build-shared-windows-image:
 win32-x64: build-shared-windows-image
 	@mkdir -p dist/bin
 	podman run --rm -v $(PWD):/app:Z -w /app \
-		-e GOARCH=amd64 -e BINARY_NAME=cem $(SHARED_WINDOWS_CC_IMAGE)
+		-e GOARCH=amd64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(SHARED_WINDOWS_CC_IMAGE)
 	@mv dist/bin/cem-windows-amd64.exe dist/bin/cem-win32-x64.exe
 
 win32-arm64: build-shared-windows-image
 	@mkdir -p dist/bin
 	podman run --rm -v $(PWD):/app:Z -w /app \
-		-e GOARCH=arm64 -e BINARY_NAME=cem $(SHARED_WINDOWS_CC_IMAGE)
+		-e GOARCH=arm64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(SHARED_WINDOWS_CC_IMAGE)
 	@mv dist/bin/cem-windows-arm64.exe dist/bin/cem-win32-arm64.exe
 
 ## Code generation and dependencies
