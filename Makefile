@@ -19,7 +19,7 @@ else
     RACE_LDFLAGS :=
 endif
 
-.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-generate bench-lookup bench-lsp bench-lsp-cem bench-lsp-wc setup-wc-toolkit profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major examples-analyze examples-verify examples-clean
+.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-generate bench-lookup bench-lsp bench-lsp-cem bench-lsp-wc setup-wc-toolkit profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major examples-analyze examples-verify examples-clean linux-x64 linux-arm64 darwin-x64 darwin-arm64 win32-x64 win32-arm64
 
 build: generate
 	@mkdir -p dist
@@ -34,7 +34,7 @@ install: build
 all: windows
 
 clean:
-	rm -rf dist/ cpu.out cover.out coverage/ cmd/coverage.e2e/ artifacts platforms
+	rm -rf dist/ cpu.out cover.out coverage/ cmd/coverage.e2e/ artifacts platforms existing-binaries
 
 # Convenience target to build both Windows variants
 windows: windows-x64 windows-arm64
@@ -59,6 +59,45 @@ windows-x64: build-windows-cc-image
 windows-arm64: build-windows-cc-image
 	mkdir -p dist
 	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=arm64 $(WINDOWS_CC_IMAGE)
+
+## Cross-platform build targets for go-release-workflows compatibility
+## These targets output to dist/bin/<binary>-<platform>[.exe] as required by
+## bennypowers/go-release-workflows
+
+LDFLAGS := $(shell ./scripts/ldflags.sh)
+
+# Linux targets (native or cross-compile)
+linux-x64: generate
+	@mkdir -p dist/bin
+	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 CC=gcc \
+		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-linux-x64 .
+
+linux-arm64: generate
+	@mkdir -p dist/bin
+	CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc \
+		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-linux-arm64 .
+
+# Darwin targets (must run on macOS)
+darwin-x64: generate
+	@mkdir -p dist/bin
+	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC=clang \
+		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-darwin-x64 .
+
+darwin-arm64: generate
+	@mkdir -p dist/bin
+	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CC=clang \
+		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-darwin-arm64 .
+
+# Windows targets (cross-compile via podman container)
+win32-x64: build-windows-cc-image
+	@mkdir -p dist/bin
+	podman run --rm -v $(PWD):/app:Z -w /app \
+		-e GOARCH=amd64 -e OUTPUT_DIR=dist/bin $(WINDOWS_CC_IMAGE)
+
+win32-arm64: build-windows-cc-image
+	@mkdir -p dist/bin
+	podman run --rm -v $(PWD):/app:Z -w /app \
+		-e GOARCH=arm64 -e OUTPUT_DIR=dist/bin $(WINDOWS_CC_IMAGE)
 
 ## Code generation and dependencies
 generate:

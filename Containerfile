@@ -18,14 +18,22 @@ WORKDIR /app
 COPY . .
 
 # By default, run a shell script that picks the correct CC and output name for the arch
+# Supports OUTPUT_DIR env var for go-release-workflows compatibility (defaults to dist/)
 CMD bash -c '\
   set -e; \
-  export OUT="dist/cem-windows-$GOARCH.exe"; \
+  OUTDIR="${OUTPUT_DIR:-dist}"; \
   if [[ "$GOARCH" == "arm64" ]]; then \
     export CC="aarch64-w64-mingw32-clang"; \
+    ARCH_SUFFIX="arm64"; \
   else \
     export CC="x86_64-w64-mingw32-gcc"; \
+    ARCH_SUFFIX="x64"; \
   fi; \
-  mkdir -p dist; \
+  if [[ "$OUTDIR" == "dist/bin" ]]; then \
+    OUT="$OUTDIR/cem-win32-$ARCH_SUFFIX.exe"; \
+  else \
+    OUT="$OUTDIR/cem-windows-$GOARCH.exe"; \
+  fi; \
+  mkdir -p "$OUTDIR"; \
   go build -o "$OUT" . \
 '
