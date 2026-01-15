@@ -146,7 +146,7 @@ jobs:
           - platform: linux-arm64
             runner: ubuntu-24.04-arm64
           - platform: darwin-x64
-            runner: macos-13        # Last x64 macOS runner
+            runner: macos-14        # Runs x64 via Rosetta 2
           - platform: darwin-arm64
             runner: macos-latest    # ARM64
           - platform: win32-x64
