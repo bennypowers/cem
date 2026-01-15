@@ -27,4 +27,7 @@ else
     LDFLAGS="${LDFLAGS} -X 'bennypowers.dev/cem/internal/version.GitDirty='"
 fi
 
+# Strip debug info and symbol table for smaller binaries
+LDFLAGS="${LDFLAGS} -s -w"
+
 echo "${LDFLAGS}"
