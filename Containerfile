@@ -1,6 +1,6 @@
 FROM fedora:43
 
-ENV LLVM_MINGW_VERSION=20250613
+ENV LLVM_MINGW_VERSION=20251216
 ENV LLVM_MINGW_DISTRO=ubuntu-22.04
 ENV GOOS=windows
 ENV GOARCH=amd64
@@ -8,7 +8,7 @@ ENV CGO_ENABLED=1
 ENV PATH="/opt/llvm-mingw-$LLVM_MINGW_VERSION-ucrt-$LLVM_MINGW_DISTRO-x86_64/bin:${PATH}"
 
 RUN dnf install -y golang mingw64-gcc mingw64-binutils mingw64-crt mingw64-headers curl tar coreutils
-# Download and extract llvm-mingw (latest as of July 2025, update as needed)
+# Download and extract llvm-mingw (update version as needed from https://github.com/mstorsjo/llvm-mingw/releases)
 RUN curl -LO https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-${LLVM_MINGW_DISTRO}-x86_64.tar.xz && \
     tar -xJf llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-${LLVM_MINGW_DISTRO}-x86_64.tar.xz -C /opt && \
     rm llvm-mingw-${LLVM_MINGW_VERSION}-ucrt-${LLVM_MINGW_DISTRO}-x86_64.tar.xz
