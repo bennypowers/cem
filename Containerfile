@@ -35,5 +35,5 @@ CMD bash -c '\
     OUT="$OUTDIR/cem-windows-$GOARCH.exe"; \
   fi; \
   mkdir -p "$OUTDIR"; \
-  go build -o "$OUT" . \
+  go build -ldflags="-s -w" -o "$OUT" . \
 '
