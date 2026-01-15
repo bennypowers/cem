@@ -5,6 +5,7 @@ builds:
   - main: .
     binary: cem
     ldflags:
+      - -s -w
       - -X 'bennypowers.dev/cem/internal/version.Version={{.Version}}'
       - -X 'bennypowers.dev/cem/internal/version.GitCommit={{.Commit}}'
       - -X 'bennypowers.dev/cem/internal/version.GitTag={{.Tag}}'
