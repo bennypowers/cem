@@ -78,14 +78,19 @@ linux-arm64: generate
 		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-linux-arm64 .
 
 # Darwin targets (must run on macOS)
+# Explicit -arch flags ensure correct architecture when cross-compiling on macOS
 darwin-x64: generate
 	@mkdir -p dist/bin
-	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC=clang \
+	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 \
+		CC="clang -arch x86_64" \
+		CGO_CFLAGS="-arch x86_64" CGO_LDFLAGS="-arch x86_64" \
 		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-darwin-x64 .
 
 darwin-arm64: generate
 	@mkdir -p dist/bin
-	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CC=clang \
+	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 \
+		CC="clang -arch arm64" \
+		CGO_CFLAGS="-arch arm64" CGO_LDFLAGS="-arch arm64" \
 		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-darwin-arm64 .
 
 # Windows targets for go-release-workflows (use shared Containerfile.windows)
