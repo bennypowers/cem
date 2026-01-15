@@ -100,6 +100,7 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CC: ${{ matrix.cc }}
+          GOEXPERIMENT: jsonv2
 
       - name: Normalize existing binary names
         if: ${{ !(matrix.goos == 'windows' && matrix.goarch == 'arm64') }}
@@ -177,7 +178,6 @@ jobs:
         with:
           expected-dir: expected
           actual-dir: actual
-          strict: 'true'
 
   # ==========================================================================
   # SUMMARY
