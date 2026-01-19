@@ -4,13 +4,14 @@ go 1.25.5
 
 require (
 	atomicgo.dev/keyboard v0.2.9
+	bennypowers.dev/asimonim v0.0.1
 	bennypowers.dev/mappa v0.0.2
 	github.com/IBM/fp-go v1.0.153
 	github.com/adrg/xdg v0.5.3
 	github.com/agext/levenshtein v1.2.3
 	github.com/alecthomas/chroma/v2 v2.20.0
 	github.com/bmatcuk/doublestar v1.3.4
-	github.com/bmatcuk/doublestar/v4 v4.9.1
+	github.com/bmatcuk/doublestar/v4 v4.9.2
 	github.com/dunglas/go-urlpattern v0.0.0-20241020164140-716dfa1c80b1
 	github.com/evanw/esbuild v0.27.0
 	github.com/fsnotify/fsnotify v1.9.0
@@ -18,6 +19,7 @@ require (
 	github.com/google/jsonschema-go v0.3.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/gosimple/slug v1.15.0
+	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/modelcontextprotocol/go-sdk v1.2.0
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
@@ -64,7 +66,6 @@ require (
 	github.com/gookit/color v1.5.4 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
-	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/lithammer/fuzzysearch v1.1.8 // indirect
@@ -92,6 +93,7 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tdewolff/parse/v2 v2.8.5 // indirect
+	github.com/tidwall/jsonc v0.3.2 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tliron/commonlog v0.2.18 // indirect

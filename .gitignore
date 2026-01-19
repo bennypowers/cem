@@ -9,6 +9,7 @@ coverage
 coverage.e2e
 *.test
 dist
+benchmark_results/
 docs/resources
 .claude/*.local.json
 node_modules
