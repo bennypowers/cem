@@ -47,8 +47,8 @@ func ParseTokensWithAsimonim(data []byte, opts ParseOptions) (*token.Map, error)
 		Prefix:        opts.Prefix,
 		GroupMarkers:  opts.GroupMarkers,
 		SchemaVersion: schemaVersion,
-		SkipSort:      true,  // we don't need sorted output for map lookup
-		SkipPositions: true,  // cem doesn't need LSP position tracking
+		SkipSort:      true, // we don't need sorted output for map lookup
+		SkipPositions: true, // cem doesn't need LSP position tracking
 	}
 
 	tokens, err := parser.Parse(data, parserOpts)
