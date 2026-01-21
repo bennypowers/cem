@@ -52,7 +52,10 @@ func generateTokenFile(numTokens int) []byte {
 	typography["heading"] = heading
 	tokens["typography"] = typography
 
-	data, _ := json.Marshal(tokens)
+	data, err := json.Marshal(tokens)
+	if err != nil {
+		panic(fmt.Sprintf("generateTokenFile: %v", err))
+	}
 	return data
 }
 

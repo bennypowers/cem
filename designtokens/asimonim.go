@@ -53,7 +53,7 @@ func ParseTokensWithAsimonim(data []byte, opts ParseOptions) (*token.Map, error)
 
 	tokens, err := parser.Parse(data, parserOpts)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing tokens: %w", err)
 	}
 
 	// Resolve $extends relationships (v2025.10 feature, no-op for Draft schema)

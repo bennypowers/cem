@@ -8,9 +8,10 @@ package designtokens
 
 import (
 	"encoding/json"
-	"os"
 	"path/filepath"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform/testutil"
 )
 
 // expectedToken represents the expected token structure in golden files.
@@ -32,20 +33,11 @@ func TestParseTokensWithAsimonim(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tokensPath := filepath.Join("testdata", tc.fixtureDir, "tokens.json")
-			expectedPath := filepath.Join("testdata", tc.fixtureDir, "expected.json")
+			// Read input tokens using fixture helper
+			tokensData := testutil.LoadFixtureFile(t, filepath.Join(tc.fixtureDir, "tokens.json"))
 
-			// Read input tokens
-			tokensData, err := os.ReadFile(tokensPath)
-			if err != nil {
-				t.Fatalf("failed to read tokens.json: %v", err)
-			}
-
-			// Read expected output
-			expectedData, err := os.ReadFile(expectedPath)
-			if err != nil {
-				t.Fatalf("failed to read expected.json: %v", err)
-			}
+			// Read expected output using fixture helper
+			expectedData := testutil.LoadFixtureFile(t, filepath.Join(tc.fixtureDir, "expected.json"))
 
 			var expected map[string]expectedToken
 			if err := json.Unmarshal(expectedData, &expected); err != nil {
