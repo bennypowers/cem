@@ -47,6 +47,7 @@
             },
             {
               "name": "--token-color",
+              "default": "red",
               "description": "--token-color",
               "syntax": "\u003ccolor\u003e"
             }

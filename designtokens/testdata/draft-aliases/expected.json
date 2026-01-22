@@ -1,0 +1,12 @@
+{
+  "--test-color-brand": {
+    "value": "#FF6B35",
+    "description": "",
+    "syntax": "<color>"
+  },
+  "--test-color-primary": {
+    "value": "#FF6B35",
+    "description": "",
+    "syntax": "<color>"
+  }
+}

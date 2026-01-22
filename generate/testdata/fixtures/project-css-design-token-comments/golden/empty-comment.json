@@ -20,11 +20,13 @@
           "cssProperties": [
             {
               "name": "--cem-color-primary",
+              "default": "#0066cc",
               "description": "DESIGN TOKEN description for primary color",
               "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--cem-spacing-base",
+              "default": "1rem",
               "description": "DESIGN TOKEN description for base spacing",
               "syntax": "\u003clength\u003e"
             }

@@ -17,17 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package types
 
-// TokenResult represents a design token with its value, description, and syntax
-type TokenResult interface {
-	Value() any
-	Description() string
-	Syntax() string
-}
+import "bennypowers.dev/asimonim/token"
 
 // DesignTokens provides access to design tokens by name
 type DesignTokens interface {
-	// Get returns the TokenResult for the given name, prepending the prefix if it's not present
-	Get(name string) (TokenResult, bool)
+	// Get returns the Token for the given name, prepending the prefix if it's not present
+	Get(name string) (*token.Token, bool)
 }
 
 // DesignTokensLoader provides an interface for loading design tokens

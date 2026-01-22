@@ -22,6 +22,7 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/asimonim/token"
 	C "bennypowers.dev/cem/cmd/config"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
@@ -46,7 +47,7 @@ type mockDesignTokens struct {
 	name string
 }
 
-func (m *mockDesignTokens) Get(name string) (types.TokenResult, bool) {
+func (m *mockDesignTokens) Get(name string) (*token.Token, bool) {
 	return nil, false
 }
 

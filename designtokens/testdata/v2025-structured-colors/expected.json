@@ -1,0 +1,7 @@
+{
+  "--test-color-brand": {
+    "value": "#FF6B36",
+    "description": "",
+    "syntax": "<color>"
+  }
+}
