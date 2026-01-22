@@ -60,19 +60,26 @@ impl CemExtension {
         )?;
 
         let (platform, arch) = zed::current_platform();
-        let asset_name = format!(
-            "cem-{os}-{arch}",
-            os = match platform {
-                zed::Os::Mac => "darwin",
-                zed::Os::Linux => "linux",
-                zed::Os::Windows => "windows",
-            },
-            arch = match arch {
-                zed::Architecture::Aarch64 => "arm64",
-                zed::Architecture::X8664 => "amd64",
-                zed::Architecture::X86 => "amd64",
+        // Binary names for the cem language server:
+        //  * - cem-darwin-arm64
+        //  * - cem-darwin-x64
+        //  * - cem-linux-arm64
+        //  * - cem-linux-x64
+        //  * - cem-win32-arm64.exe
+        //  * - cem-win32-x64.exe
+        let arch_name = match arch {
+            zed::Architecture::Aarch64 => "arm64",
+            zed::Architecture::X8664 => "x64",
+            zed::Architecture::X86 => {
+                return Err("Unsupported architecture: 32-bit x86 is not supported.".to_string())
             }
-        );
+        };
+        let (os_name, ext) = match platform {
+            zed::Os::Mac => ("darwin", ""),
+            zed::Os::Linux => ("linux", ""),
+            zed::Os::Windows => ("win32", ".exe"),
+        };
+        let asset_name = format!("cem-{}-{}{}", os_name, arch_name, ext);
 
         let asset = release
             .assets
