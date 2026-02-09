@@ -202,16 +202,35 @@ func TestElementDefinition(t *testing.T) {
 }
 
 func TestElementDescription(t *testing.T) {
-	r := ephemeral.NewRegistry()
-	r.Update("file:///test.ts", makeTestPackage("test-el", "TestEl", "A test element"))
+	t.Run("summary only", func(t *testing.T) {
+		r := ephemeral.NewRegistry()
+		r.Update("file:///test.ts", makeTestPackage("test-el", "TestEl", "A test element"))
 
-	desc, ok := r.ElementDescription("test-el")
-	if !ok {
-		t.Fatal("expected to find element description")
-	}
-	if desc != "A test element" {
-		t.Errorf("expected description 'A test element', got %q", desc)
-	}
+		desc, ok := r.ElementDescription("test-el")
+		if !ok {
+			t.Fatal("expected to find element description")
+		}
+		if desc != "A test element" {
+			t.Errorf("expected description 'A test element', got %q", desc)
+		}
+	})
+
+	t.Run("description preferred over summary", func(t *testing.T) {
+		r := ephemeral.NewRegistry()
+		pkg := makeTestPackage("test-el", "TestEl", "Short summary")
+		// Set Description on the declaration — should be preferred over Summary
+		ce := pkg.Modules[0].Declarations[0].(*M.CustomElementDeclaration)
+		ce.Description = "Full description of the element"
+		r.Update("file:///test.ts", pkg)
+
+		desc, ok := r.ElementDescription("test-el")
+		if !ok {
+			t.Fatal("expected to find element description")
+		}
+		if desc != "Full description of the element" {
+			t.Errorf("expected 'Full description of the element', got %q", desc)
+		}
+	})
 }
 
 func TestHas(t *testing.T) {

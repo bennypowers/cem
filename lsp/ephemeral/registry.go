@@ -78,6 +78,10 @@ func (r *Registry) Remove(uri string) {
 }
 
 // rebuildIndex rebuilds the flat tag-name → entry index from all stored packages.
+// If multiple URIs define the same tag name, the last one visited wins (Go map
+// iteration is non-deterministic). In practice this is unlikely — locally-defined
+// elements are typically unique per file — and the main registry takes precedence
+// over ephemeral data regardless.
 // Must be called with r.mu held.
 func (r *Registry) rebuildIndex() {
 	r.byTag = make(map[string]*ephemeralEntry)

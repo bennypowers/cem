@@ -911,6 +911,8 @@ func FindDefinedElementTags(code []byte, qm *QueryManager) []string {
 		return nil
 	}
 
+	// Returns nil on error — consistent with the nil-return convention for
+	// parse failures above. Callers treat nil as "no definitions found".
 	matcher, err := GetCachedQueryMatcher(qm, "typescript", "definedElements")
 	if err != nil {
 		return nil

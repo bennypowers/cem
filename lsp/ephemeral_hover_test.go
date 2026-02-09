@@ -113,7 +113,13 @@ func TestEphemeralHover(t *testing.T) {
 			return
 		}
 
-		var expected protocol.Hover
+		// Unmarshal expected golden into a typed struct so Contents
+		// deserializes as MarkupContent rather than map[string]interface{}.
+		type expectedHover struct {
+			Contents protocol.MarkupContent `json:"contents"`
+			Range    *protocol.Range        `json:"range"`
+		}
+		var expected expectedHover
 		if err := fixture.GetExpected("expected", &expected); err != nil {
 			t.Fatalf("Failed to get expected hover: %v", err)
 		}
@@ -123,20 +129,17 @@ func TestEphemeralHover(t *testing.T) {
 			t.Fatalf("Expected Contents to be MarkupContent, got %T", result.Contents)
 		}
 
-		expectedContents, ok := expected.Contents.(protocol.MarkupContent)
-		if !ok {
-			t.Fatalf("Expected Contents in expected.json to be MarkupContent, got %T", expected.Contents)
+		if actualContents.Kind != expected.Contents.Kind {
+			t.Errorf("Expected kind %s, got %s", expected.Contents.Kind, actualContents.Kind)
 		}
 
-		if actualContents.Kind != expectedContents.Kind {
-			t.Errorf("Expected kind %s, got %s", expectedContents.Kind, actualContents.Kind)
+		if actualContents.Value != expected.Contents.Value {
+			t.Errorf("Expected value:\n%s\n\nGot:\n%s", expected.Contents.Value, actualContents.Value)
 		}
 
-		if actualContents.Value != expectedContents.Value {
-			t.Errorf("Expected value:\n%s\n\nGot:\n%s", expectedContents.Value, actualContents.Value)
-		}
-
-		if expected.Range != nil && result.Range != nil {
+		if (expected.Range == nil) != (result.Range == nil) {
+			t.Errorf("Range nil mismatch.\nExpected: %+v\nGot: %+v", expected.Range, result.Range)
+		} else if expected.Range != nil && result.Range != nil {
 			if result.Range.Start.Line != expected.Range.Start.Line ||
 				result.Range.Start.Character != expected.Range.Start.Character ||
 				result.Range.End.Line != expected.Range.End.Line ||
