@@ -74,6 +74,7 @@ type Server struct {
 	urlRewrites             []config.URLRewrite           // URL rewrites for request path mapping
 	pathResolver            *transform.PathResolver       // Cached path resolver (initialized once)
 	pathResolverSourceFiles []string                      // Files that pathResolver depends on (for hot-reload)
+	warnedSpecifiers        sync.Map                      // Deduplicates transitive dependency warnings (keyed by specifier)
 }
 
 // NewServer creates a new server with the given port

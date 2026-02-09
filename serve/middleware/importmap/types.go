@@ -23,6 +23,7 @@ import (
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/types"
+	"bennypowers.dev/mappa/resolve"
 )
 
 // ImportMap represents an ES module import map
@@ -61,6 +62,19 @@ type Config struct {
 // This is an opaque wrapper around mappa's DependencyGraph.
 type DependencyGraph struct {
 	graph any // *resolve.DependencyGraph from mappa
+}
+
+// Dependents returns packages that directly depend on pkg.
+// Returns nil if the graph is nil or the underlying type assertion fails.
+func (dg *DependencyGraph) Dependents(pkg string) []string {
+	if dg == nil || dg.graph == nil {
+		return nil
+	}
+	g, ok := dg.graph.(*resolve.DependencyGraph)
+	if !ok {
+		return nil
+	}
+	return g.Dependents(pkg)
 }
 
 // IncrementalResult contains both the import map and dependency graph.
