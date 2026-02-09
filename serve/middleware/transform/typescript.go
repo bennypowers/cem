@@ -33,16 +33,17 @@ const DefaultTarget = "ES2022"
 
 // TypeScriptConfig holds configuration for TypeScript transformation
 type TypeScriptConfig struct {
-	WatchDirFunc     func() string // Function to get current watch directory
-	TsconfigRawFunc  func() string // Function to get current tsconfig.json content
-	Cache            *Cache
-	Pool             *Pool // Worker pool for limiting concurrent transforms
-	Logger           types.Logger
-	ErrorBroadcaster types.ErrorBroadcaster
-	Target           string
-	Enabled          bool                    // Enable/disable TypeScript transformation
-	FS               platform.FileSystem     // Filesystem abstraction for testability
-	PathResolver     middleware.PathResolver // Cached path resolver for efficient URL rewriting
+	WatchDirFunc        func() string // Function to get current watch directory
+	TsconfigRawFunc     func() string // Function to get current tsconfig.json content
+	Cache               *Cache
+	Pool                *Pool // Worker pool for limiting concurrent transforms
+	Logger              types.Logger
+	ErrorBroadcaster    types.ErrorBroadcaster
+	Target              string
+	Enabled             bool                                  // Enable/disable TypeScript transformation
+	FS                  platform.FileSystem                   // Filesystem abstraction for testability
+	PathResolver        middleware.PathResolver               // Cached path resolver for efficient URL rewriting
+	OnTransformComplete func(requestPath string, code []byte) // Called after successful transform (async)
 }
 
 // NewTypeScript creates a middleware that transforms TypeScript files to JavaScript
@@ -230,6 +231,8 @@ func NewTypeScript(config TypeScriptConfig) middleware.Middleware {
 						if config.Logger != nil {
 							config.Logger.Error("Failed to write transform response: %v", err)
 						}
+					} else if config.OnTransformComplete != nil {
+						go config.OnTransformComplete(tsPathNorm, result.Code)
 					}
 					return
 				}

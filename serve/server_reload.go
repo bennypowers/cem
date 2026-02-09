@@ -301,6 +301,7 @@ func (s *Server) regenerateImportMapIfNeeded(event FileEvent) {
 	} else if importMap != nil {
 		s.importMap = importMap
 		s.importMapGraph = importMapGraph
+		s.warnedSpecifiers.Clear() // Reset dedup so warnings re-fire for new import map
 		s.logger.Debug("Regenerated import map in %v", importMapDuration)
 	}
 	s.mu.Unlock()
