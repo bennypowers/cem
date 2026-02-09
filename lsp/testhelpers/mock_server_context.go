@@ -370,6 +370,9 @@ func (m *MockServerContext) QueryManager() (*queries.QueryManager, error) {
 	return nil, fmt.Errorf("QueryManager not available in test context")
 }
 
+// SynthesizeEphemeralElements is a no-op for test contexts
+func (m *MockServerContext) SynthesizeEphemeralElements(uri string) {}
+
 func (m *MockServerContext) ModuleGraph() *modulegraph.ModuleGraph {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -445,7 +448,7 @@ func (m *MockServerContext) SetDocumentManager(dm types.DocumentManager) {
 	}
 }
 
-// SetDocumentManager sets the document manager for tests
+// SetRegistry sets the registry for tests
 func (m *MockServerContext) SetRegistry(registry types.Registry) {
 	m.Registry = registry
 }

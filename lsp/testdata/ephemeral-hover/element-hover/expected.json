@@ -1,0 +1,16 @@
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "## `\u003cgreeting-card\u003e`\n\n**Shows a personalized greeting**\n\nA greeting card element\n\n### Attributes\n\n- **`name`** _string_ - The person to greet\n- **`color-scheme`** _'light' | 'dark'_ - Visual style variant\n\n### Slots\n\n- **`header`** - Header content\n- **``** - Default slot for greeting content\n\n"
+  },
+  "range": {
+    "start": {
+      "line": 6,
+      "character": 3
+    },
+    "end": {
+      "line": 6,
+      "character": 16
+    }
+  }
+}

@@ -90,4 +90,7 @@ type ServerContext interface {
 
 	// Module graph operations for re-export analysis
 	ModuleGraph() *modulegraph.ModuleGraph
+
+	// Ephemeral registry synthesis for locally-defined elements
+	SynthesizeEphemeralElements(uri string)
 }

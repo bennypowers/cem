@@ -1,0 +1,16 @@
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "## `\u003cclick-counter\u003e`\n\n**Increments a count**\n\nA counter element\n\n### Attributes\n\n- **`count`** _number_ - Number of clicks\n\n"
+  },
+  "range": {
+    "start": {
+      "line": 13,
+      "character": 15
+    },
+    "end": {
+      "line": 15,
+      "character": 5
+    }
+  }
+}

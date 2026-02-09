@@ -1,0 +1,8 @@
+import { LitElement, html, customElement } from 'lit';
+
+@customElement('test-el')
+export class TestEl extends LitElement {
+  render() {
+    return html`<test-el></test-el>`;
+  }
+}

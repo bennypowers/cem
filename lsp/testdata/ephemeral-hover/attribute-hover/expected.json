@@ -1,0 +1,16 @@
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "## `name` attribute\n\n**On `\u003cgreeting-card\u003e` element**\n\n**Type:** `string`\n\nThe person to greet\n\n**Default:** `'World'`\n\n"
+  },
+  "range": {
+    "start": {
+      "line": 6,
+      "character": 17
+    },
+    "end": {
+      "line": 6,
+      "character": 21
+    }
+  }
+}
