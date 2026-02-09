@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -135,7 +136,7 @@ func loadLSPFixture(t *testing.T, scenarioDir, scenarioName string) *LSPFixture 
 				var key string
 				if name == "expected.json" {
 					key = "expected"
-				} else if len(name) > len("expected-") && name[:len("expected-")] == "expected-" {
+				} else if strings.HasPrefix(name, "expected-") {
 					key = name[len("expected-") : len(name)-len(".json")]
 				} else {
 					key = name[:len(name)-len(".json")]

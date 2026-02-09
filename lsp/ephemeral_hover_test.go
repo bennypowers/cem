@@ -64,7 +64,6 @@ func TestEphemeralHover(t *testing.T) {
 			tsURI := "file:///element.ts"
 			dm.OpenDocument(tsURI, elementTS, 1)
 			server.SynthesizeEphemeralElements(tsURI)
-
 		}
 
 		// Open the primary input as a document
