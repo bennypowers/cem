@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"bennypowers.dev/cem/lsp/document"
+	"bennypowers.dev/cem/lsp/ephemeral"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/lifecycle"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
@@ -51,6 +52,7 @@ const (
 type Server struct {
 	workspace          types.WorkspaceContext
 	registry           *Registry
+	ephemeralRegistry  *ephemeral.Registry
 	documents          lspTypes.Manager
 	server             *server.Server
 	transport          TransportKind
@@ -74,10 +76,11 @@ func NewServer(workspace types.WorkspaceContext, transport TransportKind) (*Serv
 	}
 
 	s := &Server{
-		workspace: workspace,
-		registry:  registry,
-		documents: documents,
-		transport: transport,
+		workspace:         workspace,
+		registry:          registry,
+		ephemeralRegistry: ephemeral.NewRegistry(),
+		documents:         documents,
+		transport:         transport,
 	}
 
 	// Server now directly implements all context interfaces

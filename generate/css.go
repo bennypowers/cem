@@ -216,7 +216,7 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 		}
 		parser := Q.GetCSSParser()
 		defer Q.PutCSSParser(parser)
-		if hasBindings {
+		if hasBindings && mp.cssCache != nil {
 			for _, binding := range bindings {
 				spec, ok := mp.styleImportsBindingToSpecMap[binding.Text]
 				if ok && strings.HasPrefix(spec, ".") {

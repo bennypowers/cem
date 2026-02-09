@@ -28,7 +28,7 @@ import (
 // generateSourceReference creates a SourceReference for a declaration if sourceControlRootUrl is configured
 // Returns nil if node is nil, config is unavailable, or sourceControlRootUrl is not configured
 func (mp *ModuleProcessor) generateSourceReference(node *ts.Node) (*M.SourceReference, error) {
-	if node == nil {
+	if node == nil || mp.ctx == nil {
 		return nil, nil // No error, just no source reference
 	}
 

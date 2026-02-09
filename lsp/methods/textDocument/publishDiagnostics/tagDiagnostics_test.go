@@ -900,3 +900,7 @@ customElements.define('my-button', MyButton);`
 		})
 	}
 }
+
+// TestTagDiagnostics_LocalDefinitionNotInManifest has been moved to
+// lsp/ephemeral_integration_test.go as it requires a real Server with
+// ephemeral registry synthesis to work correctly.

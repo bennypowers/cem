@@ -211,7 +211,7 @@ func AllQueries() QuerySelector {
 func LSPQueries() QuerySelector {
 	return QuerySelector{
 		HTML:       []string{"customElements", "completionContext", "scriptTags", "headElements", "attributes"},
-		TypeScript: []string{"htmlTemplates", "completionContext", "imports", "classes", "exports", "importAttributes"},
+		TypeScript: []string{"htmlTemplates", "completionContext", "imports", "classes", "exports", "importAttributes", "definedElements"},
 		CSS:        []string{},
 		JSDoc:      []string{},
 		TSX:        []string{"customElements", "completionContext"}, // TSX queries for custom element detection
@@ -891,4 +891,50 @@ func GetCachedQueryMatcher(manager *QueryManager, language, queryName string) (*
 	cursor := ts.NewQueryCursor()
 	matcher := QueryMatcher{query, cursor}
 	return &matcher, nil
+}
+
+// FindDefinedElementTags uses the definedElements.scm query to find
+// custom element tag names defined in TypeScript/JavaScript source code
+// via @customElement decorators or customElements.define calls.
+func FindDefinedElementTags(code []byte, qm *QueryManager) []string {
+	parser := RetrieveTypeScriptParser()
+	defer PutTypeScriptParser(parser)
+
+	tree := parser.Parse(code, nil)
+	if tree == nil {
+		return nil
+	}
+	defer tree.Close()
+
+	root := tree.RootNode()
+	if root == nil {
+		return nil
+	}
+
+	// Returns nil on error — consistent with the nil-return convention for
+	// parse failures above. Callers treat nil as "no definitions found".
+	matcher, err := GetCachedQueryMatcher(qm, "typescript", "definedElements")
+	if err != nil {
+		return nil
+	}
+	defer matcher.Close()
+
+	var tags []string
+	for match := range matcher.AllQueryMatches(root, code) {
+		if match == nil {
+			continue
+		}
+		for _, capture := range match.Captures {
+			if int(capture.Index) >= matcher.CaptureCount() {
+				continue
+			}
+			if matcher.GetCaptureNameByIndex(capture.Index) == "defined.tagName" {
+				tag := capture.Node.Utf8Text(code)
+				if !slices.Contains(tags, tag) {
+					tags = append(tags, tag)
+				}
+			}
+		}
+	}
+	return tags
 }

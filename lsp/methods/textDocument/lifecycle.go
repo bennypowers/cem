@@ -54,6 +54,10 @@ func DidOpen(ctx types.ServerContext, context *glsp.Context, params *protocol.Di
 	if doc != nil {
 		helpers.SafeDebugLog("[LIFECYCLE] Successfully opened document: %s", params.TextDocument.URI)
 
+		// Synthesize ephemeral element declarations before diagnostics,
+		// so locally-defined elements are available for diagnostic checks
+		ctx.SynthesizeEphemeralElements(params.TextDocument.URI)
+
 		// Trigger diagnostics for the newly opened document
 		if err := publishDiagnostics.PublishDiagnostics(ctx, context, params.TextDocument.URI); err != nil {
 			helpers.SafeDebugLog("[LIFECYCLE] Failed to publish diagnostics for %s: %v", params.TextDocument.URI, err)
@@ -132,6 +136,9 @@ func DidChange(ctx types.ServerContext, context *glsp.Context, params *protocol.
 	if updatedDoc != nil {
 		helpers.SafeDebugLog("[LIFECYCLE] Successfully updated document: %s", params.TextDocument.URI)
 
+		// Synthesize ephemeral element declarations before diagnostics
+		ctx.SynthesizeEphemeralElements(params.TextDocument.URI)
+
 		// Trigger diagnostics for the updated document
 		if err := publishDiagnostics.PublishDiagnostics(ctx, context, params.TextDocument.URI); err != nil {
 			helpers.SafeDebugLog("[LIFECYCLE] Failed to publish diagnostics for %s: %v", params.TextDocument.URI, err)
@@ -150,6 +157,12 @@ func DidClose(ctx types.ServerContext, context *glsp.Context, params *protocol.D
 		return err
 	}
 	dm.CloseDocument(params.TextDocument.URI)
+
+	// Clean up ephemeral data for the closed document.
+	// SynthesizeEphemeralElements will see doc == nil (already closed)
+	// and remove any stale ephemeral data for this URI.
+	ctx.SynthesizeEphemeralElements(params.TextDocument.URI)
+
 	return nil
 }
 

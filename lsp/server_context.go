@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"sync"
 
+	"bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
@@ -100,27 +102,58 @@ func (s *Server) AllDocuments() []types.Document {
 // Registry operations
 
 func (s *Server) AllTagNames() []string {
-	return s.registry.AllTagNames()
+	mainTags := s.registry.AllTagNames()
+	ephemeralTags := s.ephemeralRegistry.AllTagNames()
+	if len(ephemeralTags) == 0 {
+		return mainTags
+	}
+
+	// Merge, deduplicating ephemeral tags already in main
+	seen := make(map[string]bool, len(mainTags))
+	for _, tag := range mainTags {
+		seen[tag] = true
+	}
+	for _, tag := range ephemeralTags {
+		if !seen[tag] {
+			mainTags = append(mainTags, tag)
+		}
+	}
+	return mainTags
 }
 
 func (s *Server) Element(tagName string) (*M.CustomElement, bool) {
-	return s.registry.Element(tagName)
+	if el, ok := s.registry.Element(tagName); ok {
+		return el, true
+	}
+	return s.ephemeralRegistry.Element(tagName)
 }
 
 func (s *Server) Attributes(tagName string) (map[string]*M.Attribute, bool) {
-	return s.registry.Attributes(tagName)
+	if attrs, ok := s.registry.Attributes(tagName); ok {
+		return attrs, true
+	}
+	return s.ephemeralRegistry.Attributes(tagName)
 }
 
 func (s *Server) Slots(tagName string) ([]M.Slot, bool) {
-	return s.registry.Slots(tagName)
+	if slots, ok := s.registry.Slots(tagName); ok {
+		return slots, true
+	}
+	return s.ephemeralRegistry.Slots(tagName)
 }
 
 func (s *Server) ElementDefinition(tagName string) (types.ElementDefinition, bool) {
-	return s.registry.ElementDefinition(tagName)
+	if def, ok := s.registry.ElementDefinition(tagName); ok {
+		return def, true
+	}
+	return s.ephemeralRegistry.ElementDefinition(tagName)
 }
 
 func (s *Server) FindCustomElementDeclaration(tagName string) *M.CustomElementDeclaration {
-	return s.registry.FindCustomElementDeclaration(tagName)
+	if decl := s.registry.FindCustomElementDeclaration(tagName); decl != nil {
+		return decl
+	}
+	return s.ephemeralRegistry.FindCustomElementDeclaration(tagName)
 }
 
 // ManifestCount returns the number of loaded manifests
@@ -145,7 +178,8 @@ func (s *Server) ElementSource(tagName string) (string, bool) {
 	// Get the element definition which contains source information
 	definition, exists := s.registry.ElementDefinition(tagName)
 	if !exists {
-		return "", false
+		// Fall back to ephemeral registry
+		return s.ephemeralRegistry.ElementSource(tagName)
 	}
 
 	packageName := definition.PackageName()
@@ -269,7 +303,8 @@ func (s *Server) ElementDescription(tagName string) (string, bool) {
 	// Use FindCustomElementDeclaration to get the full declaration with summary/description
 	decl := s.registry.FindCustomElementDeclaration(tagName)
 	if decl == nil {
-		return "", false
+		// Fall back to ephemeral registry
+		return s.ephemeralRegistry.ElementDescription(tagName)
 	}
 
 	// Prefer description over summary
@@ -281,4 +316,126 @@ func (s *Server) ElementDescription(tagName string) (string, bool) {
 	}
 
 	return "", false
+}
+
+// ephemeralQueryManager lazily creates a QueryManager with GenerateQueries()
+// for use by the ephemeral synthesis pipeline
+var (
+	ephemeralQM     *queries.QueryManager
+	ephemeralQMOnce sync.Once
+	ephemeralQMErr  error
+)
+
+func getEphemeralQueryManager() (*queries.QueryManager, error) {
+	ephemeralQMOnce.Do(func() {
+		ephemeralQM, ephemeralQMErr = queries.NewQueryManager(queries.GenerateQueries())
+	})
+	return ephemeralQM, ephemeralQMErr
+}
+
+// SynthesizeEphemeralElements runs synthesis of element declarations from a
+// TypeScript/JavaScript document that defines custom elements locally.
+// The synthesized data is stored in the ephemeral registry and acts as a
+// fallback for all LSP features.
+//
+// Synthesis runs synchronously so that ephemeral data is available before
+// diagnostics fire. The per-file cost is ~1-5ms, well within LSP budgets.
+//
+// If the document is no longer open (e.g., after DidClose), ephemeral data
+// for the URI is removed immediately.
+func (s *Server) SynthesizeEphemeralElements(uri string) {
+	doc := s.Document(uri)
+	if doc == nil {
+		// Document closed — remove any stale ephemeral data
+		s.ephemeralRegistry.Remove(uri)
+		return
+	}
+
+	lang := doc.Language()
+	if lang != "typescript" && lang != "javascript" {
+		return
+	}
+
+	content, err := doc.Content()
+	if err != nil || content == "" {
+		return
+	}
+
+	contentBytes := []byte(content)
+
+	// Fast check: does this file define any custom elements?
+	lspQM, err := s.QueryManager()
+	if err != nil {
+		return
+	}
+
+	definedTags := queries.FindDefinedElementTags(contentBytes, lspQM)
+	if len(definedTags) == 0 {
+		// No local definitions — remove any stale ephemeral data
+		s.ephemeralRegistry.Remove(uri)
+		return
+	}
+
+	// Check if all defined tags are already in the main registry
+	allInMain := true
+	for _, tag := range definedTags {
+		if _, ok := s.registry.Element(tag); !ok {
+			allInMain = false
+			break
+		}
+	}
+	if allInMain {
+		// All tags are already known via manifests — no need for ephemeral data
+		s.ephemeralRegistry.Remove(uri)
+		return
+	}
+
+	// Run the full generate pipeline on this file's source
+	genQM, err := getEphemeralQueryManager()
+	if err != nil {
+		helpers.SafeDebugLog("[EPHEMERAL] Failed to get generate query manager: %v", err)
+		return
+	}
+
+	parser := queries.RetrieveTypeScriptParser()
+	defer queries.PutTypeScriptParser(parser)
+
+	mp, err := generate.NewEphemeralModuleProcessor(uri, contentBytes, parser, genQM)
+	if err != nil {
+		helpers.SafeDebugLog("[EPHEMERAL] Failed to create module processor for %s: %v", uri, err)
+		return
+	}
+	defer mp.Close()
+
+	module, _, _, _, errs := mp.Collect()
+	if errs != nil {
+		helpers.SafeDebugLog("[EPHEMERAL] Errors collecting from %s: %v", uri, errs)
+		// Continue — partial results are still useful
+	}
+
+	if module == nil {
+		return
+	}
+
+	// Check if the module has any CustomElementDeclarations
+	hasCustomElements := false
+	for _, decl := range module.Declarations {
+		if _, ok := decl.(*M.CustomElementDeclaration); ok {
+			hasCustomElements = true
+			break
+		}
+	}
+	if !hasCustomElements {
+		s.ephemeralRegistry.Remove(uri)
+		return
+	}
+
+	// Wrap in a Package and update the ephemeral registry
+	pkg := &M.Package{
+		SchemaVersion: "2.1.0",
+		Modules:       []M.Module{*module},
+	}
+	s.ephemeralRegistry.Update(uri, pkg)
+
+	helpers.SafeDebugLog("[EPHEMERAL] Synthesized elements for %s: %d declarations", uri, len(module.Declarations))
 }

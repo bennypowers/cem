@@ -527,6 +527,59 @@ func (mp *ModuleProcessor) processDeclarations() error {
 	return err
 }
 
+// NewEphemeralModuleProcessor creates a ModuleProcessor from in-memory source bytes
+// without a workspace context. This is used by the LSP ephemeral registry to
+// synthesize CustomElementDeclaration objects from open documents that define
+// custom elements but aren't part of any CEM manifest.
+//
+// Unlike NewModuleProcessor, this constructor:
+//   - Takes source bytes directly instead of reading from disk
+//   - Has no WorkspaceContext — no config, no package.json, no file reads
+//   - Uses a silent (non-verbose) logger
+//   - Skips export path resolution
+//   - Returns nil source references (since mp.ctx is nil)
+//   - Skips external CSS file resolution (since mp.cssCache is nil)
+func NewEphemeralModuleProcessor(
+	file string,
+	code []byte,
+	parser *ts.Parser,
+	queryManager *Q.QueryManager,
+) (*ModuleProcessor, error) {
+	module := M.NewModule(file)
+	// Create a silent logger (non-verbose, no config dependency)
+	logger := &LogCtx{
+		File:    file,
+		Verbose: false,
+	}
+
+	tree := parser.Parse(code, nil)
+	if tree == nil {
+		return nil, fmt.Errorf("NewEphemeralModuleProcessor: failed to parse %s", file)
+	}
+	root := tree.RootNode()
+
+	return &ModuleProcessor{
+		queryManager: queryManager,
+		file:         file,
+		absPath:      file,
+		logger:       logger,
+		code:         code,
+		source:       string(code),
+		parser:       parser,
+		tree:         tree,
+		root:         root,
+		module:       module,
+		tagAliases:   make(map[string]string),
+		importBindingToSpecMap: make(map[string]struct {
+			name string
+			spec string
+		}),
+		styleImportsBindingToSpecMap: make(map[string]string),
+		classNamesAdded:              S.NewSet[string](),
+		// packageJSON, ctx, and cssCache are intentionally nil
+	}, nil
+}
+
 // resolveImportSpec resolves an import specifier relative to the current module's path.
 // For example, if the current module is "elements/demo-field/demo-field.js" and
 // the import spec is "../../base/form-associated-element.js", this resolves to

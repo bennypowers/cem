@@ -70,13 +70,26 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 	importedElements := parseScriptImports(content, ctx, doc)
 	helpers.SafeDebugLog("[DIAGNOSTICS] Imported elements from script tags: %v", importedElements)
 
-	// Get all available tag names from manifest for fallback
+	// Find elements defined in the current file via @customElement or customElements.define.
+	// This is a fast safety net for patterns the ephemeral synthesis pipeline doesn't fully
+	// handle (e.g., customElements.define without a decorator doesn't produce a
+	// CustomElementDeclaration in the generate pipeline).
+	locallyDefinedElements := findLocallyDefinedElements(content, ctx, doc)
+	helpers.SafeDebugLog("[DIAGNOSTICS] Locally defined elements: %v", locallyDefinedElements)
+
+	// Get all available tag names from manifest and ephemeral registry
 	allAvailableTagNames := ctx.AllTagNames()
-	helpers.SafeDebugLog("[DIAGNOSTICS] All available tag names in manifests: %v", allAvailableTagNames)
+	helpers.SafeDebugLog("[DIAGNOSTICS] All available tag names: %v", allAvailableTagNames)
 
 	for _, match := range tagMatches {
 		tagName := match.TagName
 		helpers.SafeDebugLog("[DIAGNOSTICS] Checking tag '%s'", tagName)
+
+		// Skip elements defined in the current file
+		if slices.Contains(locallyDefinedElements, tagName) {
+			helpers.SafeDebugLog("[DIAGNOSTICS] Element '%s' is defined in current file, skipping", tagName)
+			continue
+		}
 
 		// Check if the tag is imported (available in current context)
 		isImported := slices.Contains(importedElements, tagName)
@@ -393,6 +406,25 @@ func parseTypeScriptImports(content string, ctx types.ServerContext) []string {
 	}
 
 	return importedElements
+}
+
+// findLocallyDefinedElements finds custom element tag names defined in the current file
+// via @customElement('tag-name') decorators or customElements.define('tag-name', Class) calls.
+// This is a fast safety net for diagnostic suppression — the ephemeral registry handles
+// full IntelliSense, but the generate pipeline doesn't produce CustomElementDeclarations
+// for all definition patterns (e.g., customElements.define without a decorator).
+func findLocallyDefinedElements(content string, ctx types.ServerContext, doc types.Document) []string {
+	lang := doc.Language()
+	if lang != "typescript" && lang != "javascript" {
+		return nil
+	}
+
+	queryManager, err := ctx.QueryManager()
+	if err != nil {
+		return nil
+	}
+
+	return queries.FindDefinedElementTags([]byte(content), queryManager)
 }
 
 // parseModuleScriptImports parses <script type="module"> tags for imports using tree-sitter

@@ -21,17 +21,19 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
 // LSPFixture represents a single LSP test scenario loaded from fixtures
 type LSPFixture struct {
-	Name         string          // Test scenario name (directory name)
-	InputHTML    string          // HTML content from input.html (deprecated: use InputContent)
-	InputContent string          // Content from input.html or input.ts
-	InputType    string          // File type: "html" or "ts"
-	Manifest     json.RawMessage // Optional manifest data from manifest.json
-	ExpectedMap  map[string]any  // Expected results from expected-*.json or expected.json
+	Name            string            // Test scenario name (directory name)
+	InputHTML       string            // HTML content from input.html (deprecated: use InputContent)
+	InputContent    string            // Content from input.html or input.ts
+	InputType       string            // File type: "html" or "ts"
+	Manifest        json.RawMessage   // Optional manifest data from manifest.json
+	ExpectedMap     map[string]any    // Expected results from expected-*.json or expected.json
+	AdditionalFiles map[string]string // Additional source files in the fixture directory (filename → content)
 }
 
 // RunLSPFixtures discovers and runs LSP tests from a testdata directory.
@@ -73,8 +75,9 @@ func loadLSPFixture(t *testing.T, scenarioDir, scenarioName string) *LSPFixture 
 	t.Helper()
 
 	fixture := &LSPFixture{
-		Name:        scenarioName,
-		ExpectedMap: make(map[string]any),
+		Name:            scenarioName,
+		ExpectedMap:     make(map[string]any),
+		AdditionalFiles: make(map[string]string),
 	}
 
 	// Try input.html first, then input.ts
@@ -101,16 +104,26 @@ func loadLSPFixture(t *testing.T, scenarioDir, scenarioName string) *LSPFixture 
 		fixture.Manifest = json.RawMessage(manifestBytes)
 	}
 
-	// Load all expected-*.json files (optional)
+	// Load all expected-*.json files and additional source files (optional)
 	entries, err := os.ReadDir(scenarioDir)
 	if err == nil {
+		// Determine the primary input filename to exclude from additional files
+		primaryInput := "input.html"
+		if fixture.InputType == "ts" {
+			primaryInput = "input.ts"
+		}
+
 		for _, entry := range entries {
 			if entry.IsDir() {
 				continue
 			}
 			name := entry.Name()
-			if filepath.Ext(name) == ".json" && filepath.Base(name) != "manifest.json" {
-				fullPath := filepath.Join(scenarioDir, name)
+			ext := filepath.Ext(name)
+			fullPath := filepath.Join(scenarioDir, name)
+
+			switch {
+			// JSON files: expected-*.json and expected.json
+			case ext == ".json" && name != "manifest.json" && name != "package.json":
 				data, err := os.ReadFile(fullPath)
 				if err != nil {
 					continue
@@ -120,17 +133,24 @@ func loadLSPFixture(t *testing.T, scenarioDir, scenarioName string) *LSPFixture 
 					t.Logf("Warning: failed to parse %s: %v", name, err)
 					continue
 				}
-				// Handle both "expected.json" and "expected-*.json" patterns
 				var key string
 				if name == "expected.json" {
 					key = "expected"
-				} else if len(name) > len("expected-") && name[:len("expected-")] == "expected-" {
+				} else if strings.HasPrefix(name, "expected-") {
 					key = name[len("expected-") : len(name)-len(".json")]
 				} else {
-					// Other JSON files, use filename without extension
 					key = name[:len(name)-len(".json")]
 				}
 				fixture.ExpectedMap[key] = expectedData
+
+			// Source files: .ts, .js, .html, .css (excluding primary input)
+			case (ext == ".ts" || ext == ".js" || ext == ".html" || ext == ".css") && name != primaryInput:
+				data, err := os.ReadFile(fullPath)
+				if err != nil {
+					t.Logf("Warning: failed to read additional file %s: %v", name, err)
+					continue
+				}
+				fixture.AdditionalFiles[name] = string(data)
 			}
 		}
 	}
