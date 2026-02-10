@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "elements/bare-element/bare-element.js",
+      "declarations": [
+        {
+          "name": "BareElement",
+          "kind": "class",
+          "tagName": "bare-element",
+          "customElement": true,
+          "members": [
+            {
+              "name": "foo",
+              "kind": "field"
+            },
+            {
+              "name": "bar",
+              "kind": "field"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "foo",
+              "fieldName": "foo"
+            },
+            {
+              "name": "bar",
+              "fieldName": "bar"
+            }
+          ],
+          "slots": [
+            {
+              "name": ""
+            },
+            {
+              "name": "header"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "container"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--bare-color"
+            }
+          ],
+          "events": [
+            {
+              "name": "change"
+            },
+            {
+              "name": "click"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

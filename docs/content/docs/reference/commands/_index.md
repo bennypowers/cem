@@ -25,5 +25,9 @@ The `cem` command-line tool has several commands to help you generate and query 
   {{< card title="Validate" href="validate" icon="/images/sections/validate.svg" >}}
   Ensure your custom elements manifest files conform to the official schema and catch potential issues before publishing.
   {{< /card >}}
+
+  {{< card title="Health" href="health" icon="/images/sections/validate.svg" >}}
+  Score documentation quality in your custom elements manifest and get actionable recommendations for improvement.
+  {{< /card >}}
 {{< /card-grid >}}
 

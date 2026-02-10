@@ -110,6 +110,11 @@ type DemosConfig struct {
 	Rendering string `mapstructure:"rendering" yaml:"rendering"`
 }
 
+type HealthConfig struct {
+	FailBelow int      `mapstructure:"failBelow" yaml:"failBelow"`
+	Disable   []string `mapstructure:"disable" yaml:"disable"`
+}
+
 type CemConfig struct {
 	ProjectDir string `mapstructure:"projectDir" yaml:"projectDir"`
 	ConfigFile string `mapstructure:"configFile" yaml:"configFile"`
@@ -119,6 +124,8 @@ type CemConfig struct {
 	Generate GenerateConfig `mapstructure:"generate" yaml:"generate"`
 	// MCP server options
 	MCP MCPConfig `mapstructure:"mcp" yaml:"mcp"`
+	// Health command options
+	Health HealthConfig `mapstructure:"health" yaml:"health"`
 	// Serve command options
 	Serve ServeConfig `mapstructure:"serve" yaml:"serve"`
 	// Canonical public source control URL corresponding to project root on primary branch.
