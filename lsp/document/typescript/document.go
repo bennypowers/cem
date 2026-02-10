@@ -461,9 +461,10 @@ func (d *TypeScriptDocument) findHTMLTemplates(handler *Handler) ([]TemplateCont
 				if templateCaptures, exists := captureMap[captureName]; exists {
 					for _, capture := range templateCaptures {
 						template := TemplateContext{
-							Range:   d.ByteRangeToProtocolRange(content, capture.StartByte, capture.EndByte),
-							content: capture.Text,
-							Type:    "html",
+							Range:     d.ByteRangeToProtocolRange(content, capture.StartByte, capture.EndByte),
+							content:   capture.Text,
+							startByte: capture.StartByte,
+							Type:      "html",
 						}
 						templates = append(templates, template)
 					}
@@ -510,17 +511,28 @@ func (d *TypeScriptDocument) parseHTMLInTemplate(template TemplateContext, handl
 	if err != nil {
 		return nil, fmt.Errorf("failed to get HTML custom elements query: %w", err)
 	}
+	defer htmlCustomElements.Close()
 
-	// Find custom elements in the HTML template
-	for captureMap := range htmlCustomElements.ParentCaptures(htmlTree.RootNode(), []byte(templateContent), "element") {
-		if tagNames, exists := captureMap["tag.name"]; exists {
-			for _, capture := range tagNames {
-				if strings.Contains(capture.Text, "-") {
-					// Adjust positions relative to the template start
+	contentBytes := []byte(templateContent)
+	seen := make(map[string]bool)
+
+	// Find custom elements in the HTML template (both regular and self-closing)
+	for _, parentName := range []string{"element", "self.closing.tag"} {
+		for captureMap := range htmlCustomElements.ParentCaptures(htmlTree.RootNode(), contentBytes, parentName) {
+			if tagNames, exists := captureMap["tag.name"]; exists {
+				for _, capture := range tagNames {
+					if !strings.Contains(capture.Text, "-") {
+						continue
+					}
+					key := fmt.Sprintf("%s:%d:%d", capture.Text, capture.StartByte, capture.EndByte)
+					if seen[key] {
+						continue
+					}
+					seen[key] = true
 					element := types.CustomElementMatch{
 						TagName:    capture.Text,
 						Range:      d.adjustRangeToTemplate(capture, template),
-						Attributes: make(map[string]types.AttributeMatch),
+						Attributes: d.collectTemplateAttributes(captureMap, contentBytes, template),
 					}
 					elements = append(elements, element)
 				}
@@ -533,16 +545,75 @@ func (d *TypeScriptDocument) parseHTMLInTemplate(template TemplateContext, handl
 
 // adjustRangeToTemplate adjusts a range from template content to document coordinates
 func (d *TypeScriptDocument) adjustRangeToTemplate(
-	_ Q.CaptureInfo,
+	capture Q.CaptureInfo,
 	template TemplateContext,
 ) protocol.Range {
-	// This is a simplified version - a full implementation would need to:
-	// 1. Calculate the byte offset of the template start in the document
-	// 2. Add the capture's byte offsets to get document positions
-	// 3. Convert byte positions back to line/character positions
+	return protocol.Range{
+		Start: d.byteOffsetToPosition(template.startByte + capture.StartByte),
+		End:   d.byteOffsetToPosition(template.startByte + capture.EndByte),
+	}
+}
 
-	// For now, return the template range as a placeholder
-	return template.Range
+// collectTemplateAttributes extracts attributes from a capture map and adjusts
+// their ranges to document coordinates.
+func (d *TypeScriptDocument) collectTemplateAttributes(
+	captureMap Q.CaptureMap,
+	contentBytes []byte,
+	template TemplateContext,
+) map[string]types.AttributeMatch {
+	attributes := make(map[string]types.AttributeMatch)
+	attrNames, ok := captureMap["attr.name"]
+	if !ok {
+		return attributes
+	}
+
+	// Build a map of attribute values by their byte position
+	valuesByPosition := make(map[uint]string)
+	if attrValues, ok := captureMap["attr.value"]; ok {
+		for _, av := range attrValues {
+			value := av.Text
+			if len(value) >= 2 && (value[0] == '"' || value[0] == '\'') && value[len(value)-1] == value[0] {
+				value = value[1 : len(value)-1]
+			}
+			valuesByPosition[av.StartByte] = value
+		}
+	}
+	if unquotedValues, ok := captureMap["attr.unquoted.value"]; ok {
+		for _, uv := range unquotedValues {
+			valuesByPosition[uv.StartByte] = uv.Text
+		}
+	}
+
+	for _, attrName := range attrNames {
+		attrMatch := types.AttributeMatch{
+			Name:  attrName.Text,
+			Range: d.adjustRangeToTemplate(attrName, template),
+		}
+
+		// Find the closest value after this attribute name with an = sign between them
+		var closestValue string
+		var closestDistance = ^uint(0)
+		for valuePos, value := range valuesByPosition {
+			if valuePos > attrName.EndByte {
+				distance := valuePos - attrName.EndByte
+				if distance < closestDistance {
+					betweenText := string(contentBytes[attrName.EndByte:valuePos])
+					trimmed := strings.TrimLeft(betweenText, " \t\r\n")
+					if len(trimmed) > 0 && trimmed[0] == '=' {
+						closestDistance = distance
+						closestValue = value
+					}
+				}
+			}
+		}
+		if closestValue != "" {
+			attrMatch.Value = closestValue
+		}
+
+		attributes[attrName.Text] = attrMatch
+	}
+
+	return attributes
 }
 
 // analyzeCompletionContext analyzes completion context for TypeScript documents
@@ -864,8 +935,21 @@ func (d *TypeScriptDocument) FindAttributeAtPosition(
 	position protocol.Position,
 	dm any,
 ) (*types.AttributeMatch, string) {
-	// This method needs to be implemented for the types.Document interface
-	// For now, return nil as this functionality is handled by the handler
+	dmValue := reflect.ValueOf(dm)
+	if dmValue.Kind() == reflect.Pointer && !dmValue.IsNil() {
+		method := dmValue.MethodByName("GetLanguageHandler")
+		if method.IsValid() {
+			results := method.Call([]reflect.Value{reflect.ValueOf("typescript")})
+			if len(results) > 0 && !results[0].IsNil() {
+				handler := results[0].Interface()
+				if h, ok := handler.(interface {
+					FindAttributeAtPosition(types.Document, protocol.Position) (*types.AttributeMatch, string)
+				}); ok {
+					return h.FindAttributeAtPosition(d, position)
+				}
+			}
+		}
+	}
 	return nil, ""
 }
 

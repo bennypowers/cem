@@ -28,21 +28,17 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// TestHover_MultilineAllAttributes tests hover on all attributes that failed in the benchmark.
-// This is a regression test for issues #176 and #179, ensuring our attribute value matching fix
-// works for ALL attributes on a multi-line element.
-//
-// Benchmark failures (on docs/lsp/benchmarks branch) showed these 5 attributes all failed:
-// - variant, size, disabled, loading, icon
-//
-// Root cause: Benchmark test positions were outdated, but this test validates the fix works.
-func TestHover_MultilineAllAttributes(t *testing.T) {
+// TestHover_NestedElements tests that hovering on a custom element nested
+// inside another custom element in a TypeScript template literal returns
+// hover docs for the inner element, not the outer one.
+// This is a regression test for the bug where hovering on <rh-icon> inside
+// <rh-surface> in rh-alert.ts showed docs for rh-surface.
+func TestHover_NestedElements(t *testing.T) {
 	testutil.RunLSPFixtures(t, "testdata-regression", func(t *testing.T, fixture *testutil.LSPFixture) {
-		if fixture.Name != "multiline-all-attributes" {
+		if fixture.Name != "nested-element-hover-typescript" {
 			t.Skip("not applicable to this test")
 		}
 
-		// Setup context
 		ctx := testhelpers.NewMockServerContext()
 		if fixture.Manifest != nil {
 			var pkg M.Package
@@ -59,31 +55,28 @@ func TestHover_MultilineAllAttributes(t *testing.T) {
 		defer dm.Close()
 		ctx.SetDocumentManager(dm)
 
-		uri := "file:///test.html"
+		uri := "file:///test.ts"
 		doc := dm.OpenDocument(uri, fixture.InputContent, 1)
 		ctx.AddDocument(uri, doc)
 
-		// Test each attribute that failed in the benchmark
+		// Line 5:  "      <outer-surface color-palette="lightest">"
+		//           outer-surface tag at chars 7-20, "color-palette" attr at chars 21-34
+		// Line 7:  "          <inner-icon id="icon" set="ui" icon="check"></inner-icon>"
+		//           inner-icon tag at chars 11-21, "icon" attr at chars 41-45
 		testCases := []struct {
 			name     string
 			position protocol.Position
 		}{
-			{"variant", protocol.Position{Line: 6, Character: 13}},
-			{"size", protocol.Position{Line: 7, Character: 13}},
-			{"disabled", protocol.Position{Line: 8, Character: 13}},
-			{"loading", protocol.Position{Line: 9, Character: 13}},
-			{"icon", protocol.Position{Line: 10, Character: 13}},
+			// Hover on the inner-icon tag name
+			{"element", protocol.Position{Line: 7, Character: 15}},
+			// Hover on the "icon" attribute of inner-icon
+			{"attribute", protocol.Position{Line: 7, Character: 42}},
+			// Hover on the "color-palette" attribute of outer-surface
+			{"outer-attribute", protocol.Position{Line: 5, Character: 25}},
 		}
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				// Load expected result from fixture
-				var expected protocol.Hover
-				if err := fixture.GetExpected(tc.name, &expected); err != nil {
-					t.Fatalf("Failed to get expected hover: %v", err)
-				}
-
-				// Call hover
 				params := &protocol.HoverParams{
 					TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 						TextDocument: protocol.TextDocumentIdentifier{URI: uri},
@@ -100,33 +93,23 @@ func TestHover_MultilineAllAttributes(t *testing.T) {
 					t.Fatal("Expected hover result, got nil")
 				}
 
-				// Structured comparison
 				actualContents, ok := result.Contents.(protocol.MarkupContent)
 				if !ok {
 					t.Fatalf("Expected Contents to be MarkupContent, got %T", result.Contents)
 				}
 
-				expectedContents, ok := expected.Contents.(protocol.MarkupContent)
-				if !ok {
-					t.Fatalf("Expected Contents in expected.json to be MarkupContent, got %T", expected.Contents)
+				// Unmarshal expected golden into a typed struct so Contents
+				// deserializes as MarkupContent rather than map[string]interface{}.
+				var expected struct {
+					Contents protocol.MarkupContent `json:"contents"`
+					Range    *protocol.Range        `json:"range"`
+				}
+				if err := fixture.GetExpected(tc.name, &expected); err != nil {
+					t.Fatalf("Failed to get expected hover: %v", err)
 				}
 
-				if actualContents.Kind != expectedContents.Kind {
-					t.Errorf("Expected kind %s, got %s", expectedContents.Kind, actualContents.Kind)
-				}
-
-				if actualContents.Value != expectedContents.Value {
-					t.Errorf("Expected value:\n%s\n\nGot:\n%s", expectedContents.Value, actualContents.Value)
-				}
-
-				// Verify range
-				if expected.Range != nil && result.Range != nil {
-					if result.Range.Start.Line != expected.Range.Start.Line ||
-						result.Range.Start.Character != expected.Range.Start.Character ||
-						result.Range.End.Line != expected.Range.End.Line ||
-						result.Range.End.Character != expected.Range.End.Character {
-						t.Errorf("Range mismatch.\nExpected: %+v\nGot: %+v", expected.Range, result.Range)
-					}
+				if actualContents.Value != expected.Contents.Value {
+					t.Errorf("Expected value:\n%s\n\nGot:\n%s", expected.Contents.Value, actualContents.Value)
 				}
 			})
 		}

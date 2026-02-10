@@ -22,9 +22,10 @@ import (
 
 // TemplateContext represents an HTML template context in TypeScript
 type TemplateContext struct {
-	Range   protocol.Range
-	content string
-	Type    string // "html", "innerHTML", "outerHTML"
+	Range     protocol.Range
+	content   string
+	startByte uint   // byte offset of the template content within the document
+	Type      string // "html", "innerHTML", "outerHTML"
 }
 
 // Content returns the template content

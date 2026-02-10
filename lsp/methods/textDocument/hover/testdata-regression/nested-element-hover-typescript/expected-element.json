@@ -1,0 +1,6 @@
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "## `<inner-icon>`\n\nAn icon element\n\n### Attributes\n\n- **`set`** _string_ - Icon set name\n- **`icon`** _string_ - Icon identifier\n\n"
+  }
+}

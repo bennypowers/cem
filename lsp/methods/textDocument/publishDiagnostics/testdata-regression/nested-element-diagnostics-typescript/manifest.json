@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "./outer-surface.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "OuterSurface",
+          "tagName": "outer-surface",
+          "customElement": true,
+          "description": "A surface container element",
+          "attributes": [
+            {
+              "name": "id",
+              "type": { "text": "string" },
+              "description": "Element identifier"
+            },
+            {
+              "name": "role",
+              "type": { "text": "string" },
+              "description": "ARIA role"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "outer-surface",
+          "declaration": {
+            "name": "OuterSurface"
+          }
+        }
+      ]
+    }
+  ]
+}
