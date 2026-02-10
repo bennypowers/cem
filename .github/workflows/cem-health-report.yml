@@ -24,11 +24,6 @@ on:
         type: string
         default: ""
 
-  pull_request:
-    types: [opened, synchronize, reopened]
-
-  workflow_dispatch:
-
 jobs:
   health:
     runs-on: ubuntu-latest
