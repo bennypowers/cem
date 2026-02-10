@@ -511,6 +511,7 @@ func (d *TypeScriptDocument) parseHTMLInTemplate(template TemplateContext, handl
 	if err != nil {
 		return nil, fmt.Errorf("failed to get HTML custom elements query: %w", err)
 	}
+	defer htmlCustomElements.Close()
 
 	contentBytes := []byte(templateContent)
 	seen := make(map[string]bool)
@@ -571,7 +572,7 @@ func (d *TypeScriptDocument) collectTemplateAttributes(
 	if attrValues, ok := captureMap["attr.value"]; ok {
 		for _, av := range attrValues {
 			value := av.Text
-			if len(value) >= 2 && (value[0] == '"' || value[0] == '\'') {
+			if len(value) >= 2 && (value[0] == '"' || value[0] == '\'') && value[len(value)-1] == value[0] {
 				value = value[1 : len(value)-1]
 			}
 			valuesByPosition[av.StartByte] = value

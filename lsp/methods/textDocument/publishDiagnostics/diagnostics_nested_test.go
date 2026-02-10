@@ -60,6 +60,10 @@ func TestDiagnostics_NestedElementRanges(t *testing.T) {
 
 		diagnostics := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(ctx, doc)
 
+		if len(diagnostics) != 2 {
+			t.Fatalf("Expected 2 diagnostics, got %d", len(diagnostics))
+		}
+
 		// We expect diagnostics for both elements:
 		// - outer-surface: known but not imported
 		// - inner-icon: unknown element
