@@ -73,17 +73,21 @@ var healthCmd = &cobra.Command{
 
 		// Merge config and flag values
 		configDisabled := viper.GetStringSlice("health.disable")
-		allDisabled := append(configDisabled, disableFlags...)
+		allDisabled := make([]string, 0, len(configDisabled)+len(disableFlags))
+		allDisabled = append(allDisabled, configDisabled...)
+		allDisabled = append(allDisabled, disableFlags...)
 
 		configModules := viper.GetStringSlice("health.modules")
-		allModules := append(configModules, moduleFlags...)
+		allModules := make([]string, 0, len(configModules)+len(moduleFlags))
+		allModules = append(allModules, configModules...)
+		allModules = append(allModules, moduleFlags...)
 
 		configFailBelow := viper.GetInt("health.failBelow")
 		if failBelow == 0 && configFailBelow > 0 {
 			failBelow = configFailBelow
 		}
 
-		options := health.HealthOptions{
+		options := health.Options{
 			Component: component,
 			Modules:   allModules,
 			Disable:   allDisabled,

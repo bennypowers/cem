@@ -81,7 +81,9 @@ jobs:
         env:
           PKG_PATH: ${{ inputs.package-path || '.' }}
           GEN_ARGS: ${{ inputs.generate-args }}
-        run: cem generate -p "$PKG_PATH" $GEN_ARGS
+        run: |
+          # shellcheck disable=SC2086
+          cem generate -p "$PKG_PATH" $GEN_ARGS
 
       - name: Generate health report (PR)
         if: github.event_name == 'pull_request'
@@ -150,7 +152,9 @@ jobs:
         env:
           PKG_PATH: ${{ inputs.package-path || '.' }}
           HEALTH_ARGS: ${{ inputs.health-args }}
-        run: cem health -p "$PKG_PATH" --format markdown $HEALTH_ARGS > health_report.md
+        run: |
+          # shellcheck disable=SC2086
+          cem health -p "$PKG_PATH" --format markdown $HEALTH_ARGS > health_report.md
 
       - name: Find previous health comment
         if: github.event_name == 'pull_request'
@@ -181,6 +185,7 @@ jobs:
           FAIL_BELOW: ${{ inputs.fail-below }}
           HEALTH_ARGS: ${{ inputs.health-args }}
         run: |
+          # shellcheck disable=SC2086
           cem health -p "$PKG_PATH" \
             --fail-below "$FAIL_BELOW" \
             --format text $HEALTH_ARGS > /dev/null

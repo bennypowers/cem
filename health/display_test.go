@@ -41,7 +41,7 @@ func TestWriteMarkdownReport(t *testing.T) {
 			fixturePath := filepath.Join("testdata", "fixtures", tt.fixture, "custom-elements.json")
 			goldenPath := filepath.Join("testdata", "goldens", "markdown-"+tt.fixture+".md")
 
-			result, err := Analyze(fixturePath, HealthOptions{})
+			result, err := Analyze(fixturePath, Options{})
 			if err != nil {
 				t.Fatalf("Analyze() error = %v", err)
 			}

@@ -62,8 +62,11 @@ func TestDescriptionRule(t *testing.T) {
 		}
 		ctx := &HealthContext{Declaration: decl, DeclName: "TestElement"}
 		result := rule.Evaluate(ctx)
-		if result.Points == 0 {
-			t.Error("expected some points when summary exists")
+		// "Provides a way to display things" (32 chars) earns:
+		//   Has description: 5, Optimal length: 3, Purpose (1 word "provides"): 3
+		// Total: 11 out of 25
+		if result.Points != 11 {
+			t.Errorf("expected 11 points for summary fallback, got %d", result.Points)
 		}
 	})
 

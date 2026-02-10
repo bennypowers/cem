@@ -47,8 +47,11 @@ EOF
 fi
 
 # Get all module paths from the manifest
-manifest_modules=$(cem health -p "$PACKAGE_PATH" --format json 2>/dev/null | \
-                   jq -r '.modules[].path' 2>/dev/null || echo "")
+health_output=$(cem health -p "$PACKAGE_PATH" --format json 2>&1) || {
+  echo "::error::cem health failed: $health_output" >&2
+  exit 1
+}
+manifest_modules=$(echo "$health_output" | jq -r '.modules[].path' 2>/dev/null || echo "")
 
 if [ -z "$manifest_modules" ]; then
   cat > health_report.md <<'EOF'

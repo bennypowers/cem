@@ -51,15 +51,15 @@ type ComponentReport struct {
 	Categories []CategoryScore `json:"categories"`
 }
 
-// HealthOptions configures the health analysis.
-type HealthOptions struct {
+// Options configures the health analysis.
+type Options struct {
 	Component string   // filter to a single component by tag name or class name
 	Modules   []string // filter to specific modules by path
 	Disable   []string // disabled category IDs
 }
 
 // Analyze performs health analysis on a manifest file.
-func Analyze(manifestPath string, options HealthOptions) (*HealthResult, error) {
+func Analyze(manifestPath string, options Options) (*HealthResult, error) {
 	manifestData, err := os.ReadFile(manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading manifest file: %w", err)
