@@ -125,23 +125,23 @@ jobs:
           fi
 
           # Match changed files against module paths
-          declare -A matched
+          matched_modules=()
           while IFS= read -r f; do
             mapped=$(map_ext "$f")
             while IFS= read -r mod; do
               if [ "$mapped" = "$mod" ] || [ "$f" = "$mod" ]; then
-                matched["$mod"]=1
+                matched_modules+=("$mod")
               fi
             done <<< "$manifest_modules"
           done <<< "$changed_files"
 
-          if [ ${#matched[@]} -eq 0 ]; then
+          if [ ${#matched_modules[@]} -eq 0 ]; then
             printf '### Documentation Health\n\nNo changed files match any modules in the manifest.\n' > health_report.md
             exit 0
           fi
 
           flags=()
-          for mod in "${!matched[@]}"; do
+          for mod in "${matched_modules[@]}"; do
             flags+=(--module "$mod")
           done
 
