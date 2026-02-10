@@ -97,6 +97,7 @@ VSCODE_VERSION=$(node -e "process.stdout.write(JSON.parse(require('fs').readFile
 ZED_VERSION=$(grep '^version = ' extensions/zed/extension.toml | cut -d'"' -f2)
 NPM_VERSION=$(node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('npm/package.json','utf8')).version)")
 
+CLAUDE_VERSION=""
 if [ -f .claude-plugin/marketplace.json ]; then
   CLAUDE_VERSION=$(node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('.claude-plugin/marketplace.json','utf8')).plugins[0].version)")
 fi
@@ -104,7 +105,9 @@ fi
 for PAIR in "extensions/vscode/package.json:$VSCODE_VERSION" "extensions/zed/extension.toml:$ZED_VERSION" "npm/package.json:$NPM_VERSION" ".claude-plugin/marketplace.json:$CLAUDE_VERSION"; do
   FILE="${PAIR%%:*}"
   FILE_VERSION="${PAIR##*:}"
-  if [ -n "$FILE_VERSION" ] && [ "$FILE_VERSION" != "$CHECK_VERSION" ]; then
+  if [ ! -f "$FILE" ]; then
+    echo "  - $FILE: skipped (file not found)"
+  elif [ -n "$FILE_VERSION" ] && [ "$FILE_VERSION" != "$CHECK_VERSION" ]; then
     echo "  ✗ $FILE has version $FILE_VERSION (expected $CHECK_VERSION)"
     MISMATCH=1
   else

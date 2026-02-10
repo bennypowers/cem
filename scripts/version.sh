@@ -87,8 +87,17 @@ elif command -v node &> /dev/null; then
     fs.writeFileSync('npm/package.json', JSON.stringify(pkg, null, 2) + '\n');
   "
 else
-  sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" npm/package.json
+  # Fallback to sed
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" npm/package.json
+  else
+    sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" npm/package.json
+  fi
 fi
+
+# Update npm optionalDependencies to match
+echo "Updating npm/package.json optionalDependencies..."
+RELEASE_TAG="v$VERSION" node scripts/update-platform-package-versions.js
 
 # Update package-lock.json
 echo "Updating package-lock.json..."

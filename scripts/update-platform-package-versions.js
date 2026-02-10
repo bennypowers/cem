@@ -13,4 +13,4 @@ await writeFile(out, JSON.stringify({
     `@pwrs/cem-${t.name}`,
     version,
   ])),
-}, null, 2), 'utf8');
+}, null, 2) + '\n', 'utf8');
