@@ -38,6 +38,7 @@ changed_files=$(git diff --name-only "origin/${BASE_REF}...HEAD" 2>/dev/null || 
                 echo "")
 
 if [ -z "$changed_files" ]; then
+  echo "::warning::Could not determine changed files. Ensure the checkout has sufficient fetch-depth." >&2
   cat > health_report.md <<'EOF'
 ### Documentation Health
 

@@ -31,6 +31,25 @@ func containsWord(text string, pattern *regexp.Regexp) bool {
 	return pattern.MatchString(text)
 }
 
+var (
+	purposePatterns = []*regexp.Regexp{
+		wordPattern("for"), wordPattern("when"), wordPattern("use"),
+		wordPattern("provides"), wordPattern("allows"), wordPattern("enables"),
+	}
+	rfcPatterns = []*regexp.Regexp{
+		wordPattern("must"), wordPattern("should"), wordPattern("avoid"),
+		wordPattern("shall"), wordPattern("required"), wordPattern("recommended"),
+	}
+	a11yPatterns = []*regexp.Regexp{
+		wordPattern("accessibility"), wordPattern("a11y"), wordPattern("aria"),
+		wordPattern("screen reader"), wordPattern("wcag"),
+	}
+	kbPatterns = []*regexp.Regexp{
+		wordPattern("keyboard"), wordPattern("key"), wordPattern("enter"),
+		wordPattern("space"), wordPattern("tab"), wordPattern("focus"),
+	}
+)
+
 // DescriptionRule scores element description quality (25 pts max).
 type DescriptionRule struct{}
 
@@ -82,12 +101,8 @@ func (r *DescriptionRule) Evaluate(ctx *HealthContext) CategoryScore {
 		pts := 0
 		msg := ""
 		lower := strings.ToLower(desc)
-		purposeWords := []*regexp.Regexp{
-			wordPattern("for"), wordPattern("when"), wordPattern("use"),
-			wordPattern("provides"), wordPattern("allows"), wordPattern("enables"),
-		}
 		found := 0
-		for _, w := range purposeWords {
+		for _, w := range purposePatterns {
 			if containsWord(lower, w) {
 				found++
 			}
@@ -109,12 +124,8 @@ func (r *DescriptionRule) Evaluate(ctx *HealthContext) CategoryScore {
 		pts := 0
 		msg := ""
 		lower := strings.ToLower(desc)
-		rfcWords := []*regexp.Regexp{
-			wordPattern("must"), wordPattern("should"), wordPattern("avoid"),
-			wordPattern("shall"), wordPattern("required"), wordPattern("recommended"),
-		}
 		found := 0
-		for _, w := range rfcWords {
+		for _, w := range rfcPatterns {
 			if containsWord(lower, w) {
 				found++
 			}
@@ -136,11 +147,7 @@ func (r *DescriptionRule) Evaluate(ctx *HealthContext) CategoryScore {
 		pts := 0
 		msg := ""
 		lower := strings.ToLower(desc)
-		a11yWords := []*regexp.Regexp{
-			wordPattern("accessibility"), wordPattern("a11y"), wordPattern("aria"),
-			wordPattern("screen reader"), wordPattern("wcag"),
-		}
-		for _, w := range a11yWords {
+		for _, w := range a11yPatterns {
 			if containsWord(lower, w) {
 				pts = 4
 				break
@@ -158,11 +165,7 @@ func (r *DescriptionRule) Evaluate(ctx *HealthContext) CategoryScore {
 		pts := 0
 		msg := ""
 		lower := strings.ToLower(desc)
-		kbWords := []*regexp.Regexp{
-			wordPattern("keyboard"), wordPattern("key"), wordPattern("enter"),
-			wordPattern("space"), wordPattern("tab"), wordPattern("focus"),
-		}
-		for _, w := range kbWords {
+		for _, w := range kbPatterns {
 			if containsWord(lower, w) {
 				pts = 3
 				break
