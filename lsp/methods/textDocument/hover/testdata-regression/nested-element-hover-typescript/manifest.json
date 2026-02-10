@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "./outer-surface.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "OuterSurface",
+          "tagName": "outer-surface",
+          "customElement": true,
+          "description": "A surface container element",
+          "attributes": [
+            {
+              "name": "id",
+              "type": { "text": "string" },
+              "description": "Element identifier"
+            },
+            {
+              "name": "role",
+              "type": { "text": "string" },
+              "description": "ARIA role"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "outer-surface",
+          "declaration": {
+            "name": "OuterSurface"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "./inner-icon.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "InnerIcon",
+          "tagName": "inner-icon",
+          "customElement": true,
+          "description": "An icon element",
+          "attributes": [
+            {
+              "name": "set",
+              "type": { "text": "string" },
+              "description": "Icon set name"
+            },
+            {
+              "name": "icon",
+              "type": { "text": "string" },
+              "description": "Icon identifier"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "inner-icon",
+          "declaration": {
+            "name": "InnerIcon"
+          }
+        }
+      ]
+    }
+  ]
+}

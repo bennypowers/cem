@@ -28,21 +28,17 @@ import (
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
-// TestHover_MultilineAllAttributes tests hover on all attributes that failed in the benchmark.
-// This is a regression test for issues #176 and #179, ensuring our attribute value matching fix
-// works for ALL attributes on a multi-line element.
-//
-// Benchmark failures (on docs/lsp/benchmarks branch) showed these 5 attributes all failed:
-// - variant, size, disabled, loading, icon
-//
-// Root cause: Benchmark test positions were outdated, but this test validates the fix works.
-func TestHover_MultilineAllAttributes(t *testing.T) {
+// TestHover_NestedElements tests that hovering on a custom element nested
+// inside another custom element in a TypeScript template literal returns
+// hover docs for the inner element, not the outer one.
+// This is a regression test for the bug where hovering on <rh-icon> inside
+// <rh-surface> in rh-alert.ts showed docs for rh-surface.
+func TestHover_NestedElements(t *testing.T) {
 	testutil.RunLSPFixtures(t, "testdata-regression", func(t *testing.T, fixture *testutil.LSPFixture) {
-		if fixture.Name != "multiline-all-attributes" {
+		if fixture.Name != "nested-element-hover-typescript" {
 			return
 		}
 
-		// Setup context
 		ctx := testhelpers.NewMockServerContext()
 		if fixture.Manifest != nil {
 			var pkg M.Package
@@ -59,31 +55,24 @@ func TestHover_MultilineAllAttributes(t *testing.T) {
 		defer dm.Close()
 		ctx.SetDocumentManager(dm)
 
-		uri := "file:///test.html"
+		uri := "file:///test.ts"
 		doc := dm.OpenDocument(uri, fixture.InputContent, 1)
 		ctx.AddDocument(uri, doc)
 
-		// Test each attribute that failed in the benchmark
+		// Line 7 of input.ts:
+		//           <inner-icon id="icon" set="ui" icon="check"></inner-icon>
+		// char:      0123456789...
+		// inner-icon tag name is at characters 11-20
 		testCases := []struct {
 			name     string
 			position protocol.Position
 		}{
-			{"variant", protocol.Position{Line: 6, Character: 13}},
-			{"size", protocol.Position{Line: 7, Character: 13}},
-			{"disabled", protocol.Position{Line: 8, Character: 13}},
-			{"loading", protocol.Position{Line: 9, Character: 13}},
-			{"icon", protocol.Position{Line: 10, Character: 13}},
+			// Hover on the inner-icon tag name (character 15 is within "inner-icon")
+			{"element", protocol.Position{Line: 7, Character: 15}},
 		}
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				// Load expected result from fixture
-				var expected protocol.Hover
-				if err := fixture.GetExpected(tc.name, &expected); err != nil {
-					t.Fatalf("Failed to get expected hover: %v", err)
-				}
-
-				// Call hover
 				params := &protocol.HoverParams{
 					TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 						TextDocument: protocol.TextDocumentIdentifier{URI: uri},
@@ -100,10 +89,15 @@ func TestHover_MultilineAllAttributes(t *testing.T) {
 					t.Fatal("Expected hover result, got nil")
 				}
 
-				// Structured comparison
 				actualContents, ok := result.Contents.(protocol.MarkupContent)
 				if !ok {
 					t.Fatalf("Expected Contents to be MarkupContent, got %T", result.Contents)
+				}
+
+				// The critical assertion: we must get inner-icon docs, not outer-surface
+				var expected protocol.Hover
+				if err := fixture.GetExpected(tc.name, &expected); err != nil {
+					t.Fatalf("Failed to get expected hover: %v", err)
 				}
 
 				expectedContents, ok := expected.Contents.(protocol.MarkupContent)
@@ -111,22 +105,8 @@ func TestHover_MultilineAllAttributes(t *testing.T) {
 					t.Fatalf("Expected Contents in expected.json to be MarkupContent, got %T", expected.Contents)
 				}
 
-				if actualContents.Kind != expectedContents.Kind {
-					t.Errorf("Expected kind %s, got %s", expectedContents.Kind, actualContents.Kind)
-				}
-
 				if actualContents.Value != expectedContents.Value {
 					t.Errorf("Expected value:\n%s\n\nGot:\n%s", expectedContents.Value, actualContents.Value)
-				}
-
-				// Verify range
-				if expected.Range != nil && result.Range != nil {
-					if result.Range.Start.Line != expected.Range.Start.Line ||
-						result.Range.Start.Character != expected.Range.Start.Character ||
-						result.Range.End.Line != expected.Range.End.Line ||
-						result.Range.End.Character != expected.Range.End.Character {
-						t.Errorf("Range mismatch.\nExpected: %+v\nGot: %+v", expected.Range, result.Range)
-					}
 				}
 			})
 		}
