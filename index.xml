@@ -853,7 +853,50 @@ component knowledge you document for humans.&lt;/p></description></item><item><t
  &lt;/tr>
  &lt;/tbody>
 &lt;/table>
-&lt;p>By default, &lt;code>.d.ts&lt;/code> TypeScript declaration files are excluded. Use &lt;code>--no-default-excludes&lt;/code> to include all matching files.&lt;/p></description></item><item><title>List</title><link>https://bennypowers.dev/cem/docs/reference/commands/list/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/list/</guid><description>&lt;p>The &lt;code>cem list&lt;/code> command provides a fast, flexible way to inspect your custom elements manifest.&lt;/p>
+&lt;p>By default, &lt;code>.d.ts&lt;/code> TypeScript declaration files are excluded. Use &lt;code>--no-default-excludes&lt;/code> to include all matching files.&lt;/p></description></item><item><title>Health</title><link>https://bennypowers.dev/cem/docs/reference/commands/health/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/health/</guid><description>&lt;info-callout type="info">
+ &lt;template shadowrootmode="open">
+ &lt;style>
+ #content {
+ display: block;
+ margin: 1rem 0;
+ border-radius: 0.5rem;
+ background: var(--color-accent);
+ border-left: 4px solid var(--callout-color);
+ overflow: hidden;
+
+ &amp;.info { --callout-color: var(--color-theme); }
+ &amp;.warning { --callout-color: #fbbf24; }
+ &amp;.error { --callout-color: #ef4444; }
+ &amp;.success { --callout-color: #10b981; }
+
+ .inner {
+ padding: 1rem;
+ color: var(--color-text);
+
+ ::slotted(*:first-child) {
+ margin-top: 0;
+ }
+
+ ::slotted(*:last-child) {
+ margin-bottom: 0;
+ }
+ }
+ }
+ &lt;/style>
+
+ &lt;div id="content" class="info" part="callout">
+ &lt;div class="inner" part="content">
+ &lt;slot>&lt;/slot>
+ &lt;/div>
+ &lt;/div>
+ &lt;/template>
+
+ &lt;strong>TL;DR&lt;/strong>: Run &lt;code>cem health&lt;/code> to score how well your custom elements are documented. Use &lt;code>--format markdown&lt;/code> for CI reports, &lt;code>--fail-below 60&lt;/code> to enforce a minimum score, and &lt;code>--disable demos&lt;/code> to skip categories you don&amp;rsquo;t care about.
+&lt;/info-callout>
+
+&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
+
+&lt;p>The &lt;code>cem health&lt;/code> command analyzes a &lt;code>custom-elements.json&lt;/code> manifest and scores the quality of its documentation across several categories. It produces actionable recommendations sorted by potential point gain.&lt;/p></description></item><item><title>List</title><link>https://bennypowers.dev/cem/docs/reference/commands/list/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/list/</guid><description>&lt;p>The &lt;code>cem list&lt;/code> command provides a fast, flexible way to inspect your custom elements manifest.&lt;/p>
 &lt;p>Without any subcommands, &lt;code>cem list&lt;/code> prints a table of all declarations in the manifest.&lt;/p>
 
 &lt;code-highlighter>
