@@ -23,9 +23,9 @@ import (
 // DescriptionRule scores element description quality (25 pts max).
 type DescriptionRule struct{}
 
-func (r *DescriptionRule) ID() string        { return "description" }
-func (r *DescriptionRule) Category() string   { return "Element description" }
-func (r *DescriptionRule) MaxPoints() int     { return 25 }
+func (r *DescriptionRule) ID() string       { return "description" }
+func (r *DescriptionRule) Category() string { return "Element description" }
+func (r *DescriptionRule) MaxPoints() int   { return 25 }
 
 func (r *DescriptionRule) Evaluate(ctx *HealthContext) CategoryScore {
 	desc := ctx.Declaration.Description()

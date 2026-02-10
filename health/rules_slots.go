@@ -23,9 +23,9 @@ import (
 // SlotDocRule scores slot documentation quality (15 pts max).
 type SlotDocRule struct{}
 
-func (r *SlotDocRule) ID() string        { return "slots" }
-func (r *SlotDocRule) Category() string   { return "Slot documentation" }
-func (r *SlotDocRule) MaxPoints() int     { return 15 }
+func (r *SlotDocRule) ID() string       { return "slots" }
+func (r *SlotDocRule) Category() string { return "Slot documentation" }
+func (r *SlotDocRule) MaxPoints() int   { return 15 }
 
 func (r *SlotDocRule) Evaluate(ctx *HealthContext) CategoryScore {
 	slots, ok := ctx.Declaration.Slots()

@@ -23,9 +23,9 @@ import (
 // AttributeDocRule scores attribute documentation quality (20 pts max).
 type AttributeDocRule struct{}
 
-func (r *AttributeDocRule) ID() string        { return "attributes" }
-func (r *AttributeDocRule) Category() string   { return "Attribute documentation" }
-func (r *AttributeDocRule) MaxPoints() int     { return 20 }
+func (r *AttributeDocRule) ID() string       { return "attributes" }
+func (r *AttributeDocRule) Category() string { return "Attribute documentation" }
+func (r *AttributeDocRule) MaxPoints() int   { return 20 }
 
 func (r *AttributeDocRule) Evaluate(ctx *HealthContext) CategoryScore {
 	attrs, ok := ctx.Declaration.Attributes()

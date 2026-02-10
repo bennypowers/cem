@@ -23,9 +23,9 @@ import (
 // CSSDocRule scores CSS property and part documentation quality (15 pts max).
 type CSSDocRule struct{}
 
-func (r *CSSDocRule) ID() string        { return "css" }
-func (r *CSSDocRule) Category() string   { return "CSS documentation" }
-func (r *CSSDocRule) MaxPoints() int     { return 15 }
+func (r *CSSDocRule) ID() string       { return "css" }
+func (r *CSSDocRule) Category() string { return "CSS documentation" }
+func (r *CSSDocRule) MaxPoints() int   { return 15 }
 
 func (r *CSSDocRule) Evaluate(ctx *HealthContext) CategoryScore {
 	cssProps, propsOk := ctx.Declaration.CSSProperties()

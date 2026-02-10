@@ -23,9 +23,9 @@ import (
 // EventDocRule scores event documentation quality (15 pts max).
 type EventDocRule struct{}
 
-func (r *EventDocRule) ID() string        { return "events" }
-func (r *EventDocRule) Category() string   { return "Event documentation" }
-func (r *EventDocRule) MaxPoints() int     { return 15 }
+func (r *EventDocRule) ID() string       { return "events" }
+func (r *EventDocRule) Category() string { return "Event documentation" }
+func (r *EventDocRule) MaxPoints() int   { return 15 }
 
 func (r *EventDocRule) Evaluate(ctx *HealthContext) CategoryScore {
 	events, ok := ctx.Declaration.Events()

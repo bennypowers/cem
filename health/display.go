@@ -147,10 +147,10 @@ func printComponentReport(comp ComponentReport) {
 		}
 
 		items = append(items, pterm.BulletListItem{
-			Level:      0,
-			Text:       fmt.Sprintf("%s %s (%d/%d)", icon, msg, cat.Points, cat.MaxPoints),
+			Level:       0,
+			Text:        fmt.Sprintf("%s %s (%d/%d)", icon, msg, cat.Points, cat.MaxPoints),
 			BulletStyle: pterm.NewStyle(),
-			Bullet:     " ",
+			Bullet:      " ",
 		})
 	}
 	_ = pterm.DefaultBulletList.WithItems(items).Render()

@@ -19,9 +19,9 @@ package health
 // DemoDocRule scores demo documentation quality (10 pts max).
 type DemoDocRule struct{}
 
-func (r *DemoDocRule) ID() string        { return "demos" }
-func (r *DemoDocRule) Category() string   { return "Demos" }
-func (r *DemoDocRule) MaxPoints() int     { return 10 }
+func (r *DemoDocRule) ID() string       { return "demos" }
+func (r *DemoDocRule) Category() string { return "Demos" }
+func (r *DemoDocRule) MaxPoints() int   { return 10 }
 
 func (r *DemoDocRule) Evaluate(ctx *HealthContext) CategoryScore {
 	demos, ok := ctx.Declaration.Demos()
