@@ -28,6 +28,7 @@ type RawDeclaration map[string]any
 type RawMember map[string]any
 type RawProperty map[string]any
 type RawSuperclass map[string]any
+type RawDemo map[string]any
 
 // Default value length threshold for warnings (applies to all default values)
 const DefaultLengthThreshold = 200
@@ -81,6 +82,48 @@ func (d RawDeclaration) Kind() string {
 		return kind
 	}
 	return ""
+}
+
+func (d RawDeclaration) Description() string {
+	if desc, ok := d["description"].(string); ok {
+		return desc
+	}
+	return ""
+}
+
+func (d RawDeclaration) Summary() string {
+	if summary, ok := d["summary"].(string); ok {
+		return summary
+	}
+	return ""
+}
+
+func (d RawDeclaration) TagName() string {
+	if tagName, ok := d["tagName"].(string); ok {
+		return tagName
+	}
+	return ""
+}
+
+func (d RawDeclaration) IsCustomElement() bool {
+	if ce, ok := d["customElement"].(bool); ok {
+		return ce
+	}
+	return d.TagName() != ""
+}
+
+func (d RawDeclaration) Demos() ([]RawDemo, bool) {
+	demos, ok := d["demos"].([]any)
+	if !ok {
+		return nil, false
+	}
+	result := make([]RawDemo, len(demos))
+	for i, demo := range demos {
+		if dm, ok := demo.(map[string]any); ok {
+			result[i] = RawDemo(dm)
+		}
+	}
+	return result, true
 }
 
 func (d RawDeclaration) Members() ([]RawMember, bool) {
@@ -142,6 +185,36 @@ func (d RawDeclaration) getPropertyArray(key string) ([]RawProperty, bool) {
 	return result, true
 }
 
+func (d RawDemo) URL() string {
+	if url, ok := d["url"].(string); ok {
+		return url
+	}
+	return ""
+}
+
+func (d RawDemo) Description() string {
+	if desc, ok := d["description"].(string); ok {
+		return desc
+	}
+	return ""
+}
+
+func (m RawMember) Description() string {
+	if desc, ok := m["description"].(string); ok {
+		return desc
+	}
+	return ""
+}
+
+func (m RawMember) Type() string {
+	if typeObj, ok := m["type"].(map[string]any); ok {
+		if text, ok := typeObj["text"].(string); ok {
+			return text
+		}
+	}
+	return ""
+}
+
 func (m RawMember) Name() string {
 	if name, ok := m["name"].(string); ok {
 		return name
@@ -173,6 +246,22 @@ func (m RawMember) Privacy() string {
 func (m RawMember) Default() string {
 	if defaultVal, ok := m["default"].(string); ok {
 		return defaultVal
+	}
+	return ""
+}
+
+func (p RawProperty) Description() string {
+	if desc, ok := p["description"].(string); ok {
+		return desc
+	}
+	return ""
+}
+
+func (p RawProperty) Type() string {
+	if typeObj, ok := p["type"].(map[string]any); ok {
+		if text, ok := typeObj["text"].(string); ok {
+			return text
+		}
 	}
 	return ""
 }

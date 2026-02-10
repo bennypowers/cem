@@ -1,0 +1,191 @@
+name: Health Report
+
+on:
+  workflow_call:
+    inputs:
+      package-path:
+        description: "Path to the package"
+        type: string
+        default: "."
+      cem-version:
+        description: "cem version to install (semver, without v prefix). If empty, reads from package.json or uses latest."
+        type: string
+        default: ""
+      fail-below:
+        description: "Exit 1 if overall percentage is below this threshold (0-100)"
+        type: number
+        default: 0
+      generate-args:
+        description: "Additional arguments for cem generate"
+        type: string
+        default: ""
+      health-args:
+        description: "Additional arguments for cem health"
+        type: string
+        default: ""
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install cem
+        env:
+          PACKAGE_PATH: ${{ inputs.package-path || '.' }}
+          INPUT_VERSION: ${{ inputs.cem-version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          MIN_VERSION="0.9.5"
+
+          version_ge() {
+            printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1 | grep -qx "$2"
+          }
+
+          VERSION="$INPUT_VERSION"
+
+          # If no explicit version, check package.json
+          if [ -z "$VERSION" ] && [ -f "${PACKAGE_PATH}/package.json" ]; then
+            VERSION=$(jq -r '
+              (.devDependencies["@pwrs/cem"] // .dependencies["@pwrs/cem"] // empty)
+            ' "${PACKAGE_PATH}/package.json" 2>/dev/null \
+              | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)
+          fi
+
+          # If still no version, use latest release
+          if [ -z "$VERSION" ]; then
+            VERSION=$(gh release view --repo bennypowers/cem --json tagName -q '.tagName' | sed 's/^v//')
+          fi
+
+          # Enforce minimum version
+          if ! version_ge "$VERSION" "$MIN_VERSION"; then
+            echo "::warning::Requested cem version $VERSION is below minimum $MIN_VERSION, using $MIN_VERSION"
+            VERSION="$MIN_VERSION"
+          fi
+
+          echo "Installing cem v${VERSION}"
+          curl -fsSL "https://github.com/bennypowers/cem/releases/download/v${VERSION}/cem-linux-x64" \
+            -o /usr/local/bin/cem
+          chmod +x /usr/local/bin/cem
+          cem --version
+
+      - name: Generate manifest
+        env:
+          PKG_PATH: ${{ inputs.package-path || '.' }}
+          GEN_ARGS: ${{ inputs.generate-args }}
+        run: |
+          # shellcheck disable=SC2086
+          cem generate -p "$PKG_PATH" $GEN_ARGS
+
+      - name: Generate health report (PR)
+        if: github.event_name == 'pull_request'
+        env:
+          PACKAGE_PATH: ${{ inputs.package-path || '.' }}
+        run: |
+          set -euo pipefail
+          BASE_REF="${GITHUB_BASE_REF:-main}"
+
+          # Map source extensions to compiled output extensions
+          map_ext() {
+            case "$1" in
+              *.tsx)  echo "${1%.tsx}.js" ;;
+              *.jsx)  echo "${1%.jsx}.js" ;;
+              *.ts)   echo "${1%.ts}.js" ;;
+              *.mts)  echo "${1%.mts}.mjs" ;;
+              *.cts)  echo "${1%.cts}.cjs" ;;
+              *.scss) echo "${1%.scss}.css" ;;
+              *.sass) echo "${1%.sass}.css" ;;
+              *)      echo "$1" ;;
+            esac
+          }
+
+          changed_files=$(git diff --name-only "origin/${BASE_REF}...HEAD" 2>/dev/null \
+                       || git diff --name-only "${BASE_REF}...HEAD" 2>/dev/null \
+                       || echo "")
+
+          if [ -z "$changed_files" ]; then
+            printf '### Documentation Health\n\nNo changed files detected.\n' > health_report.md
+            exit 0
+          fi
+
+          manifest_modules=$(cem health -p "$PACKAGE_PATH" --format json 2>/dev/null \
+                          | jq -r '.modules[].path' 2>/dev/null || echo "")
+
+          if [ -z "$manifest_modules" ]; then
+            printf '### Documentation Health\n\nNo modules found in manifest.\n' > health_report.md
+            exit 0
+          fi
+
+          # Match changed files against module paths
+          declare -A matched
+          while IFS= read -r f; do
+            mapped=$(map_ext "$f")
+            while IFS= read -r mod; do
+              if [ "$mapped" = "$mod" ] || [ "$f" = "$mod" ]; then
+                matched["$mod"]=1
+              fi
+            done <<< "$manifest_modules"
+          done <<< "$changed_files"
+
+          if [ ${#matched[@]} -eq 0 ]; then
+            printf '### Documentation Health\n\nNo changed files match any modules in the manifest.\n' > health_report.md
+            exit 0
+          fi
+
+          flags=()
+          for mod in "${!matched[@]}"; do
+            flags+=(--module "$mod")
+          done
+
+          cem health -p "$PACKAGE_PATH" --format markdown "${flags[@]}" > health_report.md
+
+      - name: Generate health report (dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          PKG_PATH: ${{ inputs.package-path || '.' }}
+          HEALTH_ARGS: ${{ inputs.health-args }}
+        run: |
+          # shellcheck disable=SC2086
+          cem health -p "$PKG_PATH" --format markdown $HEALTH_ARGS > health_report.md
+
+      - name: Find previous health comment
+        if: github.event_name == 'pull_request'
+        id: find-comment
+        uses: peter-evans/find-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "### Documentation Health"
+
+      - name: Post or update health comment
+        if: github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-file: health_report.md
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace
+
+      - name: Post job summary (dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: cat health_report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check fail-below threshold
+        if: ${{ (inputs.fail-below || 0) > 0 }}
+        env:
+          PKG_PATH: ${{ inputs.package-path || '.' }}
+          FAIL_BELOW: ${{ inputs.fail-below }}
+          HEALTH_ARGS: ${{ inputs.health-args }}
+        run: |
+          # shellcheck disable=SC2086
+          cem health -p "$PKG_PATH" \
+            --fail-below "$FAIL_BELOW" \
+            --format text $HEALTH_ARGS > /dev/null

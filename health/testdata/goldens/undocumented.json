@@ -1,0 +1,202 @@
+{
+  "modules": [
+    {
+      "path": "elements/bare-element/bare-element.js",
+      "score": 0,
+      "maxScore": 100,
+      "declarations": [
+        {
+          "tagName": "bare-element",
+          "name": "BareElement",
+          "score": 0,
+          "maxScore": 100,
+          "categories": [
+            {
+              "id": "description",
+              "category": "Element description",
+              "points": 0,
+              "maxPoints": 25,
+              "status": "fail",
+              "findings": [
+                {
+                  "check": "Has description",
+                  "points": 0,
+                  "max": 5,
+                  "message": "add a description to explain what this declaration does"
+                },
+                {
+                  "check": "Optimal length",
+                  "points": 0,
+                  "max": 3,
+                  "message": "add a description"
+                },
+                {
+                  "check": "Explains purpose/context",
+                  "points": 0,
+                  "max": 5,
+                  "message": "describe purpose and context using words like 'for', 'when', 'provides', 'allows'"
+                },
+                {
+                  "check": "RFC 2119 keywords",
+                  "points": 0,
+                  "max": 5,
+                  "message": "use RFC 2119 keywords (MUST, SHOULD, AVOID) to clarify requirements"
+                },
+                {
+                  "check": "Accessibility notes",
+                  "points": 0,
+                  "max": 4,
+                  "message": "mention accessibility considerations (ARIA, screen reader, WCAG)"
+                },
+                {
+                  "check": "Keyboard interaction",
+                  "points": 0,
+                  "max": 3,
+                  "message": "document keyboard interaction (Enter, Space, Tab, focus)"
+                }
+              ]
+            },
+            {
+              "id": "attributes",
+              "category": "Attribute documentation",
+              "points": 0,
+              "maxPoints": 20,
+              "status": "fail",
+              "findings": [
+                {
+                  "check": "All have descriptions",
+                  "points": 0,
+                  "max": 10,
+                  "message": "add descriptions to all attributes"
+                },
+                {
+                  "check": "Descriptions explain purpose",
+                  "points": 0,
+                  "max": 5,
+                  "message": "write meaningful descriptions (\u003e20 chars) that explain purpose, not just type"
+                },
+                {
+                  "check": "Constraints documented",
+                  "points": 0,
+                  "max": 5,
+                  "message": "document type information or default values for attributes"
+                }
+              ]
+            },
+            {
+              "id": "slots",
+              "category": "Slot documentation",
+              "points": 0,
+              "maxPoints": 15,
+              "status": "fail",
+              "findings": [
+                {
+                  "check": "All have descriptions",
+                  "points": 0,
+                  "max": 5,
+                  "message": "add descriptions to all slots"
+                },
+                {
+                  "check": "Content type guidelines",
+                  "points": 0,
+                  "max": 5,
+                  "message": "describe expected content types for slots (e.g., 'inline text', 'block elements')"
+                },
+                {
+                  "check": "Accessibility considerations",
+                  "points": 0,
+                  "max": 5,
+                  "message": "mention accessibility considerations for slot content"
+                }
+              ]
+            },
+            {
+              "id": "css",
+              "category": "CSS documentation",
+              "points": 0,
+              "maxPoints": 15,
+              "status": "fail",
+              "findings": [
+                {
+                  "check": "CSS properties documented",
+                  "points": 0,
+                  "max": 5,
+                  "message": "add descriptions to all CSS custom properties"
+                },
+                {
+                  "check": "CSS parts documented",
+                  "points": 0,
+                  "max": 5,
+                  "message": "add descriptions to all CSS parts"
+                },
+                {
+                  "check": "Design system notes",
+                  "points": 0,
+                  "max": 5,
+                  "message": "reference design tokens or theme considerations in CSS descriptions"
+                }
+              ]
+            },
+            {
+              "id": "events",
+              "category": "Event documentation",
+              "points": 0,
+              "maxPoints": 15,
+              "status": "fail",
+              "findings": [
+                {
+                  "check": "All have descriptions",
+                  "points": 0,
+                  "max": 5,
+                  "message": "add descriptions to all events"
+                },
+                {
+                  "check": "Trigger conditions",
+                  "points": 0,
+                  "max": 5,
+                  "message": "describe when events are fired (e.g., 'Fired when the user clicks...')"
+                },
+                {
+                  "check": "Event detail described",
+                  "points": 0,
+                  "max": 5,
+                  "message": "describe event detail/data shape"
+                }
+              ]
+            },
+            {
+              "id": "demos",
+              "category": "Demos",
+              "points": 0,
+              "maxPoints": 10,
+              "status": "fail",
+              "findings": [
+                {
+                  "check": "Has demo",
+                  "points": 0,
+                  "max": 5,
+                  "message": "add at least one demo with a URL"
+                },
+                {
+                  "check": "Demo has description",
+                  "points": 0,
+                  "max": 5,
+                  "message": "add demos with descriptions"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "overallScore": 0,
+  "overallMax": 100,
+  "recommendations": [
+    "bare-element: add descriptions to all attributes (Attribute documentation, +10 pts)",
+    "bare-element: add descriptions to all events (Event documentation, +5 pts)",
+    "bare-element: reference design tokens or theme considerations in CSS descriptions (CSS documentation, +5 pts)",
+    "bare-element: use RFC 2119 keywords (MUST, SHOULD, AVOID) to clarify requirements (Element description, +5 pts)",
+    "bare-element: describe expected content types for slots (e.g., 'inline text', 'block elements') (Slot documentation, +5 pts)"
+  ]
+}

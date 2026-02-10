@@ -1,0 +1,33 @@
+### Documentation Health
+{{- if not .Modules}}
+
+No declarations found in manifest.
+{{- else}}
+
+| Module | Score | | |
+|--------|------:|-|---|
+{{- range .Modules}}
+| `{{.Path}}` | {{.Score}}/{{.MaxScore}} | {{statusEmoji .Score .MaxScore}} | {{percentage .Score .MaxScore}}% |
+{{- end}}
+| **Overall** | **{{.OverallScore}}/{{.OverallMax}}** | {{statusEmoji .OverallScore .OverallMax}} | **{{percentage .OverallScore .OverallMax}}%** |
+{{- range .Modules}}{{range .Declarations}}
+
+<details>
+<summary>{{summaryLabel .TagName .Name}} — {{.Score}}/{{.MaxScore}} {{statusEmoji .Score .MaxScore}}</summary>
+
+| Category | Score | |
+|----------|------:|-|
+{{- range .Categories}}
+| {{.Category}} | {{.Points}}/{{.MaxPoints}} | {{statusEmoji .Points .MaxPoints}} |
+{{- end}}
+
+</details>
+{{- end}}{{end}}
+{{- if .Recommendations}}
+
+**Recommendations:**
+{{- range $i, $rec := .Recommendations}}
+{{inc $i}}. {{$rec}}
+{{- end}}
+{{- end}}
+{{- end}}

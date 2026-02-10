@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "elements/strict-input/strict-input.js",
+      "declarations": [
+        {
+          "name": "StrictInput",
+          "description": "A strict input component. Users MUST provide a label attribute. The value SHOULD be validated before form submission. Consumers MUST AVOID setting innerHTML directly.",
+          "kind": "class",
+          "tagName": "strict-input",
+          "customElement": true,
+          "members": [],
+          "attributes": [],
+          "slots": [],
+          "cssParts": [],
+          "cssProperties": [],
+          "events": []
+        }
+      ]
+    }
+  ]
+}

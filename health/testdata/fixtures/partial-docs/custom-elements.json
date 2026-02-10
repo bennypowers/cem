@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "elements/data-table/data-table.js",
+      "declarations": [
+        {
+          "name": "DataTable",
+          "description": "A data table component for displaying tabular data.",
+          "kind": "class",
+          "tagName": "data-table",
+          "customElement": true,
+          "members": [
+            {
+              "name": "rows",
+              "description": "Table row data",
+              "type": {
+                "text": "Row[]"
+              },
+              "kind": "field",
+              "attribute": "rows"
+            },
+            {
+              "name": "columns",
+              "kind": "field"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "rows",
+              "description": "Table row data",
+              "type": {
+                "text": "Row[]"
+              },
+              "fieldName": "rows"
+            },
+            {
+              "name": "columns",
+              "fieldName": "columns"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Default content slot"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "table",
+              "description": "The main table element"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--data-table-border",
+              "description": "Border style",
+              "default": "1px solid #ccc"
+            }
+          ],
+          "events": [
+            {
+              "name": "row-click",
+              "description": "Fired when a row is clicked"
+            }
+          ],
+          "demos": [
+            {
+              "url": "elements/data-table/demos/"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

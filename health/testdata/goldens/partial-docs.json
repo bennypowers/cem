@@ -1,0 +1,193 @@
+{
+  "modules": [
+    {
+      "path": "elements/data-table/data-table.js",
+      "score": 53,
+      "maxScore": 100,
+      "declarations": [
+        {
+          "tagName": "data-table",
+          "name": "DataTable",
+          "score": 53,
+          "maxScore": 100,
+          "categories": [
+            {
+              "id": "description",
+              "category": "Element description",
+              "points": 11,
+              "maxPoints": 25,
+              "status": "warn",
+              "findings": [
+                {
+                  "check": "Has description",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Optimal length",
+                  "points": 3,
+                  "max": 3
+                },
+                {
+                  "check": "Explains purpose/context",
+                  "points": 3,
+                  "max": 5,
+                  "message": "describe purpose and context using words like 'for', 'when', 'provides', 'allows'"
+                },
+                {
+                  "check": "RFC 2119 keywords",
+                  "points": 0,
+                  "max": 5,
+                  "message": "use RFC 2119 keywords (MUST, SHOULD, AVOID) to clarify requirements"
+                },
+                {
+                  "check": "Accessibility notes",
+                  "points": 0,
+                  "max": 4,
+                  "message": "mention accessibility considerations (ARIA, screen reader, WCAG)"
+                },
+                {
+                  "check": "Keyboard interaction",
+                  "points": 0,
+                  "max": 3,
+                  "message": "document keyboard interaction (Enter, Space, Tab, focus)"
+                }
+              ]
+            },
+            {
+              "id": "attributes",
+              "category": "Attribute documentation",
+              "points": 7,
+              "maxPoints": 20,
+              "status": "fail",
+              "findings": [
+                {
+                  "check": "All have descriptions",
+                  "points": 5,
+                  "max": 10,
+                  "message": "add descriptions to all attributes"
+                },
+                {
+                  "check": "Descriptions explain purpose",
+                  "points": 0,
+                  "max": 5,
+                  "message": "write meaningful descriptions (\u003e20 chars) that explain purpose, not just type"
+                },
+                {
+                  "check": "Constraints documented",
+                  "points": 2,
+                  "max": 5,
+                  "message": "document type information or default values for attributes"
+                }
+              ]
+            },
+            {
+              "id": "slots",
+              "category": "Slot documentation",
+              "points": 10,
+              "maxPoints": 15,
+              "status": "warn",
+              "findings": [
+                {
+                  "check": "All have descriptions",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Content type guidelines",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Accessibility considerations",
+                  "points": 0,
+                  "max": 5,
+                  "message": "mention accessibility considerations for slot content"
+                }
+              ]
+            },
+            {
+              "id": "css",
+              "category": "CSS documentation",
+              "points": 10,
+              "maxPoints": 15,
+              "status": "warn",
+              "findings": [
+                {
+                  "check": "CSS properties documented",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "CSS parts documented",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Design system notes",
+                  "points": 0,
+                  "max": 5,
+                  "message": "reference design tokens or theme considerations in CSS descriptions"
+                }
+              ]
+            },
+            {
+              "id": "events",
+              "category": "Event documentation",
+              "points": 10,
+              "maxPoints": 15,
+              "status": "warn",
+              "findings": [
+                {
+                  "check": "All have descriptions",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Trigger conditions",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Event detail described",
+                  "points": 0,
+                  "max": 5,
+                  "message": "describe event detail/data shape"
+                }
+              ]
+            },
+            {
+              "id": "demos",
+              "category": "Demos",
+              "points": 5,
+              "maxPoints": 10,
+              "status": "warn",
+              "findings": [
+                {
+                  "check": "Has demo",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Demo has description",
+                  "points": 0,
+                  "max": 5,
+                  "message": "add descriptions to demos"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "overallScore": 53,
+  "overallMax": 100,
+  "recommendations": [
+    "data-table: use RFC 2119 keywords (MUST, SHOULD, AVOID) to clarify requirements (Element description, +5 pts)",
+    "data-table: add descriptions to all attributes (Attribute documentation, +5 pts)",
+    "data-table: write meaningful descriptions (\u003e20 chars) that explain purpose, not just type (Attribute documentation, +5 pts)",
+    "data-table: mention accessibility considerations for slot content (Slot documentation, +5 pts)",
+    "data-table: reference design tokens or theme considerations in CSS descriptions (CSS documentation, +5 pts)"
+  ]
+}

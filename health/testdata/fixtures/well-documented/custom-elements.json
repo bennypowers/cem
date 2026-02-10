@@ -1,0 +1,121 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "elements/multi-select/multi-select.js",
+      "declarations": [
+        {
+          "name": "MultiSelect",
+          "summary": "A multi-select dropdown for choosing multiple options",
+          "description": "An accessible multi-select component that allows users to choose multiple options from a dropdown list. Use this component when you need to provide a list of selectable items. It MUST be used within a form context and SHOULD include a label for accessibility. The component provides keyboard navigation with Tab, Enter, and Space keys for focus management. It follows WCAG 2.1 AA guidelines and includes ARIA attributes for screen reader support.",
+          "kind": "class",
+          "tagName": "multi-select",
+          "customElement": true,
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "options",
+              "description": "The list of available options to display in the dropdown. Each option provides a label and value for form submission.",
+              "type": {
+                "text": "Option[]"
+              },
+              "default": "[]",
+              "kind": "field",
+              "attribute": "options"
+            },
+            {
+              "name": "value",
+              "description": "The currently selected values. When multiple selections are made, this array contains all selected option values.",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "kind": "field",
+              "attribute": "value"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "options",
+              "description": "The list of available options to display in the dropdown. Each option provides a label and value for form submission.",
+              "type": {
+                "text": "Option[]"
+              },
+              "default": "[]",
+              "fieldName": "options"
+            },
+            {
+              "name": "value",
+              "description": "The currently selected values. When multiple selections are made, this array contains all selected option values.",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "fieldName": "value"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Default slot for child option elements. Accepts inline text content or custom option nodes with aria-role attributes."
+            },
+            {
+              "name": "label",
+              "description": "Slot for the label element. Content should be accessible text that screen readers can announce."
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "listbox",
+              "description": "The dropdown list container. Use design tokens for consistent theme spacing."
+            },
+            {
+              "name": "option",
+              "description": "Individual option elements in the list. Apply theme colors via design tokens."
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--multi-select-max-height",
+              "description": "Maximum height of the dropdown. Maps to the design system spacing token scale.",
+              "default": "300px",
+              "syntax": "<length>"
+            },
+            {
+              "name": "--multi-select-option-padding",
+              "description": "Padding for each option. Use design token values for consistent spacing.",
+              "default": "8px 12px",
+              "syntax": "<length>"
+            }
+          ],
+          "events": [
+            {
+              "name": "change",
+              "description": "Fired when the selection changes. The event detail contains the new list of selected values.",
+              "type": {
+                "text": "CustomEvent"
+              }
+            },
+            {
+              "name": "open",
+              "description": "Dispatched when the dropdown opens. The detail property includes the trigger source.",
+              "type": {
+                "text": "CustomEvent"
+              }
+            }
+          ],
+          "demos": [
+            {
+              "url": "elements/multi-select/demos/",
+              "description": "Basic usage example showing multi-select with predefined options"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
