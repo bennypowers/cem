@@ -2,19 +2,19 @@
   "modules": [
     {
       "path": "elements/data-table/data-table.js",
-      "score": 56,
+      "score": 53,
       "maxScore": 100,
       "declarations": [
         {
           "tagName": "data-table",
           "name": "DataTable",
-          "score": 56,
+          "score": 53,
           "maxScore": 100,
           "categories": [
             {
               "id": "description",
               "category": "Element description",
-              "points": 14,
+              "points": 11,
               "maxPoints": 25,
               "status": "warn",
               "findings": [
@@ -48,8 +48,9 @@
                 },
                 {
                   "check": "Keyboard interaction",
-                  "points": 3,
-                  "max": 3
+                  "points": 0,
+                  "max": 3,
+                  "message": "document keyboard interaction (Enter, Space, Tab, focus)"
                 }
               ]
             },
@@ -180,7 +181,7 @@
       ]
     }
   ],
-  "overallScore": 56,
+  "overallScore": 53,
   "overallMax": 100,
   "recommendations": [
     "data-table: use RFC 2119 keywords (MUST, SHOULD, AVOID) to clarify requirements (Element description, +5 pts)",

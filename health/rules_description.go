@@ -17,8 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package health
 
 import (
+	"regexp"
 	"strings"
 )
+
+// containsWord checks for a whole-word match using regex word boundaries.
+func containsWord(text, word string) bool {
+	pattern := `\b` + regexp.QuoteMeta(word) + `\b`
+	matched, _ := regexp.MatchString(pattern, text)
+	return matched
+}
 
 // DescriptionRule scores element description quality (25 pts max).
 type DescriptionRule struct{}
@@ -55,6 +63,8 @@ func (r *DescriptionRule) Evaluate(ctx *HealthContext) CategoryScore {
 		msg := ""
 		if desc == "" {
 			msg = "add a description"
+		} else if len(desc) < 20 {
+			msg = "description is too short; provide at least 20 characters"
 		} else if len(desc) > 400 {
 			msg = "description is longer than 400 characters; consider being more concise"
 		} else {
@@ -72,7 +82,7 @@ func (r *DescriptionRule) Evaluate(ctx *HealthContext) CategoryScore {
 		purposeWords := []string{"for", "when", "use", "provides", "allows", "enables"}
 		found := 0
 		for _, w := range purposeWords {
-			if strings.Contains(lower, w) {
+			if containsWord(lower, w) {
 				found++
 			}
 		}
@@ -138,7 +148,7 @@ func (r *DescriptionRule) Evaluate(ctx *HealthContext) CategoryScore {
 		lower := strings.ToLower(desc)
 		kbWords := []string{"keyboard", "key", "enter", "space", "tab", "focus"}
 		for _, w := range kbWords {
-			if strings.Contains(lower, w) {
+			if containsWord(lower, w) {
 				pts = 3
 				break
 			}

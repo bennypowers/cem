@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package health
 
 import (
+	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/validate"
@@ -67,10 +68,7 @@ func TestDescriptionRule(t *testing.T) {
 	})
 
 	t.Run("too long description", func(t *testing.T) {
-		long := ""
-		for len(long) <= 400 {
-			long += "This is a very long description. "
-		}
+		long := strings.Repeat("This is a very long description. ", 13)
 		decl := validate.RawDeclaration{
 			"name":        "TestElement",
 			"description": long,

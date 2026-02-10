@@ -77,7 +77,7 @@ func proportionalScore(count, total, max int) int {
 	if total == 0 {
 		return max
 	}
-	return int(float64(count) / float64(total) * float64(max))
+	return min(int(float64(count)/float64(total)*float64(max)), max)
 }
 
 // defaultRules returns the standard set of health rules.

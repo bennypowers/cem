@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"fmt"
+	"math"
 	"os"
 
 	"bennypowers.dev/cem/health"
@@ -61,6 +62,12 @@ var healthCmd = &cobra.Command{
 		component, _ := cmd.Flags().GetString("component")
 		moduleFlags, _ := cmd.Flags().GetStringArray("module")
 		format, _ := cmd.Flags().GetString("format")
+		switch format {
+		case "text", "json", "markdown":
+		default:
+			fmt.Fprintf(os.Stderr, "Invalid format %q: must be text, json, or markdown\n", format)
+			os.Exit(1)
+		}
 		failBelow, _ := cmd.Flags().GetInt("fail-below")
 		disableFlags, _ := cmd.Flags().GetStringArray("disable")
 
@@ -98,8 +105,10 @@ var healthCmd = &cobra.Command{
 
 		// Check fail-below threshold
 		if failBelow > 0 && result.OverallMax > 0 {
-			pct := result.OverallScore * 100 / result.OverallMax
+			pct := int(math.Round(float64(result.OverallScore) * 100 / float64(result.OverallMax)))
 			if pct < failBelow {
+				fmt.Fprintf(os.Stderr, "Health score %d%% (%d/%d) is below the --fail-below threshold of %d%%\n",
+					pct, result.OverallScore, result.OverallMax, failBelow)
 				os.Exit(1)
 			}
 		}

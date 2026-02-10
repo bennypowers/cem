@@ -2,19 +2,19 @@
   "modules": [
     {
       "path": "elements/strict-input/strict-input.js",
-      "score": 83,
+      "score": 78,
       "maxScore": 100,
       "declarations": [
         {
           "tagName": "strict-input",
           "name": "StrictInput",
-          "score": 83,
+          "score": 78,
           "maxScore": 100,
           "categories": [
             {
               "id": "description",
               "category": "Element description",
-              "points": 18,
+              "points": 13,
               "maxPoints": 25,
               "status": "warn",
               "findings": [
@@ -30,8 +30,9 @@
                 },
                 {
                   "check": "Explains purpose/context",
-                  "points": 5,
-                  "max": 5
+                  "points": 0,
+                  "max": 5,
+                  "message": "describe purpose and context using words like 'for', 'when', 'provides', 'allows'"
                 },
                 {
                   "check": "RFC 2119 keywords",
@@ -174,9 +175,10 @@
       ]
     }
   ],
-  "overallScore": 83,
+  "overallScore": 78,
   "overallMax": 100,
   "recommendations": [
+    "strict-input: describe purpose and context using words like 'for', 'when', 'provides', 'allows' (Element description, +5 pts)",
     "strict-input: add at least one demo with a URL (Demos, +5 pts)",
     "strict-input: add demos with descriptions (Demos, +5 pts)",
     "strict-input: mention accessibility considerations (ARIA, screen reader, WCAG) (Element description, +4 pts)",

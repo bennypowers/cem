@@ -119,8 +119,8 @@ func (d RawDeclaration) Demos() ([]RawDemo, bool) {
 	}
 	result := make([]RawDemo, len(demos))
 	for i, demo := range demos {
-		if d, ok := demo.(map[string]any); ok {
-			result[i] = RawDemo(d)
+		if dm, ok := demo.(map[string]any); ok {
+			result[i] = RawDemo(dm)
 		}
 	}
 	return result, true

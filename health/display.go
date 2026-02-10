@@ -40,7 +40,7 @@ type DisplayOptions struct {
 func PrintHealthResult(result *HealthResult, options DisplayOptions) error {
 	switch options.Format {
 	case "json":
-		return printHealthResultJSON(result)
+		return printHealthResultJSON(os.Stdout, result)
 	case "markdown":
 		return writeMarkdownReport(os.Stdout, result)
 	case "text", "":
@@ -51,8 +51,8 @@ func PrintHealthResult(result *HealthResult, options DisplayOptions) error {
 	}
 }
 
-func printHealthResultJSON(result *HealthResult) error {
-	encoder := json.NewEncoder(os.Stdout)
+func printHealthResultJSON(w io.Writer, result *HealthResult) error {
+	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(result)
 }

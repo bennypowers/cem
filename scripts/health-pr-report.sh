@@ -22,6 +22,7 @@ map_extension() {
   local file="$1"
   case "$file" in
     *.tsx)  echo "${file%.tsx}.js" ;;
+    *.jsx)  echo "${file%.jsx}.js" ;;
     *.ts)   echo "${file%.ts}.js" ;;
     *.mts)  echo "${file%.mts}.mjs" ;;
     *.cts)  echo "${file%.cts}.cjs" ;;

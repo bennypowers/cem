@@ -53,6 +53,7 @@ func TestDemoDocRule(t *testing.T) {
 		}
 		ctx := &HealthContext{Declaration: decl}
 		result := rule.Evaluate(ctx)
+		// "Has demo" check awards 5 pts; "Demo has description" awards 0
 		if result.Points != 5 {
 			t.Errorf("expected 5 points (has demo, no description), got %d", result.Points)
 		}

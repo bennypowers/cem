@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package health
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"os"
 	"slices"
-	"sort"
 
 	"bennypowers.dev/cem/validate"
 )
@@ -223,15 +223,19 @@ func generateRecommendations(modules []ModuleReport) []string {
 					if fGap <= 0 {
 						continue
 					}
-					msg := fmt.Sprintf("%s: %s (%s, +%d pts)", name, finding.Message, cat.Category, fGap)
+					action := finding.Message
+					if action == "" {
+						action = finding.Check
+					}
+					msg := fmt.Sprintf("%s: %s (%s, +%d pts)", name, action, cat.Category, fGap)
 					recs = append(recs, rec{message: msg, potential: fGap})
 				}
 			}
 		}
 	}
 
-	sort.Slice(recs, func(i, j int) bool {
-		return recs[i].potential > recs[j].potential
+	slices.SortFunc(recs, func(a, b rec) int {
+		return cmp.Compare(b.potential, a.potential)
 	})
 
 	var result []string

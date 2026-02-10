@@ -83,7 +83,7 @@ func (r *CSSDocRule) Evaluate(ctx *HealthContext) CategoryScore {
 
 	// Check 3: Design system notes (5 pts)
 	{
-		designWords := []string{"design", "token", "theme", "system"}
+		designWords := []string{"design", "token", "theme"}
 		combined := 0
 		combinedTotal := propsTotal + partsTotal
 		if propsOk {

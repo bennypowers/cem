@@ -51,6 +51,26 @@ func TestSlotDocRule(t *testing.T) {
 		}
 	})
 
+	t.Run("partial score with one documented and one undocumented slot", func(t *testing.T) {
+		decl := validate.RawDeclaration{
+			"name": "TestElement",
+			"slots": []any{
+				map[string]any{
+					"name":        "",
+					"description": "Default slot for inline text content. Must have an aria-label for screen reader accessibility.",
+				},
+				map[string]any{
+					"name": "header",
+				},
+			},
+		}
+		ctx := &HealthContext{Declaration: decl}
+		result := rule.Evaluate(ctx)
+		if result.Points == 0 || result.Points == rule.MaxPoints() {
+			t.Errorf("expected partial score, got %d", result.Points)
+		}
+	})
+
 	t.Run("zero score with undocumented slots", func(t *testing.T) {
 		decl := validate.RawDeclaration{
 			"name": "TestElement",

@@ -78,7 +78,10 @@ jobs:
           cem --version
 
       - name: Generate manifest
-        run: cem generate -p ${{ inputs.package-path || '.' }} ${{ inputs.generate-args }}
+        env:
+          PKG_PATH: ${{ inputs.package-path || '.' }}
+          GEN_ARGS: ${{ inputs.generate-args }}
+        run: cem generate -p "$PKG_PATH" $GEN_ARGS
 
       - name: Generate health report (PR)
         if: github.event_name == 'pull_request'
@@ -92,6 +95,7 @@ jobs:
           map_ext() {
             case "$1" in
               *.tsx)  echo "${1%.tsx}.js" ;;
+              *.jsx)  echo "${1%.jsx}.js" ;;
               *.ts)   echo "${1%.ts}.js" ;;
               *.mts)  echo "${1%.mts}.mjs" ;;
               *.cts)  echo "${1%.cts}.cjs" ;;
@@ -143,7 +147,10 @@ jobs:
 
       - name: Generate health report (dispatch)
         if: github.event_name == 'workflow_dispatch'
-        run: cem health -p ${{ inputs.package-path || '.' }} --format markdown ${{ inputs.health-args }} > health_report.md
+        env:
+          PKG_PATH: ${{ inputs.package-path || '.' }}
+          HEALTH_ARGS: ${{ inputs.health-args }}
+        run: cem health -p "$PKG_PATH" --format markdown $HEALTH_ARGS > health_report.md
 
       - name: Find previous health comment
         if: github.event_name == 'pull_request'
@@ -169,7 +176,11 @@ jobs:
 
       - name: Check fail-below threshold
         if: ${{ (inputs.fail-below || 0) > 0 }}
+        env:
+          PKG_PATH: ${{ inputs.package-path || '.' }}
+          FAIL_BELOW: ${{ inputs.fail-below }}
+          HEALTH_ARGS: ${{ inputs.health-args }}
         run: |
-          cem health -p ${{ inputs.package-path || '.' }} \
-            --fail-below ${{ inputs.fail-below }} \
-            --format text ${{ inputs.health-args }} > /dev/null
+          cem health -p "$PKG_PATH" \
+            --fail-below "$FAIL_BELOW" \
+            --format text $HEALTH_ARGS > /dev/null

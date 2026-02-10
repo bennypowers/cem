@@ -2,15 +2,15 @@
 
 | Module | Score | | |
 |--------|------:|-|---|
-| `elements/data-table/data-table.js` | 56/100 | :warning: | 56% |
-| **Overall** | **56/100** | :warning: | **56%** |
+| `elements/data-table/data-table.js` | 53/100 | :warning: | 53% |
+| **Overall** | **53/100** | :warning: | **53%** |
 
 <details>
-<summary><code>data-table</code> (DataTable) — 56/100 :warning:</summary>
+<summary><code>data-table</code> (DataTable) — 53/100 :warning:</summary>
 
 | Category | Score | |
 |----------|------:|-|
-| Element description | 14/25 | :warning: |
+| Element description | 11/25 | :warning: |
 | Attribute documentation | 7/20 | :x: |
 | Slot documentation | 10/15 | :warning: |
 | CSS documentation | 10/15 | :warning: |
