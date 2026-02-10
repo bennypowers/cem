@@ -36,7 +36,7 @@ import (
 func TestHover_NestedElements(t *testing.T) {
 	testutil.RunLSPFixtures(t, "testdata-regression", func(t *testing.T, fixture *testutil.LSPFixture) {
 		if fixture.Name != "nested-element-hover-typescript" {
-			return
+			t.Skip("not applicable to this test")
 		}
 
 		ctx := testhelpers.NewMockServerContext()
@@ -94,19 +94,18 @@ func TestHover_NestedElements(t *testing.T) {
 					t.Fatalf("Expected Contents to be MarkupContent, got %T", result.Contents)
 				}
 
-				// The critical assertion: we must get inner-icon docs, not outer-surface
-				var expected protocol.Hover
+				// Unmarshal expected golden into a typed struct so Contents
+				// deserializes as MarkupContent rather than map[string]interface{}.
+				var expected struct {
+					Contents protocol.MarkupContent `json:"contents"`
+					Range    *protocol.Range        `json:"range"`
+				}
 				if err := fixture.GetExpected(tc.name, &expected); err != nil {
 					t.Fatalf("Failed to get expected hover: %v", err)
 				}
 
-				expectedContents, ok := expected.Contents.(protocol.MarkupContent)
-				if !ok {
-					t.Fatalf("Expected Contents in expected.json to be MarkupContent, got %T", expected.Contents)
-				}
-
-				if actualContents.Value != expectedContents.Value {
-					t.Errorf("Expected value:\n%s\n\nGot:\n%s", expectedContents.Value, actualContents.Value)
+				if actualContents.Value != expected.Contents.Value {
+					t.Errorf("Expected value:\n%s\n\nGot:\n%s", expected.Contents.Value, actualContents.Value)
 				}
 			})
 		}

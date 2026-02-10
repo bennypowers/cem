@@ -39,7 +39,7 @@ import (
 func TestHover_MultilineAllAttributes(t *testing.T) {
 	testutil.RunLSPFixtures(t, "testdata-regression", func(t *testing.T, fixture *testutil.LSPFixture) {
 		if fixture.Name != "multiline-all-attributes" {
-			return
+			t.Skip("not applicable to this test")
 		}
 
 		// Setup context

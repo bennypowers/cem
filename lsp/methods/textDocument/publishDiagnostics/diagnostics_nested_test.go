@@ -35,7 +35,7 @@ import (
 func TestDiagnostics_NestedElementRanges(t *testing.T) {
 	testutil.RunLSPFixtures(t, "testdata-regression", func(t *testing.T, fixture *testutil.LSPFixture) {
 		if fixture.Name != "nested-element-diagnostics-typescript" {
-			return
+			t.Skip("not applicable to this test")
 		}
 
 		ctx := testhelpers.NewMockServerContext()

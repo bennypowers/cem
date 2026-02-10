@@ -513,6 +513,7 @@ func (d *TypeScriptDocument) parseHTMLInTemplate(template TemplateContext, handl
 	}
 
 	contentBytes := []byte(templateContent)
+	seen := make(map[string]bool)
 
 	// Find custom elements in the HTML template (both regular and self-closing)
 	for _, parentName := range []string{"element", "self.closing.tag"} {
@@ -522,6 +523,11 @@ func (d *TypeScriptDocument) parseHTMLInTemplate(template TemplateContext, handl
 					if !strings.Contains(capture.Text, "-") {
 						continue
 					}
+					key := fmt.Sprintf("%s:%d:%d", capture.Text, capture.StartByte, capture.EndByte)
+					if seen[key] {
+						continue
+					}
+					seen[key] = true
 					element := types.CustomElementMatch{
 						TagName:    capture.Text,
 						Range:      d.adjustRangeToTemplate(capture, template),
