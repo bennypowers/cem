@@ -74,6 +74,22 @@ else
   fi
 fi
 
+# Update npm wrapper package version
+echo "Updating npm/package.json..."
+if command -v jq &> /dev/null; then
+  jq ".version = \"$VERSION\"" npm/package.json > npm/package.json.tmp
+  mv npm/package.json.tmp npm/package.json
+elif command -v node &> /dev/null; then
+  node -e "
+    const fs = require('fs');
+    const pkg = JSON.parse(fs.readFileSync('npm/package.json', 'utf8'));
+    pkg.version = '$VERSION';
+    fs.writeFileSync('npm/package.json', JSON.stringify(pkg, null, 2) + '\n');
+  "
+else
+  sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" npm/package.json
+fi
+
 # Update package-lock.json
 echo "Updating package-lock.json..."
 npm install
@@ -84,18 +100,19 @@ echo "Version updated in:"
 echo "  - extensions/vscode/package.json"
 echo "  - extensions/zed/extension.toml"
 echo "  - .claude-plugin/marketplace.json"
+echo "  - npm/package.json"
 echo "  - package-lock.json"
 echo ""
 echo "Changes:"
-git diff extensions/vscode/package.json extensions/zed/extension.toml .claude-plugin/marketplace.json package-lock.json
+git diff extensions/vscode/package.json extensions/zed/extension.toml .claude-plugin/marketplace.json npm/package.json package-lock.json
 
 # Check if there are changes
-if ! git diff --quiet extensions/vscode/package.json extensions/zed/extension.toml .claude-plugin/marketplace.json package-lock.json; then
+if ! git diff --quiet extensions/vscode/package.json extensions/zed/extension.toml .claude-plugin/marketplace.json npm/package.json package-lock.json; then
   echo ""
   read -p "Commit version changes? (y/n) " -n 1 -r
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
-    git add extensions/vscode/package.json extensions/zed/extension.toml .claude-plugin/marketplace.json package-lock.json
+    git add extensions/vscode/package.json extensions/zed/extension.toml .claude-plugin/marketplace.json npm/package.json package-lock.json
     git commit -m "chore: prepare version $VERSION"
     echo "✓ Version changes committed"
     echo ""
@@ -104,7 +121,7 @@ if ! git diff --quiet extensions/vscode/package.json extensions/zed/extension.to
   else
     echo "Version changes rejected by user."
     # Discard changes
-    git checkout -- extensions/vscode/package.json extensions/zed/extension.toml .claude-plugin/marketplace.json package-lock.json
+    git checkout -- extensions/vscode/package.json extensions/zed/extension.toml .claude-plugin/marketplace.json npm/package.json package-lock.json
     exit 1
   fi
 else
