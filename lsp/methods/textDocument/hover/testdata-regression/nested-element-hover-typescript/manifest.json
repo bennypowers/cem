@@ -13,14 +13,9 @@
           "description": "A surface container element",
           "attributes": [
             {
-              "name": "id",
-              "type": { "text": "string" },
-              "description": "Element identifier"
-            },
-            {
-              "name": "role",
-              "type": { "text": "string" },
-              "description": "ARIA role"
+              "name": "color-palette",
+              "type": { "text": "'lightest' | 'light' | 'dark' | 'darkest'" },
+              "description": "Sets the color palette"
             }
           ]
         }

@@ -934,8 +934,21 @@ func (d *TypeScriptDocument) FindAttributeAtPosition(
 	position protocol.Position,
 	dm any,
 ) (*types.AttributeMatch, string) {
-	// This method needs to be implemented for the types.Document interface
-	// For now, return nil as this functionality is handled by the handler
+	dmValue := reflect.ValueOf(dm)
+	if dmValue.Kind() == reflect.Pointer && !dmValue.IsNil() {
+		method := dmValue.MethodByName("GetLanguageHandler")
+		if method.IsValid() {
+			results := method.Call([]reflect.Value{reflect.ValueOf("typescript")})
+			if len(results) > 0 && !results[0].IsNil() {
+				handler := results[0].Interface()
+				if h, ok := handler.(interface {
+					FindAttributeAtPosition(types.Document, protocol.Position) (*types.AttributeMatch, string)
+				}); ok {
+					return h.FindAttributeAtPosition(d, position)
+				}
+			}
+		}
+	}
 	return nil, ""
 }
 

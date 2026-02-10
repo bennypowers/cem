@@ -1,0 +1,6 @@
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "## `color-palette` attribute\n\n**On `<outer-surface>` element**\n\n**Type:** `'lightest' | 'light' | 'dark' | 'darkest'`\n\nSets the color palette\n\n"
+  }
+}

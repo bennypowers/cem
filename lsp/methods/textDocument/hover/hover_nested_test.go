@@ -59,16 +59,20 @@ func TestHover_NestedElements(t *testing.T) {
 		doc := dm.OpenDocument(uri, fixture.InputContent, 1)
 		ctx.AddDocument(uri, doc)
 
-		// Line 7 of input.ts:
-		//           <inner-icon id="icon" set="ui" icon="check"></inner-icon>
-		// char:      0123456789...
-		// inner-icon tag name is at characters 11-20
+		// Line 5:  "      <outer-surface color-palette="lightest">"
+		//           outer-surface tag at chars 7-20, "color-palette" attr at chars 21-34
+		// Line 7:  "          <inner-icon id="icon" set="ui" icon="check"></inner-icon>"
+		//           inner-icon tag at chars 11-21, "icon" attr at chars 41-45
 		testCases := []struct {
 			name     string
 			position protocol.Position
 		}{
-			// Hover on the inner-icon tag name (character 15 is within "inner-icon")
+			// Hover on the inner-icon tag name
 			{"element", protocol.Position{Line: 7, Character: 15}},
+			// Hover on the "icon" attribute of inner-icon
+			{"attribute", protocol.Position{Line: 7, Character: 42}},
+			// Hover on the "color-palette" attribute of outer-surface
+			{"outer-attribute", protocol.Position{Line: 5, Character: 25}},
 		}
 
 		for _, tc := range testCases {
