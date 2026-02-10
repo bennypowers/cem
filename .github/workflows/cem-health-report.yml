@@ -75,7 +75,7 @@ jobs:
           curl -fsSL "https://github.com/bennypowers/cem/releases/download/v${VERSION}/cem-linux-x64" \
             -o /usr/local/bin/cem
           chmod +x /usr/local/bin/cem
-          cem --version
+          cem version
 
       - name: Generate manifest
         env:
