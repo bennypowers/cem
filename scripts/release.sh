@@ -87,9 +87,45 @@ echo "Step 1: Updating version files and committing..."
 }
 echo ""
 
-echo "Step 2: Pushing version commit..."
+# Strip 'v' prefix for version comparison
+CHECK_VERSION="${VERSION#v}"
+
+echo "Step 2: Verifying version sync across all packages..."
+MISMATCH=0
+
+VSCODE_VERSION=$(node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('extensions/vscode/package.json','utf8')).version)")
+ZED_VERSION=$(grep '^version = ' extensions/zed/extension.toml | cut -d'"' -f2)
+NPM_VERSION=$(node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('npm/package.json','utf8')).version)")
+
+CLAUDE_VERSION=""
+if [ -f .claude-plugin/marketplace.json ]; then
+  CLAUDE_VERSION=$(node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('.claude-plugin/marketplace.json','utf8')).plugins[0].version)")
+fi
+
+for PAIR in "extensions/vscode/package.json:$VSCODE_VERSION" "extensions/zed/extension.toml:$ZED_VERSION" "npm/package.json:$NPM_VERSION" ".claude-plugin/marketplace.json:$CLAUDE_VERSION"; do
+  FILE="${PAIR%%:*}"
+  FILE_VERSION="${PAIR##*:}"
+  if [ ! -f "$FILE" ]; then
+    echo "  - $FILE: skipped (file not found)"
+  elif [ -n "$FILE_VERSION" ] && [ "$FILE_VERSION" != "$CHECK_VERSION" ]; then
+    echo "  ✗ $FILE has version $FILE_VERSION (expected $CHECK_VERSION)"
+    MISMATCH=1
+  else
+    echo "  ✓ $FILE: $FILE_VERSION"
+  fi
+done
+
+if [ "$MISMATCH" -eq 1 ]; then
+  echo ""
+  echo "Error: version mismatch detected after running version.sh"
+  echo "Release aborted. Fix version.sh and try again."
+  exit 1
+fi
+echo ""
+
+echo "Step 3: Pushing version commit..."
 git push
 echo ""
 
-echo "Step 3: Creating GitHub release (gh will tag and push)..."
+echo "Step 4: Creating GitHub release (gh will tag and push)..."
 gh release create "$VERSION"
