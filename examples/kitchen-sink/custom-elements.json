@@ -390,19 +390,55 @@
           "events": [
             {
               "name": "click",
-              "description": "Emitted when the button is clicked"
+              "description": "Emitted when the button is clicked",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             },
             {
               "name": "focus",
-              "description": "Emitted when the button gains focus"
+              "description": "Emitted when the button gains focus",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             },
             {
               "name": "blur",
-              "description": "Emitted when the button loses focus"
+              "description": "Emitted when the button loses focus",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             },
             {
               "name": "invalid",
-              "description": "Emitted when form validation fails"
+              "description": "Emitted when form validation fails",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             }
           ],
           "slots": [
@@ -803,19 +839,55 @@
           "events": [
             {
               "name": "input",
-              "description": "Emitted when the value changes"
+              "description": "Emitted when the value changes",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             },
             {
               "name": "change",
-              "description": "Emitted when the input loses focus"
+              "description": "Emitted when the input loses focus",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             },
             {
               "name": "focus",
-              "description": "Emitted when the field gains focus"
+              "description": "Emitted when the field gains focus",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             },
             {
               "name": "blur",
-              "description": "Emitted when the field loses focus"
+              "description": "Emitted when the field loses focus",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             }
           ],
           "slots": [
@@ -1003,11 +1075,29 @@
           "events": [
             {
               "name": "input",
-              "description": "Emitted when the value changes"
+              "description": "Emitted when the value changes",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             },
             {
               "name": "change",
-              "description": "Emitted when the input loses focus"
+              "description": "Emitted when the input loses focus",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             }
           ],
           "cssParts": [
@@ -1480,11 +1570,29 @@
           "events": [
             {
               "name": "demo-input",
-              "description": "Emitted when the input value changes (on input event)"
+              "description": "Emitted when the input value changes (on input event)",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             },
             {
               "name": "demo-change",
-              "description": "Emitted when the input value is committed (on change event)"
+              "description": "Emitted when the input value is committed (on change event)",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
             }
           ],
           "cssParts": [

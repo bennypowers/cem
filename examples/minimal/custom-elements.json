@@ -58,12 +58,12 @@
               "name": "--hello-world-color",
               "description": "Color of the greeting text",
               "default": "inherit",
-              "syntax": "<color>"
+              "syntax": "\u003ccolor\u003e"
             }
           ],
           "demos": [
             {
-              "url": "elements/hello-world/demos/"
+              "url": "elements/hello-world/demo/"
             }
           ],
           "customElement": true
