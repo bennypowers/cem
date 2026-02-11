@@ -1,0 +1,117 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/dts-element.js",
+      "declarations": [
+        {
+          "name": "DtsElement",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "'light' | 'dark' | 'high-contrast'",
+                "references": [
+                  {
+                    "name": "ThemeVariant",
+                    "package": "@tokens/core"
+                  }
+                ]
+              },
+              "default": "'light'",
+              "kind": "field"
+            },
+            {
+              "name": "size",
+              "type": {
+                "text": "'sm' | 'md' | 'lg'",
+                "references": [
+                  {
+                    "name": "Size",
+                    "package": "@tokens/core"
+                  }
+                ]
+              },
+              "default": "'sm'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "DtsElement",
+            "module": "src/dts-element.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DtsElement",
+          "declaration": {
+            "name": "DtsElement",
+            "module": "src/dts-element.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-element.js",
+      "declarations": [
+        {
+          "name": "JsdocElement",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "color",
+              "type": {
+                "text": "'red' | 'blue' | 'green'",
+                "references": [
+                  {
+                    "name": "ColorVariant",
+                    "package": "@tokens/colors"
+                  }
+                ]
+              },
+              "default": "'red'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "JsdocElement",
+            "module": "src/jsdoc-element.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "JsdocElement",
+          "declaration": {
+            "name": "JsdocElement",
+            "module": "src/jsdoc-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

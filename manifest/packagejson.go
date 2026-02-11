@@ -31,6 +31,113 @@ type PackageJSON struct {
 	Version        string `json:"version"`
 	Exports        any    `json:"exports,omitempty"`
 	CustomElements string `json:"customElements"`
+	Types          string `json:"types,omitempty"`
+	Typings        string `json:"typings,omitempty"`
+	Main           string `json:"main,omitempty"`
+}
+
+// ResolveImportSubpath resolves an import subpath to a file path within the package.
+// subpath is like "./lib/types" or "." for root.
+// Returns the resolved file path relative to the package root.
+// This is the inverse of ResolveExportPath: given a consumer-facing subpath,
+// it returns the actual file path within the package.
+func ResolveImportSubpath(pkg *PackageJSON, subpath string) (string, error) {
+	if pkg == nil {
+		return "", fmt.Errorf("package.json is nil")
+	}
+
+	// Normalize subpath
+	if subpath == "" {
+		subpath = "."
+	}
+
+	// Try exports map first
+	if pkg.Exports != nil {
+		resolved, err := resolveSubpathFromExports(pkg.Exports, subpath)
+		if err == nil {
+			return resolved, nil
+		}
+	}
+
+	// Fallback for root subpath: use types → typings → main fields
+	if subpath == "." {
+		if pkg.Types != "" {
+			return strings.TrimPrefix(pkg.Types, "./"), nil
+		}
+		if pkg.Typings != "" {
+			return strings.TrimPrefix(pkg.Typings, "./"), nil
+		}
+		if pkg.Main != "" {
+			return strings.TrimPrefix(pkg.Main, "./"), nil
+		}
+	}
+
+	return "", fmt.Errorf("cannot resolve subpath %q: %w", subpath, ErrNotExported)
+}
+
+// resolveSubpathFromExports resolves a subpath against the exports field.
+func resolveSubpathFromExports(exports any, subpath string) (string, error) {
+	// Handle string exports (single export)
+	if expStr, ok := exports.(string); ok {
+		if subpath == "." {
+			return strings.TrimPrefix(expStr, "./"), nil
+		}
+		return "", fmt.Errorf("subpath %q not found in string export", subpath)
+	}
+
+	exportsMap, ok := exports.(map[string]any)
+	if !ok {
+		return "", fmt.Errorf("exports field is not a map")
+	}
+
+	// Direct match for the subpath key
+	if expVal, found := exportsMap[subpath]; found {
+		return resolveExportValue(expVal)
+	}
+
+	// Wildcard pattern matching
+	for key, val := range exportsMap {
+		if !strings.Contains(key, "*") {
+			continue
+		}
+		parts := strings.SplitN(key, "*", 2)
+		keyPrefix := parts[0]
+		keySuffix := parts[1]
+		if strings.HasPrefix(subpath, keyPrefix) && strings.HasSuffix(subpath, keySuffix) {
+			starValue := subpath[len(keyPrefix):]
+			if keySuffix != "" {
+				starValue = starValue[:len(starValue)-len(keySuffix)]
+			}
+			resolved, err := resolveExportValue(val)
+			if err != nil {
+				continue
+			}
+			return strings.Replace(resolved, "*", starValue, 1), nil
+		}
+	}
+
+	return "", fmt.Errorf("subpath %q not found in exports", subpath)
+}
+
+// resolveExportValue extracts a file path from an export value,
+// preferring the "types" condition, then "import", then "default".
+func resolveExportValue(val any) (string, error) {
+	switch v := val.(type) {
+	case string:
+		return strings.TrimPrefix(v, "./"), nil
+	case map[string]any:
+		// Prefer types condition for type resolution.
+		// NOTE: nested condition maps (e.g. "types": {"import": "...", "require": "..."})
+		// are not yet handled — cond would be map[string]any, not string.
+		for _, condition := range []string{"types", "import", "default"} {
+			if cond, ok := v[condition]; ok {
+				if s, ok := cond.(string); ok {
+					return strings.TrimPrefix(s, "./"), nil
+				}
+			}
+		}
+	}
+	return "", fmt.Errorf("cannot resolve export value")
 }
 
 // ResolveExportPath resolves a file path relative to the package root
@@ -87,8 +194,9 @@ func ResolveExportPath(packageJson *PackageJSON, relFilePath string) (string, er
 
 			// Fixed: subpath pattern matching, match cleanRel against expTarget with *
 			if strings.Contains(expTarget, "*") {
-				targetPrefix := strings.Split(expTarget, "*")[0]
-				targetSuffix := strings.Split(expTarget, "*")[1]
+				targetParts := strings.SplitN(expTarget, "*", 2)
+				targetPrefix := targetParts[0]
+				targetSuffix := targetParts[1]
 				if strings.HasPrefix(cleanRel, targetPrefix) && strings.HasSuffix(cleanRel, targetSuffix) {
 					starValue := cleanRel[len(targetPrefix):]
 					if targetSuffix != "" {

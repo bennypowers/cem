@@ -205,8 +205,9 @@ func postprocess(
 	slices.SortStableFunc(pkg.Modules, func(a, b M.Module) int {
 		return cmp.Compare(a.Path, b.Path)
 	})
-	// Resolve type aliases
-	if err := ResolveTypeAliases(&pkg, typeAliases, imports); err != nil {
+	// Resolve type aliases (including cross-package external types)
+	externalResolver := NewExternalTypeResolver(ctx, qm)
+	if err := ResolveTypeAliases(&pkg, typeAliases, imports, externalResolver); err != nil {
 		errsList = append(errsList, fmt.Errorf("type resolution failed: %w", err))
 	}
 	if len(errsList) > 0 {
