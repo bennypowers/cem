@@ -17,11 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"bennypowers.dev/cem/health"
+	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/workspace"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -37,10 +41,15 @@ func init() {
 }
 
 var healthCmd = &cobra.Command{
-	Use:   "health",
+	Use:   "health [source files...]",
 	Short: "Score documentation quality in a custom-elements manifest",
-	Long:  `Analyze a custom-elements.json manifest and score the quality of its documentation.`,
-	Args:  cobra.MaximumNArgs(1),
+	Long: `Analyze a custom-elements.json manifest and score the quality of its documentation.
+
+Source file paths can be passed as positional arguments to filter the report
+to modules matching those files. File extensions are mapped to their compiled
+output equivalents (.ts -> .js, .tsx -> .js, etc.) and resolved through the
+package.json exports map, replicating the same logic used by cem generate.`,
+	Args: cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, err := workspace.GetWorkspaceContext(cmd)
 		if err != nil {
@@ -49,10 +58,6 @@ var healthCmd = &cobra.Command{
 		}
 
 		manifestPath := ctx.CustomElementsManifestPath()
-		if len(args) > 0 {
-			manifestPath = args[0]
-		}
-
 		if manifestPath == "" {
 			fmt.Fprintln(os.Stderr, "Could not find custom-elements.json")
 			os.Exit(1)
@@ -81,6 +86,35 @@ var healthCmd = &cobra.Command{
 		allModules := make([]string, 0, len(configModules)+len(moduleFlags))
 		allModules = append(allModules, configModules...)
 		allModules = append(allModules, moduleFlags...)
+
+		// Resolve positional file args to module paths
+		if len(args) > 0 {
+			pkgJSON, _ := ctx.PackageJSON()
+
+			// Determine the package path prefix to strip from file args.
+			// File args (e.g. from git diff) are repo-root-relative, but
+			// module paths in the manifest are package-root-relative.
+			pkgPrefix := ""
+			if p, _ := cmd.Flags().GetString("package"); p != "" && p != "." {
+				pkgPrefix = filepath.ToSlash(filepath.Clean(p)) + "/"
+			}
+
+			for _, file := range args {
+				rel := filepath.ToSlash(file)
+				rel = strings.TrimPrefix(rel, pkgPrefix)
+				normalized := M.NormalizeSourcePath(rel)
+				resolved, err := M.ResolveExportPath(pkgJSON, normalized)
+				if err != nil {
+					if errors.Is(err, M.ErrNotExported) {
+						// Not exported — use normalized path as-is (same as generate)
+						allModules = append(allModules, normalized)
+					}
+					// Other files (README, tests, etc.) — silently skip
+					continue
+				}
+				allModules = append(allModules, resolved)
+			}
+		}
 
 		configFailBelow := viper.GetInt("health.failBelow")
 		if failBelow == 0 && configFailBelow > 0 {

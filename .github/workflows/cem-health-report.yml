@@ -93,20 +93,6 @@ jobs:
           set -euo pipefail
           BASE_REF="${GITHUB_BASE_REF:-main}"
 
-          # Map source extensions to compiled output extensions
-          map_ext() {
-            case "$1" in
-              *.tsx)  echo "${1%.tsx}.js" ;;
-              *.jsx)  echo "${1%.jsx}.js" ;;
-              *.ts)   echo "${1%.ts}.js" ;;
-              *.mts)  echo "${1%.mts}.mjs" ;;
-              *.cts)  echo "${1%.cts}.cjs" ;;
-              *.scss) echo "${1%.scss}.css" ;;
-              *.sass) echo "${1%.sass}.css" ;;
-              *)      echo "$1" ;;
-            esac
-          }
-
           changed_files=$(git diff --name-only "origin/${BASE_REF}...HEAD" 2>/dev/null \
                        || git diff --name-only "${BASE_REF}...HEAD" 2>/dev/null \
                        || echo "")
@@ -116,36 +102,14 @@ jobs:
             exit 0
           fi
 
-          manifest_modules=$(cem health -p "$PACKAGE_PATH" --format json 2>/dev/null \
-                          | jq -r '.modules[].path' 2>/dev/null || echo "")
-
-          if [ -z "$manifest_modules" ]; then
-            printf '### Documentation Health\n\nNo modules found in manifest.\n' > health_report.md
-            exit 0
-          fi
-
-          # Match changed files against module paths
-          matched_modules=()
+          # Pass changed files as positional args — cem health resolves
+          # source extensions and package.json exports internally.
+          files=()
           while IFS= read -r f; do
-            mapped=$(map_ext "$f")
-            while IFS= read -r mod; do
-              if [ "$mapped" = "$mod" ] || [ "$f" = "$mod" ]; then
-                matched_modules+=("$mod")
-              fi
-            done <<< "$manifest_modules"
+            files+=("$f")
           done <<< "$changed_files"
 
-          if [ ${#matched_modules[@]} -eq 0 ]; then
-            printf '### Documentation Health\n\nNo changed files match any modules in the manifest.\n' > health_report.md
-            exit 0
-          fi
-
-          flags=()
-          for mod in "${matched_modules[@]}"; do
-            flags+=(--module "$mod")
-          done
-
-          cem health -p "$PACKAGE_PATH" --format markdown "${flags[@]}" > health_report.md
+          cem health -p "$PACKAGE_PATH" --format markdown "${files[@]}" > health_report.md
 
       - name: Generate health report (dispatch)
         if: github.event_name == 'workflow_dispatch'

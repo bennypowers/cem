@@ -27,7 +27,7 @@ func NewReference(name string, pkg string, module string) *Reference {
 	return &Reference{
 		Name:    name,
 		Package: pkg,
-		Module:  normalizePath(module),
+		Module:  NormalizeSourcePath(module),
 	}
 }
 

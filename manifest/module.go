@@ -44,7 +44,7 @@ type JavaScriptModule struct {
 func NewModule(file string) *Module {
 	return &Module{
 		Kind: "javascript-module",
-		Path: normalizePath(file),
+		Path: NormalizeSourcePath(file),
 	}
 }
 

@@ -20,15 +20,29 @@ package manifest
 
 import (
 	"encoding/json"
-	"regexp"
+	"path/filepath"
+	"strings"
 )
 
 type Deprecatable interface {
 	IsDeprecated() bool
 }
 
-func normalizePath(path string) string {
-	return regexp.MustCompile(`\.ts$`).ReplaceAllString(path, ".js")
+// NormalizeSourcePath maps a source file path to its compiled output path
+// by replacing the source extension with the corresponding output extension.
+func NormalizeSourcePath(path string) string {
+	ext := filepath.Ext(path)
+	base := strings.TrimSuffix(path, ext)
+	switch ext {
+	case ".ts", ".tsx", ".jsx":
+		return base + ".js"
+	case ".mts":
+		return base + ".mjs"
+	case ".cts":
+		return base + ".cjs"
+	default:
+		return path
+	}
 }
 
 // Embedded type for Types with Name, Summary, and Description
