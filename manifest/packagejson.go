@@ -133,12 +133,6 @@ func resolveExportValue(val any) (string, error) {
 				}
 			}
 		}
-		// Try first string value as fallback
-		for _, v2 := range v {
-			if s, ok := v2.(string); ok {
-				return strings.TrimPrefix(s, "./"), nil
-			}
-		}
 	}
 	return "", fmt.Errorf("cannot resolve export value")
 }

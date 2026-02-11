@@ -187,6 +187,7 @@ func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAlia
 	ctx.visited[typeText] = true
 	ctx.path = append(ctx.path, typeText)
 	defer func() {
+		delete(ctx.visited, typeText)
 		ctx.path = ctx.path[:len(ctx.path)-1]
 	}()
 

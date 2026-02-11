@@ -38,7 +38,7 @@ type ExternalTypeResolver struct {
 	projectRoot       string
 	workspacePackages map[string]string // pkg name → abs path
 	queryManager      *Q.QueryManager
-	cache             sync.Map // pkg name → map[string]string
+	cache             sync.Map // import specifier → map[string]string
 }
 
 // NewExternalTypeResolver creates a resolver that can look up type aliases
@@ -51,16 +51,26 @@ func NewExternalTypeResolver(ctx types.WorkspaceContext, qm *Q.QueryManager) *Ex
 
 	// Detect workspace mode and discover sibling packages
 	wsRoot, err := workspace.FindWorkspaceRoot(ctx.Root())
-	if err == nil && wsRoot != "" {
+	if err != nil {
+		L.Debug("ExternalTypeResolver: no workspace root found: %v", err)
+	} else if wsRoot != "" {
 		pkgPath := filepath.Join(wsRoot, "package.json")
 		data, err := os.ReadFile(pkgPath)
-		if err == nil {
+		if err != nil {
+			L.Debug("ExternalTypeResolver: cannot read workspace package.json: %v", err)
+		} else {
 			var pkg struct {
 				Workspaces any `json:"workspaces"`
 			}
-			if json.Unmarshal(data, &pkg) == nil && pkg.Workspaces != nil {
+			if err := json.Unmarshal(data, &pkg); err != nil {
+				L.Debug("ExternalTypeResolver: cannot parse workspace package.json: %v", err)
+			} else if pkg.Workspaces == nil {
+				L.Debug("ExternalTypeResolver: no workspaces field in %s", pkgPath)
+			} else {
 				packages, err := workspace.DiscoverWorkspacePackages(wsRoot, pkg.Workspaces)
-				if err == nil {
+				if err != nil {
+					L.Debug("ExternalTypeResolver: workspace discovery failed: %v", err)
+				} else {
 					r.workspacePackages = packages
 					L.Debug("ExternalTypeResolver: discovered %d workspace packages", len(packages))
 				}
@@ -79,8 +89,8 @@ func (r *ExternalTypeResolver) ResolveType(importSpec, typeName string) (definit
 		return "", "", false
 	}
 
-	// Check cache
-	if cached, ok := r.cache.Load(pkgName); ok {
+	// Check cache (keyed by importSpec to distinguish subpaths)
+	if cached, ok := r.cache.Load(importSpec); ok {
 		aliases := cached.(map[string]string)
 		if def, ok := aliases[typeName]; ok {
 			return def, pkgName, true
@@ -104,7 +114,7 @@ func (r *ExternalTypeResolver) ResolveType(importSpec, typeName string) (definit
 	}
 
 	// Cache result (even empty, to avoid repeated lookups)
-	r.cache.Store(pkgName, aliases)
+	r.cache.Store(importSpec, aliases)
 
 	if def, ok := aliases[typeName]; ok {
 		return def, pkgName, true
@@ -158,13 +168,13 @@ func (r *ExternalTypeResolver) resolveFromWorkspaceSibling(pkgName string) map[s
 
 	aliases := make(map[string]string)
 
-	err := filepath.Walk(siblingPath, func(path string, info os.FileInfo, err error) error {
+	err := filepath.WalkDir(siblingPath, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return nil // skip errors
 		}
 		// Skip directories we don't want
-		if info.IsDir() {
-			base := info.Name()
+		if d.IsDir() {
+			base := d.Name()
 			if base == "node_modules" || base == "dist" || base == ".git" {
 				return filepath.SkipDir
 			}
@@ -292,8 +302,13 @@ func (r *ExternalTypeResolver) tryConventionalPaths(pkgDir, basePath string) str
 // toDTSPath converts a file path to its .d.ts equivalent.
 // Returns empty string if the .d.ts file doesn't exist.
 func (r *ExternalTypeResolver) toDTSPath(filePath string) string {
-	ext := filepath.Ext(filePath)
-	base := strings.TrimSuffix(filePath, ext)
+	var base string
+	if strings.HasSuffix(filePath, ".d.ts") {
+		base = strings.TrimSuffix(filePath, ".d.ts")
+	} else {
+		ext := filepath.Ext(filePath)
+		base = strings.TrimSuffix(filePath, ext)
+	}
 	dts := base + ".d.ts"
 	if _, err := os.Stat(dts); err == nil {
 		return dts
@@ -304,8 +319,13 @@ func (r *ExternalTypeResolver) toDTSPath(filePath string) string {
 // toJSPath converts a file path to its .js equivalent.
 // Returns empty string if the .js file doesn't exist.
 func (r *ExternalTypeResolver) toJSPath(filePath string) string {
-	ext := filepath.Ext(filePath)
-	base := strings.TrimSuffix(filePath, ext)
+	var base, ext string
+	if strings.HasSuffix(filePath, ".d.ts") {
+		base = strings.TrimSuffix(filePath, ".d.ts")
+	} else {
+		ext = filepath.Ext(filePath)
+		base = strings.TrimSuffix(filePath, ext)
+	}
 	js := base + ".js"
 	if _, err := os.Stat(js); err == nil {
 		return js
