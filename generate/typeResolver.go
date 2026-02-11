@@ -58,8 +58,9 @@ func newResolutionContext() *resolutionContext {
 	}
 }
 
-// ResolveTypeAliases resolves all type aliases in the package
-func ResolveTypeAliases(pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap) error {
+// ResolveTypeAliases resolves all type aliases in the package.
+// externalResolver may be nil if cross-package resolution is not needed.
+func ResolveTypeAliases(pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, externalResolver *ExternalTypeResolver) error {
 	L.Debug("ResolveTypeAliases called with %d modules", len(pkg.Modules))
 	for i := range pkg.Modules {
 		modulePath := pkg.Modules[i].Path
@@ -68,63 +69,63 @@ func ResolveTypeAliases(pkg *M.Package, typeAliases moduleTypeAliasesMap, import
 			aliasCount = len(aliases)
 		}
 		L.Debug("Resolving types in module: %s (has %d type aliases)", modulePath, aliasCount)
-		if err := resolveModuleTypes(&pkg.Modules[i], pkg, typeAliases, imports); err != nil {
+		if err := resolveModuleTypes(&pkg.Modules[i], pkg, typeAliases, imports, externalResolver); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func resolveModuleTypes(module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap) error {
+func resolveModuleTypes(module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, externalResolver *ExternalTypeResolver) error {
 	// Resolve types in all declarations
 	// (Exports just reference declarations, so we don't need to process them separately)
 	for _, decl := range module.Declarations {
 		switch d := decl.(type) {
 		case *M.CustomElementDeclaration:
 			// CustomElementDeclaration embeds ClassDeclaration, so we can pass it directly
-			resolveClassTypes(&d.ClassDeclaration, module, pkg, typeAliases, imports)
+			resolveClassTypes(&d.ClassDeclaration, module, pkg, typeAliases, imports, externalResolver)
 		case *M.ClassDeclaration:
-			resolveClassTypes(d, module, pkg, typeAliases, imports)
+			resolveClassTypes(d, module, pkg, typeAliases, imports, externalResolver)
 		}
 	}
 
 	return nil
 }
 
-func resolveClassTypes(class *M.ClassDeclaration, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap) {
+func resolveClassTypes(class *M.ClassDeclaration, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, externalResolver *ExternalTypeResolver) {
 	// Resolve types in all class members (fields and methods)
 	for _, member := range class.Members {
 		switch m := member.(type) {
 		case *M.ClassField:
 			if m.Type != nil {
-				resolveType(m.Type, module, pkg, typeAliases, imports)
+				resolveType(m.Type, module, pkg, typeAliases, imports, externalResolver)
 			}
 		case *M.CustomElementField:
 			if m.Type != nil {
-				resolveType(m.Type, module, pkg, typeAliases, imports)
+				resolveType(m.Type, module, pkg, typeAliases, imports, externalResolver)
 			}
 		case *M.ClassMethod:
 			// Resolve parameter types
 			for _, param := range m.Parameters {
 				if param.Type != nil {
-					resolveType(param.Type, module, pkg, typeAliases, imports)
+					resolveType(param.Type, module, pkg, typeAliases, imports, externalResolver)
 				}
 			}
 			// Resolve return type
 			if m.Return != nil && m.Return.Type != nil {
-				resolveType(m.Return.Type, module, pkg, typeAliases, imports)
+				resolveType(m.Return.Type, module, pkg, typeAliases, imports, externalResolver)
 			}
 		}
 	}
 }
 
-func resolveType(typ *M.Type, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap) {
+func resolveType(typ *M.Type, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, externalResolver *ExternalTypeResolver) {
 	if typ == nil || typ.Text == "" {
 		return
 	}
 
 	ctx := newResolutionContext()
-	resolved, refs := resolveTypeText(typ.Text, module, pkg, typeAliases, imports, ctx)
+	resolved, refs := resolveTypeText(typ.Text, module, pkg, typeAliases, imports, externalResolver, ctx)
 
 	if resolved != typ.Text {
 		L.Debug("Resolved type: %s -> %s", typ.Text, resolved)
@@ -134,7 +135,7 @@ func resolveType(typ *M.Type, module *M.Module, pkg *M.Package, typeAliases modu
 }
 
 // resolveUnionType resolves each constituent of a union type
-func resolveUnionType(typeText string, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, ctx *resolutionContext) (string, []M.TypeReference) {
+func resolveUnionType(typeText string, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, externalResolver *ExternalTypeResolver, ctx *resolutionContext) (string, []M.TypeReference) {
 	parts := strings.Split(typeText, "|")
 	resolvedParts := make([]string, 0, len(parts))
 	allRefs := make([]M.TypeReference, 0)
@@ -146,7 +147,7 @@ func resolveUnionType(typeText string, module *M.Module, pkg *M.Package, typeAli
 		}
 
 		// Recursively resolve each part
-		resolved, refs := resolveTypeText(part, module, pkg, typeAliases, imports, ctx)
+		resolved, refs := resolveTypeText(part, module, pkg, typeAliases, imports, externalResolver, ctx)
 		resolvedParts = append(resolvedParts, resolved)
 		allRefs = append(allRefs, refs...)
 	}
@@ -156,12 +157,12 @@ func resolveUnionType(typeText string, module *M.Module, pkg *M.Package, typeAli
 	return result, allRefs
 }
 
-func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, ctx *resolutionContext) (string, []M.TypeReference) {
+func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, externalResolver *ExternalTypeResolver, ctx *resolutionContext) (string, []M.TypeReference) {
 	typeText = strings.TrimSpace(typeText)
 
 	// Handle union types by resolving each constituent
 	if strings.Contains(typeText, "|") {
-		return resolveUnionType(typeText, module, pkg, typeAliases, imports, ctx)
+		return resolveUnionType(typeText, module, pkg, typeAliases, imports, externalResolver, ctx)
 	}
 
 	// Check if it's a simple type identifier that could be an alias
@@ -201,7 +202,7 @@ func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAlia
 			}
 
 			// Recursively resolve the definition
-			resolved, nestedRefs := resolveTypeText(definition, module, pkg, typeAliases, imports, ctx)
+			resolved, nestedRefs := resolveTypeText(definition, module, pkg, typeAliases, imports, externalResolver, ctx)
 			refs := append([]M.TypeReference{ref}, nestedRefs...)
 
 			return resolved, refs
@@ -215,33 +216,47 @@ func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAlia
 
 			// Find the target module in the package
 			targetModule := findModuleBySpec(pkg, module.Path, imp.spec)
-			if targetModule == nil {
-				L.Debug("Target module not found for import spec: %s", imp.spec)
-				return typeText, nil
+			if targetModule != nil {
+				L.Debug("Found target module: %s", targetModule.Path)
+
+				// Look up the type in the target module using the original name
+				if targetAliases, hasAliases := typeAliases[targetModule.Path]; hasAliases {
+					if definition, found := targetAliases[imp.name]; found {
+						// Create a reference to the imported type
+						ref := M.TypeReference{
+							Reference: M.Reference{
+								Name:   imp.name,
+								Module: targetModule.Path,
+							},
+						}
+
+						// Recursively resolve in the context of the target module
+						resolved, nestedRefs := resolveTypeText(definition, targetModule, pkg, typeAliases, imports, externalResolver, ctx)
+						refs := append([]M.TypeReference{ref}, nestedRefs...)
+
+						return resolved, refs
+					}
+				}
+
+				L.Debug("Type alias '%s' not found in target module %s", imp.name, targetModule.Path)
 			}
 
-			L.Debug("Found target module: %s", targetModule.Path)
-
-			// Look up the type in the target module using the original name
-			if targetAliases, hasAliases := typeAliases[targetModule.Path]; hasAliases {
-				if definition, found := targetAliases[imp.name]; found {
-					// Create a reference to the imported type
+			// Target module not found in this package — try external resolution
+			if targetModule == nil && externalResolver != nil {
+				if definition, pkgName, ok := externalResolver.ResolveType(imp.spec, imp.name); ok {
+					L.Debug("Resolved external type '%s' from package '%s'", imp.name, pkgName)
 					ref := M.TypeReference{
 						Reference: M.Reference{
-							Name:   imp.name,
-							Module: targetModule.Path,
+							Name:    imp.name,
+							Package: pkgName,
 						},
 					}
-
-					// Recursively resolve in the context of the target module
-					resolved, nestedRefs := resolveTypeText(definition, targetModule, pkg, typeAliases, imports, ctx)
+					resolved, nestedRefs := resolveTypeText(definition, module, pkg, typeAliases, imports, externalResolver, ctx)
 					refs := append([]M.TypeReference{ref}, nestedRefs...)
-
 					return resolved, refs
 				}
+				L.Debug("Target module not found for import spec: %s", imp.spec)
 			}
-
-			L.Debug("Type alias '%s' not found in target module %s", imp.name, targetModule.Path)
 		}
 	}
 
