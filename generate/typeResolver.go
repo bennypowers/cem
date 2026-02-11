@@ -239,7 +239,7 @@ func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAlia
 					}
 				}
 
-					// Type exists in a local module but has no alias definition there;
+				// Type exists in a local module but has no alias definition there;
 				// skip external resolution to avoid shadowing local types.
 				L.Debug("Type alias '%s' not found in target module %s", imp.name, targetModule.Path)
 			}
