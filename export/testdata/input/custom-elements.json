@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "elements/my-button.js",
+      "declarations": [
+        {
+          "name": "MyButton",
+          "summary": "A button component",
+          "description": "A reusable button component with variants and sizes.",
+          "customElement": true,
+          "tagName": "my-button",
+          "superclass": {
+            "name": "HTMLElement"
+          },
+          "attributes": [
+            {
+              "name": "variant",
+              "type": { "text": "'primary' | 'secondary'" },
+              "default": "'primary'",
+              "summary": "Button variant style",
+              "fieldName": "variant"
+            },
+            {
+              "name": "disabled",
+              "type": { "text": "boolean" },
+              "summary": "Whether the button is disabled",
+              "fieldName": "disabled"
+            }
+          ],
+          "members": [
+            {
+              "name": "variant",
+              "kind": "field",
+              "type": { "text": "'primary' | 'secondary'" },
+              "default": "'primary'",
+              "summary": "Button variant style",
+              "attribute": "variant",
+              "reflects": true
+            },
+            {
+              "name": "disabled",
+              "kind": "field",
+              "type": { "text": "boolean" },
+              "summary": "Whether the button is disabled",
+              "attribute": "disabled",
+              "reflects": true
+            },
+            {
+              "name": "data",
+              "kind": "field",
+              "type": { "text": "Record<string, unknown>" },
+              "summary": "Arbitrary data payload"
+            }
+          ],
+          "events": [
+            {
+              "name": "my-click",
+              "type": { "text": "CustomEvent<{ value: string }>" },
+              "summary": "Fired when the button is clicked"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "summary": "Default slot for button content"
+            },
+            {
+              "name": "icon",
+              "summary": "Slot for an icon"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "button",
+              "summary": "The button element"
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--my-button-color",
+              "default": "blue",
+              "summary": "Button text color"
+            }
+          ],
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button",
+          "declaration": { "name": "MyButton", "module": "elements/my-button.js" }
+        },
+        {
+          "kind": "js",
+          "name": "MyButton",
+          "declaration": { "name": "MyButton", "module": "elements/my-button.js" }
+        }
+      ]
+    }
+  ]
+}

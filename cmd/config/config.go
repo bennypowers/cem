@@ -110,6 +110,17 @@ type DemosConfig struct {
 	Rendering string `mapstructure:"rendering" yaml:"rendering"`
 }
 
+type FrameworkExportConfig struct {
+	// Output directory for generated wrapper files
+	Output string `mapstructure:"output" yaml:"output"`
+	// Prefix to strip from tag names when generating component names
+	StripPrefix string `mapstructure:"stripPrefix" yaml:"stripPrefix"`
+	// Override the package name used in import paths
+	PackageName string `mapstructure:"packageName" yaml:"packageName"`
+	// Angular NgModule name (defaults to "ComponentsModule")
+	ModuleName string `mapstructure:"moduleName" yaml:"moduleName"`
+}
+
 type HealthConfig struct {
 	FailBelow int      `mapstructure:"failBelow" yaml:"failBelow"`
 	Disable   []string `mapstructure:"disable" yaml:"disable"`
@@ -128,6 +139,8 @@ type CemConfig struct {
 	Health HealthConfig `mapstructure:"health" yaml:"health"`
 	// Serve command options
 	Serve ServeConfig `mapstructure:"serve" yaml:"serve"`
+	// Export command options: maps framework name to its config
+	Export map[string]FrameworkExportConfig `mapstructure:"export" yaml:"export"`
 	// Canonical public source control URL corresponding to project root on primary branch.
 	// e.g. https://github.com/bennypowers/cem/tree/main/
 	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl" yaml:"sourceControlRootUrl"`
@@ -195,6 +208,11 @@ func (c *CemConfig) Clone() *CemConfig {
 	if c.AdditionalPackages != nil {
 		clone.AdditionalPackages = make([]string, len(c.AdditionalPackages))
 		copy(clone.AdditionalPackages, c.AdditionalPackages)
+	}
+	// Deep copy export config
+	if c.Export != nil {
+		clone.Export = make(map[string]FrameworkExportConfig, len(c.Export))
+		maps.Copy(clone.Export, c.Export)
 	}
 	return &clone
 }
