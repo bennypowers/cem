@@ -98,10 +98,18 @@ func (r *ExternalTypeResolver) ResolveType(importSpec, typeName string) (definit
 		return "", "", false
 	}
 
-	// Try workspace sibling first
+	// Try workspace sibling first (cached by pkgName since the scan is package-wide)
 	var aliases map[string]string
 	if _, isWorkspace := r.workspacePackages[pkgName]; isWorkspace {
-		aliases = r.resolveFromWorkspaceSibling(pkgName)
+		wsKey := "ws:" + pkgName
+		if cached, ok := r.cache.Load(wsKey); ok {
+			aliases = cached.(map[string]string)
+		} else {
+			aliases = r.resolveFromWorkspaceSibling(pkgName)
+			if aliases != nil {
+				r.cache.Store(wsKey, aliases)
+			}
+		}
 	}
 
 	// Fall back to node_modules
@@ -180,8 +188,11 @@ func (r *ExternalTypeResolver) resolveFromWorkspaceSibling(pkgName string) map[s
 			}
 			return nil
 		}
-		// Only parse .ts files (not .d.ts)
-		if !strings.HasSuffix(path, ".ts") || strings.HasSuffix(path, ".d.ts") {
+		// Only parse .ts/.tsx files (not .d.ts)
+		if strings.HasSuffix(path, ".d.ts") {
+			return nil
+		}
+		if !strings.HasSuffix(path, ".ts") && !strings.HasSuffix(path, ".tsx") {
 			return nil
 		}
 

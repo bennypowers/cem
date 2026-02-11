@@ -100,8 +100,9 @@ func resolveSubpathFromExports(exports any, subpath string) (string, error) {
 		if !strings.Contains(key, "*") {
 			continue
 		}
-		keyPrefix := strings.Split(key, "*")[0]
-		keySuffix := strings.Split(key, "*")[1]
+		parts := strings.SplitN(key, "*", 2)
+		keyPrefix := parts[0]
+		keySuffix := parts[1]
 		if strings.HasPrefix(subpath, keyPrefix) && strings.HasSuffix(subpath, keySuffix) {
 			starValue := subpath[len(keyPrefix):]
 			if keySuffix != "" {
@@ -125,7 +126,9 @@ func resolveExportValue(val any) (string, error) {
 	case string:
 		return strings.TrimPrefix(v, "./"), nil
 	case map[string]any:
-		// Prefer types condition for type resolution
+		// Prefer types condition for type resolution.
+		// NOTE: nested condition maps (e.g. "types": {"import": "...", "require": "..."})
+		// are not yet handled — cond would be map[string]any, not string.
 		for _, condition := range []string{"types", "import", "default"} {
 			if cond, ok := v[condition]; ok {
 				if s, ok := cond.(string); ok {
@@ -191,8 +194,9 @@ func ResolveExportPath(packageJson *PackageJSON, relFilePath string) (string, er
 
 			// Fixed: subpath pattern matching, match cleanRel against expTarget with *
 			if strings.Contains(expTarget, "*") {
-				targetPrefix := strings.Split(expTarget, "*")[0]
-				targetSuffix := strings.Split(expTarget, "*")[1]
+				targetParts := strings.SplitN(expTarget, "*", 2)
+				targetPrefix := targetParts[0]
+				targetSuffix := targetParts[1]
 				if strings.HasPrefix(cleanRel, targetPrefix) && strings.HasSuffix(cleanRel, targetSuffix) {
 					starValue := cleanRel[len(targetPrefix):]
 					if targetSuffix != "" {
