@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
-	"text/template"
 )
 
 var _ FrameworkExporter = (*ReactExporter)(nil)
@@ -33,20 +32,7 @@ func (r *ReactExporter) Name() string { return "react" }
 func (r *ReactExporter) ExportElement(element ExportElement, cfg FrameworkExportConfig) (map[string]string, error) {
 	componentName := TagNameToComponentName(element.TagName, cfg.StripPrefix)
 
-	tmpl, err := template.New("react.ts.tmpl").Funcs(template.FuncMap{
-		"or": func(a, b string) string {
-			if a != "" {
-				return a
-			}
-			return b
-		},
-		"jsKey": func(s string) string {
-			if strings.ContainsAny(s, "-. ") {
-				return "'" + s + "'"
-			}
-			return s
-		},
-	}).ParseFS(templateFS, "templates/react.ts.tmpl")
+	tmpl, err := getReactTemplate()
 	if err != nil {
 		return nil, fmt.Errorf("parsing react template: %w", err)
 	}

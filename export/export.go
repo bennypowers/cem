@@ -35,10 +35,9 @@ type FrameworkExportConfig struct {
 
 // ExportElement is a template-friendly representation of a custom element.
 type ExportElement struct {
-	TagName       string
-	ClassName     string
-	ComponentName string
-	ModulePath    string
+	TagName    string
+	ClassName  string
+	ModulePath string
 	ImportPath    string
 	Summary       string
 	Description   string
@@ -279,44 +278,30 @@ func buildExportElement(ced *M.CustomElementDeclaration, mod *M.Module, packageN
 
 	// Properties: public fields not already covered by attributes
 	for _, member := range ced.Fields() {
+		var cf *M.ClassField
 		switch f := member.(type) {
 		case *M.CustomElementField:
-			if f.Privacy == M.Private || f.Privacy == M.Protected {
-				continue
-			}
-			if attrFieldNames[f.Name] {
-				continue
-			}
-			typeName := ""
-			if f.Type != nil {
-				typeName = f.Type.Text
-			}
-			elem.Properties = append(elem.Properties, ExportProperty{
-				Name:     f.Name,
-				Type:     MapCEMType(typeName),
-				Default:  f.Default,
-				Summary:  f.Summary,
-				Readonly: f.Readonly,
-			})
+			cf = &f.ClassField
 		case *M.ClassField:
-			if f.Privacy == M.Private || f.Privacy == M.Protected {
-				continue
-			}
-			if attrFieldNames[f.Name] {
-				continue
-			}
-			typeName := ""
-			if f.Type != nil {
-				typeName = f.Type.Text
-			}
-			elem.Properties = append(elem.Properties, ExportProperty{
-				Name:     f.Name,
-				Type:     MapCEMType(typeName),
-				Default:  f.Default,
-				Summary:  f.Summary,
-				Readonly: f.Readonly,
-			})
+			cf = f
 		}
+		if cf == nil || cf.Privacy == M.Private || cf.Privacy == M.Protected {
+			continue
+		}
+		if attrFieldNames[cf.Name] {
+			continue
+		}
+		typeName := ""
+		if cf.Type != nil {
+			typeName = cf.Type.Text
+		}
+		elem.Properties = append(elem.Properties, ExportProperty{
+			Name:     cf.Name,
+			Type:     MapCEMType(typeName),
+			Default:  cf.Default,
+			Summary:  cf.Summary,
+			Readonly: cf.Readonly,
+		})
 	}
 
 	// Events

@@ -33,14 +33,7 @@ func (a *AngularExporter) Name() string { return "angular" }
 func (a *AngularExporter) ExportElement(element ExportElement, cfg FrameworkExportConfig) (map[string]string, error) {
 	componentName := TagNameToComponentName(element.TagName, cfg.StripPrefix)
 
-	tmpl, err := template.New("angular.ts.tmpl").Funcs(template.FuncMap{
-		"or": func(a, b string) string {
-			if a != "" {
-				return a
-			}
-			return b
-		},
-	}).ParseFS(templateFS, "templates/angular.ts.tmpl")
+	tmpl, err := getAngularTemplate()
 	if err != nil {
 		return nil, fmt.Errorf("parsing angular template: %w", err)
 	}

@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
-	"text/template"
 )
 
 var _ FrameworkExporter = (*VueExporter)(nil)
@@ -33,14 +32,7 @@ func (v *VueExporter) Name() string { return "vue" }
 func (v *VueExporter) ExportElement(element ExportElement, cfg FrameworkExportConfig) (map[string]string, error) {
 	componentName := TagNameToComponentName(element.TagName, cfg.StripPrefix)
 
-	tmpl, err := template.New("vue.vue.tmpl").Funcs(template.FuncMap{
-		"or": func(a, b string) string {
-			if a != "" {
-				return a
-			}
-			return b
-		},
-	}).ParseFS(templateFS, "templates/vue.vue.tmpl")
+	tmpl, err := getVueTemplate()
 	if err != nil {
 		return nil, fmt.Errorf("parsing vue template: %w", err)
 	}
