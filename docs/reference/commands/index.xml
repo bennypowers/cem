@@ -85,7 +85,46 @@
 
 &lt;code-highlighter>
  &lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">cem serve&lt;/span>&lt;/span>&lt;/code>&lt;/pre>
-&lt;/code-highlighter>&lt;p>Starts the server on &lt;code>http://localhost:8000&lt;/code>.&lt;/p></description></item><item><title>Generate</title><link>https://bennypowers.dev/cem/docs/reference/commands/generate/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/generate/</guid><description>&lt;p>Generates custom elements manifest from source code using 
+&lt;/code-highlighter>&lt;p>Starts the server on &lt;code>http://localhost:8000&lt;/code>.&lt;/p></description></item><item><title>Export</title><link>https://bennypowers.dev/cem/docs/reference/commands/export/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/export/</guid><description>&lt;p>Generates framework-specific wrapper components (React, Vue, Angular) from a custom-elements manifest. The generated wrappers provide native framework DX with compile-time type checking and IDE autocomplete.&lt;/p>
+&lt;h2 id="syntax">Syntax&lt;/h2>
+
+&lt;code-highlighter>
+ &lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">cem &lt;span class="nb">export&lt;/span> &lt;span class="o">[&lt;/span>flags&lt;span class="o">]&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>
+&lt;/code-highlighter>&lt;h2 id="arguments">Arguments&lt;/h2>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Argument&lt;/th>
+ &lt;th>Type&lt;/th>
+ &lt;th>Description&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;code>--format&lt;/code>&lt;/td>
+ &lt;td>string&lt;/td>
+ &lt;td>Framework to export: &lt;code>react&lt;/code>, &lt;code>vue&lt;/code>, or &lt;code>angular&lt;/code> (exports all configured frameworks if omitted)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--output, -o&lt;/code>&lt;/td>
+ &lt;td>string&lt;/td>
+ &lt;td>Output directory for generated wrapper files&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--strip-prefix&lt;/code>&lt;/td>
+ &lt;td>string&lt;/td>
+ &lt;td>Prefix to strip from tag names (e.g., &lt;code>demo-&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--package, -p&lt;/code>&lt;/td>
+ &lt;td>string&lt;/td>
+ &lt;td>Package specifier: local path, &lt;code>npm:@scope/package&lt;/code>, or URL&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;h2 id="use-cases">Use Cases&lt;/h2>
+&lt;h3 id="library-author">Library author&lt;/h3>
+&lt;p>As a web component library author, generate wrappers directly from your project source:&lt;/p></description></item><item><title>Generate</title><link>https://bennypowers.dev/cem/docs/reference/commands/generate/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/generate/</guid><description>&lt;p>Generates custom elements manifest from source code using 
 &lt;a href="https://tree-sitter.github.io/tree-sitter/" 
  target="_blank" 
  rel="noopener">tree-sitter
