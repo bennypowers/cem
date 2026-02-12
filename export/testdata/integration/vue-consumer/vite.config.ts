@@ -1,12 +1,18 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import vue from '@vitejs/plugin-vue';
 import { resolve, dirname } from 'node:path';
 import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 
 export default defineConfig({
   plugins: [
-    react(),
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: tag => tag.startsWith('demo-'),
+        },
+      },
+    }),
     {
       name: 'lit-transform',
       enforce: 'pre',
@@ -34,9 +40,4 @@ export default defineConfig({
       },
     },
   ],
-  resolve: {
-    alias: {
-      '@cem-examples/kitchen-sink': resolve(__dirname, '../../../../examples/kitchen-sink'),
-    },
-  },
 });

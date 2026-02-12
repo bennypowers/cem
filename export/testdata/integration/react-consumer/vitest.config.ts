@@ -1,14 +1,10 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
-import { resolve } from 'node:path';
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     dedupe: ['lit'],
-    alias: {
-      '@cem-examples/kitchen-sink': resolve(__dirname, '../../../../examples/kitchen-sink'),
-    },
   },
   test: {
     environment: 'happy-dom',

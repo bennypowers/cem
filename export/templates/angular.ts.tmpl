@@ -3,9 +3,9 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  inject,
   Input,
   Output,
-  ViewChild,
   AfterViewInit,
   OnChanges,
   OnDestroy,
@@ -31,7 +31,7 @@ import '{{ .ImportPath }}';
   `,
 })
 export class {{ .ComponentName }}Component implements AfterViewInit, OnChanges, OnDestroy {
-  @ViewChild('el', { static: true }) private elRef!: ElementRef<HTMLElement>;
+  private elRef = inject(ElementRef<HTMLElement>);
 
 {{- range .Attributes }}
   /** {{ .Summary }} */

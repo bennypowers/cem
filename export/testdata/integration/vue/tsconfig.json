@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "paths": {
+      "@cem-examples/kitchen-sink/*": ["../../../../examples/kitchen-sink/*"]
+    }
+  },
+  "include": ["src/**/*", "generated/**/*"]
+}

@@ -1,17 +1,16 @@
 {
-  "name": "@cem-test/export-react-integration",
+  "name": "@cem-test/export-react-consumer",
   "private": true,
   "type": "module",
   "scripts": {
-    "prestart": "cem export --format react -o generated -p ../../../../examples/kitchen-sink",
+    "prestart": "cem export --format react -o generated -p npm:@cem-examples/kitchen-sink",
     "start": "vite",
-    "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@cem-examples/kitchen-sink": "file:../../../../examples/kitchen-sink",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "lit": "^3.0.0"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@testing-library/react": "^16.0.0",

@@ -1,9 +1,9 @@
 import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
+import angular from '@analogjs/vite-plugin-angular';
 import { resolve } from 'node:path';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [angular({ tsconfig: 'tsconfig.json' })],
   resolve: {
     dedupe: ['lit'],
     alias: {
@@ -11,6 +11,8 @@ export default defineConfig({
     },
   },
   test: {
+    globals: true,
     environment: 'happy-dom',
+    setupFiles: ['@analogjs/vitest-angular/setup-zone'],
   },
 });

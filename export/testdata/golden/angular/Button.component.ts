@@ -3,9 +3,9 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  inject,
   Input,
   Output,
-  ViewChild,
   AfterViewInit,
   OnChanges,
   OnDestroy,
@@ -25,7 +25,7 @@ import 'my-package/elements/my-button.js';
   `,
 })
 export class ButtonComponent implements AfterViewInit, OnChanges, OnDestroy {
-  @ViewChild('el', { static: true }) private elRef!: ElementRef<HTMLElement>;
+  private elRef = inject(ElementRef<HTMLElement>);
   /** Button variant style */
   @Input() variant?: 'primary' | 'secondary';
   /** Whether the button is disabled */

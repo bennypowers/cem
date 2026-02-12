@@ -34,9 +34,4 @@ export default defineConfig({
       },
     },
   ],
-  resolve: {
-    alias: {
-      '@cem-examples/kitchen-sink': resolve(__dirname, '../../../../examples/kitchen-sink'),
-    },
-  },
 });
