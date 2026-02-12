@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { platform, arch } from "node:os";
 import { createRequire } from "node:module";
+import { chmodSync, accessSync, constants } from "node:fs";
 import { spawn } from "node:child_process";
 
 const require = createRequire(import.meta.url);
@@ -26,6 +27,15 @@ try {
 } catch {
   console.error(`cem: Platform binary package @pwrs/cem-${target} not installed. Was there an install error?`);
   process.exit(1);
+}
+
+// npm tarball extraction can strip the execute bit; fix it before spawning
+if (platform() !== 'win32') {
+  try {
+    accessSync(binPath, constants.X_OK);
+  } catch {
+    chmodSync(binPath, 0o755);
+  }
 }
 
 const child = spawn(binPath, process.argv.slice(2), { stdio: "inherit" });
