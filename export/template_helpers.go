@@ -47,35 +47,13 @@ func reactFuncMap() template.FuncMap {
 }
 
 var (
-	reactTmpl   *template.Template
-	vueTmpl     *template.Template
-	angularTmpl *template.Template
-
-	reactOnce   sync.Once
-	vueOnce     sync.Once
-	angularOnce sync.Once
+	getReactTemplate = sync.OnceValues(func() (*template.Template, error) {
+		return template.New("react.ts.tmpl").Funcs(reactFuncMap()).ParseFS(templateFS, "templates/react.ts.tmpl")
+	})
+	getVueTemplate = sync.OnceValues(func() (*template.Template, error) {
+		return template.New("vue.vue.tmpl").Funcs(baseFuncMap()).ParseFS(templateFS, "templates/vue.vue.tmpl")
+	})
+	getAngularTemplate = sync.OnceValues(func() (*template.Template, error) {
+		return template.New("angular.ts.tmpl").Funcs(baseFuncMap()).ParseFS(templateFS, "templates/angular.ts.tmpl")
+	})
 )
-
-func getReactTemplate() (*template.Template, error) {
-	var err error
-	reactOnce.Do(func() {
-		reactTmpl, err = template.New("react.ts.tmpl").Funcs(reactFuncMap()).ParseFS(templateFS, "templates/react.ts.tmpl")
-	})
-	return reactTmpl, err
-}
-
-func getVueTemplate() (*template.Template, error) {
-	var err error
-	vueOnce.Do(func() {
-		vueTmpl, err = template.New("vue.vue.tmpl").Funcs(baseFuncMap()).ParseFS(templateFS, "templates/vue.vue.tmpl")
-	})
-	return vueTmpl, err
-}
-
-func getAngularTemplate() (*template.Template, error) {
-	var err error
-	angularOnce.Do(func() {
-		angularTmpl, err = template.New("angular.ts.tmpl").Funcs(baseFuncMap()).ParseFS(templateFS, "templates/angular.ts.tmpl")
-	})
-	return angularTmpl, err
-}
