@@ -64,13 +64,32 @@ export class {{ .ComponentName }}Component implements AfterViewInit, OnChanges, 
   ngOnChanges(changes: SimpleChanges): void {
     const el = this.elRef?.nativeElement;
     if (!el) return;
+{{- range .Attributes }}
+{{- if .IsBoolean }}
+    if (changes['{{ .Name | or .FieldName }}']) {
+      if (this.{{ .Name | or .FieldName }}) {
+        el.setAttribute('{{ .Name }}', '');
+      } else {
+        el.removeAttribute('{{ .Name }}');
+      }
+    }
+{{- else }}
+    if (changes['{{ .Name | or .FieldName }}']) {
+      if (this.{{ .Name | or .FieldName }} != null) {
+        el.setAttribute('{{ .Name }}', String(this.{{ .Name | or .FieldName }}));
+      } else {
+        el.removeAttribute('{{ .Name }}');
+      }
+    }
+{{- end }}
+{{- end }}
 {{- range .Properties }}
     if (changes['{{ .Name }}']) (el as any).{{ .Name }} = this.{{ .Name }};
 {{- end }}
   }
 
   ngOnDestroy(): void {
-    this.listeners.forEach(fn => fn());
+    this.listeners.forEach(fn => { fn(); });
     this.listeners = [];
   }
 }

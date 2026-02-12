@@ -18,7 +18,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	C "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/export"
@@ -54,8 +53,7 @@ selected via the --format flag for one-off usage.`,
 			return fmt.Errorf("reading manifest: %w", err)
 		}
 		if manifest == nil {
-			fmt.Fprintln(os.Stderr, "Could not find custom-elements.json")
-			os.Exit(1)
+			return fmt.Errorf("could not find custom-elements.json")
 		}
 
 		// Determine package name
@@ -70,14 +68,15 @@ selected via the --format flag for one-off usage.`,
 		frameworks := make(map[string]export.FrameworkExportConfig)
 
 		var configExport map[string]C.FrameworkExportConfig
-		if err := viper.UnmarshalKey("export", &configExport); err == nil {
-			for name, cfg := range configExport {
-				frameworks[name] = export.FrameworkExportConfig{
-					Output:      cfg.Output,
-					StripPrefix: cfg.StripPrefix,
-					PackageName: cfg.PackageName,
-					ModuleName:  cfg.ModuleName,
-				}
+		if err := viper.UnmarshalKey("export", &configExport); err != nil {
+			return fmt.Errorf("parsing export config: %w", err)
+		}
+		for name, cfg := range configExport {
+			frameworks[name] = export.FrameworkExportConfig{
+				Output:      cfg.Output,
+				StripPrefix: cfg.StripPrefix,
+				PackageName: cfg.PackageName,
+				ModuleName:  cfg.ModuleName,
 			}
 		}
 

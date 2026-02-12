@@ -37,7 +37,7 @@ export const Button = forwardRef(function Button(
     if (variant !== undefined) (el as any).variant = variant;
     if (disabled !== undefined) (el as any).disabled = disabled;
     if (data !== undefined) (el as any).data = data;
-  });
+  }, [ref, variant, disabled, data,]);
 
   // Bind event listeners
   useEffect(() => {
@@ -49,8 +49,8 @@ export const Button = forwardRef(function Button(
       el.addEventListener('my-click', handler);
       cleanups.push(() => el.removeEventListener('my-click', handler));
     }
-    return () => cleanups.forEach(fn => fn());
-  });
+    return () => cleanups.forEach(fn => { fn(); });
+  }, [ref, onMyClick,]);
 
   return React.createElement(
     'my-button',

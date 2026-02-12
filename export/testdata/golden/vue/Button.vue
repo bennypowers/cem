@@ -22,7 +22,7 @@ const emit = defineEmits<{
   <my-button
     :variant="props.variant"
     :disabled="props.disabled ? '' : undefined"
-    :data="props.data"
+    :data.prop="props.data"
     @my-click="emit('my-click', $event as CustomEvent<{ value: string }>)">
     <slot />
     <slot name="icon" />

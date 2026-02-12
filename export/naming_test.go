@@ -30,9 +30,11 @@ func TestToPascalCase(t *testing.T) {
 		{"hello", "Hello"},
 	}
 	for _, tt := range tests {
-		if got := ToPascalCase(tt.input); got != tt.want {
-			t.Errorf("ToPascalCase(%q) = %q, want %q", tt.input, got, tt.want)
-		}
+		t.Run(tt.input, func(t *testing.T) {
+			if got := ToPascalCase(tt.input); got != tt.want {
+				t.Errorf("ToPascalCase(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
 	}
 }
 
@@ -47,9 +49,11 @@ func TestToCamelCase(t *testing.T) {
 		{"hello", "hello"},
 	}
 	for _, tt := range tests {
-		if got := ToCamelCase(tt.input); got != tt.want {
-			t.Errorf("ToCamelCase(%q) = %q, want %q", tt.input, got, tt.want)
-		}
+		t.Run(tt.input, func(t *testing.T) {
+			if got := ToCamelCase(tt.input); got != tt.want {
+				t.Errorf("ToCamelCase(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
 	}
 }
 
@@ -65,9 +69,11 @@ func TestToKebabCase(t *testing.T) {
 		{"ABCDef", "a-b-c-def"},
 	}
 	for _, tt := range tests {
-		if got := ToKebabCase(tt.input); got != tt.want {
-			t.Errorf("ToKebabCase(%q) = %q, want %q", tt.input, got, tt.want)
-		}
+		t.Run(tt.input, func(t *testing.T) {
+			if got := ToKebabCase(tt.input); got != tt.want {
+				t.Errorf("ToKebabCase(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
 	}
 }
 
@@ -81,9 +87,11 @@ func TestTagNameToComponentName(t *testing.T) {
 		{"demo-button", "other-", "DemoButton"},
 	}
 	for _, tt := range tests {
-		if got := TagNameToComponentName(tt.tagName, tt.prefix); got != tt.want {
-			t.Errorf("TagNameToComponentName(%q, %q) = %q, want %q", tt.tagName, tt.prefix, got, tt.want)
-		}
+		t.Run(tt.tagName+"/"+tt.prefix, func(t *testing.T) {
+			if got := TagNameToComponentName(tt.tagName, tt.prefix); got != tt.want {
+				t.Errorf("TagNameToComponentName(%q, %q) = %q, want %q", tt.tagName, tt.prefix, got, tt.want)
+			}
+		})
 	}
 }
 
@@ -96,9 +104,11 @@ func TestToReactEventName(t *testing.T) {
 		{"color-changed", "onColorChanged"},
 	}
 	for _, tt := range tests {
-		if got := ToReactEventName(tt.input); got != tt.want {
-			t.Errorf("ToReactEventName(%q) = %q, want %q", tt.input, got, tt.want)
-		}
+		t.Run(tt.input, func(t *testing.T) {
+			if got := ToReactEventName(tt.input); got != tt.want {
+				t.Errorf("ToReactEventName(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
 	}
 }
 
@@ -111,9 +121,11 @@ func TestToAngularEventName(t *testing.T) {
 		{"color-changed", "colorChanged"},
 	}
 	for _, tt := range tests {
-		if got := ToAngularEventName(tt.input); got != tt.want {
-			t.Errorf("ToAngularEventName(%q) = %q, want %q", tt.input, got, tt.want)
-		}
+		t.Run(tt.input, func(t *testing.T) {
+			if got := ToAngularEventName(tt.input); got != tt.want {
+				t.Errorf("ToAngularEventName(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
 	}
 }
 
@@ -125,8 +137,10 @@ func TestToVueEventName(t *testing.T) {
 		{"click", "click"},
 	}
 	for _, tt := range tests {
-		if got := ToVueEventName(tt.input); got != tt.want {
-			t.Errorf("ToVueEventName(%q) = %q, want %q", tt.input, got, tt.want)
-		}
+		t.Run(tt.input, func(t *testing.T) {
+			if got := ToVueEventName(tt.input); got != tt.want {
+				t.Errorf("ToVueEventName(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
 	}
 }

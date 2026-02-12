@@ -55,7 +55,7 @@ export const {{ .ComponentName }} = forwardRef(function {{ .ComponentName }}(
 {{- range .Properties }}
     if ({{ .Name }} !== undefined) (el as any).{{ .Name }} = {{ .Name }};
 {{- end }}
-  });
+  }, [ref,{{ range .Attributes }}{{ if .FieldName }} {{ .FieldName }},{{ end }}{{ end }}{{ range .Properties }} {{ .Name }},{{ end }}]);
 
   // Bind event listeners
   useEffect(() => {
@@ -71,8 +71,8 @@ export const {{ .ComponentName }} = forwardRef(function {{ .ComponentName }}(
     }
 {{- end }}
 {{- end }}
-    return () => cleanups.forEach(fn => fn());
-  });
+    return () => cleanups.forEach(fn => { fn(); });
+  }, [ref,{{ range .Events }}{{ if not .IsNative }} {{ .ReactName }},{{ end }}{{ end }}]);
 
   return React.createElement(
     '{{ .TagName }}',

@@ -33,9 +33,11 @@ func TestMapCEMType(t *testing.T) {
 		{"Array<string>", "Array<string>"},
 	}
 	for _, tt := range tests {
-		if got := MapCEMType(tt.input); got != tt.want {
-			t.Errorf("MapCEMType(%q) = %q, want %q", tt.input, got, tt.want)
-		}
+		t.Run(tt.input, func(t *testing.T) {
+			if got := MapCEMType(tt.input); got != tt.want {
+				t.Errorf("MapCEMType(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
 	}
 }
 
@@ -51,8 +53,10 @@ func TestIsBooleanType(t *testing.T) {
 		{"  boolean  ", true},
 	}
 	for _, tt := range tests {
-		if got := IsBooleanType(tt.input); got != tt.want {
-			t.Errorf("IsBooleanType(%q) = %v, want %v", tt.input, got, tt.want)
-		}
+		t.Run(tt.input, func(t *testing.T) {
+			if got := IsBooleanType(tt.input); got != tt.want {
+				t.Errorf("IsBooleanType(%q) = %v, want %v", tt.input, got, tt.want)
+			}
+		})
 	}
 }

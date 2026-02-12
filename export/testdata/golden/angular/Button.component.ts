@@ -49,11 +49,25 @@ export class ButtonComponent implements AfterViewInit, OnChanges, OnDestroy {
   ngOnChanges(changes: SimpleChanges): void {
     const el = this.elRef?.nativeElement;
     if (!el) return;
+    if (changes['variant']) {
+      if (this.variant != null) {
+        el.setAttribute('variant', String(this.variant));
+      } else {
+        el.removeAttribute('variant');
+      }
+    }
+    if (changes['disabled']) {
+      if (this.disabled) {
+        el.setAttribute('disabled', '');
+      } else {
+        el.removeAttribute('disabled');
+      }
+    }
     if (changes['data']) (el as any).data = this.data;
   }
 
   ngOnDestroy(): void {
-    this.listeners.forEach(fn => fn());
+    this.listeners.forEach(fn => { fn(); });
     this.listeners = [];
   }
 }
