@@ -63,6 +63,23 @@ generate:
     # Available functions: alias, slug, lower, upper
     urlTemplate: "https://example.com/components/{{.component | alias}}/demo/{{.demo | slug}}/"
 
+# Configuration for the `export` command.
+# Each key is a framework name (react, vue, angular).
+export:
+  react:
+    # Output directory for generated wrapper files.
+    output: "react-wrappers"
+    # Prefix to strip from tag names when generating component names.
+    stripPrefix: "my-"
+    # Override the npm package name used in import paths.
+    packageName: "@my-org/web-components"
+  vue:
+    output: "vue-wrappers"
+  angular:
+    output: "angular-wrappers"
+    # Angular NgModule name (defaults to "ComponentsModule").
+    moduleName: "MyComponentsModule"
+
 # Configuration for validation warnings.
 warnings:
   disable:
