@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, afterEach, beforeAll } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
 import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
@@ -33,6 +33,10 @@ beforeAll(() => {
     BrowserDynamicTestingModule,
     platformBrowserDynamicTesting(),
   );
+});
+
+afterEach(() => {
+  TestBed.resetTestingModule();
 });
 
 describe('Angular wrappers render custom elements', () => {

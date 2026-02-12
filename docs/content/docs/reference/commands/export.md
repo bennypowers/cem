@@ -82,7 +82,7 @@ Generates Vue single-file components (`.vue`) with typed props and `v-model` sup
 
 ### Angular
 
-Generates an Angular module with component directives that bind to custom element properties and events. Use the `moduleName` option to customize the NgModule name.
+Generates standalone Angular components that wrap custom elements, binding inputs to properties/attributes and outputs to events. An optional NgModule re-exports all components for convenience. Use the `moduleName` option to customize the NgModule name.
 
 ## See Also
 
