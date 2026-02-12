@@ -10,7 +10,7 @@
     {
       "name": "cem",
       "description": "LSP and MCP support for Custom Elements - intelligent autocomplete, validation, and AI-native component understanding",
-      "version": "0.9.6",
+      "version": "0.9.7",
       "author": {
         "name": "Benny Powers",
         "email": "web@bennypowers.com"

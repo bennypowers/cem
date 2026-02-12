@@ -2,7 +2,7 @@
   "name": "cem-language-server-vscode",
   "displayName": "Custom Elements Manifest Language Server",
   "description": "IDE features for custom elements with intelligent autocomplete and hover documentation",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "publisher": "pwrs",
   "license": "GPL-3.0-or-later",
   "type": "module",
