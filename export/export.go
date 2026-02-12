@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 
+	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/pterm/pterm"
 )
@@ -148,7 +150,14 @@ func Export(opts Options) error {
 		"angular": &AngularExporter{},
 	}
 
-	for name, cfg := range opts.Frameworks {
+	frameworkNames := make([]string, 0, len(opts.Frameworks))
+	for name := range opts.Frameworks {
+		frameworkNames = append(frameworkNames, name)
+	}
+	sort.Strings(frameworkNames)
+
+	for _, name := range frameworkNames {
+		cfg := opts.Frameworks[name]
 		exporter, ok := exporters[name]
 		if !ok {
 			return fmt.Errorf("unknown framework: %q", name)
@@ -196,6 +205,8 @@ func Export(opts Options) error {
 
 // nativeDOMEvents lists standard DOM events that React handles natively through
 // HTMLAttributes. Wrappers should not re-declare these to avoid type conflicts.
+// This list may need updates as the DOM spec evolves (e.g., pointercancel,
+// gotpointercapture, beforeinput are currently omitted).
 var nativeDOMEvents = map[string]bool{
 	"click": true, "dblclick": true, "mousedown": true, "mouseup": true,
 	"mouseover": true, "mouseout": true, "mousemove": true, "mouseenter": true,
@@ -284,6 +295,8 @@ func buildExportElement(ced *M.CustomElementDeclaration, mod *M.Module, packageN
 			cf = &f.ClassField
 		case *M.ClassField:
 			cf = f
+		default:
+			logging.Debug("skipping unknown field type in %s: %T", ced.TagName, member)
 		}
 		if cf == nil || cf.Privacy == M.Private || cf.Privacy == M.Protected {
 			continue

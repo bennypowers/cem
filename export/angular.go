@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
-	"text/template"
 )
 
 var _ FrameworkExporter = (*AngularExporter)(nil)
@@ -83,7 +82,7 @@ func (a *AngularExporter) ExportIndex(elements []ExportElement, cfg FrameworkExp
 		})
 	}
 
-	tmpl, err := template.New("angular-module.ts.tmpl").ParseFS(templateFS, "templates/angular-module.ts.tmpl")
+	tmpl, err := getAngularModuleTemplate()
 	if err != nil {
 		return nil, fmt.Errorf("parsing angular module template: %w", err)
 	}

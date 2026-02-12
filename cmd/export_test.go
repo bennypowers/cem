@@ -46,11 +46,11 @@ func runNpmCI(t *testing.T, dir string) {
 	t.Cleanup(cancel)
 	cmd := exec.CommandContext(ctx, "npm", "ci")
 	cmd.Dir = dir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		t.Fatalf("npm ci failed: %v", err)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("npm ci failed:\n%s\n%v", string(out), err)
 	}
+	t.Logf("npm ci output: %s", string(out))
 }
 
 func runNpmInstall(t *testing.T, dir string) {
@@ -60,11 +60,11 @@ func runNpmInstall(t *testing.T, dir string) {
 	t.Cleanup(cancel)
 	cmd := exec.CommandContext(ctx, "npm", "install")
 	cmd.Dir = dir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		t.Fatalf("npm install failed: %v", err)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("npm install failed:\n%s\n%v", string(out), err)
 	}
+	t.Logf("npm install output: %s", string(out))
 }
 
 func runVitest(t *testing.T, dir string) {

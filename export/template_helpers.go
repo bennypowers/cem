@@ -37,6 +37,9 @@ func baseFuncMap() template.FuncMap {
 // reactFuncMap returns template functions for the React exporter.
 func reactFuncMap() template.FuncMap {
 	fm := baseFuncMap()
+	// jsKey wraps attribute names containing special characters in quotes
+	// for use as JS object keys. Assumes keys don't contain single quotes,
+	// which is safe for custom-element attribute names.
 	fm["jsKey"] = func(s string) string {
 		if strings.ContainsAny(s, "-. ") {
 			return "'" + s + "'"
@@ -55,5 +58,8 @@ var (
 	})
 	getAngularTemplate = sync.OnceValues(func() (*template.Template, error) {
 		return template.New("angular.ts.tmpl").Funcs(baseFuncMap()).ParseFS(templateFS, "templates/angular.ts.tmpl")
+	})
+	getAngularModuleTemplate = sync.OnceValues(func() (*template.Template, error) {
+		return template.New("angular-module.ts.tmpl").ParseFS(templateFS, "templates/angular-module.ts.tmpl")
 	})
 )
