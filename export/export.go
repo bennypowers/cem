@@ -212,10 +212,10 @@ var nativeDOMEvents = map[string]bool{
 	"pointerenter": true, "pointerleave": true, "pointerover": true, "pointerout": true,
 	"copy": true, "cut": true, "paste": true,
 	"compositionstart": true, "compositionupdate": true, "compositionend": true,
-	"select": true,
+	"select":         true,
 	"animationstart": true, "animationend": true, "animationiteration": true,
 	"transitionend": true,
-	"load": true, "error": true, "abort": true,
+	"load":          true, "error": true, "abort": true,
 }
 
 // buildExportElements transforms manifest declarations into template-friendly ExportElements.

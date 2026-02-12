@@ -1,15 +1,18 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import angular from '@analogjs/vite-plugin-angular';
 import { resolve, dirname } from 'node:path';
 import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 
 export default defineConfig({
   plugins: [
-    react(),
+    angular({
+      tsconfig: 'tsconfig.json',
+      transformFilter: (_code: string, id: string) =>
+        !id.includes('/examples/kitchen-sink/'),
+    }),
     {
       name: 'lit-transform',
-      enforce: 'pre',
       transform(code, id) {
         if (id.includes('/examples/kitchen-sink/') && /\.ts$/.test(id)) {
           const result = ts.transpileModule(code, {
@@ -21,6 +24,8 @@ export default defineConfig({
             },
             fileName: id,
           });
+          // Replace CSS import attributes with inline CSSStyleSheet construction
+          // Vite can't serve CSS as native module scripts, so we inline them
           const output = result.outputText.replace(
             /import\s+(\w+)\s+from\s+["']([^"']+\.css)["']\s*with\s*\{[^}]*\}\s*;/g,
             (_match, varName, cssPath) => {
@@ -34,9 +39,4 @@ export default defineConfig({
       },
     },
   ],
-  resolve: {
-    alias: {
-      '@cem-examples/kitchen-sink': resolve(__dirname, '../../../../examples/kitchen-sink'),
-    },
-  },
 });

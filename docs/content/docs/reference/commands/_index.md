@@ -22,6 +22,10 @@ The `cem` command-line tool has several commands to help you generate and query 
   Find elements, attributes, methods, and other API features across your entire project using flexible keyword and regex pattern matching.
   {{< /card >}}
 
+  {{< card title="Export" href="export" icon="/images/sections/export.svg" >}}
+  Generate framework-specific wrapper components for React, Vue, and Angular from your custom elements manifest.
+  {{< /card >}}
+
   {{< card title="Validate" href="validate" icon="/images/sections/validate.svg" >}}
   Ensure your custom elements manifest files conform to the official schema and catch potential issues before publishing.
   {{< /card >}}
