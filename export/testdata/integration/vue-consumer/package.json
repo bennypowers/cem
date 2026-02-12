@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@cem-examples/kitchen-sink": "file:../../../../examples/kitchen-sink",
+    "lit": "^3.0.0",
     "vue": "^3.5.0"
   },
   "devDependencies": {

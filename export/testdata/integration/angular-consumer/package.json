@@ -10,6 +10,7 @@
   "dependencies": {
     "@cem-examples/kitchen-sink": "file:../../../../examples/kitchen-sink",
     "@angular/core": "^19.0.0",
+    "lit": "^3.0.0",
     "@angular/compiler": "^19.0.0",
     "@angular/platform-browser": "^19.0.0",
     "@angular/platform-browser-dynamic": "^19.0.0",
