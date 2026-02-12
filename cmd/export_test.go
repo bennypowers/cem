@@ -39,32 +39,18 @@ func assertGeneratedFiles(t *testing.T, generatedDir string) {
 	}
 }
 
-func runNpmCI(t *testing.T, dir string) {
+func runNpm(t *testing.T, dir string, args ...string) {
 	t.Helper()
-	t.Log("Running npm ci...")
+	t.Logf("Running npm %s...", args[0])
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	t.Cleanup(cancel)
-	cmd := exec.CommandContext(ctx, "npm", "ci")
+	cmd := exec.CommandContext(ctx, "npm", args...)
 	cmd.Dir = dir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		t.Fatalf("npm ci failed:\n%s\n%v", string(out), err)
+		t.Fatalf("npm %s failed:\n%s\n%v", args[0], string(out), err)
 	}
-	t.Logf("npm ci output: %s", string(out))
-}
-
-func runNpmInstall(t *testing.T, dir string) {
-	t.Helper()
-	t.Log("Running npm install...")
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	t.Cleanup(cancel)
-	cmd := exec.CommandContext(ctx, "npm", "install")
-	cmd.Dir = dir
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("npm install failed:\n%s\n%v", string(out), err)
-	}
-	t.Logf("npm install output: %s", string(out))
+	t.Logf("npm %s output: %s", args[0], string(out))
 }
 
 func runVitest(t *testing.T, dir string) {
@@ -108,7 +94,7 @@ func runExportIntegrationTest(t *testing.T, framework string) {
 		t.Logf("cem export stderr: %s", stderr)
 
 		assertGeneratedFiles(t, generatedDir)
-		runNpmCI(t, fixtureDir)
+		runNpm(t, fixtureDir, "ci")
 		runVitest(t, fixtureDir)
 	})
 
@@ -119,7 +105,7 @@ func runExportIntegrationTest(t *testing.T, framework string) {
 		os.RemoveAll(generatedDir)
 		t.Cleanup(func() { os.RemoveAll(generatedDir) })
 
-		runNpmInstall(t, fixtureDir)
+		runNpm(t, fixtureDir, "install")
 
 		t.Log("Running cem export with npm: specifier...")
 		stdout, stderr := runCemCommand(t, fixtureDir,

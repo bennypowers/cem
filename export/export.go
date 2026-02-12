@@ -237,11 +237,13 @@ func buildExportElements(pkg *M.Package, packageName string) []ExportElement {
 			switch d := decl.(type) {
 			case *M.CustomElementDeclaration:
 				if d.TagName == "" {
+					logging.Debug("skipping declaration %s: no tag name", d.Name())
 					continue
 				}
 				elements = append(elements, buildExportElement(d, mod, packageName))
 			case *M.CustomElementMixinDeclaration:
 				if d.TagName == "" {
+					logging.Debug("skipping mixin declaration %s: no tag name", d.Name())
 					continue
 				}
 				elements = append(elements, buildExportElement(&d.CustomElementDeclaration, mod, packageName))
@@ -253,8 +255,11 @@ func buildExportElements(pkg *M.Package, packageName string) []ExportElement {
 
 func buildExportElement(ced *M.CustomElementDeclaration, mod *M.Module, packageName string) ExportElement {
 	importPath := mod.Path
-	if packageName != "" {
+	switch {
+	case packageName != "" && mod.Path != "":
 		importPath = packageName + "/" + mod.Path
+	case packageName != "":
+		importPath = packageName
 	}
 
 	elem := ExportElement{

@@ -22,31 +22,20 @@ import (
 	"text/template"
 )
 
-// baseFuncMap returns template functions shared across all framework exporters.
-func baseFuncMap() template.FuncMap {
+// reactFuncMap returns template functions for the React exporter.
+// Templates also use the built-in `or` function (Go 1.23+).
+func reactFuncMap() template.FuncMap {
 	return template.FuncMap{
-		"or": func(a, b string) string {
-			if a != "" {
-				return a
+		// jsKey wraps attribute names containing special characters in quotes
+		// for use as JS object keys. Assumes keys don't contain single quotes,
+		// which is safe for custom-element attribute names.
+		"jsKey": func(s string) string {
+			if strings.ContainsAny(s, "-. ") {
+				return "'" + s + "'"
 			}
-			return b
+			return s
 		},
 	}
-}
-
-// reactFuncMap returns template functions for the React exporter.
-func reactFuncMap() template.FuncMap {
-	fm := baseFuncMap()
-	// jsKey wraps attribute names containing special characters in quotes
-	// for use as JS object keys. Assumes keys don't contain single quotes,
-	// which is safe for custom-element attribute names.
-	fm["jsKey"] = func(s string) string {
-		if strings.ContainsAny(s, "-. ") {
-			return "'" + s + "'"
-		}
-		return s
-	}
-	return fm
 }
 
 var (
@@ -54,10 +43,10 @@ var (
 		return template.New("react.ts.tmpl").Funcs(reactFuncMap()).ParseFS(templateFS, "templates/react.ts.tmpl")
 	})
 	getVueTemplate = sync.OnceValues(func() (*template.Template, error) {
-		return template.New("vue.vue.tmpl").Funcs(baseFuncMap()).ParseFS(templateFS, "templates/vue.vue.tmpl")
+		return template.New("vue.vue.tmpl").ParseFS(templateFS, "templates/vue.vue.tmpl")
 	})
 	getAngularTemplate = sync.OnceValues(func() (*template.Template, error) {
-		return template.New("angular.ts.tmpl").Funcs(baseFuncMap()).ParseFS(templateFS, "templates/angular.ts.tmpl")
+		return template.New("angular.ts.tmpl").ParseFS(templateFS, "templates/angular.ts.tmpl")
 	})
 	getAngularModuleTemplate = sync.OnceValues(func() (*template.Template, error) {
 		return template.New("angular-module.ts.tmpl").ParseFS(templateFS, "templates/angular-module.ts.tmpl")
