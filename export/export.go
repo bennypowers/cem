@@ -35,12 +35,12 @@ type FrameworkExportConfig struct {
 
 // ExportElement is a template-friendly representation of a custom element.
 type ExportElement struct {
-	TagName    string
-	ClassName  string
-	ModulePath string
-	ImportPath    string
-	Summary       string
-	Description   string
+	TagName     string
+	ClassName   string
+	ModulePath  string
+	ImportPath  string
+	Summary     string
+	Description string
 
 	Attributes    []ExportAttribute
 	Properties    []ExportProperty
