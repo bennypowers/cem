@@ -25,3 +25,9 @@ done <<< "$changed_files"
 printf '%s\n' "${files[@]}" > changed_files.txt
 # shellcheck disable=SC2086
 cem health -p "$PACKAGE_PATH" --format markdown $HEALTH_ARGS "${files[@]}" > health_report.md
+
+# If the report shows "No declarations found" but we did pass files,
+# the changed files simply don't correspond to any manifest modules.
+if grep -q 'No declarations found in manifest' health_report.md; then
+  printf '### Documentation Health\n\nNo relevant changes in this PR.\n' > health_report.md
+fi
