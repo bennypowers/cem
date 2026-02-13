@@ -23,6 +23,28 @@ on:
         description: "Additional arguments for cem health"
         type: string
         default: ""
+  workflow_dispatch:
+    inputs:
+      package-path:
+        description: "Path to the package"
+        type: string
+        default: "."
+      cem-version:
+        description: "cem version to install (semver, without v prefix). If empty, reads from package.json or uses latest."
+        type: string
+        default: ""
+      fail-below:
+        description: "Exit 1 if overall percentage is below this threshold (0-100)"
+        type: number
+        default: 0
+      generate-args:
+        description: "Additional arguments for cem generate"
+        type: string
+        default: ""
+      health-args:
+        description: "Additional arguments for cem health"
+        type: string
+        default: ""
 
 jobs:
   health:
@@ -85,7 +107,7 @@ jobs:
           # shellcheck disable=SC2086
           cem generate -p "$PKG_PATH" $GEN_ARGS
 
-      - name: Generate health report (PR)
+      - name: Generate health report for pull request
         if: github.event_name == 'pull_request'
         env:
           PACKAGE_PATH: ${{ inputs.package-path || '.' }}
@@ -109,9 +131,10 @@ jobs:
             files+=("$f")
           done <<< "$changed_files"
 
+          printf '%s\n' "${files[@]}" > changed_files.txt
           cem health -p "$PACKAGE_PATH" --format markdown "${files[@]}" > health_report.md
 
-      - name: Generate health report (dispatch)
+      - name: Generate health report for entire repo
         if: github.event_name == 'workflow_dispatch'
         env:
           PKG_PATH: ${{ inputs.package-path || '.' }}
@@ -142,8 +165,23 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: cat health_report.md >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Check fail-below threshold
-        if: ${{ (inputs.fail-below || 0) > 0 }}
+      - name: Check fail-below threshold (PR)
+        if: github.event_name == 'pull_request' && (inputs.fail-below || 0) > 0
+        env:
+          PKG_PATH: ${{ inputs.package-path || '.' }}
+          FAIL_BELOW: ${{ inputs.fail-below }}
+        run: |
+          if [ ! -f changed_files.txt ]; then
+            echo "No relevant changed files, skipping threshold check"
+            exit 0
+          fi
+          mapfile -t files < changed_files.txt
+          cem health -p "$PKG_PATH" \
+            --fail-below "$FAIL_BELOW" \
+            --format text "${files[@]}" > /dev/null
+
+      - name: Check fail-below threshold (dispatch)
+        if: github.event_name == 'workflow_dispatch' && (inputs.fail-below || 0) > 0
         env:
           PKG_PATH: ${{ inputs.package-path || '.' }}
           FAIL_BELOW: ${{ inputs.fail-below }}
