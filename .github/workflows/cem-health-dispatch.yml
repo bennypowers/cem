@@ -1,7 +1,7 @@
-name: Health Report
+name: Health Report (Dispatch)
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       package-path:
         description: "Path to the package"
@@ -28,14 +28,11 @@ jobs:
   health:
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
       contents: read
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
       - name: Setup cem
         uses: ./.github/actions/setup-cem
@@ -46,29 +43,18 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Generate health report
-        uses: ./.github/actions/pr-health-report
-        with:
-          package-path: ${{ inputs.package-path || '.' }}
-          health-args: ${{ inputs.health-args }}
+        env:
+          PKG_PATH: ${{ inputs.package-path || '.' }}
+          HEALTH_ARGS: ${{ inputs.health-args }}
+        run: |
+          # shellcheck disable=SC2086
+          cem health -p "$PKG_PATH" --format markdown $HEALTH_ARGS > health_report.md
 
       - name: Log health report
         run: cat health_report.md
 
-      - name: Find previous health comment
-        id: find-comment
-        uses: peter-evans/find-comment@v4
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: "github-actions[bot]"
-          body-includes: "### Documentation Health"
-
-      - name: Post or update health comment
-        uses: peter-evans/create-or-update-comment@v5
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body-file: health_report.md
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+      - name: Post job summary
+        run: cat health_report.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Check fail-below threshold
         if: (inputs.fail-below || 0) > 0
@@ -77,12 +63,7 @@ jobs:
           FAIL_BELOW: ${{ inputs.fail-below }}
           HEALTH_ARGS: ${{ inputs.health-args }}
         run: |
-          if [ ! -f changed_files.txt ]; then
-            echo "No relevant changed files, skipping threshold check"
-            exit 0
-          fi
-          mapfile -t files < changed_files.txt
           # shellcheck disable=SC2086
           cem health -p "$PKG_PATH" \
             --fail-below "$FAIL_BELOW" \
-            --format text $HEALTH_ARGS "${files[@]}" > /dev/null
+            --format text $HEALTH_ARGS > /dev/null

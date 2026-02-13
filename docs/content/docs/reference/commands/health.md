@@ -148,9 +148,12 @@ cem health --fail-below 80
 
 ## GitHub Actions
 
-A reusable workflow is available at `bennypowers/cem/.github/workflows/cem-health-report.yml`. On pull requests, it generates a manifest, runs `cem health`, and posts a sticky PR comment with the results filtered to only the changed modules.
+Two reusable workflows are available:
 
-### Downstream usage
+- **`cem-health-report.yml`** — for pull requests. Generates a manifest, runs `cem health` scoped to changed files, and posts a sticky PR comment.
+- **`cem-health-dispatch.yml`** — for manual runs. Generates a manifest, runs `cem health` across the whole repo, and posts a job summary.
+
+### PR workflow
 
 ```yaml
 name: Health Report
@@ -166,7 +169,24 @@ jobs:
       fail-below: 60
 ```
 
+### Dispatch workflow
+
+```yaml
+name: Health Report (Dispatch)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  health:
+    uses: bennypowers/cem/.github/workflows/cem-health-dispatch.yml@main
+    with:
+      fail-below: 60
+```
+
 ### Workflow inputs
+
+Both workflows accept the same inputs:
 
 | Input | Type | Default | Description |
 | ----- | ---- | ------- | ----------- |
@@ -176,4 +196,4 @@ jobs:
 | `generate-args` | string | | Additional arguments for `cem generate` |
 | `health-args` | string | | Additional arguments for `cem health` |
 
-The workflow downloads the `cem` binary directly from GitHub releases — no Node.js or `node_modules` required.
+Both workflows download the `cem` binary directly from GitHub releases — no Node.js or `node_modules` required.

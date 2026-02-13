@@ -1,0 +1,20 @@
+name: PR Health Report
+description: Generate a PR-scoped health report based on changed files
+
+inputs:
+  package-path:
+    description: "Path to the package"
+    default: "."
+  health-args:
+    description: "Additional arguments for cem health"
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Generate health report
+      shell: bash
+      env:
+        PACKAGE_PATH: ${{ inputs.package-path }}
+        HEALTH_ARGS: ${{ inputs.health-args }}
+      run: ${{ github.action_path }}/pr-health-report.sh

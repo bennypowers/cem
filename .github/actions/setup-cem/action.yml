@@ -1,0 +1,36 @@
+name: Setup cem
+description: Install cem binary and generate a custom elements manifest
+
+inputs:
+  package-path:
+    description: "Path to the package"
+    default: "."
+  cem-version:
+    description: "cem version to install (semver, without v prefix). If empty, reads from package.json or uses latest."
+    default: ""
+  generate-args:
+    description: "Additional arguments for cem generate"
+    default: ""
+  github-token:
+    description: "GitHub token for gh CLI"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Install cem
+      shell: bash
+      env:
+        PACKAGE_PATH: ${{ inputs.package-path }}
+        INPUT_VERSION: ${{ inputs.cem-version }}
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: ${{ github.action_path }}/install-cem.sh
+
+    - name: Generate manifest
+      shell: bash
+      env:
+        PKG_PATH: ${{ inputs.package-path }}
+        GEN_ARGS: ${{ inputs.generate-args }}
+      run: |
+        # shellcheck disable=SC2086
+        cem generate -p "$PKG_PATH" $GEN_ARGS
