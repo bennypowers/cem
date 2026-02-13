@@ -38,7 +38,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup cem
-        uses: ./.github/actions/setup-cem
+        uses: bennypowers/cem/.github/actions/setup-cem@main
         with:
           package-path: ${{ inputs.package-path || '.' }}
           cem-version: ${{ inputs.cem-version }}
@@ -46,7 +46,7 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Generate health report
-        uses: ./.github/actions/pr-health-report
+        uses: bennypowers/cem/.github/actions/pr-health-report@main
         with:
           package-path: ${{ inputs.package-path || '.' }}
           health-args: ${{ inputs.health-args }}
