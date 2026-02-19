@@ -21,7 +21,7 @@ type expectedToken struct {
 	Syntax      string `json:"syntax"`
 }
 
-func TestParseTokensWithAsimonimnRejectsDashPrefix(t *testing.T) {
+func TestParseTokensWithAsimonimRejectsDashPrefix(t *testing.T) {
 	data := testutil.LoadFixtureFile(t, filepath.Join("invalid-dash-prefix", "tokens.json"))
 	_, err := ParseTokensWithAsimonim(data, ParseOptions{Prefix: "--rh"})
 	if err == nil {

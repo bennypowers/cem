@@ -55,11 +55,8 @@ func LoadDesignTokens(ctx types.WorkspaceContext) (*DesignTokens, error) {
 	}
 
 	prefix := cfg.Generate.DesignTokens.Prefix
-	if strings.HasPrefix(prefix, "-") {
-		return nil, fmt.Errorf(
-			"design token prefix %q should not start with dashes (use %q instead)",
-			prefix,
-			strings.TrimLeft(prefix, "-"))
+	if err := validatePrefix(prefix); err != nil {
+		return nil, err
 	}
 
 	spec := cfg.Generate.DesignTokens.Spec
@@ -136,6 +133,17 @@ func MergeDesignTokensToModule(module *M.Module, designTokens types.DesignTokens
 		}
 		module.Declarations[i] = d
 	}
+}
+
+// validatePrefix returns an error if prefix starts with dashes.
+func validatePrefix(prefix string) error {
+	if strings.HasPrefix(prefix, "-") {
+		return fmt.Errorf(
+			"design token prefix %q should not start with dashes (use %q instead)",
+			prefix,
+			strings.TrimLeft(prefix, "-"))
+	}
+	return nil
 }
 
 const (

@@ -13,7 +13,6 @@ package designtokens
 
 import (
 	"fmt"
-	"strings"
 
 	asimonimParser "bennypowers.dev/asimonim/parser"
 	"bennypowers.dev/asimonim/resolver"
@@ -32,11 +31,8 @@ type ParseOptions struct {
 // ParseTokensWithAsimonim parses design tokens from raw bytes.
 // TODO: Remove when asimonim/load supports network fetching.
 func ParseTokensWithAsimonim(data []byte, opts ParseOptions) (*token.Map, error) {
-	if strings.HasPrefix(opts.Prefix, "-") {
-		return nil, fmt.Errorf(
-			"design token prefix %q should not start with dashes (use %q instead)",
-			opts.Prefix,
-			strings.TrimLeft(opts.Prefix, "-"))
+	if err := validatePrefix(opts.Prefix); err != nil {
+		return nil, err
 	}
 
 	parser := asimonimParser.NewJSONParser()
