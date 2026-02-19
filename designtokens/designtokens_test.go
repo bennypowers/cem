@@ -8,6 +8,7 @@ package designtokens
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"path/filepath"
 	"testing"
@@ -38,8 +39,8 @@ func (s *stubWorkspaceContext) ConfigFile() string                   { return ""
 func (s *stubWorkspaceContext) PackageJSON() (*M.PackageJSON, error) { return nil, nil }
 func (s *stubWorkspaceContext) Manifest() (*M.Package, error)        { return nil, nil }
 func (s *stubWorkspaceContext) CustomElementsManifestPath() string   { return "" }
-func (s *stubWorkspaceContext) ReadFile(string) (io.ReadCloser, error) {
-	return nil, nil
+func (s *stubWorkspaceContext) ReadFile(path string) (io.ReadCloser, error) {
+	return nil, fmt.Errorf("stubWorkspaceContext.ReadFile(%q): not implemented", path)
 }
 func (s *stubWorkspaceContext) Glob(string) ([]string, error)               { return nil, nil }
 func (s *stubWorkspaceContext) OutputWriter(string) (io.WriteCloser, error) { return nil, nil }
@@ -77,18 +78,15 @@ func TestValidatePrefix(t *testing.T) {
 }
 
 func TestLoadDesignTokens(t *testing.T) {
-	testCases := []struct {
-		name       string
-		fixtureDir string
-	}{
-		{"draft-basic", "draft-basic"},
-		{"draft-aliases", "draft-aliases"},
-		{"v2025-structured-colors", "v2025-structured-colors"},
+	fixtureDirs := []string{
+		"draft-basic",
+		"draft-aliases",
+		"v2025-structured-colors",
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			fixtureRoot, err := filepath.Abs(filepath.Join("testdata", tc.fixtureDir))
+	for _, dir := range fixtureDirs {
+		t.Run(dir, func(t *testing.T) {
+			fixtureRoot, err := filepath.Abs(filepath.Join("testdata", dir))
 			if err != nil {
 				t.Fatalf("failed to resolve fixture path: %v", err)
 			}
@@ -131,7 +129,7 @@ func TestLoadDesignTokens(t *testing.T) {
 			}
 
 			testutil.CheckGolden(t, "expected", append(actualJSON, '\n'), testutil.GoldenOptions{
-				Dir:         filepath.Join("testdata", tc.fixtureDir),
+				Dir:         filepath.Join("testdata", dir),
 				Extension:   ".json",
 				UseJSONDiff: true,
 			})
