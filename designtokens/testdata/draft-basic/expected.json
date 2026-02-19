@@ -2,16 +2,16 @@
   "--test-color-primary": {
     "value": "#ff0000",
     "description": "Primary brand color",
-    "syntax": "<color>"
+    "syntax": "\u003ccolor\u003e"
   },
   "--test-color-secondary": {
     "value": "#00ff00",
     "description": "",
-    "syntax": "<color>"
+    "syntax": "\u003ccolor\u003e"
   },
   "--test-spacing-small": {
     "value": "4px",
     "description": "",
-    "syntax": "<length>"
+    "syntax": "\u003clength\u003e"
   }
 }

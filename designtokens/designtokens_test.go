@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"io"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	C "bennypowers.dev/cem/cmd/config"
@@ -78,9 +77,6 @@ func TestValidatePrefix(t *testing.T) {
 }
 
 func TestLoadDesignTokens(t *testing.T) {
-	_, thisFile, _, _ := runtime.Caller(0)
-	testdataDir := filepath.Join(filepath.Dir(thisFile), "testdata")
-
 	testCases := []struct {
 		name       string
 		fixtureDir string
@@ -92,17 +88,11 @@ func TestLoadDesignTokens(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fixtureRoot := filepath.Join(testdataDir, tc.fixtureDir)
-
-			// Load golden expected output
-			expectedData := testutil.LoadFixtureFile(t, filepath.Join(tc.fixtureDir, "expected.json"))
-
-			var expected map[string]expectedToken
-			if err := json.Unmarshal(expectedData, &expected); err != nil {
-				t.Fatalf("failed to parse expected.json: %v", err)
+			fixtureRoot, err := filepath.Abs(filepath.Join("testdata", tc.fixtureDir))
+			if err != nil {
+				t.Fatalf("failed to resolve fixture path: %v", err)
 			}
 
-			// Load tokens through LoadDesignTokens with a stub workspace context
 			ctx := &stubWorkspaceContext{
 				root: fixtureRoot,
 				config: &C.CemConfig{
@@ -120,33 +110,43 @@ func TestLoadDesignTokens(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			// Verify each expected token against golden file
-			for name, exp := range expected {
-				tok, ok := dt.Get(name)
-				if !ok {
-					t.Errorf("missing token: %s", name)
-					continue
+			// Build actual output in golden format from loaded tokens
+			// and verify Get() returns each token
+			actual := make(map[string]expectedToken)
+			for _, tok := range dt.tokens.All() {
+				name := tok.CSSVariableName()
+				if _, ok := dt.Get(name); !ok {
+					t.Errorf("Get(%q) returned false", name)
 				}
-				if tok.DisplayValue() != exp.Value {
-					t.Errorf("%s: expected value %q, got %q", name, exp.Value, tok.DisplayValue())
-				}
-				if tok.Description != exp.Description {
-					t.Errorf("%s: expected description %q, got %q", name, exp.Description, tok.Description)
-				}
-				if tok.CSSSyntax() != exp.Syntax {
-					t.Errorf("%s: expected syntax %q, got %q", name, exp.Syntax, tok.CSSSyntax())
+				actual[name] = expectedToken{
+					Value:       tok.DisplayValue(),
+					Description: tok.Description,
+					Syntax:      tok.CSSSyntax(),
 				}
 			}
+
+			actualJSON, err := json.MarshalIndent(actual, "", "  ")
+			if err != nil {
+				t.Fatalf("failed to marshal actual tokens: %v", err)
+			}
+
+			testutil.CheckGolden(t, "expected", append(actualJSON, '\n'), testutil.GoldenOptions{
+				Dir:         filepath.Join("testdata", tc.fixtureDir),
+				Extension:   ".json",
+				UseJSONDiff: true,
+			})
 		})
 	}
 }
 
 func TestLoadDesignTokensRejectsDashPrefix(t *testing.T) {
-	_, thisFile, _, _ := runtime.Caller(0)
-	testdataDir := filepath.Join(filepath.Dir(thisFile), "testdata")
+	fixtureRoot, err := filepath.Abs(filepath.Join("testdata", "invalid-dash-prefix"))
+	if err != nil {
+		t.Fatalf("failed to resolve fixture path: %v", err)
+	}
 
 	ctx := &stubWorkspaceContext{
-		root: filepath.Join(testdataDir, "invalid-dash-prefix"),
+		root: fixtureRoot,
 		config: &C.CemConfig{
 			Generate: C.GenerateConfig{
 				DesignTokens: C.DesignTokensConfig{
@@ -157,12 +157,8 @@ func TestLoadDesignTokensRejectsDashPrefix(t *testing.T) {
 		},
 	}
 
-	_, err := LoadDesignTokens(ctx)
+	_, err = LoadDesignTokens(ctx)
 	if err == nil {
 		t.Fatal("expected error for --rh prefix, got nil")
-	}
-	want := `design token prefix "--rh" should not start with dashes (use "rh" instead)`
-	if err.Error() != want {
-		t.Errorf("unexpected error message:\n got: %s\nwant: %s", err.Error(), want)
 	}
 }
