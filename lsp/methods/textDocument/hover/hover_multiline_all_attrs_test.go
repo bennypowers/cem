@@ -96,10 +96,6 @@ func TestHover_MultilineAllAttributes(t *testing.T) {
 					t.Fatalf("Hover failed: %v", err)
 				}
 
-				if result == nil {
-					t.Fatal("Expected hover result, got nil")
-				}
-
 				// Structured comparison
 				actualContents, ok := result.Contents.(protocol.MarkupContent)
 				if !ok {

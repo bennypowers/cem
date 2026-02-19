@@ -189,16 +189,10 @@ func TestMCPContext_SnapshotConsistency(t *testing.T) {
 			t.Fatalf("Failed to take snapshot: %v", err)
 		}
 
-		if snapshot == nil {
-			t.Fatal("Snapshot is nil")
-		}
-
+		// Verify snapshot contains expected elements
 		if snapshot.elements == nil {
 			t.Fatal("Snapshot elements map is nil")
-		}
-
-		// Verify snapshot contains expected elements
-		if len(snapshot.elements) == 0 {
+		} else if len(snapshot.elements) == 0 {
 			t.Error("Snapshot contains no elements")
 		}
 

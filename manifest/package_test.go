@@ -422,11 +422,6 @@ func TestCloneBackreferences(t *testing.T) {
 	// Clone the package
 	cloned := pkg.Clone()
 
-	// Verify the cloned package is not nil
-	if cloned == nil {
-		t.Fatal("Cloned package should not be nil")
-	}
-
 	// Verify we have modules
 	if len(cloned.Modules) != 1 {
 		t.Fatalf("Expected 1 module, got %d", len(cloned.Modules))

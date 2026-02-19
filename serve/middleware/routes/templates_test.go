@@ -57,8 +57,7 @@ func TestDeclarationAsKind(t *testing.T) {
 		result := declarationAsKind[*M.CustomElementDeclaration](ce)
 		if result == nil {
 			t.Fatal("Expected non-nil result for matching type")
-		}
-		if result.TagName != "my-element" {
+		} else if result.TagName != "my-element" {
 			t.Errorf("Expected TagName='my-element', got %q", result.TagName)
 		}
 	})
@@ -71,8 +70,7 @@ func TestDeclarationAsKind(t *testing.T) {
 		result := declarationAsKind[*M.FunctionDeclaration](fn)
 		if result == nil {
 			t.Fatal("Expected non-nil result for matching type")
-		}
-		if result.Name() != "myFunction" {
+		} else if result.Name() != "myFunction" {
 			t.Errorf("Expected Name='myFunction', got %q", result.Name())
 		}
 	})
@@ -87,8 +85,7 @@ func TestDeclarationAsKind(t *testing.T) {
 		result := declarationAsKind[*M.VariableDeclaration](v)
 		if result == nil {
 			t.Fatal("Expected non-nil result for matching type")
-		}
-		if result.Name() != "myVar" {
+		} else if result.Name() != "myVar" {
 			t.Errorf("Expected Name='myVar', got %q", result.Name())
 		}
 	})
@@ -101,8 +98,7 @@ func TestDeclarationAsKind(t *testing.T) {
 		result := declarationAsKind[*M.MixinDeclaration](mixin)
 		if result == nil {
 			t.Fatal("Expected non-nil result for matching type")
-		}
-		if result.Name() != "MyMixin" {
+		} else if result.Name() != "MyMixin" {
 			t.Errorf("Expected Name='MyMixin', got %q", result.Name())
 		}
 	})

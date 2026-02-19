@@ -115,8 +115,7 @@ func testSynthesis(t *testing.T, fixture *testutil.LSPFixture) {
 	decl := server.FindCustomElementDeclaration("test-greeting")
 	if decl == nil {
 		t.Fatal("Expected FindCustomElementDeclaration to return non-nil")
-	}
-	if decl.Summary == "" && decl.Description == "" {
+	} else if decl.Summary == "" && decl.Description == "" {
 		t.Error("Expected declaration to have summary or description from JSDoc")
 	}
 
@@ -180,8 +179,7 @@ func testSkipWhenInMain(t *testing.T, fixture *testutil.LSPFixture) {
 	decl := server.FindCustomElementDeclaration("test-button")
 	if decl == nil {
 		t.Fatal("Expected to find declaration")
-	}
-	if decl.Summary != "From main registry" {
+	} else if decl.Summary != "From main registry" {
 		t.Errorf("Expected main registry data ('From main registry'), got %q — ephemeral data overwrote main registry", decl.Summary)
 	}
 }

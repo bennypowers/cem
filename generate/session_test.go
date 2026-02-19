@@ -319,16 +319,14 @@ func TestInMemoryManifest_Performance(t *testing.T) {
 	copy := gs.InMemoryManifest()
 	if copy == nil {
 		t.Fatal("InMemoryManifest should return a copy of the manifest")
-	}
-
-	// Verify it's a different instance (thread-safe at the package level)
-	if copy == original {
-		t.Error("InMemoryManifest should return a different instance")
-	}
-
-	// Verify content is preserved
-	if copy.SchemaVersion != original.SchemaVersion {
-		t.Errorf("Content mismatch after copy: got %s, want %s", copy.SchemaVersion, original.SchemaVersion)
+	} else {
+		if copy == original {
+			t.Error("InMemoryManifest should return a different instance")
+		}
+		// Verify content is preserved
+		if copy.SchemaVersion != original.SchemaVersion {
+			t.Errorf("Content mismatch after copy: got %s, want %s", copy.SchemaVersion, original.SchemaVersion)
+		}
 	}
 }
 
@@ -360,23 +358,20 @@ func TestInMemoryManifestDeep_ThreadSafety(t *testing.T) {
 	copy := gs.InMemoryManifestDeep()
 	if copy == nil {
 		t.Fatal("InMemoryManifestDeep should return a copy of the manifest")
-	}
-
-	// Verify it's a different instance (thread-safe)
-	if copy == original {
-		t.Error("InMemoryManifestDeep should return a different instance for thread safety")
-	}
-
-	// Verify content is preserved
-	if copy.SchemaVersion != original.SchemaVersion {
-		t.Errorf("Content mismatch after deep copy: got %s, want %s", copy.SchemaVersion, original.SchemaVersion)
-	}
-
-	// Test that modifying the deep copy doesn't affect the original
-	if len(copy.Modules) > 0 {
-		copy.Modules[0].Summary = "Modified summary"
-		if original.Modules[0].Summary == "Modified summary" {
-			t.Error("Modifying deep copy should not affect original (not properly deep copied)")
+	} else {
+		if copy == original {
+			t.Error("InMemoryManifestDeep should return a different instance for thread safety")
+		}
+		// Verify content is preserved
+		if copy.SchemaVersion != original.SchemaVersion {
+			t.Errorf("Content mismatch after deep copy: got %s, want %s", copy.SchemaVersion, original.SchemaVersion)
+		}
+		// Test that modifying the deep copy doesn't affect the original
+		if len(copy.Modules) > 0 {
+			copy.Modules[0].Summary = "Modified summary"
+			if original.Modules[0].Summary == "Modified summary" {
+				t.Error("Modifying deep copy should not affect original (not properly deep copied)")
+			}
 		}
 	}
 }
@@ -404,9 +399,7 @@ func TestModuleIndex_Performance(t *testing.T) {
 	module := gs.ModuleByPath("test/module2.js")
 	if module == nil {
 		t.Fatal("ModuleByPath should find existing module")
-	}
-
-	if module.Path != "test/module2.js" {
+	} else if module.Path != "test/module2.js" {
 		t.Errorf("Wrong module returned: got %s, want test/module2.js", module.Path)
 	}
 

@@ -129,8 +129,7 @@ func TestIncrementalParser_ParseStrategies(t *testing.T) {
 			parser := NewIncrementalParser(tt.strategy)
 			if parser == nil {
 				t.Fatal("Failed to create incremental parser")
-			}
-			if parser.strategy != tt.strategy {
+			} else if parser.strategy != tt.strategy {
 				t.Errorf("Expected strategy %v, got %v", tt.strategy, parser.strategy)
 			}
 		})
