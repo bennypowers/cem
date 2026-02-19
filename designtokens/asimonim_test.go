@@ -21,6 +21,18 @@ type expectedToken struct {
 	Syntax      string `json:"syntax"`
 }
 
+func TestParseTokensWithAsimonimRejectsDashPrefix(t *testing.T) {
+	data := testutil.LoadFixtureFile(t, filepath.Join("invalid-dash-prefix", "tokens.json"))
+	_, err := ParseTokensWithAsimonim(data, ParseOptions{Prefix: "--rh"})
+	if err == nil {
+		t.Fatal("expected error for --rh prefix, got nil")
+	}
+	want := `design token prefix "--rh" should not start with dashes (use "rh" instead)`
+	if err.Error() != want {
+		t.Errorf("unexpected error message:\n got: %s\nwant: %s", err.Error(), want)
+	}
+}
+
 func TestParseTokensWithAsimonim(t *testing.T) {
 	testCases := []struct {
 		name       string

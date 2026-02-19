@@ -31,6 +31,10 @@ type ParseOptions struct {
 // ParseTokensWithAsimonim parses design tokens from raw bytes.
 // TODO: Remove when asimonim/load supports network fetching.
 func ParseTokensWithAsimonim(data []byte, opts ParseOptions) (*token.Map, error) {
+	if err := validatePrefix(opts.Prefix); err != nil {
+		return nil, err
+	}
+
 	parser := asimonimParser.NewJSONParser()
 
 	// Detect schema version from content if not specified

@@ -11,7 +11,7 @@ generate:
     urlTemplate: https://bennypowers.dev/cem/examples/kitchen-sink/{{.tag}}/{{.demo}}/
   designTokens:
     spec: design-tokens.json
-    prefix: --demo
+    prefix: demo
 serve:
   importMap:
     generate: true

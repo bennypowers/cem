@@ -54,10 +54,15 @@ func LoadDesignTokens(ctx types.WorkspaceContext) (*DesignTokens, error) {
 		return nil, err
 	}
 
+	prefix := cfg.Generate.DesignTokens.Prefix
+	if err := validatePrefix(prefix); err != nil {
+		return nil, err
+	}
+
 	spec := cfg.Generate.DesignTokens.Spec
 	opts := load.Options{
 		Root:   ctx.Root(),
-		Prefix: cfg.Generate.DesignTokens.Prefix,
+		Prefix: prefix,
 	}
 
 	// Try loading via asimonim (handles local files and node_modules)
@@ -128,6 +133,17 @@ func MergeDesignTokensToModule(module *M.Module, designTokens types.DesignTokens
 		}
 		module.Declarations[i] = d
 	}
+}
+
+// validatePrefix returns an error if prefix starts with dashes.
+func validatePrefix(prefix string) error {
+	if strings.HasPrefix(prefix, "-") {
+		return fmt.Errorf(
+			"design token prefix %q should not start with dashes (use %q instead)",
+			prefix,
+			strings.TrimLeft(prefix, "-"))
+	}
+	return nil
 }
 
 const (
