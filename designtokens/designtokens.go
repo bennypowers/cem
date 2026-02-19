@@ -60,8 +60,10 @@ func LoadDesignTokens(ctx types.WorkspaceContext) (*DesignTokens, error) {
 		Prefix: prefix,
 	}
 
-	if specifier.Parse(spec).IsNPM() {
+	parsed := specifier.Parse(spec)
+	if parsed.IsNPM() || parsed.IsJSR() {
 		opts.Fetcher = load.NewHTTPFetcher(load.DefaultMaxSize)
+		opts.CDN = specifier.CDNEsmSh
 	}
 
 	tokens, err := load.Load(context.Background(), spec, opts)

@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	atomicgo.dev/keyboard v0.2.9
-	bennypowers.dev/asimonim v0.1.0
+	bennypowers.dev/asimonim v0.1.1
 	bennypowers.dev/mappa v0.0.2
 	github.com/IBM/fp-go v1.0.153
 	github.com/adrg/xdg v0.5.3
@@ -74,6 +74,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-pointer v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/mazznoer/csscolorparser v0.1.8 // indirect
 	github.com/mfridman/tparse v0.17.0 // indirect
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/nlnwa/whatwg-url v0.5.0 // indirect

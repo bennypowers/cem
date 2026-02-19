@@ -46,9 +46,9 @@ generate:
 
   # Configuration for integrating Design Tokens.
   designTokens:
-    # An npm specifier or local path to a DTCG-formatted JSON module.
-    # npm: specifiers resolve from node_modules first,
-    # falling back to unpkg.com if not installed locally.
+    # An npm or jsr specifier, or local path to a DTCG-formatted JSON module.
+    # npm: and jsr: specifiers resolve from node_modules first,
+    # falling back to esm.sh if not installed locally.
     spec: "npm:@my-ds/tokens/tokens.json"
     # A CSS custom property prefix to apply to the design tokens.
     # Do not include leading dashes (use "my-ds", not "--my-ds").

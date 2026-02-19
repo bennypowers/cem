@@ -138,34 +138,46 @@ func TestLoadDesignTokens(t *testing.T) {
 	}
 }
 
-func TestLoadDesignTokensNPMFetcherWiring(t *testing.T) {
+func TestLoadDesignTokensFetcherWiring(t *testing.T) {
 	fixtureRoot, err := filepath.Abs(filepath.Join("testdata", "draft-basic"))
 	if err != nil {
 		t.Fatalf("failed to resolve fixture path: %v", err)
 	}
 
-	ctx := &stubWorkspaceContext{
-		root: fixtureRoot,
-		config: &C.CemConfig{
-			Generate: C.GenerateConfig{
-				DesignTokens: C.DesignTokensConfig{
-					Spec:   "npm:@nonexistent-cem-test-pkg/tokens/tokens.json",
-					Prefix: "test",
+	tests := []struct {
+		name string
+		spec string
+	}{
+		{"npm", "npm:@nonexistent-cem-test-pkg/tokens/tokens.json"},
+		{"jsr", "jsr:@nonexistent-cem-test-pkg/tokens/tokens.json"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := &stubWorkspaceContext{
+				root: fixtureRoot,
+				config: &C.CemConfig{
+					Generate: C.GenerateConfig{
+						DesignTokens: C.DesignTokensConfig{
+							Spec:   tt.spec,
+							Prefix: "test",
+						},
+					},
 				},
-			},
-		},
-	}
+			}
 
-	_, err = LoadDesignTokens(ctx)
-	if err == nil {
-		t.Fatal("expected error for nonexistent npm package, got nil")
-	}
+			_, err := LoadDesignTokens(ctx)
+			if err == nil {
+				t.Fatalf("expected error for nonexistent %s package, got nil", tt.name)
+			}
 
-	// The error should mention unpkg.com, indicating the fetcher was wired up
-	// and attempted a CDN fallback after local resolution failed.
-	errMsg := err.Error()
-	if !strings.Contains(errMsg, "unpkg.com") {
-		t.Errorf("expected error to mention unpkg.com (CDN fallback), got: %s", errMsg)
+			// The error should mention esm.sh, indicating the fetcher was wired up
+			// and attempted a CDN fallback after local resolution failed.
+			errMsg := err.Error()
+			if !strings.Contains(errMsg, "esm.sh") {
+				t.Errorf("expected error to mention esm.sh (CDN fallback), got: %s", errMsg)
+			}
+		})
 	}
 }
 

@@ -168,8 +168,8 @@ Use the `--design-tokens` flag to integrate [DTCG-format][dtcg] design tokens:
 cem generate --design-tokens npm:@my-ds/tokens/tokens.json --design-tokens-prefix my-ds
 ```
 
-`npm:` specifiers resolve from `node_modules` first. If the package
-isn't installed locally, cem fetches it from [unpkg.com](https://unpkg.com)
+`npm:` and `jsr:` specifiers resolve from `node_modules` first. If the package
+isn't installed locally, cem fetches it from [esm.sh](https://esm.sh)
 automatically.
 
 The prefix should not include leading dashes — use `my-ds`, not `--my-ds`.
