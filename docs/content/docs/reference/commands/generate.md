@@ -37,7 +37,7 @@ Best supports LitElements written in idiomatic style with TypeScript decorators.
 | `--watch, -w`                   | bool               | Watch files for changes and regenerate automatically                                              |
 | `--exclude, -e`                 | array              | Files or glob patterns to exclude                                                                 |
 | `--no-default-excludes`         | bool               | Do not exclude `.d.ts` files by default                                                           |
-| `--design-tokens`               | string             | Path or npm specifier for DTCG-format design tokens                                               |
+| `--design-tokens`               | string             | Path or npm specifier for DTCG-format design tokens. npm: specifiers fall back to unpkg.com if not installed locally |
 | `--design-tokens-prefix`        | string             | CSS custom property prefix for design tokens                                                      |
 | `--demo-discovery-file-glob`    | string             | Glob pattern for discovering demo files                                                           |
 | `--demo-discovery-url-pattern`  | string             | URLPattern with named parameters (`:param`) for matching demo file paths                          |
