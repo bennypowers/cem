@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	C "bennypowers.dev/cem/cmd/config"
@@ -134,6 +135,37 @@ func TestLoadDesignTokens(t *testing.T) {
 				UseJSONDiff: true,
 			})
 		})
+	}
+}
+
+func TestLoadDesignTokensNPMFetcherWiring(t *testing.T) {
+	fixtureRoot, err := filepath.Abs(filepath.Join("testdata", "draft-basic"))
+	if err != nil {
+		t.Fatalf("failed to resolve fixture path: %v", err)
+	}
+
+	ctx := &stubWorkspaceContext{
+		root: fixtureRoot,
+		config: &C.CemConfig{
+			Generate: C.GenerateConfig{
+				DesignTokens: C.DesignTokensConfig{
+					Spec:   "npm:@nonexistent-cem-test-pkg/tokens/tokens.json",
+					Prefix: "test",
+				},
+			},
+		},
+	}
+
+	_, err = LoadDesignTokens(ctx)
+	if err == nil {
+		t.Fatal("expected error for nonexistent npm package, got nil")
+	}
+
+	// The error should mention unpkg.com, indicating the fetcher was wired up
+	// and attempted a CDN fallback after local resolution failed.
+	errMsg := err.Error()
+	if !strings.Contains(errMsg, "unpkg.com") {
+		t.Errorf("expected error to mention unpkg.com (CDN fallback), got: %s", errMsg)
 	}
 }
 

@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"bennypowers.dev/asimonim/load"
+	"bennypowers.dev/asimonim/specifier"
 	"bennypowers.dev/asimonim/token"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
@@ -57,6 +58,10 @@ func LoadDesignTokens(ctx types.WorkspaceContext) (*DesignTokens, error) {
 	opts := load.Options{
 		Root:   ctx.Root(),
 		Prefix: prefix,
+	}
+
+	if specifier.Parse(spec).IsNPM() {
+		opts.Fetcher = load.NewHTTPFetcher(load.DefaultMaxSize)
 	}
 
 	tokens, err := load.Load(context.Background(), spec, opts)
