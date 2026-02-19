@@ -54,10 +54,18 @@ func LoadDesignTokens(ctx types.WorkspaceContext) (*DesignTokens, error) {
 		return nil, err
 	}
 
+	prefix := cfg.Generate.DesignTokens.Prefix
+	if strings.HasPrefix(prefix, "-") {
+		return nil, fmt.Errorf(
+			"design token prefix %q should not start with dashes (use %q instead)",
+			prefix,
+			strings.TrimLeft(prefix, "-"))
+	}
+
 	spec := cfg.Generate.DesignTokens.Spec
 	opts := load.Options{
 		Root:   ctx.Root(),
-		Prefix: cfg.Generate.DesignTokens.Prefix,
+		Prefix: prefix,
 	}
 
 	// Try loading via asimonim (handles local files and node_modules)
