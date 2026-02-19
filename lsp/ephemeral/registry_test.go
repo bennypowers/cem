@@ -64,8 +64,7 @@ func TestUpdate(t *testing.T) {
 	decl := r.FindCustomElementDeclaration("test-el")
 	if decl == nil {
 		t.Fatal("expected to find test-el declaration after Update")
-	}
-	if decl.TagName != "test-el" {
+	} else if decl.TagName != "test-el" {
 		t.Errorf("expected tag name 'test-el', got %q", decl.TagName)
 	}
 	if decl.Summary != "A test element" {

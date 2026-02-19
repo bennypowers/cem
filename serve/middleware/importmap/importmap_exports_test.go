@@ -47,10 +47,6 @@ func TestImportMap_SinglePackageWithExportsMap(t *testing.T) {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}
 
-	if importMap == nil {
-		t.Fatal("Expected import map, got nil")
-	}
-
 	// Should have main export
 	if mainPath, ok := importMap.Imports["my-components"]; !ok {
 		t.Error("Expected 'my-components' in import map")
@@ -121,10 +117,6 @@ func TestImportMap_WorkspacePackageWithExportsMap(t *testing.T) {
 	importMap, err := Generate(tmpDir, nil)
 	if err != nil {
 		t.Fatalf("GenerateImportMap failed: %v", err)
-	}
-
-	if importMap == nil {
-		t.Fatal("Expected import map, got nil")
 	}
 
 	// Should have main export
@@ -206,10 +198,6 @@ func TestImportMap_NodeModuleDependencyWithExportsMap(t *testing.T) {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}
 
-	if importMap == nil {
-		t.Fatal("Expected import map, got nil")
-	}
-
 	// Should have main export
 	if mainPath, ok := importMap.Imports["some-lib"]; !ok {
 		t.Error("Expected 'some-lib' in import map")
@@ -288,10 +276,6 @@ func TestImportMap_ConditionalExportsWithImportCondition(t *testing.T) {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}
 
-	if importMap == nil {
-		t.Fatal("Expected import map, got nil")
-	}
-
 	// Should use "import" condition, not "require"
 	if mainPath, ok := importMap.Imports["dual-package"]; !ok {
 		t.Error("Expected 'dual-package' in import map")
@@ -345,10 +329,6 @@ func TestImportMap_WildcardExports(t *testing.T) {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}
 
-	if importMap == nil {
-		t.Fatal("Expected import map, got nil")
-	}
-
 	// Should have main export
 	if mainPath, ok := importMap.Imports["wildcard-lib"]; !ok {
 		t.Error("Expected 'wildcard-lib' in import map")
@@ -386,10 +366,6 @@ func TestImportMap_WildcardWithPrefix(t *testing.T) {
 	importMap, err := Generate(tmpDir, nil)
 	if err != nil {
 		t.Fatalf("GenerateImportMap failed: %v", err)
-	}
-
-	if importMap == nil {
-		t.Fatal("Expected import map, got nil")
 	}
 
 	// Main export
@@ -447,10 +423,6 @@ func TestImportMap_ConditionOnlyExports(t *testing.T) {
 		t.Fatalf("GenerateImportMap failed: %v", err)
 	}
 
-	if importMap == nil {
-		t.Fatal("Expected import map, got nil")
-	}
-
 	// Should map the package name to the import condition, NOT "condition-only/import"
 	if mainPath, ok := importMap.Imports["condition-only"]; !ok {
 		t.Error("Expected 'condition-only' in import map")
@@ -501,10 +473,6 @@ func TestImportMap_SubpathWildcardPatterns(t *testing.T) {
 	importMap, err := Generate(tmpDir, nil)
 	if err != nil {
 		t.Fatalf("GenerateImportMap failed: %v", err)
-	}
-
-	if importMap == nil {
-		t.Fatal("Expected import map, got nil")
 	}
 
 	// Should have main export
@@ -584,10 +552,6 @@ func TestImportMap_MultipleWorkspacesWithExports(t *testing.T) {
 	importMap, err := Generate(tmpDir, nil)
 	if err != nil {
 		t.Fatalf("GenerateImportMap failed: %v", err)
-	}
-
-	if importMap == nil {
-		t.Fatal("Expected import map, got nil")
 	}
 
 	// Check first workspace package

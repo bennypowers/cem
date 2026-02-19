@@ -121,14 +121,10 @@ func TestCreateMissingImportAction(t *testing.T) {
 				return
 			}
 
-			// Verify action was created
+			// Verify action was created and properties
 			if action == nil {
 				t.Fatal("Expected action to be created, but got nil")
-			}
-
-			// Verify action properties
-			expectedTitle := "Add import for '" + config.TagName + "'"
-			if action.Title != expectedTitle {
+			} else if expectedTitle := "Add import for '" + config.TagName + "'"; action.Title != expectedTitle {
 				t.Errorf("Expected title '%s', got '%s'", expectedTitle, action.Title)
 			}
 

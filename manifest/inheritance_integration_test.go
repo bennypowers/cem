@@ -51,8 +51,7 @@ func TestInheritance_SimpleMixin(t *testing.T) {
 
 	if disabledAttr == nil {
 		t.Fatal("disabled attribute not found in flattened attributes")
-	}
-	if disabledAttr.InheritedFrom == nil {
+	} else if disabledAttr.InheritedFrom == nil {
 		t.Error("disabled attribute should have InheritedFrom set")
 	} else if disabledAttr.InheritedFrom.Name != "DisabledMixin" {
 		t.Errorf("disabled.InheritedFrom.Name = %s, want DisabledMixin", disabledAttr.InheritedFrom.Name)
@@ -60,8 +59,7 @@ func TestInheritance_SimpleMixin(t *testing.T) {
 
 	if labelAttr == nil {
 		t.Fatal("label attribute not found in flattened attributes")
-	}
-	if labelAttr.InheritedFrom != nil {
+	} else if labelAttr.InheritedFrom != nil {
 		t.Error("label attribute should not have InheritedFrom set (class's own attribute)")
 	}
 }
@@ -94,8 +92,7 @@ func TestInheritance_Superclass(t *testing.T) {
 
 	if baseAttr == nil {
 		t.Fatal("base-prop attribute not found in flattened attributes")
-	}
-	if baseAttr.InheritedFrom == nil {
+	} else if baseAttr.InheritedFrom == nil {
 		t.Error("base-prop attribute should have InheritedFrom set")
 	} else if baseAttr.InheritedFrom.Name != "BaseElement" {
 		t.Errorf("base-prop.InheritedFrom.Name = %s, want BaseElement", baseAttr.InheritedFrom.Name)
@@ -103,8 +100,7 @@ func TestInheritance_Superclass(t *testing.T) {
 
 	if childAttr == nil {
 		t.Fatal("child-prop attribute not found in flattened attributes")
-	}
-	if childAttr.InheritedFrom != nil {
+	} else if childAttr.InheritedFrom != nil {
 		t.Error("child-prop attribute should not have InheritedFrom set (class's own attribute)")
 	}
 }

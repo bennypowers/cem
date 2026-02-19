@@ -89,10 +89,6 @@ func TestHover_NestedElements(t *testing.T) {
 					t.Fatalf("Hover failed: %v", err)
 				}
 
-				if result == nil {
-					t.Fatal("Expected hover result, got nil")
-				}
-
 				actualContents, ok := result.Contents.(protocol.MarkupContent)
 				if !ok {
 					t.Fatalf("Expected Contents to be MarkupContent, got %T", result.Contents)
