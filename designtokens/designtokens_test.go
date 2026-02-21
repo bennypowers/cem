@@ -182,13 +182,8 @@ func TestLoadDesignTokensFetcherWiring(t *testing.T) {
 }
 
 func TestLoadDesignTokensRejectsDashPrefix(t *testing.T) {
-	fixtureRoot, err := filepath.Abs(filepath.Join("testdata", "invalid-dash-prefix"))
-	if err != nil {
-		t.Fatalf("failed to resolve fixture path: %v", err)
-	}
-
 	ctx := &stubWorkspaceContext{
-		root: fixtureRoot,
+		root: t.TempDir(),
 		config: &C.CemConfig{
 			Generate: C.GenerateConfig{
 				DesignTokens: C.DesignTokensConfig{
@@ -199,7 +194,7 @@ func TestLoadDesignTokensRejectsDashPrefix(t *testing.T) {
 		},
 	}
 
-	_, err = LoadDesignTokens(ctx)
+	_, err := LoadDesignTokens(ctx)
 	if err == nil {
 		t.Fatal("expected error for --rh prefix, got nil")
 	}

@@ -6,8 +6,6 @@ atomicgo.dev/keyboard v0.2.9 h1:tOsIid3nlPLZ3lwgG8KZMp/SFmr7P0ssEN5JUsm78K8=
 atomicgo.dev/keyboard v0.2.9/go.mod h1:BC4w9g00XkxH/f1HXhW2sXmJFOCWbKn9xrOunSFtExQ=
 atomicgo.dev/schedule v0.1.0 h1:nTthAbhZS5YZmgYbb2+DH8uQIZcTlIrd4eYr3UQxEjs=
 atomicgo.dev/schedule v0.1.0/go.mod h1:xeUa3oAkiuHYh8bKiQBRojqAMq3PXXbJujjb0hw8pEU=
-bennypowers.dev/asimonim v0.1.0 h1:kqdFcikBgS3z4LZRm3izmCLFwPVUg4nitjdUH1SWsbE=
-bennypowers.dev/asimonim v0.1.0/go.mod h1:ntp9RUOmW1E5r2xo3tnMAfM8G2IGQQxq5zKPW1+pvS8=
 bennypowers.dev/asimonim v0.1.1 h1:MHBL4/iAZpWWBL0cpZkRZOOQSE4KGd/pYYA6jPI5eIM=
 bennypowers.dev/asimonim v0.1.1/go.mod h1:ntp9RUOmW1E5r2xo3tnMAfM8G2IGQQxq5zKPW1+pvS8=
 bennypowers.dev/mappa v0.0.2 h1:Q7rtEcGFxpV+8NKu+3UfBu8z3rYLikbSJdoebGcBlN8=
@@ -139,8 +137,6 @@ github.com/mattn/go-pointer v0.0.1/go.mod h1:2zXcozF6qYGgmsG+SeTZz3oAbFLdD3OWqnU
 github.com/mattn/go-runewidth v0.0.13/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
 github.com/mattn/go-runewidth v0.0.16 h1:E5ScNMtiwvlvB5paMFdw9p4kSQzbXFikJ5SQO6TULQc=
 github.com/mattn/go-runewidth v0.0.16/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
-github.com/mazznoer/csscolorparser v0.1.8 h1:i7w3wHW99d0q0KZv1ONkU/efXFAKcw1mgEgW6gj8KUA=
-github.com/mazznoer/csscolorparser v0.1.8/go.mod h1:OQRVvgCyHDCAquR1YWfSwwaDcM0LhnSffGnlbOew/3I=
 github.com/mfridman/tparse v0.17.0 h1:1q/g32f74UmDN4ZHRZ1awNLk9FJzPYE+fwz9GF94rOs=
 github.com/mfridman/tparse v0.17.0/go.mod h1:KhOXQYgIr9u0xZIyzFoPOL+7Lo7QcVNhtQ+zA/aVPB8=
 github.com/microcosm-cc/bluemonday v1.0.27 h1:MpEUotklkwCSLeH+Qdx1VJgNqLlpY2KXwXFM08ygZfk=
