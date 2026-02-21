@@ -231,7 +231,7 @@
  &lt;tr>
  &lt;td>&lt;code>--design-tokens&lt;/code>&lt;/td>
  &lt;td>string&lt;/td>
- &lt;td>Path or npm specifier for DTCG-format design tokens&lt;/td>
+ &lt;td>Path, npm, or jsr specifier for DTCG-format design tokens. Package specifiers fall back to esm.sh if not installed locally&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;code>--design-tokens-prefix&lt;/code>&lt;/td>
