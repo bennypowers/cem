@@ -2,11 +2,11 @@
   "--test-color-brand": {
     "value": "#FF6B35",
     "description": "",
-    "syntax": "<color>"
+    "syntax": "\u003ccolor\u003e"
   },
   "--test-color-primary": {
     "value": "#FF6B35",
     "description": "",
-    "syntax": "<color>"
+    "syntax": "\u003ccolor\u003e"
   }
 }

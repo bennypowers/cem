@@ -165,8 +165,14 @@ color: var(--a);
 Use the `--design-tokens` flag to integrate [DTCG-format][dtcg] design tokens:
 
 ```bash
-cem generate --design-tokens npm:@my-ds/tokens/tokens.json
+cem generate --design-tokens npm:@my-ds/tokens/tokens.json --design-tokens-prefix my-ds
 ```
+
+`npm:` and `jsr:` specifiers resolve from `node_modules` first. If the package
+isn't installed locally, cem fetches it from [esm.sh](https://esm.sh)
+automatically.
+
+The prefix should not include leading dashes — use `my-ds`, not `--my-ds`.
 
 When both user comments and design token descriptions exist for the same property, both are included (user description first, then design token description).
 

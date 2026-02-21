@@ -18,17 +18,12 @@ package designtokens
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
-	"time"
 
 	"bennypowers.dev/asimonim/load"
 	"bennypowers.dev/asimonim/specifier"
 	"bennypowers.dev/asimonim/token"
-	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
 )
@@ -60,25 +55,11 @@ func LoadDesignTokens(ctx types.WorkspaceContext) (*DesignTokens, error) {
 	}
 
 	spec := cfg.Generate.DesignTokens.Spec
-	opts := load.Options{
-		Root:   ctx.Root(),
-		Prefix: prefix,
-	}
+	opts := buildLoadOptions(spec, ctx.Root(), prefix)
 
-	// Try loading via asimonim (handles local files and node_modules)
-	tokens, err := load.Load(spec, opts)
+	tokens, err := load.Load(context.Background(), spec, opts)
 	if err != nil {
-		// Only fall back to network for resolution/not-found errors
-		// Other errors (parsing, alias resolution, etc.) should be reported directly
-		if isResolutionError(err) {
-			logging.Debug("local resolution failed for %q, attempting network fallback: %v", spec, err)
-			tokens, err = loadFromNetwork(spec, opts)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	return &DesignTokens{tokens: tokens}, nil
@@ -135,6 +116,21 @@ func MergeDesignTokensToModule(module *M.Module, designTokens types.DesignTokens
 	}
 }
 
+// buildLoadOptions constructs load.Options for the given specifier,
+// wiring up CDN fallback for package specifiers.
+func buildLoadOptions(spec, root, prefix string) load.Options {
+	opts := load.Options{
+		Root:   root,
+		Prefix: prefix,
+	}
+	parsed := specifier.Parse(spec)
+	if parsed.IsNPM() || parsed.IsJSR() {
+		opts.Fetcher = load.NewHTTPFetcher(load.DefaultMaxSize)
+		opts.CDN = specifier.CDNEsmSh
+	}
+	return opts
+}
+
 // validatePrefix returns an error if prefix starts with dashes.
 func validatePrefix(prefix string) error {
 	if strings.HasPrefix(prefix, "-") {
@@ -144,75 +140,4 @@ func validatePrefix(prefix string) error {
 			strings.TrimLeft(prefix, "-"))
 	}
 	return nil
-}
-
-const (
-	// networkTimeout is the maximum time to wait for a network fetch
-	networkTimeout = 30 * time.Second
-	// maxResponseSize is the maximum allowed response size (10 MB)
-	maxResponseSize = 10 * 1024 * 1024
-)
-
-// isResolutionError returns true if the error indicates a resolution or not-found issue
-// that can be recovered by falling back to network fetch.
-func isResolutionError(err error) bool {
-	if err == nil {
-		return false
-	}
-	errStr := err.Error()
-	// Check for resolution errors from asimonim (wraps with "failed to resolve specifier")
-	// or file not found errors (from filesystem operations)
-	return strings.Contains(errStr, "failed to resolve specifier") ||
-		strings.Contains(errStr, "no such file or directory") ||
-		strings.Contains(errStr, "file does not exist") ||
-		strings.Contains(errStr, "cannot find module")
-}
-
-// loadFromNetwork fetches tokens from CDN when local resolution fails.
-// TODO: Remove once asimonim supports network fetching.
-func loadFromNetwork(spec string, opts load.Options) (*token.Map, error) {
-	parsed := specifier.Parse(spec)
-	if !parsed.IsNPM() && !parsed.IsJSR() {
-		return nil, errors.New("network fallback only supported for npm:/jsr: specifiers")
-	}
-
-	// Fetch from unpkg.com with timeout
-	url := "https://unpkg.com/" + parsed.Package + "/" + parsed.File
-
-	ctx, cancel := context.WithTimeout(context.Background(), networkTimeout)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request for %s: %w", url, err)
-	}
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, fmt.Errorf("timeout fetching %s after %s", url, networkTimeout)
-		}
-		return nil, fmt.Errorf("failed to fetch %s: %w", url, err)
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch from CDN: %s returned %s", url, resp.Status)
-	}
-
-	// Limit response size to prevent excessive memory use
-	limitedReader := io.LimitReader(resp.Body, maxResponseSize+1)
-	content, err := io.ReadAll(limitedReader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response from %s: %w", url, err)
-	}
-	if len(content) > maxResponseSize {
-		return nil, fmt.Errorf("response from %s exceeds maximum size of %d bytes", url, maxResponseSize)
-	}
-
-	// Parse fetched content using lower-level API
-	return ParseTokensWithAsimonim(content, ParseOptions{
-		Prefix: opts.Prefix,
-	})
 }

@@ -37,7 +37,7 @@ Best supports LitElements written in idiomatic style with TypeScript decorators.
 | `--watch, -w`                   | bool               | Watch files for changes and regenerate automatically                                              |
 | `--exclude, -e`                 | array              | Files or glob patterns to exclude                                                                 |
 | `--no-default-excludes`         | bool               | Do not exclude `.d.ts` files by default                                                           |
-| `--design-tokens`               | string             | Path or npm specifier for DTCG-format design tokens                                               |
+| `--design-tokens`               | string             | Path, npm, or jsr specifier for DTCG-format design tokens. Package specifiers fall back to esm.sh if not installed locally |
 | `--design-tokens-prefix`        | string             | CSS custom property prefix for design tokens                                                      |
 | `--demo-discovery-file-glob`    | string             | Glob pattern for discovering demo files                                                           |
 | `--demo-discovery-url-pattern`  | string             | URLPattern with named parameters (`:param`) for matching demo file paths                          |
@@ -153,7 +153,7 @@ generate:
     - "src/**/*.test.ts"
   output: custom-elements.json
   designTokens: "npm:@my-ds/tokens/tokens.json"
-  designTokensPrefix: "--my-ds"
+  designTokensPrefix: "my-ds"
   demoDiscovery:
     fileGlob: "src/**/demo/*.html"
     urlPattern: "/src/:tag/demo/:demo.html"
