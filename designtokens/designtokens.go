@@ -55,16 +55,7 @@ func LoadDesignTokens(ctx types.WorkspaceContext) (*DesignTokens, error) {
 	}
 
 	spec := cfg.Generate.DesignTokens.Spec
-	opts := load.Options{
-		Root:   ctx.Root(),
-		Prefix: prefix,
-	}
-
-	parsed := specifier.Parse(spec)
-	if parsed.IsNPM() || parsed.IsJSR() {
-		opts.Fetcher = load.NewHTTPFetcher(load.DefaultMaxSize)
-		opts.CDN = specifier.CDNEsmSh
-	}
+	opts := buildLoadOptions(spec, ctx.Root(), prefix)
 
 	tokens, err := load.Load(context.Background(), spec, opts)
 	if err != nil {
@@ -123,6 +114,21 @@ func MergeDesignTokensToModule(module *M.Module, designTokens types.DesignTokens
 		}
 		module.Declarations[i] = d
 	}
+}
+
+// buildLoadOptions constructs load.Options for the given specifier,
+// wiring up CDN fallback for package specifiers.
+func buildLoadOptions(spec, root, prefix string) load.Options {
+	opts := load.Options{
+		Root:   root,
+		Prefix: prefix,
+	}
+	parsed := specifier.Parse(spec)
+	if parsed.IsNPM() || parsed.IsJSR() {
+		opts.Fetcher = load.NewHTTPFetcher(load.DefaultMaxSize)
+		opts.CDN = specifier.CDNEsmSh
+	}
+	return opts
 }
 
 // validatePrefix returns an error if prefix starts with dashes.

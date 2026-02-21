@@ -138,44 +138,29 @@ func TestLoadDesignTokens(t *testing.T) {
 	}
 }
 
-func TestLoadDesignTokensFetcherWiring(t *testing.T) {
-	fixtureRoot, err := filepath.Abs(filepath.Join("testdata", "draft-basic"))
-	if err != nil {
-		t.Fatalf("failed to resolve fixture path: %v", err)
-	}
-
+func TestBuildLoadOptions(t *testing.T) {
 	tests := []struct {
-		name string
-		spec string
+		name      string
+		spec      string
+		wantCDN   bool
+		wantFetch bool
 	}{
-		{"npm", "npm:@nonexistent-cem-test-pkg/tokens/tokens.json"},
-		{"jsr", "jsr:@nonexistent-cem-test-pkg/tokens/tokens.json"},
+		{"npm", "npm:@my-ds/tokens/tokens.json", true, true},
+		{"jsr", "jsr:@my-ds/tokens/tokens.json", true, true},
+		{"local", "./tokens.json", false, false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := &stubWorkspaceContext{
-				root: fixtureRoot,
-				config: &C.CemConfig{
-					Generate: C.GenerateConfig{
-						DesignTokens: C.DesignTokensConfig{
-							Spec:   tt.spec,
-							Prefix: "test",
-						},
-					},
-				},
+			opts := buildLoadOptions(tt.spec, "/tmp", "test")
+			if (opts.Fetcher != nil) != tt.wantFetch {
+				t.Errorf("Fetcher: got nil=%v, want nil=%v", opts.Fetcher == nil, !tt.wantFetch)
 			}
-
-			_, err := LoadDesignTokens(ctx)
-			if err == nil {
-				t.Fatalf("expected error for nonexistent %s package, got nil", tt.name)
+			if (opts.CDN != "") != tt.wantCDN {
+				t.Errorf("CDN: got %q, want non-empty=%v", opts.CDN, tt.wantCDN)
 			}
-
-			// The error should mention esm.sh, indicating the fetcher was wired up
-			// and attempted a CDN fallback after local resolution failed.
-			errMsg := err.Error()
-			if !strings.Contains(errMsg, "esm.sh") {
-				t.Errorf("expected error to mention esm.sh (CDN fallback), got: %s", errMsg)
+			if tt.wantCDN && !strings.Contains(string(opts.CDN), "esm.sh") {
+				t.Errorf("CDN: got %q, want esm.sh", opts.CDN)
 			}
 		})
 	}
@@ -197,5 +182,8 @@ func TestLoadDesignTokensRejectsDashPrefix(t *testing.T) {
 	_, err := LoadDesignTokens(ctx)
 	if err == nil {
 		t.Fatal("expected error for --rh prefix, got nil")
+	}
+	if !strings.Contains(err.Error(), "prefix") {
+		t.Errorf("expected prefix validation error, got: %v", err)
 	}
 }
