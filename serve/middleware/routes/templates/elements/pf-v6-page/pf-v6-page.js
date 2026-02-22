@@ -33,7 +33,8 @@ export class PfV6Page extends CemElement {
 
       if (!event.composedPath().some(node => node === sidebar || node === mastheadToggle)) {
         this.sidebarCollapsed = true;
-        this.dispatchEvent(new SidebarToggleEvent(false));
+        const expanded = !this.sidebarCollapsed;
+        this.dispatchEvent(new SidebarToggleEvent(expanded));
       }
     }
   };
