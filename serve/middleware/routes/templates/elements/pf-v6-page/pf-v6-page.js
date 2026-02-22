@@ -1,4 +1,5 @@
 import { CemElement } from '/__cem/cem-element.js';
+import { SidebarToggleEvent } from '/__cem/elements/pf-v6-masthead/pf-v6-masthead.js';
 
 /**
  * PatternFly v6 Page Layout
@@ -32,6 +33,8 @@ export class PfV6Page extends CemElement {
 
       if (!event.composedPath().some(node => node === sidebar || node === mastheadToggle)) {
         this.sidebarCollapsed = true;
+        const expanded = !this.sidebarCollapsed;
+        this.dispatchEvent(new SidebarToggleEvent(expanded));
       }
     }
   };
