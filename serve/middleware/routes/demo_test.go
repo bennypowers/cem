@@ -403,6 +403,33 @@ func TestResolveViaDemoSubresource(t *testing.T) {
 			expected: "",
 		},
 		{
+			name:        "exact route match returns empty",
+			requestPath: "/elements/avatar/demo/sizes/",
+			watchDir:    "/test",
+			demoRoutes: map[string]*middleware.DemoRouteEntry{
+				"/elements/avatar/demo/sizes/": {
+					LocalRoute: "/elements/avatar/demo/sizes/",
+					TagName:    "rh-avatar",
+					FilePath:   "elements/rh-avatar/demo/sizes.html",
+				},
+			},
+			expected: "",
+		},
+		{
+			name:        "workspace with empty PackagePath falls back to watchDir",
+			requestPath: "/elements/avatar/demo/sizes/perlman.jpg",
+			watchDir:    "/test",
+			isWorkspace: true,
+			demoRoutes: map[string]*middleware.DemoRouteEntry{
+				"/elements/avatar/demo/sizes/": {
+					LocalRoute: "/elements/avatar/demo/sizes/",
+					TagName:    "rh-avatar",
+					FilePath:   "elements/rh-avatar/demo/sizes.html",
+				},
+			},
+			expected: "/test/elements/rh-avatar/demo/perlman.jpg",
+		},
+		{
 			name:        "workspace mode uses PackagePath",
 			requestPath: "/elements/avatar/demo/sizes/perlman.jpg",
 			isWorkspace: true,

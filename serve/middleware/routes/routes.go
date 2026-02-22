@@ -977,6 +977,10 @@ func servePackageStaticAsset(w http.ResponseWriter, r *http.Request, config Conf
 		fullPath = resolveViaRoutingTable(requestPath, config)
 	}
 
+	// Track whether fullPath came from strategy 1/2 so we know whether
+	// a demo-subresource fallback is worth trying on ReadFile failure.
+	fromRoutingStrategies := fullPath != ""
+
 	// Strategy 3: Try demo subresource resolution
 	// When a flat demo file is served at a directory-style URL, relative resource
 	// paths resolve against that virtual directory. This maps them to the actual
@@ -992,11 +996,13 @@ func servePackageStaticAsset(w http.ResponseWriter, r *http.Request, config Conf
 	// Try to read the file
 	content, err := config.Context.FileSystem().ReadFile(fullPath)
 	if err != nil {
-		// Strategy 1/2 path didn't exist - try demo subresource as fallback
-		fallbackPath := resolveViaDemoSubresource(requestPath, config)
-		if fallbackPath != "" && fallbackPath != fullPath {
-			fullPath = fallbackPath
-			content, err = config.Context.FileSystem().ReadFile(fullPath)
+		// Strategy 1/2 resolved a path that doesn't exist on disk —
+		// try demo subresource as fallback (only if we haven't already).
+		if fromRoutingStrategies {
+			if fallbackPath := resolveViaDemoSubresource(requestPath, config); fallbackPath != "" {
+				fullPath = fallbackPath
+				content, err = config.Context.FileSystem().ReadFile(fullPath)
+			}
 		}
 		if err != nil {
 			config.Context.Logger().Debug("servePackageStaticAsset: file not found: %v", err)
@@ -1164,8 +1170,9 @@ func resolveViaDemoSubresource(requestPath string, config Config) string {
 	if config.Context.IsWorkspace() && matchedEntry.PackagePath != "" {
 		// Workspace mode: use PackagePath
 		fullPath = filepath.Join(matchedEntry.PackagePath, demoFileDir, cleaned)
-		// Security: ensure result stays within PackagePath
-		if rel, err := filepath.Rel(matchedEntry.PackagePath, fullPath); err != nil || strings.HasPrefix(rel, "..") {
+		// Security: ensure result stays within the demo subdirectory
+		expectedBase := filepath.Join(matchedEntry.PackagePath, demoFileDir)
+		if rel, err := filepath.Rel(expectedBase, fullPath); err != nil || strings.HasPrefix(rel, "..") {
 			config.Context.Logger().Debug("resolveViaDemoSubresource: path traversal rejected for %s", requestPath)
 			return ""
 		}
