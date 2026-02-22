@@ -34,14 +34,19 @@ import (
 // mockContext implements middleware.DevServerContext for testing
 type mockContext struct {
 	manifestBytes []byte
+	watchDir      string
+	demoRoutes    map[string]*middleware.DemoRouteEntry
+	isWorkspace   bool
 }
 
-func (m *mockContext) WatchDir() string                                  { return "" }
-func (m *mockContext) IsWorkspace() bool                                 { return false }
+func (m *mockContext) WatchDir() string {
+	return m.watchDir
+}
+func (m *mockContext) IsWorkspace() bool                                 { return m.isWorkspace }
 func (m *mockContext) WorkspacePackages() []middleware.WorkspacePackage  { return nil }
 func (m *mockContext) Manifest() ([]byte, error)                         { return m.manifestBytes, nil }
 func (m *mockContext) ImportMap() middleware.ImportMap                   { return nil }
-func (m *mockContext) DemoRoutes() map[string]*middleware.DemoRouteEntry { return nil }
+func (m *mockContext) DemoRoutes() map[string]*middleware.DemoRouteEntry { return m.demoRoutes }
 func (m *mockContext) SourceControlRootURL() string                      { return "" }
 func (m *mockContext) Logger() logger.Logger                             { return logger.NewDefaultLogger() }
 func (m *mockContext) FileSystem() platform.FileSystem                   { return nil }

@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"bennypowers.dev/cem/serve/middleware"
 )
 
 // TestBuildDemoRoutingTable_DirectoryTraversalPrevention tests that malicious
@@ -332,6 +334,129 @@ func TestBuildDemoRoutingTable_SourceHrefPaths(t *testing.T) {
 
 			if foundPath != tt.expectedPath {
 				t.Errorf("%s: expected path %q, got %q", tt.description, tt.expectedPath, foundPath)
+			}
+		})
+	}
+}
+
+// TestResolveViaDemoSubresource tests that subresources referenced from
+// directory-style demo URLs are resolved to the demo file's parent directory
+func TestResolveViaDemoSubresource(t *testing.T) {
+	tests := []struct {
+		name        string
+		requestPath string
+		watchDir    string
+		isWorkspace bool
+		demoRoutes  map[string]*middleware.DemoRouteEntry
+		expected    string
+	}{
+		{
+			name:        "flat-file subresource single-package",
+			requestPath: "/elements/avatar/demo/sizes/perlman.jpg",
+			watchDir:    "/test",
+			demoRoutes: map[string]*middleware.DemoRouteEntry{
+				"/elements/avatar/demo/sizes/": {
+					LocalRoute: "/elements/avatar/demo/sizes/",
+					TagName:    "rh-avatar",
+					FilePath:   "elements/rh-avatar/demo/sizes.html",
+				},
+			},
+			expected: "/test/elements/rh-avatar/demo/perlman.jpg",
+		},
+		{
+			name:        "nested subresource",
+			requestPath: "/elements/avatar/demo/sizes/images/foo.jpg",
+			watchDir:    "/test",
+			demoRoutes: map[string]*middleware.DemoRouteEntry{
+				"/elements/avatar/demo/sizes/": {
+					LocalRoute: "/elements/avatar/demo/sizes/",
+					TagName:    "rh-avatar",
+					FilePath:   "elements/rh-avatar/demo/sizes.html",
+				},
+			},
+			expected: "/test/elements/rh-avatar/demo/images/foo.jpg",
+		},
+		{
+			name:        "path traversal rejection",
+			requestPath: "/elements/avatar/demo/sizes/../../../etc/passwd",
+			watchDir:    "/test",
+			demoRoutes: map[string]*middleware.DemoRouteEntry{
+				"/elements/avatar/demo/sizes/": {
+					LocalRoute: "/elements/avatar/demo/sizes/",
+					TagName:    "rh-avatar",
+					FilePath:   "elements/rh-avatar/demo/sizes.html",
+				},
+			},
+			expected: "",
+		},
+		{
+			name:        "no match",
+			requestPath: "/unrelated/path/image.jpg",
+			watchDir:    "/test",
+			demoRoutes: map[string]*middleware.DemoRouteEntry{
+				"/elements/avatar/demo/sizes/": {
+					LocalRoute: "/elements/avatar/demo/sizes/",
+					TagName:    "rh-avatar",
+					FilePath:   "elements/rh-avatar/demo/sizes.html",
+				},
+			},
+			expected: "",
+		},
+		{
+			name:        "exact route match returns empty",
+			requestPath: "/elements/avatar/demo/sizes/",
+			watchDir:    "/test",
+			demoRoutes: map[string]*middleware.DemoRouteEntry{
+				"/elements/avatar/demo/sizes/": {
+					LocalRoute: "/elements/avatar/demo/sizes/",
+					TagName:    "rh-avatar",
+					FilePath:   "elements/rh-avatar/demo/sizes.html",
+				},
+			},
+			expected: "",
+		},
+		{
+			name:        "workspace with empty PackagePath falls back to watchDir",
+			requestPath: "/elements/avatar/demo/sizes/perlman.jpg",
+			watchDir:    "/test",
+			isWorkspace: true,
+			demoRoutes: map[string]*middleware.DemoRouteEntry{
+				"/elements/avatar/demo/sizes/": {
+					LocalRoute: "/elements/avatar/demo/sizes/",
+					TagName:    "rh-avatar",
+					FilePath:   "elements/rh-avatar/demo/sizes.html",
+				},
+			},
+			expected: "/test/elements/rh-avatar/demo/perlman.jpg",
+		},
+		{
+			name:        "workspace mode uses PackagePath",
+			requestPath: "/elements/avatar/demo/sizes/perlman.jpg",
+			isWorkspace: true,
+			demoRoutes: map[string]*middleware.DemoRouteEntry{
+				"/elements/avatar/demo/sizes/": {
+					LocalRoute:  "/elements/avatar/demo/sizes/",
+					TagName:     "rh-avatar",
+					FilePath:    "elements/rh-avatar/demo/sizes.html",
+					PackagePath: "/workspace/packages/avatars",
+				},
+			},
+			expected: "/workspace/packages/avatars/elements/rh-avatar/demo/perlman.jpg",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := Config{
+				Context: &mockContext{
+					watchDir:    tt.watchDir,
+					demoRoutes:  tt.demoRoutes,
+					isWorkspace: tt.isWorkspace,
+				},
+			}
+			got := resolveViaDemoSubresource(tt.requestPath, cfg)
+			if got != tt.expected {
+				t.Errorf("resolveViaDemoSubresource(%q) = %q, want %q", tt.requestPath, got, tt.expected)
 			}
 		})
 	}

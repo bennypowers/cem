@@ -977,6 +977,18 @@ func servePackageStaticAsset(w http.ResponseWriter, r *http.Request, config Conf
 		fullPath = resolveViaRoutingTable(requestPath, config)
 	}
 
+	// Track whether fullPath came from strategy 1/2 so we know whether
+	// a demo-subresource fallback is worth trying on ReadFile failure.
+	fromRoutingStrategies := fullPath != ""
+
+	// Strategy 3: Try demo subresource resolution
+	// When a flat demo file is served at a directory-style URL, relative resource
+	// paths resolve against that virtual directory. This maps them to the actual
+	// file location alongside the demo source file on disk.
+	if fullPath == "" {
+		fullPath = resolveViaDemoSubresource(requestPath, config)
+	}
+
 	if fullPath == "" {
 		return false
 	}
@@ -984,9 +996,18 @@ func servePackageStaticAsset(w http.ResponseWriter, r *http.Request, config Conf
 	// Try to read the file
 	content, err := config.Context.FileSystem().ReadFile(fullPath)
 	if err != nil {
-		// File doesn't exist
-		config.Context.Logger().Debug("servePackageStaticAsset: file not found: %v", err)
-		return false
+		// Strategy 1/2 resolved a path that doesn't exist on disk —
+		// try demo subresource as fallback (only if we haven't already).
+		if fromRoutingStrategies {
+			if fallbackPath := resolveViaDemoSubresource(requestPath, config); fallbackPath != "" {
+				fullPath = fallbackPath
+				content, err = config.Context.FileSystem().ReadFile(fullPath)
+			}
+		}
+		if err != nil {
+			config.Context.Logger().Debug("servePackageStaticAsset: file not found: %v", err)
+			return false
+		}
 	}
 
 	config.Context.Logger().Debug("servePackageStaticAsset: successfully serving %s (%d bytes)", fullPath, len(content))
@@ -1098,5 +1119,74 @@ func resolveViaRoutingTable(requestPath string, config Config) string {
 			fullPath, config.Context.WatchDir(), packageDir, relativePath)
 	}
 
+	return fullPath
+}
+
+// resolveViaDemoSubresource resolves subresource requests for directory-style demo URLs.
+// When a flat demo file (e.g., sizes.html) is served at a directory-style URL
+// (/elements/avatar/demo/sizes/), the browser resolves relative resource paths
+// (e.g., src="perlman.jpg") against that directory URL, requesting
+// /elements/avatar/demo/sizes/perlman.jpg. This function maps that request
+// to the actual file location alongside the demo source file on disk.
+// Returns the full file path or empty string if not found.
+func resolveViaDemoSubresource(requestPath string, config Config) string {
+	routes := config.Context.DemoRoutes()
+	if routes == nil {
+		return ""
+	}
+
+	// Find the longest demo route URL that is a prefix of the request path
+	var matchedEntry *DemoRouteEntry
+	var matchedRoute string
+
+	for route, entry := range routes {
+		if strings.HasPrefix(requestPath, route) && len(route) > len(matchedRoute) {
+			matchedEntry = entry
+			matchedRoute = route
+		}
+	}
+
+	if matchedEntry == nil {
+		return ""
+	}
+
+	// Strip the route URL, leaving the resource path (e.g., "perlman.jpg")
+	resourcePath := strings.TrimPrefix(requestPath, matchedRoute)
+	if resourcePath == "" {
+		return ""
+	}
+
+	// Security: reject path traversal
+	cleaned := filepath.Clean(resourcePath)
+	if strings.HasPrefix(cleaned, "..") || filepath.IsAbs(cleaned) {
+		config.Context.Logger().Debug("resolveViaDemoSubresource: path traversal rejected for %s", requestPath)
+		return ""
+	}
+
+	// Resolve relative to the demo file's parent directory on disk
+	demoFileDir := filepath.Dir(matchedEntry.FilePath)
+
+	var fullPath string
+	if config.Context.IsWorkspace() && matchedEntry.PackagePath != "" {
+		// Workspace mode: use PackagePath
+		fullPath = filepath.Join(matchedEntry.PackagePath, demoFileDir, cleaned)
+		// Security: ensure result stays within the demo subdirectory
+		expectedBase := filepath.Join(matchedEntry.PackagePath, demoFileDir)
+		if rel, err := filepath.Rel(expectedBase, fullPath); err != nil || strings.HasPrefix(rel, "..") {
+			config.Context.Logger().Debug("resolveViaDemoSubresource: path traversal rejected for %s", requestPath)
+			return ""
+		}
+	} else {
+		// Single-package mode: use WatchDir
+		fullPath = filepath.Join(config.Context.WatchDir(), demoFileDir, cleaned)
+		expectedBase := filepath.Join(config.Context.WatchDir(), demoFileDir)
+		if rel, err := filepath.Rel(expectedBase, fullPath); err != nil || strings.HasPrefix(rel, "..") {
+			config.Context.Logger().Debug("resolveViaDemoSubresource: path traversal rejected for %s", requestPath)
+			return ""
+		}
+	}
+
+	config.Context.Logger().Debug("resolveViaDemoSubresource: %s -> %s (demoFileDir=%s, resource=%s)",
+		requestPath, fullPath, demoFileDir, resourcePath)
 	return fullPath
 }
