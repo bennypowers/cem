@@ -402,19 +402,21 @@ func (r *ExternalTypeResolver) scanTypeAliasesFromFile(filePath string) (map[str
 	aliases := make(map[string]aliasDefinition)
 	for match := range matcher.AllQueryMatches(tree.RootNode(), content) {
 		var name string
-		var defNode *ts.Node
+		var defNode ts.Node
+		var haveDef bool
 		for _, capture := range match.Captures {
 			captureName := matcher.GetCaptureNameByIndex(capture.Index)
 			switch captureName {
 			case "alias.name":
 				name = capture.Node.Utf8Text(content)
 			case "alias.definition":
-				defNode = &capture.Node
+				defNode = capture.Node
+				haveDef = true
 			}
 		}
-		if name != "" && defNode != nil {
+		if name != "" && haveDef {
 			if defNode.GrammarName() == "template_literal_type" {
-				td := parseTemplateLiteralNode(defNode, content)
+				td := parseTemplateLiteralNode(&defNode, content)
 				aliases[name] = aliasDefinition{template: td}
 			} else {
 				aliases[name] = aliasDefinition{text: defNode.Utf8Text(content)}
