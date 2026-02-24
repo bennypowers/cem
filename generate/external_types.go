@@ -356,22 +356,15 @@ func (r *ExternalTypeResolver) toDTSPath(filePath string) string {
 // toJSPath converts a file path to its .js equivalent.
 // Returns empty string if the .js file doesn't exist.
 func (r *ExternalTypeResolver) toJSPath(filePath string) string {
-	var base, ext string
+	var base string
 	if before, ok := strings.CutSuffix(filePath, ".d.ts"); ok {
 		base = before
 	} else {
-		ext = filepath.Ext(filePath)
-		base = strings.TrimSuffix(filePath, ext)
+		base = strings.TrimSuffix(filePath, filepath.Ext(filePath))
 	}
 	js := base + ".js"
 	if _, err := os.Stat(js); err == nil {
 		return js
-	}
-	// If the original path is already .js, return it if it exists
-	if ext == ".js" {
-		if _, err := os.Stat(filePath); err == nil {
-			return filePath
-		}
 	}
 	return ""
 }
