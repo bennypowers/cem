@@ -159,7 +159,35 @@ func analyzeDefinitionTarget(doc types.Document, position protocol.Position, dm 
 		}
 	}
 
-	// No element found at position
+	// Cursor may be on an attribute outside the tag name range (e.g. in HTML,
+	// FindElementAtPosition only matches the tag name bytes). Fall back to
+	// FindAttributeAtPosition which checks all attribute ranges.
+	attr, tagName := doc.FindAttributeAtPosition(position, dm)
+	if attr != nil && tagName != "" {
+		if attr.Name == "slot" && attr.Value != "" {
+			return &DefinitionRequest{
+				Position:    position,
+				TargetType:  DefinitionTargetSlot,
+				ElementName: tagName,
+				SlotName:    attr.Value,
+			}
+		}
+		if strings.HasPrefix(attr.Name, "@") && len(attr.Name) > 1 {
+			return &DefinitionRequest{
+				Position:    position,
+				TargetType:  DefinitionTargetEvent,
+				ElementName: tagName,
+				EventName:   attr.Name[1:],
+			}
+		}
+		return &DefinitionRequest{
+			Position:      position,
+			TargetType:    DefinitionTargetAttribute,
+			ElementName:   tagName,
+			AttributeName: attr.Name,
+		}
+	}
+
 	return nil
 }
 
