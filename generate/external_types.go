@@ -24,13 +24,29 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"unicode"
 
 	L "bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 	"bennypowers.dev/cem/types"
 	"bennypowers.dev/cem/workspace"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
+
+// templateDef represents a parsed template literal type.
+// statics[0] + exprs[0] + statics[1] + exprs[1] + ... + statics[n]
+// Invariant: len(statics) == len(exprs) + 1
+type templateDef struct {
+	statics []string
+	exprs   []string
+}
+
+// aliasDefinition is either plain text or a parsed template literal.
+type aliasDefinition struct {
+	text     string
+	template *templateDef
+}
 
 // ExternalTypeResolver resolves type aliases from external packages
 // (workspace siblings, node_modules .d.ts, or node_modules .js JSDoc).
@@ -168,13 +184,13 @@ func extractSubpath(importSpec string) string {
 
 // resolveFromWorkspaceSibling scans TypeScript source files in a workspace
 // sibling package for type alias declarations.
-func (r *ExternalTypeResolver) resolveFromWorkspaceSibling(pkgName string) map[string]string {
+func (r *ExternalTypeResolver) resolveFromWorkspaceSibling(pkgName string) map[string]aliasDefinition {
 	siblingPath, ok := r.workspacePackages[pkgName]
 	if !ok {
 		return nil
 	}
 
-	aliases := make(map[string]string)
+	aliases := make(map[string]aliasDefinition)
 
 	err := filepath.WalkDir(siblingPath, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
@@ -214,7 +230,7 @@ func (r *ExternalTypeResolver) resolveFromWorkspaceSibling(pkgName string) map[s
 
 // resolveFromNodeModules resolves type aliases from a node_modules dependency.
 // It tries .d.ts files first, then falls back to .js files with JSDoc @typedef.
-func (r *ExternalTypeResolver) resolveFromNodeModules(importSpec string) map[string]string {
+func (r *ExternalTypeResolver) resolveFromNodeModules(importSpec string) map[string]aliasDefinition {
 	pkgName := extractPackageName(importSpec)
 	subpath := extractSubpath(importSpec)
 
@@ -280,8 +296,12 @@ func (r *ExternalTypeResolver) resolveFromNodeModules(importSpec string) map[str
 	if jsPath != "" {
 		content, err := os.ReadFile(jsPath)
 		if err == nil {
-			aliases := parseJSDocTypedefs(content)
-			if len(aliases) > 0 {
+			jsdocAliases := parseJSDocTypedefs(content)
+			if len(jsdocAliases) > 0 {
+				aliases := make(map[string]aliasDefinition, len(jsdocAliases))
+				for k, v := range jsdocAliases {
+					aliases[k] = aliasDefinition{text: v}
+				}
 				return aliases
 			}
 		}
@@ -352,7 +372,7 @@ func (r *ExternalTypeResolver) toJSPath(filePath string) string {
 
 // scanTypeAliasesFromFile parses a TypeScript file using tree-sitter
 // and extracts type alias declarations.
-func (r *ExternalTypeResolver) scanTypeAliasesFromFile(filePath string) (map[string]string, error) {
+func (r *ExternalTypeResolver) scanTypeAliasesFromFile(filePath string) (map[string]aliasDefinition, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
@@ -373,24 +393,66 @@ func (r *ExternalTypeResolver) scanTypeAliasesFromFile(filePath string) (map[str
 	}
 	defer matcher.Close()
 
-	aliases := make(map[string]string)
+	aliases := make(map[string]aliasDefinition)
 	for match := range matcher.AllQueryMatches(tree.RootNode(), content) {
-		var name, definition string
+		var name string
+		var defNode *ts.Node
 		for _, capture := range match.Captures {
 			captureName := matcher.GetCaptureNameByIndex(capture.Index)
 			switch captureName {
 			case "alias.name":
 				name = capture.Node.Utf8Text(content)
 			case "alias.definition":
-				definition = capture.Node.Utf8Text(content)
+				defNode = &capture.Node
 			}
 		}
-		if name != "" && definition != "" {
-			aliases[name] = definition
+		if name != "" && defNode != nil {
+			if defNode.GrammarName() == "template_literal_type" {
+				td := parseTemplateLiteralNode(defNode, content)
+				aliases[name] = aliasDefinition{template: td}
+			} else {
+				aliases[name] = aliasDefinition{text: defNode.Utf8Text(content)}
+			}
 		}
 	}
 
 	return aliases, nil
+}
+
+// parseTemplateLiteralNode walks the tree-sitter AST of a template_literal_type
+// node and decomposes it into a structured templateDef.
+func parseTemplateLiteralNode(node *ts.Node, content []byte) *templateDef {
+	td := &templateDef{}
+	cursor := node.Walk()
+	defer cursor.Close()
+
+	lastWasExpr := true // start true so we prepend an empty static if first child is an expr
+	for _, child := range node.NamedChildren(cursor) {
+		switch child.GrammarName() {
+		case "string_fragment":
+			td.statics = append(td.statics, child.Utf8Text(content))
+			lastWasExpr = false
+		case "template_type":
+			if lastWasExpr {
+				// Two adjacent expressions or expression at start — insert empty static
+				td.statics = append(td.statics, "")
+			}
+			// The expression is the first named child of the template_type node
+			exprCursor := child.Walk()
+			namedChildren := child.NamedChildren(exprCursor)
+			if len(namedChildren) > 0 {
+				td.exprs = append(td.exprs, namedChildren[0].Utf8Text(content))
+			}
+			exprCursor.Close()
+			lastWasExpr = true
+		}
+	}
+	// Ensure trailing static
+	if lastWasExpr {
+		td.statics = append(td.statics, "")
+	}
+
+	return td
 }
 
 // jsdocTypedefPattern matches JSDoc @typedef annotations like:
@@ -414,29 +476,32 @@ func parseJSDocTypedefs(content []byte) map[string]string {
 // resolveWithinFile resolves type aliases against each other within a single
 // file's alias map. This expands compound definitions like
 // Placement = Side | AlignedPlacement into their fully-resolved scalar forms.
-func resolveWithinFile(aliases map[string]string) map[string]string {
+func resolveWithinFile(aliases map[string]aliasDefinition) map[string]string {
 	if aliases == nil {
 		return nil
 	}
 	resolved := make(map[string]string, len(aliases))
 	for name, def := range aliases {
-		resolved[name] = resolveDefinitionParts(def, aliases, make(map[string]bool))
+		resolved[name] = resolveAlias(def, aliases, make(map[string]bool))
 	}
 	return resolved
 }
 
-// resolveDefinitionParts recursively resolves a type definition string using
+// resolveAlias dispatches resolution for an aliasDefinition — either plain
+// text or a structured template literal.
+func resolveAlias(def aliasDefinition, aliases map[string]aliasDefinition, visited map[string]bool) string {
+	if def.template != nil {
+		return expandTemplate(def.template, aliases, visited)
+	}
+	return resolveTextParts(def.text, aliases, visited)
+}
+
+// resolveTextParts recursively resolves a type definition string using
 // sibling aliases from the same file. Handles unions by resolving each part.
-func resolveDefinitionParts(def string, aliases map[string]string, visited map[string]bool) string {
+func resolveTextParts(def string, aliases map[string]aliasDefinition, visited map[string]bool) string {
 	def = strings.TrimSpace(def)
 	if def == "" {
 		return def
-	}
-
-	// Template literal type — must be checked before unions because template
-	// literals can contain | inside ${} expressions (e.g., `${Side}-${'a' | 'b'}`)
-	if strings.HasPrefix(def, "`") && strings.HasSuffix(def, "`") {
-		return expandTemplateLiteral(def, aliases, visited)
 	}
 
 	// Handle unions: resolve each part independently
@@ -446,7 +511,7 @@ func resolveDefinitionParts(def string, aliases map[string]string, visited map[s
 		for _, part := range parts {
 			part = strings.TrimSpace(part)
 			if part != "" {
-				resolvedParts = append(resolvedParts, resolveDefinitionParts(part, aliases, visited))
+				resolvedParts = append(resolvedParts, resolveTextParts(part, aliases, visited))
 			}
 		}
 		return strings.Join(resolvedParts, " | ")
@@ -471,9 +536,9 @@ func resolveDefinitionParts(def string, aliases map[string]string, visited map[s
 	// Try to resolve as a sibling alias — unmark after subtree resolves
 	// so the same alias can be referenced from multiple branches
 	// (e.g., Side used in both a union and a template literal)
-	if resolved, ok := aliases[def]; ok {
+	if aliasDef, ok := aliases[def]; ok {
 		visited[def] = true
-		result := resolveDefinitionParts(resolved, aliases, visited)
+		result := resolveAlias(aliasDef, aliases, visited)
 		delete(visited, def)
 		return result
 	}
@@ -481,75 +546,36 @@ func resolveDefinitionParts(def string, aliases map[string]string, visited map[s
 	return def
 }
 
-// expandTemplateLiteral expands a TypeScript template literal type into a
-// union of concrete string literals by computing the cross-product of all
-// ${} expression values.
-//
-// Example: `${Side}-${Alignment}` where Side='top'|'right' and Alignment='start'|'end'
-// → 'top-start' | 'top-end' | 'right-start' | 'right-end'
-func expandTemplateLiteral(template string, aliases map[string]string, visited map[string]bool) string {
-	// Strip backticks
-	inner := template[1 : len(template)-1]
+// broadPrimitives are types that, when used in a template expression, collapse
+// the entire template to `string`.
+var broadPrimitives = map[string]bool{
+	"string": true, "any": true, "number": true, "boolean": true, "unknown": true,
+}
 
-	// Parse into segments: alternating static text and ${} expressions.
-	// Start with a single empty combination and build up by appending each segment.
+// expandTemplate expands a parsed template literal type into a union of
+// concrete string literals by resolving each expression and computing the
+// cross-product. Returns "string" if any expression is a broad primitive,
+// or reconstructs the original template if an expression is unresolvable.
+func expandTemplate(td *templateDef, aliases map[string]aliasDefinition, visited map[string]bool) string {
 	combinations := []string{""}
 
-	for len(inner) > 0 {
-		exprStart := strings.Index(inner, "${")
-		if exprStart < 0 {
-			// Remaining text is all static
-			for i := range combinations {
-				combinations[i] += inner
-			}
-			break
+	for i, expr := range td.exprs {
+		// Append the static text before this expression
+		static := td.statics[i]
+		for j := range combinations {
+			combinations[j] += static
 		}
 
-		// Append static text before the expression
-		if exprStart > 0 {
-			staticText := inner[:exprStart]
-			for i := range combinations {
-				combinations[i] += staticText
-			}
-		}
+		// Resolve the expression text
+		resolved := resolveTextParts(expr, aliases, visited)
 
-		// Find the matching closing brace, accounting for nested braces
-		inner = inner[exprStart+2:] // skip "${"
-		braceDepth := 1
-		exprEnd := -1
-		for i, ch := range inner {
-			if ch == '{' {
-				braceDepth++
-			} else if ch == '}' {
-				braceDepth--
-				if braceDepth == 0 {
-					exprEnd = i
-					break
-				}
-			}
-		}
-		if exprEnd < 0 {
-			// Malformed template — return as-is
-			return template
-		}
-
-		exprText := inner[:exprEnd]
-		inner = inner[exprEnd+1:]
-
-		// Recursively resolve the expression to get its possible values
-		resolved := resolveDefinitionParts(exprText, aliases, visited)
-
-		// Split the resolved expression into individual values
-		var values []string
-		for part := range strings.SplitSeq(resolved, "|") {
-			part = strings.TrimSpace(part)
-			part = strings.Trim(part, "'\"")
-			if part != "" {
-				values = append(values, part)
-			}
-		}
-		if len(values) == 0 {
-			return template // Can't expand
+		// Validate resolved values
+		values, bail := validateExpressionValues(resolved)
+		switch bail {
+		case "string":
+			return "string"
+		case "unresolvable":
+			return reconstructTemplate(td)
 		}
 
 		// Cross-product: each existing combination × each value
@@ -562,10 +588,96 @@ func expandTemplateLiteral(template string, aliases map[string]string, visited m
 		combinations = expanded
 	}
 
+	// Append trailing static text
+	trailing := td.statics[len(td.statics)-1]
+	for i := range combinations {
+		combinations[i] += trailing
+	}
+
 	// Format as quoted union
 	quoted := make([]string, len(combinations))
 	for i, combo := range combinations {
 		quoted[i] = "'" + combo + "'"
 	}
 	return strings.Join(quoted, " | ")
+}
+
+// validateExpressionValues splits a resolved type expression on |, classifies
+// each part, and returns the usable string values. The bail return signals
+// whether to collapse ("string") or give up ("unresolvable").
+func validateExpressionValues(resolved string) (values []string, bail string) {
+	for part := range strings.SplitSeq(resolved, "|") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+
+		// Quoted string literal — unquote and add
+		if (strings.HasPrefix(part, "'") && strings.HasSuffix(part, "'")) ||
+			(strings.HasPrefix(part, "\"") && strings.HasSuffix(part, "\"")) {
+			values = append(values, part[1:len(part)-1])
+			continue
+		}
+
+		// undefined, null — skip
+		if part == "undefined" || part == "null" {
+			continue
+		}
+
+		// Broad primitive — collapse the whole template
+		if broadPrimitives[part] {
+			return nil, "string"
+		}
+
+		// Numeric literal — stringify
+		if isNumericLiteral(part) {
+			values = append(values, part)
+			continue
+		}
+
+		// Anything else (unresolved identifier, complex type) — bail
+		return nil, "unresolvable"
+	}
+	if len(values) == 0 {
+		return nil, "unresolvable"
+	}
+	return values, ""
+}
+
+// isNumericLiteral returns true for strings like "1", "-3", "1.5", "-0.5".
+func isNumericLiteral(s string) bool {
+	if s == "" {
+		return false
+	}
+	dotSeen := false
+	for i, r := range s {
+		if r == '-' && i == 0 {
+			continue
+		}
+		if r == '.' && !dotSeen {
+			dotSeen = true
+			continue
+		}
+		if !unicode.IsDigit(r) {
+			return false
+		}
+	}
+	// Must contain at least one digit
+	return len(s) > 0 && s != "-" && s != "." && s != "-."
+}
+
+// reconstructTemplate rebuilds the backtick-quoted template literal text
+// from a templateDef, used when bailing out on unresolvable expressions.
+func reconstructTemplate(td *templateDef) string {
+	var b strings.Builder
+	b.WriteByte('`')
+	for i, expr := range td.exprs {
+		b.WriteString(td.statics[i])
+		b.WriteString("${")
+		b.WriteString(expr)
+		b.WriteByte('}')
+	}
+	b.WriteString(td.statics[len(td.statics)-1])
+	b.WriteByte('`')
+	return b.String()
 }
