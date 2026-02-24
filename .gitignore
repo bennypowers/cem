@@ -33,6 +33,8 @@ docs/public
 docs/static/*-last-output.*
 docs/**/custom-elements.json
 
+RELEASE_NOTES.md
+
 lsp/benchmark/results
 docs/data/lsp-benchmark-results*.json
 .worktrees
