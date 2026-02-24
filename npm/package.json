@@ -1,6 +1,6 @@
 {
   "name": "@pwrs/cem",
-  "version": "0.9.8",
+  "version": "0.9.9",
   "description": "CLI tool for generating and working with Custom Elements Manifests",
   "type": "module",
   "engines": {
@@ -13,12 +13,12 @@
     "postinstall": "node ./install-platform-binary.js"
   },
   "optionalDependencies": {
-    "@pwrs/cem-linux-x64": "0.9.8",
-    "@pwrs/cem-linux-arm64": "0.9.8",
-    "@pwrs/cem-darwin-x64": "0.9.8",
-    "@pwrs/cem-darwin-arm64": "0.9.8",
-    "@pwrs/cem-win32-x64": "0.9.8",
-    "@pwrs/cem-win32-arm64": "0.9.8"
+    "@pwrs/cem-linux-x64": "0.9.9",
+    "@pwrs/cem-linux-arm64": "0.9.9",
+    "@pwrs/cem-darwin-x64": "0.9.9",
+    "@pwrs/cem-darwin-arm64": "0.9.9",
+    "@pwrs/cem-win32-x64": "0.9.9",
+    "@pwrs/cem-win32-arm64": "0.9.9"
   },
   "files": [
     "bin/cem.js",
