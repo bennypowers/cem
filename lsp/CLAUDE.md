@@ -17,7 +17,7 @@ Each LSP method in its own package following `methods/textDocument/methodName/` 
 - New features need integration tests; bug fixes need regression tests
 - Use `package lsp_test` to test only public APIs
 - Use fixture files in organized directories, not inline content
-- Use `testhelpers.NewMockDocument(content)` for mock documents
+- Use `testhelpers.NewMockServerContext()` for test context, `dm.OpenDocument()` for test documents
 
 ### Benchmark Validation
 - Benchmarks in `lsp/benchmark/` validate LSP correctness and performance
