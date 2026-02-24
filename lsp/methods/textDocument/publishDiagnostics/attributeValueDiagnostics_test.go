@@ -248,6 +248,129 @@ func TestAttributeValueDiagnostics_UnionTypes(t *testing.T) {
 	}
 }
 
+func TestAttributeValueDiagnostics_UnresolvedTypeAliases(t *testing.T) {
+	t.Run("skips validation for unresolved type alias union", func(t *testing.T) {
+		ctx := testhelpers.NewMockServerContext()
+		content := `<rh-tooltip position="right">Content</rh-tooltip>`
+
+		dm, err := document.NewDocumentManager()
+		if err != nil {
+			t.Fatalf("Failed to create DocumentManager: %v", err)
+		}
+		defer dm.Close()
+		ctx.SetDocumentManager(dm)
+		doc := dm.OpenDocument("test.html", content, 1)
+		ctx.AddDocument("test.html", doc)
+
+		// Type text uses unresolved type aliases (as produced by some manifest generators)
+		ctx.AddAttributes("rh-tooltip", map[string]*M.Attribute{
+			"position": {
+				FullyQualified: M.FullyQualified{Name: "position"},
+				Type:           &M.Type{Text: "Side | AlignedPlacement"},
+			},
+		})
+
+		diagnostics := publishDiagnostics.AnalyzeAttributeValueDiagnosticsForTest(ctx, doc)
+
+		if len(diagnostics) != 0 {
+			t.Errorf("Expected no diagnostics for unresolved alias union, got %d:", len(diagnostics))
+			for i, diag := range diagnostics {
+				t.Errorf("  Diagnostic %d: %s", i, diag.Message)
+			}
+		}
+	})
+
+	t.Run("skips validation for mixed literals and unresolved alias", func(t *testing.T) {
+		ctx := testhelpers.NewMockServerContext()
+		content := `<my-element variant="custom">Content</my-element>`
+
+		dm, err := document.NewDocumentManager()
+		if err != nil {
+			t.Fatalf("Failed to create DocumentManager: %v", err)
+		}
+		defer dm.Close()
+		ctx.SetDocumentManager(dm)
+		doc := dm.OpenDocument("test.html", content, 1)
+		ctx.AddDocument("test.html", doc)
+
+		ctx.AddAttributes("my-element", map[string]*M.Attribute{
+			"variant": {
+				FullyQualified: M.FullyQualified{Name: "variant"},
+				Type:           &M.Type{Text: `"primary" | "secondary" | CustomVariant`},
+			},
+		})
+
+		diagnostics := publishDiagnostics.AnalyzeAttributeValueDiagnosticsForTest(ctx, doc)
+
+		if len(diagnostics) != 0 {
+			t.Errorf("Expected no diagnostics when union has unresolvable type reference, got %d:", len(diagnostics))
+			for i, diag := range diagnostics {
+				t.Errorf("  Diagnostic %d: %s", i, diag.Message)
+			}
+		}
+	})
+
+	t.Run("skips validation when union contains string primitive", func(t *testing.T) {
+		ctx := testhelpers.NewMockServerContext()
+		content := `<my-element mode="anything">Content</my-element>`
+
+		dm, err := document.NewDocumentManager()
+		if err != nil {
+			t.Fatalf("Failed to create DocumentManager: %v", err)
+		}
+		defer dm.Close()
+		ctx.SetDocumentManager(dm)
+		doc := dm.OpenDocument("test.html", content, 1)
+		ctx.AddDocument("test.html", doc)
+
+		ctx.AddAttributes("my-element", map[string]*M.Attribute{
+			"mode": {
+				FullyQualified: M.FullyQualified{Name: "mode"},
+				Type:           &M.Type{Text: `"auto" | string`},
+			},
+		})
+
+		diagnostics := publishDiagnostics.AnalyzeAttributeValueDiagnosticsForTest(ctx, doc)
+
+		if len(diagnostics) != 0 {
+			t.Errorf("Expected no diagnostics when union contains 'string', got %d:", len(diagnostics))
+			for i, diag := range diagnostics {
+				t.Errorf("  Diagnostic %d: %s", i, diag.Message)
+			}
+		}
+	})
+
+	t.Run("union with undefined still validates literals", func(t *testing.T) {
+		ctx := testhelpers.NewMockServerContext()
+		content := `<my-element size="huge">Content</my-element>`
+
+		dm, err := document.NewDocumentManager()
+		if err != nil {
+			t.Fatalf("Failed to create DocumentManager: %v", err)
+		}
+		defer dm.Close()
+		ctx.SetDocumentManager(dm)
+		doc := dm.OpenDocument("test.html", content, 1)
+		ctx.AddDocument("test.html", doc)
+
+		ctx.AddAttributes("my-element", map[string]*M.Attribute{
+			"size": {
+				FullyQualified: M.FullyQualified{Name: "size"},
+				Type:           &M.Type{Text: `"small" | "medium" | "large" | undefined`},
+			},
+		})
+
+		diagnostics := publishDiagnostics.AnalyzeAttributeValueDiagnosticsForTest(ctx, doc)
+
+		if len(diagnostics) != 1 {
+			t.Errorf("Expected 1 diagnostic for invalid value 'huge', got %d:", len(diagnostics))
+			for i, diag := range diagnostics {
+				t.Errorf("  Diagnostic %d: %s", i, diag.Message)
+			}
+		}
+	})
+}
+
 func TestAttributeValueDiagnostics_LiteralTypes(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<my-element role="Primary" status="Inactive">Content</my-element>`
