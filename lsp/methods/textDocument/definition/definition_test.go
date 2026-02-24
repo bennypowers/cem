@@ -141,6 +141,86 @@ func TestDefinition(t *testing.T) {
 	}
 }
 
+func TestDefinition_AttributeOnHTMLElement(t *testing.T) {
+	// Regression test: go-to-definition on an attribute in HTML should work.
+	// Previously, FindElementAtPosition used the tag name range, so clicking
+	// on an attribute returned nil (position outside the tag name bytes).
+
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create document manager: %v", err)
+	}
+	defer dm.Close()
+
+	ctx := testhelpers.NewMockServerContext()
+	ctx.SetDocumentManager(dm)
+
+	// Register element definition
+	elementDef := &testhelpers.MockElementDefinition{
+		ModulePathStr:  "components/button-element.js",
+		PackageNameStr: "demo-project",
+	}
+	ctx.ElementDefsMap["button-element"] = elementDef
+	ctx.SetWorkspaceRoot("testdata/integration/definition-test-fixtures")
+
+	htmlContent := `<button-element variant="primary"></button-element>`
+
+	uri := "file:///test-attr.html"
+	doc := dm.OpenDocument(uri, htmlContent, 1)
+	ctx.AddDocument(uri, doc)
+
+	tests := []struct {
+		name     string
+		position protocol.Position
+		wantNil  bool
+		desc     string
+	}{
+		{
+			name:     "cursor on tag name",
+			position: protocol.Position{Line: 0, Character: 5},
+			wantNil:  false,
+			desc:     "definition on tag name should work",
+		},
+		{
+			name:     "cursor on attribute name",
+			position: protocol.Position{Line: 0, Character: 18},
+			wantNil:  false,
+			desc:     "definition on attribute name should work",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			params := &protocol.DefinitionParams{
+				TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+					TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+					Position:     tt.position,
+				},
+			}
+
+			result, err := definition.Definition(ctx, nil, params)
+			if err != nil {
+				t.Fatalf("Definition failed: %v", err)
+			}
+
+			if tt.wantNil {
+				if result != nil {
+					t.Errorf("expected nil, got %v", result)
+				}
+			} else {
+				if result == nil {
+					t.Fatalf("expected definition location, got nil: %s", tt.desc)
+				}
+				location, ok := result.(protocol.Location)
+				if !ok {
+					t.Fatalf("expected protocol.Location, got %T", result)
+				}
+				t.Logf("definition URI: %s at %d:%d", location.URI, location.Range.Start.Line, location.Range.Start.Character)
+			}
+		})
+	}
+}
+
 // TestResolveSourcePath tests the path resolution logic specifically
 func TestResolveSourcePath(t *testing.T) {
 	tests := []struct {

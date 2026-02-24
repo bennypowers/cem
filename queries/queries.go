@@ -211,7 +211,7 @@ func AllQueries() QuerySelector {
 func LSPQueries() QuerySelector {
 	return QuerySelector{
 		HTML:       []string{"customElements", "completionContext", "scriptTags", "headElements", "attributes"},
-		TypeScript: []string{"htmlTemplates", "completionContext", "imports", "classes", "exports", "importAttributes", "definedElements"},
+		TypeScript: []string{"htmlTemplates", "completionContext", "imports", "classes", "classMemberDeclaration", "exports", "importAttributes", "definedElements"},
 		CSS:        []string{},
 		JSDoc:      []string{},
 		TSX:        []string{"customElements", "completionContext"}, // TSX queries for custom element detection
