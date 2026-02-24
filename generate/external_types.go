@@ -146,6 +146,12 @@ func (r *ExternalTypeResolver) ResolveType(importSpec, typeName string) (definit
 	return "", "", false
 }
 
+// isQuoted checks if a source partial is a quoted string
+func isQuoted(str string) bool {
+	return (strings.HasPrefix(str, "'") && strings.HasSuffix(str, "'")) ||
+		(strings.HasPrefix(str, "\"") && strings.HasSuffix(str, "\""))
+}
+
 // extractPackageName extracts the npm package name from an import specifier.
 // "@scope/pkg/sub/path" → "@scope/pkg"
 // "pkg/sub/path" → "pkg"
@@ -334,8 +340,8 @@ func (r *ExternalTypeResolver) tryConventionalPaths(pkgDir, basePath string) str
 // Returns empty string if the .d.ts file doesn't exist.
 func (r *ExternalTypeResolver) toDTSPath(filePath string) string {
 	var base string
-	if strings.HasSuffix(filePath, ".d.ts") {
-		base = strings.TrimSuffix(filePath, ".d.ts")
+	if before, ok := strings.CutSuffix(filePath, ".d.ts"); ok {
+		base = before
 	} else {
 		ext := filepath.Ext(filePath)
 		base = strings.TrimSuffix(filePath, ext)
@@ -351,8 +357,8 @@ func (r *ExternalTypeResolver) toDTSPath(filePath string) string {
 // Returns empty string if the .js file doesn't exist.
 func (r *ExternalTypeResolver) toJSPath(filePath string) string {
 	var base, ext string
-	if strings.HasSuffix(filePath, ".d.ts") {
-		base = strings.TrimSuffix(filePath, ".d.ts")
+	if before, ok := strings.CutSuffix(filePath, ".d.ts"); ok {
+		base = before
 	} else {
 		ext = filepath.Ext(filePath)
 		base = strings.TrimSuffix(filePath, ext)
@@ -506,9 +512,8 @@ func resolveTextParts(def string, aliases map[string]aliasDefinition, visited ma
 
 	// Handle unions: resolve each part independently
 	if strings.Contains(def, "|") {
-		parts := strings.Split(def, "|")
-		resolvedParts := make([]string, 0, len(parts))
-		for _, part := range parts {
+		var resolvedParts []string
+		for part := range strings.SplitSeq(def, "|") {
 			part = strings.TrimSpace(part)
 			if part != "" {
 				resolvedParts = append(resolvedParts, resolveTextParts(part, aliases, visited))
@@ -518,8 +523,7 @@ func resolveTextParts(def string, aliases map[string]aliasDefinition, visited ma
 	}
 
 	// Quoted string literal — already a scalar value
-	if (strings.HasPrefix(def, "'") && strings.HasSuffix(def, "'")) ||
-		(strings.HasPrefix(def, "\"") && strings.HasSuffix(def, "\"")) {
+	if isQuoted(def) {
 		return def
 	}
 
@@ -613,8 +617,7 @@ func validateExpressionValues(resolved string) (values []string, bail string) {
 		}
 
 		// Quoted string literal — unquote and add
-		if (strings.HasPrefix(part, "'") && strings.HasSuffix(part, "'")) ||
-			(strings.HasPrefix(part, "\"") && strings.HasSuffix(part, "\"")) {
+		if isQuoted(part) {
 			values = append(values, part[1:len(part)-1])
 			continue
 		}
