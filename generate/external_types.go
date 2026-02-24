@@ -105,7 +105,7 @@ func (r *ExternalTypeResolver) ResolveType(importSpec, typeName string) (definit
 		if cached, ok := r.cache.Load(wsKey); ok {
 			aliases = cached.(map[string]string)
 		} else {
-			aliases = r.resolveFromWorkspaceSibling(pkgName)
+			aliases = resolveWithinFile(r.resolveFromWorkspaceSibling(pkgName))
 			if aliases != nil {
 				r.cache.Store(wsKey, aliases)
 			}
@@ -114,7 +114,7 @@ func (r *ExternalTypeResolver) ResolveType(importSpec, typeName string) (definit
 
 	// Fall back to node_modules
 	if aliases == nil {
-		aliases = r.resolveFromNodeModules(importSpec)
+		aliases = resolveWithinFile(r.resolveFromNodeModules(importSpec))
 	}
 
 	if aliases == nil {
@@ -409,4 +409,163 @@ func parseJSDocTypedefs(content []byte) map[string]string {
 		}
 	}
 	return aliases
+}
+
+// resolveWithinFile resolves type aliases against each other within a single
+// file's alias map. This expands compound definitions like
+// Placement = Side | AlignedPlacement into their fully-resolved scalar forms.
+func resolveWithinFile(aliases map[string]string) map[string]string {
+	if aliases == nil {
+		return nil
+	}
+	resolved := make(map[string]string, len(aliases))
+	for name, def := range aliases {
+		resolved[name] = resolveDefinitionParts(def, aliases, make(map[string]bool))
+	}
+	return resolved
+}
+
+// resolveDefinitionParts recursively resolves a type definition string using
+// sibling aliases from the same file. Handles unions by resolving each part.
+func resolveDefinitionParts(def string, aliases map[string]string, visited map[string]bool) string {
+	def = strings.TrimSpace(def)
+	if def == "" {
+		return def
+	}
+
+	// Template literal type — must be checked before unions because template
+	// literals can contain | inside ${} expressions (e.g., `${Side}-${'a' | 'b'}`)
+	if strings.HasPrefix(def, "`") && strings.HasSuffix(def, "`") {
+		return expandTemplateLiteral(def, aliases, visited)
+	}
+
+	// Handle unions: resolve each part independently
+	if strings.Contains(def, "|") {
+		parts := strings.Split(def, "|")
+		resolvedParts := make([]string, 0, len(parts))
+		for _, part := range parts {
+			part = strings.TrimSpace(part)
+			if part != "" {
+				resolvedParts = append(resolvedParts, resolveDefinitionParts(part, aliases, visited))
+			}
+		}
+		return strings.Join(resolvedParts, " | ")
+	}
+
+	// Quoted string literal — already a scalar value
+	if (strings.HasPrefix(def, "'") && strings.HasSuffix(def, "'")) ||
+		(strings.HasPrefix(def, "\"") && strings.HasSuffix(def, "\"")) {
+		return def
+	}
+
+	// Primitive types — no resolution needed
+	if primitiveTypes[def] {
+		return def
+	}
+
+	// Prevent circular resolution
+	if visited[def] {
+		return def
+	}
+
+	// Try to resolve as a sibling alias — unmark after subtree resolves
+	// so the same alias can be referenced from multiple branches
+	// (e.g., Side used in both a union and a template literal)
+	if resolved, ok := aliases[def]; ok {
+		visited[def] = true
+		result := resolveDefinitionParts(resolved, aliases, visited)
+		delete(visited, def)
+		return result
+	}
+
+	return def
+}
+
+// expandTemplateLiteral expands a TypeScript template literal type into a
+// union of concrete string literals by computing the cross-product of all
+// ${} expression values.
+//
+// Example: `${Side}-${Alignment}` where Side='top'|'right' and Alignment='start'|'end'
+// → 'top-start' | 'top-end' | 'right-start' | 'right-end'
+func expandTemplateLiteral(template string, aliases map[string]string, visited map[string]bool) string {
+	// Strip backticks
+	inner := template[1 : len(template)-1]
+
+	// Parse into segments: alternating static text and ${} expressions.
+	// Start with a single empty combination and build up by appending each segment.
+	combinations := []string{""}
+
+	for len(inner) > 0 {
+		exprStart := strings.Index(inner, "${")
+		if exprStart < 0 {
+			// Remaining text is all static
+			for i := range combinations {
+				combinations[i] += inner
+			}
+			break
+		}
+
+		// Append static text before the expression
+		if exprStart > 0 {
+			staticText := inner[:exprStart]
+			for i := range combinations {
+				combinations[i] += staticText
+			}
+		}
+
+		// Find the matching closing brace, accounting for nested braces
+		inner = inner[exprStart+2:] // skip "${"
+		braceDepth := 1
+		exprEnd := -1
+		for i, ch := range inner {
+			if ch == '{' {
+				braceDepth++
+			} else if ch == '}' {
+				braceDepth--
+				if braceDepth == 0 {
+					exprEnd = i
+					break
+				}
+			}
+		}
+		if exprEnd < 0 {
+			// Malformed template — return as-is
+			return template
+		}
+
+		exprText := inner[:exprEnd]
+		inner = inner[exprEnd+1:]
+
+		// Recursively resolve the expression to get its possible values
+		resolved := resolveDefinitionParts(exprText, aliases, visited)
+
+		// Split the resolved expression into individual values
+		var values []string
+		for part := range strings.SplitSeq(resolved, "|") {
+			part = strings.TrimSpace(part)
+			part = strings.Trim(part, "'\"")
+			if part != "" {
+				values = append(values, part)
+			}
+		}
+		if len(values) == 0 {
+			return template // Can't expand
+		}
+
+		// Cross-product: each existing combination × each value
+		expanded := make([]string, 0, len(combinations)*len(values))
+		for _, combo := range combinations {
+			for _, val := range values {
+				expanded = append(expanded, combo+val)
+			}
+		}
+		combinations = expanded
+	}
+
+	// Format as quoted union
+	quoted := make([]string, len(combinations))
+	for i, combo := range combinations {
+		quoted[i] = "'" + combo + "'"
+	}
+	return strings.Join(quoted, " | ")
 }

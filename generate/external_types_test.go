@@ -288,6 +288,192 @@ func TestResolveType_CacheHit(t *testing.T) {
 	}
 }
 
+func TestResolveType_WithinFileAliasResolution(t *testing.T) {
+	// Simulates the @patternfly/pfe-core pattern where Placement
+	// references Side and AlignedPlacement defined in the same file
+	dir := t.TempDir()
+	pkgDir := filepath.Join(dir, "node_modules", "@pfe", "core")
+	if err := os.MkdirAll(pkgDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(pkgDir, "package.json"), []byte(`{
+		"name": "@pfe/core",
+		"types": "index.d.ts"
+	}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(pkgDir, "index.d.ts"), []byte(`
+type Side = 'top' | 'right' | 'bottom' | 'left';
+type AlignedPlacement = 'top-start' | 'top-end' | 'right-start' | 'right-end' | 'bottom-start' | 'bottom-end' | 'left-start' | 'left-end';
+export type Placement = Side | AlignedPlacement;
+`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	qm, err := Q.NewQueryManager(Q.GenerateQueries())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer qm.Close()
+
+	resolver := &ExternalTypeResolver{
+		projectRoot:  dir,
+		queryManager: qm,
+	}
+
+	def, pkg, found := resolver.ResolveType("@pfe/core", "Placement")
+	if !found {
+		t.Fatal("expected to find Placement")
+	}
+	if pkg != "@pfe/core" {
+		t.Errorf("package = %q, want %q", pkg, "@pfe/core")
+	}
+
+	// Placement should be fully resolved to scalar string literals,
+	// not left as "Side | AlignedPlacement"
+	expected := "'top' | 'right' | 'bottom' | 'left' | 'top-start' | 'top-end' | 'right-start' | 'right-end' | 'bottom-start' | 'bottom-end' | 'left-start' | 'left-end'"
+	if def != expected {
+		t.Errorf("definition = %q,\n      want %q", def, expected)
+	}
+}
+
+func TestResolveType_NestedAliasChain(t *testing.T) {
+	// Tests nested alias chains: ButtonType → SubmitType | ResetType | 'button'
+	dir := t.TempDir()
+	pkgDir := filepath.Join(dir, "node_modules", "my-types")
+	if err := os.MkdirAll(pkgDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(pkgDir, "package.json"), []byte(`{
+		"name": "my-types",
+		"types": "index.d.ts"
+	}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(pkgDir, "index.d.ts"), []byte(`
+type SubmitType = 'submit';
+type ResetType = 'reset';
+export type ButtonType = SubmitType | ResetType | 'button';
+`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	qm, err := Q.NewQueryManager(Q.GenerateQueries())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer qm.Close()
+
+	resolver := &ExternalTypeResolver{
+		projectRoot:  dir,
+		queryManager: qm,
+	}
+
+	def, _, found := resolver.ResolveType("my-types", "ButtonType")
+	if !found {
+		t.Fatal("expected to find ButtonType")
+	}
+
+	expected := "'submit' | 'reset' | 'button'"
+	if def != expected {
+		t.Errorf("definition = %q, want %q", def, expected)
+	}
+}
+
+func TestResolveType_TemplateLiteralExpansion(t *testing.T) {
+	// Simulates the real @floating-ui/utils pattern where AlignedPlacement
+	// is a template literal type referencing Side and Alignment
+	dir := t.TempDir()
+	pkgDir := filepath.Join(dir, "node_modules", "@float", "utils")
+	if err := os.MkdirAll(pkgDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(pkgDir, "package.json"), []byte(`{
+		"name": "@float/utils",
+		"types": "index.d.ts"
+	}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(pkgDir, "index.d.ts"), []byte(""+
+		"type Side = 'top' | 'right' | 'bottom' | 'left';\n"+
+		"type Alignment = 'start' | 'end';\n"+
+		"type AlignedPlacement = `${Side}-${Alignment}`;\n"+
+		"export type Placement = Side | AlignedPlacement;\n",
+	), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	qm, err := Q.NewQueryManager(Q.GenerateQueries())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer qm.Close()
+
+	resolver := &ExternalTypeResolver{
+		projectRoot:  dir,
+		queryManager: qm,
+	}
+
+	def, _, found := resolver.ResolveType("@float/utils", "Placement")
+	if !found {
+		t.Fatal("expected to find Placement")
+	}
+
+	expected := "'top' | 'right' | 'bottom' | 'left' | 'top-start' | 'top-end' | 'right-start' | 'right-end' | 'bottom-start' | 'bottom-end' | 'left-start' | 'left-end'"
+	if def != expected {
+		t.Errorf("definition =\n  %q,\nwant\n  %q", def, expected)
+	}
+}
+
+func TestResolveType_TemplateLiteralSimple(t *testing.T) {
+	// Template literal with inline union (no alias reference)
+	dir := t.TempDir()
+	pkgDir := filepath.Join(dir, "node_modules", "my-ui")
+	if err := os.MkdirAll(pkgDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(pkgDir, "package.json"), []byte(`{
+		"name": "my-ui",
+		"types": "index.d.ts"
+	}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(pkgDir, "index.d.ts"), []byte(
+		"export type PrefixedSize = `size-${'sm' | 'md' | 'lg'}`;\n",
+	), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	qm, err := Q.NewQueryManager(Q.GenerateQueries())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer qm.Close()
+
+	resolver := &ExternalTypeResolver{
+		projectRoot:  dir,
+		queryManager: qm,
+	}
+
+	def, _, found := resolver.ResolveType("my-ui", "PrefixedSize")
+	if !found {
+		t.Fatal("expected to find PrefixedSize")
+	}
+
+	expected := "'size-sm' | 'size-md' | 'size-lg'"
+	if def != expected {
+		t.Errorf("definition = %q, want %q", def, expected)
+	}
+}
+
 func TestResolveType_NotFound(t *testing.T) {
 	resolver := &ExternalTypeResolver{
 		projectRoot: t.TempDir(),

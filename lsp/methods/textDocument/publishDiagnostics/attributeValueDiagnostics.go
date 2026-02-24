@@ -92,10 +92,6 @@ func validateAttributeValue(attr *M.Attribute, match AttributeMatch) []protocol.
 		diagnostics = append(diagnostics, validateNumberAttribute(match)...)
 	case lowerTypeText == "string":
 		// String attributes are very permissive - almost any value is valid
-		// Generic string validation is not generalizable due to wide variety of use cases:
-		// - URLs, file paths, CSS selectors, arbitrary text, IDs, JSON strings, etc.
-		// - Each string attribute type would need domain-specific validation rules
-		// - Better to provide no validation than incorrect validation
 	case strings.Contains(typeText, "|"):
 		diagnostics = append(diagnostics, validateUnionType(typeText, match)...)
 	case isLiteralType(typeText):
@@ -211,10 +207,13 @@ func validateUnionType(typeText string, match AttributeMatch) []protocol.Diagnos
 	}
 
 	// Parse union options from type text (e.g., "red" | "green" | "blue")
-	options := parseUnionOptions(typeText)
-	if len(options) == 0 {
-		return diagnostics // Skip validation if we can't parse the union
+	parsed := parseUnionOptions(typeText)
+	if parsed.hasUnresolvable || len(parsed.literals) == 0 {
+		// Union contains unresolvable type references (e.g., Side | AlignedPlacement)
+		// or no concrete literals — skip validation to avoid false positives
+		return diagnostics
 	}
+	options := parsed.literals
 
 	// Check if the value matches any of the union options
 	if slices.Contains(options, match.Value) {
@@ -347,21 +346,37 @@ func isArrayType(typeText string) bool {
 	return strings.Contains(typeText, "[]") || strings.Contains(typeText, "array")
 }
 
-// parseUnionOptions extracts options from a union type string
-func parseUnionOptions(typeText string) []string {
-	var options []string
+// unionOptions holds parsed union type results
+type unionOptions struct {
+	literals        []string // Concrete string literal values (from quoted parts)
+	hasUnresolvable bool     // True if union contains type references we can't resolve
+}
 
-	// Split by | and clean up quotes and whitespace
-	parts := strings.SplitSeq(typeText, "|")
-	for part := range parts {
+// parseUnionOptions extracts concrete string literal options from a union type string.
+// Union parts that are quoted string literals become valid options.
+// Parts that are undefined/null are ignored (they indicate optionality).
+// Parts that are unresolvable type identifiers or permissive primitives (string, any)
+// set hasUnresolvable, causing validation to be skipped.
+func parseUnionOptions(typeText string) unionOptions {
+	result := unionOptions{}
+
+	for part := range strings.SplitSeq(typeText, "|") {
 		part = strings.TrimSpace(part)
-		part = strings.Trim(part, `"'`) // Remove quotes
-		if part != "" {
-			options = append(options, part)
+		if part == "" {
+			continue
+		}
+
+		if isLiteralType(part) {
+			result.literals = append(result.literals, strings.Trim(part, `"'`))
+		} else if part == "undefined" || part == "null" {
+			continue
+		} else {
+			// Unquoted identifier that wasn't resolved upstream
+			result.hasUnresolvable = true
 		}
 	}
 
-	return options
+	return result
 }
 
 // findClosestUnionOption finds the closest matching option using Levenshtein distance
