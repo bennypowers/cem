@@ -78,19 +78,43 @@ explicitly.
 
 ## Documenting Slots and Parts
 
-`cem` automatically detects `<slot>` elements and `part` attributes in your 
+`cem` automatically detects `<slot>` elements and `part` attributes in your
 template. You can add descriptions using JSDoc tags or inline HTML comments.
 
-### HTML Comment Documentation
+{{< tip >}}
+Prefer inline HTML comments over JSDoc `@slot` and `@csspart` tags for documenting slots and parts. HTML comments stay co-located with the markup they describe, making them easier to maintain.
+{{< /tip >}}
 
-Use plain comments for descriptions:
+### Plain Comments
+
+A plain HTML comment immediately before an element is the simplest way to add a
+description. This works for both slots and parts:
 
 ```html
-<!-- This is the **default** `slot`. -->
+<!-- Button label content. SHOULD contain text. -->
 <slot></slot>
+
+<!-- The native button element -->
+<button part="button">
 ```
 
-Or use YAML for detailed metadata:
+### Single-Key YAML
+
+When you need a short `summary` label (shown in tooling previews) rather than a
+full description, use a single-key YAML comment:
+
+```html
+<!-- summary: Button label content -->
+<slot></slot>
+
+<!-- summary: The native button element -->
+<button part="button">
+```
+
+### YAML Metadata
+
+When you need separate `summary` and `description` fields, or want to mark
+something as `deprecated`, use multi-key YAML syntax inside the comment:
 
 ```html
 <!--
@@ -103,7 +127,10 @@ Or use YAML for detailed metadata:
 <slot></slot>
 ```
 
-When an element has both a slot and part attribute:
+### Combined Slot and Part
+
+When the same element has both a `slot` and `part` attribute and you want
+separate documentation for each, use nested `slot:` and `part:` keys:
 
 ```html
 <!-- slot:
@@ -119,6 +146,10 @@ When including inline markdown <code>\`code\`</code> in lit-html templates, esca
 {{</tip>}}
 
 ## Documenting CSS Custom Properties
+
+{{< tip >}}
+Prefer documenting CSS custom properties in your CSS sources rather than with JSDoc `@cssprop` tags on the class. CSS comments keep the documentation co-located with the property definitions.
+{{< /tip >}}
 
 Document CSS variables using JSDoc-style comments in your CSS:
 
