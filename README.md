@@ -11,6 +11,8 @@ integration. It can also query that manifest for information about your package
 npm install --save-dev @pwrs/cem
 ```
 
+On Gentoo Linux, enable the `bennypowers` overlay and `emerge dev-util/cem`.
+
 For more options, see [Installation docs][installationdocs]
 
 ## Features
