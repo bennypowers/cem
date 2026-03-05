@@ -31,6 +31,16 @@ go install bennypowers.dev/cem@latest
 
 This installs the `cem` binary to your `$GOPATH/bin` directory.
 
+### Gentoo Linux
+
+Enable the `bennypowers` overlay, then install:
+
+```sh
+eselect repository enable bennypowers
+emaint sync -r bennypowers
+emerge dev-util/cem
+```
+
 ### Build from Source
 
 Clone the repository and build locally:
