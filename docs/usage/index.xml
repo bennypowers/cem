@@ -113,7 +113,7 @@ comments—it becomes the foundation for your entire development experience.&lt;
  &lt;/div>
  &lt;/template>
 
- &lt;strong>TL;DR&lt;/strong>: Use JSDoc tags (&lt;code>@slot&lt;/code>, &lt;code>@csspart&lt;/code>, &lt;code>@cssprop&lt;/code>, &lt;code>@fires&lt;/code>, &lt;code>@attr&lt;/code>) to document your components. These power autocomplete, validation, AI assistants, and interactive controls. See examples below.
+ &lt;strong>TL;DR&lt;/strong>: Use inline HTML comments for slots and parts, and CSS-source comments for custom properties — they stay co-located with the markup and styles they describe. JSDoc tags (&lt;code>@slot&lt;/code>, &lt;code>@csspart&lt;/code>, &lt;code>@cssprop&lt;/code>, &lt;code>@fires&lt;/code>, &lt;code>@attr&lt;/code>) are an alternative, and remain the preferred choice for &lt;code>@fires&lt;/code> and &lt;code>@attr&lt;/code>. See examples below.
 &lt;/info-callout>
 
 &lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
