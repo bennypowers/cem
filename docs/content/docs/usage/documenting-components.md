@@ -4,7 +4,7 @@ weight: 25
 ---
 
 {{< tip >}}
-**TL;DR**: Use JSDoc tags (`@slot`, `@csspart`, `@cssprop`, `@fires`, `@attr`) to document your components. These power autocomplete, validation, AI assistants, and interactive controls. See examples below.
+**TL;DR**: Use inline HTML comments for slots and parts, and CSS-source comments for custom properties — they stay co-located with the markup and styles they describe. JSDoc tags (`@slot`, `@csspart`, `@cssprop`, `@fires`, `@attr`) are an alternative, and remain the preferred choice for `@fires` and `@attr`. See examples below.
 {{< /tip >}}
 
 Use JSDoc comments to document your custom elements for the [manifest][workflow]. The manifest powers [LSP features][lsp] like autocomplete and validation, enables [AI assistants][mcp] to understand your components, and drives the dev server's [interactive controls][knobs].
