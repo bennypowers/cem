@@ -136,8 +136,7 @@ separate documentation for each, use nested `slot:` and `part:` keys:
 <!-- slot:
        summary: The `info` slot
      part:
-       summary: The `info-part` part
--->
+       summary: The `info-part` part -->
 <slot name="info" part="info-part"></slot>
 ```
 
