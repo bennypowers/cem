@@ -61,6 +61,7 @@ export class CemHealthPanel extends CemElement {
   }
 
   disconnectedCallback() {
+    super.disconnectedCallback?.();
     this.#abortController?.abort();
   }
 

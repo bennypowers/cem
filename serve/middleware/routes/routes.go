@@ -429,11 +429,30 @@ func filterHealthByComponent(result *health.HealthResult, component string) *hea
 		modules = []health.ModuleReport{}
 	}
 
+	// Scope recommendations to the filtered component
+	var recs []string
+	for _, rec := range result.Recommendations {
+		for _, mod := range modules {
+			for _, decl := range mod.Declarations {
+				name := decl.TagName
+				if name == "" {
+					name = decl.Name
+				}
+				if strings.Contains(rec, name+":") {
+					recs = append(recs, rec)
+				}
+			}
+		}
+	}
+	if recs == nil {
+		recs = []string{}
+	}
+
 	return &health.HealthResult{
 		Modules:         modules,
 		OverallScore:    overallScore,
 		OverallMax:      overallMax,
-		Recommendations: result.Recommendations,
+		Recommendations: recs,
 	}
 }
 

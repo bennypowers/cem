@@ -89,7 +89,6 @@ header:first-child,
 #title {
   display: var(--_has-title, flex);
   align-items: center;
-  justify-content: space-between;
   gap: var(--pf-t--global--spacer--sm);
   flex-wrap: wrap;
 }
@@ -118,9 +117,10 @@ header:first-child,
   padding-block-start: var(--pf-v6-c-card--first-child--PaddingBlockStart);
 }
 
-/* Health badge in title slot - match heading block-start padding */
+/* Health badge in title slot - push to end, match heading block-start offset */
 #title ::slotted(pf-v6-popover) {
-  padding-block-start: var(--pf-v6-c-card--first-child--PaddingBlockStart);
+  margin-inline-start: auto;
+  margin-block-start: var(--pf-v6-c-card--first-child--PaddingBlockStart);
 }
 
 /* Style summary span to display inline with heading */
