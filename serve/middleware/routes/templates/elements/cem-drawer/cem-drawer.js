@@ -31,6 +31,7 @@ export class CemServeDrawer extends HTMLElement {
   #isDragging = false;
   #startY = 0;
   #startHeight = 0;
+  #maxHeight = null;
   #resizeDebounceTimer = null;
   #initialized = false;
   #rafId = null;
@@ -42,6 +43,28 @@ export class CemServeDrawer extends HTMLElement {
 
   set open(value) {
     this.toggleAttribute('open', !!value);
+  }
+
+  /**
+   * Returns the maximum safe height for the drawer content in pixels.
+   *
+   * The toggle button must always remain visible below the masthead so the
+   * user can close or resize the drawer at any time.
+   *
+   * Mathematically, toggle_top = viewport - toggleHeight - contentHeight
+   * (the description section above the drawer cancels out), so:
+   *   maxContent = viewport - mastheadHeight - toggleHeight - handleHeight
+   *
+   * Using offsetHeight (instead of getBoundingClientRect) keeps this
+   * compatible with test environments where layout is not computed.
+   */
+  #getMaxHeight() {
+    const toggle = this.#$('toggle');
+    const handle = this.#$('resize-handle');
+    const mastheadHeight = 56;
+    const toggleHeight = toggle?.offsetHeight ?? 32;
+    const handleHeight = handle?.offsetHeight ?? 4;
+    return Math.max(100, window.innerHeight - mastheadHeight - toggleHeight - handleHeight);
   }
 
   connectedCallback() {
@@ -58,6 +81,9 @@ export class CemServeDrawer extends HTMLElement {
 
     // Apply initial attribute states that may have been set before shadowRoot was ready
     this.#applyInitialState();
+
+    // Clamp drawer height when the viewport shrinks
+    window.addEventListener('resize', this.#handleWindowResize);
 
     // Set up toggle button
     const toggleButton = this.#$('toggle');
@@ -89,17 +115,25 @@ export class CemServeDrawer extends HTMLElement {
 
       if (content) {
         let height = parseInt(this.getAttribute('drawer-height') || '400', 10);
-        let wasInvalid = false;
+        let needsPersist = false;
         // If height is 0 or invalid, reset to default
         if (height <= 0 || isNaN(height)) {
           height = 400;
-          wasInvalid = true;
-          // Update the attribute to reflect the reset
-          this.setAttribute('drawer-height', '400');
+          needsPersist = true;
+        }
+        // Clamp to the maximum safe height so the toggle stays below the masthead.
+        // This handles persisted heights that exceed the current viewport.
+        const maxHeight = this.#getMaxHeight();
+        if (height > maxHeight) {
+          height = maxHeight;
+          needsPersist = true;
+        }
+        if (needsPersist) {
+          this.setAttribute('drawer-height', String(height));
         }
         content.style.height = `${height}px`;
-        // Dispatch resize event if we corrected an invalid height so parent can persist it
-        if (wasInvalid) {
+        // Dispatch resize event if we corrected the height so the parent can persist it
+        if (needsPersist) {
           this.dispatchEvent(new CemDrawerResizeEvent(height));
         }
       }
@@ -115,6 +149,8 @@ export class CemServeDrawer extends HTMLElement {
     this.#startY = e.clientY;
     const content = this.#$('content');
     this.#startHeight = content.offsetHeight;
+    // Capture max height once at drag start so the toggle's position is stable
+    this.#maxHeight = this.#getMaxHeight();
 
     // Disable transitions during drag
     content.classList.remove('transitions-enabled');
@@ -132,10 +168,7 @@ export class CemServeDrawer extends HTMLElement {
     if (!this.#isDragging) return;
 
     const deltaY = this.#startY - e.clientY; // Inverted because drawer grows upward
-    // Allow resizing from 100px minimum up to just below the header (56px)
-    const headerHeight = 56; // --cem-dev-server-header-height
-    const maxHeight = window.innerHeight - headerHeight;
-    const newHeight = Math.max(100, Math.min(maxHeight, this.#startHeight + deltaY));
+    const newHeight = Math.max(100, Math.min(this.#maxHeight, this.#startHeight + deltaY));
 
     // Store pending height and schedule RAF update
     this.#pendingHeight = newHeight;
@@ -179,8 +212,7 @@ export class CemServeDrawer extends HTMLElement {
       }
       case 'End': {
         e.preventDefault();
-        const headerHeight = 56;
-        newHeight = window.innerHeight - headerHeight; // Maximum height
+        newHeight = this.#getMaxHeight();
         break;
       }
       default:
@@ -188,9 +220,7 @@ export class CemServeDrawer extends HTMLElement {
     }
 
     // Clamp to min/max
-    const headerHeight = 56;
-    const maxHeight = window.innerHeight - headerHeight;
-    newHeight = Math.max(100, Math.min(maxHeight, newHeight));
+    newHeight = Math.max(100, Math.min(this.#getMaxHeight(), newHeight));
 
     content.style.height = `${newHeight}px`;
     this.#updateAriaValueNow(newHeight);
@@ -201,11 +231,7 @@ export class CemServeDrawer extends HTMLElement {
     const resizeHandle = this.#$('resize-handle');
     if (resizeHandle) {
       resizeHandle.setAttribute('aria-valuenow', Math.round(height));
-
-      // Update max based on window size
-      const headerHeight = 56;
-      const maxHeight = window.innerHeight - headerHeight;
-      resizeHandle.setAttribute('aria-valuemax', Math.round(maxHeight));
+      resizeHandle.setAttribute('aria-valuemax', Math.round(this.#getMaxHeight()));
     }
   }
 
@@ -235,6 +261,23 @@ export class CemServeDrawer extends HTMLElement {
     document.removeEventListener('mouseup', this.#stopResize);
   }
 
+  #handleWindowResize = () => {
+    if (!this.open) return;
+    const content = this.#$('content');
+    if (!content) return;
+    const currentHeight = parseInt(content.style.height) || 0;
+    const maxHeight = this.#getMaxHeight();
+    if (currentHeight > maxHeight) {
+      content.style.height = `${maxHeight}px`;
+      this.setAttribute('drawer-height', String(maxHeight));
+      this.dispatchEvent(new CemDrawerResizeEvent(maxHeight));
+    }
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener('resize', this.#handleWindowResize);
+  }
+
   attributeChangedCallback(name, oldValue, newValue) {
     // Guard against calling before shadowRoot is populated
     if (!this.shadowRoot?.firstChild) {
@@ -250,17 +293,24 @@ export class CemServeDrawer extends HTMLElement {
         if (open) {
           // Restore height from drawer-height attribute (default 400 if not set or 0)
           let height = parseInt(this.getAttribute('drawer-height') || '400', 10);
-          let wasInvalid = false;
+          let needsPersist = false;
           // If height is 0 or invalid, reset to default
           if (height <= 0 || isNaN(height)) {
             height = 400;
-            wasInvalid = true;
-            // Update the attribute to reflect the reset
-            this.setAttribute('drawer-height', '400');
+            needsPersist = true;
+          }
+          // Clamp to the maximum safe height so the toggle stays below the masthead
+          const maxHeight = this.#getMaxHeight();
+          if (height > maxHeight) {
+            height = maxHeight;
+            needsPersist = true;
+          }
+          if (needsPersist) {
+            this.setAttribute('drawer-height', String(height));
           }
           content.style.height = `${height}px`;
-          // Dispatch resize event if we corrected an invalid height so parent can persist it
-          if (wasInvalid) {
+          // Dispatch resize event if we corrected the height so parent can persist it
+          if (needsPersist) {
             this.dispatchEvent(new CemDrawerResizeEvent(height));
           }
         } else {
