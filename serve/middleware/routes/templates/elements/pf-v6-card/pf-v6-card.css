@@ -87,7 +87,11 @@ header:first-child,
 }
 
 #title {
-  display: var(--_has-title, block);
+  display: var(--_has-title, flex);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pf-t--global--spacer--sm);
+  flex-wrap: wrap;
 }
 
 #body {
@@ -111,6 +115,11 @@ header:first-child,
   font-size: var(--pf-v6-c-card__title-text--FontSize);
   font-weight: var(--pf-v6-c-card__title-text--FontWeight);
   line-height: var(--pf-v6-c-card__title-text--LineHeight);
+  padding-block-start: var(--pf-v6-c-card--first-child--PaddingBlockStart);
+}
+
+/* Health badge in title slot - match heading block-start padding */
+#title ::slotted(pf-v6-popover) {
   padding-block-start: var(--pf-v6-c-card--first-child--PaddingBlockStart);
 }
 

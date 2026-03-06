@@ -178,6 +178,10 @@
               <div id="log-container"></div>
             </div>
           </pf-v6-tab>
+          <pf-v6-tab title="Health">
+            <cem-health-panel {{if .Attributes.PrimaryTagName}}component="{{.Attributes.PrimaryTagName}}"{{end}}>
+            </cem-health-panel>
+          </pf-v6-tab>
           <pf-v6-tab title="Events">
             <div class="events-wrapper">
               <pf-v6-toolbar sticky>

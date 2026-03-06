@@ -31,6 +31,7 @@ import (
 
 	"bennypowers.dev/cem/cmd/config"
 	G "bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/health"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware"
@@ -75,6 +76,7 @@ type Server struct {
 	pathResolver            *transform.PathResolver       // Cached path resolver (initialized once)
 	pathResolverSourceFiles []string                      // Files that pathResolver depends on (for hot-reload)
 	warnedSpecifiers        sync.Map                      // Deduplicates transitive dependency warnings (keyed by specifier)
+	healthCache             *health.HealthResult          // Cached health analysis result
 }
 
 // NewServer creates a new server with the given port

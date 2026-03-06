@@ -65,6 +65,11 @@ func Analyze(manifestPath string, options Options) (*HealthResult, error) {
 		return nil, fmt.Errorf("error reading manifest file: %w", err)
 	}
 
+	return AnalyzeBytes(manifestData, options)
+}
+
+// AnalyzeBytes performs health analysis on manifest JSON bytes.
+func AnalyzeBytes(manifestData []byte, options Options) (*HealthResult, error) {
 	var manifestJSON map[string]any
 	if err := json.Unmarshal(manifestData, &manifestJSON); err != nil {
 		return nil, fmt.Errorf("error parsing manifest: %w", err)
