@@ -27,6 +27,7 @@ const (
 	DiagnosticTypeMissingImport            DiagnosticType = "missing-import"
 	DiagnosticTypeAttributeSuggestion      DiagnosticType = "attribute-suggestion"
 	DiagnosticTypeAttributeValueSuggestion DiagnosticType = "attribute-value-suggestion"
+	DiagnosticTypeRequirementViolation     DiagnosticType = "requirement-violation"
 )
 
 // AutofixData contains the data needed for creating autofix code actions

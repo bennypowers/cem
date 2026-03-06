@@ -51,6 +51,10 @@ func PublishDiagnostics(ctx types.ServerContext, glspContext *glsp.Context, uri 
 	attributeValueDiagnostics := analyzeAttributeValueDiagnostics(ctx, doc)
 	diagnostics = append(diagnostics, attributeValueDiagnostics...)
 
+	// Analyze conditional requirement diagnostics from descriptions
+	requirementDiags := analyzeRequirementDiagnostics(ctx, doc)
+	diagnostics = append(diagnostics, requirementDiags...)
+
 	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d diagnostics for %s", len(diagnostics), uri)
 
 	// Publish diagnostics to the client
