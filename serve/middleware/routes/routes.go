@@ -573,9 +573,10 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 		}
 	}
 
-	// Prepare chrome data
-	demoTitle := entry.Demo.Description
-	if demoTitle == "" {
+	// Prepare chrome data - use prettified route for title, reserve description for footer
+	demoTitle := prettifyRoute(entry.LocalRoute)
+	if demoTitle == "Demo" {
+		// Fallback to filename for generic "Demo" routes
 		demoTitle = filepath.Base(entry.FilePath)
 	}
 
@@ -842,8 +843,8 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 	var suggestions []URLSuggestion
 	for route, entry := range routes {
 		distance := levenshteinDistance(requestedPath, route)
-		demoName := entry.Demo.Description
-		if demoName == "" {
+		demoName := prettifyRoute(entry.LocalRoute)
+		if demoName == "Demo" {
 			demoName = filepath.Base(entry.FilePath)
 		}
 		suggestions = append(suggestions, URLSuggestion{

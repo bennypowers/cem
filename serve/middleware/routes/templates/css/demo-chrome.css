@@ -248,6 +248,17 @@ cem-serve-listing {
   margin: 0;
 }
 
+.demo-link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pf-t--global--spacer--xs);
+}
+
+.demo-description {
+  font-size: var(--cem-dev-server-font-size-sm);
+  color: var(--cem-dev-server-text-secondary);
+}
+
 cem-serve-knobs {
   & .instance-tag {
     font-family: var(--cem-dev-server-font-family-mono);

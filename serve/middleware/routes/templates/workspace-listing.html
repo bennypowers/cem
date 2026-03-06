@@ -12,9 +12,14 @@
       <div class="element-description">{{.Description}}</div>
       {{end}}
       {{range .Demos}}
-      <pf-v6-button slot="footer" href="{{.URL}}" variant="link">
-        {{.Name}}
-      </pf-v6-button>
+      <div slot="footer" class="demo-link">
+        <pf-v6-button href="{{.URL}}" variant="link">
+          {{.Name}}
+        </pf-v6-button>
+        {{if .Description}}
+        <span class="demo-description">{{.Description}}</span>
+        {{end}}
+      </div>
       {{end}}
     </pf-v6-card>
     {{end}}
