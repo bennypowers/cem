@@ -228,10 +228,10 @@ describe('cem-drawer', () => {
     it('respects drawer-height attribute when opened', () => {
       const content = el.shadowRoot.getElementById('content');
 
-      el.setAttribute('drawer-height', '600');
+      el.setAttribute('drawer-height', '300');
       el.open = true;
 
-      expect(content.style.height).to.equal('600px');
+      expect(content.style.height).to.equal('300px');
     });
 
     it('sets height to 0px when closed', () => {
@@ -390,7 +390,9 @@ describe('cem-drawer', () => {
       resizeHandle.dispatchEvent(event);
 
       const height = parseInt(content.style.height, 10);
-      const maxHeight = window.innerHeight - 56;
+      const toggleHeight = el.shadowRoot.getElementById('toggle')?.offsetHeight ?? 32;
+      const handleHeight = el.shadowRoot.getElementById('resize-handle')?.offsetHeight ?? 4;
+      const maxHeight = Math.max(100, window.innerHeight - 56 - toggleHeight - handleHeight);
       expect(height).to.equal(maxHeight);
     });
 
@@ -405,7 +407,9 @@ describe('cem-drawer', () => {
     });
 
     it('enforces maximum height with keyboard', () => {
-      const maxHeight = window.innerHeight - 56;
+      const toggleHeight = el.shadowRoot.getElementById('toggle')?.offsetHeight ?? 32;
+      const handleHeight = el.shadowRoot.getElementById('resize-handle')?.offsetHeight ?? 4;
+      const maxHeight = Math.max(100, window.innerHeight - 56 - toggleHeight - handleHeight);
       content.style.height = `${maxHeight}px`;
 
       const event = new KeyboardEvent('keydown', { key: 'ArrowUp' });
@@ -470,8 +474,10 @@ describe('cem-drawer', () => {
       const event = new KeyboardEvent('keydown', { key: 'ArrowUp' });
       resizeHandle.dispatchEvent(event);
 
+      const toggleHeight = el.shadowRoot.getElementById('toggle')?.offsetHeight ?? 32;
+      const handleHeight = resizeHandle?.offsetHeight ?? 4;
       const ariaValueMax = parseInt(resizeHandle.getAttribute('aria-valuemax'), 10);
-      const expectedMax = window.innerHeight - 56;
+      const expectedMax = Math.max(100, window.innerHeight - 56 - toggleHeight - handleHeight);
       expect(ariaValueMax).to.equal(expectedMax);
     });
   });
@@ -605,7 +611,9 @@ describe('cem-drawer', () => {
       resizeHandle.dispatchEvent(new KeyboardEvent('keydown', { key: 'End' }));
 
       const height = parseInt(content.style.height, 10);
-      const maxHeight = window.innerHeight - 56;
+      const toggleHeight = el.shadowRoot.getElementById('toggle')?.offsetHeight ?? 32;
+      const handleHeight = resizeHandle?.offsetHeight ?? 4;
+      const maxHeight = Math.max(100, window.innerHeight - 56 - toggleHeight - handleHeight);
       expect(height).to.equal(maxHeight);
     });
 
