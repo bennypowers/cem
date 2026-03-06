@@ -146,6 +146,16 @@ func RenderElementListing(templates *TemplateRegistry, ctx middleware.DevServerC
 	})
 }
 
+// demoTitleFromRoute derives a display title from a DemoRouteEntry.
+// Uses the prettified route, falling back to the filename for generic "Demo" routes.
+func demoTitleFromRoute(entry *DemoRouteEntry) string {
+	title := prettifyRoute(entry.LocalRoute)
+	if title == "Demo" {
+		title = filepath.Base(entry.FilePath)
+	}
+	return title
+}
+
 // prettifyRoute converts a route path to a human-readable name
 // e.g., /elements/accordion/demo/ → "Demo"
 // e.g., /elements/accordion/demo/accents/ → "Accents"
