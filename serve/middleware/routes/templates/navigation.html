@@ -15,7 +15,8 @@
         <pf-v6-nav-list>
           {{range .Demos}}
           <pf-v6-nav-item>
-            <pf-v6-nav-link href="{{.URL}}">
+            <pf-v6-nav-link href="{{.URL}}"{{if .Description}}
+                            title="{{.Description}}"{{end}}>
               {{.Name}}
             </pf-v6-nav-link>
           </pf-v6-nav-item>
@@ -47,7 +48,8 @@
               <pf-v6-nav-list>
                 {{range .Demos}}
                 <pf-v6-nav-item>
-                  <pf-v6-nav-link href="{{.URL}}">
+                  <pf-v6-nav-link href="{{.URL}}"{{if .Description}}
+                                  title="{{.Description}}"{{end}}>
                     {{.Name}}
                   </pf-v6-nav-link>
                 </pf-v6-nav-item>

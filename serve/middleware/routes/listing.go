@@ -42,6 +42,7 @@ type ElementListing struct {
 // DemoListing represents a single demo
 type DemoListing struct {
 	Name        string
+	Description string // Demo description (for tooltips, subtitles, footer panel)
 	URL         string
 	Slug        string
 	PackageName string // Package name (for workspace mode, empty for single-package)
@@ -145,6 +146,16 @@ func RenderElementListing(templates *TemplateRegistry, ctx middleware.DevServerC
 	})
 }
 
+// demoTitleFromRoute derives a display title from a DemoRouteEntry.
+// Uses the prettified route, falling back to the filename for generic "Demo" routes.
+func demoTitleFromRoute(entry *DemoRouteEntry) string {
+	title := prettifyRoute(entry.LocalRoute)
+	if title == "Demo" {
+		title = filepath.Base(entry.FilePath)
+	}
+	return title
+}
+
 // prettifyRoute converts a route path to a human-readable name
 // e.g., /elements/accordion/demo/ → "Demo"
 // e.g., /elements/accordion/demo/accents/ → "Accents"
@@ -236,17 +247,12 @@ func extractElementListings(pkg *M.Package, packageName string) ([]ElementListin
 		// Extract local route from demo URL
 		localRoute := extractLocalRoute(demo.URL)
 
-		// Use description as name if available, otherwise prettify the route
-		name := demo.Description
-		if name == "" {
-			// Use the local route but make it prettier
-			// e.g., /elements/accordion/demo/ → "Demo"
-			// e.g., /elements/accordion/demo/accents/ → "Accents"
-			name = prettifyRoute(localRoute)
-		}
+		// Use prettified route for the display name
+		name := prettifyRoute(localRoute)
 
 		listing.Demos = append(listing.Demos, DemoListing{
 			Name:        name,
+			Description: demo.Description,
 			URL:         localRoute,
 			Slug:        slugify(name),
 			PackageName: packageName,
@@ -374,12 +380,10 @@ func buildPackageListingsFromRoutes(routes map[string]*DemoRouteEntry) ([]Packag
 					description = template.HTML(descriptionHTML)
 				}
 
-				demoName := route.Demo.Description
-				if demoName == "" {
-					demoName = prettifyRoute(route.LocalRoute)
-				}
+				demoName := prettifyRoute(route.LocalRoute)
 				demoListings = append(demoListings, DemoListing{
 					Name:        demoName,
+					Description: route.Demo.Description,
 					URL:         route.LocalRoute,
 					Slug:        slugify(demoName),
 					PackageName: route.PackageName,
