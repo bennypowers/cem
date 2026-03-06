@@ -87,7 +87,10 @@ header:first-child,
 }
 
 #title {
-  display: var(--_has-title, block);
+  display: var(--_has-title, flex);
+  align-items: center;
+  gap: var(--pf-t--global--spacer--sm);
+  flex-wrap: wrap;
 }
 
 #body {
@@ -112,6 +115,12 @@ header:first-child,
   font-weight: var(--pf-v6-c-card__title-text--FontWeight);
   line-height: var(--pf-v6-c-card__title-text--LineHeight);
   padding-block-start: var(--pf-v6-c-card--first-child--PaddingBlockStart);
+}
+
+/* Health badge in title slot - push to end, match heading block-start offset */
+#title ::slotted(pf-v6-popover) {
+  margin-inline-start: auto;
+  margin-block-start: var(--pf-v6-c-card--first-child--PaddingBlockStart);
 }
 
 /* Style summary span to display inline with heading */

@@ -29,6 +29,7 @@ import (
 	"sort"
 	"strings"
 
+	"bennypowers.dev/cem/health"
 	V "bennypowers.dev/cem/internal/version"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/serve/logger"
@@ -107,6 +108,9 @@ func New(config Config) middleware.Middleware {
 				return
 			case r.URL.Path == "/__cem/api/markdown":
 				serveMarkdownAPI(w, r, config)
+				return
+			case r.URL.Path == "/__cem/api/health":
+				serveHealthAPI(w, r, config)
 				return
 			case r.URL.Path == "/__cem/debug":
 				serveDebugInfo(w, r, config)
@@ -361,6 +365,94 @@ func serveDebugInfo(
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(debugInfo); err != nil {
 		config.Context.Logger().Error("Failed to encode debug info response: %v", err)
+	}
+}
+
+// serveHealthAPI serves the health analysis as JSON
+func serveHealthAPI(
+	w http.ResponseWriter,
+	r *http.Request,
+	config Config,
+) {
+	result, err := config.Context.HealthResult()
+	if err != nil {
+		config.Context.Logger().Error("Failed to get health result: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// Filter by component if requested
+	component := r.URL.Query().Get("component")
+	if component != "" && result != nil {
+		filtered := filterHealthByComponent(result, component)
+		result = filtered
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(result); err != nil {
+		config.Context.Logger().Error("Failed to encode health response: %v", err)
+	}
+}
+
+// filterHealthByComponent returns a HealthResult containing only the specified component
+func filterHealthByComponent(result *health.HealthResult, component string) *health.HealthResult {
+	var modules []health.ModuleReport
+	overallScore := 0
+	overallMax := 0
+
+	for _, mod := range result.Modules {
+		var decls []health.ComponentReport
+		for _, decl := range mod.Declarations {
+			if decl.TagName == component || decl.Name == component {
+				decls = append(decls, decl)
+			}
+		}
+		if len(decls) > 0 {
+			modScore := 0
+			modMax := 0
+			for _, d := range decls {
+				modScore += d.Score
+				modMax += d.MaxScore
+			}
+			modules = append(modules, health.ModuleReport{
+				Path:         mod.Path,
+				Score:        modScore,
+				MaxScore:     modMax,
+				Declarations: decls,
+			})
+			overallScore += modScore
+			overallMax += modMax
+		}
+	}
+
+	if modules == nil {
+		modules = []health.ModuleReport{}
+	}
+
+	// Scope recommendations to the filtered component
+	var recs []string
+	for _, rec := range result.Recommendations {
+		for _, mod := range modules {
+			for _, decl := range mod.Declarations {
+				name := decl.TagName
+				if name == "" {
+					name = decl.Name
+				}
+				if strings.Contains(rec, name+":") {
+					recs = append(recs, rec)
+				}
+			}
+		}
+	}
+	if recs == nil {
+		recs = []string{}
+	}
+
+	return &health.HealthResult{
+		Modules:         modules,
+		OverallScore:    overallScore,
+		OverallMax:      overallMax,
+		Recommendations: recs,
 	}
 }
 

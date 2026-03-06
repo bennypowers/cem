@@ -19,6 +19,7 @@ package middleware
 
 import (
 	"bennypowers.dev/cem/cmd/config"
+	"bennypowers.dev/cem/health"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware/types"
@@ -104,4 +105,7 @@ type DevServerContext interface {
 
 	// PathResolver returns the cached path resolver for efficient URL rewriting
 	PathResolver() PathResolver
+
+	// HealthResult returns the cached health analysis result, computing it lazily
+	HealthResult() (*health.HealthResult, error)
 }

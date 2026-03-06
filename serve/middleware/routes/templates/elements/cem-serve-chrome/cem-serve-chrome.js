@@ -1,5 +1,7 @@
 import '/__cem/elements/cem-color-scheme-toggle/cem-color-scheme-toggle.js';
 import '/__cem/elements/cem-drawer/cem-drawer.js';
+import '/__cem/elements/cem-health-panel/cem-health-panel.js';
+import '/__cem/health-badges.js';
 import '/__cem/elements/cem-manifest-browser/cem-manifest-browser.js';
 import '/__cem/elements/cem-reconnection-content/cem-reconnection-content.js';
 import '/__cem/elements/cem-serve-demo/cem-serve-demo.js';

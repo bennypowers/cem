@@ -3,10 +3,10 @@
   <h2 class="package-heading">{{.Name}}</h2>
   <div class="listing-grid">
     {{range .Elements}}
-    <pf-v6-card>
+    <pf-v6-card data-tag-name="{{.TagName}}">
       <h3 slot="title"><code>&lt;{{.TagName}}&gt;</code></h3>
       {{if .Summary}}
-      <span slot="title" class="element-summary">{{.Summary}}</span>
+      <div class="element-summary">{{.Summary}}</div>
       {{end}}
       {{if .Description}}
       <div class="element-description">{{.Description}}</div>

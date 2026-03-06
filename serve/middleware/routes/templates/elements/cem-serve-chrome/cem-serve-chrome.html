@@ -247,6 +247,10 @@
               </pf-v6-drawer>
             </div>
           </pf-v6-tab>
+          <pf-v6-tab title="Health">
+            <cem-health-panel {{if .Attributes.PrimaryTagName}}component="{{.Attributes.PrimaryTagName}}"{{end}}>
+            </cem-health-panel>
+          </pf-v6-tab>
         </pf-v6-tabs>
       </cem-drawer>
     </footer>

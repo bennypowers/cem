@@ -59,6 +59,7 @@ func (s *Server) SetManifest(manifest []byte) error {
 
 	s.manifest = manifestCopy
 	s.demoRoutes = routingTable
+	s.invalidateHealthCache()
 
 	if err != nil {
 		// Return error wrapped to indicate partial success
@@ -185,6 +186,7 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 	s.manifest = make([]byte, len(manifestBytes))
 	copy(s.manifest, manifestBytes)
 	s.demoRoutes = routingTable
+	s.invalidateHealthCache()
 
 	return len(manifestBytes), nil
 }
@@ -273,6 +275,7 @@ func (s *Server) RegenerateManifest() (int, error) {
 	s.manifest = make([]byte, len(manifestBytes))
 	copy(s.manifest, manifestBytes)
 	s.demoRoutes = routingTable
+	s.invalidateHealthCache()
 
 	return len(manifestBytes), nil
 }
@@ -344,6 +347,7 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, erro
 	s.manifest = make([]byte, len(manifestBytes))
 	copy(s.manifest, manifestBytes)
 	s.demoRoutes = routingTable
+	s.invalidateHealthCache()
 
 	return len(manifestBytes), nil
 }
