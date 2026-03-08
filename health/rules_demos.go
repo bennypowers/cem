@@ -24,6 +24,14 @@ func (r *DemoDocRule) Category() string { return "Demos" }
 func (r *DemoDocRule) MaxPoints() int   { return 10 }
 
 func (r *DemoDocRule) Evaluate(ctx *HealthContext) CategoryScore {
+	if !ctx.Declaration.IsCustomElement() {
+		return CategoryScore{
+			ID:       r.ID(),
+			Category: r.Category(),
+			Status:   "pass",
+		}
+	}
+
 	demos, ok := ctx.Declaration.Demos()
 
 	var findings []Finding
