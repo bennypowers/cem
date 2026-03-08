@@ -27,7 +27,8 @@ func TestDemoDocRule(t *testing.T) {
 
 	t.Run("full score with described demo", func(t *testing.T) {
 		decl := validate.RawDeclaration{
-			"name": "TestElement",
+			"name":    "TestElement",
+			"tagName": "test-element",
 			"demos": []any{
 				map[string]any{
 					"url":         "demos/basic.html",
@@ -44,7 +45,8 @@ func TestDemoDocRule(t *testing.T) {
 
 	t.Run("partial score with demo but no description", func(t *testing.T) {
 		decl := validate.RawDeclaration{
-			"name": "TestElement",
+			"name":    "TestElement",
+			"tagName": "test-element",
 			"demos": []any{
 				map[string]any{
 					"url": "demos/basic.html",
@@ -61,12 +63,31 @@ func TestDemoDocRule(t *testing.T) {
 
 	t.Run("zero score with no demos", func(t *testing.T) {
 		decl := validate.RawDeclaration{
-			"name": "TestElement",
+			"name":    "TestElement",
+			"tagName": "test-element",
 		}
 		ctx := &HealthContext{Declaration: decl}
 		result := rule.Evaluate(ctx)
 		if result.Points != 0 {
 			t.Errorf("expected 0 points, got %d", result.Points)
+		}
+	})
+
+	t.Run("skips non-custom-element classes", func(t *testing.T) {
+		decl := validate.RawDeclaration{
+			"name": "MyMixin",
+			"kind": "mixin",
+		}
+		ctx := &HealthContext{Declaration: decl}
+		result := rule.Evaluate(ctx)
+		if result.MaxPoints != 0 {
+			t.Errorf("expected 0 max points for non-CE class, got %d", result.MaxPoints)
+		}
+		if result.Points != 0 {
+			t.Errorf("expected 0 points for non-CE class, got %d", result.Points)
+		}
+		if result.Status != "pass" {
+			t.Errorf("expected pass status for non-CE class, got %q", result.Status)
 		}
 	})
 }
