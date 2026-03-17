@@ -91,6 +91,28 @@ Work through each API surface systematically:
 - Consider which properties consumers will most likely want to override
 - Prefer to use existing design tokens rather than to add element-specific props
 
+#### CSS Nesting
+- Use native CSS nesting for descendant selectors within shadow DOM
+- Don't nest `:host` attribute selectors with `&` -- `&([attr])` inside `:host {}` is invalid because `&` substitutes `:host` literally, making `&([attr])` parse as a function call rather than an attribute selector
+- Keep `:host([variant="..."])` blocks flat at the top level; nesting is valid for descendants within those blocks
+
+```css
+/* WRONG: &([attr]) is invalid */
+:host {
+  &([variant="primary"]) { ... }
+}
+
+/* RIGHT: flat :host selectors, nested descendants */
+:host([variant="primary"]) {
+  --_color: blue;
+}
+
+:host([variant="primary"]) button {
+  &:hover { --_color: darkblue; }
+  &:active { --_color: navy; }
+}
+```
+
 #### CSS Parts
 - Name parts after the internal element they expose (`button`, `label`, `icon`)
 - Only expose parts that consumers need to style
