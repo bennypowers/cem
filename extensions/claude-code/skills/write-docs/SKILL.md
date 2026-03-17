@@ -19,13 +19,13 @@ including usage examples and integration guidance.
 
 Read the target element's full manifest data:
 
-```
+```text
 cem://element/{tagName}
 ```
 
 And each sub-resource for complete coverage:
 
-```
+```text
 cem://element/{tagName}/attributes
 cem://element/{tagName}/slots
 cem://element/{tagName}/events
@@ -36,7 +36,7 @@ cem://element/{tagName}/css/states
 
 Also read project-level guidelines for tone and conventions:
 
-```
+```text
 cem://guidelines
 ```
 

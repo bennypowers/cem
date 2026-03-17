@@ -5,7 +5,7 @@ description: >
   Use when the user asks to "compose elements", "build a layout",
   "combine components", "create a page with", "what elements should I use for",
   or describes a UI they want to build using custom elements.
-tools: Read
+tools: Read, generate_html, validate_html
 ---
 
 # Component Composition Advisor
@@ -25,19 +25,19 @@ Clarify (if not already provided):
 
 Read the complete element library:
 
-```
+```text
 cem://elements
 ```
 
 Read project-level guidelines for composition patterns:
 
-```
+```text
 cem://guidelines
 ```
 
 For each candidate element, read its full API to understand capabilities and slot expectations:
 
-```
+```text
 cem://element/{tagName}
 cem://element/{tagName}/slots
 cem://element/{tagName}/attributes

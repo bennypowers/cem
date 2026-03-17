@@ -23,7 +23,7 @@ Search the project for Angular version and patterns:
 
 Read the target element(s):
 
-```
+```text
 cem://element/{tagName}
 cem://element/{tagName}/attributes
 cem://element/{tagName}/events

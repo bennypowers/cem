@@ -47,15 +47,17 @@ generate:
     urlPattern: /elements/:tag/demo/:demo.html
     urlTemplate: /elements/{{.tag}}/demo/{{.demo}}/
 serve:
-  cssTransform:
-    - "elements/**/*.css"
+  transforms:
+    css:
+      include:
+        - "elements/**/*.css"
 ```
 
 - `generate.files`: globs for element source files
 - `generate.output`: manifest output path
 - `generate.designTokens`: DTCG token file and CSS custom property prefix
 - `generate.demoDiscovery`: how to find and route demo files
-- `serve.cssTransform`: globs for CSS files to serve as JS modules (enables `import styles from './el.css' with { type: 'css' }`)
+- `serve.transforms.css.include`: globs for CSS files to serve as JS modules (enables `import styles from './el.css' with { type: 'css' }`)
 
 ### Demo Files
 

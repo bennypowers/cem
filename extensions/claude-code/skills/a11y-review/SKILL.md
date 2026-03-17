@@ -6,7 +6,7 @@ description: >
   "audit accessibility", "find accessibility issues", or mentions "WCAG",
   "screen reader", "keyboard navigation", or "ARIA"
   in the context of custom elements.
-tools: Read, Glob, Grep
+tools: Read, Glob, Grep, validate_html
 ---
 
 # Accessibility Review
@@ -19,7 +19,7 @@ Review HTML that uses custom elements for accessibility compliance, guided by ma
 
 1. Read the accessibility resource for the project's manifest-documented a11y patterns:
 
-```
+```text
 cem://accessibility
 ```
 
@@ -30,13 +30,13 @@ cem://accessibility
 
 3. For each custom element found in the HTML, read its element resource:
 
-```
+```text
 cem://element/{tagName}
 ```
 
 And its slot guidelines:
 
-```
+```text
 cem://element/{tagName}/slots
 ```
 

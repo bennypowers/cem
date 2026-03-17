@@ -31,7 +31,7 @@ Determine the two versions to compare. Sources:
 
 Read the current project's elements for context:
 
-```
+```text
 cem://elements
 ```
 

@@ -27,19 +27,19 @@ Ask the user (if not already provided):
 
 Read the existing elements to understand naming patterns:
 
-```
+```text
 cem://elements
 ```
 
 For elements the user mentions as related or similar, read their full APIs:
 
-```
+```text
 cem://element/{tagName}
 ```
 
 Also read any project-level guidelines:
 
-```
+```text
 cem://guidelines
 ```
 

@@ -23,7 +23,7 @@ Search the project for Vue version and tooling:
 
 Read the target element(s):
 
-```
+```text
 cem://element/{tagName}
 cem://element/{tagName}/attributes
 cem://element/{tagName}/events

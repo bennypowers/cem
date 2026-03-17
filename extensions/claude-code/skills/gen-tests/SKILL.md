@@ -21,7 +21,7 @@ with Playwright or Puppeteer.
 
 Read the target element's full manifest data:
 
-```
+```text
 cem://element/{tagName}
 cem://element/{tagName}/attributes
 cem://element/{tagName}/slots

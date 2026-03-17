@@ -141,7 +141,7 @@ sorted by point impact]
 
 If the user wants more detail on specific gaps, read the element's MCP resources:
 
-```
+```text
 cem://element/{tagName}
 cem://element/{tagName}/attributes
 cem://element/{tagName}/slots

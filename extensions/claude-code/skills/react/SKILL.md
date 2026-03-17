@@ -32,7 +32,7 @@ Also check for:
 
 Read the target element(s):
 
-```
+```text
 cem://element/{tagName}
 cem://element/{tagName}/attributes
 cem://element/{tagName}/events
@@ -207,7 +207,7 @@ Present the integration code with:
 | Custom events | Not supported in JSX | `onEventName` works |
 | `className` | Set as attribute | Set as `class` |
 | `ref` | Works | Works |
-| SSR | Attributes only | Properties serialized |
+| SSR | Attributes only | Attributes only |
 
 ## Guidelines
 
