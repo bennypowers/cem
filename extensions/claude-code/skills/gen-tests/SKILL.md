@@ -308,7 +308,7 @@ test.describe('<my-button>', () => {
 
 Generate both files:
 
-```
+```text
 tests/
 ├── pages/
 │   └── MyButtonPage.ts       # Page object
