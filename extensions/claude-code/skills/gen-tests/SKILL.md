@@ -142,14 +142,28 @@ export class MyButtonPage {
   // --- Event helpers (from manifest events) ---
 
   /**
-   * Returns a promise that resolves when the element fires the given event.
-   * Call this BEFORE triggering the interaction.
+   * Returns a promise that resolves with serializable event data when the
+   * element fires the given event. Call this BEFORE triggering the interaction.
+   *
+   * DOM Event objects are not serializable across the Playwright boundary.
+   * This extracts the event's own enumerable properties (the class fields
+   * on typed Event subclasses) into a plain object.
    */
-  async waitForEvent<T = unknown>(eventName: string): Promise<T> {
+  async waitForEvent(eventName: string): Promise<Record<string, unknown>> {
     return this.host.evaluate(
       (el, name) =>
-        new Promise<T>((resolve) =>
-          el.addEventListener(name, (ev) => resolve(ev as T), { once: true }),
+        new Promise<Record<string, unknown>>((resolve) =>
+          el.addEventListener(
+            name,
+            (ev) => {
+              const data: Record<string, unknown> = { type: ev.type };
+              for (const key of Object.keys(ev)) {
+                data[key] = (ev as Record<string, unknown>)[key];
+              }
+              resolve(data);
+            },
+            { once: true },
+          ),
         ),
       eventName,
     );
@@ -263,10 +277,10 @@ test.describe('<my-button>', () => {
   });
 
   test.describe('events', () => {
-    test('fires click event', async () => {
-      const event = button.waitForEvent('click');
-      await button.click();
-      expect(await event).toBeTruthy();
+    test('fires change event', async () => {
+      const eventData = button.waitForEvent('change');
+      await button.setVariant('secondary');
+      expect((await eventData).type).toBe('change');
     });
   });
 
