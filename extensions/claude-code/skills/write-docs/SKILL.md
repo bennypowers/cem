@@ -5,7 +5,7 @@ description: >
   Use when the user asks to "write docs", "generate documentation",
   "document this element", "create API docs", or mentions "usage examples" or
   "component documentation".
-tools: Read, Glob, Grep
+tools: Read, Glob, Grep, generate_html
 ---
 
 # Write Element Documentation

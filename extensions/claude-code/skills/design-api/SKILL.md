@@ -160,4 +160,4 @@ Optionally, generate a skeleton class definition or manifest snippet if the user
 - **Attributes for HTML, properties for JS**: Attributes should be serializable; complex data goes through properties only
 - **Slots over attributes for rich content**: If content could be more than a plain string, use a slot
 - **CSS custom properties for theming, parts for structure**: Properties for colors/spacing, parts for layout overrides
-- **Clarify**: If an API can't be clearly and succintly described in plain English, that likely indicates a design flaw.
+- **Clarify**: If an API can't be clearly and succinctly described in plain English, that likely indicates a design flaw.

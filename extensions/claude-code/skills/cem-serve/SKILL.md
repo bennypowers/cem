@@ -22,10 +22,10 @@ map generator only resolves packages from `dependencies`.
 ```json
 {
   "dependencies": {
-    "lit": "^3.x"
+    "lit": "^3.0.0"
   },
   "devDependencies": {
-    "@pwrs/cem": "^0.9.x"
+    "@pwrs/cem": "^0.9.0"
   }
 }
 ```

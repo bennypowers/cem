@@ -179,7 +179,7 @@ Angular content projection (`<ng-content>`) and web component slots are differen
 Custom elements don't work with Angular's `ngModel` or reactive forms out of the box. Create a `ControlValueAccessor`:
 
 ```ts
-import { Directive, forwardRef } from '@angular/core';
+import { Directive, ElementRef, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Directive({
@@ -249,7 +249,7 @@ Extend the `HTMLElementTagNameMap` so Angular's template type checker understand
 
 ```ts
 // custom-elements.d.ts
-declare namespace HTMLElementTagNameMap {
+declare global {
   interface HTMLElementTagNameMap {
     'my-element': import('my-element-library').MyElement;
   }

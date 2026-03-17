@@ -164,15 +164,15 @@ export class MyButtonPage {
     );
   }
 
-  async computedStyle(property: string, partSelector?: string): Promise<string> {
+  async computedStyle(property: string, internalSelector?: string): Promise<string> {
     return this.host.evaluate(
-      (el, [prop, part]) => {
-        const target = part
-          ? el.shadowRoot?.querySelector(part) ?? el
+      (el, [prop, selector]) => {
+        const target = selector
+          ? el.shadowRoot?.querySelector(selector) ?? el
           : el;
         return getComputedStyle(target).getPropertyValue(prop);
       },
-      [property, partSelector ?? null] as const,
+      [property, internalSelector ?? null] as const,
     );
   }
 
@@ -273,7 +273,7 @@ test.describe('<my-button>', () => {
   test.describe('css custom properties', () => {
     test('--my-button-color overrides text color', async () => {
       await button.setCssProperty('--my-button-color', 'red');
-      const color = await button.computedStyle('color', '[part="button"]');
+      const color = await button.computedStyle('color', '#button');
       expect(color).toBe('rgb(255, 0, 0)');
     });
   });

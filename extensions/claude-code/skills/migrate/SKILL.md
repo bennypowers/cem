@@ -81,7 +81,7 @@ Report the number of affected files and locations.
 
 ### Phase 4: Migration Report
 
-```markdown
+````markdown
 ## Migration Report: {package} {old-version} -> {new-version}
 
 ### Summary
@@ -125,7 +125,7 @@ Report the number of affected files and locations.
 1. [Fix breaking changes that cause build/runtime errors first]
 2. [Address deprecation warnings]
 3. [Optionally adopt new features]
-```
+````
 
 ## Guidelines
 

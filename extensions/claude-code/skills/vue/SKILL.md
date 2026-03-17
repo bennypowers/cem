@@ -127,6 +127,7 @@ Note: Vue 2 reached end-of-life on December 31, 2023. Consider migrating to Vue 
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import 'my-element-library';
 
 const isDisabled = ref(false);

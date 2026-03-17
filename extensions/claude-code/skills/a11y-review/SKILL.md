@@ -40,7 +40,7 @@ And its slot guidelines:
 cem://element/{tagName}/slots
 ```
 
-Pay special attention to the element's description and to it's slots descriptions - Does the element have an implicit role? Do slots require a specific role to be slotted into them?
+Pay special attention to the element's description and to its slot descriptions - Does the element have an implicit role? Do slots require a specific role to be slotted into them?
 
 ### Phase 2: Validate with MCP Tool
 
