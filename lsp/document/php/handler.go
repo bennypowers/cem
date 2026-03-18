@@ -74,8 +74,14 @@ func (h *Handler) Language() string {
 // PHP blocks with whitespace to produce valid HTML with preserved positions.
 func (h *Handler) extractHTML(source []byte) []byte {
 	h.mu.Lock()
-	h.phpParser.Reset()
-	tree := h.phpParser.Parse(source, nil)
+	parser := h.phpParser
+	query := h.textQuery
+	if parser == nil || query == nil {
+		h.mu.Unlock()
+		return nil
+	}
+	parser.Reset()
+	tree := parser.Parse(source, nil)
 	h.mu.Unlock()
 
 	if tree == nil {
@@ -97,7 +103,7 @@ func (h *Handler) extractHTML(source []byte) []byte {
 	cursor := sitter.NewQueryCursor()
 	defer cursor.Close()
 
-	matches := cursor.Matches(h.textQuery, tree.RootNode(), source)
+	matches := cursor.Matches(query, tree.RootNode(), source)
 	for m := matches.Next(); m != nil; m = matches.Next() {
 		for _, c := range m.Captures {
 			n := c.Node
