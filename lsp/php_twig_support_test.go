@@ -157,23 +157,46 @@ func TestPHP_AttributeExtraction(t *testing.T) {
 	}
 }
 
-func TestPHP_SlotAttribute(t *testing.T) {
+func TestPHP_PositionPreservation(t *testing.T) {
 	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
 	defer dm.Close()
 
-	content := readPHPTwigFixture(t, "php-interpolated.php")
-	elements := openAndFindElements(t, dm, "test://product.php", content)
+	content := readPHPTwigFixture(t, "wordpress-theme.php")
+	elements := openAndFindElements(t, dm, "test://theme.php", content)
 
-	// product-card's child img has slot="image", span has slot="price"
-	// These are slotted children, not attributes on product-card itself,
-	// so they appear as separate elements only if they're custom elements.
-	// The important test is that product-card itself is found with its attributes.
-	el := findElement(elements, "product-card")
+	// site-header is on line 12 (0-indexed) in the original PHP file:
+	// "  <site-header theme="dark">"
+	// After PHP extraction, whitespace-replacement preserves line numbers.
+	el := findElement(elements, "site-header")
 	if el == nil {
-		t.Fatal("product-card not found")
+		t.Fatal("site-header not found")
+	}
+	if el.Range.Start.Line != 12 {
+		t.Errorf("Expected site-header on line 12, got line %d", el.Range.Start.Line)
+	}
+}
+
+func TestTwig_PositionPreservation(t *testing.T) {
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create document manager: %v", err)
+	}
+	defer dm.Close()
+
+	content := readPHPTwigFixture(t, "drupal-theme.html.twig")
+	elements := openAndFindElements(t, dm, "test://template.html.twig", content)
+
+	// site-header is on line 7 (0-indexed) in the Twig file:
+	// "  <site-header theme="{{ theme_variant|default('light') }}">"
+	el := findElement(elements, "site-header")
+	if el == nil {
+		t.Fatal("site-header not found")
+	}
+	if el.Range.Start.Line != 7 {
+		t.Errorf("Expected site-header on line 7, got line %d", el.Range.Start.Line)
 	}
 }
 

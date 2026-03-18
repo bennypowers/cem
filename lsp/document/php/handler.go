@@ -142,10 +142,14 @@ func (h *Handler) FindAttributeAtPosition(doc types.Document, position protocol.
 
 // Close cleans up resources
 func (h *Handler) Close() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	if h.phpParser != nil {
 		h.phpParser.Close()
+		h.phpParser = nil
 	}
 	if h.textQuery != nil {
 		h.textQuery.Close()
+		h.textQuery = nil
 	}
 }
