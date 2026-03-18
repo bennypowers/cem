@@ -22,7 +22,6 @@ import (
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	Q "bennypowers.dev/cem/queries"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 	tree_sitter_php "github.com/tree-sitter/tree-sitter-php/bindings/go"
@@ -35,17 +34,16 @@ import (
 //
 // PHP blocks are replaced with whitespace to preserve line/column positions.
 type Handler struct {
-	htmlHandler  types.LanguageHandler
-	queryManager *Q.QueryManager
-	phpParser    *sitter.Parser
-	textQuery    *sitter.Query
-	mu           sync.RWMutex
+	htmlHandler types.LanguageHandler
+	phpParser   *sitter.Parser
+	textQuery   *sitter.Query
+	mu          sync.RWMutex
 }
 
 var phpLang = sitter.NewLanguage(tree_sitter_php.LanguagePHP())
 
 // NewHandler creates a new PHP language handler
-func NewHandler(queryManager *Q.QueryManager, htmlHandler types.LanguageHandler) (*Handler, error) {
+func NewHandler(htmlHandler types.LanguageHandler) (*Handler, error) {
 	parser := sitter.NewParser()
 	if err := parser.SetLanguage(phpLang); err != nil {
 		return nil, fmt.Errorf("failed to set PHP language: %w", err)
@@ -58,10 +56,9 @@ func NewHandler(queryManager *Q.QueryManager, htmlHandler types.LanguageHandler)
 	}
 
 	return &Handler{
-		htmlHandler:  htmlHandler,
-		queryManager: queryManager,
-		phpParser:    parser,
-		textQuery:    textQuery,
+		htmlHandler: htmlHandler,
+		phpParser:   parser,
+		textQuery:   textQuery,
 	}, nil
 }
 

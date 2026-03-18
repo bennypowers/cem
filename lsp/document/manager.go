@@ -417,7 +417,7 @@ func (dm *documentManager) initializeLanguageHandlers() error {
 	}
 	dm.addLanguageHandler(tsxHandler)
 
-	phpHandler, err := createPHPHandler(dm.queryManager, htmlHandler)
+	phpHandler, err := createPHPHandler(htmlHandler)
 	if err != nil {
 		return fmt.Errorf("failed to create PHP handler: %w", err)
 	}
@@ -456,6 +456,6 @@ func createTSXHandler(queryManager *Q.QueryManager) (types.LanguageHandler, erro
 }
 
 // createPHPHandler creates a new PHP language handler that delegates to HTML
-func createPHPHandler(queryManager *Q.QueryManager, htmlHandler types.LanguageHandler) (types.LanguageHandler, error) {
-	return php.NewHandler(queryManager, htmlHandler)
+func createPHPHandler(htmlHandler types.LanguageHandler) (types.LanguageHandler, error) {
+	return php.NewHandler(htmlHandler)
 }
