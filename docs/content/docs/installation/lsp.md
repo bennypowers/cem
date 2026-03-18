@@ -4,7 +4,7 @@ weight: 20
 ---
 
 {{< tip >}}
-**TL;DR**: Install CEM, then configure your editor to run `cem lsp`. VS Code users can install the extension. Neovim/Zed users configure their LSP client to start `cem lsp` for HTML/TypeScript files.
+**TL;DR**: Install CEM, then configure your editor to run `cem lsp`. VS Code users can install the extension. Neovim/Zed users configure their LSP client to start `cem lsp` for HTML, Twig, PHP, and TypeScript files.
 {{< /tip >}}
 
 Configure the CEM Language Server Protocol integration for your editor to get intelligent autocomplete, hover documentation, and validation for custom elements.
@@ -15,7 +15,7 @@ Configure the CEM Language Server Protocol integration for your editor to get in
 
 ## What is LSP?
 
-The Language Server Protocol provides a standard way to add language-specific features to any editor. The CEM language server analyzes your custom elements manifests to offer contextual autocomplete, hover documentation, go-to-definition, and other IDE enhancements for HTML and TypeScript files.
+The Language Server Protocol provides a standard way to add language-specific features to any editor. The CEM language server analyzes your custom elements manifests to offer contextual autocomplete, hover documentation, go-to-definition, and other IDE enhancements for HTML, Twig, PHP, and TypeScript files. This includes HTML embedded in languages like PHP (e.g. WordPress themes) or in Twig templates (e.g. Drupal themes).
 
 ## Features
 
@@ -55,7 +55,7 @@ For Neovim 0.12+'s native LSP configuration support, create `~/.config/nvim/lsp/
 return {
   cmd = { 'cem', 'lsp' },
   root_markers = { 'custom-elements.json', 'package.json', '.git' },
-  filetypes = { 'html', 'typescript', 'javascript' },
+  filetypes = { 'html', 'twig', 'php', 'typescript', 'javascript' },
   -- Control debug logging via LSP trace levels
   trace = 'off', -- 'off' | 'messages' | 'verbose'
 }
@@ -83,14 +83,14 @@ Depending on which LSP plugin you use, configure Emacs to run `cem` for HTML, Ja
 (lsp-register-client
  (make-lsp-client
   :new-connection (lsp-stdio-connection '("cem" "lsp"))
-  :major-modes '(html-mode typescript-mode js-mode)
+  :major-modes '(html-mode twig-mode php-mode typescript-mode js-mode)
   :server-id 'cem-lsp))
 ```
 
 **eglot:**
 ```elisp
 (add-to-list 'eglot-server-programs
-             '((html-mode typescript-mode js-mode) . ("cem" "lsp")))
+             '((html-mode twig-mode php-mode typescript-mode js-mode) . ("cem" "lsp")))
 ```
 
 ### Claude Code
@@ -115,11 +115,11 @@ The LSP activates automatically for HTML, TypeScript, and JavaScript files.
 
 ### Other Editors
 
-Configure your LSP client to run `cem lsp` for file types `html`, `typescript`, and `javascript`. The server communicates over stdio and follows the standard LSP specification.
+Configure your LSP client to run `cem lsp` for file types `html`, `twig`, `php`, `typescript`, and `javascript`. The server communicates over stdio and follows the standard LSP specification.
 
 Typical configuration elements:
 - **Command**: `cem lsp`
-- **File types**: `html`, `typescript`, `javascript`
+- **File types**: `html`, `twig`, `php`, `typescript`, `javascript`
 - **Root markers**: `custom-elements.json`, `package.json`, `.git`
 - **Transport**: stdio
 
