@@ -2,7 +2,7 @@
 
 ## Overview
 
-The CEM LSP server provides Language Server Protocol support for custom elements in HTML files and TypeScript template literals. It uses tree-sitter for parsing and leverages custom-elements manifest data for intelligent IDE features.
+The CEM LSP server provides Language Server Protocol support for custom elements in HTML files, TypeScript template literals, and HTML embedded in languages like PHP and Twig. It uses tree-sitter for parsing and leverages custom-elements manifest data for intelligent IDE features.
 
 ## Core Components
 
@@ -13,7 +13,7 @@ LSP protocol handler that delegates requests to organized method handlers using 
 Indexes custom elements manifests from workspace, node_modules, and config files. Provides O(1) lookups with automatic file watching for manifest changes. Thread-safe with comprehensive mutex protection.
 
 ### Document Manager (`document.go`)
-Manages document lifecycle with tree-sitter parsing, incremental updates, parser pooling, and query caching. Handles HTML files directly and extracts TypeScript template literals.
+Manages document lifecycle with tree-sitter parsing, incremental updates, parser pooling, and query caching. Handles HTML and Twig files directly, extracts HTML from PHP files using tree-sitter-php, and extracts TypeScript template literals.
 
 ### Method Organization (`methods/`)
 Organized by LSP method type with colocated packages:
@@ -37,6 +37,8 @@ Organized by LSP method type with colocated packages:
 ### Parsing
 - **Tree-sitter Integration**: Shared query system with selective loading for performance
 - **Template Literal Support**: Detects `html`` templates, `innerHTML` assignments, etc.
+- **PHP Support**: Two-stage pipeline using tree-sitter-php to extract HTML text nodes, preserving positions
+- **Twig Support**: Twig syntax (`{% %}`, `{{ }}`) is valid HTML text, so the HTML parser handles it directly
 - **Incremental Updates**: Efficient document change handling
 
 ### Validation & Autofixes

@@ -22,6 +22,7 @@ import (
 	"sync"
 
 	"bennypowers.dev/cem/lsp/document/html"
+	"bennypowers.dev/cem/lsp/document/php"
 	"bennypowers.dev/cem/lsp/document/tsx"
 	"bennypowers.dev/cem/lsp/document/typescript"
 	"bennypowers.dev/cem/lsp/helpers"
@@ -416,6 +417,12 @@ func (dm *documentManager) initializeLanguageHandlers() error {
 	}
 	dm.addLanguageHandler(tsxHandler)
 
+	phpHandler, err := createPHPHandler(htmlHandler)
+	if err != nil {
+		return fmt.Errorf("failed to create PHP handler: %w", err)
+	}
+	dm.addLanguageHandler(phpHandler)
+
 	return nil
 }
 
@@ -446,4 +453,9 @@ func createTypeScriptHandler(queryManager *Q.QueryManager) (types.LanguageHandle
 // createTSXHandler creates a new TSX language handler
 func createTSXHandler(queryManager *Q.QueryManager) (types.LanguageHandler, error) {
 	return tsx.NewHandler(queryManager)
+}
+
+// createPHPHandler creates a new PHP language handler that delegates to HTML
+func createPHPHandler(htmlHandler types.LanguageHandler) (types.LanguageHandler, error) {
+	return php.NewHandler(htmlHandler)
 }

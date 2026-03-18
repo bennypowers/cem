@@ -1,0 +1,22 @@
+{# Twig interpolation inside attributes and around custom elements. #}
+{% set card_variant = theme.card_variant|default('elevated') %}
+{% set theme_mode = theme.mode|default('light') %}
+
+<site-header theme="{{ theme_mode }}">
+  <nav-menu orientation="horizontal">
+    {% for item in menu_items %}
+    <nav-item href="{{ item.url }}">{{ item.label }}</nav-item>
+    {% endfor %}
+  </nav-menu>
+</site-header>
+
+{% macro render_card(article, variant) %}
+<blog-card variant="{{ variant }}">
+  <h2 slot="heading">{{ article.title }}</h2>
+  {{ article.body|raw }}
+</blog-card>
+{% endmacro %}
+
+{% for article in articles %}
+  {{ _self.render_card(article, card_variant) }}
+{% endfor %}

@@ -1,0 +1,31 @@
+{#
+ # Drupal theme template using web components with design tokens.
+ # Covers: Twig blocks, variables, filters, control flow, macros.
+ #}
+{% extends "layout.html.twig" %}
+
+{% block content %}
+  <site-header theme="{{ theme_variant|default('light') }}">
+    <h1>{{ site_name|escape }}</h1>
+  </site-header>
+
+  <main>
+    {% for article in articles %}
+    <blog-card variant="outlined">
+      <h2 slot="heading">{{ article.title }}</h2>
+      <span slot="date">{{ article.date|date("Y-m-d") }}</span>
+      {{ article.body|raw }}
+    </blog-card>
+    {% endfor %}
+  </main>
+
+  {% if show_sidebar %}
+  <sidebar-widget collapsible>
+    {% include 'sidebar.html.twig' %}
+  </sidebar-widget>
+  {% endif %}
+
+  <site-footer year="{{ "now"|date("Y") }}">
+    &copy; {{ site_name }}
+  </site-footer>
+{% endblock %}
