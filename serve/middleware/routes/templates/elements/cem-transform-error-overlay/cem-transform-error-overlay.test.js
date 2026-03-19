@@ -33,11 +33,11 @@ describe('cem-transform-error-overlay', () => {
     });
 
     it('renders title, message, and file elements', () => {
-      const title = el.shadowRoot.getElementById('title');
+      const titleContainer = el.shadowRoot.getElementById('title-container');
       const message = el.shadowRoot.getElementById('message');
       const file = el.shadowRoot.getElementById('file');
 
-      expect(title).to.exist;
+      expect(titleContainer).to.exist;
       expect(message).to.exist;
       expect(file).to.exist;
     });
@@ -143,8 +143,9 @@ describe('cem-transform-error-overlay', () => {
       await el.updateComplete;
     });
 
-    it('closes the overlay', () => {
+    it('closes the overlay', async () => {
       el.hide();
+      await el.updateComplete;
 
       expect(el.hasAttribute('open')).to.be.false;
     });
@@ -157,8 +158,9 @@ describe('cem-transform-error-overlay', () => {
       }).to.not.throw();
     });
 
-    it('can be called when overlay is already closed', () => {
+    it('can be called when overlay is already closed', async () => {
       el.hide();
+      await el.updateComplete;
       expect(el.hasAttribute('open')).to.be.false;
 
       expect(() => el.hide()).to.not.throw();
@@ -203,9 +205,10 @@ describe('cem-transform-error-overlay', () => {
       await el.updateComplete;
     });
 
-    it('closes overlay when clicked', () => {
+    it('closes overlay when clicked', async () => {
       const closeButton = el.shadowRoot.getElementById('close');
       closeButton.click();
+      await el.updateComplete;
 
       expect(el.hasAttribute('open')).to.be.false;
     });
@@ -235,11 +238,12 @@ describe('cem-transform-error-overlay', () => {
       await el.updateComplete;
     });
 
-    it('closes on Escape key', () => {
+    it('closes on Escape key', async () => {
       expect(el.hasAttribute('open')).to.be.true;
 
       const event = new KeyboardEvent('keydown', { key: 'Escape' });
       document.dispatchEvent(event);
+      await el.updateComplete;
 
       expect(el.hasAttribute('open')).to.be.false;
     });
@@ -249,7 +253,8 @@ describe('cem-transform-error-overlay', () => {
       keys.forEach(key => {
         const event = new KeyboardEvent('keydown', { key });
         document.dispatchEvent(event);
-        expect(el.hasAttribute('open')).to.be.true;
+        // open property should remain true (attribute check is async but property is sync)
+        expect(el.open).to.be.true;
       });
     });
 

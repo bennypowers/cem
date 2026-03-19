@@ -8,10 +8,13 @@ describe('cem-connection-status', () => {
       expect(el).to.be.instanceOf(HTMLElement);
     });
 
-    it('creates shadow root on construction', () => {
+    it('has open shadow root', async () => {
       const el = document.createElement('cem-connection-status');
+      document.body.appendChild(el);
+      await el.updateComplete;
       expect(el.shadowRoot).to.exist;
       expect(el.shadowRoot.mode).to.equal('open');
+      el.remove();
     });
 
     it('renders template with icon and message elements', async () => {
@@ -137,6 +140,7 @@ describe('cem-connection-status', () => {
     describe('state transitions', () => {
       it('transitions from connected to reconnecting', async () => {
         el.show('connected', 'Connected');
+        await el.updateComplete;
         expect(el.getAttribute('state')).to.equal('connected');
 
         el.show('reconnecting', 'Reconnecting...');
@@ -147,6 +151,7 @@ describe('cem-connection-status', () => {
 
       it('transitions from reconnecting to connected', async () => {
         el.show('reconnecting', 'Reconnecting...');
+        await el.updateComplete;
         expect(el.getAttribute('state')).to.equal('reconnecting');
 
         el.show('connected', 'Connected');
@@ -157,6 +162,7 @@ describe('cem-connection-status', () => {
 
       it('transitions from reconnecting to disconnected', async () => {
         el.show('reconnecting', 'Reconnecting...');
+        await el.updateComplete;
         expect(el.getAttribute('state')).to.equal('reconnecting');
 
         el.show('disconnected', 'Connection failed');
@@ -173,6 +179,7 @@ describe('cem-connection-status', () => {
 
         // Change state
         el.show('reconnecting', 'Reconnecting...');
+        await el.updateComplete;
 
         expect(el.hasAttribute('faded')).to.be.false;
       });
@@ -411,9 +418,10 @@ describe('cem-connection-status', () => {
       if (el2 && el2.parentNode) el2.parentNode.removeChild(el2);
     });
 
-    it('manages independent states', () => {
+    it('manages independent states', async () => {
       el1.show('connected', 'Connected 1');
       el2.show('disconnected', 'Disconnected 2');
+      await Promise.all([el1.updateComplete, el2.updateComplete]);
 
       expect(el1.getAttribute('state')).to.equal('connected');
       expect(el2.getAttribute('state')).to.equal('disconnected');
@@ -449,18 +457,22 @@ describe('cem-connection-status', () => {
     it('simulates connection workflow', async () => {
       // Initial connection
       el.show('connected', 'Connected to dev server');
+      await el.updateComplete;
       expect(el.getAttribute('state')).to.equal('connected');
 
       // Connection drops
       el.show('reconnecting', 'Reconnecting... (attempt 1)');
+      await el.updateComplete;
       expect(el.getAttribute('state')).to.equal('reconnecting');
 
       // Still trying
       el.show('reconnecting', 'Reconnecting... (attempt 2)');
+      await el.updateComplete;
       expect(el.getAttribute('state')).to.equal('reconnecting');
 
       // Reconnected
       el.show('connected', 'Reconnected successfully', { fadeDelay: 100 });
+      await el.updateComplete;
       expect(el.getAttribute('state')).to.equal('connected');
 
       // Should fade after delay
