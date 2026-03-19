@@ -53,7 +53,7 @@ var templateErrorTemplate string
 //go:embed templates/**
 var TemplatesFS embed.FS
 
-//go:embed templates/js/*.js templates/css/*.css templates/images/* templates/elements/*.css templates/elements/**/*
+//go:embed templates/js/*.js templates/css/*.css templates/images/* templates/elements/*.css templates/elements/**/* templates/vendor/* templates/vendor/**/*
 var InternalModules embed.FS
 
 // TemplateRegistry holds parsed templates and the context for error broadcasting
