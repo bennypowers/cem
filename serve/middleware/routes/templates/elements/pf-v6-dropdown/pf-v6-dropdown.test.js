@@ -8,14 +8,14 @@ describe('pf-v6-dropdown', () => {
 
     beforeEach(async () => {
       el = await fixture('<pf-v6-dropdown></pf-v6-dropdown>');
-      await el.rendered;
+      await el.updateComplete;
     });
 
     it('is defined as custom element', () => {
       expect(el).to.be.instanceOf(HTMLElement);
     });
 
-    it('extends CemElement', () => {
+    it('extends LitElement', () => {
       expect(el.constructor.name).to.equal('PfV6Dropdown');
       expect(el.shadowRoot).to.exist;
     });
@@ -48,7 +48,7 @@ describe('pf-v6-dropdown', () => {
 
     beforeEach(async () => {
       el = await fixture('<pf-v6-dropdown></pf-v6-dropdown>');
-      await el.rendered;
+      await el.updateComplete;
     });
 
     it('has default values', () => {
@@ -111,7 +111,7 @@ describe('pf-v6-dropdown', () => {
 
     beforeEach(async () => {
       el = await fixture('<pf-v6-dropdown expanded></pf-v6-dropdown>');
-      await el.rendered;
+      await el.updateComplete;
     });
 
     it('reflects expanded attribute', () => {
@@ -203,7 +203,7 @@ describe('pf-v6-dropdown', () => {
 
     beforeEach(async () => {
       el = await fixture('<pf-v6-dropdown disabled></pf-v6-dropdown>');
-      await el.rendered;
+      await el.updateComplete;
     });
 
     it('reflects disabled attribute', () => {
@@ -228,7 +228,7 @@ describe('pf-v6-dropdown', () => {
 
     beforeEach(async () => {
       el = await fixture('<pf-v6-dropdown label="Filter menu"></pf-v6-dropdown>');
-      await el.rendered;
+      await el.updateComplete;
     });
 
     it('reflects label attribute', () => {
@@ -245,7 +245,7 @@ describe('pf-v6-dropdown', () => {
       await el.updateComplete;
 
       const menu = el.shadowRoot.getElementById('menu');
-      expect(menu.hasAttribute('label')).to.be.false;
+      expect(menu.getAttribute('label')).to.equal('');
     });
   });
 
@@ -260,9 +260,9 @@ describe('pf-v6-dropdown', () => {
           <pf-v6-menu-item value="save">Save</pf-v6-menu-item>
         </pf-v6-dropdown>
       `);
-      await el.rendered;
+      await el.updateComplete;
       items = [...el.querySelectorAll('pf-v6-menu-item')];
-      await Promise.all(items.map(item => item.rendered));
+      await Promise.all(items.map(item => item.updateComplete));
     });
 
     it('bubbles select events from menu items', async () => {
@@ -280,7 +280,7 @@ describe('pf-v6-dropdown', () => {
 
     beforeEach(async () => {
       el = await fixture('<pf-v6-dropdown></pf-v6-dropdown>');
-      await el.rendered;
+      await el.updateComplete;
     });
 
     it('sets and removes expanded attribute', () => {
@@ -299,12 +299,12 @@ describe('pf-v6-dropdown', () => {
       expect(el.hasAttribute('disabled')).to.be.false;
     });
 
-    it('sets and removes label attribute', () => {
+    it('sets and gets label property', () => {
       el.label = 'Options menu';
-      expect(el.getAttribute('label')).to.equal('Options menu');
+      expect(el.label).to.equal('Options menu');
 
       el.label = '';
-      expect(el.hasAttribute('label')).to.be.false;
+      expect(el.label).to.equal('');
     });
   });
 
@@ -313,7 +313,7 @@ describe('pf-v6-dropdown', () => {
 
     beforeEach(async () => {
       el = await fixture('<pf-v6-dropdown></pf-v6-dropdown>');
-      await el.rendered;
+      await el.updateComplete;
     });
 
     it('handles rapid toggle clicks', () => {
@@ -371,9 +371,9 @@ describe('pf-v6-dropdown', () => {
           <pf-v6-menu-item value="save">Save</pf-v6-menu-item>
         </pf-v6-dropdown>
       `);
-      await el.rendered;
+      await el.updateComplete;
       const items = [...el.querySelectorAll('pf-v6-menu-item')];
-      await Promise.all(items.map(item => item.rendered));
+      await Promise.all(items.map(item => item.updateComplete));
 
       // User clicks toggle
       const toggle = el.shadowRoot.getElementById('toggle');
@@ -397,9 +397,9 @@ describe('pf-v6-dropdown', () => {
           <pf-v6-menu-item variant="checkbox" value="debug" checked></pf-v6-menu-item>
         </pf-v6-dropdown>
       `);
-      await el.rendered;
+      await el.updateComplete;
       const items = [...el.querySelectorAll('pf-v6-menu-item')];
-      await Promise.all(items.map(item => item.rendered));
+      await Promise.all(items.map(item => item.updateComplete));
 
       // User opens dropdown
       el.expand();
@@ -429,9 +429,9 @@ describe('pf-v6-dropdown', () => {
           <pf-v6-menu-item value="option2"></pf-v6-menu-item>
         </pf-v6-dropdown>
       `);
-      await el.rendered;
+      await el.updateComplete;
       const items = [...el.querySelectorAll('pf-v6-menu-item')];
-      await Promise.all(items.map(item => item.rendered));
+      await Promise.all(items.map(item => item.updateComplete));
 
       // User tabs to dropdown and presses Enter to open
       const toggle = el.shadowRoot.getElementById('toggle');
@@ -451,7 +451,7 @@ describe('pf-v6-dropdown', () => {
 
     it('simulates disabled dropdown', async () => {
       const el = await fixture('<pf-v6-dropdown disabled></pf-v6-dropdown>');
-      await el.rendered;
+      await el.updateComplete;
       const toggle = el.shadowRoot.getElementById('toggle');
 
       // User tries to click disabled dropdown

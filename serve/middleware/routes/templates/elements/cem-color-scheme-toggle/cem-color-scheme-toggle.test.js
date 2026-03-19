@@ -2,23 +2,11 @@ import { expect, waitUntil } from '@open-wc/testing';
 import './cem-color-scheme-toggle.js';
 
 describe('cem-color-scheme-toggle', () => {
-  // Helper to create element with shadow DOM and content
-  function createElementWithShadow() {
+  // Helper to create a LitElement instance and wait for first render
+  async function createElement() {
     const el = document.createElement('cem-color-scheme-toggle');
-    const shadow = el.attachShadow({ mode: 'open' });
-    shadow.innerHTML = `
-      <div id="toggle-group" role="radiogroup" aria-label="Color scheme">
-        <label class="toggle-option">
-          <input type="radio" name="color-scheme" value="light">
-        </label>
-        <label class="toggle-option">
-          <input type="radio" name="color-scheme" value="system" checked>
-        </label>
-        <label class="toggle-option">
-          <input type="radio" name="color-scheme" value="dark">
-        </label>
-      </div>
-    `;
+    document.body.appendChild(el);
+    await el.updateComplete;
     return el;
   }
 
@@ -30,6 +18,8 @@ describe('cem-color-scheme-toggle', () => {
   afterEach(() => {
     localStorage.clear();
     document.body.style.colorScheme = '';
+    // Clean up any elements left in the DOM
+    document.querySelectorAll('cem-color-scheme-toggle').forEach(el => el.remove());
   });
 
   describe('initialization', () => {
@@ -38,50 +28,43 @@ describe('cem-color-scheme-toggle', () => {
       expect(el).to.be.instanceOf(HTMLElement);
     });
 
-    it('restores saved color scheme from localStorage on connect', () => {
+    it('restores saved color scheme from localStorage on connect', async () => {
       localStorage.setItem('cem-serve-color-scheme', 'dark');
 
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
-      el.connectedCallback();
+      const el = await createElement();
 
       expect(document.body.style.colorScheme).to.equal('dark');
 
       const darkRadio = el.shadowRoot.querySelector('input[value="dark"]');
       expect(darkRadio.checked).to.be.true;
 
-      document.body.removeChild(el);
+      el.remove();
     });
 
-    it('defaults to system scheme when no preference saved', () => {
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
-      el.connectedCallback();
+    it('defaults to system scheme when no preference saved', async () => {
+      const el = await createElement();
 
       expect(document.body.style.colorScheme).to.equal('light dark');
 
       const systemRadio = el.shadowRoot.querySelector('input[value="system"]');
       expect(systemRadio.checked).to.be.true;
 
-      document.body.removeChild(el);
+      el.remove();
     });
 
-    it('handles missing shadow root gracefully', () => {
-      const el = document.createElement('cem-color-scheme-toggle');
-      document.body.appendChild(el);
+    it('has shadow root with rendered content', async () => {
+      const el = await createElement();
 
-      // Should not throw
-      expect(() => el.connectedCallback()).to.not.throw();
+      expect(el.shadowRoot).to.exist;
+      expect(el.shadowRoot.getElementById('toggle-group')).to.exist;
 
-      document.body.removeChild(el);
+      el.remove();
     });
   });
 
   describe('color scheme application', () => {
     it('applies light color scheme to body', async () => {
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
-      el.connectedCallback();
+      const el = await createElement();
 
       const lightRadio = el.shadowRoot.querySelector('input[value="light"]');
       lightRadio.click();
@@ -90,13 +73,11 @@ describe('cem-color-scheme-toggle', () => {
 
       expect(document.body.style.colorScheme).to.equal('light');
 
-      document.body.removeChild(el);
+      el.remove();
     });
 
     it('applies dark color scheme to body', async () => {
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
-      el.connectedCallback();
+      const el = await createElement();
 
       const darkRadio = el.shadowRoot.querySelector('input[value="dark"]');
       darkRadio.click();
@@ -105,13 +86,11 @@ describe('cem-color-scheme-toggle', () => {
 
       expect(document.body.style.colorScheme).to.equal('dark');
 
-      document.body.removeChild(el);
+      el.remove();
     });
 
     it('applies system color scheme (both light and dark) to body', async () => {
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
-      el.connectedCallback();
+      const el = await createElement();
 
       // First set to light
       const lightRadio = el.shadowRoot.querySelector('input[value="light"]');
@@ -126,15 +105,13 @@ describe('cem-color-scheme-toggle', () => {
 
       expect(document.body.style.colorScheme).to.equal('light dark');
 
-      document.body.removeChild(el);
+      el.remove();
     });
   });
 
   describe('localStorage persistence', () => {
     it('saves color scheme preference to localStorage', async () => {
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
-      el.connectedCallback();
+      const el = await createElement();
 
       const darkRadio = el.shadowRoot.querySelector('input[value="dark"]');
       darkRadio.click();
@@ -143,13 +120,11 @@ describe('cem-color-scheme-toggle', () => {
 
       expect(localStorage.getItem('cem-serve-color-scheme')).to.equal('dark');
 
-      document.body.removeChild(el);
+      el.remove();
     });
 
     it('persists across multiple selections', async () => {
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
-      el.connectedCallback();
+      const el = await createElement();
 
       const lightRadio = el.shadowRoot.querySelector('input[value="light"]');
       const darkRadio = el.shadowRoot.querySelector('input[value="dark"]');
@@ -167,7 +142,7 @@ describe('cem-color-scheme-toggle', () => {
       await waitUntil(() => localStorage.getItem('cem-serve-color-scheme') === 'system');
       expect(localStorage.getItem('cem-serve-color-scheme')).to.equal('system');
 
-      document.body.removeChild(el);
+      el.remove();
     });
 
     it('handles localStorage errors gracefully (Safari private mode)', async () => {
@@ -182,9 +157,7 @@ describe('cem-color-scheme-toggle', () => {
         throw new Error('SecurityError');
       };
 
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
-      el.connectedCallback();
+      const el = await createElement();
 
       // Should not throw and should still function
       const darkRadio = el.shadowRoot.querySelector('input[value="dark"]');
@@ -194,7 +167,7 @@ describe('cem-color-scheme-toggle', () => {
       await waitUntil(() => document.body.style.colorScheme === 'dark');
       expect(document.body.style.colorScheme).to.equal('dark');
 
-      document.body.removeChild(el);
+      el.remove();
 
       // Restore
       Storage.prototype.setItem = originalSetItem;
@@ -204,9 +177,7 @@ describe('cem-color-scheme-toggle', () => {
 
   describe('radio button state management', () => {
     it('updates radio button selection on change', async () => {
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
-      el.connectedCallback();
+      const el = await createElement();
 
       const lightRadio = el.shadowRoot.querySelector('input[value="light"]');
       const systemRadio = el.shadowRoot.querySelector('input[value="system"]');
@@ -233,15 +204,13 @@ describe('cem-color-scheme-toggle', () => {
       expect(darkRadio.checked).to.be.false;
       expect(systemRadio.checked).to.be.false;
 
-      document.body.removeChild(el);
+      el.remove();
     });
 
-    it('restores correct radio button state from localStorage', () => {
+    it('restores correct radio button state from localStorage', async () => {
       localStorage.setItem('cem-serve-color-scheme', 'light');
 
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
-      el.connectedCallback();
+      const el = await createElement();
 
       const lightRadio = el.shadowRoot.querySelector('input[value="light"]');
       const systemRadio = el.shadowRoot.querySelector('input[value="system"]');
@@ -251,13 +220,11 @@ describe('cem-color-scheme-toggle', () => {
       expect(systemRadio.checked).to.be.false;
       expect(darkRadio.checked).to.be.false;
 
-      document.body.removeChild(el);
+      el.remove();
     });
 
-    it('handles all radio buttons with same name', () => {
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
-      el.connectedCallback();
+    it('handles all radio buttons with same name', async () => {
+      const el = await createElement();
 
       const radios = el.shadowRoot.querySelectorAll('input[type="radio"]');
       expect(radios).to.have.lengthOf(3);
@@ -267,31 +234,33 @@ describe('cem-color-scheme-toggle', () => {
         expect(radio.name).to.equal('color-scheme');
       });
 
-      document.body.removeChild(el);
+      el.remove();
     });
   });
 
   describe('accessibility', () => {
-    it('has radiogroup role', () => {
-      const el = createElementWithShadow();
+    it('has radiogroup role', async () => {
+      const el = await createElement();
 
       const group = el.shadowRoot.getElementById('toggle-group');
       expect(group.getAttribute('role')).to.equal('radiogroup');
+
+      el.remove();
     });
 
-    it('has aria-label on radiogroup', () => {
-      const el = createElementWithShadow();
+    it('has aria-label on radiogroup', async () => {
+      const el = await createElement();
 
       const group = el.shadowRoot.getElementById('toggle-group');
       expect(group.getAttribute('aria-label')).to.equal('Color scheme');
+
+      el.remove();
     });
   });
 
   describe('edge cases', () => {
     it('handles rapid successive clicks', async () => {
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
-      el.connectedCallback();
+      const el = await createElement();
 
       const lightRadio = el.shadowRoot.querySelector('input[value="light"]');
       const darkRadio = el.shadowRoot.querySelector('input[value="dark"]');
@@ -307,13 +276,11 @@ describe('cem-color-scheme-toggle', () => {
       expect(document.body.style.colorScheme).to.equal('dark');
       expect(localStorage.getItem('cem-serve-color-scheme')).to.equal('dark');
 
-      document.body.removeChild(el);
+      el.remove();
     });
 
     it('handles clicking the same radio button multiple times', async () => {
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
-      el.connectedCallback();
+      const el = await createElement();
 
       const darkRadio = el.shadowRoot.querySelector('input[value="dark"]');
 
@@ -326,37 +293,34 @@ describe('cem-color-scheme-toggle', () => {
       expect(document.body.style.colorScheme).to.equal('dark');
       expect(localStorage.getItem('cem-serve-color-scheme')).to.equal('dark');
 
-      document.body.removeChild(el);
+      el.remove();
     });
 
-    it('handles invalid localStorage values', () => {
+    it('handles invalid localStorage values', async () => {
       localStorage.setItem('cem-serve-color-scheme', 'invalid-scheme');
 
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
-      el.connectedCallback();
+      const el = await createElement();
 
       // Should default to system behavior for invalid values
       expect(document.body.style.colorScheme).to.equal('light dark');
 
-      document.body.removeChild(el);
+      el.remove();
     });
   });
 
-  describe('SSR compatibility', () => {
-    it('works with pre-existing shadow DOM', () => {
-      const el = createElementWithShadow();
-      document.body.appendChild(el);
+  describe('Lit rendering', () => {
+    it('renders shadow DOM via Lit render()', async () => {
+      const el = await createElement();
 
       expect(el.shadowRoot).to.exist;
 
       const radios = el.shadowRoot.querySelectorAll('input[type="radio"]');
       expect(radios).to.have.lengthOf(3);
 
-      document.body.removeChild(el);
+      el.remove();
     });
 
-    it('does not throw when connectedCallback runs without shadow root', () => {
+    it('does not throw on connect and disconnect', () => {
       const el = document.createElement('cem-color-scheme-toggle');
 
       expect(() => {

@@ -1,4 +1,4 @@
-import { fixture, expect, html, waitUntil } from '@open-wc/testing';
+import { expect, waitUntil } from '@open-wc/testing';
 import './cem-connection-status.js';
 
 describe('cem-connection-status', () => {
@@ -14,33 +14,28 @@ describe('cem-connection-status', () => {
       expect(el.shadowRoot.mode).to.equal('open');
     });
 
-    it('renders template with icon and message elements', () => {
+    it('renders template with icon and message elements', async () => {
       const el = document.createElement('cem-connection-status');
+      document.body.appendChild(el);
+      await el.updateComplete;
 
       const icon = el.shadowRoot.getElementById('icon');
       const message = el.shadowRoot.getElementById('message');
 
       expect(icon).to.exist;
       expect(message).to.exist;
-    });
 
-    it('has correct inline styles', () => {
-      const el = document.createElement('cem-connection-status');
-      const style = el.shadowRoot.querySelector('style');
-
-      expect(style).to.exist;
-      expect(style.textContent).to.include('position: fixed');
-      expect(style.textContent).to.include('bottom: 20px');
-      expect(style.textContent).to.include('right: 20px');
+      el.remove();
     });
   });
 
   describe('show() method', () => {
     let el;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       el = document.createElement('cem-connection-status');
       document.body.appendChild(el);
+      await el.updateComplete;
     });
 
     afterEach(() => {
@@ -50,16 +45,18 @@ describe('cem-connection-status', () => {
     });
 
     describe('connected state', () => {
-      it('shows connected status with green icon', () => {
+      it('shows connected status with green icon', async () => {
         el.show('connected', 'Connected to server');
+        await el.updateComplete;
 
         expect(el.getAttribute('state')).to.equal('connected');
-        expect(el.shadowRoot.getElementById('icon').textContent).to.equal('🟢');
+        expect(el.shadowRoot.getElementById('icon').textContent).to.equal('\u{1F7E2}');
         expect(el.shadowRoot.getElementById('message').textContent).to.equal('Connected to server');
       });
 
-      it('applies connected styling', () => {
+      it('applies connected styling', async () => {
         el.show('connected', 'Connected');
+        await el.updateComplete;
 
         expect(el.getAttribute('state')).to.equal('connected');
         // Connected state has specific colors in CSS
@@ -98,11 +95,12 @@ describe('cem-connection-status', () => {
     });
 
     describe('reconnecting state', () => {
-      it('shows reconnecting status with yellow icon', () => {
+      it('shows reconnecting status with yellow icon', async () => {
         el.show('reconnecting', 'Reconnecting...');
+        await el.updateComplete;
 
         expect(el.getAttribute('state')).to.equal('reconnecting');
-        expect(el.shadowRoot.getElementById('icon').textContent).to.equal('🟡');
+        expect(el.shadowRoot.getElementById('icon').textContent).to.equal('\u{1F7E1}');
         expect(el.shadowRoot.getElementById('message').textContent).to.equal('Reconnecting...');
       });
 
@@ -117,11 +115,12 @@ describe('cem-connection-status', () => {
     });
 
     describe('disconnected state', () => {
-      it('shows disconnected status with red icon', () => {
+      it('shows disconnected status with red icon', async () => {
         el.show('disconnected', 'Connection lost');
+        await el.updateComplete;
 
         expect(el.getAttribute('state')).to.equal('disconnected');
-        expect(el.shadowRoot.getElementById('icon').textContent).to.equal('🔴');
+        expect(el.shadowRoot.getElementById('icon').textContent).to.equal('\u{1F534}');
         expect(el.shadowRoot.getElementById('message').textContent).to.equal('Connection lost');
       });
 
@@ -136,31 +135,34 @@ describe('cem-connection-status', () => {
     });
 
     describe('state transitions', () => {
-      it('transitions from connected to reconnecting', () => {
+      it('transitions from connected to reconnecting', async () => {
         el.show('connected', 'Connected');
         expect(el.getAttribute('state')).to.equal('connected');
 
         el.show('reconnecting', 'Reconnecting...');
+        await el.updateComplete;
         expect(el.getAttribute('state')).to.equal('reconnecting');
-        expect(el.shadowRoot.getElementById('icon').textContent).to.equal('🟡');
+        expect(el.shadowRoot.getElementById('icon').textContent).to.equal('\u{1F7E1}');
       });
 
-      it('transitions from reconnecting to connected', () => {
+      it('transitions from reconnecting to connected', async () => {
         el.show('reconnecting', 'Reconnecting...');
         expect(el.getAttribute('state')).to.equal('reconnecting');
 
         el.show('connected', 'Connected');
+        await el.updateComplete;
         expect(el.getAttribute('state')).to.equal('connected');
-        expect(el.shadowRoot.getElementById('icon').textContent).to.equal('🟢');
+        expect(el.shadowRoot.getElementById('icon').textContent).to.equal('\u{1F7E2}');
       });
 
-      it('transitions from reconnecting to disconnected', () => {
+      it('transitions from reconnecting to disconnected', async () => {
         el.show('reconnecting', 'Reconnecting...');
         expect(el.getAttribute('state')).to.equal('reconnecting');
 
         el.show('disconnected', 'Connection failed');
+        await el.updateComplete;
         expect(el.getAttribute('state')).to.equal('disconnected');
-        expect(el.shadowRoot.getElementById('icon').textContent).to.equal('🔴');
+        expect(el.shadowRoot.getElementById('icon').textContent).to.equal('\u{1F534}');
       });
 
       it('removes faded attribute on state change', async () => {
@@ -177,27 +179,32 @@ describe('cem-connection-status', () => {
     });
 
     describe('message updates', () => {
-      it('updates message for same state', () => {
+      it('updates message for same state', async () => {
         el.show('reconnecting', 'Attempt 1...');
+        await el.updateComplete;
         expect(el.shadowRoot.getElementById('message').textContent).to.equal('Attempt 1...');
 
         el.show('reconnecting', 'Attempt 2...');
+        await el.updateComplete;
         expect(el.shadowRoot.getElementById('message').textContent).to.equal('Attempt 2...');
       });
 
-      it('handles empty message', () => {
+      it('handles empty message', async () => {
         el.show('connected', '');
+        await el.updateComplete;
         expect(el.shadowRoot.getElementById('message').textContent).to.equal('');
       });
 
-      it('handles long message', () => {
+      it('handles long message', async () => {
         const longMessage = 'This is a very long message that might overflow the toast container';
         el.show('connected', longMessage);
+        await el.updateComplete;
         expect(el.shadowRoot.getElementById('message').textContent).to.equal(longMessage);
       });
 
-      it('handles special characters in message', () => {
+      it('handles special characters in message', async () => {
         el.show('connected', 'Connected! <>&"\'');
+        await el.updateComplete;
         expect(el.shadowRoot.getElementById('message').textContent).to.equal('Connected! <>&"\'');
       });
     });
@@ -206,9 +213,10 @@ describe('cem-connection-status', () => {
   describe('hide() method', () => {
     let el;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       el = document.createElement('cem-connection-status');
       document.body.appendChild(el);
+      await el.updateComplete;
     });
 
     afterEach(() => {
@@ -257,9 +265,10 @@ describe('cem-connection-status', () => {
   describe('positioning and styling', () => {
     let el;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       el = document.createElement('cem-connection-status');
       document.body.appendChild(el);
+      await el.updateComplete;
     });
 
     afterEach(() => {
@@ -273,8 +282,9 @@ describe('cem-connection-status', () => {
       expect(styles.position).to.equal('fixed');
     });
 
-    it('has high z-index for overlay', () => {
+    it('has high z-index for overlay', async () => {
       el.show('connected', 'Test');
+      await el.updateComplete;
       const styles = getComputedStyle(el);
       // z-index should be very high (999999)
       expect(parseInt(styles.zIndex)).to.be.greaterThan(1000);
@@ -289,9 +299,10 @@ describe('cem-connection-status', () => {
   describe('accessibility', () => {
     let el;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       el = document.createElement('cem-connection-status');
       document.body.appendChild(el);
+      await el.updateComplete;
     });
 
     afterEach(() => {
@@ -300,16 +311,18 @@ describe('cem-connection-status', () => {
       }
     });
 
-    it('uses emoji icons for visual clarity', () => {
+    it('uses emoji icons for visual clarity', async () => {
       el.show('connected', 'Test');
+      await el.updateComplete;
       const icon = el.shadowRoot.getElementById('icon');
 
       // Should contain an emoji
       expect(icon.textContent).to.match(/^[\u{1F534}\u{1F7E1}\u{1F7E2}]$/u);
     });
 
-    it('provides textual message alongside icon', () => {
+    it('provides textual message alongside icon', async () => {
       el.show('connected', 'Successfully connected');
+      await el.updateComplete;
       const message = el.shadowRoot.getElementById('message');
 
       expect(message.textContent).to.equal('Successfully connected');
@@ -319,9 +332,10 @@ describe('cem-connection-status', () => {
   describe('edge cases', () => {
     let el;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       el = document.createElement('cem-connection-status');
       document.body.appendChild(el);
+      await el.updateComplete;
     });
 
     afterEach(() => {
@@ -330,11 +344,12 @@ describe('cem-connection-status', () => {
       }
     });
 
-    it('handles rapid state changes', () => {
+    it('handles rapid state changes', async () => {
       el.show('connected', 'Connected');
       el.show('reconnecting', 'Reconnecting');
       el.show('disconnected', 'Disconnected');
       el.show('connected', 'Connected again');
+      await el.updateComplete;
 
       expect(el.getAttribute('state')).to.equal('connected');
       expect(el.shadowRoot.getElementById('message').textContent).to.equal('Connected again');
@@ -346,29 +361,31 @@ describe('cem-connection-status', () => {
       }).to.not.throw();
     });
 
-    it('handles undefined message', () => {
+    it('handles undefined message', async () => {
       el.show('connected', undefined);
-      // textContent converts undefined to empty string, not 'undefined'
+      await el.updateComplete;
       expect(el.shadowRoot.getElementById('message').textContent).to.equal('');
     });
 
-    it('handles null message', () => {
+    it('handles null message', async () => {
       el.show('connected', null);
-      // textContent converts null to empty string, not 'null'
+      await el.updateComplete;
       expect(el.shadowRoot.getElementById('message').textContent).to.equal('');
     });
 
-    it('handles numeric message', () => {
+    it('handles numeric message', async () => {
       el.show('connected', 12345);
+      await el.updateComplete;
       expect(el.shadowRoot.getElementById('message').textContent).to.equal('12345');
     });
 
-    it('handles unknown state gracefully', () => {
+    it('handles unknown state gracefully', async () => {
       el.show('unknown-state', 'Unknown');
+      await el.updateComplete;
 
       expect(el.getAttribute('state')).to.equal('unknown-state');
-      // Icon should be undefined/empty since no match
-      expect(el.shadowRoot.getElementById('icon').textContent).to.be.oneOf(['', 'undefined']);
+      // Icon should be empty since no match in ICONS map
+      expect(el.shadowRoot.getElementById('icon').textContent).to.equal('');
     });
 
     it('handles hide() on element not in DOM', () => {
@@ -381,11 +398,12 @@ describe('cem-connection-status', () => {
   describe('multiple instances', () => {
     let el1, el2;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       el1 = document.createElement('cem-connection-status');
       el2 = document.createElement('cem-connection-status');
       document.body.appendChild(el1);
       document.body.appendChild(el2);
+      await Promise.all([el1.updateComplete, el2.updateComplete]);
     });
 
     afterEach(() => {
@@ -401,11 +419,12 @@ describe('cem-connection-status', () => {
       expect(el2.getAttribute('state')).to.equal('disconnected');
     });
 
-    it('shares template but has independent shadow DOMs', () => {
+    it('has independent shadow DOMs', async () => {
       expect(el1.shadowRoot).to.not.equal(el2.shadowRoot);
 
       el1.show('connected', 'Message 1');
       el2.show('reconnecting', 'Message 2');
+      await Promise.all([el1.updateComplete, el2.updateComplete]);
 
       expect(el1.shadowRoot.getElementById('message').textContent).to.equal('Message 1');
       expect(el2.shadowRoot.getElementById('message').textContent).to.equal('Message 2');
@@ -415,9 +434,10 @@ describe('cem-connection-status', () => {
   describe('real-world usage', () => {
     let el;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       el = document.createElement('cem-connection-status');
       document.body.appendChild(el);
+      await el.updateComplete;
     });
 
     afterEach(() => {
@@ -448,14 +468,15 @@ describe('cem-connection-status', () => {
       expect(el.hasAttribute('faded')).to.be.true;
     });
 
-    it('simulates permanent disconnection', () => {
+    it('simulates permanent disconnection', async () => {
       el.show('connected', 'Connected');
       el.show('reconnecting', 'Connection lost, reconnecting...');
       el.show('reconnecting', 'Retrying...');
       el.show('disconnected', 'Unable to reconnect to server');
+      await el.updateComplete;
 
       expect(el.getAttribute('state')).to.equal('disconnected');
-      expect(el.shadowRoot.getElementById('icon').textContent).to.equal('🔴');
+      expect(el.shadowRoot.getElementById('icon').textContent).to.equal('\u{1F534}');
     });
   });
 });
