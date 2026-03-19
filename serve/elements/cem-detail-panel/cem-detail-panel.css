@@ -1,0 +1,41 @@
+/* Detail Panel - Displays manifest item details on-demand */
+
+:host {
+  display: block;
+  padding: var(--pf-t--global--spacer--md, 1rem);
+}
+
+#details-content {
+  h3 {
+    margin-top: 0;
+    margin-bottom: var(--pf-t--global--spacer--sm, 0.5rem);
+    font-size: var(--pf-t--global--font--size--heading--lg, 1.25rem);
+  }
+
+  dl {
+    margin: 0;
+  }
+
+  dt {
+    font-weight: var(--pf-t--global--font--weight--body--bold, 600);
+    margin-top: var(--pf-t--global--spacer--sm, 0.5rem);
+  }
+
+  dd {
+    margin-left: 0;
+    margin-bottom: var(--pf-v6-c-description-list--m-horizontal__description--MarginBlockEnd, 0.5rem);
+  }
+
+  .empty-state {
+    color: var(--pf-t--global--text--color--subtle, #6c757d);
+    font-style: italic;
+  }
+
+  code {
+    background-color: var(--pf-t--global--background--color--secondary--default, #f5f5f5);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-family: var(--pf-t--global--font--family--mono, monospace);
+    font-size: 0.875em;
+  }
+}
