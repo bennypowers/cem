@@ -1,7 +1,9 @@
 import { expect, waitUntil } from '@open-wc/testing';
 import sinon from 'sinon';
 import './cem-manifest-browser.js';
-import { CemVirtualTree } from '/__cem/elements/cem-virtual-tree/cem-virtual-tree.js';
+// Get CemVirtualTree from the registry to avoid double-registration
+// (importing from /__cem/ proxy loads a separate module instance)
+const CemVirtualTree = customElements.get('cem-virtual-tree');
 
 describe('cem-manifest-browser', () => {
   let el;

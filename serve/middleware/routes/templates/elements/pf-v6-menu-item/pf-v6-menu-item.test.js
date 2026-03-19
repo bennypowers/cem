@@ -235,35 +235,43 @@ describe('pf-v6-menu-item', () => {
       el = await fixture('<pf-v6-menu-item></pf-v6-menu-item>');
     });
 
-    it('sets and removes disabled attribute', () => {
+    it('sets and removes disabled attribute', async () => {
       el.disabled = true;
+      await el.updateComplete;
       expect(el.hasAttribute('disabled')).to.be.true;
 
       el.disabled = false;
+      await el.updateComplete;
       expect(el.hasAttribute('disabled')).to.be.false;
     });
 
-    it('sets and removes checked attribute', () => {
+    it('sets and removes checked attribute', async () => {
       el.checked = true;
+      await el.updateComplete;
       expect(el.hasAttribute('checked')).to.be.true;
 
       el.checked = false;
+      await el.updateComplete;
       expect(el.hasAttribute('checked')).to.be.false;
     });
 
-    it('sets and reflects variant attribute', () => {
+    it('sets and reflects variant attribute', async () => {
       el.variant = 'checkbox';
+      await el.updateComplete;
       expect(el.getAttribute('variant')).to.equal('checkbox');
 
       el.variant = 'default';
+      await el.updateComplete;
       expect(el.getAttribute('variant')).to.equal('default');
     });
 
-    it('sets and reflects value attribute', () => {
+    it('sets and reflects value attribute', async () => {
       el.value = 'test';
+      await el.updateComplete;
       expect(el.getAttribute('value')).to.equal('test');
 
       el.value = '';
+      await el.updateComplete;
       expect(el.getAttribute('value')).to.equal('');
     });
   });

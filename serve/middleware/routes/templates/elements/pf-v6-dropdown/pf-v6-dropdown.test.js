@@ -283,19 +283,23 @@ describe('pf-v6-dropdown', () => {
       await el.updateComplete;
     });
 
-    it('sets and removes expanded attribute', () => {
+    it('sets and removes expanded attribute', async () => {
       el.expanded = true;
+      await el.updateComplete;
       expect(el.hasAttribute('expanded')).to.be.true;
 
       el.expanded = false;
+      await el.updateComplete;
       expect(el.hasAttribute('expanded')).to.be.false;
     });
 
-    it('sets and removes disabled attribute', () => {
+    it('sets and removes disabled attribute', async () => {
       el.disabled = true;
+      await el.updateComplete;
       expect(el.hasAttribute('disabled')).to.be.true;
 
       el.disabled = false;
+      await el.updateComplete;
       expect(el.hasAttribute('disabled')).to.be.false;
     });
 
