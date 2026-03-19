@@ -24,10 +24,10 @@
   flex: 1;
   overflow: auto;
   min-height: 0;
+}
 
-  &::slotted(pf-v6-tree-view) {
-    margin: var(--pf-t--global--spacer--md, 1rem);
-  }
+::slotted(pf-v6-tree-view) {
+  margin: var(--pf-t--global--spacer--md, 1rem);
 }
 
 #panel-title {

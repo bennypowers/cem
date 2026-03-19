@@ -659,6 +659,7 @@ export class CemServeChrome extends LitElement {
       <pf-v6-toolbar-item>
         <pf-v6-button href="${this.sourceURL}"
                       target="_blank"
+                      rel="noopener noreferrer"
                       variant="plain"
                       aria-label="View source file">
           <svg aria-label="${label}"

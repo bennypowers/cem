@@ -21,8 +21,7 @@ export class CemServeDemo extends LitElement {
    * Find the Nth instance of an element by tag name
    */
   #getElementInstance(tagName: string, instanceIndex = 0): Element | null {
-    const root = this.shadowRoot ?? this;
-    const elements = root.querySelectorAll(tagName);
+    const elements = this.querySelectorAll(tagName);
     return elements[instanceIndex] || null;
   }
 
@@ -103,9 +102,8 @@ export class CemServeDemo extends LitElement {
    * @param value - Attribute value (boolean for presence/absence)
    * @returns Whether the operation succeeded
    */
-  setDemoAttribute(selector: string, attribute: string, value: string | boolean): boolean {
-    const root = this.shadowRoot ?? this;
-    const target = root.querySelector(selector);
+  setDemoAttribute(selector: string, attribute: string, value: string | boolean | null): boolean {
+    const target = this.querySelector(selector);
     if (!target) return false;
 
     if (typeof value === 'boolean') {
@@ -127,8 +125,7 @@ export class CemServeDemo extends LitElement {
    * @returns Whether the operation succeeded
    */
   setDemoProperty(selector: string, property: string, value: unknown): boolean {
-    const root = this.shadowRoot ?? this;
-    const target = root.querySelector(selector);
+    const target = this.querySelector(selector);
     if (target) {
       (target as Record<string, unknown>)[property] = value;
       return true;
@@ -144,8 +141,7 @@ export class CemServeDemo extends LitElement {
    * @returns Whether the operation succeeded
    */
   setDemoCssCustomProperty(selector: string, cssProperty: string, value: string): boolean {
-    const root = this.shadowRoot ?? this;
-    const target = root.querySelector(selector) as HTMLElement | null;
+    const target = this.querySelector(selector) as HTMLElement | null;
     if (target) {
       const propertyName = cssProperty.startsWith('--') ? cssProperty : `--${cssProperty}`;
       target.style.setProperty(propertyName, value);

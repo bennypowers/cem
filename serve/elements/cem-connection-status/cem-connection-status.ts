@@ -30,6 +30,9 @@ export class CemConnectionStatus extends LitElement {
   @property()
   accessor message = '';
 
+  #fadeTimeout: ReturnType<typeof setTimeout> | null = null;
+  #hideTimeout: ReturnType<typeof setTimeout> | null = null;
+
   render() {
     return html`
       <span id="icon">${this.state ? ICONS[this.state] : ''}</span>
@@ -38,12 +41,20 @@ export class CemConnectionStatus extends LitElement {
   }
 
   show(state: ConnectionState, message: string, { fadeDelay = 0 } = {}): void {
+    if (this.#fadeTimeout != null) {
+      clearTimeout(this.#fadeTimeout);
+      this.#fadeTimeout = null;
+    }
+    if (this.#hideTimeout != null) {
+      clearTimeout(this.#hideTimeout);
+      this.#hideTimeout = null;
+    }
     this.state = state;
     this.faded = false;
     this.message = message;
 
     if (fadeDelay > 0 && state === 'connected') {
-      setTimeout(() => {
+      this.#fadeTimeout = setTimeout(() => {
         this.faded = true;
       }, fadeDelay);
     }
@@ -51,7 +62,7 @@ export class CemConnectionStatus extends LitElement {
 
   hide(): void {
     this.style.opacity = '0';
-    setTimeout(() => this.remove(), 300);
+    this.#hideTimeout = setTimeout(() => this.remove(), 300);
   }
 }
 

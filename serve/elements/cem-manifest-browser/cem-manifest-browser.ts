@@ -52,6 +52,14 @@ export class CemManifestBrowser extends LitElement {
 
   #searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this.#searchDebounceTimer != null) {
+      clearTimeout(this.#searchDebounceTimer);
+      this.#searchDebounceTimer = null;
+    }
+  }
+
   render() {
     return html`
       <div id="drawer-content" slot="content">
