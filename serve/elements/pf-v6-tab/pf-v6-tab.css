@@ -1,0 +1,6 @@
+:host {
+  display: block;
+  padding: var(--pf-t--global--spacer--md);
+  height: 100%;
+  box-sizing: border-box;
+}

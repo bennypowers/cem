@@ -2,7 +2,6 @@ import { expect, waitUntil } from '@open-wc/testing';
 import sinon from 'sinon';
 import './cem-drawer.js';
 import { CemDrawerChangeEvent, CemDrawerResizeEvent } from './cem-drawer.js';
-import { loadSSRTemplate } from '../../../testdata/frontend/helpers/ssr-template-loader.js';
 
 // Helper to flush requestAnimationFrame
 const flushRAF = () => new Promise(resolve => requestAnimationFrame(resolve));
@@ -12,9 +11,8 @@ describe('cem-drawer', () => {
 
   beforeEach(async () => {
     el = document.createElement('cem-drawer');
-    // cem-drawer extends HTMLElement and expects SSR shadow DOM
-    await loadSSRTemplate(el, 'cem-drawer');
     document.body.appendChild(el);
+    await el.updateComplete;
   });
 
   afterEach(() => {
@@ -76,30 +74,37 @@ describe('cem-drawer', () => {
       expect(el.open).to.be.false;
     });
 
-    it('returns true when open attribute is present', () => {
+    it('returns true when open attribute is present', async () => {
       el.setAttribute('open', '');
+      await el.updateComplete;
       expect(el.open).to.be.true;
     });
 
-    it('sets open attribute when set to true', () => {
+    it('sets open attribute when set to true', async () => {
       el.open = true;
+      await el.updateComplete;
       expect(el.hasAttribute('open')).to.be.true;
     });
 
-    it('removes open attribute when set to false', () => {
-      el.setAttribute('open', '');
+    it('removes open attribute when set to false', async () => {
+      el.open = true;
+      await el.updateComplete;
       el.open = false;
+      await el.updateComplete;
       expect(el.hasAttribute('open')).to.be.false;
     });
 
-    it('coerces truthy values to true', () => {
+    it('coerces truthy values to true', async () => {
       el.open = 'yes';
+      await el.updateComplete;
       expect(el.hasAttribute('open')).to.be.true;
     });
 
-    it('coerces falsy values to false', () => {
-      el.setAttribute('open', '');
+    it('coerces falsy values to false', async () => {
+      el.open = true;
+      await el.updateComplete;
       el.open = '';
+      await el.updateComplete;
       expect(el.hasAttribute('open')).to.be.false;
     });
   });
@@ -155,24 +160,28 @@ describe('cem-drawer', () => {
   });
 
   describe('change events', () => {
-    it('dispatches change event when opened via attribute', (done) => {
+    it('dispatches change event when opened via property', (done) => {
       el.addEventListener('change', (e) => {
         expect(e.open).to.be.true;
         done();
       });
 
-      el.setAttribute('open', '');
+      el.open = true;
     });
 
-    it('dispatches change event when closed via attribute', (done) => {
-      el.setAttribute('open', '');
+    it('dispatches change event when closed via property', async () => {
+      el.open = true;
+      await el.updateComplete;
 
-      el.addEventListener('change', (e) => {
-        expect(e.open).to.be.false;
-        done();
+      const promise = new Promise((resolve) => {
+        el.addEventListener('change', (e) => {
+          expect(e.open).to.be.false;
+          resolve();
+        });
       });
 
-      el.removeAttribute('open');
+      el.open = false;
+      await promise;
     });
 
     it('dispatches change event when toggled', (done) => {
@@ -194,52 +203,55 @@ describe('cem-drawer', () => {
       expect(el.open).to.be.true;
     });
 
-    it('updates aria-expanded attribute', () => {
+    it('updates aria-expanded attribute', async () => {
       const toggleButton = el.shadowRoot.getElementById('toggle');
 
       toggleButton.click();
+      await el.updateComplete;
       expect(toggleButton.getAttribute('aria-expanded')).to.equal('true');
 
       toggleButton.click();
+      await el.updateComplete;
       expect(toggleButton.getAttribute('aria-expanded')).to.equal('false');
     });
 
-    it('enables transitions on first click', () => {
-      const content = el.shadowRoot.getElementById('content');
+    it('enables transitions on first click', async () => {
       const toggleButton = el.shadowRoot.getElementById('toggle');
 
-      expect(content.classList.contains('transitions-enabled')).to.be.false;
-
       toggleButton.click();
+      await el.updateComplete;
 
+      const content = el.shadowRoot.getElementById('content');
       expect(content.classList.contains('transitions-enabled')).to.be.true;
     });
   });
 
   describe('height management', () => {
-    it('sets default height of 400px when opened', () => {
-      const content = el.shadowRoot.getElementById('content');
-
+    it('sets default height of 400px when opened', async () => {
       el.open = true;
+      await el.updateComplete;
 
+      const content = el.shadowRoot.getElementById('content');
       expect(content.style.height).to.equal('400px');
     });
 
-    it('respects drawer-height attribute when opened', () => {
-      const content = el.shadowRoot.getElementById('content');
-
+    it('respects drawer-height attribute when opened', async () => {
       el.setAttribute('drawer-height', '300');
+      await el.updateComplete;
       el.open = true;
+      await el.updateComplete;
 
+      const content = el.shadowRoot.getElementById('content');
       expect(content.style.height).to.equal('300px');
     });
 
-    it('sets height to 0px when closed', () => {
-      const content = el.shadowRoot.getElementById('content');
-
+    it('sets height to 0px when closed', async () => {
       el.open = true;
+      await el.updateComplete;
       el.open = false;
+      await el.updateComplete;
 
+      const content = el.shadowRoot.getElementById('content');
       expect(content.style.height).to.equal('0px');
     });
   });
@@ -247,10 +259,11 @@ describe('cem-drawer', () => {
   describe('mouse resizing', () => {
     let resizeHandle, content;
 
-    beforeEach(() => {
+    beforeEach(async () => {
+      el.open = true;
+      await el.updateComplete;
       resizeHandle = el.shadowRoot.getElementById('resize-handle');
       content = el.shadowRoot.getElementById('content');
-      el.open = true; // Open drawer for resize testing
     });
 
     it('starts resize on mousedown', () => {
@@ -346,10 +359,11 @@ describe('cem-drawer', () => {
   describe('keyboard resizing', () => {
     let resizeHandle, content;
 
-    beforeEach(() => {
+    beforeEach(async () => {
+      el.open = true;
+      await el.updateComplete;
       resizeHandle = el.shadowRoot.getElementById('resize-handle');
       content = el.shadowRoot.getElementById('content');
-      el.open = true;
       content.style.height = '400px';
     });
 
@@ -454,9 +468,10 @@ describe('cem-drawer', () => {
   describe('ARIA attributes', () => {
     let resizeHandle;
 
-    beforeEach(() => {
-      resizeHandle = el.shadowRoot.getElementById('resize-handle');
+    beforeEach(async () => {
       el.open = true;
+      await el.updateComplete;
+      resizeHandle = el.shadowRoot.getElementById('resize-handle');
     });
 
     it('updates aria-valuenow on resize', () => {
@@ -494,16 +509,18 @@ describe('cem-drawer', () => {
       expect(el.open).to.be.false;
     });
 
-    it('handles opening with non-numeric drawer-height', () => {
+    it('handles opening with non-numeric drawer-height', async () => {
       el.setAttribute('drawer-height', 'invalid');
       el.open = true;
+      await el.updateComplete;
 
-      const content = el.shadowRoot.getElementById('content');
-      // Should use NaN or 0, but drawer should still function
+      // Should still function even with NaN drawer-height
       expect(el.open).to.be.true;
     });
 
-    it('handles resize without content element', () => {
+    it('handles resize without content element', async () => {
+      el.open = true;
+      await el.updateComplete;
       const resizeHandle = el.shadowRoot.getElementById('resize-handle');
 
       // Remove content element
@@ -524,7 +541,9 @@ describe('cem-drawer', () => {
       }).to.not.throw();
     });
 
-    it('handles mousemove without mousedown', () => {
+    it('handles mousemove without mousedown', async () => {
+      el.open = true;
+      await el.updateComplete;
       const content = el.shadowRoot.getElementById('content');
       const initialHeight = content.style.height;
 
@@ -534,7 +553,9 @@ describe('cem-drawer', () => {
       expect(content.style.height).to.equal(initialHeight);
     });
 
-    it('fires resize events immediately for keyboard', () => {
+    it('fires resize events immediately for keyboard', async () => {
+      el.open = true;
+      await el.updateComplete;
       const resizeHandle = el.shadowRoot.getElementById('resize-handle');
       const spy = sinon.spy();
       el.addEventListener('resize', spy);
@@ -551,11 +572,12 @@ describe('cem-drawer', () => {
   });
 
   describe('real-world usage', () => {
-    it('simulates user opening drawer via toggle button', () => {
+    it('simulates user opening drawer via toggle button', async () => {
       const toggleButton = el.shadowRoot.getElementById('toggle');
 
       expect(el.open).to.be.false;
       toggleButton.click();
+      await el.updateComplete;
       expect(el.open).to.be.true;
 
       const content = el.shadowRoot.getElementById('content');
@@ -563,10 +585,10 @@ describe('cem-drawer', () => {
     });
 
     it('simulates user resizing drawer with mouse', async () => {
+      el.open = true;
+      await el.updateComplete;
       const resizeHandle = el.shadowRoot.getElementById('resize-handle');
       const content = el.shadowRoot.getElementById('content');
-
-      el.open = true;
 
       // User grabs handle
       resizeHandle.dispatchEvent(new MouseEvent('mousedown', { clientY: 500 }));
@@ -585,11 +607,11 @@ describe('cem-drawer', () => {
       expect(height).to.be.greaterThan(400);
     });
 
-    it('simulates user resizing drawer with keyboard', () => {
+    it('simulates user resizing drawer with keyboard', async () => {
+      el.open = true;
+      await el.updateComplete;
       const resizeHandle = el.shadowRoot.getElementById('resize-handle');
       const content = el.shadowRoot.getElementById('content');
-
-      el.open = true;
       content.style.height = '400px';
 
       // User presses ArrowUp 5 times
@@ -601,11 +623,11 @@ describe('cem-drawer', () => {
       expect(height).to.equal(450); // 400 + (5 * 10)
     });
 
-    it('simulates user quickly maximizing drawer', () => {
+    it('simulates user quickly maximizing drawer', async () => {
+      el.open = true;
+      await el.updateComplete;
       const resizeHandle = el.shadowRoot.getElementById('resize-handle');
       const content = el.shadowRoot.getElementById('content');
-
-      el.open = true;
 
       // User presses End key
       resizeHandle.dispatchEvent(new KeyboardEvent('keydown', { key: 'End' }));
@@ -617,11 +639,11 @@ describe('cem-drawer', () => {
       expect(height).to.equal(maxHeight);
     });
 
-    it('simulates user minimizing drawer', () => {
+    it('simulates user minimizing drawer', async () => {
+      el.open = true;
+      await el.updateComplete;
       const resizeHandle = el.shadowRoot.getElementById('resize-handle');
       const content = el.shadowRoot.getElementById('content');
-
-      el.open = true;
 
       // User presses Home key
       resizeHandle.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home' }));
@@ -630,11 +652,13 @@ describe('cem-drawer', () => {
       expect(height).to.equal(100);
     });
 
-    it('simulates user closing drawer', () => {
+    it('simulates user closing drawer', async () => {
       el.open = true;
+      await el.updateComplete;
 
       const toggleButton = el.shadowRoot.getElementById('toggle');
       toggleButton.click();
+      await el.updateComplete;
 
       expect(el.open).to.be.false;
 

@@ -79,7 +79,8 @@
                     drawer="{{if .State.Drawer.Open}}expanded{{else}}collapsed{{end}}"
                     drawer-height="{{.State.Drawer.Height}}"
                     tabs-selected="{{.State.Tabs.SelectedIndex}}"
-                    sidebar="{{if .State.Sidebar.Collapsed}}collapsed{{else}}expanded{{end}}">
+                    sidebar="{{if .State.Sidebar.Collapsed}}collapsed{{else}}expanded{{end}}"
+                    {{if .Description}}has-description{{end}}>
     {{if .Description}}
     <section slot="description">
       {{.Description}}

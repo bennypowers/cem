@@ -20,21 +20,21 @@ describe('pf-v6-menu-item', () => {
 
     beforeEach(async () => {
       el = await fixture('<pf-v6-menu-item></pf-v6-menu-item>');
-      await el.rendered;
+      await el.updateComplete;
     });
 
     it('is defined as custom element', () => {
       expect(el).to.be.instanceOf(HTMLElement);
     });
 
-    it('extends CemElement', () => {
+    it('extends LitElement', () => {
       expect(el.constructor.name).to.equal('PfV6MenuItem');
       expect(el.shadowRoot).to.exist;
     });
 
-    it('renders input element', () => {
+    it('does not render input element for default variant', () => {
       const input = el.shadowRoot.getElementById('input');
-      expect(input).to.exist;
+      expect(input).to.not.exist;
     });
 
     it('renders slot for content', () => {
@@ -110,7 +110,7 @@ describe('pf-v6-menu-item', () => {
 
     beforeEach(async () => {
       el = await fixture('<pf-v6-menu-item variant="checkbox"></pf-v6-menu-item>');
-      await el.rendered;
+      await el.updateComplete;
     });
 
     it('has checkbox variant', () => {
@@ -190,7 +190,7 @@ describe('pf-v6-menu-item', () => {
 
     beforeEach(async () => {
       el = await fixture('<pf-v6-menu-item disabled></pf-v6-menu-item>');
-      await el.rendered;
+      await el.updateComplete;
     });
 
     it('reflects disabled attribute', () => {
@@ -221,7 +221,7 @@ describe('pf-v6-menu-item', () => {
 
     it('disables native checkbox input', async () => {
       el = await fixture('<pf-v6-menu-item variant="checkbox" disabled></pf-v6-menu-item>');
-      await el.rendered;
+      await el.updateComplete;
 
       const input = el.shadowRoot.getElementById('input');
       expect(input.disabled).to.be.true;
@@ -235,36 +235,44 @@ describe('pf-v6-menu-item', () => {
       el = await fixture('<pf-v6-menu-item></pf-v6-menu-item>');
     });
 
-    it('sets and removes disabled attribute', () => {
+    it('sets and removes disabled attribute', async () => {
       el.disabled = true;
+      await el.updateComplete;
       expect(el.hasAttribute('disabled')).to.be.true;
 
       el.disabled = false;
+      await el.updateComplete;
       expect(el.hasAttribute('disabled')).to.be.false;
     });
 
-    it('sets and removes checked attribute', () => {
+    it('sets and removes checked attribute', async () => {
       el.checked = true;
+      await el.updateComplete;
       expect(el.hasAttribute('checked')).to.be.true;
 
       el.checked = false;
+      await el.updateComplete;
       expect(el.hasAttribute('checked')).to.be.false;
     });
 
-    it('sets and removes variant attribute', () => {
+    it('sets and reflects variant attribute', async () => {
       el.variant = 'checkbox';
+      await el.updateComplete;
       expect(el.getAttribute('variant')).to.equal('checkbox');
 
-      el.variant = '';
-      expect(el.hasAttribute('variant')).to.be.false;
+      el.variant = 'default';
+      await el.updateComplete;
+      expect(el.getAttribute('variant')).to.equal('default');
     });
 
-    it('sets and removes value attribute', () => {
+    it('sets and reflects value attribute', async () => {
       el.value = 'test';
+      await el.updateComplete;
       expect(el.getAttribute('value')).to.equal('test');
 
       el.value = '';
-      expect(el.hasAttribute('value')).to.be.false;
+      await el.updateComplete;
+      expect(el.getAttribute('value')).to.equal('');
     });
   });
 
@@ -306,7 +314,7 @@ describe('pf-v6-menu-item', () => {
 
     it('handles initial checked state', async () => {
       const el = await fixture('<pf-v6-menu-item variant="checkbox" checked></pf-v6-menu-item>');
-      await el.rendered;
+      await el.updateComplete;
 
       expect(el.checked).to.be.true;
       const input = el.shadowRoot.getElementById('input');
@@ -317,7 +325,7 @@ describe('pf-v6-menu-item', () => {
   describe('real-world scenarios', () => {
     it('simulates menu item selection', async () => {
       const el = await fixture('<pf-v6-menu-item value="save">Save</pf-v6-menu-item>');
-      await el.rendered;
+      await el.updateComplete;
 
       setTimeout(() => el.click());
       const event = await oneEvent(el, 'select');
@@ -327,7 +335,7 @@ describe('pf-v6-menu-item', () => {
 
     it('simulates checkbox menu item toggle', async () => {
       const el = await fixture('<pf-v6-menu-item variant="checkbox" value="show-warnings" checked></pf-v6-menu-item>');
-      await el.rendered;
+      await el.updateComplete;
 
       setTimeout(() => el.click());
       const event = await oneEvent(el, 'select');
@@ -339,7 +347,7 @@ describe('pf-v6-menu-item', () => {
 
     it('simulates keyboard navigation and selection', async () => {
       const el = await fixture('<pf-v6-menu-item value="copy"></pf-v6-menu-item>');
-      await el.rendered;
+      await el.updateComplete;
       el.focus();
 
       setTimeout(() => sendKeys({ press: 'Enter' }));
@@ -350,7 +358,7 @@ describe('pf-v6-menu-item', () => {
 
     it('simulates disabled menu item', async () => {
       const el = await fixture('<pf-v6-menu-item value="delete" disabled></pf-v6-menu-item>');
-      await el.rendered;
+      await el.updateComplete;
 
       let eventFired = false;
       el.addEventListener('select', () => eventFired = true);
@@ -369,7 +377,7 @@ describe('pf-v6-menu-item', () => {
         </div>
       `);
       const items = [...container.querySelectorAll('pf-v6-menu-item')];
-      await Promise.all(items.map(item => item.rendered));
+      await Promise.all(items.map(item => item.updateComplete));
 
       // User unchecks 'debug'
       items[3].click();

@@ -1,198 +1,153 @@
-import { CemElement } from '/__cem/cem-element.js';
-
-/**
- * PatternFly v6 Text Input Group
- *
- * A text input with optional icons and utility buttons.
- *
- * @slot icon - Leading icon
- * @slot status-icon - Trailing status icon (success, warning, error)
- * @slot utilities - Utility buttons/actions (e.g., eyedropper, clear)
- *
- * @attr {string} value - Input value
- * @attr {string} type - Input type (default: "text")
- * @attr {string} placeholder - Placeholder text
- * @attr {string} aria-label - Accessible label
- * @attr {boolean} disabled - Disabled state
- * @attr {boolean} readonly - Readonly state
- * @attr {boolean} required - Required state
- * @attr {boolean} plain - Plain variant (no background/border)
- * @attr {boolean} icon - Has leading icon
- * @attr {string} status - Validation status: success|warning|error
- *
- * @fires input - Native input event
- * @fires change - Native change event
- *
- * @customElement pf-v6-text-input-group
- */
-class PfV6TextInputGroup extends CemElement {
-  static is = 'pf-v6-text-input-group';
-  static formAssociated = true;
-
-  static observedAttributes = [
-    'value',
-    'type',
-    'placeholder',
-    'disabled',
-    'readonly',
-    'required',
-    'plain',
-    'icon',
-    'status'
-  ];
-
-  #input;
-  #internals = this.attachInternals();
-
-  async afterTemplateLoaded() {
-    this.#input = this.shadowRoot.getElementById('input');
-
-    // Connect ElementInternals labels to the internal input
-    // This allows <label for="input-group-id"> to work properly
-    if (this.#internals.labels) {
-      const labelIds = Array.from(this.#internals.labels).map(label => label.id).filter(Boolean);
-      if (labelIds.length > 0) {
-        this.#input.setAttribute('aria-labelledby', labelIds.join(' '));
-      }
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __knownSymbol = (name, symbol) => (symbol = Symbol[name]) ? symbol : Symbol.for("Symbol." + name);
+var __typeError = (msg) => {
+  throw TypeError(msg);
+};
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __decoratorStart = (base) => [, , , __create(base?.[__knownSymbol("metadata")] ?? null)];
+var __decoratorStrings = ["class", "method", "getter", "setter", "accessor", "field", "value", "get", "set"];
+var __expectFn = (fn) => fn !== void 0 && typeof fn !== "function" ? __typeError("Function expected") : fn;
+var __decoratorContext = (kind, name, done, metadata, fns) => ({ kind: __decoratorStrings[kind], name, metadata, addInitializer: (fn) => done._ ? __typeError("Already initialized") : fns.push(__expectFn(fn || null)) });
+var __decoratorMetadata = (array, target) => __defNormalProp(target, __knownSymbol("metadata"), array[3]);
+var __runInitializers = (array, flags, self, value) => {
+  for (var i = 0, fns = array[flags >> 1], n = fns && fns.length; i < n; i++) flags & 1 ? fns[i].call(self) : value = fns[i].call(self, value);
+  return value;
+};
+var __decorateElement = (array, flags, name, decorators, target, extra) => {
+  var fn, it, done, ctx, access, k = flags & 7, s2 = !!(flags & 8), p = !!(flags & 16);
+  var j = k > 3 ? array.length + 1 : k ? s2 ? 1 : 2 : 0, key = __decoratorStrings[k + 5];
+  var initializers = k > 3 && (array[j - 1] = []), extraInitializers = array[j] || (array[j] = []);
+  var desc = k && (!p && !s2 && (target = target.prototype), k < 5 && (k > 3 || !p) && __getOwnPropDesc(k < 4 ? target : { get [name]() {
+    return __privateGet(this, extra);
+  }, set [name](x) {
+    return __privateSet(this, extra, x);
+  } }, name));
+  k ? p && k < 4 && __name(extra, (k > 2 ? "set " : k > 1 ? "get " : "") + name) : __name(target, name);
+  for (var i = decorators.length - 1; i >= 0; i--) {
+    ctx = __decoratorContext(k, name, done = {}, array[3], extraInitializers);
+    if (k) {
+      ctx.static = s2, ctx.private = p, access = ctx.access = { has: p ? (x) => __privateIn(target, x) : (x) => name in x };
+      if (k ^ 3) access.get = p ? (x) => (k ^ 1 ? __privateGet : __privateMethod)(x, target, k ^ 4 ? extra : desc.get) : (x) => x[name];
+      if (k > 2) access.set = p ? (x, y) => __privateSet(x, target, y, k ^ 4 ? extra : desc.set) : (x, y) => x[name] = y;
     }
-
-    // Forward input and change events
-    this.#input?.addEventListener('input', (e) => {
-      this.setAttribute('value', e.target.value);
-      // Re-dispatch event for external listeners
-      this.dispatchEvent(new InputEvent('input', {
-        bubbles: true,
-        data: e.data,
-        inputType: e.inputType
-      }));
-    });
-
-    this.#input?.addEventListener('change', (e) => {
-      this.dispatchEvent(new Event('change', {
-        bubbles: true,
-      }));
-    });
+    it = (0, decorators[i])(k ? k < 4 ? p ? extra : desc[key] : k > 4 ? void 0 : { get: desc.get, set: desc.set } : target, ctx), done._ = 1;
+    if (k ^ 4 || it === void 0) __expectFn(it) && (k > 4 ? initializers.unshift(it) : k ? p ? extra = it : desc[key] = it : target = it);
+    else if (typeof it !== "object" || it === null) __typeError("Object expected");
+    else __expectFn(fn = it.get) && (desc.get = fn), __expectFn(fn = it.set) && (desc.set = fn), __expectFn(fn = it.init) && initializers.unshift(fn);
   }
+  return k || __decoratorMetadata(array, target), desc && __defProp(target, name, desc), p ? k ^ 4 ? extra : desc : target;
+};
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateIn = (member, obj) => Object(obj) !== obj ? __typeError('Cannot use the "in" operator on this value') : member.has(obj);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
 
-  // Getters and setters
-  get value() {
-    return this.getAttribute('value') || '';
+// elements/pf-v6-text-input-group/pf-v6-text-input-group.ts
+import { LitElement, html } from "/__cem/vendor/lit.js";
+import { customElement } from "/__cem/vendor/lit/decorators/custom-element.js";
+import { property } from "/__cem/vendor/lit/decorators/property.js";
+import { live } from "/__cem/vendor/lit/directives/live.js";
+import { ifDefined } from "/__cem/vendor/lit/directives/if-defined.js";
+
+// lit-css:/home/bennyp/Developer/cem/serve/elements/pf-v6-text-input-group/pf-v6-text-input-group.css
+var s = new CSSStyleSheet();
+s.replaceSync(JSON.parse('":host {\\n\\n  --pf-v6-c-text-input-group--BackgroundColor: var(--pf-t--global--background--color--control--default);\\n  --pf-v6-c-text-input-group--BorderColor: var(--pf-t--global--border--color--default);\\n  --pf-v6-c-text-input-group--m-success--BorderColor: var(--pf-t--global--border--color--status--success--default);\\n  --pf-v6-c-text-input-group--m-warning--BorderColor: var(--pf-t--global--border--color--status--warning--default);\\n  --pf-v6-c-text-input-group--m-error--BorderColor: var(--pf-t--global--border--color--status--danger--default);\\n  --pf-v6-c-text-input-group--BorderWidth: var(--pf-t--global--border--width--control--default);\\n  --pf-v6-c-text-input-group__LineHeight: var(--pf-t--global--font--line-height--body);\\n  --pf-v6-c-text-input-group__FontSize: var(--pf-t--global--font--size--body--default);\\n  --pf-v6-c-text-input-group--m-hover--BorderColor: var(--pf-t--global--border--color--hover);\\n  --pf-v6-c-text-input-group--m-hover--m-success--BorderColor: var(--pf-t--global--border--color--status--success--hover);\\n  --pf-v6-c-text-input-group--m-hover--m-warning--BorderColor: var(--pf-t--global--border--color--status--warning--hover);\\n  --pf-v6-c-text-input-group--m-hover--m-error--BorderColor: var(--pf-t--global--border--color--status--danger--hover);\\n  --pf-v6-c-text-input-group__main--first-child--not--text-input--MarginInlineStart: calc(var(--pf-t--global--spacer--control--horizontal--plain) / 2);\\n  --pf-v6-c-text-input-group__main--m-icon__text-input--PaddingInlineStart: calc(var(--pf-t--global--spacer--control--horizontal--default) + var(--pf-v6-c-text-input-group__icon--FontSize) + var(--pf-t--global--spacer--gap--text-to-element--default));\\n  --pf-v6-c-text-input-group--status__text-input--PaddingInlineEnd: calc(var(--pf-t--global--spacer--control--horizontal--default) + var(--pf-v6-c-text-input-group__icon--FontSize) + var(--pf-t--global--spacer--gap--text-to-element--default));\\n  --pf-v6-c-text-input-group--utilities--status__text-input--PaddingInlineEnd: calc(var(--pf-t--global--spacer--sm) + var(--pf-v6-c-text-input-group__icon--FontSize) + var(--pf-t--global--spacer--gap--text-to-element--default));\\n  --pf-v6-c-text-input-group__main--RowGap: var(--pf-t--global--spacer--xs);\\n  --pf-v6-c-text-input-group__main--ColumnGap: var(--pf-t--global--spacer--xs);\\n  --pf-v6-c-text-input-group__text--BorderRadius--base: var(--pf-t--global--border--radius--small);\\n  --pf-v6-c-text-input-group__text--BorderStartStartRadius: var(--pf-v6-c-text-input-group__text--BorderRadius--base);\\n  --pf-v6-c-text-input-group__text--BorderStartEndRadius: var(--pf-v6-c-text-input-group__text--BorderRadius--base);\\n  --pf-v6-c-text-input-group__text--BorderEndEndRadius: var(--pf-v6-c-text-input-group__text--BorderRadius--base);\\n  --pf-v6-c-text-input-group__text--BorderEndStartRadius: var(--pf-v6-c-text-input-group__text--BorderRadius--base);\\n  --pf-v6-c-text-input-group__text-input--PaddingBlockStart: var(--pf-t--global--spacer--control--vertical--default);\\n  --pf-v6-c-text-input-group__text-input--PaddingInlineEnd: var(--pf-t--global--spacer--control--horizontal--default);\\n  --pf-v6-c-text-input-group__text-input--PaddingBlockEnd: var(--pf-t--global--spacer--control--vertical--default);\\n  --pf-v6-c-text-input-group__text-input--PaddingInlineStart: var(--pf-t--global--spacer--control--horizontal--default);\\n  --pf-v6-c-text-input-group__text-input--MinWidth: 12ch;\\n  --pf-v6-c-text-input-group__text-input--m-hint--Color: var(--pf-t--global--text--color--placeholder);\\n  --pf-v6-c-text-input-group__text-input--Color: var(--pf-t--global--text--color--regular);\\n  --pf-v6-c-text-input-group__text-input--placeholder--Color: var(--pf-t--global--text--color--placeholder);\\n  --pf-v6-c-text-input-group__text-input--BackgroundColor: transparent;\\n  --pf-v6-c-text-input-group__text-input--OutlineOffset: -6px;\\n  --pf-v6-c-text-input-group__icon--FontSize: var(--pf-t--global--icon--size--md);\\n  --pf-v6-c-text-input-group__icon--InsetInlineStart: var(--pf-t--global--spacer--control--horizontal--default);\\n  --pf-v6-c-text-input-group__icon--m-status--InsetInlineEnd: var(--pf-t--global--spacer--control--horizontal--default);\\n  --pf-v6-c-text-input-group--utilities--icon--m-status--InsetInlineEnd: var(--pf-t--global--spacer--sm);\\n  --pf-v6-c-text-input-group__icon--Color: var(--pf-t--global--icon--color--regular);\\n  --pf-v6-c-text-input-group--m-disabled__icon--Color: var(--pf-t--global--icon--color--on-disabled);\\n  --pf-v6-c-text-input-group__icon--m-status--Color: var(--pf-t--global--icon--color--regular);\\n  --pf-v6-c-text-input-group--m-disabled__icon--m-status--Color: var(--pf-t--global--icon--color--on-disabled);\\n  --pf-v6-c-text-input-group__main--m-success__icon--m-status--Color: var(--pf-t--global--icon--color--status--success--default);\\n  --pf-v6-c-text-input-group__main--m-warning__icon--m-status--Color: var(--pf-t--global--icon--color--status--warning--default);\\n  --pf-v6-c-text-input-group__main--m-error__icon--m-status--Color: var(--pf-t--global--icon--color--status--danger--default);\\n  --pf-v6-c-text-input-group__icon--TranslateY: -50%;\\n  --pf-v6-c-text-input-group__utilities--child--MarginInlineStart: var(--pf-t--global--spacer--xs);\\n  --pf-v6-c-text-input-group--m-disabled--Color: var(--pf-t--global--text--color--on-disabled);\\n  --pf-v6-c-text-input-group--m-disabled--BackgroundColor: var(--pf-t--global--background--color--disabled--default);\\n\\n  position: relative;\\n  display: flex;\\n  width: 100%;\\n  font-size: var(--pf-v6-c-text-input-group__FontSize);\\n  line-height: var(--pf-v6-c-text-input-group__LineHeight);\\n  color: var(--pf-v6-c-text-input-group--Color, inherit);\\n  background-color: var(--pf-v6-c-text-input-group--BackgroundColor);\\n  border-start-start-radius: var(--pf-v6-c-text-input-group__text--BorderStartStartRadius);\\n  border-start-end-radius: var(--pf-v6-c-text-input-group__text--BorderStartEndRadius);\\n  border-end-start-radius: var(--pf-v6-c-text-input-group__text--BorderEndStartRadius);\\n  border-end-end-radius: var(--pf-v6-c-text-input-group__text--BorderEndEndRadius);\\n}\\n\\n:host::before {\\n  position: absolute;\\n  inset: 0;\\n  pointer-events: none;\\n  content: \\"\\";\\n  border: var(--pf-v6-c-text-input-group--BorderWidth) solid var(--pf-v6-c-text-input-group--BorderColor);\\n  border-start-start-radius: var(--pf-v6-c-text-input-group__text--BorderStartStartRadius);\\n  border-start-end-radius: var(--pf-v6-c-text-input-group__text--BorderStartEndRadius);\\n  border-end-start-radius: var(--pf-v6-c-text-input-group__text--BorderEndStartRadius);\\n  border-end-end-radius: var(--pf-v6-c-text-input-group__text--BorderEndEndRadius);\\n}\\n\\n:host([disabled]) {\\n  --pf-v6-c-text-input-group--Color: var(--pf-v6-c-text-input-group--m-disabled--Color);\\n  --pf-v6-c-text-input-group__text-input--Color: var(--pf-v6-c-text-input-group--m-disabled--Color);\\n  --pf-v6-c-text-input-group__text-input--placeholder--Color: var(--pf-v6-c-text-input-group--m-disabled--Color);\\n  --pf-v6-c-text-input-group__icon--Color: var(--pf-v6-c-text-input-group--m-disabled__icon--Color);\\n  --pf-v6-c-text-input-group__icon--m-status--Color: var(--pf-v6-c-text-input-group--m-disabled__icon--m-status--Color);\\n  --pf-v6-c-text-input-group--BackgroundColor: var(--pf-v6-c-text-input-group--m-disabled--BackgroundColor);\\n  pointer-events: none;\\n}\\n\\n:host([plain])::before {\\n  border: 0;\\n}\\n\\n:host([plain]) {\\n  --pf-v6-c-text-input-group--BackgroundColor: transparent;\\n}\\n\\n:host([status=\\"success\\"]) {\\n  --pf-v6-c-text-input-group--BorderColor: var(--pf-v6-c-text-input-group--m-success--BorderColor);\\n  --pf-v6-c-text-input-group--m-hover--BorderColor: var(--pf-v6-c-text-input-group--m-hover--m-success--BorderColor);\\n  --pf-v6-c-text-input-group__icon--m-status--Color: var(--pf-v6-c-text-input-group__main--m-success__icon--m-status--Color);\\n}\\n\\n:host([status=\\"warning\\"]) {\\n  --pf-v6-c-text-input-group--BorderColor: var(--pf-v6-c-text-input-group--m-warning--BorderColor);\\n  --pf-v6-c-text-input-group--m-hover--BorderColor: var(--pf-v6-c-text-input-group--m-hover--m-warning--BorderColor);\\n  --pf-v6-c-text-input-group__icon--m-status--Color: var(--pf-v6-c-text-input-group__main--m-warning__icon--m-status--Color);\\n}\\n\\n:host([status=\\"error\\"]) {\\n  --pf-v6-c-text-input-group--BorderColor: var(--pf-v6-c-text-input-group--m-error--BorderColor);\\n  --pf-v6-c-text-input-group--m-hover--BorderColor: var(--pf-v6-c-text-input-group--m-hover--m-error--BorderColor);\\n  --pf-v6-c-text-input-group__icon--m-status--Color: var(--pf-v6-c-text-input-group__main--m-error__icon--m-status--Color);\\n}\\n\\n:host(:hover) {\\n  --pf-v6-c-text-input-group--BorderColor: var(--pf-v6-c-text-input-group--m-hover--BorderColor);\\n}\\n\\n:host([icon]) {\\n  --pf-v6-c-text-input-group__text--Position: relative;\\n  --pf-v6-c-text-input-group__text-input--PaddingInlineStart: var(--pf-v6-c-text-input-group__main--m-icon__text-input--PaddingInlineStart);\\n}\\n\\n:host([status]) {\\n  --pf-v6-c-text-input-group__text--Position: relative;\\n  --pf-v6-c-text-input-group__text-input--PaddingInlineEnd: var(--pf-v6-c-text-input-group--status__text-input--PaddingInlineEnd);\\n}\\n\\n:host(:has(#utilities slot[name=\\"utilities\\"]::slotted(*))) {\\n  --pf-v6-c-text-input-group__icon--m-status--InsetInlineEnd: var(--pf-v6-c-text-input-group--utilities--icon--m-status--InsetInlineEnd);\\n  --pf-v6-c-text-input-group--status__text-input--PaddingInlineEnd: var(--pf-v6-c-text-input-group--utilities--status__text-input--PaddingInlineEnd);\\n}\\n\\n#main {\\n  display: flex;\\n  flex: 1;\\n  flex-wrap: wrap;\\n  gap: var(--pf-v6-c-text-input-group__main--RowGap) var(--pf-v6-c-text-input-group__main--ColumnGap);\\n  min-width: 0;\\n}\\n\\n:host([icon]) #main {\\n  display: inline-flex;\\n  align-items: center;\\n  justify-content: center;\\n  min-width: calc(var(--pf-v6-c-text-input-group__LineHeight) * var(--pf-v6-c-text-input-group__FontSize));\\n}\\n\\n#text {\\n  position: var(--pf-v6-c-text-input-group__text--Position, revert);\\n  display: inline-grid;\\n  flex: 1;\\n  grid-template-areas: \\"text-input\\";\\n  grid-template-columns: 1fr;\\n}\\n\\n#icon {\\n  display: none;\\n  position: absolute;\\n  inset-block-start: 50%;\\n  inset-inline-start: var(--pf-v6-c-text-input-group__icon--InsetInlineStart);\\n  font-size: var(--pf-v6-c-text-input-group__icon--FontSize);\\n  color: var(--pf-v6-c-text-input-group__icon--Color);\\n  transform: translateY(var(--pf-v6-c-text-input-group__icon--TranslateY));\\n  pointer-events: none;\\n}\\n\\n:host([icon]) #icon {\\n  display: block;\\n}\\n\\n#status-icon {\\n  display: none;\\n  position: absolute;\\n  inset-block-start: 50%;\\n  inset-inline-start: auto;\\n  inset-inline-end: var(--pf-v6-c-text-input-group__icon--m-status--InsetInlineEnd);\\n  font-size: var(--pf-v6-c-text-input-group__icon--FontSize);\\n  color: var(--pf-v6-c-text-input-group__icon--m-status--Color);\\n  transform: translateY(var(--pf-v6-c-text-input-group__icon--TranslateY));\\n  pointer-events: none;\\n}\\n\\n:host([status]) #status-icon {\\n  display: block;\\n}\\n\\n#input {\\n  overflow: hidden;\\n  text-overflow: ellipsis;\\n  white-space: nowrap;\\n  position: relative;\\n  width: 100%;\\n  min-width: var(--pf-v6-c-text-input-group__text-input--MinWidth);\\n  box-sizing: border-box;\\n  padding-block-start: var(--pf-v6-c-text-input-group__text-input--PaddingBlockStart);\\n  padding-block-end: var(--pf-v6-c-text-input-group__text-input--PaddingBlockEnd);\\n  padding-inline-start: var(--pf-v6-c-text-input-group__text-input--PaddingInlineStart);\\n  padding-inline-end: var(--pf-v6-c-text-input-group__text-input--PaddingInlineEnd);\\n  color: var(--pf-v6-c-text-input-group__text-input--Color);\\n  background-color: var(--pf-v6-c-text-input-group__text-input--BackgroundColor);\\n  border: 0;\\n  outline-offset: var(--pf-v6-c-text-input-group__text-input--OutlineOffset);\\n  grid-area: text-input;\\n}\\n\\n#input::placeholder {\\n  color: var(--pf-v6-c-text-input-group__text-input--placeholder--Color);\\n}\\n\\n#utilities {\\n  display: flex;\\n  align-items: center;\\n  margin-inline-start: var(--pf-v6-c-text-input-group__utilities--MarginInlineStart);\\n  margin-inline-end: var(--pf-v6-c-text-input-group__utilities--MarginInlineEnd);\\n}\\n\\n#utilities::slotted(*) {\\n  margin-inline-start: var(--pf-v6-c-text-input-group__utilities--child--MarginInlineStart);\\n}\\n\\n#utilities::slotted(:first-child) {\\n  margin-inline-start: 0;\\n}\\n"'));
+var pf_v6_text_input_group_default = s;
+
+// elements/pf-v6-text-input-group/pf-v6-text-input-group.ts
+var _status_dec, _icon_dec, _plain_dec, _required_dec, _readonly_dec, _disabled_dec, _placeholder_dec, _type_dec, _value_dec, _a, _PfV6TextInputGroup_decorators, _internals, _init, _value, _type, _placeholder, _disabled, _readonly, _required, _plain, _icon, _status, _PfV6TextInputGroup_instances, onInput_fn, onChange_fn;
+_PfV6TextInputGroup_decorators = [customElement("pf-v6-text-input-group")];
+var PfV6TextInputGroup = class extends (_a = LitElement, _value_dec = [property({ reflect: true })], _type_dec = [property({ reflect: true })], _placeholder_dec = [property({ reflect: true })], _disabled_dec = [property({ type: Boolean, reflect: true })], _readonly_dec = [property({ type: Boolean, reflect: true })], _required_dec = [property({ type: Boolean, reflect: true })], _plain_dec = [property({ type: Boolean, reflect: true })], _icon_dec = [property({ type: Boolean, reflect: true })], _status_dec = [property({ reflect: true })], _a) {
+  constructor() {
+    super(...arguments);
+    __privateAdd(this, _PfV6TextInputGroup_instances);
+    __privateAdd(this, _internals, this.attachInternals());
+    __privateAdd(this, _value, __runInitializers(_init, 8, this, "")), __runInitializers(_init, 11, this);
+    __privateAdd(this, _type, __runInitializers(_init, 12, this, "text")), __runInitializers(_init, 15, this);
+    __privateAdd(this, _placeholder, __runInitializers(_init, 16, this)), __runInitializers(_init, 19, this);
+    __privateAdd(this, _disabled, __runInitializers(_init, 20, this, false)), __runInitializers(_init, 23, this);
+    __privateAdd(this, _readonly, __runInitializers(_init, 24, this, false)), __runInitializers(_init, 27, this);
+    __privateAdd(this, _required, __runInitializers(_init, 28, this, false)), __runInitializers(_init, 31, this);
+    __privateAdd(this, _plain, __runInitializers(_init, 32, this, false)), __runInitializers(_init, 35, this);
+    __privateAdd(this, _icon, __runInitializers(_init, 36, this, false)), __runInitializers(_init, 39, this);
+    __privateAdd(this, _status, __runInitializers(_init, 40, this)), __runInitializers(_init, 43, this);
   }
-
-  set value(val) {
-    if (val) {
-      this.setAttribute('value', val);
-    } else {
-      this.removeAttribute('value');
-    }
+  render() {
+    return html`
+      <div id="main">
+        <span id="text">
+          <span id="icon"><slot name="icon"></slot></span>
+          <span id="status-icon"><slot name="status-icon"></slot></span>
+          <input id="input"
+                 type=${this.type}
+                 .value=${live(this.value)}
+                 placeholder=${ifDefined(this.placeholder)}
+                 ?disabled=${this.disabled}
+                 ?readonly=${this.readonly}
+                 ?required=${this.required}
+                 @input=${__privateMethod(this, _PfV6TextInputGroup_instances, onInput_fn)}
+                 @change=${__privateMethod(this, _PfV6TextInputGroup_instances, onChange_fn)}>
+        </span>
+      </div>
+      <div id="utilities">
+        <slot name="utilities"></slot>
+      </div>
+    `;
   }
-
-  get type() {
-    return this.getAttribute('type') || 'text';
-  }
-
-  set type(val) {
-    this.setAttribute('type', val);
-  }
-
-  get placeholder() {
-    return this.getAttribute('placeholder') || '';
-  }
-
-  set placeholder(val) {
-    if (val) {
-      this.setAttribute('placeholder', val);
-    } else {
-      this.removeAttribute('placeholder');
-    }
-  }
-
-  get disabled() {
-    return this.hasAttribute('disabled');
-  }
-
-  set disabled(val) {
-    this.toggleAttribute('disabled', !!val);
-  }
-
-  get readonly() {
-    return this.hasAttribute('readonly');
-  }
-
-  set readonly(val) {
-    this.toggleAttribute('readonly', !!val);
-  }
-
-  get required() {
-    return this.hasAttribute('required');
-  }
-
-  set required(val) {
-    this.toggleAttribute('required', !!val);
-  }
-
-  get status() {
-    return this.getAttribute('status');
-  }
-
-  set status(val) {
-    if (val && ['success', 'warning', 'error'].includes(val)) {
-      this.setAttribute('status', val);
-    } else {
-      this.removeAttribute('status');
-    }
-  }
-
-  // Public methods
   focus() {
-    this.#input?.focus();
+    this.shadowRoot?.getElementById("input")?.focus();
   }
-
   blur() {
-    this.#input?.blur();
+    this.shadowRoot?.getElementById("input")?.blur();
   }
-
   select() {
-    this.#input?.select();
+    this.shadowRoot?.getElementById("input")?.select();
   }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue === newValue || !this.#input) return;
-
-    switch (name) {
-      case 'value':
-        if (this.#input.value !== newValue) {
-          this.#input.value = newValue || '';
-        }
-        break;
-
-      case 'type':
-        this.#input.type = newValue || 'text';
-        break;
-
-      case 'placeholder':
-        if (newValue) {
-          this.#input.placeholder = newValue;
-        } else {
-          this.#input.removeAttribute('placeholder');
-        }
-        break;
-
-      case 'disabled':
-        this.#input.toggleAttribute('disabled', newValue !== null);
-        break;
-
-      case 'readonly':
-        this.#input.toggleAttribute('readonly', newValue !== null);
-        break;
-
-      case 'required':
-        this.#input.toggleAttribute('required', newValue !== null);
-        break;
-    }
-  }
-
-  static {
-    customElements.define(this.is, this);
-  }
-}
+};
+_init = __decoratorStart(_a);
+_internals = new WeakMap();
+_value = new WeakMap();
+_type = new WeakMap();
+_placeholder = new WeakMap();
+_disabled = new WeakMap();
+_readonly = new WeakMap();
+_required = new WeakMap();
+_plain = new WeakMap();
+_icon = new WeakMap();
+_status = new WeakMap();
+_PfV6TextInputGroup_instances = new WeakSet();
+onInput_fn = function(e) {
+  const input = e.target;
+  this.value = input.value;
+  this.dispatchEvent(new InputEvent("input", {
+    bubbles: true,
+    data: e.data,
+    inputType: e.inputType
+  }));
+};
+onChange_fn = function() {
+  this.dispatchEvent(new Event("change", { bubbles: true }));
+};
+__decorateElement(_init, 4, "value", _value_dec, PfV6TextInputGroup, _value);
+__decorateElement(_init, 4, "type", _type_dec, PfV6TextInputGroup, _type);
+__decorateElement(_init, 4, "placeholder", _placeholder_dec, PfV6TextInputGroup, _placeholder);
+__decorateElement(_init, 4, "disabled", _disabled_dec, PfV6TextInputGroup, _disabled);
+__decorateElement(_init, 4, "readonly", _readonly_dec, PfV6TextInputGroup, _readonly);
+__decorateElement(_init, 4, "required", _required_dec, PfV6TextInputGroup, _required);
+__decorateElement(_init, 4, "plain", _plain_dec, PfV6TextInputGroup, _plain);
+__decorateElement(_init, 4, "icon", _icon_dec, PfV6TextInputGroup, _icon);
+__decorateElement(_init, 4, "status", _status_dec, PfV6TextInputGroup, _status);
+PfV6TextInputGroup = __decorateElement(_init, 0, "PfV6TextInputGroup", _PfV6TextInputGroup_decorators, PfV6TextInputGroup);
+__publicField(PfV6TextInputGroup, "formAssociated", true);
+__publicField(PfV6TextInputGroup, "styles", pf_v6_text_input_group_default);
+__runInitializers(_init, 1, PfV6TextInputGroup);
+export {
+  PfV6TextInputGroup
+};
+//# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsiLi4vLi4vLi4vLi4vLi4vZWxlbWVudHMvcGYtdjYtdGV4dC1pbnB1dC1ncm91cC9wZi12Ni10ZXh0LWlucHV0LWdyb3VwLnRzIiwgImxpdC1jc3M6L2hvbWUvYmVubnlwL0RldmVsb3Blci9jZW0vc2VydmUvZWxlbWVudHMvcGYtdjYtdGV4dC1pbnB1dC1ncm91cC9wZi12Ni10ZXh0LWlucHV0LWdyb3VwLmNzcyJdLAogICJzb3VyY2VzQ29udGVudCI6IFsiaW1wb3J0IHsgTGl0RWxlbWVudCwgaHRtbCB9IGZyb20gJ2xpdCc7XG5pbXBvcnQgeyBjdXN0b21FbGVtZW50IH0gZnJvbSAnbGl0L2RlY29yYXRvcnMvY3VzdG9tLWVsZW1lbnQuanMnO1xuaW1wb3J0IHsgcHJvcGVydHkgfSBmcm9tICdsaXQvZGVjb3JhdG9ycy9wcm9wZXJ0eS5qcyc7XG5pbXBvcnQgeyBsaXZlIH0gZnJvbSAnbGl0L2RpcmVjdGl2ZXMvbGl2ZS5qcyc7XG5pbXBvcnQgeyBpZkRlZmluZWQgfSBmcm9tICdsaXQvZGlyZWN0aXZlcy9pZi1kZWZpbmVkLmpzJztcblxuaW1wb3J0IHN0eWxlcyBmcm9tICcuL3BmLXY2LXRleHQtaW5wdXQtZ3JvdXAuY3NzJztcblxuLyoqXG4gKiBQYXR0ZXJuRmx5IHY2IFRleHQgSW5wdXQgR3JvdXBcbiAqXG4gKiBBIHRleHQgaW5wdXQgd2l0aCBvcHRpb25hbCBpY29ucyBhbmQgdXRpbGl0eSBidXR0b25zLlxuICpcbiAqIEBzbG90IGljb24gLSBMZWFkaW5nIGljb25cbiAqIEBzbG90IHN0YXR1cy1pY29uIC0gVHJhaWxpbmcgc3RhdHVzIGljb24gKHN1Y2Nlc3MsIHdhcm5pbmcsIGVycm9yKVxuICogQHNsb3QgdXRpbGl0aWVzIC0gVXRpbGl0eSBidXR0b25zL2FjdGlvbnMgKGUuZy4sIGV5ZWRyb3BwZXIsIGNsZWFyKVxuICpcbiAqIEBmaXJlcyBpbnB1dCAtIE5hdGl2ZSBpbnB1dCBldmVudFxuICogQGZpcmVzIGNoYW5nZSAtIE5hdGl2ZSBjaGFuZ2UgZXZlbnRcbiAqL1xuQGN1c3RvbUVsZW1lbnQoJ3BmLXY2LXRleHQtaW5wdXQtZ3JvdXAnKVxuZXhwb3J0IGNsYXNzIFBmVjZUZXh0SW5wdXRHcm91cCBleHRlbmRzIExpdEVsZW1lbnQge1xuICBzdGF0aWMgcmVhZG9ubHkgZm9ybUFzc29jaWF0ZWQgPSB0cnVlO1xuXG4gIHN0YXRpYyBzdHlsZXMgPSBzdHlsZXM7XG5cbiAgI2ludGVybmFscyA9IHRoaXMuYXR0YWNoSW50ZXJuYWxzKCk7XG5cbiAgQHByb3BlcnR5KHsgcmVmbGVjdDogdHJ1ZSB9KVxuICBhY2Nlc3NvciB2YWx1ZSA9ICcnO1xuXG4gIEBwcm9wZXJ0eSh7IHJlZmxlY3Q6IHRydWUgfSlcbiAgYWNjZXNzb3IgdHlwZSA9ICd0ZXh0JztcblxuICBAcHJvcGVydHkoeyByZWZsZWN0OiB0cnVlIH0pXG4gIGFjY2Vzc29yIHBsYWNlaG9sZGVyPzogc3RyaW5nO1xuXG4gIEBwcm9wZXJ0eSh7IHR5cGU6IEJvb2xlYW4sIHJlZmxlY3Q6IHRydWUgfSlcbiAgYWNjZXNzb3IgZGlzYWJsZWQgPSBmYWxzZTtcblxuICBAcHJvcGVydHkoeyB0eXBlOiBCb29sZWFuLCByZWZsZWN0OiB0cnVlIH0pXG4gIGFjY2Vzc29yIHJlYWRvbmx5ID0gZmFsc2U7XG5cbiAgQHByb3BlcnR5KHsgdHlwZTogQm9vbGVhbiwgcmVmbGVjdDogdHJ1ZSB9KVxuICBhY2Nlc3NvciByZXF1aXJlZCA9IGZhbHNlO1xuXG4gIEBwcm9wZXJ0eSh7IHR5cGU6IEJvb2xlYW4sIHJlZmxlY3Q6IHRydWUgfSlcbiAgYWNjZXNzb3IgcGxhaW4gPSBmYWxzZTtcblxuICBAcHJvcGVydHkoeyB0eXBlOiBCb29sZWFuLCByZWZsZWN0OiB0cnVlIH0pXG4gIGFjY2Vzc29yIGljb24gPSBmYWxzZTtcblxuICBAcHJvcGVydHkoeyByZWZsZWN0OiB0cnVlIH0pXG4gIGFjY2Vzc29yIHN0YXR1cz86ICdzdWNjZXNzJyB8ICd3YXJuaW5nJyB8ICdlcnJvcic7XG5cbiAgcmVuZGVyKCkge1xuICAgIHJldHVybiBodG1sYFxuICAgICAgPGRpdiBpZD1cIm1haW5cIj5cbiAgICAgICAgPHNwYW4gaWQ9XCJ0ZXh0XCI+XG4gICAgICAgICAgPHNwYW4gaWQ9XCJpY29uXCI+PHNsb3QgbmFtZT1cImljb25cIj48L3Nsb3Q+PC9zcGFuPlxuICAgICAgICAgIDxzcGFuIGlkPVwic3RhdHVzLWljb25cIj48c2xvdCBuYW1lPVwic3RhdHVzLWljb25cIj48L3Nsb3Q+PC9zcGFuPlxuICAgICAgICAgIDxpbnB1dCBpZD1cImlucHV0XCJcbiAgICAgICAgICAgICAgICAgdHlwZT0ke3RoaXMudHlwZX1cbiAgICAgICAgICAgICAgICAgLnZhbHVlPSR7bGl2ZSh0aGlzLnZhbHVlKX1cbiAgICAgICAgICAgICAgICAgcGxhY2Vob2xkZXI9JHtpZkRlZmluZWQodGhpcy5wbGFjZWhvbGRlcil9XG4gICAgICAgICAgICAgICAgID9kaXNhYmxlZD0ke3RoaXMuZGlzYWJsZWR9XG4gICAgICAgICAgICAgICAgID9yZWFkb25seT0ke3RoaXMucmVhZG9ubHl9XG4gICAgICAgICAgICAgICAgID9yZXF1aXJlZD0ke3RoaXMucmVxdWlyZWR9XG4gICAgICAgICAgICAgICAgIEBpbnB1dD0ke3RoaXMuI29uSW5wdXR9XG4gICAgICAgICAgICAgICAgIEBjaGFuZ2U9JHt0aGlzLiNvbkNoYW5nZX0+XG4gICAgICAgIDwvc3Bhbj5cbiAgICAgIDwvZGl2PlxuICAgICAgPGRpdiBpZD1cInV0aWxpdGllc1wiPlxuICAgICAgICA8c2xvdCBuYW1lPVwidXRpbGl0aWVzXCI+PC9zbG90PlxuICAgICAgPC9kaXY+XG4gICAgYDtcbiAgfVxuXG4gIGZvY3VzKCkge1xuICAgIHRoaXMuc2hhZG93Um9vdD8uZ2V0RWxlbWVudEJ5SWQoJ2lucHV0Jyk/LmZvY3VzKCk7XG4gIH1cblxuICBibHVyKCkge1xuICAgICh0aGlzLnNoYWRvd1Jvb3Q/LmdldEVsZW1lbnRCeUlkKCdpbnB1dCcpIGFzIEhUTUxJbnB1dEVsZW1lbnQgfCBudWxsKT8uYmx1cigpO1xuICB9XG5cbiAgc2VsZWN0KCkge1xuICAgICh0aGlzLnNoYWRvd1Jvb3Q/LmdldEVsZW1lbnRCeUlkKCdpbnB1dCcpIGFzIEhUTUxJbnB1dEVsZW1lbnQgfCBudWxsKT8uc2VsZWN0KCk7XG4gIH1cblxuICAjb25JbnB1dChlOiBJbnB1dEV2ZW50KSB7XG4gICAgY29uc3QgaW5wdXQgPSBlLnRhcmdldCBhcyBIVE1MSW5wdXRFbGVtZW50O1xuICAgIHRoaXMudmFsdWUgPSBpbnB1dC52YWx1ZTtcbiAgICB0aGlzLmRpc3BhdGNoRXZlbnQobmV3IElucHV0RXZlbnQoJ2lucHV0Jywge1xuICAgICAgYnViYmxlczogdHJ1ZSxcbiAgICAgIGRhdGE6IGUuZGF0YSxcbiAgICAgIGlucHV0VHlwZTogZS5pbnB1dFR5cGUsXG4gICAgfSkpO1xuICB9XG5cbiAgI29uQ2hhbmdlKCkge1xuICAgIHRoaXMuZGlzcGF0Y2hFdmVudChuZXcgRXZlbnQoJ2NoYW5nZScsIHsgYnViYmxlczogdHJ1ZSB9KSk7XG4gIH1cbn1cblxuZGVjbGFyZSBnbG9iYWwge1xuICBpbnRlcmZhY2UgSFRNTEVsZW1lbnRUYWdOYW1lTWFwIHtcbiAgICAncGYtdjYtdGV4dC1pbnB1dC1ncm91cCc6IFBmVjZUZXh0SW5wdXRHcm91cDtcbiAgfVxufVxuIiwgImNvbnN0IHM9bmV3IENTU1N0eWxlU2hlZXQoKTtzLnJlcGxhY2VTeW5jKEpTT04ucGFyc2UoXCJcXFwiOmhvc3Qge1xcXFxuXFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS1CYWNrZ3JvdW5kQ29sb3I6IHZhcigtLXBmLXQtLWdsb2JhbC0tYmFja2dyb3VuZC0tY29sb3ItLWNvbnRyb2wtLWRlZmF1bHQpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tQm9yZGVyQ29sb3I6IHZhcigtLXBmLXQtLWdsb2JhbC0tYm9yZGVyLS1jb2xvci0tZGVmYXVsdCk7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS1tLXN1Y2Nlc3MtLUJvcmRlckNvbG9yOiB2YXIoLS1wZi10LS1nbG9iYWwtLWJvcmRlci0tY29sb3ItLXN0YXR1cy0tc3VjY2Vzcy0tZGVmYXVsdCk7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS1tLXdhcm5pbmctLUJvcmRlckNvbG9yOiB2YXIoLS1wZi10LS1nbG9iYWwtLWJvcmRlci0tY29sb3ItLXN0YXR1cy0td2FybmluZy0tZGVmYXVsdCk7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS1tLWVycm9yLS1Cb3JkZXJDb2xvcjogdmFyKC0tcGYtdC0tZ2xvYmFsLS1ib3JkZXItLWNvbG9yLS1zdGF0dXMtLWRhbmdlci0tZGVmYXVsdCk7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS1Cb3JkZXJXaWR0aDogdmFyKC0tcGYtdC0tZ2xvYmFsLS1ib3JkZXItLXdpZHRoLS1jb250cm9sLS1kZWZhdWx0KTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX0xpbmVIZWlnaHQ6IHZhcigtLXBmLXQtLWdsb2JhbC0tZm9udC0tbGluZS1oZWlnaHQtLWJvZHkpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fRm9udFNpemU6IHZhcigtLXBmLXQtLWdsb2JhbC0tZm9udC0tc2l6ZS0tYm9keS0tZGVmYXVsdCk7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS1tLWhvdmVyLS1Cb3JkZXJDb2xvcjogdmFyKC0tcGYtdC0tZ2xvYmFsLS1ib3JkZXItLWNvbG9yLS1ob3Zlcik7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS1tLWhvdmVyLS1tLXN1Y2Nlc3MtLUJvcmRlckNvbG9yOiB2YXIoLS1wZi10LS1nbG9iYWwtLWJvcmRlci0tY29sb3ItLXN0YXR1cy0tc3VjY2Vzcy0taG92ZXIpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tbS1ob3Zlci0tbS13YXJuaW5nLS1Cb3JkZXJDb2xvcjogdmFyKC0tcGYtdC0tZ2xvYmFsLS1ib3JkZXItLWNvbG9yLS1zdGF0dXMtLXdhcm5pbmctLWhvdmVyKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXAtLW0taG92ZXItLW0tZXJyb3ItLUJvcmRlckNvbG9yOiB2YXIoLS1wZi10LS1nbG9iYWwtLWJvcmRlci0tY29sb3ItLXN0YXR1cy0tZGFuZ2VyLS1ob3Zlcik7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19tYWluLS1maXJzdC1jaGlsZC0tbm90LS10ZXh0LWlucHV0LS1NYXJnaW5JbmxpbmVTdGFydDogY2FsYyh2YXIoLS1wZi10LS1nbG9iYWwtLXNwYWNlci0tY29udHJvbC0taG9yaXpvbnRhbC0tcGxhaW4pIC8gMik7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19tYWluLS1tLWljb25fX3RleHQtaW5wdXQtLVBhZGRpbmdJbmxpbmVTdGFydDogY2FsYyh2YXIoLS1wZi10LS1nbG9iYWwtLXNwYWNlci0tY29udHJvbC0taG9yaXpvbnRhbC0tZGVmYXVsdCkgKyB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX2ljb24tLUZvbnRTaXplKSArIHZhcigtLXBmLXQtLWdsb2JhbC0tc3BhY2VyLS1nYXAtLXRleHQtdG8tZWxlbWVudC0tZGVmYXVsdCkpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tc3RhdHVzX190ZXh0LWlucHV0LS1QYWRkaW5nSW5saW5lRW5kOiBjYWxjKHZhcigtLXBmLXQtLWdsb2JhbC0tc3BhY2VyLS1jb250cm9sLS1ob3Jpem9udGFsLS1kZWZhdWx0KSArIHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9faWNvbi0tRm9udFNpemUpICsgdmFyKC0tcGYtdC0tZ2xvYmFsLS1zcGFjZXItLWdhcC0tdGV4dC10by1lbGVtZW50LS1kZWZhdWx0KSk7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS11dGlsaXRpZXMtLXN0YXR1c19fdGV4dC1pbnB1dC0tUGFkZGluZ0lubGluZUVuZDogY2FsYyh2YXIoLS1wZi10LS1nbG9iYWwtLXNwYWNlci0tc20pICsgdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19pY29uLS1Gb250U2l6ZSkgKyB2YXIoLS1wZi10LS1nbG9iYWwtLXNwYWNlci0tZ2FwLS10ZXh0LXRvLWVsZW1lbnQtLWRlZmF1bHQpKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX21haW4tLVJvd0dhcDogdmFyKC0tcGYtdC0tZ2xvYmFsLS1zcGFjZXItLXhzKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX21haW4tLUNvbHVtbkdhcDogdmFyKC0tcGYtdC0tZ2xvYmFsLS1zcGFjZXItLXhzKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtLUJvcmRlclJhZGl1cy0tYmFzZTogdmFyKC0tcGYtdC0tZ2xvYmFsLS1ib3JkZXItLXJhZGl1cy0tc21hbGwpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdGV4dC0tQm9yZGVyU3RhcnRTdGFydFJhZGl1czogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX190ZXh0LS1Cb3JkZXJSYWRpdXMtLWJhc2UpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdGV4dC0tQm9yZGVyU3RhcnRFbmRSYWRpdXM6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdGV4dC0tQm9yZGVyUmFkaXVzLS1iYXNlKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtLUJvcmRlckVuZEVuZFJhZGl1czogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX190ZXh0LS1Cb3JkZXJSYWRpdXMtLWJhc2UpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdGV4dC0tQm9yZGVyRW5kU3RhcnRSYWRpdXM6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdGV4dC0tQm9yZGVyUmFkaXVzLS1iYXNlKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtaW5wdXQtLVBhZGRpbmdCbG9ja1N0YXJ0OiB2YXIoLS1wZi10LS1nbG9iYWwtLXNwYWNlci0tY29udHJvbC0tdmVydGljYWwtLWRlZmF1bHQpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdGV4dC1pbnB1dC0tUGFkZGluZ0lubGluZUVuZDogdmFyKC0tcGYtdC0tZ2xvYmFsLS1zcGFjZXItLWNvbnRyb2wtLWhvcml6b250YWwtLWRlZmF1bHQpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdGV4dC1pbnB1dC0tUGFkZGluZ0Jsb2NrRW5kOiB2YXIoLS1wZi10LS1nbG9iYWwtLXNwYWNlci0tY29udHJvbC0tdmVydGljYWwtLWRlZmF1bHQpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdGV4dC1pbnB1dC0tUGFkZGluZ0lubGluZVN0YXJ0OiB2YXIoLS1wZi10LS1nbG9iYWwtLXNwYWNlci0tY29udHJvbC0taG9yaXpvbnRhbC0tZGVmYXVsdCk7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX190ZXh0LWlucHV0LS1NaW5XaWR0aDogMTJjaDtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtaW5wdXQtLW0taGludC0tQ29sb3I6IHZhcigtLXBmLXQtLWdsb2JhbC0tdGV4dC0tY29sb3ItLXBsYWNlaG9sZGVyKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtaW5wdXQtLUNvbG9yOiB2YXIoLS1wZi10LS1nbG9iYWwtLXRleHQtLWNvbG9yLS1yZWd1bGFyKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtaW5wdXQtLXBsYWNlaG9sZGVyLS1Db2xvcjogdmFyKC0tcGYtdC0tZ2xvYmFsLS10ZXh0LS1jb2xvci0tcGxhY2Vob2xkZXIpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdGV4dC1pbnB1dC0tQmFja2dyb3VuZENvbG9yOiB0cmFuc3BhcmVudDtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtaW5wdXQtLU91dGxpbmVPZmZzZXQ6IC02cHg7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19pY29uLS1Gb250U2l6ZTogdmFyKC0tcGYtdC0tZ2xvYmFsLS1pY29uLS1zaXplLS1tZCk7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19pY29uLS1JbnNldElubGluZVN0YXJ0OiB2YXIoLS1wZi10LS1nbG9iYWwtLXNwYWNlci0tY29udHJvbC0taG9yaXpvbnRhbC0tZGVmYXVsdCk7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19pY29uLS1tLXN0YXR1cy0tSW5zZXRJbmxpbmVFbmQ6IHZhcigtLXBmLXQtLWdsb2JhbC0tc3BhY2VyLS1jb250cm9sLS1ob3Jpem9udGFsLS1kZWZhdWx0KTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXAtLXV0aWxpdGllcy0taWNvbi0tbS1zdGF0dXMtLUluc2V0SW5saW5lRW5kOiB2YXIoLS1wZi10LS1nbG9iYWwtLXNwYWNlci0tc20pO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9faWNvbi0tQ29sb3I6IHZhcigtLXBmLXQtLWdsb2JhbC0taWNvbi0tY29sb3ItLXJlZ3VsYXIpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tbS1kaXNhYmxlZF9faWNvbi0tQ29sb3I6IHZhcigtLXBmLXQtLWdsb2JhbC0taWNvbi0tY29sb3ItLW9uLWRpc2FibGVkKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX2ljb24tLW0tc3RhdHVzLS1Db2xvcjogdmFyKC0tcGYtdC0tZ2xvYmFsLS1pY29uLS1jb2xvci0tcmVndWxhcik7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS1tLWRpc2FibGVkX19pY29uLS1tLXN0YXR1cy0tQ29sb3I6IHZhcigtLXBmLXQtLWdsb2JhbC0taWNvbi0tY29sb3ItLW9uLWRpc2FibGVkKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX21haW4tLW0tc3VjY2Vzc19faWNvbi0tbS1zdGF0dXMtLUNvbG9yOiB2YXIoLS1wZi10LS1nbG9iYWwtLWljb24tLWNvbG9yLS1zdGF0dXMtLXN1Y2Nlc3MtLWRlZmF1bHQpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fbWFpbi0tbS13YXJuaW5nX19pY29uLS1tLXN0YXR1cy0tQ29sb3I6IHZhcigtLXBmLXQtLWdsb2JhbC0taWNvbi0tY29sb3ItLXN0YXR1cy0td2FybmluZy0tZGVmYXVsdCk7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19tYWluLS1tLWVycm9yX19pY29uLS1tLXN0YXR1cy0tQ29sb3I6IHZhcigtLXBmLXQtLWdsb2JhbC0taWNvbi0tY29sb3ItLXN0YXR1cy0tZGFuZ2VyLS1kZWZhdWx0KTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX2ljb24tLVRyYW5zbGF0ZVk6IC01MCU7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX191dGlsaXRpZXMtLWNoaWxkLS1NYXJnaW5JbmxpbmVTdGFydDogdmFyKC0tcGYtdC0tZ2xvYmFsLS1zcGFjZXItLXhzKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXAtLW0tZGlzYWJsZWQtLUNvbG9yOiB2YXIoLS1wZi10LS1nbG9iYWwtLXRleHQtLWNvbG9yLS1vbi1kaXNhYmxlZCk7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS1tLWRpc2FibGVkLS1CYWNrZ3JvdW5kQ29sb3I6IHZhcigtLXBmLXQtLWdsb2JhbC0tYmFja2dyb3VuZC0tY29sb3ItLWRpc2FibGVkLS1kZWZhdWx0KTtcXFxcblxcXFxuICBwb3NpdGlvbjogcmVsYXRpdmU7XFxcXG4gIGRpc3BsYXk6IGZsZXg7XFxcXG4gIHdpZHRoOiAxMDAlO1xcXFxuICBmb250LXNpemU6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fRm9udFNpemUpO1xcXFxuICBsaW5lLWhlaWdodDogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19MaW5lSGVpZ2h0KTtcXFxcbiAgY29sb3I6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tQ29sb3IsIGluaGVyaXQpO1xcXFxuICBiYWNrZ3JvdW5kLWNvbG9yOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXAtLUJhY2tncm91bmRDb2xvcik7XFxcXG4gIGJvcmRlci1zdGFydC1zdGFydC1yYWRpdXM6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdGV4dC0tQm9yZGVyU3RhcnRTdGFydFJhZGl1cyk7XFxcXG4gIGJvcmRlci1zdGFydC1lbmQtcmFkaXVzOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtLUJvcmRlclN0YXJ0RW5kUmFkaXVzKTtcXFxcbiAgYm9yZGVyLWVuZC1zdGFydC1yYWRpdXM6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdGV4dC0tQm9yZGVyRW5kU3RhcnRSYWRpdXMpO1xcXFxuICBib3JkZXItZW5kLWVuZC1yYWRpdXM6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdGV4dC0tQm9yZGVyRW5kRW5kUmFkaXVzKTtcXFxcbn1cXFxcblxcXFxuOmhvc3Q6OmJlZm9yZSB7XFxcXG4gIHBvc2l0aW9uOiBhYnNvbHV0ZTtcXFxcbiAgaW5zZXQ6IDA7XFxcXG4gIHBvaW50ZXItZXZlbnRzOiBub25lO1xcXFxuICBjb250ZW50OiBcXFxcXFxcIlxcXFxcXFwiO1xcXFxuICBib3JkZXI6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tQm9yZGVyV2lkdGgpIHNvbGlkIHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tQm9yZGVyQ29sb3IpO1xcXFxuICBib3JkZXItc3RhcnQtc3RhcnQtcmFkaXVzOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtLUJvcmRlclN0YXJ0U3RhcnRSYWRpdXMpO1xcXFxuICBib3JkZXItc3RhcnQtZW5kLXJhZGl1czogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX190ZXh0LS1Cb3JkZXJTdGFydEVuZFJhZGl1cyk7XFxcXG4gIGJvcmRlci1lbmQtc3RhcnQtcmFkaXVzOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtLUJvcmRlckVuZFN0YXJ0UmFkaXVzKTtcXFxcbiAgYm9yZGVyLWVuZC1lbmQtcmFkaXVzOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtLUJvcmRlckVuZEVuZFJhZGl1cyk7XFxcXG59XFxcXG5cXFxcbjpob3N0KFtkaXNhYmxlZF0pIHtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXAtLUNvbG9yOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXAtLW0tZGlzYWJsZWQtLUNvbG9yKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtaW5wdXQtLUNvbG9yOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXAtLW0tZGlzYWJsZWQtLUNvbG9yKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtaW5wdXQtLXBsYWNlaG9sZGVyLS1Db2xvcjogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS1tLWRpc2FibGVkLS1Db2xvcik7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19pY29uLS1Db2xvcjogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS1tLWRpc2FibGVkX19pY29uLS1Db2xvcik7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19pY29uLS1tLXN0YXR1cy0tQ29sb3I6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tbS1kaXNhYmxlZF9faWNvbi0tbS1zdGF0dXMtLUNvbG9yKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXAtLUJhY2tncm91bmRDb2xvcjogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS1tLWRpc2FibGVkLS1CYWNrZ3JvdW5kQ29sb3IpO1xcXFxuICBwb2ludGVyLWV2ZW50czogbm9uZTtcXFxcbn1cXFxcblxcXFxuOmhvc3QoW3BsYWluXSk6OmJlZm9yZSB7XFxcXG4gIGJvcmRlcjogMDtcXFxcbn1cXFxcblxcXFxuOmhvc3QoW3BsYWluXSkge1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tQmFja2dyb3VuZENvbG9yOiB0cmFuc3BhcmVudDtcXFxcbn1cXFxcblxcXFxuOmhvc3QoW3N0YXR1cz1cXFxcXFxcInN1Y2Nlc3NcXFxcXFxcIl0pIHtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXAtLUJvcmRlckNvbG9yOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXAtLW0tc3VjY2Vzcy0tQm9yZGVyQ29sb3IpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tbS1ob3Zlci0tQm9yZGVyQ29sb3I6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tbS1ob3Zlci0tbS1zdWNjZXNzLS1Cb3JkZXJDb2xvcik7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19pY29uLS1tLXN0YXR1cy0tQ29sb3I6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fbWFpbi0tbS1zdWNjZXNzX19pY29uLS1tLXN0YXR1cy0tQ29sb3IpO1xcXFxufVxcXFxuXFxcXG46aG9zdChbc3RhdHVzPVxcXFxcXFwid2FybmluZ1xcXFxcXFwiXSkge1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tQm9yZGVyQ29sb3I6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tbS13YXJuaW5nLS1Cb3JkZXJDb2xvcik7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS1tLWhvdmVyLS1Cb3JkZXJDb2xvcjogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwLS1tLWhvdmVyLS1tLXdhcm5pbmctLUJvcmRlckNvbG9yKTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX2ljb24tLW0tc3RhdHVzLS1Db2xvcjogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19tYWluLS1tLXdhcm5pbmdfX2ljb24tLW0tc3RhdHVzLS1Db2xvcik7XFxcXG59XFxcXG5cXFxcbjpob3N0KFtzdGF0dXM9XFxcXFxcXCJlcnJvclxcXFxcXFwiXSkge1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tQm9yZGVyQ29sb3I6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tbS1lcnJvci0tQm9yZGVyQ29sb3IpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tbS1ob3Zlci0tQm9yZGVyQ29sb3I6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tbS1ob3Zlci0tbS1lcnJvci0tQm9yZGVyQ29sb3IpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9faWNvbi0tbS1zdGF0dXMtLUNvbG9yOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX21haW4tLW0tZXJyb3JfX2ljb24tLW0tc3RhdHVzLS1Db2xvcik7XFxcXG59XFxcXG5cXFxcbjpob3N0KDpob3Zlcikge1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tQm9yZGVyQ29sb3I6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tbS1ob3Zlci0tQm9yZGVyQ29sb3IpO1xcXFxufVxcXFxuXFxcXG46aG9zdChbaWNvbl0pIHtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtLVBvc2l0aW9uOiByZWxhdGl2ZTtcXFxcbiAgLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtaW5wdXQtLVBhZGRpbmdJbmxpbmVTdGFydDogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19tYWluLS1tLWljb25fX3RleHQtaW5wdXQtLVBhZGRpbmdJbmxpbmVTdGFydCk7XFxcXG59XFxcXG5cXFxcbjpob3N0KFtzdGF0dXNdKSB7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX190ZXh0LS1Qb3NpdGlvbjogcmVsYXRpdmU7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX190ZXh0LWlucHV0LS1QYWRkaW5nSW5saW5lRW5kOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXAtLXN0YXR1c19fdGV4dC1pbnB1dC0tUGFkZGluZ0lubGluZUVuZCk7XFxcXG59XFxcXG5cXFxcbjpob3N0KDpoYXMoI3V0aWxpdGllcyBzbG90W25hbWU9XFxcXFxcXCJ1dGlsaXRpZXNcXFxcXFxcIl06OnNsb3R0ZWQoKikpKSB7XFxcXG4gIC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19pY29uLS1tLXN0YXR1cy0tSW5zZXRJbmxpbmVFbmQ6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tdXRpbGl0aWVzLS1pY29uLS1tLXN0YXR1cy0tSW5zZXRJbmxpbmVFbmQpO1xcXFxuICAtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cC0tc3RhdHVzX190ZXh0LWlucHV0LS1QYWRkaW5nSW5saW5lRW5kOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXAtLXV0aWxpdGllcy0tc3RhdHVzX190ZXh0LWlucHV0LS1QYWRkaW5nSW5saW5lRW5kKTtcXFxcbn1cXFxcblxcXFxuI21haW4ge1xcXFxuICBkaXNwbGF5OiBmbGV4O1xcXFxuICBmbGV4OiAxO1xcXFxuICBmbGV4LXdyYXA6IHdyYXA7XFxcXG4gIGdhcDogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19tYWluLS1Sb3dHYXApIHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fbWFpbi0tQ29sdW1uR2FwKTtcXFxcbiAgbWluLXdpZHRoOiAwO1xcXFxufVxcXFxuXFxcXG46aG9zdChbaWNvbl0pICNtYWluIHtcXFxcbiAgZGlzcGxheTogaW5saW5lLWZsZXg7XFxcXG4gIGFsaWduLWl0ZW1zOiBjZW50ZXI7XFxcXG4gIGp1c3RpZnktY29udGVudDogY2VudGVyO1xcXFxuICBtaW4td2lkdGg6IGNhbGModmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19MaW5lSGVpZ2h0KSAqIHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fRm9udFNpemUpKTtcXFxcbn1cXFxcblxcXFxuI3RleHQge1xcXFxuICBwb3NpdGlvbjogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX190ZXh0LS1Qb3NpdGlvbiwgcmV2ZXJ0KTtcXFxcbiAgZGlzcGxheTogaW5saW5lLWdyaWQ7XFxcXG4gIGZsZXg6IDE7XFxcXG4gIGdyaWQtdGVtcGxhdGUtYXJlYXM6IFxcXFxcXFwidGV4dC1pbnB1dFxcXFxcXFwiO1xcXFxuICBncmlkLXRlbXBsYXRlLWNvbHVtbnM6IDFmcjtcXFxcbn1cXFxcblxcXFxuI2ljb24ge1xcXFxuICBkaXNwbGF5OiBub25lO1xcXFxuICBwb3NpdGlvbjogYWJzb2x1dGU7XFxcXG4gIGluc2V0LWJsb2NrLXN0YXJ0OiA1MCU7XFxcXG4gIGluc2V0LWlubGluZS1zdGFydDogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19pY29uLS1JbnNldElubGluZVN0YXJ0KTtcXFxcbiAgZm9udC1zaXplOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX2ljb24tLUZvbnRTaXplKTtcXFxcbiAgY29sb3I6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9faWNvbi0tQ29sb3IpO1xcXFxuICB0cmFuc2Zvcm06IHRyYW5zbGF0ZVkodmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19pY29uLS1UcmFuc2xhdGVZKSk7XFxcXG4gIHBvaW50ZXItZXZlbnRzOiBub25lO1xcXFxufVxcXFxuXFxcXG46aG9zdChbaWNvbl0pICNpY29uIHtcXFxcbiAgZGlzcGxheTogYmxvY2s7XFxcXG59XFxcXG5cXFxcbiNzdGF0dXMtaWNvbiB7XFxcXG4gIGRpc3BsYXk6IG5vbmU7XFxcXG4gIHBvc2l0aW9uOiBhYnNvbHV0ZTtcXFxcbiAgaW5zZXQtYmxvY2stc3RhcnQ6IDUwJTtcXFxcbiAgaW5zZXQtaW5saW5lLXN0YXJ0OiBhdXRvO1xcXFxuICBpbnNldC1pbmxpbmUtZW5kOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX2ljb24tLW0tc3RhdHVzLS1JbnNldElubGluZUVuZCk7XFxcXG4gIGZvbnQtc2l6ZTogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX19pY29uLS1Gb250U2l6ZSk7XFxcXG4gIGNvbG9yOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX2ljb24tLW0tc3RhdHVzLS1Db2xvcik7XFxcXG4gIHRyYW5zZm9ybTogdHJhbnNsYXRlWSh2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX2ljb24tLVRyYW5zbGF0ZVkpKTtcXFxcbiAgcG9pbnRlci1ldmVudHM6IG5vbmU7XFxcXG59XFxcXG5cXFxcbjpob3N0KFtzdGF0dXNdKSAjc3RhdHVzLWljb24ge1xcXFxuICBkaXNwbGF5OiBibG9jaztcXFxcbn1cXFxcblxcXFxuI2lucHV0IHtcXFxcbiAgb3ZlcmZsb3c6IGhpZGRlbjtcXFxcbiAgdGV4dC1vdmVyZmxvdzogZWxsaXBzaXM7XFxcXG4gIHdoaXRlLXNwYWNlOiBub3dyYXA7XFxcXG4gIHBvc2l0aW9uOiByZWxhdGl2ZTtcXFxcbiAgd2lkdGg6IDEwMCU7XFxcXG4gIG1pbi13aWR0aDogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX190ZXh0LWlucHV0LS1NaW5XaWR0aCk7XFxcXG4gIGJveC1zaXppbmc6IGJvcmRlci1ib3g7XFxcXG4gIHBhZGRpbmctYmxvY2stc3RhcnQ6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdGV4dC1pbnB1dC0tUGFkZGluZ0Jsb2NrU3RhcnQpO1xcXFxuICBwYWRkaW5nLWJsb2NrLWVuZDogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX190ZXh0LWlucHV0LS1QYWRkaW5nQmxvY2tFbmQpO1xcXFxuICBwYWRkaW5nLWlubGluZS1zdGFydDogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX190ZXh0LWlucHV0LS1QYWRkaW5nSW5saW5lU3RhcnQpO1xcXFxuICBwYWRkaW5nLWlubGluZS1lbmQ6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdGV4dC1pbnB1dC0tUGFkZGluZ0lubGluZUVuZCk7XFxcXG4gIGNvbG9yOiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtaW5wdXQtLUNvbG9yKTtcXFxcbiAgYmFja2dyb3VuZC1jb2xvcjogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX190ZXh0LWlucHV0LS1CYWNrZ3JvdW5kQ29sb3IpO1xcXFxuICBib3JkZXI6IDA7XFxcXG4gIG91dGxpbmUtb2Zmc2V0OiB2YXIoLS1wZi12Ni1jLXRleHQtaW5wdXQtZ3JvdXBfX3RleHQtaW5wdXQtLU91dGxpbmVPZmZzZXQpO1xcXFxuICBncmlkLWFyZWE6IHRleHQtaW5wdXQ7XFxcXG59XFxcXG5cXFxcbiNpbnB1dDo6cGxhY2Vob2xkZXIge1xcXFxuICBjb2xvcjogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX190ZXh0LWlucHV0LS1wbGFjZWhvbGRlci0tQ29sb3IpO1xcXFxufVxcXFxuXFxcXG4jdXRpbGl0aWVzIHtcXFxcbiAgZGlzcGxheTogZmxleDtcXFxcbiAgYWxpZ24taXRlbXM6IGNlbnRlcjtcXFxcbiAgbWFyZ2luLWlubGluZS1zdGFydDogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX191dGlsaXRpZXMtLU1hcmdpbklubGluZVN0YXJ0KTtcXFxcbiAgbWFyZ2luLWlubGluZS1lbmQ6IHZhcigtLXBmLXY2LWMtdGV4dC1pbnB1dC1ncm91cF9fdXRpbGl0aWVzLS1NYXJnaW5JbmxpbmVFbmQpO1xcXFxufVxcXFxuXFxcXG4jdXRpbGl0aWVzOjpzbG90dGVkKCopIHtcXFxcbiAgbWFyZ2luLWlubGluZS1zdGFydDogdmFyKC0tcGYtdjYtYy10ZXh0LWlucHV0LWdyb3VwX191dGlsaXRpZXMtLWNoaWxkLS1NYXJnaW5JbmxpbmVTdGFydCk7XFxcXG59XFxcXG5cXFxcbiN1dGlsaXRpZXM6OnNsb3R0ZWQoOmZpcnN0LWNoaWxkKSB7XFxcXG4gIG1hcmdpbi1pbmxpbmUtc3RhcnQ6IDA7XFxcXG59XFxcXG5cXFwiXCIpKTtleHBvcnQgZGVmYXVsdCBzOyJdLAogICJtYXBwaW5ncyI6ICI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQUFBLFNBQVMsWUFBWSxZQUFZO0FBQ2pDLFNBQVMscUJBQXFCO0FBQzlCLFNBQVMsZ0JBQWdCO0FBQ3pCLFNBQVMsWUFBWTtBQUNyQixTQUFTLGlCQUFpQjs7O0FDSjFCLElBQU0sSUFBRSxJQUFJLGNBQWM7QUFBRSxFQUFFLFlBQVksS0FBSyxNQUFNLDI1WUFBeTZZLENBQUM7QUFBRSxJQUFPLGlDQUFROzs7QURBaC9ZO0FBb0JBLGtDQUFDLGNBQWMsd0JBQXdCO0FBQ2hDLElBQU0scUJBQU4sZUFBaUMsaUJBT3RDLGNBQUMsU0FBUyxFQUFFLFNBQVMsS0FBSyxDQUFDLElBRzNCLGFBQUMsU0FBUyxFQUFFLFNBQVMsS0FBSyxDQUFDLElBRzNCLG9CQUFDLFNBQVMsRUFBRSxTQUFTLEtBQUssQ0FBQyxJQUczQixpQkFBQyxTQUFTLEVBQUUsTUFBTSxTQUFTLFNBQVMsS0FBSyxDQUFDLElBRzFDLGlCQUFDLFNBQVMsRUFBRSxNQUFNLFNBQVMsU0FBUyxLQUFLLENBQUMsSUFHMUMsaUJBQUMs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
