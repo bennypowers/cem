@@ -108,13 +108,13 @@ build-shared-windows-image:
 		echo "Image $(SHARED_WINDOWS_CC_IMAGE) already exists, skipping build."; \
 	fi
 
-win32-x64: generate build-shared-windows-image
+win32-x64: build-shared-windows-image
 	@mkdir -p dist/bin
 	podman run --rm -v $(PWD):/app:Z -w /app \
 		-e GOARCH=amd64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(SHARED_WINDOWS_CC_IMAGE)
 	@mv dist/bin/cem-windows-amd64.exe dist/bin/cem-win32-x64.exe
 
-win32-arm64: generate build-shared-windows-image
+win32-arm64: build-shared-windows-image
 	@mkdir -p dist/bin
 	podman run --rm -v $(PWD):/app:Z -w /app \
 		-e GOARCH=arm64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(SHARED_WINDOWS_CC_IMAGE)
