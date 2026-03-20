@@ -9,7 +9,7 @@ Port PatternFly React components to LitElement web components for the cem dev se
 These are *minimal* ports - only implement what the dev server actually uses, not full-fidelity 1:1 React parity.
 
 ## References
-- Steven Glanzer's full-fidelity ports: `~/Developer/pfv6-to-lit/elements/pfv6-*/`
+- Steven Spriggs's full-fidelity ports: `~/Developer/pfv6-to-lit/elements/pfv6-*/`
 - PatternFly React source: `~/Developer/patternfly/patternfly-react/packages/react-core/src/components/`
 - PatternFly SCSS: `~/Developer/patternfly/patternfly/src/patternfly/components/`
 - Existing ported components: `serve/elements/pf-v6-*/` (source) and `serve/middleware/routes/templates/elements/pf-v6-*/` (compiled output)
