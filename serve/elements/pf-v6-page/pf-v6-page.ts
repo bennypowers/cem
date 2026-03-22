@@ -19,7 +19,7 @@ import { SidebarToggleEvent } from '../pf-v6-masthead/pf-v6-masthead.js';
  */
 @customElement('pf-v6-page')
 export class PfV6Page extends LitElement {
-  static readonly match = window.matchMedia('(min-width: 75rem)');
+  static readonly match = globalThis.window?.matchMedia?.('(min-width: 75rem)');
 
   static styles = styles;
 

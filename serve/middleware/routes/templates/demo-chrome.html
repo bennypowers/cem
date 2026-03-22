@@ -14,6 +14,8 @@
   {{if .ImportMap}}
   <script type="importmap">{{.ImportMap}}</script>
   {{end}}
+  <!-- Hydration support must load before any LitElement modules -->
+  <script type="module" src="/__cem/vendor/lit-element-hydrate-support.js"></script>
   <!-- Modulepreload hints for all elements -->
   <link rel="modulepreload" href="/__cem/elements/cem-color-scheme-toggle/cem-color-scheme-toggle.js">
   <link rel="modulepreload" href="/__cem/elements/cem-connection-status/cem-connection-status.js">

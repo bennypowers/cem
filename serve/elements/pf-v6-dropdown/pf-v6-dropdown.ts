@@ -24,7 +24,7 @@ export class PfV6Dropdown extends LitElement {
   static readonly #instances = new Set<PfV6Dropdown>();
 
   static {
-    document.addEventListener('click', (event) => {
+    document?.addEventListener?.('click', (event: Event) => {
       for (const instance of PfV6Dropdown.#instances) {
         if (instance.expanded && !event.composedPath().includes(instance)) {
           instance.collapse();

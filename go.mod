@@ -29,7 +29,6 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
-	github.com/tdewolff/minify/v2 v2.24.8
 	github.com/tidwall/gjson v1.18.0
 	github.com/tliron/glsp v0.2.2
 	github.com/tree-sitter/go-tree-sitter v0.24.0
@@ -47,9 +46,12 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
+require github.com/tetratelabs/wazero v1.9.0 // indirect
+
 require (
 	atomicgo.dev/cursor v0.2.0 // indirect
 	atomicgo.dev/schedule v0.1.0 // indirect
+	bennypowers.dev/lit-ssr-go v0.0.3
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/bitfield/gotestdox v0.2.2 // indirect
@@ -93,7 +95,6 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/tdewolff/parse/v2 v2.8.5 // indirect
 	github.com/tidwall/jsonc v0.3.2 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
@@ -115,3 +116,5 @@ tool (
 	github.com/mfridman/tparse
 	gotest.tools/gotestsum
 )
+
+replace bennypowers.dev/lit-ssr-go => /home/bennyp/Developer/lit-ssr-wasm-runtime-only/go

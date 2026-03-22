@@ -35,6 +35,9 @@ func run() error {
 	if err := transpileElements(); err != nil {
 		return fmt.Errorf("transpile elements: %w", err)
 	}
+	if err := bundleSSR(); err != nil {
+		return fmt.Errorf("bundle SSR: %w", err)
+	}
 	return nil
 }
 
@@ -62,6 +65,7 @@ func vendorLit() error {
 		{"lit/directives/if-defined.js", "lit/directives/if-defined.js"},
 		{"lit/directives/repeat.js", "lit/directives/repeat.js"},
 		{"lit/directives/live.js", "lit/directives/live.js"},
+		{"@lit-labs/ssr-client/lit-element-hydrate-support.js", "lit-element-hydrate-support.js"},
 		{"lit/directives/unsafe-html.js", "lit/directives/unsafe-html.js"},
 	}
 
@@ -101,9 +105,12 @@ func litCSSPlugin() api.Plugin {
 	return api.Plugin{
 		Name: "lit-css",
 		Setup: func(build api.PluginBuild) {
-			// Resolve .css imports to our custom namespace
+			// Resolve .css imports from our elements to our custom namespace
 			build.OnResolve(api.OnResolveOptions{Filter: `\.css$`}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
-				// Resolve relative to the importer
+				// Only handle CSS from our element sources, not from node_modules
+				if strings.Contains(args.Importer, "node_modules") {
+					return api.OnResolveResult{}, nil
+				}
 				absPath := filepath.Join(filepath.Dir(args.Importer), args.Path)
 				return api.OnResolveResult{
 					Path:      absPath,
@@ -231,6 +238,63 @@ func transpileElements() error {
 	return nil
 }
 
+// stubExternals returns an esbuild plugin that replaces /__cem/* imports
+// with empty modules. These are client-only runtime modules (WebSocket,
+// state persistence) that aren't needed for SSR rendering.
+func stubExternals() api.Plugin {
+	return api.Plugin{
+		Name: "stub-externals",
+		Setup: func(build api.PluginBuild) {
+			build.OnResolve(api.OnResolveOptions{Filter: `^/__cem/`}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
+				return api.OnResolveResult{
+					Path:      args.Path,
+					Namespace: "stub",
+				}, nil
+			})
+			build.OnLoad(api.OnLoadOptions{Filter: `.*`, Namespace: "stub"}, func(args api.OnLoadArgs) (api.OnLoadResult, error) {
+				var contents string
+				if strings.Contains(args.Path, "/__cem/") {
+					contents = "export default {}; export class CEMReloadClient {}; export class StatePersistence {}"
+				} else {
+					// Node built-in stubs with working Buffer for base64
+					contents = `export default {};
+export const Buffer = {
+  from(s, encoding) {
+    if (encoding === 'binary') {
+      const arr = new Uint8Array(s.length);
+      for (let i = 0; i < s.length; i++) arr[i] = s.charCodeAt(i);
+      return { toString(enc) {
+        if (enc === 'base64') return btoa(String.fromCharCode(...arr));
+        return s;
+      }};
+    }
+    if (typeof s === 'string') return new TextEncoder().encode(s);
+    return new Uint8Array(s);
+  },
+  isBuffer() { return false; },
+  alloc(n) { return new Uint8Array(n); },
+};
+export const readFileSync = () => "";`
+				}
+				return api.OnLoadResult{Contents: &contents, Loader: api.LoaderJS}, nil
+			})
+		},
+	}
+}
+
+// stubNodeBuiltins replaces Node.js built-in imports with stubs for QuickJS.
+// Matches the approach from lit-ssr-wasm's build script.
+func stubNodeBuiltins() api.Plugin {
+	return api.Plugin{
+		Name: "stub-node-builtins",
+		Setup: func(build api.PluginBuild) {
+			build.OnResolve(api.OnResolveOptions{Filter: `^(node:|buffer$|fs$|path$|stream|util$|events$|crypto$|os$|url$|http$|https$|net$|tls$|child_process$|module$|vm$|zlib$|node-fetch)|register-css-hook`}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
+				return api.OnResolveResult{Path: args.Path, Namespace: "stub"}, nil
+			})
+		},
+	}
+}
+
 // rewriteLitImports replaces bare lit specifiers with /__cem/vendor/ paths.
 func rewriteLitImports(code string) string {
 	replacements := []struct {
@@ -255,4 +319,62 @@ func rewriteLitImports(code string) string {
 		code = strings.ReplaceAll(code, r.from, r.to)
 	}
 	return code
+}
+
+// bundleSSR creates a single fully-bundled JS file containing all element
+// components with lit included. This bundle is used by the lit-ssr-wasm
+// renderer for server-side rendering. Unlike the browser-served modules
+// (which use external imports), this bundle is self-contained.
+func bundleSSR() error {
+	// Find all element .ts files
+	entries, err := filepath.Glob("elements/*/*.ts")
+	if err != nil {
+		return err
+	}
+	if len(entries) == 0 {
+		return nil
+	}
+
+	// Self-contained SSR bundle:
+	//   1. ssr-polyfills.js (URL, Buffer for QuickJS)
+	//   2. @lit-labs/ssr DOM shims (HTMLElement, document, CSSStyleSheet, etc.)
+	//   3. lit (loads against the shims)
+	//   4. All chrome components
+	var imports strings.Builder
+	fmt.Fprintln(&imports, "import './elements/ssr-polyfills.js';")
+	fmt.Fprintln(&imports, "import '@lit-labs/ssr/lib/install-global-dom-shim.js';")
+	for _, entry := range entries {
+		fmt.Fprintf(&imports, "import './%s';\n", entry)
+	}
+
+	outfile := "middleware/routes/templates/ssr-bundle.js"
+	source := stripImportAttributes(imports.String())
+
+	result := api.Build(api.BuildOptions{
+		Stdin: &api.StdinOptions{
+			Contents:   source,
+			Sourcefile: "ssr-entry.ts",
+			Loader:     api.LoaderTS,
+			ResolveDir: ".",
+		},
+		Outfile:    outfile,
+		Bundle:     true,
+		Format:     api.FormatESModule,
+		Target:     api.ES2022,
+		Platform:   api.PlatformNode,
+		Conditions: []string{"node"},
+		Write:      true,
+		TsconfigRaw: `{"compilerOptions":{}}`,
+		LogLevel:   api.LogLevelWarning,
+		NodePaths:  []string{"elements/node_modules"},
+		Define:     map[string]string{"process.env.NODE_ENV": `"production"`},
+		Plugins:    []api.Plugin{litCSSPlugin(), stubExternals(), stubNodeBuiltins()},
+	})
+
+	if len(result.Errors) > 0 {
+		msgs := api.FormatMessages(result.Errors, api.FormatMessagesOptions{})
+		return fmt.Errorf("bundling SSR:\n%s", strings.Join(msgs, "\n"))
+	}
+
+	return nil
 }
