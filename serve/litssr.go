@@ -49,7 +49,9 @@ func (s *Server) initLitSSR(ctx context.Context) error {
 		return nil
 	}
 
-	renderer, err := litssr.NewWithElements(ctx, source, elements, 0)
+	// Single worker is sufficient for the dev server (one user, ~3500 renders/sec).
+	// This keeps init to ~1s instead of ~6s with NumCPU workers.
+	renderer, err := litssr.NewWithElements(ctx, source, elements, 1)
 	if err != nil {
 		return fmt.Errorf("init lit-ssr renderer: %w", err)
 	}
