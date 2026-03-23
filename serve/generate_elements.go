@@ -12,12 +12,16 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	G "bennypowers.dev/cem/generate"
+	M "bennypowers.dev/cem/manifest"
+	W "bennypowers.dev/cem/workspace"
 	"github.com/evanw/esbuild/pkg/api"
 )
 
@@ -35,9 +39,61 @@ func run() error {
 	if err := transpileElements(); err != nil {
 		return fmt.Errorf("transpile elements: %w", err)
 	}
+	if err := generateManifests(); err != nil {
+		return fmt.Errorf("generate manifests: %w", err)
+	}
 	if err := bundleSSR(); err != nil {
 		return fmt.Errorf("bundle SSR: %w", err)
 	}
+	return nil
+}
+
+// generateManifests runs cem generate on the element sources to produce
+// custom-elements.json manifests for the two internal packages.
+func generateManifests() error {
+	pkgs := []struct {
+		glob    string
+		outPath string
+	}{
+		{"pf-v6-*/*.ts", "elements/patternfly/custom-elements.json"},
+		{"cem-*/*.ts", "elements/chrome/custom-elements.json"},
+	}
+
+	for _, pkg := range pkgs {
+		wsCtx := W.NewFileSystemWorkspaceContext("elements")
+		if err := wsCtx.Init(); err != nil {
+			return fmt.Errorf("init workspace for %s: %w", pkg.glob, err)
+		}
+		cfg, err := wsCtx.Config()
+		if err != nil {
+			return fmt.Errorf("config for %s: %w", pkg.glob, err)
+		}
+		cfg.Generate.Files = []string{pkg.glob}
+
+		session, err := G.NewGenerateSession(wsCtx)
+		if err != nil {
+			return fmt.Errorf("session for %s: %w", pkg.glob, err)
+		}
+
+		manifest, err := session.GenerateFullManifest(context.Background())
+		session.Close()
+		if err != nil {
+			return fmt.Errorf("generate %s: %w", pkg.glob, err)
+		}
+
+		jsonStr, err := M.SerializeToString(manifest)
+		if err != nil {
+			return fmt.Errorf("serialize %s: %w", pkg.glob, err)
+		}
+
+		if err := os.MkdirAll(filepath.Dir(pkg.outPath), 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(pkg.outPath, []byte(jsonStr), 0o644); err != nil {
+			return fmt.Errorf("write %s: %w", pkg.outPath, err)
+		}
+	}
+
 	return nil
 }
 
