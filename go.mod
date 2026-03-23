@@ -13,7 +13,7 @@ require (
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/bmatcuk/doublestar/v4 v4.9.2
 	github.com/dunglas/go-urlpattern v0.0.0-20241020164140-716dfa1c80b1
-	github.com/evanw/esbuild v0.27.0
+	github.com/evanw/esbuild v0.27.4
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/jsonschema-go v0.3.0
@@ -53,7 +53,7 @@ require (
 	atomicgo.dev/schedule v0.1.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/bennypowers/lit-ssr-wasm/go v0.1.1
+	github.com/bennypowers/lit-ssr-wasm/go v0.2.0
 	github.com/bitfield/gotestdox v0.2.2 // indirect
 	github.com/bits-and-blooms/bitset v1.14.3 // indirect
 	github.com/charmbracelet/lipgloss v1.0.0 // indirect
@@ -107,7 +107,7 @@ require (
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
 	gotest.tools/gotestsum v1.13.0 // indirect
 )

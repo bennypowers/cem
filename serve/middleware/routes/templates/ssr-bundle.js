@@ -1,12 +1,20 @@
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __knownSymbol = (name, symbol) => (symbol = Symbol[name]) ? symbol : Symbol.for("Symbol." + name);
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __knownSymbol = (name, symbol) => (symbol = Symbol[name]) ? symbol : /* @__PURE__ */ Symbol.for("Symbol." + name);
 var __typeError = (msg) => {
   throw TypeError(msg);
 };
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __decoratorStart = (base) => [, , , __create(base?.[__knownSymbol("metadata")] ?? null)];
 var __decoratorStrings = ["class", "method", "getter", "setter", "accessor", "field", "value", "get", "set"];
 var __expectFn = (fn) => fn !== void 0 && typeof fn !== "function" ? __typeError("Function expected") : fn;
@@ -48,6 +56,60 @@ var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
 var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
 
+// cem-stub:/__cem/websocket-client.js
+var websocket_client_exports = {};
+__export(websocket_client_exports, {
+  CEMReloadClient: () => CEMReloadClient,
+  StatePersistence: () => StatePersistence,
+  default: () => websocket_client_default
+});
+var websocket_client_default, CEMReloadClient, StatePersistence;
+var init_websocket_client = __esm({
+  "cem-stub:/__cem/websocket-client.js"() {
+    websocket_client_default = {};
+    CEMReloadClient = class {
+    };
+    StatePersistence = class {
+    };
+  }
+});
+
+// cem-stub:/__cem/state-persistence.js
+var state_persistence_exports = {};
+__export(state_persistence_exports, {
+  CEMReloadClient: () => CEMReloadClient2,
+  StatePersistence: () => StatePersistence2,
+  default: () => state_persistence_default
+});
+var state_persistence_default, CEMReloadClient2, StatePersistence2;
+var init_state_persistence = __esm({
+  "cem-stub:/__cem/state-persistence.js"() {
+    state_persistence_default = {};
+    CEMReloadClient2 = class {
+    };
+    StatePersistence2 = class {
+    };
+  }
+});
+
+// cem-stub:/__cem/health-badges.js
+var health_badges_exports = {};
+__export(health_badges_exports, {
+  CEMReloadClient: () => CEMReloadClient3,
+  StatePersistence: () => StatePersistence3,
+  default: () => health_badges_default
+});
+var health_badges_default, CEMReloadClient3, StatePersistence3;
+var init_health_badges = __esm({
+  "cem-stub:/__cem/health-badges.js"() {
+    health_badges_default = {};
+    CEMReloadClient3 = class {
+    };
+    StatePersistence3 = class {
+    };
+  }
+});
+
 // lit-ssr-wasm-shim:@lit-labs/ssr-dom-shim
 var customElements2 = globalThis.customElements;
 var HTMLElement2 = globalThis.HTMLElement;
@@ -65,7 +127,7 @@ var ElementInternals = globalThis.ElementInternals ?? class ElementInternals2 {
 // elements/node_modules/@lit/reactive-element/node/css-tag.js
 var t = globalThis;
 var e = t.ShadowRoot && (void 0 === t.ShadyCSS || t.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype;
-var s = Symbol();
+var s = /* @__PURE__ */ Symbol();
 var o = /* @__PURE__ */ new WeakMap();
 var n = class {
   constructor(t6, e6, o8) {
@@ -138,7 +200,7 @@ var b = { toAttribute(t6, s57) {
 } };
 var m = (t6, s57) => !h(t6, s57);
 var y = { attribute: true, type: String, converter: b, reflect: false, useDefault: false, hasChanged: m };
-Symbol.metadata ??= Symbol("metadata"), l.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
+Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), l.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
 var g = class extends (globalThis.HTMLElement ?? HTMLElement2) {
   static addInitializer(t6) {
     this._$Ei(), (this.l ??= []).push(t6);
@@ -148,7 +210,7 @@ var g = class extends (globalThis.HTMLElement ?? HTMLElement2) {
   }
   static createProperty(t6, s57 = y) {
     if (s57.state && (s57.attribute = false), this._$Ei(), this.prototype.hasOwnProperty(t6) && ((s57 = Object.create(s57)).wrapped = true), this.elementProperties.set(t6, s57), !s57.noAccessor) {
-      const i5 = Symbol(), e6 = this.getPropertyDescriptor(t6, i5, s57);
+      const i5 = /* @__PURE__ */ Symbol(), e6 = this.getPropertyDescriptor(t6, i5, s57);
       void 0 !== e6 && r2(this.prototype, t6, e6);
     }
   }
@@ -349,8 +411,8 @@ var x = (t6) => (i5, ...s57) => ({ _$litType$: t6, strings: i5, values: s57 });
 var T = x(1);
 var b2 = x(2);
 var w = x(3);
-var E = Symbol.for("lit-noChange");
-var A = Symbol.for("lit-nothing");
+var E = /* @__PURE__ */ Symbol.for("lit-noChange");
+var A = /* @__PURE__ */ Symbol.for("lit-nothing");
 var C = /* @__PURE__ */ new WeakMap();
 var P = l2.createTreeWalker(l2, 129);
 function V(t6, i5) {
@@ -6953,15 +7015,9 @@ _init49 = __decoratorStart(_a49);
 PfV6TreeView = __decorateElement(_init49, 0, "PfV6TreeView", _PfV6TreeView_decorators, PfV6TreeView);
 __runInitializers(_init49, 1, PfV6TreeView);
 
-// cem-stub:/__cem/websocket-client.js
-var CEMReloadClient = class {
-};
-
-// cem-stub:/__cem/state-persistence.js
-var StatePersistence = class {
-};
-
 // elements/cem-serve-chrome/cem-serve-chrome.ts
+var CEMReloadClient4;
+var StatePersistence4;
 var CemLogsEvent = class extends Event {
   logs;
   constructor(logs) {
@@ -6969,7 +7025,7 @@ var CemLogsEvent = class extends Event {
     this.logs = logs;
   }
 };
-var _hasDescription_dec, _sidebar_dec, _tabsSelected_dec, _drawerHeight_dec2, _drawer_dec, _knobs_dec, _sourceURL_dec, _canonicalURL_dec, _packageName_dec, _demoTitle_dec, _primaryTagName_dec, _a50, _CemServeChrome_decorators, _demoInfoTemplate, _demoGroupTemplate, _demoListTemplate, _logEntryTemplate, _eventEntryTemplate, _init50, _primaryTagName, _demoTitle, _packageName, _canonicalURL, _sourceURL, _knobs, _drawer, _drawerHeight2, _tabsSelected, _sidebar, _hasDescription2, _CemServeChrome_instances, $_fn2, $$_fn, _logContainer, _drawerOpen, _initialLogsFetched, _isInitialLoad, _debugData, _elementEventMap, _manifest, _capturedEvents, _maxCapturedEvents, _eventList, _eventDetailHeader, _eventDetailBody, _selectedEventId, _eventsFilterValue, _eventsFilterDebounceTimer, _eventTypeFilters, _elementFilters, _discoveredElements, _handleLogsEvent, _handleTreeExpand, _handleTreeCollapse, _handleTreeSelect, _copyLogsFeedbackTimeout, _copyDebugFeedbackTimeout, _copyEventsFeedbackTimeout, _logsFilterValue, _logsFilterDebounceTimer, _logLevelFilters, _logLevelDropdown, _observer2, _wsClient, renderSourceButton_fn, fetchDebugInfo_fn, populateDemoUrls_fn, setupLogListener_fn, filterLogs_fn, getLogTypeFromEntry_fn, loadLogFilterState_fn, syncCheckboxStates_fn, saveLogFilterState_fn, _handleLogFilterChange, copyLogs_fn, setupDebugOverlay_fn, setupFooterDrawer_fn, detectBrowser_fn, copyDebugInfo_fn, renderLogs_fn, getLogBadge_fn, applyLogLabelAttrs_fn, scrollLatestIntoView_fn, scrollLogsToBottom_fn, migrateFromLocalStorageIfNeeded_fn, setupColorSchemeToggle_fn, applyColorScheme_fn, setupKnobCoordination_fn, _onKnobChange, _onKnobClear, getKnobTarget_fn, getKnobTypeFromEvent_fn, getKnobTypeFromClearEvent_fn, setupTreeStatePersistence_fn, applyTreeState_fn, setupSidebarStatePersistence_fn, findTreeItemById_fn, getTreeNodeId_fn, discoverElementEvents_fn, setupEventCapture_fn, attachEventListeners_fn, observeDemoMutations_fn, _handleElementEvent, getEventDocumentation_fn, findTypeDeclaration_fn, captureEvent_fn, extractEventProperties_fn, renderEvent_fn, selectEvent_fn, buildPropertiesForDisplay_fn, buildPropertyTree_fn, scrollEventsToBottom_fn, isEventsTabActive_fn, filterEvents_fn, eventMatchesTextFilter_fn, getEventRecordById_fn, updateEventFilters_fn, _handleEventTypeFilterChange, _handleElementFilterChange, loadEventFiltersFromStorage_fn, saveEventFilters_fn, clearEvents_fn, copyEvents_fn, setupEventListeners_fn;
+var _hasDescription_dec, _sidebar_dec, _tabsSelected_dec, _drawerHeight_dec2, _drawer_dec, _knobs_dec, _sourceURL_dec, _canonicalURL_dec, _packageName_dec, _demoTitle_dec, _primaryTagName_dec, _a50, _CemServeChrome_decorators, _demoInfoTemplate, _demoGroupTemplate, _demoListTemplate, _logEntryTemplate, _eventEntryTemplate, _init50, _primaryTagName, _demoTitle, _packageName, _canonicalURL, _sourceURL, _knobs, _drawer, _drawerHeight2, _tabsSelected, _sidebar, _hasDescription2, _CemServeChrome_instances, $_fn2, $$_fn, _logContainer, _drawerOpen, _initialLogsFetched, _isInitialLoad, _debugData, _elementEventMap, _manifest, _capturedEvents, _maxCapturedEvents, _eventList, _eventDetailHeader, _eventDetailBody, _selectedEventId, _eventsFilterValue, _eventsFilterDebounceTimer, _eventTypeFilters, _elementFilters, _discoveredElements, _handleLogsEvent, _handleTreeExpand, _handleTreeCollapse, _handleTreeSelect, _copyLogsFeedbackTimeout, _copyDebugFeedbackTimeout, _copyEventsFeedbackTimeout, _logsFilterValue, _logsFilterDebounceTimer, _logLevelFilters, _logLevelDropdown, _observer2, _wsClient, _clientModulesLoaded, initWsClient_fn, renderSourceButton_fn, fetchDebugInfo_fn, populateDemoUrls_fn, setupLogListener_fn, filterLogs_fn, getLogTypeFromEntry_fn, loadLogFilterState_fn, syncCheckboxStates_fn, saveLogFilterState_fn, _handleLogFilterChange, copyLogs_fn, setupDebugOverlay_fn, setupFooterDrawer_fn, detectBrowser_fn, copyDebugInfo_fn, renderLogs_fn, getLogBadge_fn, applyLogLabelAttrs_fn, scrollLatestIntoView_fn, scrollLogsToBottom_fn, migrateFromLocalStorageIfNeeded_fn, setupColorSchemeToggle_fn, applyColorScheme_fn, setupKnobCoordination_fn, _onKnobChange, _onKnobClear, getKnobTarget_fn, getKnobTypeFromEvent_fn, getKnobTypeFromClearEvent_fn, setupTreeStatePersistence_fn, applyTreeState_fn, setupSidebarStatePersistence_fn, findTreeItemById_fn, getTreeNodeId_fn, discoverElementEvents_fn, setupEventCapture_fn, attachEventListeners_fn, observeDemoMutations_fn, _handleElementEvent, getEventDocumentation_fn, findTypeDeclaration_fn, captureEvent_fn, extractEventProperties_fn, renderEvent_fn, selectEvent_fn, buildPropertiesForDisplay_fn, buildPropertyTree_fn, scrollEventsToBottom_fn, isEventsTabActive_fn, filterEvents_fn, eventMatchesTextFilter_fn, getEventRecordById_fn, updateEventFilters_fn, _handleEventTypeFilterChange, _handleElementFilterChange, loadEventFiltersFromStorage_fn, saveEventFilters_fn, clearEvents_fn, copyEvents_fn, setupEventListeners_fn;
 _CemServeChrome_decorators = [t3("cem-serve-chrome")];
 var _CemServeChrome = class _CemServeChrome extends (_a50 = i3, _primaryTagName_dec = [n4({ attribute: "primary-tag-name" })], _demoTitle_dec = [n4({ attribute: "demo-title" })], _packageName_dec = [n4({ attribute: "package-name" })], _canonicalURL_dec = [n4({ attribute: "canonical-url" })], _sourceURL_dec = [n4({ attribute: "source-url" })], _knobs_dec = [n4()], _drawer_dec = [n4()], _drawerHeight_dec2 = [n4({ attribute: "drawer-height" })], _tabsSelected_dec = [n4({ attribute: "tabs-selected" })], _sidebar_dec = [n4()], _hasDescription_dec = [n4({ type: Boolean, attribute: "has-description" })], _a50) {
   constructor() {
@@ -7044,46 +7100,8 @@ var _CemServeChrome = class _CemServeChrome extends (_a50 = i3, _primaryTagName_
       }
     }));
     /* c8 ignore stop */
-    __privateAdd(this, _wsClient, new CEMReloadClient({
-      jitterMax: 1e3,
-      overlayThreshold: 15,
-      badgeFadeDelay: 2e3,
-      /* c8 ignore start - WebSocket callbacks tested via integration */
-      callbacks: {
-        onOpen: () => {
-          __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "reconnection-modal")?.close();
-        },
-        onError: (errorData) => {
-          if (errorData?.title && errorData?.message) {
-            console.error("[cem-serve] Server error:", errorData);
-            __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "error-overlay")?.show(errorData.title, errorData.message, errorData.file);
-          } else {
-            console.error("[cem-serve] WebSocket error:", errorData);
-          }
-        },
-        onReconnecting: ({ attempt, delay }) => {
-          if (attempt >= 15) {
-            __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "reconnection-modal")?.showModal();
-            __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "reconnection-content")?.updateRetryInfo(attempt, delay);
-          }
-        },
-        onReload: () => {
-          const errorOverlay = __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "error-overlay");
-          if (errorOverlay?.hasAttribute("open")) {
-            errorOverlay.hide();
-          }
-          window.location.reload();
-        },
-        onShutdown: () => {
-          __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "reconnection-modal")?.showModal();
-          __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "reconnection-content")?.updateRetryInfo(30, 3e4);
-        },
-        onLogs: (logs) => {
-          window.dispatchEvent(new CemLogsEvent(logs));
-        }
-      }
-      /* c8 ignore stop */
-    }));
+    __privateAdd(this, _wsClient);
+    __privateAdd(this, _clientModulesLoaded, false);
     __privateAdd(this, _handleLogFilterChange, (event) => {
       const { value, checked } = event;
       if (checked) {
@@ -7456,8 +7474,19 @@ var _CemServeChrome = class _CemServeChrome extends (_a50 = i3, _primaryTagName_
       </cem-transform-error-overlay>
     `;
   }
-  connectedCallback() {
+  async connectedCallback() {
     super.connectedCallback();
+    if (!__privateGet(this, _clientModulesLoaded)) {
+      [{ CEMReloadClient: CEMReloadClient4 }, { StatePersistence: StatePersistence4 }] = await Promise.all([
+        // @ts-ignore -- plain JS modules served at runtime by Go server
+        Promise.resolve().then(() => (init_websocket_client(), websocket_client_exports)),
+        // @ts-ignore
+        Promise.resolve().then(() => (init_state_persistence(), state_persistence_exports))
+      ]);
+      Promise.resolve().then(() => init_health_badges());
+      __privateSet(this, _clientModulesLoaded, true);
+      __privateMethod(this, _CemServeChrome_instances, initWsClient_fn).call(this);
+    }
     __privateMethod(this, _CemServeChrome_instances, migrateFromLocalStorageIfNeeded_fn).call(this);
   }
   firstUpdated() {
@@ -7573,6 +7602,49 @@ _logLevelFilters = new WeakMap();
 _logLevelDropdown = new WeakMap();
 _observer2 = new WeakMap();
 _wsClient = new WeakMap();
+_clientModulesLoaded = new WeakMap();
+initWsClient_fn = function() {
+  __privateSet(this, _wsClient, new CEMReloadClient4({
+    jitterMax: 1e3,
+    overlayThreshold: 15,
+    badgeFadeDelay: 2e3,
+    /* c8 ignore start - WebSocket callbacks tested via integration */
+    callbacks: {
+      onOpen: () => {
+        __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "reconnection-modal")?.close();
+      },
+      onError: (errorData) => {
+        if (errorData?.title && errorData?.message) {
+          console.error("[cem-serve] Server error:", errorData);
+          __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "error-overlay")?.show(errorData.title, errorData.message, errorData.file);
+        } else {
+          console.error("[cem-serve] WebSocket error:", errorData);
+        }
+      },
+      onReconnecting: ({ attempt, delay }) => {
+        if (attempt >= 15) {
+          __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "reconnection-modal")?.showModal();
+          __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "reconnection-content")?.updateRetryInfo(attempt, delay);
+        }
+      },
+      onReload: () => {
+        const errorOverlay = __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "error-overlay");
+        if (errorOverlay?.hasAttribute("open")) {
+          errorOverlay.hide();
+        }
+        window.location.reload();
+      },
+      onShutdown: () => {
+        __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "reconnection-modal")?.showModal();
+        __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "reconnection-content")?.updateRetryInfo(30, 3e4);
+      },
+      onLogs: (logs) => {
+        window.dispatchEvent(new CemLogsEvent(logs));
+      }
+    }
+    /* c8 ignore stop */
+  }));
+};
 renderSourceButton_fn = function() {
   if (!this.sourceURL) return A;
   let label = "Version Control";
@@ -7828,7 +7900,7 @@ setupFooterDrawer_fn = function() {
   __privateSet(this, _drawerOpen, drawer.open);
   drawer.addEventListener("change", (e6) => {
     __privateSet(this, _drawerOpen, e6.open);
-    StatePersistence.updateState({
+    StatePersistence4.updateState({
       drawer: { open: e6.open }
     });
     if (e6.open) {
@@ -7837,12 +7909,12 @@ setupFooterDrawer_fn = function() {
   });
   drawer.addEventListener("resize", (e6) => {
     drawer.setAttribute("drawer-height", e6.height);
-    StatePersistence.updateState({
+    StatePersistence4.updateState({
       drawer: { height: e6.height }
     });
   });
   tabs.addEventListener("change", (e6) => {
-    StatePersistence.updateState({
+    StatePersistence4.updateState({
       tabs: { selectedIndex: e6.selectedIndex }
     });
     if (e6.selectedIndex === 2 && drawer.open) {
@@ -8004,7 +8076,7 @@ migrateFromLocalStorageIfNeeded_fn = function() {
     if (hasLocalStorage) {
       const migrated = localStorage.getItem("cem-serve-migrated-to-cookies");
       if (!migrated) {
-        StatePersistence.migrateFromLocalStorage();
+        StatePersistence4.migrateFromLocalStorage();
         localStorage.setItem("cem-serve-migrated-to-cookies", "true");
         setTimeout(() => window.location.reload(), 100);
       }
@@ -8015,7 +8087,7 @@ migrateFromLocalStorageIfNeeded_fn = function() {
 setupColorSchemeToggle_fn = function() {
   const toggleGroup = this.shadowRoot?.querySelector(".color-scheme-toggle");
   if (!toggleGroup) return;
-  const state = StatePersistence.getState();
+  const state = StatePersistence4.getState();
   __privateMethod(this, _CemServeChrome_instances, applyColorScheme_fn).call(this, state.colorScheme);
   const items = toggleGroup.querySelectorAll("pf-v6-toggle-group-item");
   items.forEach((item) => {
@@ -8026,7 +8098,7 @@ setupColorSchemeToggle_fn = function() {
   toggleGroup.addEventListener("pf-v6-toggle-group-change", (e6) => {
     const scheme = e6.value;
     __privateMethod(this, _CemServeChrome_instances, applyColorScheme_fn).call(this, scheme);
-    StatePersistence.updateState({ colorScheme: scheme });
+    StatePersistence4.updateState({ colorScheme: scheme });
   });
 };
 applyColorScheme_fn = function(scheme) {
@@ -8097,34 +8169,34 @@ setupTreeStatePersistence_fn = function() {
   __privateSet(this, _handleTreeExpand, (e6) => {
     if (e6.target?.tagName !== "PF-V6-TREE-ITEM") return;
     const nodeId = __privateMethod(this, _CemServeChrome_instances, getTreeNodeId_fn).call(this, e6.target);
-    const treeState = StatePersistence.getTreeState();
+    const treeState = StatePersistence4.getTreeState();
     if (!treeState.expanded.includes(nodeId)) {
       treeState.expanded.push(nodeId);
-      StatePersistence.setTreeState(treeState);
+      StatePersistence4.setTreeState(treeState);
     }
   });
   this.addEventListener("expand", __privateGet(this, _handleTreeExpand));
   __privateSet(this, _handleTreeCollapse, (e6) => {
     if (e6.target?.tagName !== "PF-V6-TREE-ITEM") return;
     const nodeId = __privateMethod(this, _CemServeChrome_instances, getTreeNodeId_fn).call(this, e6.target);
-    const treeState = StatePersistence.getTreeState();
+    const treeState = StatePersistence4.getTreeState();
     const index = treeState.expanded.indexOf(nodeId);
     if (index > -1) {
       treeState.expanded.splice(index, 1);
-      StatePersistence.setTreeState(treeState);
+      StatePersistence4.setTreeState(treeState);
     }
   });
   this.addEventListener("collapse", __privateGet(this, _handleTreeCollapse));
   __privateSet(this, _handleTreeSelect, (e6) => {
     if (e6.target?.tagName !== "PF-V6-TREE-ITEM") return;
     const nodeId = __privateMethod(this, _CemServeChrome_instances, getTreeNodeId_fn).call(this, e6.target);
-    StatePersistence.updateTreeState({ selected: nodeId });
+    StatePersistence4.updateTreeState({ selected: nodeId });
   });
   this.addEventListener("select", __privateGet(this, _handleTreeSelect));
   __privateMethod(this, _CemServeChrome_instances, applyTreeState_fn).call(this);
 };
 applyTreeState_fn = function() {
-  const treeState = StatePersistence.getTreeState();
+  const treeState = StatePersistence4.getTreeState();
   for (const nodeId of treeState.expanded) {
     const treeItem = __privateMethod(this, _CemServeChrome_instances, findTreeItemById_fn).call(this, nodeId);
     if (treeItem && !treeItem.hasAttribute("expanded")) {
@@ -8143,7 +8215,7 @@ setupSidebarStatePersistence_fn = function() {
   if (!page) return;
   page.addEventListener("sidebar-toggle", (event) => {
     const collapsed = !event.expanded;
-    StatePersistence.updateState({
+    StatePersistence4.updateState({
       sidebar: { collapsed }
     });
   });

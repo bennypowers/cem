@@ -48,12 +48,18 @@ import '../pf-v6-toolbar/pf-v6-toolbar.js';
 import '../pf-v6-tree-item/pf-v6-tree-item.js';
 import '../pf-v6-tree-view/pf-v6-tree-view.js';
 
-// @ts-ignore -- plain JS module served at runtime by Go server
-import { CEMReloadClient } from '/__cem/websocket-client.js';
-// @ts-ignore -- plain JS module served at runtime by Go server
-import { StatePersistence } from '/__cem/state-persistence.js';
-// @ts-ignore -- plain JS module served at runtime by Go server
-import '/__cem/health-badges.js';
+// Client-only modules loaded dynamically to avoid breaking SSR.
+// These are plain JS modules served at runtime by the Go server.
+type CEMReloadClientType = { new(opts: any): any };
+type StatePersistenceType = {
+  getState(): any;
+  updateState(s: any): void;
+  getTreeState(): any;
+  setTreeState(s: any): void;
+  migrateFromLocalStorage(): void;
+};
+let CEMReloadClient: CEMReloadClientType;
+let StatePersistence: StatePersistenceType;
 
 interface EventInfo {
   eventNames: Set<string>;
@@ -318,7 +324,11 @@ export class CemServeChrome extends LitElement {
   });
   /* c8 ignore stop */
 
-  #wsClient = new CEMReloadClient({
+  #wsClient: any;
+  #clientModulesLoaded = false;
+
+  #initWsClient() {
+    this.#wsClient = new CEMReloadClient({
     jitterMax: 1000,
     overlayThreshold: 15,
     badgeFadeDelay: 2000,
@@ -357,7 +367,8 @@ export class CemServeChrome extends LitElement {
       }
     }
     /* c8 ignore stop */
-  });
+    });
+  }
 
   get demo(): Element | null {
     return this.querySelector('cem-serve-demo');
@@ -674,10 +685,23 @@ export class CemServeChrome extends LitElement {
     `;
   }
 
-  connectedCallback() {
+  async connectedCallback() {
     super.connectedCallback();
 
-    // Check if we need to migrate from localStorage
+    // Load client-only modules dynamically (not available during SSR)
+    if (!this.#clientModulesLoaded) {
+      [{ CEMReloadClient }, { StatePersistence }] = await Promise.all([
+        // @ts-ignore -- plain JS modules served at runtime by Go server
+        import('/__cem/websocket-client.js'),
+        // @ts-ignore
+        import('/__cem/state-persistence.js'),
+      ]);
+      // @ts-ignore
+      import('/__cem/health-badges.js');
+      this.#clientModulesLoaded = true;
+      this.#initWsClient();
+    }
+
     this.#migrateFromLocalStorageIfNeeded();
   }
 
