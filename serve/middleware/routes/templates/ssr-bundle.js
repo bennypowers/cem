@@ -48,841 +48,19 @@ var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
 var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
 
-// elements/node_modules/@lit-labs/ssr-dom-shim/lib/element-internals.js
-var ElementInternalsShim = class ElementInternals {
-  get shadowRoot() {
-    return this.__host.__shadowRoot;
-  }
-  constructor(_host) {
-    this.ariaActiveDescendantElement = null;
-    this.ariaAtomic = "";
-    this.ariaAutoComplete = "";
-    this.ariaBrailleLabel = "";
-    this.ariaBrailleRoleDescription = "";
-    this.ariaBusy = "";
-    this.ariaChecked = "";
-    this.ariaColCount = "";
-    this.ariaColIndex = "";
-    this.ariaColIndexText = "";
-    this.ariaColSpan = "";
-    this.ariaControlsElements = null;
-    this.ariaCurrent = "";
-    this.ariaDescribedByElements = null;
-    this.ariaDescription = "";
-    this.ariaDetailsElements = null;
-    this.ariaDisabled = "";
-    this.ariaErrorMessageElements = null;
-    this.ariaExpanded = "";
-    this.ariaFlowToElements = null;
-    this.ariaHasPopup = "";
-    this.ariaHidden = "";
-    this.ariaInvalid = "";
-    this.ariaKeyShortcuts = "";
-    this.ariaLabel = "";
-    this.ariaLabelledByElements = null;
-    this.ariaLevel = "";
-    this.ariaLive = "";
-    this.ariaModal = "";
-    this.ariaMultiLine = "";
-    this.ariaMultiSelectable = "";
-    this.ariaOrientation = "";
-    this.ariaOwnsElements = null;
-    this.ariaPlaceholder = "";
-    this.ariaPosInSet = "";
-    this.ariaPressed = "";
-    this.ariaReadOnly = "";
-    this.ariaRelevant = "";
-    this.ariaRequired = "";
-    this.ariaRoleDescription = "";
-    this.ariaRowCount = "";
-    this.ariaRowIndex = "";
-    this.ariaRowIndexText = "";
-    this.ariaRowSpan = "";
-    this.ariaSelected = "";
-    this.ariaSetSize = "";
-    this.ariaSort = "";
-    this.ariaValueMax = "";
-    this.ariaValueMin = "";
-    this.ariaValueNow = "";
-    this.ariaValueText = "";
-    this.role = "";
-    this.form = null;
-    this.labels = [];
-    this.states = /* @__PURE__ */ new Set();
-    this.validationMessage = "";
-    this.validity = {};
-    this.willValidate = true;
-    this.__host = _host;
-  }
-  checkValidity() {
-    console.warn("`ElementInternals.checkValidity()` was called on the server.This method always returns true.");
-    return true;
-  }
-  reportValidity() {
-    return true;
-  }
-  setFormValue() {
-  }
-  setValidity() {
-  }
+// lit-ssr-wasm-shim:@lit-labs/ssr-dom-shim
+var customElements2 = globalThis.customElements;
+var HTMLElement2 = globalThis.HTMLElement;
+var Element2 = globalThis.Element;
+var CSSStyleSheet2 = globalThis.CSSStyleSheet;
+var CustomElementRegistry = globalThis.CustomElementRegistry;
+var Event2 = globalThis.Event;
+var CustomEvent2 = globalThis.CustomEvent;
+var EventTarget = globalThis.EventTarget;
+var ariaMixinAttributes = globalThis.ariaMixinAttributes ?? {};
+var HYDRATE_INTERNALS_ATTR_PREFIX = globalThis.HYDRATE_INTERNALS_ATTR_PREFIX ?? "internals-";
+var ElementInternals = globalThis.ElementInternals ?? class ElementInternals2 {
 };
-
-// elements/node_modules/@lit-labs/ssr-dom-shim/lib/events.js
-var __classPrivateFieldSet = function(receiver, state, value, kind, f3) {
-  if (kind === "m") throw new TypeError("Private method is not writable");
-  if (kind === "a" && !f3) throw new TypeError("Private accessor was defined without a setter");
-  if (typeof state === "function" ? receiver !== state || !f3 : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-  return kind === "a" ? f3.call(receiver, value) : f3 ? f3.value = value : state.set(receiver, value), value;
-};
-var __classPrivateFieldGet = function(receiver, state, kind, f3) {
-  if (kind === "a" && !f3) throw new TypeError("Private accessor was defined without a getter");
-  if (typeof state === "function" ? receiver !== state || !f3 : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-  return kind === "m" ? f3 : kind === "a" ? f3.call(receiver) : f3 ? f3.value : state.get(receiver);
-};
-var _Event_cancelable;
-var _Event_bubbles;
-var _Event_composed;
-var _Event_defaultPrevented;
-var _Event_timestamp;
-var _Event_propagationStopped;
-var _Event_type;
-var _Event_target;
-var _Event_isBeingDispatched;
-var _a;
-var _CustomEvent_detail;
-var _b;
-var isCaptureEventListener = (options) => typeof options === "boolean" ? options : options?.capture ?? false;
-var NONE = 0;
-var CAPTURING_PHASE = 1;
-var AT_TARGET = 2;
-var BUBBLING_PHASE = 3;
-var EventTarget = class {
-  constructor() {
-    this.__eventListeners = /* @__PURE__ */ new Map();
-    this.__captureEventListeners = /* @__PURE__ */ new Map();
-  }
-  addEventListener(type, callback, options) {
-    if (callback === void 0 || callback === null) {
-      return;
-    }
-    const eventListenersMap = isCaptureEventListener(options) ? this.__captureEventListeners : this.__eventListeners;
-    let eventListeners = eventListenersMap.get(type);
-    if (eventListeners === void 0) {
-      eventListeners = /* @__PURE__ */ new Map();
-      eventListenersMap.set(type, eventListeners);
-    } else if (eventListeners.has(callback)) {
-      return;
-    }
-    const normalizedOptions = typeof options === "object" && options ? options : {};
-    normalizedOptions.signal?.addEventListener("abort", () => this.removeEventListener(type, callback, options));
-    eventListeners.set(callback, normalizedOptions ?? {});
-  }
-  removeEventListener(type, callback, options) {
-    if (callback === void 0 || callback === null) {
-      return;
-    }
-    const eventListenersMap = isCaptureEventListener(options) ? this.__captureEventListeners : this.__eventListeners;
-    const eventListeners = eventListenersMap.get(type);
-    if (eventListeners !== void 0) {
-      eventListeners.delete(callback);
-      if (!eventListeners.size) {
-        eventListenersMap.delete(type);
-      }
-    }
-  }
-  dispatchEvent(event) {
-    const composedPath = [this];
-    let parent = this.__eventTargetParent;
-    if (event.composed) {
-      while (parent) {
-        composedPath.push(parent);
-        parent = parent.__eventTargetParent;
-      }
-    } else {
-      while (parent && parent !== this.__host) {
-        composedPath.push(parent);
-        parent = parent.__eventTargetParent;
-      }
-    }
-    let stopPropagation = false;
-    let stopImmediatePropagation = false;
-    let eventPhase = NONE;
-    let target = null;
-    let tmpTarget = null;
-    let currentTarget = null;
-    const originalStopPropagation = event.stopPropagation;
-    const originalStopImmediatePropagation = event.stopImmediatePropagation;
-    Object.defineProperties(event, {
-      target: {
-        get() {
-          return target ?? tmpTarget;
-        },
-        ...enumerableProperty
-      },
-      srcElement: {
-        get() {
-          return event.target;
-        },
-        ...enumerableProperty
-      },
-      currentTarget: {
-        get() {
-          return currentTarget;
-        },
-        ...enumerableProperty
-      },
-      eventPhase: {
-        get() {
-          return eventPhase;
-        },
-        ...enumerableProperty
-      },
-      composedPath: {
-        value: () => composedPath,
-        ...enumerableProperty
-      },
-      stopPropagation: {
-        value: () => {
-          stopPropagation = true;
-          originalStopPropagation.call(event);
-        },
-        ...enumerableProperty
-      },
-      stopImmediatePropagation: {
-        value: () => {
-          stopImmediatePropagation = true;
-          originalStopImmediatePropagation.call(event);
-        },
-        ...enumerableProperty
-      }
-    });
-    const invokeEventListener = (listener, options, eventListenerMap) => {
-      if (typeof listener === "function") {
-        listener(event);
-      } else if (typeof listener?.handleEvent === "function") {
-        listener.handleEvent(event);
-      }
-      if (options.once) {
-        eventListenerMap.delete(listener);
-      }
-    };
-    const finishDispatch = () => {
-      currentTarget = null;
-      eventPhase = NONE;
-      return !event.defaultPrevented;
-    };
-    const captureEventPath = composedPath.slice().reverse();
-    target = !this.__host || !event.composed ? this : null;
-    const retarget = (eventTargets) => {
-      tmpTarget = this;
-      while (tmpTarget.__host && eventTargets.includes(tmpTarget.__host)) {
-        tmpTarget = tmpTarget.__host;
-      }
-    };
-    for (const eventTarget of captureEventPath) {
-      if (!target && (!tmpTarget || tmpTarget === eventTarget.__host)) {
-        retarget(captureEventPath.slice(captureEventPath.indexOf(eventTarget)));
-      }
-      currentTarget = eventTarget;
-      eventPhase = eventTarget === event.target ? AT_TARGET : CAPTURING_PHASE;
-      const captureEventListeners = eventTarget.__captureEventListeners.get(event.type);
-      if (captureEventListeners) {
-        for (const [listener, options] of captureEventListeners) {
-          invokeEventListener(listener, options, captureEventListeners);
-          if (stopImmediatePropagation) {
-            return finishDispatch();
-          }
-        }
-      }
-      if (stopPropagation) {
-        return finishDispatch();
-      }
-    }
-    const bubbleEventPath = event.bubbles ? composedPath : [this];
-    tmpTarget = null;
-    for (const eventTarget of bubbleEventPath) {
-      if (!target && (!tmpTarget || eventTarget === tmpTarget.__host)) {
-        retarget(bubbleEventPath.slice(0, bubbleEventPath.indexOf(eventTarget) + 1));
-      }
-      currentTarget = eventTarget;
-      eventPhase = eventTarget === event.target ? AT_TARGET : BUBBLING_PHASE;
-      const captureEventListeners = eventTarget.__eventListeners.get(event.type);
-      if (captureEventListeners) {
-        for (const [listener, options] of captureEventListeners) {
-          invokeEventListener(listener, options, captureEventListeners);
-          if (stopImmediatePropagation) {
-            return finishDispatch();
-          }
-        }
-      }
-      if (stopPropagation) {
-        return finishDispatch();
-      }
-    }
-    return finishDispatch();
-  }
-};
-var EventTargetShimWithRealType = EventTarget;
-var enumerableProperty = { __proto__: null };
-enumerableProperty.enumerable = true;
-Object.freeze(enumerableProperty);
-var EventShim = (_a = class Event2 {
-  constructor(type, options = {}) {
-    _Event_cancelable.set(this, false);
-    _Event_bubbles.set(this, false);
-    _Event_composed.set(this, false);
-    _Event_defaultPrevented.set(this, false);
-    _Event_timestamp.set(this, Date.now());
-    _Event_propagationStopped.set(this, false);
-    _Event_type.set(this, void 0);
-    _Event_target.set(this, void 0);
-    _Event_isBeingDispatched.set(this, void 0);
-    this.NONE = NONE;
-    this.CAPTURING_PHASE = CAPTURING_PHASE;
-    this.AT_TARGET = AT_TARGET;
-    this.BUBBLING_PHASE = BUBBLING_PHASE;
-    if (arguments.length === 0)
-      throw new Error(`The type argument must be specified`);
-    if (typeof options !== "object" || !options) {
-      throw new Error(`The "options" argument must be an object`);
-    }
-    const { bubbles, cancelable, composed } = options;
-    __classPrivateFieldSet(this, _Event_cancelable, !!cancelable, "f");
-    __classPrivateFieldSet(this, _Event_bubbles, !!bubbles, "f");
-    __classPrivateFieldSet(this, _Event_composed, !!composed, "f");
-    __classPrivateFieldSet(this, _Event_type, `${type}`, "f");
-    __classPrivateFieldSet(this, _Event_target, null, "f");
-    __classPrivateFieldSet(this, _Event_isBeingDispatched, false, "f");
-  }
-  initEvent(_type4, _bubbles, _cancelable) {
-    throw new Error("Method not implemented.");
-  }
-  stopImmediatePropagation() {
-    this.stopPropagation();
-  }
-  preventDefault() {
-    __classPrivateFieldSet(this, _Event_defaultPrevented, true, "f");
-  }
-  get target() {
-    return __classPrivateFieldGet(this, _Event_target, "f");
-  }
-  get currentTarget() {
-    return __classPrivateFieldGet(this, _Event_target, "f");
-  }
-  get srcElement() {
-    return __classPrivateFieldGet(this, _Event_target, "f");
-  }
-  get type() {
-    return __classPrivateFieldGet(this, _Event_type, "f");
-  }
-  get cancelable() {
-    return __classPrivateFieldGet(this, _Event_cancelable, "f");
-  }
-  get defaultPrevented() {
-    return __classPrivateFieldGet(this, _Event_cancelable, "f") && __classPrivateFieldGet(this, _Event_defaultPrevented, "f");
-  }
-  get timeStamp() {
-    return __classPrivateFieldGet(this, _Event_timestamp, "f");
-  }
-  composedPath() {
-    return __classPrivateFieldGet(this, _Event_isBeingDispatched, "f") ? [__classPrivateFieldGet(this, _Event_target, "f")] : [];
-  }
-  get returnValue() {
-    return !__classPrivateFieldGet(this, _Event_cancelable, "f") || !__classPrivateFieldGet(this, _Event_defaultPrevented, "f");
-  }
-  get bubbles() {
-    return __classPrivateFieldGet(this, _Event_bubbles, "f");
-  }
-  get composed() {
-    return __classPrivateFieldGet(this, _Event_composed, "f");
-  }
-  get eventPhase() {
-    return __classPrivateFieldGet(this, _Event_isBeingDispatched, "f") ? _a.AT_TARGET : _a.NONE;
-  }
-  get cancelBubble() {
-    return __classPrivateFieldGet(this, _Event_propagationStopped, "f");
-  }
-  set cancelBubble(value) {
-    if (value) {
-      __classPrivateFieldSet(this, _Event_propagationStopped, true, "f");
-    }
-  }
-  stopPropagation() {
-    __classPrivateFieldSet(this, _Event_propagationStopped, true, "f");
-  }
-  get isTrusted() {
-    return false;
-  }
-}, _Event_cancelable = /* @__PURE__ */ new WeakMap(), _Event_bubbles = /* @__PURE__ */ new WeakMap(), _Event_composed = /* @__PURE__ */ new WeakMap(), _Event_defaultPrevented = /* @__PURE__ */ new WeakMap(), _Event_timestamp = /* @__PURE__ */ new WeakMap(), _Event_propagationStopped = /* @__PURE__ */ new WeakMap(), _Event_type = /* @__PURE__ */ new WeakMap(), _Event_target = /* @__PURE__ */ new WeakMap(), _Event_isBeingDispatched = /* @__PURE__ */ new WeakMap(), _a.NONE = NONE, _a.CAPTURING_PHASE = CAPTURING_PHASE, _a.AT_TARGET = AT_TARGET, _a.BUBBLING_PHASE = BUBBLING_PHASE, _a);
-Object.defineProperties(EventShim.prototype, {
-  initEvent: enumerableProperty,
-  stopImmediatePropagation: enumerableProperty,
-  preventDefault: enumerableProperty,
-  target: enumerableProperty,
-  currentTarget: enumerableProperty,
-  srcElement: enumerableProperty,
-  type: enumerableProperty,
-  cancelable: enumerableProperty,
-  defaultPrevented: enumerableProperty,
-  timeStamp: enumerableProperty,
-  composedPath: enumerableProperty,
-  returnValue: enumerableProperty,
-  bubbles: enumerableProperty,
-  composed: enumerableProperty,
-  eventPhase: enumerableProperty,
-  cancelBubble: enumerableProperty,
-  stopPropagation: enumerableProperty,
-  isTrusted: enumerableProperty
-});
-var CustomEventShim = (_b = class CustomEvent2 extends EventShim {
-  constructor(type, options = {}) {
-    super(type, options);
-    _CustomEvent_detail.set(this, void 0);
-    __classPrivateFieldSet(this, _CustomEvent_detail, options?.detail ?? null, "f");
-  }
-  initCustomEvent(_type4, _bubbles, _cancelable, _detail) {
-    throw new Error("Method not implemented.");
-  }
-  get detail() {
-    return __classPrivateFieldGet(this, _CustomEvent_detail, "f");
-  }
-}, _CustomEvent_detail = /* @__PURE__ */ new WeakMap(), _b);
-Object.defineProperties(CustomEventShim.prototype, {
-  detail: enumerableProperty
-});
-var EventShimWithRealType = EventShim;
-var CustomEventShimWithRealType = CustomEventShim;
-
-// elements/node_modules/@lit-labs/ssr-dom-shim/lib/css.js
-var _a2;
-var MediaListShim = class MediaList extends Array {
-  get mediaText() {
-    return this.join(", ");
-  }
-  toString() {
-    return this.mediaText;
-  }
-  appendMedium(medium) {
-    if (!this.includes(medium)) {
-      this.push(medium);
-    }
-  }
-  deleteMedium(medium) {
-    const index = this.indexOf(medium);
-    if (index !== -1) {
-      this.splice(index, 1);
-    }
-  }
-  item(index) {
-    return this[index] ?? null;
-  }
-};
-var StyleSheetShim = class StyleSheet {
-  constructor() {
-    this.__media = new MediaListShim();
-    this.disabled = false;
-  }
-  get href() {
-    return null;
-  }
-  get media() {
-    return this.__media;
-  }
-  get ownerNode() {
-    return null;
-  }
-  get parentStyleSheet() {
-    return null;
-  }
-  get title() {
-    return null;
-  }
-  get type() {
-    return "text/css";
-  }
-};
-var CSSRuleShim = (_a2 = class CSSRule {
-  constructor() {
-    this.STYLE_RULE = 1;
-    this.CHARSET_RULE = 2;
-    this.IMPORT_RULE = 3;
-    this.MEDIA_RULE = 4;
-    this.FONT_FACE_RULE = 5;
-    this.PAGE_RULE = 6;
-    this.NAMESPACE_RULE = 10;
-    this.KEYFRAMES_RULE = 7;
-    this.KEYFRAME_RULE = 8;
-    this.SUPPORTS_RULE = 12;
-    this.COUNTER_STYLE_RULE = 11;
-    this.FONT_FEATURE_VALUES_RULE = 14;
-    this.__parentStyleSheet = null;
-    this.cssText = "";
-  }
-  get parentRule() {
-    return null;
-  }
-  get parentStyleSheet() {
-    return this.__parentStyleSheet;
-  }
-  get type() {
-    return 0;
-  }
-}, _a2.STYLE_RULE = 1, _a2.CHARSET_RULE = 2, _a2.IMPORT_RULE = 3, _a2.MEDIA_RULE = 4, _a2.FONT_FACE_RULE = 5, _a2.PAGE_RULE = 6, _a2.NAMESPACE_RULE = 10, _a2.KEYFRAMES_RULE = 7, _a2.KEYFRAME_RULE = 8, _a2.SUPPORTS_RULE = 12, _a2.COUNTER_STYLE_RULE = 11, _a2.FONT_FEATURE_VALUES_RULE = 14, _a2);
-var CSSRuleListShim = class CSSRuleList extends Array {
-  item(index) {
-    return this[index] ?? null;
-  }
-};
-var CSSStyleSheetShim = class CSSStyleSheet2 extends StyleSheetShim {
-  constructor() {
-    super(...arguments);
-    this.__rules = new CSSRuleListShim();
-  }
-  get cssRules() {
-    return this.__rules;
-  }
-  get ownerRule() {
-    return null;
-  }
-  get rules() {
-    return this.cssRules;
-  }
-  addRule(_selector, _style, _index) {
-    throw new Error("Method not implemented.");
-  }
-  deleteRule(_index) {
-    throw new Error("Method not implemented.");
-  }
-  insertRule(_rule, _index) {
-    throw new Error("Method not implemented.");
-  }
-  removeRule(_index) {
-    throw new Error("Method not implemented.");
-  }
-  replace(text) {
-    this.replaceSync(text);
-    return Promise.resolve(this);
-  }
-  replaceSync(text) {
-    this.__rules.length = 0;
-    const rule = new CSSRuleShim();
-    rule.cssText = text;
-    this.__rules.push(rule);
-  }
-};
-var CSSStyleSheetShimWithRealType = CSSStyleSheetShim;
-
-// elements/node_modules/@lit-labs/ssr-dom-shim/index.js
-globalThis.Event ??= EventShimWithRealType;
-globalThis.CustomEvent ??= CustomEventShimWithRealType;
-var attributes = /* @__PURE__ */ new WeakMap();
-var attributesForElement = (element) => {
-  let attrs = attributes.get(element);
-  if (attrs === void 0) {
-    attributes.set(element, attrs = /* @__PURE__ */ new Map());
-  }
-  return attrs;
-};
-var ElementShim = class Element2 extends EventTargetShimWithRealType {
-  constructor() {
-    super(...arguments);
-    this.__shadowRootMode = null;
-    this.__shadowRoot = null;
-    this.__internals = null;
-  }
-  get attributes() {
-    return Array.from(attributesForElement(this)).map(([name, value]) => ({
-      name,
-      value
-    }));
-  }
-  get shadowRoot() {
-    if (this.__shadowRootMode === "closed") {
-      return null;
-    }
-    return this.__shadowRoot;
-  }
-  get localName() {
-    return this.constructor.__localName;
-  }
-  get tagName() {
-    return this.localName?.toUpperCase();
-  }
-  setAttribute(name, value) {
-    attributesForElement(this).set(name, String(value));
-  }
-  removeAttribute(name) {
-    attributesForElement(this).delete(name);
-  }
-  toggleAttribute(name, force) {
-    if (this.hasAttribute(name)) {
-      if (force === void 0 || !force) {
-        this.removeAttribute(name);
-        return false;
-      }
-    } else {
-      if (force === void 0 || force) {
-        this.setAttribute(name, "");
-        return true;
-      } else {
-        return false;
-      }
-    }
-    return true;
-  }
-  hasAttribute(name) {
-    return attributesForElement(this).has(name);
-  }
-  attachShadow(init) {
-    const shadowRoot = { host: this };
-    this.__shadowRootMode = init.mode;
-    if (init && init.mode === "open") {
-      this.__shadowRoot = shadowRoot;
-    }
-    return shadowRoot;
-  }
-  attachInternals() {
-    if (this.__internals !== null) {
-      throw new Error(`Failed to execute 'attachInternals' on 'HTMLElement': ElementInternals for the specified element was already attached.`);
-    }
-    const internals = new ElementInternalsShim(this);
-    this.__internals = internals;
-    return internals;
-  }
-  getAttribute(name) {
-    const value = attributesForElement(this).get(name);
-    return value ?? null;
-  }
-};
-var ElementShimWithRealType = ElementShim;
-var HTMLElementShim = class HTMLElement2 extends ElementShim {
-};
-var HTMLElementShimWithRealType = HTMLElementShim;
-globalThis.litServerRoot ??= Object.defineProperty(new HTMLElementShimWithRealType(), "localName", {
-  // Patch localName (and tagName) to return a unique name.
-  get() {
-    return "lit-server-root";
-  }
-});
-function promiseWithResolvers() {
-  let resolve;
-  let reject;
-  const promise = new Promise((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
-var CustomElementRegistry = class {
-  constructor() {
-    this.__definitions = /* @__PURE__ */ new Map();
-    this.__reverseDefinitions = /* @__PURE__ */ new Map();
-    this.__pendingWhenDefineds = /* @__PURE__ */ new Map();
-  }
-  define(name, ctor) {
-    if (this.__definitions.has(name)) {
-      if (false) {
-        console.warn(`'CustomElementRegistry' already has "${name}" defined. This may have been caused by live reload or hot module replacement in which case it can be safely ignored.
-Make sure to test your application with a production build as repeat registrations will throw in production.`);
-      } else {
-        throw new Error(`Failed to execute 'define' on 'CustomElementRegistry': the name "${name}" has already been used with this registry`);
-      }
-    }
-    if (this.__reverseDefinitions.has(ctor)) {
-      throw new Error(`Failed to execute 'define' on 'CustomElementRegistry': the constructor has already been used with this registry for the tag name ${this.__reverseDefinitions.get(ctor)}`);
-    }
-    ctor.__localName = name;
-    this.__definitions.set(name, {
-      ctor,
-      // Note it's important we read `observedAttributes` in case it is a getter
-      // with side-effects, as is the case in Lit, where it triggers class
-      // finalization.
-      //
-      // TODO(aomarks) To be spec compliant, we should also capture the
-      // registration-time lifecycle methods like `connectedCallback`. For them
-      // to be actually accessible to e.g. the Lit SSR element renderer, though,
-      // we'd need to introduce a new API for accessing them (since `get` only
-      // returns the constructor).
-      observedAttributes: ctor.observedAttributes ?? []
-    });
-    this.__reverseDefinitions.set(ctor, name);
-    this.__pendingWhenDefineds.get(name)?.resolve(ctor);
-    this.__pendingWhenDefineds.delete(name);
-  }
-  get(name) {
-    const definition = this.__definitions.get(name);
-    return definition?.ctor;
-  }
-  getName(ctor) {
-    return this.__reverseDefinitions.get(ctor) ?? null;
-  }
-  upgrade(_element) {
-    throw new Error(`customElements.upgrade is not currently supported in SSR. Please file a bug if you need it.`);
-  }
-  async whenDefined(name) {
-    const definition = this.__definitions.get(name);
-    if (definition) {
-      return definition.ctor;
-    }
-    let withResolvers = this.__pendingWhenDefineds.get(name);
-    if (!withResolvers) {
-      withResolvers = promiseWithResolvers();
-      this.__pendingWhenDefineds.set(name, withResolvers);
-    }
-    return withResolvers.promise;
-  }
-};
-var CustomElementRegistryShimWithRealType = CustomElementRegistry;
-var customElements2 = new CustomElementRegistryShimWithRealType();
-
-// elements/ssr-polyfills.js
-Object.defineProperty(CSSStyleSheetShimWithRealType.prototype, "cssText", {
-  get() {
-    return Array.from(this.cssRules).map((r7) => r7.cssText).join("");
-  },
-  configurable: true
-});
-if (typeof btoa === "undefined") {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-  globalThis.btoa = function(s57) {
-    let out = "";
-    for (let i5 = 0; i5 < s57.length; i5 += 3) {
-      const a3 = s57.charCodeAt(i5), b3 = s57.charCodeAt(i5 + 1), c4 = s57.charCodeAt(i5 + 2);
-      out += chars[a3 >> 2] + chars[(a3 & 3) << 4 | b3 >> 4] + (isNaN(b3) ? "=" : chars[(b3 & 15) << 2 | c4 >> 6]) + (isNaN(c4) ? "=" : chars[c4 & 63]);
-    }
-    return out;
-  };
-}
-if (typeof URL === "undefined") {
-  globalThis.URL = class URL {
-    constructor(u3, base) {
-      this.href = String(u3);
-    }
-    toString() {
-      return this.href;
-    }
-  };
-}
-if (typeof URLSearchParams === "undefined") {
-  globalThis.URLSearchParams = class URLSearchParams {
-    constructor() {
-    }
-  };
-}
-if (typeof CSS === "undefined") {
-  globalThis.CSS = {
-    supports() {
-      return false;
-    },
-    escape(s57) {
-      return String(s57);
-    }
-  };
-}
-
-// stub:node-fetch
-var node_fetch_default = {};
-
-// elements/node_modules/@lit-labs/ssr/lib/dom-shim.js
-var getWindow = ({ includeJSBuiltIns = false, props = {} }) => {
-  class ShadowRoot {
-  }
-  class Document2 {
-    get adoptedStyleSheets() {
-      return [];
-    }
-    createTreeWalker() {
-      return {};
-    }
-    createTextNode() {
-      return {};
-    }
-    createElement() {
-      return {};
-    }
-  }
-  const window2 = {
-    EventTarget: EventTargetShimWithRealType,
-    Event: globalThis.Event ?? EventShimWithRealType,
-    CustomEvent: globalThis.CustomEvent ?? CustomEventShimWithRealType,
-    Element: ElementShimWithRealType,
-    HTMLElement: HTMLElementShimWithRealType,
-    Document: Document2,
-    document: new Document2(),
-    CSSStyleSheet: CSSStyleSheetShimWithRealType,
-    ShadowRoot,
-    CustomElementRegistry: CustomElementRegistryShimWithRealType,
-    customElements: new CustomElementRegistryShimWithRealType(),
-    atob(s57) {
-      return Buffer.from(s57, "base64").toString("binary");
-    },
-    btoa(s57) {
-      return Buffer.from(s57, "binary").toString("base64");
-    },
-    fetch: (url, init) => (
-      // TODO(aomarks) The typings from node-fetch are wrong because they don't
-      // allow URL.
-      node_fetch_default(url, init)
-    ),
-    location: new URL("http://localhost"),
-    MutationObserver: class {
-      observe() {
-      }
-    },
-    // No-op any async tasks
-    requestAnimationFrame() {
-    },
-    // Set below
-    window: void 0,
-    // User-provided globals, like `require`
-    ...props
-  };
-  if (includeJSBuiltIns) {
-    Object.assign(window2, {
-      // No-op any async tasks
-      setTimeout() {
-      },
-      clearTimeout() {
-      },
-      // Required for node-fetch
-      Buffer,
-      URL,
-      URLSearchParams,
-      console: {
-        log(...args) {
-          console.log(...args);
-        },
-        info(...args) {
-          console.info(...args);
-        },
-        warn(...args) {
-          console.warn(...args);
-        },
-        debug(...args) {
-          console.debug(...args);
-        },
-        error(...args) {
-          console.error(...args);
-        },
-        assert(bool, msg) {
-          if (!bool) {
-            throw new Error(msg);
-          }
-        }
-      }
-    });
-  }
-  return window2;
-};
-var installWindowOnGlobal = (props = {}) => {
-  if (globalThis.window === void 0) {
-    const window2 = getWindow({ props });
-    Object.assign(globalThis, window2);
-  }
-};
-
-// elements/node_modules/@lit-labs/ssr/lib/install-global-dom-shim.js
-installWindowOnGlobal();
 
 // elements/node_modules/@lit/reactive-element/node/css-tag.js
 var t = globalThis;
@@ -961,7 +139,7 @@ var b = { toAttribute(t6, s57) {
 var m = (t6, s57) => !h(t6, s57);
 var y = { attribute: true, type: String, converter: b, reflect: false, useDefault: false, hasChanged: m };
 Symbol.metadata ??= Symbol("metadata"), l.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
-var g = class extends (globalThis.HTMLElement ?? HTMLElementShimWithRealType) {
+var g = class extends (globalThis.HTMLElement ?? HTMLElement2) {
   static addInitializer(t6) {
     this._$Ei(), (this.l ??= []).push(t6);
   }
@@ -1441,9 +619,9 @@ s4.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n\\n#toggle-group {
 var cem_color_scheme_toggle_default = s4;
 
 // elements/cem-color-scheme-toggle/cem-color-scheme-toggle.ts
-var _CemColorSchemeToggle_decorators, _init, _a3;
+var _CemColorSchemeToggle_decorators, _init, _a;
 _CemColorSchemeToggle_decorators = [t3("cem-color-scheme-toggle")];
-var CemColorSchemeToggle = class extends (_a3 = i3) {
+var CemColorSchemeToggle = class extends (_a = i3) {
   static styles = cem_color_scheme_toggle_default;
   /** Storage access gatekeeper - localStorage can throw in Safari private mode */
   #getStorageItem(key, defaultValue) {
@@ -1534,7 +712,7 @@ var CemColorSchemeToggle = class extends (_a3 = i3) {
     this.#setStorageItem("cem-serve-color-scheme", scheme);
   }
 };
-_init = __decoratorStart(_a3);
+_init = __decoratorStart(_a);
 CemColorSchemeToggle = __decorateElement(_init, 0, "CemColorSchemeToggle", _CemColorSchemeToggle_decorators, CemColorSchemeToggle);
 __runInitializers(_init, 1, CemColorSchemeToggle);
 
@@ -1579,9 +757,9 @@ var ICONS = {
   reconnecting: "\u{1F7E1}",
   disconnected: "\u{1F534}"
 };
-var _message_dec, _faded_dec, _state_dec, _a4, _CemConnectionStatus_decorators, _init2, _state, _faded, _message, _fadeTimeout, _hideTimeout;
+var _message_dec, _faded_dec, _state_dec, _a2, _CemConnectionStatus_decorators, _init2, _state, _faded, _message, _fadeTimeout, _hideTimeout;
 _CemConnectionStatus_decorators = [t3("cem-connection-status")];
-var CemConnectionStatus = class extends (_a4 = i3, _state_dec = [n4({ reflect: true })], _faded_dec = [n4({ type: Boolean, reflect: true })], _message_dec = [n4()], _a4) {
+var CemConnectionStatus = class extends (_a2 = i3, _state_dec = [n4({ reflect: true })], _faded_dec = [n4({ type: Boolean, reflect: true })], _message_dec = [n4()], _a2) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _state, __runInitializers(_init2, 8, this)), __runInitializers(_init2, 11, this);
@@ -1619,7 +797,7 @@ var CemConnectionStatus = class extends (_a4 = i3, _state_dec = [n4({ reflect: t
     __privateSet(this, _hideTimeout, setTimeout(() => this.remove(), 300));
   }
 };
-_init2 = __decoratorStart(_a4);
+_init2 = __decoratorStart(_a2);
 _state = new WeakMap();
 _faded = new WeakMap();
 _message = new WeakMap();
@@ -1681,9 +859,9 @@ s6.replaceSync(JSON.parse('"/* Detail Panel - Displays manifest item details on-
 var cem_detail_panel_default = s6;
 
 // elements/cem-detail-panel/cem-detail-panel.ts
-var _contentHTML_dec, _a5, _CemDetailPanel_decorators, _init3, _contentHTML, _b2, contentHTML_get, contentHTML_set, _CemDetailPanel_instances, _cache, getItemId_fn, buildDetailHTML_fn, buildPackageDetails_fn, buildModuleDetails_fn, buildCustomElementDetails_fn, buildAttributeDetails_fn, buildPropertyDetails_fn, buildMethodDetails_fn, buildEventDetails_fn, buildSlotDetails_fn, buildCSSPropertyDetails_fn, buildCSSPartDetails_fn, buildCSSStateDetails_fn, buildDemoDetails_fn, buildClassDetails_fn, buildFunctionDetails_fn, buildVariableDetails_fn, buildMixinDetails_fn, renderMarkdown_fn, findModule_fn, findCustomElement_fn, findDeclaration_fn, escapeHtml_fn;
+var _contentHTML_dec, _a3, _CemDetailPanel_decorators, _init3, _contentHTML, _b, contentHTML_get, contentHTML_set, _CemDetailPanel_instances, _cache, getItemId_fn, buildDetailHTML_fn, buildPackageDetails_fn, buildModuleDetails_fn, buildCustomElementDetails_fn, buildAttributeDetails_fn, buildPropertyDetails_fn, buildMethodDetails_fn, buildEventDetails_fn, buildSlotDetails_fn, buildCSSPropertyDetails_fn, buildCSSPartDetails_fn, buildCSSStateDetails_fn, buildDemoDetails_fn, buildClassDetails_fn, buildFunctionDetails_fn, buildVariableDetails_fn, buildMixinDetails_fn, renderMarkdown_fn, findModule_fn, findCustomElement_fn, findDeclaration_fn, escapeHtml_fn;
 _CemDetailPanel_decorators = [t3("cem-detail-panel")];
-var CemDetailPanel = class extends (_a5 = i3, _contentHTML_dec = [r5()], _a5) {
+var CemDetailPanel = class extends (_a3 = i3, _contentHTML_dec = [r5()], _a3) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _CemDetailPanel_instances);
@@ -1715,7 +893,7 @@ var CemDetailPanel = class extends (_a5 = i3, _contentHTML_dec = [r5()], _a5) {
     __privateSet(this, _CemDetailPanel_instances, contentHTML, contentHTML_set);
   }
 };
-_init3 = __decoratorStart(_a5);
+_init3 = __decoratorStart(_a3);
 _contentHTML = new WeakMap();
 _CemDetailPanel_instances = new WeakSet();
 _cache = new WeakMap();
@@ -2159,7 +1337,7 @@ escapeHtml_fn = function(str) {
   if (!str) return "";
   return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 };
-_b2 = __decorateElement(_init3, 20, "#contentHTML", _contentHTML_dec, _CemDetailPanel_instances, _contentHTML), contentHTML_get = _b2.get, contentHTML_set = _b2.set;
+_b = __decorateElement(_init3, 20, "#contentHTML", _contentHTML_dec, _CemDetailPanel_instances, _contentHTML), contentHTML_get = _b.get, contentHTML_set = _b.set;
 CemDetailPanel = __decorateElement(_init3, 0, "CemDetailPanel", _CemDetailPanel_decorators, CemDetailPanel);
 __publicField(CemDetailPanel, "styles", cem_detail_panel_default);
 __runInitializers(_init3, 1, CemDetailPanel);
@@ -2175,9 +1353,9 @@ s8.replaceSync(JSON.parse('":host {\\n  display: var(--pf-v6-c-button--Display, 
 var pf_v6_button_default = s8;
 
 // elements/pf-v6-button/pf-v6-button.ts
-var _type_dec, _href_dec, _noPadding_dec, _disabled_dec, _block_dec, _size_dec, _variant_dec, _a6, _PfV6Button_decorators, _internals, _init4, _variant, _size, _block, _disabled, _noPadding, _href, _type, _PfV6Button_instances, updateMode_fn, updateDisabled_fn, _onClick, _onKeydown, onLinkClick_fn;
+var _type_dec, _href_dec, _noPadding_dec, _disabled_dec, _block_dec, _size_dec, _variant_dec, _a4, _PfV6Button_decorators, _internals, _init4, _variant, _size, _block, _disabled, _noPadding, _href, _type, _PfV6Button_instances, updateMode_fn, updateDisabled_fn, _onClick, _onKeydown, onLinkClick_fn;
 _PfV6Button_decorators = [t3("pf-v6-button")];
-var PfV6Button = class extends (_a6 = i3, _variant_dec = [n4({ reflect: true })], _size_dec = [n4({ reflect: true })], _block_dec = [n4({ type: Boolean, reflect: true })], _disabled_dec = [n4({ type: Boolean, reflect: true })], _noPadding_dec = [n4({ type: Boolean, reflect: true, attribute: "no-padding" })], _href_dec = [n4({ reflect: true })], _type_dec = [n4()], _a6) {
+var PfV6Button = class extends (_a4 = i3, _variant_dec = [n4({ reflect: true })], _size_dec = [n4({ reflect: true })], _block_dec = [n4({ type: Boolean, reflect: true })], _disabled_dec = [n4({ type: Boolean, reflect: true })], _noPadding_dec = [n4({ type: Boolean, reflect: true, attribute: "no-padding" })], _href_dec = [n4({ reflect: true })], _type_dec = [n4()], _a4) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Button_instances);
@@ -2237,7 +1415,7 @@ var PfV6Button = class extends (_a6 = i3, _variant_dec = [n4({ reflect: true })]
     this.removeEventListener("keydown", __privateGet(this, _onKeydown));
   }
 };
-_init4 = __decoratorStart(_a6);
+_init4 = __decoratorStart(_a4);
 _internals = new WeakMap();
 _variant = new WeakMap();
 _size = new WeakMap();
@@ -2328,9 +1506,9 @@ var CemDrawerResizeEvent = class extends Event {
     this.height = height;
   }
 };
-var _drawerHeight_dec, _open_dec, _a7, _CemServeDrawer_decorators, _init5, _open, _drawerHeight, _isDragging, _startY, _startHeight, _maxHeight, _rafId, _pendingHeight, _CemServeDrawer_instances, $_fn, getMaxHeight_fn, _onToggleClick, _startResize, _handleResize, _applyResize, _handleKeydown, updateAriaValueNow_fn, _stopResize, _handleWindowResize;
+var _drawerHeight_dec, _open_dec, _a5, _CemServeDrawer_decorators, _init5, _open, _drawerHeight, _isDragging, _startY, _startHeight, _maxHeight, _rafId, _pendingHeight, _CemServeDrawer_instances, $_fn, getMaxHeight_fn, _onToggleClick, _startResize, _handleResize, _applyResize, _handleKeydown, updateAriaValueNow_fn, _stopResize, _handleWindowResize;
 _CemServeDrawer_decorators = [t3("cem-drawer")];
-var CemServeDrawer = class extends (_a7 = i3, _open_dec = [n4({ type: Boolean, reflect: true })], _drawerHeight_dec = [n4({ type: Number, reflect: true, attribute: "drawer-height" })], _a7) {
+var CemServeDrawer = class extends (_a5 = i3, _open_dec = [n4({ type: Boolean, reflect: true })], _drawerHeight_dec = [n4({ type: Number, reflect: true, attribute: "drawer-height" })], _a5) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _CemServeDrawer_instances);
@@ -2515,7 +1693,7 @@ var CemServeDrawer = class extends (_a7 = i3, _open_dec = [n4({ type: Boolean, r
     this.open = false;
   }
 };
-_init5 = __decoratorStart(_a7);
+_init5 = __decoratorStart(_a5);
 _open = new WeakMap();
 _drawerHeight = new WeakMap();
 _isDragging = new WeakMap();
@@ -2576,9 +1754,9 @@ s10.replaceSync(JSON.parse('":host {\\n\\n  --pf-v6-c-label--PaddingBlockStart: 
 var pf_v6_label_default = s10;
 
 // elements/pf-v6-label/pf-v6-label.ts
-var _href_dec2, _editable_dec, _disabled_dec2, _compact_dec, _status_dec, _variant_dec2, _color_dec, _a8, _PfV6Label_decorators, _init6, _color, _variant2, _status, _compact, _disabled2, _editable, _href2, _hasActions, _PfV6Label_instances, onContentClick_fn, onActionsSlotChange_fn;
+var _href_dec2, _editable_dec, _disabled_dec2, _compact_dec, _status_dec, _variant_dec2, _color_dec, _a6, _PfV6Label_decorators, _init6, _color, _variant2, _status, _compact, _disabled2, _editable, _href2, _hasActions, _PfV6Label_instances, onContentClick_fn, onActionsSlotChange_fn;
 _PfV6Label_decorators = [t3("pf-v6-label")];
-var PfV6Label = class extends (_a8 = i3, _color_dec = [n4({ reflect: true })], _variant_dec2 = [n4({ reflect: true })], _status_dec = [n4({ reflect: true })], _compact_dec = [n4({ type: Boolean, reflect: true })], _disabled_dec2 = [n4({ type: Boolean, reflect: true })], _editable_dec = [n4({ type: Boolean, reflect: true })], _href_dec2 = [n4({ reflect: true })], _a8) {
+var PfV6Label = class extends (_a6 = i3, _color_dec = [n4({ reflect: true })], _variant_dec2 = [n4({ reflect: true })], _status_dec = [n4({ reflect: true })], _compact_dec = [n4({ type: Boolean, reflect: true })], _disabled_dec2 = [n4({ type: Boolean, reflect: true })], _editable_dec = [n4({ type: Boolean, reflect: true })], _href_dec2 = [n4({ reflect: true })], _a6) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Label_instances);
@@ -2619,7 +1797,7 @@ var PfV6Label = class extends (_a8 = i3, _color_dec = [n4({ reflect: true })], _
     `;
   }
 };
-_init6 = __decoratorStart(_a8);
+_init6 = __decoratorStart(_a6);
 _color = new WeakMap();
 _variant2 = new WeakMap();
 _status = new WeakMap();
@@ -2667,9 +1845,9 @@ var PfExpandableSectionToggleEvent = class extends Event {
     this.expanded = expanded;
   }
 };
-var _toggleText_dec, _truncate_dec, _limitWidth_dec, _indented_dec, _displayLg_dec, _expandBottom_dec, _expandTop_dec, _expanded_dec, _a9, _PfV6ExpandableSection_decorators, _init7, _expanded, _expandTop, _expandBottom, _displayLg, _indented, _limitWidth, _truncate, _toggleText, _PfV6ExpandableSection_instances, onDetailsToggle_fn;
+var _toggleText_dec, _truncate_dec, _limitWidth_dec, _indented_dec, _displayLg_dec, _expandBottom_dec, _expandTop_dec, _expanded_dec, _a7, _PfV6ExpandableSection_decorators, _init7, _expanded, _expandTop, _expandBottom, _displayLg, _indented, _limitWidth, _truncate, _toggleText, _PfV6ExpandableSection_instances, onDetailsToggle_fn;
 _PfV6ExpandableSection_decorators = [t3("pf-v6-expandable-section")];
-var PfV6ExpandableSection = class extends (_a9 = i3, _expanded_dec = [n4({ type: Boolean, reflect: true })], _expandTop_dec = [n4({ type: Boolean, reflect: true, attribute: "expand-top" })], _expandBottom_dec = [n4({ type: Boolean, reflect: true, attribute: "expand-bottom" })], _displayLg_dec = [n4({ type: Boolean, reflect: true, attribute: "display-lg" })], _indented_dec = [n4({ type: Boolean, reflect: true })], _limitWidth_dec = [n4({ type: Boolean, reflect: true, attribute: "limit-width" })], _truncate_dec = [n4({ type: Boolean, reflect: true })], _toggleText_dec = [n4({ attribute: "toggle-text" })], _a9) {
+var PfV6ExpandableSection = class extends (_a7 = i3, _expanded_dec = [n4({ type: Boolean, reflect: true })], _expandTop_dec = [n4({ type: Boolean, reflect: true, attribute: "expand-top" })], _expandBottom_dec = [n4({ type: Boolean, reflect: true, attribute: "expand-bottom" })], _displayLg_dec = [n4({ type: Boolean, reflect: true, attribute: "display-lg" })], _indented_dec = [n4({ type: Boolean, reflect: true })], _limitWidth_dec = [n4({ type: Boolean, reflect: true, attribute: "limit-width" })], _truncate_dec = [n4({ type: Boolean, reflect: true })], _toggleText_dec = [n4({ attribute: "toggle-text" })], _a7) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6ExpandableSection_instances);
@@ -2724,7 +1902,7 @@ var PfV6ExpandableSection = class extends (_a9 = i3, _expanded_dec = [n4({ type:
     `;
   }
 };
-_init7 = __decoratorStart(_a9);
+_init7 = __decoratorStart(_a7);
 _expanded = new WeakMap();
 _expandTop = new WeakMap();
 _expandBottom = new WeakMap();
@@ -2757,9 +1935,9 @@ var STATUS_COLORS = {
   warn: "orange",
   fail: "red"
 };
-var _result_dec, _loading_dec, _component_dec, _a10, _CemHealthPanel_decorators, _init8, _component, _loading, _b3, loading_get, loading_set, _CemHealthPanel_instances, _result, _c, result_get, result_set, _abortController, findDeclaration_fn2, renderCategory_fn, renderRecommendations_fn;
+var _result_dec, _loading_dec, _component_dec, _a8, _CemHealthPanel_decorators, _init8, _component, _loading, _b2, loading_get, loading_set, _CemHealthPanel_instances, _result, _c, result_get, result_set, _abortController, findDeclaration_fn2, renderCategory_fn, renderRecommendations_fn;
 _CemHealthPanel_decorators = [t3("cem-health-panel")];
-var CemHealthPanel = class extends (_a10 = i3, _component_dec = [n4({ reflect: true })], _loading_dec = [r5()], _result_dec = [r5()], _a10) {
+var CemHealthPanel = class extends (_a8 = i3, _component_dec = [n4({ reflect: true })], _loading_dec = [r5()], _result_dec = [r5()], _a8) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _CemHealthPanel_instances);
@@ -2819,7 +1997,7 @@ var CemHealthPanel = class extends (_a10 = i3, _component_dec = [n4({ reflect: t
     `;
   }
 };
-_init8 = __decoratorStart(_a10);
+_init8 = __decoratorStart(_a8);
 _component = new WeakMap();
 _loading = new WeakMap();
 _CemHealthPanel_instances = new WeakSet();
@@ -2875,7 +2053,7 @@ renderRecommendations_fn = function() {
     `;
 };
 __decorateElement(_init8, 4, "component", _component_dec, CemHealthPanel, _component);
-_b3 = __decorateElement(_init8, 20, "#loading", _loading_dec, _CemHealthPanel_instances, _loading), loading_get = _b3.get, loading_set = _b3.set;
+_b2 = __decorateElement(_init8, 20, "#loading", _loading_dec, _CemHealthPanel_instances, _loading), loading_get = _b2.get, loading_set = _b2.set;
 _c = __decorateElement(_init8, 20, "#result", _result_dec, _CemHealthPanel_instances, _result), result_get = _c.get, result_set = _c.set;
 CemHealthPanel = __decorateElement(_init8, 0, "CemHealthPanel", _CemHealthPanel_decorators, CemHealthPanel);
 __publicField(CemHealthPanel, "styles", cem_health_panel_default);
@@ -2892,9 +2070,9 @@ s13.replaceSync(JSON.parse('":host {\\n\\n  --pf-v6-c-badge--BorderColor: transp
 var pf_v6_badge_default = s13;
 
 // elements/pf-v6-badge/pf-v6-badge.ts
-var _screenReaderText_dec, _disabled_dec3, _unread_dec, _read_dec, _a11, _PfV6Badge_decorators, _init9, _read, _unread, _disabled3, _screenReaderText;
+var _screenReaderText_dec, _disabled_dec3, _unread_dec, _read_dec, _a9, _PfV6Badge_decorators, _init9, _read, _unread, _disabled3, _screenReaderText;
 _PfV6Badge_decorators = [t3("pf-v6-badge")];
-var PfV6Badge = class extends (_a11 = i3, _read_dec = [n4({ type: Boolean, reflect: true })], _unread_dec = [n4({ type: Boolean, reflect: true })], _disabled_dec3 = [n4({ type: Boolean, reflect: true })], _screenReaderText_dec = [n4({ attribute: "screen-reader-text" })], _a11) {
+var PfV6Badge = class extends (_a9 = i3, _read_dec = [n4({ type: Boolean, reflect: true })], _unread_dec = [n4({ type: Boolean, reflect: true })], _disabled_dec3 = [n4({ type: Boolean, reflect: true })], _screenReaderText_dec = [n4({ attribute: "screen-reader-text" })], _a9) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _read, __runInitializers(_init9, 8, this, false)), __runInitializers(_init9, 11, this);
@@ -2911,7 +2089,7 @@ var PfV6Badge = class extends (_a11 = i3, _read_dec = [n4({ type: Boolean, refle
     `;
   }
 };
-_init9 = __decoratorStart(_a11);
+_init9 = __decoratorStart(_a9);
 _read = new WeakMap();
 _unread = new WeakMap();
 _disabled3 = new WeakMap();
@@ -2945,9 +2123,9 @@ var PfDrawerCloseEvent = class extends Event {
     super("close", { bubbles: true });
   }
 };
-var _resizable_dec, _noBorder_dec, _panelWidthOn2xl_dec, _panelWidthOnXl_dec, _panelWidthOnLg_dec, _panelWidth_dec, _variant_dec3, _panelPosition_dec, _expanded_dec2, _a12, _PfV6Drawer_decorators, _init10, _expanded2, _panelPosition, _variant3, _panelWidth, _panelWidthOnLg, _panelWidthOnXl, _panelWidthOn2xl, _noBorder, _resizable, _hasHeaderContent, _hasDescriptionContent, _hasBodyContent, _PfV6Drawer_instances, onHeaderSlotchange_fn, onDescriptionSlotchange_fn, onBodySlotchange_fn;
+var _resizable_dec, _noBorder_dec, _panelWidthOn2xl_dec, _panelWidthOnXl_dec, _panelWidthOnLg_dec, _panelWidth_dec, _variant_dec3, _panelPosition_dec, _expanded_dec2, _a10, _PfV6Drawer_decorators, _init10, _expanded2, _panelPosition, _variant3, _panelWidth, _panelWidthOnLg, _panelWidthOnXl, _panelWidthOn2xl, _noBorder, _resizable, _hasHeaderContent, _hasDescriptionContent, _hasBodyContent, _PfV6Drawer_instances, onHeaderSlotchange_fn, onDescriptionSlotchange_fn, onBodySlotchange_fn;
 _PfV6Drawer_decorators = [t3("pf-v6-drawer")];
-var PfV6Drawer = class extends (_a12 = i3, _expanded_dec2 = [n4({ type: Boolean, reflect: true })], _panelPosition_dec = [n4({ reflect: true, attribute: "panel-position" })], _variant_dec3 = [n4({ reflect: true })], _panelWidth_dec = [n4({ reflect: true, attribute: "panel-width" })], _panelWidthOnLg_dec = [n4({ reflect: true, attribute: "panel-width-on-lg" })], _panelWidthOnXl_dec = [n4({ reflect: true, attribute: "panel-width-on-xl" })], _panelWidthOn2xl_dec = [n4({ reflect: true, attribute: "panel-width-on-2xl" })], _noBorder_dec = [n4({ type: Boolean, reflect: true, attribute: "no-border" })], _resizable_dec = [n4({ type: Boolean, reflect: true })], _a12) {
+var PfV6Drawer = class extends (_a10 = i3, _expanded_dec2 = [n4({ type: Boolean, reflect: true })], _panelPosition_dec = [n4({ reflect: true, attribute: "panel-position" })], _variant_dec3 = [n4({ reflect: true })], _panelWidth_dec = [n4({ reflect: true, attribute: "panel-width" })], _panelWidthOnLg_dec = [n4({ reflect: true, attribute: "panel-width-on-lg" })], _panelWidthOnXl_dec = [n4({ reflect: true, attribute: "panel-width-on-xl" })], _panelWidthOn2xl_dec = [n4({ reflect: true, attribute: "panel-width-on-2xl" })], _noBorder_dec = [n4({ type: Boolean, reflect: true, attribute: "no-border" })], _resizable_dec = [n4({ type: Boolean, reflect: true })], _a10) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Drawer_instances);
@@ -3035,7 +2213,7 @@ var PfV6Drawer = class extends (_a12 = i3, _expanded_dec2 = [n4({ type: Boolean,
     `;
   }
 };
-_init10 = __decoratorStart(_a12);
+_init10 = __decoratorStart(_a10);
 _expanded2 = new WeakMap();
 _panelPosition = new WeakMap();
 _variant3 = new WeakMap();
@@ -3110,9 +2288,9 @@ s15.replaceSync(JSON.parse('":host {\\n\\n  --pf-v6-c-text-input-group--Backgrou
 var pf_v6_text_input_group_default = s15;
 
 // elements/pf-v6-text-input-group/pf-v6-text-input-group.ts
-var _status_dec2, _icon_dec, _plain_dec, _required_dec, _readonly_dec, _disabled_dec4, _placeholder_dec, _type_dec2, _value_dec, _a13, _PfV6TextInputGroup_decorators, _internals2, _init11, _value, _type2, _placeholder, _disabled4, _readonly, _required, _plain, _icon, _status2, _PfV6TextInputGroup_instances, onInput_fn, onChange_fn;
+var _status_dec2, _icon_dec, _plain_dec, _required_dec, _readonly_dec, _disabled_dec4, _placeholder_dec, _type_dec2, _value_dec, _a11, _PfV6TextInputGroup_decorators, _internals2, _init11, _value, _type2, _placeholder, _disabled4, _readonly, _required, _plain, _icon, _status2, _PfV6TextInputGroup_instances, onInput_fn, onChange_fn;
 _PfV6TextInputGroup_decorators = [t3("pf-v6-text-input-group")];
-var PfV6TextInputGroup = class extends (_a13 = i3, _value_dec = [n4({ reflect: true })], _type_dec2 = [n4({ reflect: true })], _placeholder_dec = [n4({ reflect: true })], _disabled_dec4 = [n4({ type: Boolean, reflect: true })], _readonly_dec = [n4({ type: Boolean, reflect: true })], _required_dec = [n4({ type: Boolean, reflect: true })], _plain_dec = [n4({ type: Boolean, reflect: true })], _icon_dec = [n4({ type: Boolean, reflect: true })], _status_dec2 = [n4({ reflect: true })], _a13) {
+var PfV6TextInputGroup = class extends (_a11 = i3, _value_dec = [n4({ reflect: true })], _type_dec2 = [n4({ reflect: true })], _placeholder_dec = [n4({ reflect: true })], _disabled_dec4 = [n4({ type: Boolean, reflect: true })], _readonly_dec = [n4({ type: Boolean, reflect: true })], _required_dec = [n4({ type: Boolean, reflect: true })], _plain_dec = [n4({ type: Boolean, reflect: true })], _icon_dec = [n4({ type: Boolean, reflect: true })], _status_dec2 = [n4({ reflect: true })], _a11) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6TextInputGroup_instances);
@@ -3159,7 +2337,7 @@ var PfV6TextInputGroup = class extends (_a13 = i3, _value_dec = [n4({ reflect: t
     this.shadowRoot?.getElementById("input")?.select();
   }
 };
-_init11 = __decoratorStart(_a13);
+_init11 = __decoratorStart(_a11);
 _internals2 = new WeakMap();
 _value = new WeakMap();
 _type2 = new WeakMap();
@@ -3203,9 +2381,9 @@ s16.replaceSync(JSON.parse('":host {\\n\\n  position: relative;\\n  display: gri
 var pf_v6_toolbar_default = s16;
 
 // elements/pf-v6-toolbar/pf-v6-toolbar.ts
-var _colorVariant_dec, _fullHeight_dec, _sticky_dec, _expanded_dec3, _expandable_dec, _a14, _PfV6Toolbar_decorators, _init12, _expandable, _expanded3, _sticky, _fullHeight, _colorVariant;
+var _colorVariant_dec, _fullHeight_dec, _sticky_dec, _expanded_dec3, _expandable_dec, _a12, _PfV6Toolbar_decorators, _init12, _expandable, _expanded3, _sticky, _fullHeight, _colorVariant;
 _PfV6Toolbar_decorators = [t3("pf-v6-toolbar")];
-var PfV6Toolbar = class extends (_a14 = i3, _expandable_dec = [n4({ type: Boolean, reflect: true })], _expanded_dec3 = [n4({ type: Boolean, reflect: true })], _sticky_dec = [n4({ type: Boolean, reflect: true })], _fullHeight_dec = [n4({ type: Boolean, reflect: true, attribute: "full-height" })], _colorVariant_dec = [n4({ reflect: true, attribute: "color-variant" })], _a14) {
+var PfV6Toolbar = class extends (_a12 = i3, _expandable_dec = [n4({ type: Boolean, reflect: true })], _expanded_dec3 = [n4({ type: Boolean, reflect: true })], _sticky_dec = [n4({ type: Boolean, reflect: true })], _fullHeight_dec = [n4({ type: Boolean, reflect: true, attribute: "full-height" })], _colorVariant_dec = [n4({ reflect: true, attribute: "color-variant" })], _a12) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _expandable, __runInitializers(_init12, 8, this, false)), __runInitializers(_init12, 11, this);
@@ -3228,7 +2406,7 @@ var PfV6Toolbar = class extends (_a14 = i3, _expandable_dec = [n4({ type: Boolea
     `;
   }
 };
-_init12 = __decoratorStart(_a14);
+_init12 = __decoratorStart(_a12);
 _expandable = new WeakMap();
 _expanded3 = new WeakMap();
 _sticky = new WeakMap();
@@ -3249,9 +2427,9 @@ s17.replaceSync(JSON.parse('":host {\\n\\n  --pf-v6-hidden-visible--visible--Dis
 var pf_v6_toolbar_group_default = s17;
 
 // elements/pf-v6-toolbar-group/pf-v6-toolbar-group.ts
-var _variant_dec4, _a15, _PfV6ToolbarGroup_decorators, _init13, _variant4;
+var _variant_dec4, _a13, _PfV6ToolbarGroup_decorators, _init13, _variant4;
 _PfV6ToolbarGroup_decorators = [t3("pf-v6-toolbar-group")];
-var PfV6ToolbarGroup = class extends (_a15 = i3, _variant_dec4 = [n4({ reflect: true })], _a15) {
+var PfV6ToolbarGroup = class extends (_a13 = i3, _variant_dec4 = [n4({ reflect: true })], _a13) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _variant4, __runInitializers(_init13, 8, this)), __runInitializers(_init13, 11, this);
@@ -3260,7 +2438,7 @@ var PfV6ToolbarGroup = class extends (_a15 = i3, _variant_dec4 = [n4({ reflect: 
     return T`<slot></slot>`;
   }
 };
-_init13 = __decoratorStart(_a15);
+_init13 = __decoratorStart(_a13);
 _variant4 = new WeakMap();
 __decorateElement(_init13, 4, "variant", _variant_dec4, PfV6ToolbarGroup, _variant4);
 PfV6ToolbarGroup = __decorateElement(_init13, 0, "PfV6ToolbarGroup", _PfV6ToolbarGroup_decorators, PfV6ToolbarGroup);
@@ -3273,9 +2451,9 @@ s18.replaceSync(JSON.parse('":host {\\n\\n  --pf-v6-hidden-visible--visible--Dis
 var pf_v6_toolbar_item_default = s18;
 
 // elements/pf-v6-toolbar-item/pf-v6-toolbar-item.ts
-var _expanded_dec4, _variant_dec5, _a16, _PfV6ToolbarItem_decorators, _init14, _variant5, _expanded4;
+var _expanded_dec4, _variant_dec5, _a14, _PfV6ToolbarItem_decorators, _init14, _variant5, _expanded4;
 _PfV6ToolbarItem_decorators = [t3("pf-v6-toolbar-item")];
-var PfV6ToolbarItem = class extends (_a16 = i3, _variant_dec5 = [n4({ reflect: true })], _expanded_dec4 = [n4({ type: Boolean, reflect: true })], _a16) {
+var PfV6ToolbarItem = class extends (_a14 = i3, _variant_dec5 = [n4({ reflect: true })], _expanded_dec4 = [n4({ type: Boolean, reflect: true })], _a14) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _variant5, __runInitializers(_init14, 8, this)), __runInitializers(_init14, 11, this);
@@ -3285,7 +2463,7 @@ var PfV6ToolbarItem = class extends (_a16 = i3, _variant_dec5 = [n4({ reflect: t
     return T`<slot></slot>`;
   }
 };
-_init14 = __decoratorStart(_a16);
+_init14 = __decoratorStart(_a14);
 _variant5 = new WeakMap();
 _expanded4 = new WeakMap();
 __decorateElement(_init14, 4, "variant", _variant_dec5, PfV6ToolbarItem, _variant5);
@@ -3344,9 +2522,9 @@ var PfTreeItemCollapseEvent = class extends Event {
     super("collapse", { bubbles: true });
   }
 };
-var _hasChildren_dec, _current_dec, _expanded_dec5, _badge_dec, _icon_dec2, _label_dec, _a17, _PfV6TreeItem_decorators, _init15, _label, _icon2, _badge, _expanded5, _current, _hasChildren, _explicitHasChildren, _PfV6TreeItem_instances, onToggleClick_fn, onNodeClick_fn, onSlotChange_fn, updateIcon_fn;
+var _hasChildren_dec, _current_dec, _expanded_dec5, _badge_dec, _icon_dec2, _label_dec, _a15, _PfV6TreeItem_decorators, _init15, _label, _icon2, _badge, _expanded5, _current, _hasChildren, _explicitHasChildren, _PfV6TreeItem_instances, onToggleClick_fn, onNodeClick_fn, onSlotChange_fn, updateIcon_fn;
 _PfV6TreeItem_decorators = [t3("pf-v6-tree-item")];
-var PfV6TreeItem = class extends (_a17 = i3, _label_dec = [n4({ reflect: true })], _icon_dec2 = [n4()], _badge_dec = [n4()], _expanded_dec5 = [n4({ type: Boolean, reflect: true })], _current_dec = [n4({ type: Boolean, reflect: true })], _hasChildren_dec = [n4({ type: Boolean, reflect: true, attribute: "has-children" })], _a17) {
+var PfV6TreeItem = class extends (_a15 = i3, _label_dec = [n4({ reflect: true })], _icon_dec2 = [n4()], _badge_dec = [n4()], _expanded_dec5 = [n4({ type: Boolean, reflect: true })], _current_dec = [n4({ type: Boolean, reflect: true })], _hasChildren_dec = [n4({ type: Boolean, reflect: true, attribute: "has-children" })], _a15) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6TreeItem_instances);
@@ -3456,7 +2634,7 @@ var PfV6TreeItem = class extends (_a17 = i3, _label_dec = [n4({ reflect: true })
     item?.focus();
   }
 };
-_init15 = __decoratorStart(_a17);
+_init15 = __decoratorStart(_a15);
 _label = new WeakMap();
 _icon2 = new WeakMap();
 _badge = new WeakMap();
@@ -3505,9 +2683,9 @@ var ItemSelectEvent = class extends Event {
     this.item = item;
   }
 };
-var _CemVirtualTree_decorators, _init16, _a18;
+var _CemVirtualTree_decorators, _init16, _a16;
 _CemVirtualTree_decorators = [t3("cem-virtual-tree")];
-var _CemVirtualTree = class _CemVirtualTree extends (_a18 = i3) {
+var _CemVirtualTree = class _CemVirtualTree extends (_a16 = i3) {
   static styles = cem_virtual_tree_default;
   // Static cache for manifest (shared across all instances)
   static #manifestCache = null;
@@ -4198,15 +3376,15 @@ var _CemVirtualTree = class _CemVirtualTree extends (_a18 = i3) {
     this.#renderTree();
   }
 };
-_init16 = __decoratorStart(_a18);
+_init16 = __decoratorStart(_a16);
 _CemVirtualTree = __decorateElement(_init16, 0, "CemVirtualTree", _CemVirtualTree_decorators, _CemVirtualTree);
 __runInitializers(_init16, 1, _CemVirtualTree);
 var CemVirtualTree = _CemVirtualTree;
 
 // elements/cem-manifest-browser/cem-manifest-browser.ts
-var _CemManifestBrowser_decorators, _init17, _a19;
+var _CemManifestBrowser_decorators, _init17, _a17;
 _CemManifestBrowser_decorators = [t3("cem-manifest-browser")];
-var CemManifestBrowser = class extends (_a19 = i3) {
+var CemManifestBrowser = class extends (_a17 = i3) {
   static styles = cem_manifest_browser_default;
   #searchDebounceTimer = null;
   disconnectedCallback() {
@@ -4357,7 +3535,7 @@ var CemManifestBrowser = class extends (_a19 = i3) {
     this.#virtualTree?.collapseAll();
   }
 };
-_init17 = __decoratorStart(_a19);
+_init17 = __decoratorStart(_a17);
 CemManifestBrowser = __decorateElement(_init17, 0, "CemManifestBrowser", _CemManifestBrowser_decorators, CemManifestBrowser);
 __runInitializers(_init17, 1, CemManifestBrowser);
 
@@ -4367,9 +3545,9 @@ s21.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n\\np {\\n  margin
 var cem_reconnection_content_default = s21;
 
 // elements/cem-reconnection-content/cem-reconnection-content.ts
-var _retryText_dec, _a20, _CemReconnectionContent_decorators, _init18, _retryText, _b4, retryText_get, retryText_set, _CemReconnectionContent_instances, _countdownInterval, _remainingMs;
+var _retryText_dec, _a18, _CemReconnectionContent_decorators, _init18, _retryText, _b3, retryText_get, retryText_set, _CemReconnectionContent_instances, _countdownInterval, _remainingMs;
 _CemReconnectionContent_decorators = [t3("cem-reconnection-content")];
-var CemReconnectionContent = class extends (_a20 = i3, _retryText_dec = [r5()], _a20) {
+var CemReconnectionContent = class extends (_a18 = i3, _retryText_dec = [r5()], _a18) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _CemReconnectionContent_instances);
@@ -4423,12 +3601,12 @@ var CemReconnectionContent = class extends (_a20 = i3, _retryText_dec = [r5()], 
     this.clearCountdown();
   }
 };
-_init18 = __decoratorStart(_a20);
+_init18 = __decoratorStart(_a18);
 _retryText = new WeakMap();
 _CemReconnectionContent_instances = new WeakSet();
 _countdownInterval = new WeakMap();
 _remainingMs = new WeakMap();
-_b4 = __decorateElement(_init18, 20, "#retryText", _retryText_dec, _CemReconnectionContent_instances, _retryText), retryText_get = _b4.get, retryText_set = _b4.set;
+_b3 = __decorateElement(_init18, 20, "#retryText", _retryText_dec, _CemReconnectionContent_instances, _retryText), retryText_get = _b3.get, retryText_set = _b3.set;
 CemReconnectionContent = __decorateElement(_init18, 0, "CemReconnectionContent", _CemReconnectionContent_decorators, CemReconnectionContent);
 __publicField(CemReconnectionContent, "styles", cem_reconnection_content_default);
 __runInitializers(_init18, 1, CemReconnectionContent);
@@ -4444,9 +3622,9 @@ s23.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n"'));
 var cem_serve_demo_default = s23;
 
 // elements/cem-serve-demo/cem-serve-demo.ts
-var _CemServeDemo_decorators, _init19, _a21;
+var _CemServeDemo_decorators, _init19, _a19;
 _CemServeDemo_decorators = [t3("cem-serve-demo")];
-var CemServeDemo = class extends (_a21 = i3) {
+var CemServeDemo = class extends (_a19 = i3) {
   static styles = cem_serve_demo_default;
   render() {
     return T`<slot></slot>`;
@@ -4568,7 +3746,7 @@ var CemServeDemo = class extends (_a21 = i3) {
     return false;
   }
 };
-_init19 = __decoratorStart(_a21);
+_init19 = __decoratorStart(_a19);
 CemServeDemo = __decorateElement(_init19, 0, "CemServeDemo", _CemServeDemo_decorators, CemServeDemo);
 __runInitializers(_init19, 1, CemServeDemo);
 
@@ -4626,9 +3804,9 @@ var KnobCssPropertyClearEvent = class extends Event {
     this.name = name;
   }
 };
-var _htmlFor_dec, _a22, _CemServeKnobGroup_decorators, _init20, _htmlFor, _debounceTimers, _debounceDelay, _colorButtonListeners, _clearButtonListeners, _CemServeKnobGroup_instances, onSlotChange_fn2, attachColorButtonListeners_fn, removeColorButtonListeners_fn, attachClearButtonListeners_fn, removeClearButtonListeners_fn, _handleClearButtonClick, updateClearButtonVisibility_fn, _handleInput, _handleChange, isBooleanControl_fn, _handleColorButtonClick, applyChange_fn, parseValue_fn;
+var _htmlFor_dec, _a20, _CemServeKnobGroup_decorators, _init20, _htmlFor, _debounceTimers, _debounceDelay, _colorButtonListeners, _clearButtonListeners, _CemServeKnobGroup_instances, onSlotChange_fn2, attachColorButtonListeners_fn, removeColorButtonListeners_fn, attachClearButtonListeners_fn, removeClearButtonListeners_fn, _handleClearButtonClick, updateClearButtonVisibility_fn, _handleInput, _handleChange, isBooleanControl_fn, _handleColorButtonClick, applyChange_fn, parseValue_fn;
 _CemServeKnobGroup_decorators = [t3("cem-serve-knob-group")];
-var CemServeKnobGroup = class extends (_a22 = i3, _htmlFor_dec = [n4({ reflect: true, attribute: "for" })], _a22) {
+var CemServeKnobGroup = class extends (_a20 = i3, _htmlFor_dec = [n4({ reflect: true, attribute: "for" })], _a20) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _CemServeKnobGroup_instances);
@@ -4764,7 +3942,7 @@ var CemServeKnobGroup = class extends (_a22 = i3, _htmlFor_dec = [n4({ reflect: 
     __privateMethod(this, _CemServeKnobGroup_instances, removeClearButtonListeners_fn).call(this);
   }
 };
-_init20 = __decoratorStart(_a22);
+_init20 = __decoratorStart(_a20);
 _htmlFor = new WeakMap();
 _debounceTimers = new WeakMap();
 _debounceDelay = new WeakMap();
@@ -4885,9 +4063,9 @@ s26.replaceSync(JSON.parse('":host {\\n  --pf-v6-c-nav--PaddingBlockStart: var(-
 var pf_v6_navigation_default = s26;
 
 // elements/pf-v6-navigation/pf-v6-navigation.ts
-var _inset_dec, _scrollable_dec, _horizontal_dec, _variant_dec6, _a23, _PfV6Navigation_decorators, _init21, _variant6, _horizontal, _scrollable, _inset, _nav, _navList, _resizeObserver, _PfV6Navigation_instances, onSlotChange_fn3, setupScrollObserver_fn, _handleScrollButtons, scrollBack_fn, scrollForward_fn, teardownScrollObserver_fn;
+var _inset_dec, _scrollable_dec, _horizontal_dec, _variant_dec6, _a21, _PfV6Navigation_decorators, _init21, _variant6, _horizontal, _scrollable, _inset, _nav, _navList, _resizeObserver, _PfV6Navigation_instances, onSlotChange_fn3, setupScrollObserver_fn, _handleScrollButtons, scrollBack_fn, scrollForward_fn, teardownScrollObserver_fn;
 _PfV6Navigation_decorators = [t3("pf-v6-navigation")];
-var PfV6Navigation = class extends (_a23 = i3, _variant_dec6 = [n4({ reflect: true })], _horizontal_dec = [n4({ type: Boolean, reflect: true })], _scrollable_dec = [n4({ type: Boolean, reflect: true })], _inset_dec = [n4({ type: Boolean, reflect: true })], _a23) {
+var PfV6Navigation = class extends (_a21 = i3, _variant_dec6 = [n4({ reflect: true })], _horizontal_dec = [n4({ type: Boolean, reflect: true })], _scrollable_dec = [n4({ type: Boolean, reflect: true })], _inset_dec = [n4({ type: Boolean, reflect: true })], _a21) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Navigation_instances);
@@ -4955,7 +4133,7 @@ var PfV6Navigation = class extends (_a23 = i3, _variant_dec6 = [n4({ reflect: tr
     __privateMethod(this, _PfV6Navigation_instances, teardownScrollObserver_fn).call(this);
   }
 };
-_init21 = __decoratorStart(_a23);
+_init21 = __decoratorStart(_a21);
 _variant6 = new WeakMap();
 _horizontal = new WeakMap();
 _scrollable = new WeakMap();
@@ -5009,9 +4187,9 @@ s27.replaceSync(JSON.parse('":host {\\n\\n  display: grid;\\n  row-gap: var(--pf
 var pf_v6_nav_list_default = s27;
 
 // elements/pf-v6-nav-list/pf-v6-nav-list.ts
-var _PfV6NavList_decorators, _init22, _a24;
+var _PfV6NavList_decorators, _init22, _a22;
 _PfV6NavList_decorators = [t3("pf-v6-nav-list")];
-var PfV6NavList = class extends (_a24 = i3) {
+var PfV6NavList = class extends (_a22 = i3) {
   static styles = pf_v6_nav_list_default;
   #internals = this.attachInternals();
   constructor() {
@@ -5022,7 +4200,7 @@ var PfV6NavList = class extends (_a24 = i3) {
     return T`<slot></slot>`;
   }
 };
-_init22 = __decoratorStart(_a24);
+_init22 = __decoratorStart(_a22);
 PfV6NavList = __decorateElement(_init22, 0, "PfV6NavList", _PfV6NavList_decorators, PfV6NavList);
 __runInitializers(_init22, 1, PfV6NavList);
 
@@ -5032,9 +4210,9 @@ s28.replaceSync(JSON.parse('":host {\\n\\n  display: grid;\\n}\\n\\n:host([expan
 var pf_v6_nav_item_default = s28;
 
 // elements/pf-v6-nav-item/pf-v6-nav-item.ts
-var _expanded_dec6, _a25, _PfV6NavItem_decorators, _init23, _expanded6, _internals3, _handleToggle, _PfV6NavItem_instances, updateExpandedState_fn;
+var _expanded_dec6, _a23, _PfV6NavItem_decorators, _init23, _expanded6, _internals3, _handleToggle, _PfV6NavItem_instances, updateExpandedState_fn;
 _PfV6NavItem_decorators = [t3("pf-v6-nav-item")];
-var PfV6NavItem = class extends (_a25 = i3, _expanded_dec6 = [n4({ type: Boolean, reflect: true })], _a25) {
+var PfV6NavItem = class extends (_a23 = i3, _expanded_dec6 = [n4({ type: Boolean, reflect: true })], _a23) {
   constructor() {
     super();
     __privateAdd(this, _PfV6NavItem_instances);
@@ -5067,7 +4245,7 @@ var PfV6NavItem = class extends (_a25 = i3, _expanded_dec6 = [n4({ type: Boolean
     return T`<slot></slot>`;
   }
 };
-_init23 = __decoratorStart(_a25);
+_init23 = __decoratorStart(_a23);
 _expanded6 = new WeakMap();
 _internals3 = new WeakMap();
 _handleToggle = new WeakMap();
@@ -5095,9 +4273,9 @@ var PfNavToggleEvent = class extends Event {
     this.expanded = expanded;
   }
 };
-var _expanded_dec7, _expandable_dec2, _current_dec2, _label_dec2, _href_dec3, _a26, _PfV6NavLink_decorators, _init24, _href3, _label2, _current2, _expandable2, _expanded7, _PfV6NavLink_instances, onClick_fn, markCurrentIfMatches_fn, renderLinkContent_fn;
+var _expanded_dec7, _expandable_dec2, _current_dec2, _label_dec2, _href_dec3, _a24, _PfV6NavLink_decorators, _init24, _href3, _label2, _current2, _expandable2, _expanded7, _PfV6NavLink_instances, onClick_fn, markCurrentIfMatches_fn, renderLinkContent_fn;
 _PfV6NavLink_decorators = [t3("pf-v6-nav-link")];
-var PfV6NavLink = class extends (_a26 = i3, _href_dec3 = [n4({ reflect: true })], _label_dec2 = [n4()], _current_dec2 = [n4({ type: Boolean, reflect: true })], _expandable_dec2 = [n4({ type: Boolean, reflect: true })], _expanded_dec7 = [n4({ type: Boolean, reflect: true })], _a26) {
+var PfV6NavLink = class extends (_a24 = i3, _href_dec3 = [n4({ reflect: true })], _label_dec2 = [n4()], _current_dec2 = [n4({ type: Boolean, reflect: true })], _expandable_dec2 = [n4({ type: Boolean, reflect: true })], _expanded_dec7 = [n4({ type: Boolean, reflect: true })], _a24) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6NavLink_instances);
@@ -5136,7 +4314,7 @@ var PfV6NavLink = class extends (_a26 = i3, _href_dec3 = [n4({ reflect: true })]
     `;
   }
 };
-_init24 = __decoratorStart(_a26);
+_init24 = __decoratorStart(_a24);
 _href3 = new WeakMap();
 _label2 = new WeakMap();
 _current2 = new WeakMap();
@@ -5188,9 +4366,9 @@ s30.replaceSync(JSON.parse('":host {\\n\\n  display: flex;\\n  flex-direction: c
 var pf_v6_card_default = s30;
 
 // elements/pf-v6-card/pf-v6-card.ts
-var _fullHeight_dec2, _compact_dec2, _variant_dec7, _a27, _PfV6Card_decorators, _init25, _variant7, _compact2, _fullHeight2;
+var _fullHeight_dec2, _compact_dec2, _variant_dec7, _a25, _PfV6Card_decorators, _init25, _variant7, _compact2, _fullHeight2;
 _PfV6Card_decorators = [t3("pf-v6-card")];
-var PfV6Card = class extends (_a27 = i3, _variant_dec7 = [n4({ reflect: true })], _compact_dec2 = [n4({ type: Boolean, reflect: true })], _fullHeight_dec2 = [n4({ type: Boolean, reflect: true, attribute: "full-height" })], _a27) {
+var PfV6Card = class extends (_a25 = i3, _variant_dec7 = [n4({ reflect: true })], _compact_dec2 = [n4({ type: Boolean, reflect: true })], _fullHeight_dec2 = [n4({ type: Boolean, reflect: true, attribute: "full-height" })], _a25) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _variant7, __runInitializers(_init25, 8, this)), __runInitializers(_init25, 11, this);
@@ -5214,7 +4392,7 @@ var PfV6Card = class extends (_a27 = i3, _variant_dec7 = [n4({ reflect: true })]
     `;
   }
 };
-_init25 = __decoratorStart(_a27);
+_init25 = __decoratorStart(_a25);
 _variant7 = new WeakMap();
 _compact2 = new WeakMap();
 _fullHeight2 = new WeakMap();
@@ -5238,9 +4416,9 @@ var PfFormFieldGroupToggleEvent = class extends Event {
     this.expanded = expanded;
   }
 };
-var _description_dec, _toggleText_dec2, _expanded_dec8, _expandable_dec3, _a28, _PfV6FormFieldGroup_decorators, _init26, _expandable3, _expanded8, _toggleText2, _description;
+var _description_dec, _toggleText_dec2, _expanded_dec8, _expandable_dec3, _a26, _PfV6FormFieldGroup_decorators, _init26, _expandable3, _expanded8, _toggleText2, _description;
 _PfV6FormFieldGroup_decorators = [t3("pf-v6-form-field-group")];
-var PfV6FormFieldGroup = class extends (_a28 = i3, _expandable_dec3 = [n4({ type: Boolean, reflect: true })], _expanded_dec8 = [n4({ type: Boolean, reflect: true })], _toggleText_dec2 = [n4({ reflect: true, attribute: "toggle-text" })], _description_dec = [n4({ reflect: true })], _a28) {
+var PfV6FormFieldGroup = class extends (_a26 = i3, _expandable_dec3 = [n4({ type: Boolean, reflect: true })], _expanded_dec8 = [n4({ type: Boolean, reflect: true })], _toggleText_dec2 = [n4({ reflect: true, attribute: "toggle-text" })], _description_dec = [n4({ reflect: true })], _a26) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _expandable3, __runInitializers(_init26, 8, this, false)), __runInitializers(_init26, 11, this);
@@ -5319,7 +4497,7 @@ var PfV6FormFieldGroup = class extends (_a28 = i3, _expandable_dec3 = [n4({ type
     }
   }
 };
-_init26 = __decoratorStart(_a28);
+_init26 = __decoratorStart(_a26);
 _expandable3 = new WeakMap();
 _expanded8 = new WeakMap();
 _toggleText2 = new WeakMap();
@@ -5333,9 +4511,9 @@ __publicField(PfV6FormFieldGroup, "styles", pf_v6_form_field_group_default);
 __runInitializers(_init26, 1, PfV6FormFieldGroup);
 
 // elements/cem-serve-knobs/cem-serve-knobs.ts
-var _CemServeKnobs_decorators, _init27, _a29;
+var _CemServeKnobs_decorators, _init27, _a27;
 _CemServeKnobs_decorators = [t3("cem-serve-knobs")];
-var CemServeKnobs = class extends (_a29 = i3) {
+var CemServeKnobs = class extends (_a27 = i3) {
   static styles = cem_serve_knobs_default;
   #navList = null;
   #handleHashChange = () => {
@@ -5418,7 +4596,7 @@ var CemServeKnobs = class extends (_a29 = i3) {
     });
   }
 };
-_init27 = __decoratorStart(_a29);
+_init27 = __decoratorStart(_a27);
 CemServeKnobs = __decorateElement(_init27, 0, "CemServeKnobs", _CemServeKnobs_decorators, CemServeKnobs);
 __runInitializers(_init27, 1, CemServeKnobs);
 
@@ -5428,9 +4606,9 @@ s32.replaceSync(JSON.parse('"/* Transform Error Overlay - displays server-side c
 var cem_transform_error_overlay_default = s32;
 
 // elements/cem-transform-error-overlay/cem-transform-error-overlay.ts
-var _message_dec2, _file_dec, _title_dec, _open_dec2, _a30, _CemTransformErrorOverlay_decorators, _init28, _open2, _title, _file, _message2, _handleKeydown2;
+var _message_dec2, _file_dec, _title_dec, _open_dec2, _a28, _CemTransformErrorOverlay_decorators, _init28, _open2, _title, _file, _message2, _handleKeydown2;
 _CemTransformErrorOverlay_decorators = [t3("cem-transform-error-overlay")];
-var CemTransformErrorOverlay = class extends (_a30 = i3, _open_dec2 = [n4({ type: Boolean, reflect: true })], _title_dec = [n4()], _file_dec = [n4()], _message_dec2 = [n4()], _a30) {
+var CemTransformErrorOverlay = class extends (_a28 = i3, _open_dec2 = [n4({ type: Boolean, reflect: true })], _title_dec = [n4()], _file_dec = [n4()], _message_dec2 = [n4()], _a28) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _open2, __runInitializers(_init28, 8, this, false)), __runInitializers(_init28, 11, this);
@@ -5490,7 +4668,7 @@ var CemTransformErrorOverlay = class extends (_a30 = i3, _open_dec2 = [n4({ type
     this.open = false;
   }
 };
-_init28 = __decoratorStart(_a30);
+_init28 = __decoratorStart(_a28);
 _open2 = new WeakMap();
 _title = new WeakMap();
 _file = new WeakMap();
@@ -5539,9 +4717,9 @@ var VARIANT_LABELS = {
   info: "Info alert:",
   custom: "Custom alert:"
 };
-var _liveRegion_dec, _dismissable_dec, _truncate_dec2, _expanded_dec9, _expandable_dec4, _plain_dec2, _inline_dec, _variant_dec8, _a31, _PfV6Alert_decorators, _init29, _variant8, _inline, _plain2, _expandable4, _expanded9, _truncate2, _dismissable, _liveRegion, _PfV6Alert_instances, iconPath_get, variantLabel_get, closeButtonLabel_get, onClose_fn;
+var _liveRegion_dec, _dismissable_dec, _truncate_dec2, _expanded_dec9, _expandable_dec4, _plain_dec2, _inline_dec, _variant_dec8, _a29, _PfV6Alert_decorators, _init29, _variant8, _inline, _plain2, _expandable4, _expanded9, _truncate2, _dismissable, _liveRegion, _PfV6Alert_instances, iconPath_get, variantLabel_get, closeButtonLabel_get, onClose_fn;
 _PfV6Alert_decorators = [t3("pf-v6-alert")];
-var PfV6Alert = class extends (_a31 = i3, _variant_dec8 = [n4({ reflect: true })], _inline_dec = [n4({ type: Boolean, reflect: true })], _plain_dec2 = [n4({ type: Boolean, reflect: true })], _expandable_dec4 = [n4({ type: Boolean, reflect: true })], _expanded_dec9 = [n4({ type: Boolean, reflect: true })], _truncate_dec2 = [n4({ type: Number, reflect: true })], _dismissable_dec = [n4({ type: Boolean, reflect: true })], _liveRegion_dec = [n4({ type: Boolean, reflect: true, attribute: "live-region" })], _a31) {
+var PfV6Alert = class extends (_a29 = i3, _variant_dec8 = [n4({ reflect: true })], _inline_dec = [n4({ type: Boolean, reflect: true })], _plain_dec2 = [n4({ type: Boolean, reflect: true })], _expandable_dec4 = [n4({ type: Boolean, reflect: true })], _expanded_dec9 = [n4({ type: Boolean, reflect: true })], _truncate_dec2 = [n4({ type: Number, reflect: true })], _dismissable_dec = [n4({ type: Boolean, reflect: true })], _liveRegion_dec = [n4({ type: Boolean, reflect: true, attribute: "live-region" })], _a29) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Alert_instances);
@@ -5644,7 +4822,7 @@ var PfV6Alert = class extends (_a31 = i3, _variant_dec8 = [n4({ reflect: true })
     this.dispatchEvent(new PfAlertCollapseEvent());
   }
 };
-_init29 = __decoratorStart(_a31);
+_init29 = __decoratorStart(_a29);
 _variant8 = new WeakMap();
 _inline = new WeakMap();
 _plain2 = new WeakMap();
@@ -5687,9 +4865,9 @@ s34.replaceSync(JSON.parse('":host {\\n  display: block;\\n\\n  --pf-v6-c-alert-
 var pf_v6_alert_group_default = s34;
 
 // elements/pf-v6-alert-group/pf-v6-alert-group.ts
-var _liveRegion_dec2, _toast_dec, _a32, _PfAlertGroup_decorators, _init30, _toast, _liveRegion2, _onClose, _PfAlertGroup_instances, removeAlert_fn;
+var _liveRegion_dec2, _toast_dec, _a30, _PfAlertGroup_decorators, _init30, _toast, _liveRegion2, _onClose, _PfAlertGroup_instances, removeAlert_fn;
 _PfAlertGroup_decorators = [t3("pf-v6-alert-group")];
-var PfAlertGroup = class extends (_a32 = i3, _toast_dec = [n4({ type: Boolean, reflect: true })], _liveRegion_dec2 = [n4({ type: Boolean, reflect: true, attribute: "live-region" })], _a32) {
+var PfAlertGroup = class extends (_a30 = i3, _toast_dec = [n4({ type: Boolean, reflect: true })], _liveRegion_dec2 = [n4({ type: Boolean, reflect: true, attribute: "live-region" })], _a30) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfAlertGroup_instances);
@@ -5734,7 +4912,7 @@ var PfAlertGroup = class extends (_a32 = i3, _toast_dec = [n4({ type: Boolean, r
     }
   }
 };
-_init30 = __decoratorStart(_a32);
+_init30 = __decoratorStart(_a30);
 _toast = new WeakMap();
 _liveRegion2 = new WeakMap();
 _onClose = new WeakMap();
@@ -5767,9 +4945,9 @@ s36.replaceSync(JSON.parse('":host {\\n  --pf-v6-c-menu--RowGap: var(--pf-t--glo
 var pf_v6_menu_default = s36;
 
 // elements/pf-v6-menu/pf-v6-menu.ts
-var _label_dec3, _a33, _PfV6Menu_decorators, _internals4, _init31, _label3, _PfV6Menu_instances, onSlotChange_fn4, _onKeydown2, getMenuItems_fn, initializeTabindex_fn, focusItem_fn;
+var _label_dec3, _a31, _PfV6Menu_decorators, _internals4, _init31, _label3, _PfV6Menu_instances, onSlotChange_fn4, _onKeydown2, getMenuItems_fn, initializeTabindex_fn, focusItem_fn;
 _PfV6Menu_decorators = [t3("pf-v6-menu")];
-var PfV6Menu = class extends (_a33 = i3, _label_dec3 = [n4()], _a33) {
+var PfV6Menu = class extends (_a31 = i3, _label_dec3 = [n4()], _a31) {
   constructor() {
     super();
     __privateAdd(this, _PfV6Menu_instances);
@@ -5828,7 +5006,7 @@ var PfV6Menu = class extends (_a33 = i3, _label_dec3 = [n4()], _a33) {
     }
   }
 };
-_init31 = __decoratorStart(_a33);
+_init31 = __decoratorStart(_a31);
 _internals4 = new WeakMap();
 _label3 = new WeakMap();
 _PfV6Menu_instances = new WeakSet();
@@ -5880,9 +5058,9 @@ var PfMenuItemSelectEvent = class extends Event {
     this.checked = checked;
   }
 };
-var _description_dec2, _value_dec2, _variant_dec9, _checked_dec, _disabled_dec5, _a34, _PfV6MenuItem_decorators, _internals5, _init32, _disabled5, _checked, _variant9, _value2, _description2, _handleClick, _handleKeydown3;
+var _description_dec2, _value_dec2, _variant_dec9, _checked_dec, _disabled_dec5, _a32, _PfV6MenuItem_decorators, _internals5, _init32, _disabled5, _checked, _variant9, _value2, _description2, _handleClick, _handleKeydown3;
 _PfV6MenuItem_decorators = [t3("pf-v6-menu-item")];
-var PfV6MenuItem = class extends (_a34 = i3, _disabled_dec5 = [n4({ type: Boolean, reflect: true })], _checked_dec = [n4({ type: Boolean, reflect: true })], _variant_dec9 = [n4({ reflect: true })], _value_dec2 = [n4({ reflect: true })], _description_dec2 = [n4({ reflect: true })], _a34) {
+var PfV6MenuItem = class extends (_a32 = i3, _disabled_dec5 = [n4({ type: Boolean, reflect: true })], _checked_dec = [n4({ type: Boolean, reflect: true })], _variant_dec9 = [n4({ reflect: true })], _value_dec2 = [n4({ reflect: true })], _description_dec2 = [n4({ reflect: true })], _a32) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _internals5, this.attachInternals());
@@ -5953,7 +5131,7 @@ var PfV6MenuItem = class extends (_a34 = i3, _disabled_dec5 = [n4({ type: Boolea
     `;
   }
 };
-_init32 = __decoratorStart(_a34);
+_init32 = __decoratorStart(_a32);
 _internals5 = new WeakMap();
 _disabled5 = new WeakMap();
 _checked = new WeakMap();
@@ -5972,9 +5150,9 @@ __publicField(PfV6MenuItem, "styles", pf_v6_menu_item_default);
 __runInitializers(_init32, 1, PfV6MenuItem);
 
 // elements/pf-v6-dropdown/pf-v6-dropdown.ts
-var _label_dec4, _disabled_dec6, _expanded_dec10, _a35, _PfV6Dropdown_decorators, _instances, _init33, _expanded10, _disabled6, _label4, _onKeydown3, _PfV6Dropdown_instances, onToggleClick_fn2;
+var _label_dec4, _disabled_dec6, _expanded_dec10, _a33, _PfV6Dropdown_decorators, _instances, _init33, _expanded10, _disabled6, _label4, _onKeydown3, _PfV6Dropdown_instances, onToggleClick_fn2;
 _PfV6Dropdown_decorators = [t3("pf-v6-dropdown")];
-var _PfV6Dropdown = class _PfV6Dropdown extends (_a35 = i3, _expanded_dec10 = [n4({ type: Boolean, reflect: true })], _disabled_dec6 = [n4({ type: Boolean, reflect: true })], _label_dec4 = [n4()], _a35) {
+var _PfV6Dropdown = class _PfV6Dropdown extends (_a33 = i3, _expanded_dec10 = [n4({ type: Boolean, reflect: true })], _disabled_dec6 = [n4({ type: Boolean, reflect: true })], _label_dec4 = [n4()], _a33) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Dropdown_instances);
@@ -6048,7 +5226,7 @@ var _PfV6Dropdown = class _PfV6Dropdown extends (_a35 = i3, _expanded_dec10 = [n
     this.expanded = false;
   }
 };
-_init33 = __decoratorStart(_a35);
+_init33 = __decoratorStart(_a33);
 _instances = new WeakMap();
 _expanded10 = new WeakMap();
 _disabled6 = new WeakMap();
@@ -6088,9 +5266,9 @@ var SidebarToggleEvent = class extends Event {
     this.expanded = expanded;
   }
 };
-var _sidebarExpanded_dec, _a36, _PfV6Masthead_decorators, _internals6, _init34, _sidebarExpanded, _PfV6Masthead_instances, onToggle_fn;
+var _sidebarExpanded_dec, _a34, _PfV6Masthead_decorators, _internals6, _init34, _sidebarExpanded, _PfV6Masthead_instances, onToggle_fn;
 _PfV6Masthead_decorators = [t3("pf-v6-masthead")];
-var PfV6Masthead = class extends (_a36 = i3, _sidebarExpanded_dec = [n4({ type: Boolean, reflect: true, attribute: "sidebar-expanded" })], _a36) {
+var PfV6Masthead = class extends (_a34 = i3, _sidebarExpanded_dec = [n4({ type: Boolean, reflect: true, attribute: "sidebar-expanded" })], _a34) {
   constructor() {
     super();
     __privateAdd(this, _PfV6Masthead_instances);
@@ -6132,7 +5310,7 @@ var PfV6Masthead = class extends (_a36 = i3, _sidebarExpanded_dec = [n4({ type: 
     `;
   }
 };
-_init34 = __decoratorStart(_a36);
+_init34 = __decoratorStart(_a34);
 _internals6 = new WeakMap();
 _sidebarExpanded = new WeakMap();
 _PfV6Masthead_instances = new WeakSet();
@@ -6167,9 +5345,9 @@ var PfModalCancelEvent = class extends Event {
     super("cancel", { bubbles: true });
   }
 };
-var _open_dec3, _position_dec, _variant_dec10, _a37, _PfV6Modal_decorators, _dialog, _cancelling, _hasHeader, _hasDescription, _hasFooter, _init35, _variant10, _position, _open3, _PfV6Modal_instances, syncDialogState_fn, _onDialogClose, _onDialogCancel, _onCloseClick, _onHeaderSlotChange, _onDescriptionSlotChange, _onFooterSlotChange;
+var _open_dec3, _position_dec, _variant_dec10, _a35, _PfV6Modal_decorators, _dialog, _cancelling, _hasHeader, _hasDescription, _hasFooter, _init35, _variant10, _position, _open3, _PfV6Modal_instances, syncDialogState_fn, _onDialogClose, _onDialogCancel, _onCloseClick, _onHeaderSlotChange, _onDescriptionSlotChange, _onFooterSlotChange;
 _PfV6Modal_decorators = [t3("pf-v6-modal")];
-var PfV6Modal = class extends (_a37 = i3, _variant_dec10 = [n4({ reflect: true })], _position_dec = [n4({ reflect: true })], _open_dec3 = [n4({ type: Boolean, reflect: true })], _a37) {
+var PfV6Modal = class extends (_a35 = i3, _variant_dec10 = [n4({ reflect: true })], _position_dec = [n4({ reflect: true })], _open_dec3 = [n4({ type: Boolean, reflect: true })], _a35) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Modal_instances);
@@ -6310,7 +5488,7 @@ var PfV6Modal = class extends (_a37 = i3, _variant_dec10 = [n4({ reflect: true }
     }
   }
 };
-_init35 = __decoratorStart(_a37);
+_init35 = __decoratorStart(_a35);
 _dialog = new WeakMap();
 _cancelling = new WeakMap();
 _hasHeader = new WeakMap();
@@ -6356,9 +5534,9 @@ s40.replaceSync(JSON.parse('":host {\\n\\n  display: grid;\\n  max-height: 99999
 var pf_v6_nav_group_default = s40;
 
 // elements/pf-v6-nav-group/pf-v6-nav-group.ts
-var _PfV6NavGroup_decorators, _init36, _a38;
+var _PfV6NavGroup_decorators, _init36, _a36;
 _PfV6NavGroup_decorators = [t3("pf-v6-nav-group")];
-var PfV6NavGroup = class extends (_a38 = i3) {
+var PfV6NavGroup = class extends (_a36 = i3) {
   static styles = pf_v6_nav_group_default;
   #internals = this.attachInternals();
   constructor() {
@@ -6377,7 +5555,7 @@ var PfV6NavGroup = class extends (_a38 = i3) {
     `;
   }
 };
-_init36 = __decoratorStart(_a38);
+_init36 = __decoratorStart(_a36);
 PfV6NavGroup = __decorateElement(_init36, 0, "PfV6NavGroup", _PfV6NavGroup_decorators, PfV6NavGroup);
 __runInitializers(_init36, 1, PfV6NavGroup);
 
@@ -6387,9 +5565,9 @@ s41.replaceSync(JSON.parse('":host {\\n  z-index: var(--pf-v6-c-page__main-conta
 var pf_v6_page_main_default = s41;
 
 // elements/pf-v6-page-main/pf-v6-page-main.ts
-var _PfV6PageMain_decorators, _init37, _a39;
+var _PfV6PageMain_decorators, _init37, _a37;
 _PfV6PageMain_decorators = [t3("pf-v6-page-main")];
-var PfV6PageMain = class extends (_a39 = i3) {
+var PfV6PageMain = class extends (_a37 = i3) {
   static styles = pf_v6_page_main_default;
   #internals = this.attachInternals();
   constructor() {
@@ -6400,7 +5578,7 @@ var PfV6PageMain = class extends (_a39 = i3) {
     return T`<slot></slot>`;
   }
 };
-_init37 = __decoratorStart(_a39);
+_init37 = __decoratorStart(_a37);
 PfV6PageMain = __decorateElement(_init37, 0, "PfV6PageMain", _PfV6PageMain_decorators, PfV6PageMain);
 __runInitializers(_init37, 1, PfV6PageMain);
 
@@ -6410,9 +5588,9 @@ s42.replaceSync(JSON.parse('":host {\\n  z-index: var(--pf-v6-c-page__sidebar--Z
 var pf_v6_page_sidebar_default = s42;
 
 // elements/pf-v6-page-sidebar/pf-v6-page-sidebar.ts
-var _expanded_dec11, _collapsed_dec, _a40, _PfV6PageSidebar_decorators, _internals7, _init38, _collapsed, _expanded11;
+var _expanded_dec11, _collapsed_dec, _a38, _PfV6PageSidebar_decorators, _internals7, _init38, _collapsed, _expanded11;
 _PfV6PageSidebar_decorators = [t3("pf-v6-page-sidebar")];
-var PfV6PageSidebar = class extends (_a40 = i3, _collapsed_dec = [n4({ type: Boolean, reflect: true })], _expanded_dec11 = [n4({ type: Boolean, reflect: true })], _a40) {
+var PfV6PageSidebar = class extends (_a38 = i3, _collapsed_dec = [n4({ type: Boolean, reflect: true })], _expanded_dec11 = [n4({ type: Boolean, reflect: true })], _a38) {
   constructor() {
     super();
     __privateAdd(this, _internals7, this.attachInternals());
@@ -6435,7 +5613,7 @@ var PfV6PageSidebar = class extends (_a40 = i3, _collapsed_dec = [n4({ type: Boo
     `;
   }
 };
-_init38 = __decoratorStart(_a40);
+_init38 = __decoratorStart(_a38);
 _internals7 = new WeakMap();
 _collapsed = new WeakMap();
 _expanded11 = new WeakMap();
@@ -6451,9 +5629,9 @@ s43.replaceSync(JSON.parse('":host {\\n  container-type: inline-size;\\n  displa
 var pf_v6_page_default = s43;
 
 // elements/pf-v6-page/pf-v6-page.ts
-var _sidebarCollapsed_dec, _a41, _PfV6Page_decorators, _init39, _sidebarCollapsed, _clickOutsideHandler, _onSidebarToggle, _PfV6Page_instances, updateSidebarState_fn;
+var _sidebarCollapsed_dec, _a39, _PfV6Page_decorators, _init39, _sidebarCollapsed, _clickOutsideHandler, _onSidebarToggle, _PfV6Page_instances, updateSidebarState_fn;
 _PfV6Page_decorators = [t3("pf-v6-page")];
-var _PfV6Page = class _PfV6Page extends (_a41 = i3, _sidebarCollapsed_dec = [n4({ type: Boolean, reflect: true, attribute: "sidebar-collapsed" })], _a41) {
+var _PfV6Page = class _PfV6Page extends (_a39 = i3, _sidebarCollapsed_dec = [n4({ type: Boolean, reflect: true, attribute: "sidebar-collapsed" })], _a39) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Page_instances);
@@ -6497,7 +5675,7 @@ var _PfV6Page = class _PfV6Page extends (_a41 = i3, _sidebarCollapsed_dec = [n4(
     }
   }
 };
-_init39 = __decoratorStart(_a41);
+_init39 = __decoratorStart(_a39);
 _sidebarCollapsed = new WeakMap();
 _clickOutsideHandler = new WeakMap();
 _onSidebarToggle = new WeakMap();
@@ -6536,9 +5714,9 @@ var PfPopoverHideEvent = class extends Event {
   }
 };
 var supportsAnchorPositioning = globalThis.CSS?.supports?.("anchor-name: --test") ?? false;
-var _hasAutoWidth_dec, _maxWidth_dec, _minWidth_dec, _closeButtonLabel_dec, _closeable_dec, _triggerAction_dec, _distance_dec, _position_dec2, _open_dec4, _a42, _PfV6Popover_decorators, _init40, _open4, _position2, _distance, _triggerAction, _closeable, _closeButtonLabel, _minWidth, _maxWidth, _hasAutoWidth, _hoverShowTimeout, _hoverHideTimeout, _hasHeaderContent2, _hasFooterContent, _PfV6Popover_instances, contentStyle_get, showPopover_fn, hidePopover_fn, _handleTriggerClick, _handlePointerEnter, _handlePointerLeave, _handlePopoverPointerEnter, _handlePopoverPointerLeave, _handlePopoverToggle, _handleClose, onHeaderSlotChange_fn, onFooterSlotChange_fn;
+var _hasAutoWidth_dec, _maxWidth_dec, _minWidth_dec, _closeButtonLabel_dec, _closeable_dec, _triggerAction_dec, _distance_dec, _position_dec2, _open_dec4, _a40, _PfV6Popover_decorators, _init40, _open4, _position2, _distance, _triggerAction, _closeable, _closeButtonLabel, _minWidth, _maxWidth, _hasAutoWidth, _hoverShowTimeout, _hoverHideTimeout, _hasHeaderContent2, _hasFooterContent, _PfV6Popover_instances, contentStyle_get, showPopover_fn, hidePopover_fn, _handleTriggerClick, _handlePointerEnter, _handlePointerLeave, _handlePopoverPointerEnter, _handlePopoverPointerLeave, _handlePopoverToggle, _handleClose, onHeaderSlotChange_fn, onFooterSlotChange_fn;
 _PfV6Popover_decorators = [t3("pf-v6-popover")];
-var PfV6Popover = class extends (_a42 = i3, _open_dec4 = [n4({ type: Boolean, reflect: true })], _position_dec2 = [n4({ reflect: true })], _distance_dec = [n4({ type: Number, reflect: true })], _triggerAction_dec = [n4({ reflect: true, attribute: "trigger-action" })], _closeable_dec = [n4({ type: Boolean, reflect: true })], _closeButtonLabel_dec = [n4({ attribute: "close-button-label" })], _minWidth_dec = [n4({ attribute: "min-width" })], _maxWidth_dec = [n4({ attribute: "max-width" })], _hasAutoWidth_dec = [n4({ type: Boolean, reflect: true, attribute: "has-auto-width" })], _a42) {
+var PfV6Popover = class extends (_a40 = i3, _open_dec4 = [n4({ type: Boolean, reflect: true })], _position_dec2 = [n4({ reflect: true })], _distance_dec = [n4({ type: Number, reflect: true })], _triggerAction_dec = [n4({ reflect: true, attribute: "trigger-action" })], _closeable_dec = [n4({ type: Boolean, reflect: true })], _closeButtonLabel_dec = [n4({ attribute: "close-button-label" })], _minWidth_dec = [n4({ attribute: "min-width" })], _maxWidth_dec = [n4({ attribute: "max-width" })], _hasAutoWidth_dec = [n4({ type: Boolean, reflect: true, attribute: "has-auto-width" })], _a40) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Popover_instances);
@@ -6684,7 +5862,7 @@ var PfV6Popover = class extends (_a42 = i3, _open_dec4 = [n4({ type: Boolean, re
     clearTimeout(__privateGet(this, _hoverHideTimeout));
   }
 };
-_init40 = __decoratorStart(_a42);
+_init40 = __decoratorStart(_a40);
 _open4 = new WeakMap();
 _position2 = new WeakMap();
 _distance = new WeakMap();
@@ -6826,9 +6004,9 @@ s45.replaceSync(JSON.parse(`":host {\\n\\n  /* Form control custom properties */
 var pf_v6_select_default = s45;
 
 // elements/pf-v6-select/pf-v6-select.ts
-var _invalid_dec, _disabled_dec7, _value_dec3, _a43, _PfV6Select_decorators, _internals8, _observer, _init41, _value3, _disabled7, _invalid, _PfV6Select_instances, selectEl_get, cloneOptions_fn, _onChange, _onInput;
+var _invalid_dec, _disabled_dec7, _value_dec3, _a41, _PfV6Select_decorators, _internals8, _observer, _init41, _value3, _disabled7, _invalid, _PfV6Select_instances, selectEl_get, cloneOptions_fn, _onChange, _onInput;
 _PfV6Select_decorators = [t3("pf-v6-select")];
-var PfV6Select = class extends (_a43 = i3, _value_dec3 = [n4({ reflect: true })], _disabled_dec7 = [n4({ type: Boolean, reflect: true })], _invalid_dec = [n4({ type: Boolean, reflect: true })], _a43) {
+var PfV6Select = class extends (_a41 = i3, _value_dec3 = [n4({ reflect: true })], _disabled_dec7 = [n4({ type: Boolean, reflect: true })], _invalid_dec = [n4({ type: Boolean, reflect: true })], _a41) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Select_instances);
@@ -6888,7 +6066,7 @@ var PfV6Select = class extends (_a43 = i3, _value_dec3 = [n4({ reflect: true })]
     __privateGet(this, _observer).disconnect();
   }
 };
-_init41 = __decoratorStart(_a43);
+_init41 = __decoratorStart(_a41);
 _internals8 = new WeakMap();
 _observer = new WeakMap();
 _value3 = new WeakMap();
@@ -6929,9 +6107,9 @@ s46.replaceSync(JSON.parse('":host {\\n  position: absolute;\\n  inset-block-sta
 var pf_v6_skip_to_content_default = s46;
 
 // elements/pf-v6-skip-to-content/pf-v6-skip-to-content.ts
-var _href_dec4, _a44, _PfV6SkipToContent_decorators, _init42, _href4;
+var _href_dec4, _a42, _PfV6SkipToContent_decorators, _init42, _href4;
 _PfV6SkipToContent_decorators = [t3("pf-v6-skip-to-content")];
-var PfV6SkipToContent = class extends (_a44 = i3, _href_dec4 = [n4({ reflect: true })], _a44) {
+var PfV6SkipToContent = class extends (_a42 = i3, _href_dec4 = [n4({ reflect: true })], _a42) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _href4, __runInitializers(_init42, 8, this, "#main-content")), __runInitializers(_init42, 11, this);
@@ -6950,7 +6128,7 @@ var PfV6SkipToContent = class extends (_a44 = i3, _href_dec4 = [n4({ reflect: tr
     `;
   }
 };
-_init42 = __decoratorStart(_a44);
+_init42 = __decoratorStart(_a42);
 _href4 = new WeakMap();
 __decorateElement(_init42, 4, "href", _href_dec4, PfV6SkipToContent, _href4);
 PfV6SkipToContent = __decorateElement(_init42, 0, "PfV6SkipToContent", _PfV6SkipToContent_decorators, PfV6SkipToContent);
@@ -6963,9 +6141,9 @@ s47.replaceSync(JSON.parse('":host {\\n  display: inline-flex;\\n}\\n\\n#switch-
 var pf_v6_switch_default = s47;
 
 // elements/pf-v6-switch/pf-v6-switch.ts
-var _labelPosition_dec, _disabled_dec8, _checked_dec2, _a45, _PfV6Switch_decorators, _internals9, _init43, _checked2, _disabled8, _labelPosition, _PfV6Switch_instances, onInput_fn2;
+var _labelPosition_dec, _disabled_dec8, _checked_dec2, _a43, _PfV6Switch_decorators, _internals9, _init43, _checked2, _disabled8, _labelPosition, _PfV6Switch_instances, onInput_fn2;
 _PfV6Switch_decorators = [t3("pf-v6-switch")];
-var PfV6Switch = class extends (_a45 = i3, _checked_dec2 = [n4({ type: Boolean, reflect: true })], _disabled_dec8 = [n4({ type: Boolean, reflect: true })], _labelPosition_dec = [n4({ reflect: true, attribute: "label-position" })], _a45) {
+var PfV6Switch = class extends (_a43 = i3, _checked_dec2 = [n4({ type: Boolean, reflect: true })], _disabled_dec8 = [n4({ type: Boolean, reflect: true })], _labelPosition_dec = [n4({ reflect: true, attribute: "label-position" })], _a43) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Switch_instances);
@@ -6999,7 +6177,7 @@ var PfV6Switch = class extends (_a45 = i3, _checked_dec2 = [n4({ type: Boolean, 
     `;
   }
 };
-_init43 = __decoratorStart(_a45);
+_init43 = __decoratorStart(_a43);
 _internals9 = new WeakMap();
 _checked2 = new WeakMap();
 _disabled8 = new WeakMap();
@@ -7026,9 +6204,9 @@ s48.replaceSync(JSON.parse('":host {\\n  display: block;\\n  padding: var(--pf-t
 var pf_v6_tab_default = s48;
 
 // elements/pf-v6-tab/pf-v6-tab.ts
-var _title_dec2, _a46, _PfV6Tab_decorators, _init44, _title2;
+var _title_dec2, _a44, _PfV6Tab_decorators, _init44, _title2;
 _PfV6Tab_decorators = [t3("pf-v6-tab")];
-var PfV6Tab = class extends (_a46 = i3, _title_dec2 = [n4({ reflect: true })], _a46) {
+var PfV6Tab = class extends (_a44 = i3, _title_dec2 = [n4({ reflect: true })], _a44) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _title2, __runInitializers(_init44, 8, this, "")), __runInitializers(_init44, 11, this);
@@ -7050,7 +6228,7 @@ var PfV6Tab = class extends (_a46 = i3, _title_dec2 = [n4({ reflect: true })], _
     return T`<slot></slot>`;
   }
 };
-_init44 = __decoratorStart(_a46);
+_init44 = __decoratorStart(_a44);
 _title2 = new WeakMap();
 __decorateElement(_init44, 4, "title", _title_dec2, PfV6Tab, _title2);
 PfV6Tab = __decorateElement(_init44, 0, "PfV6Tab", _PfV6Tab_decorators, PfV6Tab);
@@ -7070,9 +6248,9 @@ var PfTabsChangeEvent = class extends Event {
     this.selectedIndex = selectedIndex;
   }
 };
-var __tabs_dec, _selected_dec, _a47, _PfV6Tabs_decorators, _init45, _selected, __tabs, _mutationObserver, _onTabsChanged, _PfV6Tabs_instances, syncTabs_fn, handleTabClick_fn, handleKeyDown_fn, updateAccentLine_fn;
+var __tabs_dec, _selected_dec, _a45, _PfV6Tabs_decorators, _init45, _selected, __tabs, _mutationObserver, _onTabsChanged, _PfV6Tabs_instances, syncTabs_fn, handleTabClick_fn, handleKeyDown_fn, updateAccentLine_fn;
 _PfV6Tabs_decorators = [t3("pf-v6-tabs")];
-var PfV6Tabs = class extends (_a47 = i3, _selected_dec = [n4({ type: Number, reflect: true })], __tabs_dec = [r5()], _a47) {
+var PfV6Tabs = class extends (_a45 = i3, _selected_dec = [n4({ type: Number, reflect: true })], __tabs_dec = [r5()], _a45) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Tabs_instances);
@@ -7152,7 +6330,7 @@ var PfV6Tabs = class extends (_a47 = i3, _selected_dec = [n4({ type: Number, ref
     `;
   }
 };
-_init45 = __decoratorStart(_a47);
+_init45 = __decoratorStart(_a45);
 _selected = new WeakMap();
 __tabs = new WeakMap();
 _mutationObserver = new WeakMap();
@@ -7225,9 +6403,9 @@ s50.replaceSync(JSON.parse('":host {\\n\\n  /* Form control custom properties */
 var pf_v6_text_input_default = s50;
 
 // elements/pf-v6-text-input/pf-v6-text-input.ts
-var _step_dec, _max_dec, _min_dec, _invalid_dec2, _readonly_dec2, _disabled_dec9, _placeholder_dec2, _value_dec4, _type_dec3, _a48, _PfV6TextInput_decorators, _internals10, _init46, _type3, _value4, _placeholder2, _disabled9, _readonly2, _invalid2, _min, _max, _step, _PfV6TextInput_instances, onInput_fn3, onChange_fn2;
+var _step_dec, _max_dec, _min_dec, _invalid_dec2, _readonly_dec2, _disabled_dec9, _placeholder_dec2, _value_dec4, _type_dec3, _a46, _PfV6TextInput_decorators, _internals10, _init46, _type3, _value4, _placeholder2, _disabled9, _readonly2, _invalid2, _min, _max, _step, _PfV6TextInput_instances, onInput_fn3, onChange_fn2;
 _PfV6TextInput_decorators = [t3("pf-v6-text-input")];
-var PfV6TextInput = class extends (_a48 = i3, _type_dec3 = [n4({ reflect: true })], _value_dec4 = [n4()], _placeholder_dec2 = [n4()], _disabled_dec9 = [n4({ type: Boolean, reflect: true })], _readonly_dec2 = [n4({ type: Boolean, reflect: true })], _invalid_dec2 = [n4({ type: Boolean, reflect: true })], _min_dec = [n4()], _max_dec = [n4()], _step_dec = [n4()], _a48) {
+var PfV6TextInput = class extends (_a46 = i3, _type_dec3 = [n4({ reflect: true })], _value_dec4 = [n4()], _placeholder_dec2 = [n4()], _disabled_dec9 = [n4({ type: Boolean, reflect: true })], _readonly_dec2 = [n4({ type: Boolean, reflect: true })], _invalid_dec2 = [n4({ type: Boolean, reflect: true })], _min_dec = [n4()], _max_dec = [n4()], _step_dec = [n4()], _a46) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6TextInput_instances);
@@ -7289,7 +6467,7 @@ var PfV6TextInput = class extends (_a48 = i3, _type_dec3 = [n4({ reflect: true }
     input?.setCustomValidity(message);
   }
 };
-_init46 = __decoratorStart(_a48);
+_init46 = __decoratorStart(_a46);
 _internals10 = new WeakMap();
 _type3 = new WeakMap();
 _value4 = new WeakMap();
@@ -7352,9 +6530,9 @@ var ToggleGroupItemSelectEvent = class extends Event {
     this.value = value;
   }
 };
-var _value_dec5, _disabled_dec10, _selected_dec2, _a49, _PfV6ToggleGroupItem_decorators, _internals11, _init47, _selected2, _disabled10, _value5, _PfV6ToggleGroupItem_instances, updateTabindex_fn, _handleClick2, _handleKeydown4, _handleFocus, selectItem_fn, focusAndSelect_fn, navigateItems_fn, navigateToEnd_fn, updateRovingTabindex_fn;
+var _value_dec5, _disabled_dec10, _selected_dec2, _a47, _PfV6ToggleGroupItem_decorators, _internals11, _init47, _selected2, _disabled10, _value5, _PfV6ToggleGroupItem_instances, updateTabindex_fn, _handleClick2, _handleKeydown4, _handleFocus, selectItem_fn, focusAndSelect_fn, navigateItems_fn, navigateToEnd_fn, updateRovingTabindex_fn;
 _PfV6ToggleGroupItem_decorators = [t3("pf-v6-toggle-group-item")];
-var PfV6ToggleGroupItem = class extends (_a49 = i3, _selected_dec2 = [n4({ type: Boolean, reflect: true })], _disabled_dec10 = [n4({ type: Boolean, reflect: true })], _value_dec5 = [n4({ reflect: true })], _a49) {
+var PfV6ToggleGroupItem = class extends (_a47 = i3, _selected_dec2 = [n4({ type: Boolean, reflect: true })], _disabled_dec10 = [n4({ type: Boolean, reflect: true })], _value_dec5 = [n4({ reflect: true })], _a47) {
   constructor() {
     super();
     __privateAdd(this, _PfV6ToggleGroupItem_instances);
@@ -7447,7 +6625,7 @@ var PfV6ToggleGroupItem = class extends (_a49 = i3, _selected_dec2 = [n4({ type:
     `;
   }
 };
-_init47 = __decoratorStart(_a49);
+_init47 = __decoratorStart(_a47);
 _internals11 = new WeakMap();
 _selected2 = new WeakMap();
 _disabled10 = new WeakMap();
@@ -7539,9 +6717,9 @@ var ToggleGroupChangeEvent = class extends Event {
     this.value = value;
   }
 };
-var _compact_dec3, _a50, _PfV6ToggleGroup_decorators, _init48, _compact3, _internals12, _handleItemSelect;
+var _compact_dec3, _a48, _PfV6ToggleGroup_decorators, _init48, _compact3, _internals12, _handleItemSelect;
 _PfV6ToggleGroup_decorators = [t3("pf-v6-toggle-group")];
-var PfV6ToggleGroup = class extends (_a50 = i3, _compact_dec3 = [n4({ type: Boolean, reflect: true })], _a50) {
+var PfV6ToggleGroup = class extends (_a48 = i3, _compact_dec3 = [n4({ type: Boolean, reflect: true })], _a48) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _compact3, __runInitializers(_init48, 8, this, false)), __runInitializers(_init48, 11, this);
@@ -7584,7 +6762,7 @@ var PfV6ToggleGroup = class extends (_a50 = i3, _compact_dec3 = [n4({ type: Bool
     `;
   }
 };
-_init48 = __decoratorStart(_a50);
+_init48 = __decoratorStart(_a48);
 _compact3 = new WeakMap();
 _internals12 = new WeakMap();
 _handleItemSelect = new WeakMap();
@@ -7599,9 +6777,9 @@ s53.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n\\n#tree {\\n  ma
 var pf_v6_tree_view_default = s53;
 
 // elements/pf-v6-tree-view/pf-v6-tree-view.ts
-var _PfV6TreeView_decorators, _init49, _a51;
+var _PfV6TreeView_decorators, _init49, _a49;
 _PfV6TreeView_decorators = [t3("pf-v6-tree-view")];
-var PfV6TreeView = class extends (_a51 = i3) {
+var PfV6TreeView = class extends (_a49 = i3) {
   static styles = pf_v6_tree_view_default;
   #currentSelection = null;
   connectedCallback() {
@@ -7771,15 +6949,15 @@ var PfV6TreeView = class extends (_a51 = i3) {
     );
   }
 };
-_init49 = __decoratorStart(_a51);
+_init49 = __decoratorStart(_a49);
 PfV6TreeView = __decorateElement(_init49, 0, "PfV6TreeView", _PfV6TreeView_decorators, PfV6TreeView);
 __runInitializers(_init49, 1, PfV6TreeView);
 
-// stub:/__cem/websocket-client.js
+// cem-stub:/__cem/websocket-client.js
 var CEMReloadClient = class {
 };
 
-// stub:/__cem/state-persistence.js
+// cem-stub:/__cem/state-persistence.js
 var StatePersistence = class {
 };
 
@@ -7791,9 +6969,9 @@ var CemLogsEvent = class extends Event {
     this.logs = logs;
   }
 };
-var _hasDescription_dec, _sidebar_dec, _tabsSelected_dec, _drawerHeight_dec2, _drawer_dec, _knobs_dec, _sourceURL_dec, _canonicalURL_dec, _packageName_dec, _demoTitle_dec, _primaryTagName_dec, _a52, _CemServeChrome_decorators, _demoInfoTemplate, _demoGroupTemplate, _demoListTemplate, _logEntryTemplate, _eventEntryTemplate, _init50, _primaryTagName, _demoTitle, _packageName, _canonicalURL, _sourceURL, _knobs, _drawer, _drawerHeight2, _tabsSelected, _sidebar, _hasDescription2, _CemServeChrome_instances, $_fn2, $$_fn, _logContainer, _drawerOpen, _initialLogsFetched, _isInitialLoad, _debugData, _elementEventMap, _manifest, _capturedEvents, _maxCapturedEvents, _eventList, _eventDetailHeader, _eventDetailBody, _selectedEventId, _eventsFilterValue, _eventsFilterDebounceTimer, _eventTypeFilters, _elementFilters, _discoveredElements, _handleLogsEvent, _handleTreeExpand, _handleTreeCollapse, _handleTreeSelect, _copyLogsFeedbackTimeout, _copyDebugFeedbackTimeout, _copyEventsFeedbackTimeout, _logsFilterValue, _logsFilterDebounceTimer, _logLevelFilters, _logLevelDropdown, _observer2, _wsClient, renderSourceButton_fn, fetchDebugInfo_fn, populateDemoUrls_fn, setupLogListener_fn, filterLogs_fn, getLogTypeFromEntry_fn, loadLogFilterState_fn, syncCheckboxStates_fn, saveLogFilterState_fn, _handleLogFilterChange, copyLogs_fn, setupDebugOverlay_fn, setupFooterDrawer_fn, detectBrowser_fn, copyDebugInfo_fn, renderLogs_fn, getLogBadge_fn, applyLogLabelAttrs_fn, scrollLatestIntoView_fn, scrollLogsToBottom_fn, migrateFromLocalStorageIfNeeded_fn, setupColorSchemeToggle_fn, applyColorScheme_fn, setupKnobCoordination_fn, _onKnobChange, _onKnobClear, getKnobTarget_fn, getKnobTypeFromEvent_fn, getKnobTypeFromClearEvent_fn, setupTreeStatePersistence_fn, applyTreeState_fn, setupSidebarStatePersistence_fn, findTreeItemById_fn, getTreeNodeId_fn, discoverElementEvents_fn, setupEventCapture_fn, attachEventListeners_fn, observeDemoMutations_fn, _handleElementEvent, getEventDocumentation_fn, findTypeDeclaration_fn, captureEvent_fn, extractEventProperties_fn, renderEvent_fn, selectEvent_fn, buildPropertiesForDisplay_fn, buildPropertyTree_fn, scrollEventsToBottom_fn, isEventsTabActive_fn, filterEvents_fn, eventMatchesTextFilter_fn, getEventRecordById_fn, updateEventFilters_fn, _handleEventTypeFilterChange, _handleElementFilterChange, loadEventFiltersFromStorage_fn, saveEventFilters_fn, clearEvents_fn, copyEvents_fn, setupEventListeners_fn;
+var _hasDescription_dec, _sidebar_dec, _tabsSelected_dec, _drawerHeight_dec2, _drawer_dec, _knobs_dec, _sourceURL_dec, _canonicalURL_dec, _packageName_dec, _demoTitle_dec, _primaryTagName_dec, _a50, _CemServeChrome_decorators, _demoInfoTemplate, _demoGroupTemplate, _demoListTemplate, _logEntryTemplate, _eventEntryTemplate, _init50, _primaryTagName, _demoTitle, _packageName, _canonicalURL, _sourceURL, _knobs, _drawer, _drawerHeight2, _tabsSelected, _sidebar, _hasDescription2, _CemServeChrome_instances, $_fn2, $$_fn, _logContainer, _drawerOpen, _initialLogsFetched, _isInitialLoad, _debugData, _elementEventMap, _manifest, _capturedEvents, _maxCapturedEvents, _eventList, _eventDetailHeader, _eventDetailBody, _selectedEventId, _eventsFilterValue, _eventsFilterDebounceTimer, _eventTypeFilters, _elementFilters, _discoveredElements, _handleLogsEvent, _handleTreeExpand, _handleTreeCollapse, _handleTreeSelect, _copyLogsFeedbackTimeout, _copyDebugFeedbackTimeout, _copyEventsFeedbackTimeout, _logsFilterValue, _logsFilterDebounceTimer, _logLevelFilters, _logLevelDropdown, _observer2, _wsClient, renderSourceButton_fn, fetchDebugInfo_fn, populateDemoUrls_fn, setupLogListener_fn, filterLogs_fn, getLogTypeFromEntry_fn, loadLogFilterState_fn, syncCheckboxStates_fn, saveLogFilterState_fn, _handleLogFilterChange, copyLogs_fn, setupDebugOverlay_fn, setupFooterDrawer_fn, detectBrowser_fn, copyDebugInfo_fn, renderLogs_fn, getLogBadge_fn, applyLogLabelAttrs_fn, scrollLatestIntoView_fn, scrollLogsToBottom_fn, migrateFromLocalStorageIfNeeded_fn, setupColorSchemeToggle_fn, applyColorScheme_fn, setupKnobCoordination_fn, _onKnobChange, _onKnobClear, getKnobTarget_fn, getKnobTypeFromEvent_fn, getKnobTypeFromClearEvent_fn, setupTreeStatePersistence_fn, applyTreeState_fn, setupSidebarStatePersistence_fn, findTreeItemById_fn, getTreeNodeId_fn, discoverElementEvents_fn, setupEventCapture_fn, attachEventListeners_fn, observeDemoMutations_fn, _handleElementEvent, getEventDocumentation_fn, findTypeDeclaration_fn, captureEvent_fn, extractEventProperties_fn, renderEvent_fn, selectEvent_fn, buildPropertiesForDisplay_fn, buildPropertyTree_fn, scrollEventsToBottom_fn, isEventsTabActive_fn, filterEvents_fn, eventMatchesTextFilter_fn, getEventRecordById_fn, updateEventFilters_fn, _handleEventTypeFilterChange, _handleElementFilterChange, loadEventFiltersFromStorage_fn, saveEventFilters_fn, clearEvents_fn, copyEvents_fn, setupEventListeners_fn;
 _CemServeChrome_decorators = [t3("cem-serve-chrome")];
-var _CemServeChrome = class _CemServeChrome extends (_a52 = i3, _primaryTagName_dec = [n4({ attribute: "primary-tag-name" })], _demoTitle_dec = [n4({ attribute: "demo-title" })], _packageName_dec = [n4({ attribute: "package-name" })], _canonicalURL_dec = [n4({ attribute: "canonical-url" })], _sourceURL_dec = [n4({ attribute: "source-url" })], _knobs_dec = [n4()], _drawer_dec = [n4()], _drawerHeight_dec2 = [n4({ attribute: "drawer-height" })], _tabsSelected_dec = [n4({ attribute: "tabs-selected" })], _sidebar_dec = [n4()], _hasDescription_dec = [n4({ type: Boolean, attribute: "has-description" })], _a52) {
+var _CemServeChrome = class _CemServeChrome extends (_a50 = i3, _primaryTagName_dec = [n4({ attribute: "primary-tag-name" })], _demoTitle_dec = [n4({ attribute: "demo-title" })], _packageName_dec = [n4({ attribute: "package-name" })], _canonicalURL_dec = [n4({ attribute: "canonical-url" })], _sourceURL_dec = [n4({ attribute: "source-url" })], _knobs_dec = [n4()], _drawer_dec = [n4()], _drawerHeight_dec2 = [n4({ attribute: "drawer-height" })], _tabsSelected_dec = [n4({ attribute: "tabs-selected" })], _sidebar_dec = [n4()], _hasDescription_dec = [n4({ type: Boolean, attribute: "has-description" })], _a50) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _CemServeChrome_instances);
@@ -8340,7 +7518,7 @@ var _CemServeChrome = class _CemServeChrome extends (_a52 = i3, _primaryTagName_
     }
   }
 };
-_init50 = __decoratorStart(_a52);
+_init50 = __decoratorStart(_a50);
 _demoInfoTemplate = new WeakMap();
 _demoGroupTemplate = new WeakMap();
 _demoListTemplate = new WeakMap();
@@ -9670,9 +8848,9 @@ s54.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n\\n#form {\\n  di
 var pf_v6_form_default = s54;
 
 // elements/pf-v6-form/pf-v6-form.ts
-var _horizontal_dec2, _a53, _PfV6Form_decorators, _init51, _horizontal2, _PfV6Form_instances, onSubmit_fn, formElement_get;
+var _horizontal_dec2, _a51, _PfV6Form_decorators, _init51, _horizontal2, _PfV6Form_instances, onSubmit_fn, formElement_get;
 _PfV6Form_decorators = [t3("pf-v6-form")];
-var PfV6Form = class extends (_a53 = i3, _horizontal_dec2 = [n4({ type: Boolean, reflect: true })], _a53) {
+var PfV6Form = class extends (_a51 = i3, _horizontal_dec2 = [n4({ type: Boolean, reflect: true })], _a51) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Form_instances);
@@ -9710,7 +8888,7 @@ var PfV6Form = class extends (_a53 = i3, _horizontal_dec2 = [n4({ type: Boolean,
     return __privateGet(this, _PfV6Form_instances, formElement_get)?.reportValidity() ?? true;
   }
 };
-_init51 = __decoratorStart(_a53);
+_init51 = __decoratorStart(_a51);
 _horizontal2 = new WeakMap();
 _PfV6Form_instances = new WeakSet();
 onSubmit_fn = function(e6) {
@@ -9734,9 +8912,9 @@ s55.replaceSync(JSON.parse('":host {\\n  display: grid;\\n  grid-template-column
 var pf_v6_form_group_default = s55;
 
 // elements/pf-v6-form-group/pf-v6-form-group.ts
-var _PfV6FormGroup_decorators, _init52, _a54;
+var _PfV6FormGroup_decorators, _init52, _a52;
 _PfV6FormGroup_decorators = [t3("pf-v6-form-group")];
-var PfV6FormGroup = class extends (_a54 = i3) {
+var PfV6FormGroup = class extends (_a52 = i3) {
   static styles = pf_v6_form_group_default;
   render() {
     return T`
@@ -9752,7 +8930,7 @@ var PfV6FormGroup = class extends (_a54 = i3) {
     `;
   }
 };
-_init52 = __decoratorStart(_a54);
+_init52 = __decoratorStart(_a52);
 PfV6FormGroup = __decorateElement(_init52, 0, "PfV6FormGroup", _PfV6FormGroup_decorators, PfV6FormGroup);
 __runInitializers(_init52, 1, PfV6FormGroup);
 
@@ -9762,9 +8940,9 @@ s56.replaceSync(JSON.parse('":host {\\n}\\n\\nlabel {\\n  font-weight: var(--pf-
 var pf_v6_form_label_default = s56;
 
 // elements/pf-v6-form-label/pf-v6-form-label.ts
-var _PfV6FormLabel_decorators, _init53, _a55;
+var _PfV6FormLabel_decorators, _init53, _a53;
 _PfV6FormLabel_decorators = [t3("pf-v6-form-label")];
-var PfV6FormLabel = class extends (_a55 = i3) {
+var PfV6FormLabel = class extends (_a53 = i3) {
   static styles = pf_v6_form_label_default;
   render() {
     return T`
@@ -9829,29 +9007,11 @@ var PfV6FormLabel = class extends (_a55 = i3) {
     return control;
   }
 };
-_init53 = __decoratorStart(_a55);
+_init53 = __decoratorStart(_a53);
 PfV6FormLabel = __decorateElement(_init53, 0, "PfV6FormLabel", _PfV6FormLabel_decorators, PfV6FormLabel);
 __runInitializers(_init53, 1, PfV6FormLabel);
 /*! Bundled license information:
 
-@lit-labs/ssr-dom-shim/lib/element-internals.js:
-@lit-labs/ssr-dom-shim/lib/events.js:
-  (**
-   * @license
-   * Copyright 2023 Google LLC
-   * SPDX-License-Identifier: BSD-3-Clause
-   *)
-
-@lit-labs/ssr-dom-shim/lib/css.js:
-  (**
-   * @license
-   * Copyright 2024 Google LLC
-   * SPDX-License-Identifier: BSD-3-Clause
-   *)
-
-@lit-labs/ssr-dom-shim/index.js:
-@lit-labs/ssr/lib/dom-shim.js:
-@lit-labs/ssr/lib/install-global-dom-shim.js:
 @lit/reactive-element/node/css-tag.js:
   (**
    * @license

@@ -238,58 +238,79 @@ func transpileElements() error {
 	return nil
 }
 
-// stubExternals returns an esbuild plugin that replaces /__cem/* imports
-// with empty modules. These are client-only runtime modules (WebSocket,
-// state persistence) that aren't needed for SSR rendering.
-func stubExternals() api.Plugin {
+// stubCemExternals stubs client-only /__cem/* imports for the SSR bundle.
+func stubCemExternals() api.Plugin {
 	return api.Plugin{
-		Name: "stub-externals",
+		Name: "stub-cem-externals",
 		Setup: func(build api.PluginBuild) {
 			build.OnResolve(api.OnResolveOptions{Filter: `^/__cem/`}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
-				return api.OnResolveResult{
-					Path:      args.Path,
-					Namespace: "stub",
-				}, nil
+				return api.OnResolveResult{Path: args.Path, Namespace: "cem-stub"}, nil
 			})
-			build.OnLoad(api.OnLoadOptions{Filter: `.*`, Namespace: "stub"}, func(args api.OnLoadArgs) (api.OnLoadResult, error) {
-				var contents string
-				if strings.Contains(args.Path, "/__cem/") {
-					contents = "export default {}; export class CEMReloadClient {}; export class StatePersistence {}"
-				} else {
-					// Node built-in stubs with working Buffer for base64
-					contents = `export default {};
-export const Buffer = {
-  from(s, encoding) {
-    if (encoding === 'binary') {
-      const arr = new Uint8Array(s.length);
-      for (let i = 0; i < s.length; i++) arr[i] = s.charCodeAt(i);
-      return { toString(enc) {
-        if (enc === 'base64') return btoa(String.fromCharCode(...arr));
-        return s;
-      }};
-    }
-    if (typeof s === 'string') return new TextEncoder().encode(s);
-    return new Uint8Array(s);
-  },
-  isBuffer() { return false; },
-  alloc(n) { return new Uint8Array(n); },
-};
-export const readFileSync = () => "";`
-				}
+			build.OnLoad(api.OnLoadOptions{Filter: `.*`, Namespace: "cem-stub"}, func(_ api.OnLoadArgs) (api.OnLoadResult, error) {
+				contents := "export default {}; export class CEMReloadClient {}; export class StatePersistence {}"
 				return api.OnLoadResult{Contents: &contents, Loader: api.LoaderJS}, nil
 			})
 		},
 	}
 }
 
-// stubNodeBuiltins replaces Node.js built-in imports with stubs for QuickJS.
-// Matches the approach from lit-ssr-wasm's build script.
+// litSsrWasmPlugin resolves @lit-labs/ssr-dom-shim to globalThis re-exports,
+// so the consumer's Lit copy shares the same customElements registry and DOM
+// shims that the lit-ssr-wasm runtime provides.
+// Port of lit-ssr-wasm's src/esbuild-plugin.ts.
+func litSsrWasmPlugin() api.Plugin {
+	shimBridge := `
+export const customElements = globalThis.customElements;
+export const HTMLElement = globalThis.HTMLElement;
+export const Element = globalThis.Element;
+export const CSSStyleSheet = globalThis.CSSStyleSheet;
+export const CustomElementRegistry = globalThis.CustomElementRegistry;
+export const Event = globalThis.Event;
+export const CustomEvent = globalThis.CustomEvent;
+export const EventTarget = globalThis.EventTarget;
+export const ariaMixinAttributes = globalThis.ariaMixinAttributes ?? {};
+export const HYDRATE_INTERNALS_ATTR_PREFIX = globalThis.HYDRATE_INTERNALS_ATTR_PREFIX ?? 'internals-';
+export const ElementInternals = globalThis.ElementInternals ?? class ElementInternals {};
+`
+	return api.Plugin{
+		Name: "lit-ssr-wasm",
+		Setup: func(build api.PluginBuild) {
+			build.OnResolve(api.OnResolveOptions{Filter: `^@lit-labs/ssr-dom-shim`}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
+				return api.OnResolveResult{Path: args.Path, Namespace: "lit-ssr-wasm-shim"}, nil
+			})
+			build.OnLoad(api.OnLoadOptions{Filter: `.*`, Namespace: "lit-ssr-wasm-shim"}, func(_ api.OnLoadArgs) (api.OnLoadResult, error) {
+				return api.OnLoadResult{Contents: &shimBridge, Loader: api.LoaderJS}, nil
+			})
+		},
+	}
+}
+
+// stubNodeBuiltins stubs Node.js built-in modules for QuickJS.
+// Port of lit-ssr-wasm's src/esbuild-stubs.ts.
 func stubNodeBuiltins() api.Plugin {
+	bufferStub := `export default {};
+export const Buffer = {
+  from(x, encoding) {
+    if (typeof x === "string") {
+      if (encoding === "binary") {
+        return { toString(enc) { if (enc === "base64") return globalThis.btoa(x); return x; } };
+      }
+      return new TextEncoder().encode(x);
+    }
+    return new Uint8Array(x);
+  },
+  isBuffer: () => false,
+  alloc: n => new Uint8Array(n),
+};
+export const readFileSync = () => "";`
 	return api.Plugin{
 		Name: "stub-node-builtins",
 		Setup: func(build api.PluginBuild) {
-			build.OnResolve(api.OnResolveOptions{Filter: `^(node:|buffer$|fs$|path$|stream|util$|events$|crypto$|os$|url$|http$|https$|net$|tls$|child_process$|module$|vm$|zlib$|node-fetch)|register-css-hook`}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
-				return api.OnResolveResult{Path: args.Path, Namespace: "stub"}, nil
+			build.OnResolve(api.OnResolveOptions{Filter: `^(?:node:)?(?:buffer|fs|path|stream|util|events|crypto|os|url|http|https|net|tls|child_process|module|vm|zlib|node-fetch)(?:/|$)`}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
+				return api.OnResolveResult{Path: args.Path, Namespace: "node-stub"}, nil
+			})
+			build.OnLoad(api.OnLoadOptions{Filter: `.*`, Namespace: "node-stub"}, func(_ api.OnLoadArgs) (api.OnLoadResult, error) {
+				return api.OnLoadResult{Contents: &bufferStub, Loader: api.LoaderJS}, nil
 			})
 		},
 	}
@@ -335,14 +356,10 @@ func bundleSSR() error {
 		return nil
 	}
 
-	// Self-contained SSR bundle:
-	//   1. ssr-polyfills.js (URL, Buffer for QuickJS)
-	//   2. @lit-labs/ssr DOM shims (HTMLElement, document, CSSStyleSheet, etc.)
-	//   3. lit (loads against the shims)
-	//   4. All chrome components
+	// SSR bundle: lit + all chrome components.
+	// The lit-ssr-wasm runtime provides DOM shims via globalThis.
+	// litSsrWasmPlugin bridges @lit-labs/ssr-dom-shim to those globals.
 	var imports strings.Builder
-	fmt.Fprintln(&imports, "import './elements/ssr-polyfills.js';")
-	fmt.Fprintln(&imports, "import '@lit-labs/ssr/lib/install-global-dom-shim.js';")
 	for _, entry := range entries {
 		fmt.Fprintf(&imports, "import './%s';\n", entry)
 	}
@@ -368,7 +385,7 @@ func bundleSSR() error {
 		LogLevel:   api.LogLevelWarning,
 		NodePaths:  []string{"elements/node_modules"},
 		Define:     map[string]string{"process.env.NODE_ENV": `"production"`},
-		Plugins:    []api.Plugin{litCSSPlugin(), stubExternals(), stubNodeBuiltins()},
+		Plugins:    []api.Plugin{litCSSPlugin(), stubCemExternals(), litSsrWasmPlugin(), stubNodeBuiltins()},
 	})
 
 	if len(result.Errors) > 0 {

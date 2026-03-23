@@ -51,9 +51,9 @@ require github.com/tetratelabs/wazero v1.9.0 // indirect
 require (
 	atomicgo.dev/cursor v0.2.0 // indirect
 	atomicgo.dev/schedule v0.1.0 // indirect
-	bennypowers.dev/lit-ssr-go v0.0.3
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/bennypowers/lit-ssr-wasm/go v0.1.1
 	github.com/bitfield/gotestdox v0.2.2 // indirect
 	github.com/bits-and-blooms/bitset v1.14.3 // indirect
 	github.com/charmbracelet/lipgloss v1.0.0 // indirect
@@ -116,5 +116,3 @@ tool (
 	github.com/mfridman/tparse
 	gotest.tools/gotestsum
 )
-
-replace bennypowers.dev/lit-ssr-go => /home/bennyp/Developer/lit-ssr-wasm-runtime-only/go

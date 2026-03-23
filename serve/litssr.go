@@ -13,7 +13,7 @@ import (
 	"context"
 	"fmt"
 
-	litssr "bennypowers.dev/lit-ssr-go"
+	litssr "github.com/bennypowers/lit-ssr-wasm/go"
 	"bennypowers.dev/cem/serve/middleware/routes"
 )
 
