@@ -23,6 +23,8 @@ import (
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/evanw/esbuild/pkg/api"
+
+	litssr "bennypowers.dev/lit-ssr-wasm/go"
 )
 
 func main() {
@@ -45,7 +47,24 @@ func run() error {
 	if err := bundleSSR(); err != nil {
 		return fmt.Errorf("bundle SSR: %w", err)
 	}
+	if err := compileSSRBytecode(); err != nil {
+		return fmt.Errorf("compile SSR bytecode: %w", err)
+	}
 	return nil
+}
+
+// compileSSRBytecode compiles the SSR bundle to QuickJS bytecode for
+// faster worker init (~100ms vs ~1s per worker).
+func compileSSRBytecode() error {
+	source, err := os.ReadFile("middleware/routes/templates/ssr-bundle.js")
+	if err != nil {
+		return err
+	}
+	bytecode, err := litssr.CompileSource(context.Background(), string(source))
+	if err != nil {
+		return fmt.Errorf("compile bytecode: %w", err)
+	}
+	return os.WriteFile("middleware/routes/templates/ssr-bundle.qbc", bytecode, 0o644)
 }
 
 // generateManifests runs cem generate on the element sources to produce

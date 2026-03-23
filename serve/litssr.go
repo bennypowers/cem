@@ -14,8 +14,9 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"testing"
 
-	litssr "github.com/bennypowers/lit-ssr-wasm/go"
+	litssr "bennypowers.dev/lit-ssr-wasm/go"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/serve/middleware/routes"
 )
@@ -29,17 +30,12 @@ type litSSRRenderer interface {
 //go:embed elements/patternfly/custom-elements.json elements/chrome/custom-elements.json
 var chromeManifestsFS embed.FS
 
-// initLitSSR initializes the Lit SSR renderer with the pre-bundled
-// SSR source embedded in the binary. Element tag names are read from
-// the generated custom-elements.json manifests.
+// initLitSSR initializes the Lit SSR renderer from pre-compiled
+// QuickJS bytecode embedded in the binary. Bytecode loading skips
+// the JS parse+compile phase, reducing init from ~1s to ~100ms.
 func (s *Server) initLitSSR(ctx context.Context) error {
-	source, err := buildComponentSource()
-	if err != nil {
-		return fmt.Errorf("build component source: %w", err)
-	}
-
-	if source == "" {
-		s.logger.Warning("No Lit element sources found, SSR disabled")
+	// Skip SSR in tests - no test exercises SSR and init adds ~1s per server
+	if testing.Testing() {
 		return nil
 	}
 
@@ -49,11 +45,28 @@ func (s *Server) initLitSSR(ctx context.Context) error {
 		return nil
 	}
 
-	// Single worker is sufficient for the dev server (one user, ~3500 renders/sec).
-	// This keeps init to ~1s instead of ~6s with NumCPU workers.
-	renderer, err := litssr.NewWithElements(ctx, source, elements, 1)
-	if err != nil {
-		return fmt.Errorf("init lit-ssr renderer: %w", err)
+	var renderer *litssr.Renderer
+
+	// Try bytecode first (fast path: ~100ms vs ~1s for source eval)
+	if bytecode, err := routes.TemplatesFS.ReadFile("templates/ssr-bundle.qbc"); err == nil && len(bytecode) > 0 {
+		renderer, err = litssr.NewFromBytecode(ctx, bytecode, elements, 1)
+		if err != nil {
+			s.logger.Warning("Bytecode init failed, falling back to source: %v", err)
+			renderer = nil
+		}
+	}
+
+	// Fallback to source eval
+	if renderer == nil {
+		source, err := buildComponentSource()
+		if err != nil || source == "" {
+			s.logger.Warning("No Lit element sources found, SSR disabled")
+			return nil
+		}
+		renderer, err = litssr.NewWithElements(ctx, source, elements, 1)
+		if err != nil {
+			return fmt.Errorf("init lit-ssr renderer: %w", err)
+		}
 	}
 
 	s.litSSR = renderer
