@@ -2,6 +2,7 @@ import { LitElement, html, nothing } from 'lit';
 import { customElement } from 'lit/decorators/custom-element.js';
 import { property } from 'lit/decorators/property.js';
 import { state } from 'lit/decorators/state.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 
 import styles from './cem-serve-chrome.css' with { type: 'css' };
 
@@ -567,7 +568,7 @@ export class CemServeChrome extends LitElement {
                   </div>
                 </pf-v6-tab>
                 <pf-v6-tab title="Health">
-                  <cem-health-panel ${this.primaryTagName ? html`component="${this.primaryTagName}"` : nothing}>
+                  <cem-health-panel component=${ifDefined(this.primaryTagName)}>
                   </cem-health-panel>
                 </pf-v6-tab>
               </pf-v6-tabs>

@@ -7393,7 +7393,7 @@ var _CemServeChrome = class _CemServeChrome extends (_a50 = i3, _primaryTagName_
                   </div>
                 </pf-v6-tab>
                 <pf-v6-tab title="Health">
-                  <cem-health-panel ${this.primaryTagName ? T`component="${this.primaryTagName}"` : A}>
+                  <cem-health-panel component=${o7(this.primaryTagName)}>
                   </cem-health-panel>
                 </pf-v6-tab>
               </pf-v6-tabs>
