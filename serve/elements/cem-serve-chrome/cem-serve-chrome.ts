@@ -686,8 +686,9 @@ export class CemServeChrome extends LitElement {
   }
 
   async connectedCallback() {
-    // Load client-only modules before super.connectedCallback() so they're
-    // available when Lit's update cycle runs (firstUpdated, etc.)
+    super.connectedCallback();
+
+    // Load client-only modules dynamically (not available during SSR)
     if (!this.#clientModulesLoaded) {
       [{ CEMReloadClient }, { StatePersistence }] = await Promise.all([
         // @ts-ignore -- plain JS modules served at runtime by Go server
@@ -700,10 +701,8 @@ export class CemServeChrome extends LitElement {
         console.error('[cem-serve] Failed to load health-badges:', e));
       this.#clientModulesLoaded = true;
       this.#initWsClient();
+      this.#migrateFromLocalStorageIfNeeded();
     }
-
-    super.connectedCallback();
-    this.#migrateFromLocalStorageIfNeeded();
   }
 
   firstUpdated() {

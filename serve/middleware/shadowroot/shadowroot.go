@@ -64,6 +64,7 @@ func New(logger types.Logger, renderer SSRRenderer) middleware.Middleware {
 			}
 
 			maps.Copy(w.Header(), rec.Header())
+			w.Header().Del("Content-Length") // SSR changes body size
 			w.WriteHeader(rec.StatusCode())
 			_, _ = w.Write([]byte(processed))
 		})

@@ -5699,7 +5699,7 @@ var _PfV6Page = class _PfV6Page extends (_a39 = i3, _sidebarCollapsed_dec = [n4(
     __privateAdd(this, _PfV6Page_instances);
     __privateAdd(this, _sidebarCollapsed, __runInitializers(_init39, 8, this, false)), __runInitializers(_init39, 11, this);
     __privateAdd(this, _clickOutsideHandler, (event) => {
-      if (!_PfV6Page.match.matches && !this.sidebarCollapsed) {
+      if (!_PfV6Page.match?.matches && !this.sidebarCollapsed) {
         const sidebar = this.querySelector("pf-v6-page-sidebar");
         const mastheadToggle = this.querySelector("pf-v6-masthead")?.shadowRoot?.getElementById("toggle-button");
         if (!event.composedPath().some((node) => node === sidebar || node === mastheadToggle)) {
@@ -7475,6 +7475,7 @@ var _CemServeChrome = class _CemServeChrome extends (_a50 = i3, _primaryTagName_
     `;
   }
   async connectedCallback() {
+    super.connectedCallback();
     if (!__privateGet(this, _clientModulesLoaded)) {
       [{ CEMReloadClient: CEMReloadClient4 }, { StatePersistence: StatePersistence4 }] = await Promise.all([
         // @ts-ignore -- plain JS modules served at runtime by Go server
@@ -7485,9 +7486,8 @@ var _CemServeChrome = class _CemServeChrome extends (_a50 = i3, _primaryTagName_
       Promise.resolve().then(() => (init_health_badges(), health_badges_exports)).catch((e6) => console.error("[cem-serve] Failed to load health-badges:", e6));
       __privateSet(this, _clientModulesLoaded, true);
       __privateMethod(this, _CemServeChrome_instances, initWsClient_fn).call(this);
+      __privateMethod(this, _CemServeChrome_instances, migrateFromLocalStorageIfNeeded_fn).call(this);
     }
-    super.connectedCallback();
-    __privateMethod(this, _CemServeChrome_instances, migrateFromLocalStorageIfNeeded_fn).call(this);
   }
   firstUpdated() {
     __privateMethod(this, _CemServeChrome_instances, setupDebugOverlay_fn).call(this);

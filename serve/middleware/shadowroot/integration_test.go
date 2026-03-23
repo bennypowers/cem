@@ -46,7 +46,7 @@ func TestMiddleware_InjectsDSD(t *testing.T) {
 
 	handler := mw(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte("<html><body><my-element>hello</my-element></body></html>"))
+		_, _ = w.Write([]byte("<html><body><my-element>hello</my-element></body></html>"))
 	}))
 
 	req := httptest.NewRequest("GET", "/", nil)
@@ -65,7 +65,7 @@ func TestMiddleware_SkipsNonHTML(t *testing.T) {
 
 	handler := mw(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/javascript")
-		w.Write([]byte("console.log('hello')"))
+		_, _ = w.Write([]byte("console.log('hello')"))
 	}))
 
 	req := httptest.NewRequest("GET", "/app.js", nil)
@@ -83,7 +83,7 @@ func TestMiddleware_SkipsCemRoutes(t *testing.T) {
 
 	handler := mw(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte("<my-element>hello</my-element>"))
+		_, _ = w.Write([]byte("<my-element>hello</my-element>"))
 	}))
 
 	req := httptest.NewRequest("GET", "/__cem/elements/foo/foo.js", nil)
@@ -101,7 +101,7 @@ func TestMiddleware_NilRenderer(t *testing.T) {
 
 	handler := mw(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte("<my-element>hello</my-element>"))
+		_, _ = w.Write([]byte("<my-element>hello</my-element>"))
 	}))
 
 	req := httptest.NewRequest("GET", "/", nil)

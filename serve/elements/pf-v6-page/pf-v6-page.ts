@@ -27,7 +27,7 @@ export class PfV6Page extends LitElement {
   accessor sidebarCollapsed = false;
 
   #clickOutsideHandler = (event: MouseEvent) => {
-    if (!PfV6Page.match.matches && !this.sidebarCollapsed) {
+    if (!PfV6Page.match?.matches && !this.sidebarCollapsed) {
       const sidebar = this.querySelector('pf-v6-page-sidebar');
       const mastheadToggle = this.querySelector('pf-v6-masthead')
         ?.shadowRoot?.getElementById('toggle-button');

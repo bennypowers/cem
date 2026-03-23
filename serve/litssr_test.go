@@ -141,8 +141,8 @@ func TestSSR_HydrationDigests(t *testing.T) {
 
 	// Base64 uses A-Z, a-z, 0-9, +, /, = only
 	for _, c := range digest {
-		if !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
-			(c >= '0' && c <= '9') || c == '+' || c == '/' || c == '=') {
+		if (c < 'A' || c > 'Z') && (c < 'a' || c > 'z') &&
+			(c < '0' || c > '9') && c != '+' && c != '/' && c != '=' {
 			t.Errorf("digest %q contains non-base64 character %q", digest, string(c))
 			break
 		}
@@ -236,7 +236,7 @@ func TestSSR_BytecodeLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewFromBytecode: %v", err)
 	}
-	t.Cleanup(func() { r.Close(context.Background()) })
+	t.Cleanup(func() { _ = r.Close(context.Background()) })
 
 	// Render and verify
 	out := render(t, r, "<pf-v6-badge>42</pf-v6-badge>")
