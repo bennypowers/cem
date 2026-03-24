@@ -28,7 +28,7 @@ describe('cem-serve-knob-group', () => {
       expect(element).to.be.instanceOf(HTMLElement);
     });
 
-    it('extends CemElement', () => {
+    it('extends LitElement', () => {
       expect(el.constructor.name).to.equal('CemServeKnobGroup');
       expect(el.shadowRoot).to.exist;
     });

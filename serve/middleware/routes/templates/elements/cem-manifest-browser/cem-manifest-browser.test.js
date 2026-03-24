@@ -30,7 +30,7 @@ describe('cem-manifest-browser', () => {
     el = document.createElement('cem-manifest-browser');
     document.body.appendChild(el);
 
-    // Wait for CemElement to load template from real server
+    // Wait for Lit to render
     await el.updateComplete;
   });
 
@@ -49,7 +49,7 @@ describe('cem-manifest-browser', () => {
       expect(element).to.be.instanceOf(HTMLElement);
     });
 
-    it('extends CemElement', () => {
+    it('extends LitElement', () => {
       expect(el.constructor.name).to.equal('CemManifestBrowser');
       expect(el.shadowRoot).to.exist;
     });
