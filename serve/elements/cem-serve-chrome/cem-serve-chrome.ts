@@ -326,7 +326,6 @@ export class CemServeChrome extends LitElement {
   /* c8 ignore stop */
 
   #wsClient: any;
-  #clientModulesLoaded = false;
 
   #initWsClient() {
     this.#wsClient = new CEMReloadClient({
@@ -686,27 +685,40 @@ export class CemServeChrome extends LitElement {
     `;
   }
 
-  async connectedCallback() {
-    // Load client-only modules BEFORE super.connectedCallback() so they're
-    // available when Lit's update cycle runs. firstUpdated() calls
-    // #setupTreeStatePersistence and #setupSidebarStatePersistence which
-    // reference StatePersistence.
-    if (!this.#clientModulesLoaded) {
-      [{ CEMReloadClient }, { StatePersistence }] = await Promise.all([
-        // @ts-ignore -- plain JS modules served at runtime by Go server
-        import('/__cem/websocket-client.js'),
-        // @ts-ignore
-        import('/__cem/state-persistence.js'),
-      ]);
+  /** Resolves when client-only modules are loaded. */
+  #modulesReady: Promise<void> = this.#loadClientModules();
+
+  #loadClientModules(): Promise<void> {
+    return Promise.all([
+      // @ts-ignore -- plain JS modules served at runtime by Go server
+      import('/__cem/websocket-client.js'),
+      // @ts-ignore
+      import('/__cem/state-persistence.js'),
+    ]).then(([ws, sp]) => {
+      CEMReloadClient = ws.CEMReloadClient;
+      StatePersistence = sp.StatePersistence;
       // @ts-ignore
       import('/__cem/health-badges.js').catch((e: unknown) =>
         console.error('[cem-serve] Failed to load health-badges:', e));
-      this.#clientModulesLoaded = true;
-    }
+    }).catch((e: unknown) => {
+      console.error('[cem-serve] Failed to load client modules:', e);
+      // Degraded fallbacks so the component still renders
+      CEMReloadClient ??= class { init() {} retry() {} destroy() {} } as any;
+      StatePersistence ??= {
+        getState: () => ({ colorScheme: 'system' }),
+        updateState() {},
+        getTreeState: () => ({ expanded: [], selected: null }),
+        setTreeState() {},
+        migrateFromLocalStorage() {},
+      };
+    });
+  }
 
+  async connectedCallback() {
+    // Modules must load before super so firstUpdated() can use StatePersistence
+    await this.#modulesReady;
     super.connectedCallback();
 
-    // Init after super so the element is fully connected
     if (this.#wsClient == null) {
       this.#initWsClient();
     }

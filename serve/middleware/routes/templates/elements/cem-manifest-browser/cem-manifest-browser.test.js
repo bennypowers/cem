@@ -31,7 +31,7 @@ describe('cem-manifest-browser', () => {
     document.body.appendChild(el);
 
     // Wait for CemElement to load template from real server
-    await el.rendered;
+    await el.updateComplete;
   });
 
   afterEach(() => {
@@ -144,7 +144,7 @@ describe('cem-manifest-browser', () => {
       drawer = el.shadowRoot.getElementById('drawer');
 
       // Trigger manifest reload
-      await virtualTree.rendered;
+      await virtualTree.updateComplete;
     });
 
     it('listens for item-select events from virtual tree', async () => {
@@ -197,7 +197,7 @@ describe('cem-manifest-browser', () => {
     beforeEach(async () => {
       searchInput = el.shadowRoot.getElementById('search');
       virtualTree = el.shadowRoot.getElementById('virtual-tree');
-      await virtualTree.rendered;
+      await virtualTree.updateComplete;
     });
 
     it('shows clear button when search has value', () => {
@@ -314,7 +314,7 @@ describe('cem-manifest-browser', () => {
 
     beforeEach(async () => {
       virtualTree = el.shadowRoot.getElementById('virtual-tree');
-      await virtualTree.rendered;
+      await virtualTree.updateComplete;
     });
 
     it('delegates expandAll to virtual tree', () => {

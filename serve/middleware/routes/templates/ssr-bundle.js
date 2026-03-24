@@ -7025,7 +7025,7 @@ var CemLogsEvent = class extends Event {
     this.logs = logs;
   }
 };
-var _hasDescription_dec, _sidebar_dec, _tabsSelected_dec, _drawerHeight_dec2, _drawer_dec, _knobs_dec, _sourceURL_dec, _canonicalURL_dec, _packageName_dec, _demoTitle_dec, _primaryTagName_dec, _a50, _CemServeChrome_decorators, _demoInfoTemplate, _demoGroupTemplate, _demoListTemplate, _logEntryTemplate, _eventEntryTemplate, _init50, _primaryTagName, _demoTitle, _packageName, _canonicalURL, _sourceURL, _knobs, _drawer, _drawerHeight2, _tabsSelected, _sidebar, _hasDescription2, _CemServeChrome_instances, $_fn2, $$_fn, _logContainer, _drawerOpen, _initialLogsFetched, _isInitialLoad, _debugData, _elementEventMap, _manifest, _capturedEvents, _maxCapturedEvents, _eventList, _eventDetailHeader, _eventDetailBody, _selectedEventId, _eventsFilterValue, _eventsFilterDebounceTimer, _eventTypeFilters, _elementFilters, _discoveredElements, _handleLogsEvent, _handleTreeExpand, _handleTreeCollapse, _handleTreeSelect, _copyLogsFeedbackTimeout, _copyDebugFeedbackTimeout, _copyEventsFeedbackTimeout, _logsFilterValue, _logsFilterDebounceTimer, _logLevelFilters, _logLevelDropdown, _observer2, _wsClient, _clientModulesLoaded, initWsClient_fn, renderSourceButton_fn, fetchDebugInfo_fn, populateDemoUrls_fn, setupLogListener_fn, filterLogs_fn, getLogTypeFromEntry_fn, loadLogFilterState_fn, syncCheckboxStates_fn, saveLogFilterState_fn, _handleLogFilterChange, copyLogs_fn, setupDebugOverlay_fn, setupFooterDrawer_fn, detectBrowser_fn, copyDebugInfo_fn, renderLogs_fn, getLogBadge_fn, applyLogLabelAttrs_fn, scrollLatestIntoView_fn, scrollLogsToBottom_fn, migrateFromLocalStorageIfNeeded_fn, setupColorSchemeToggle_fn, applyColorScheme_fn, setupKnobCoordination_fn, _onKnobChange, _onKnobClear, getKnobTarget_fn, getKnobTypeFromEvent_fn, getKnobTypeFromClearEvent_fn, setupTreeStatePersistence_fn, applyTreeState_fn, setupSidebarStatePersistence_fn, findTreeItemById_fn, getTreeNodeId_fn, discoverElementEvents_fn, setupEventCapture_fn, attachEventListeners_fn, observeDemoMutations_fn, _handleElementEvent, getEventDocumentation_fn, findTypeDeclaration_fn, captureEvent_fn, extractEventProperties_fn, renderEvent_fn, selectEvent_fn, buildPropertiesForDisplay_fn, buildPropertyTree_fn, scrollEventsToBottom_fn, isEventsTabActive_fn, filterEvents_fn, eventMatchesTextFilter_fn, getEventRecordById_fn, updateEventFilters_fn, _handleEventTypeFilterChange, _handleElementFilterChange, loadEventFiltersFromStorage_fn, saveEventFilters_fn, clearEvents_fn, copyEvents_fn, setupEventListeners_fn;
+var _hasDescription_dec, _sidebar_dec, _tabsSelected_dec, _drawerHeight_dec2, _drawer_dec, _knobs_dec, _sourceURL_dec, _canonicalURL_dec, _packageName_dec, _demoTitle_dec, _primaryTagName_dec, _a50, _CemServeChrome_decorators, _demoInfoTemplate, _demoGroupTemplate, _demoListTemplate, _logEntryTemplate, _eventEntryTemplate, _init50, _primaryTagName, _demoTitle, _packageName, _canonicalURL, _sourceURL, _knobs, _drawer, _drawerHeight2, _tabsSelected, _sidebar, _hasDescription2, _CemServeChrome_instances, $_fn2, $$_fn, _logContainer, _drawerOpen, _initialLogsFetched, _isInitialLoad, _debugData, _elementEventMap, _manifest, _capturedEvents, _maxCapturedEvents, _eventList, _eventDetailHeader, _eventDetailBody, _selectedEventId, _eventsFilterValue, _eventsFilterDebounceTimer, _eventTypeFilters, _elementFilters, _discoveredElements, _handleLogsEvent, _handleTreeExpand, _handleTreeCollapse, _handleTreeSelect, _copyLogsFeedbackTimeout, _copyDebugFeedbackTimeout, _copyEventsFeedbackTimeout, _logsFilterValue, _logsFilterDebounceTimer, _logLevelFilters, _logLevelDropdown, _observer2, _wsClient, initWsClient_fn, renderSourceButton_fn, _modulesReady, loadClientModules_fn, fetchDebugInfo_fn, populateDemoUrls_fn, setupLogListener_fn, filterLogs_fn, getLogTypeFromEntry_fn, loadLogFilterState_fn, syncCheckboxStates_fn, saveLogFilterState_fn, _handleLogFilterChange, copyLogs_fn, setupDebugOverlay_fn, setupFooterDrawer_fn, detectBrowser_fn, copyDebugInfo_fn, renderLogs_fn, getLogBadge_fn, applyLogLabelAttrs_fn, scrollLatestIntoView_fn, scrollLogsToBottom_fn, migrateFromLocalStorageIfNeeded_fn, setupColorSchemeToggle_fn, applyColorScheme_fn, setupKnobCoordination_fn, _onKnobChange, _onKnobClear, getKnobTarget_fn, getKnobTypeFromEvent_fn, getKnobTypeFromClearEvent_fn, setupTreeStatePersistence_fn, applyTreeState_fn, setupSidebarStatePersistence_fn, findTreeItemById_fn, getTreeNodeId_fn, discoverElementEvents_fn, setupEventCapture_fn, attachEventListeners_fn, observeDemoMutations_fn, _handleElementEvent, getEventDocumentation_fn, findTypeDeclaration_fn, captureEvent_fn, extractEventProperties_fn, renderEvent_fn, selectEvent_fn, buildPropertiesForDisplay_fn, buildPropertyTree_fn, scrollEventsToBottom_fn, isEventsTabActive_fn, filterEvents_fn, eventMatchesTextFilter_fn, getEventRecordById_fn, updateEventFilters_fn, _handleEventTypeFilterChange, _handleElementFilterChange, loadEventFiltersFromStorage_fn, saveEventFilters_fn, clearEvents_fn, copyEvents_fn, setupEventListeners_fn;
 _CemServeChrome_decorators = [t3("cem-serve-chrome")];
 var _CemServeChrome = class _CemServeChrome extends (_a50 = i3, _primaryTagName_dec = [n4({ attribute: "primary-tag-name" })], _demoTitle_dec = [n4({ attribute: "demo-title" })], _packageName_dec = [n4({ attribute: "package-name" })], _canonicalURL_dec = [n4({ attribute: "canonical-url" })], _sourceURL_dec = [n4({ attribute: "source-url" })], _knobs_dec = [n4()], _drawer_dec = [n4()], _drawerHeight_dec2 = [n4({ attribute: "drawer-height" })], _tabsSelected_dec = [n4({ attribute: "tabs-selected" })], _sidebar_dec = [n4()], _hasDescription_dec = [n4({ type: Boolean, attribute: "has-description" })], _a50) {
   constructor() {
@@ -7101,7 +7101,8 @@ var _CemServeChrome = class _CemServeChrome extends (_a50 = i3, _primaryTagName_
     }));
     /* c8 ignore stop */
     __privateAdd(this, _wsClient);
-    __privateAdd(this, _clientModulesLoaded, false);
+    /** Resolves when client-only modules are loaded. */
+    __privateAdd(this, _modulesReady, __privateMethod(this, _CemServeChrome_instances, loadClientModules_fn).call(this));
     __privateAdd(this, _handleLogFilterChange, (event) => {
       const { value, checked } = event;
       if (checked) {
@@ -7475,16 +7476,7 @@ var _CemServeChrome = class _CemServeChrome extends (_a50 = i3, _primaryTagName_
     `;
   }
   async connectedCallback() {
-    if (!__privateGet(this, _clientModulesLoaded)) {
-      [{ CEMReloadClient: CEMReloadClient4 }, { StatePersistence: StatePersistence4 }] = await Promise.all([
-        // @ts-ignore -- plain JS modules served at runtime by Go server
-        Promise.resolve().then(() => (init_websocket_client(), websocket_client_exports)),
-        // @ts-ignore
-        Promise.resolve().then(() => (init_state_persistence(), state_persistence_exports))
-      ]);
-      Promise.resolve().then(() => (init_health_badges(), health_badges_exports)).catch((e6) => console.error("[cem-serve] Failed to load health-badges:", e6));
-      __privateSet(this, _clientModulesLoaded, true);
-    }
+    await __privateGet(this, _modulesReady);
     super.connectedCallback();
     if (__privateGet(this, _wsClient) == null) {
       __privateMethod(this, _CemServeChrome_instances, initWsClient_fn).call(this);
@@ -7604,7 +7596,6 @@ _logLevelFilters = new WeakMap();
 _logLevelDropdown = new WeakMap();
 _observer2 = new WeakMap();
 _wsClient = new WeakMap();
-_clientModulesLoaded = new WeakMap();
 initWsClient_fn = function() {
   __privateSet(this, _wsClient, new CEMReloadClient4({
     jitterMax: 1e3,
@@ -7678,6 +7669,39 @@ renderSourceButton_fn = function() {
         </pf-v6-button>
       </pf-v6-toolbar-item>
     `;
+};
+_modulesReady = new WeakMap();
+loadClientModules_fn = function() {
+  return Promise.all([
+    // @ts-ignore -- plain JS modules served at runtime by Go server
+    Promise.resolve().then(() => (init_websocket_client(), websocket_client_exports)),
+    // @ts-ignore
+    Promise.resolve().then(() => (init_state_persistence(), state_persistence_exports))
+  ]).then(([ws, sp]) => {
+    CEMReloadClient4 = ws.CEMReloadClient;
+    StatePersistence4 = sp.StatePersistence;
+    Promise.resolve().then(() => (init_health_badges(), health_badges_exports)).catch((e6) => console.error("[cem-serve] Failed to load health-badges:", e6));
+  }).catch((e6) => {
+    console.error("[cem-serve] Failed to load client modules:", e6);
+    CEMReloadClient4 ??= class {
+      init() {
+      }
+      retry() {
+      }
+      destroy() {
+      }
+    };
+    StatePersistence4 ??= {
+      getState: () => ({ colorScheme: "system" }),
+      updateState() {
+      },
+      getTreeState: () => ({ expanded: [], selected: null }),
+      setTreeState() {
+      },
+      migrateFromLocalStorage() {
+      }
+    };
+  });
 };
 fetchDebugInfo_fn = async function() {
   const browserEl = __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "debug-browser");

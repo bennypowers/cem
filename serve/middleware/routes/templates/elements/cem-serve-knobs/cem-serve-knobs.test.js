@@ -15,7 +15,7 @@ describe('cem-serve-knobs', () => {
     document.body.appendChild(el);
 
     // Wait for CemElement to load template from real server
-    await el.rendered;
+    await el.updateComplete;
   });
 
   afterEach(() => {

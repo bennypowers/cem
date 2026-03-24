@@ -74,10 +74,8 @@ describe('cem-serve-chrome', () => {
     el = document.createElement('cem-serve-chrome');
     document.body.appendChild(el);
 
-    // Wait for Lit to render and async connectedCallback to complete
-    await el.updateComplete;
-    // connectedCallback awaits dynamic imports before super, so
-    // wait for another update cycle after modules load
+    // connectedCallback awaits #modulesReady before super.connectedCallback(),
+    // so by the time updateComplete resolves, modules are loaded and rendered
     await el.updateComplete;
   });
 
@@ -681,7 +679,7 @@ describe('cem-serve-chrome', () => {
 
       const newEl = document.createElement('cem-serve-chrome');
       document.body.appendChild(newEl);
-      await newEl.rendered;
+      await newEl.updateComplete;
 
       // Should not throw
       expect(newEl).to.exist;
@@ -716,7 +714,7 @@ describe('cem-serve-chrome', () => {
         event.open = !wasOpen;
         drawer.dispatchEvent(event);
 
-        await el.rendered;
+        await el.updateComplete;
 
         // Verify state changed
         expect(el).to.exist;
@@ -752,7 +750,7 @@ describe('cem-serve-chrome', () => {
       tabChangeEvent.selectedIndex = 3;
       tabs.dispatchEvent(tabChangeEvent);
 
-      await el.rendered;
+      await el.updateComplete;
 
       // Wait for requestAnimationFrame to complete
       await new Promise(resolve => requestAnimationFrame(resolve));
@@ -806,7 +804,7 @@ describe('cem-serve-chrome', () => {
       // Click first event button - without event records, selection won't happen
       // but we verify the click handler is wired up and doesn't throw
       button1.click();
-      await el.rendered;
+      await el.updateComplete;
 
       // Without event records, selection doesn't occur (guard clause returns early)
       expect(button1.classList.contains('selected')).to.be.false;
@@ -828,7 +826,7 @@ describe('cem-serve-chrome', () => {
       button.dataset.eventId = 'mock-event';
 
       eventList.appendChild(button);
-      await el.rendered;
+      await el.updateComplete;
 
       // Verify it's a proper button element
       expect(button.tagName.toLowerCase()).to.equal('button');
@@ -866,7 +864,7 @@ describe('cem-serve-chrome', () => {
       // Buttons natively handle Enter/Space keypresses by dispatching click events
       // Simulate a click (which is what happens on Enter/Space)
       button.click();
-      await el.rendered;
+      await el.updateComplete;
 
       // Button should be interactive
       expect(button).to.exist;
@@ -948,7 +946,7 @@ describe('cem-serve-chrome', () => {
         const debugButton = el.shadowRoot.querySelector('#debug-info');
         if (debugButton) {
           debugButton.click();
-          await el.rendered;
+          await el.updateComplete;
 
           const browser = el.shadowRoot.querySelector('#debug-browser');
           expect(browser).to.exist;
@@ -967,7 +965,7 @@ describe('cem-serve-chrome', () => {
         const debugButton = el.shadowRoot.querySelector('#debug-info');
         if (debugButton) {
           debugButton.click();
-          await el.rendered;
+          await el.updateComplete;
 
           const browser = el.shadowRoot.querySelector('#debug-browser');
           expect(browser).to.exist;
@@ -986,7 +984,7 @@ describe('cem-serve-chrome', () => {
         const debugButton = el.shadowRoot.querySelector('#debug-info');
         if (debugButton) {
           debugButton.click();
-          await el.rendered;
+          await el.updateComplete;
 
           const browser = el.shadowRoot.querySelector('#debug-browser');
           expect(browser).to.exist;
@@ -1005,7 +1003,7 @@ describe('cem-serve-chrome', () => {
         const debugButton = el.shadowRoot.querySelector('#debug-info');
         if (debugButton) {
           debugButton.click();
-          await el.rendered;
+          await el.updateComplete;
 
           const browser = el.shadowRoot.querySelector('#debug-browser');
           expect(browser).to.exist;
@@ -1142,7 +1140,7 @@ describe('cem-serve-chrome', () => {
 
         if (debugButton && debugModal) {
           debugButton.click();
-          await el.rendered;
+          await el.updateComplete;
 
           // Modal should be triggered to open (showModal called)
           expect(debugModal).to.exist;
@@ -1158,10 +1156,10 @@ describe('cem-serve-chrome', () => {
 
         if (debugButton && debugModal && closeButton) {
           debugButton.click();
-          await el.rendered;
+          await el.updateComplete;
 
           closeButton.click();
-          await el.rendered;
+          await el.updateComplete;
 
           expect(debugModal).to.exist;
         } else {
@@ -1199,7 +1197,7 @@ describe('cem-serve-chrome', () => {
           const debugButton = el.shadowRoot.querySelector('#debug-info');
           if (debugButton) {
             debugButton.click();
-            await el.rendered;
+            await el.updateComplete;
 
             // Wait for fetch to complete
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -1237,7 +1235,7 @@ describe('cem-serve-chrome', () => {
           const debugButton = el.shadowRoot.querySelector('#debug-info');
           if (debugButton) {
             debugButton.click();
-            await el.rendered;
+            await el.updateComplete;
 
             // Wait for fetch to fail
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -1271,12 +1269,12 @@ describe('cem-serve-chrome', () => {
           message: 'Test log message'
         }]));
 
-        await el.rendered;
+        await el.updateComplete;
 
         const copyButton = el.shadowRoot.querySelector('#copy-logs');
         if (copyButton) {
           copyButton.click();
-          await el.rendered;
+          await el.updateComplete;
 
           expect(writeTextStub.called).to.be.true;
         } else {
@@ -1288,7 +1286,7 @@ describe('cem-serve-chrome', () => {
         const copyButton = el.shadowRoot.querySelector('#copy-events');
         if (copyButton) {
           copyButton.click();
-          await el.rendered;
+          await el.updateComplete;
 
           // Copy should not be called when there are no visible events
           expect(writeTextStub.called).to.be.false;
@@ -1349,7 +1347,7 @@ describe('cem-serve-chrome', () => {
           selectEvent.checked = true;
           logLevelFilter.dispatchEvent(selectEvent);
 
-          await el.rendered;
+          await el.updateComplete;
 
           expect(el.shadowRoot.querySelector('#log-container')).to.exist;
         } else {
@@ -1374,7 +1372,7 @@ describe('cem-serve-chrome', () => {
           document.body.appendChild(newEl);
 
           // Wait for template to load
-          await newEl.rendered;
+          await newEl.updateComplete;
 
           // Migration marker should NOT be set again
           expect(setItemStub.calledWith('cem-serve-migrated-to-cookies')).to.be.false;
@@ -1464,7 +1462,7 @@ describe('cem-serve-chrome', () => {
 
         // Click clear button
         clearButton.click();
-        await el.rendered;
+        await el.updateComplete;
 
         // Verify all events are cleared
         expect(eventList.children.length).to.equal(0);
@@ -1549,10 +1547,10 @@ describe('cem-serve-chrome', () => {
           date: new Date().toISOString(),
           message: 'Test log'
         }]));
-        await el.rendered;
+        await el.updateComplete;
 
         copyButton.click();
-        await el.rendered;
+        await el.updateComplete;
 
         // Now disconnect - should clear the timeout
         el.disconnectedCallback();
@@ -1647,13 +1645,13 @@ describe('cem-serve-chrome', () => {
         date: new Date().toISOString(),
         message: 'Test log 1'
       }]));
-      await el.rendered;
+      await el.updateComplete;
 
       // Click twice rapidly
       copyButton.click();
-      await el.rendered;
+      await el.updateComplete;
       copyButton.click();
-      await el.rendered;
+      await el.updateComplete;
 
       // Both clicks should have succeeded
       expect(writeTextStub.callCount).to.be.at.least(2);
@@ -1672,11 +1670,11 @@ describe('cem-serve-chrome', () => {
         date: new Date().toISOString(),
         message: 'Test log'
       }]));
-      await el.rendered;
+      await el.updateComplete;
 
       // Click to trigger timeout
       copyButton.click();
-      await el.rendered;
+      await el.updateComplete;
 
       // The timeout callback includes isConnected check
       expect(el.isConnected).to.be.true;
