@@ -232,7 +232,51 @@ approach—whatever makes sense for your project.&lt;/p></description></item><it
 &lt;a href="#separate-dist-directory">automatic path rewrites
 &lt;/a> for projects with separate source and output directories. The server respects your &lt;code>tsconfig.json&lt;/code> settings and provides 
 &lt;a href="#browser-compatibility">browser compatibility control
-&lt;/a> through esbuild targets.&lt;/p></description></item><item><title>Import Maps</title><link>https://bennypowers.dev/cem/docs/usage/import-maps/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/import-maps/</guid><description>&lt;p>The dev server automatically generates 
+&lt;/a> through esbuild targets.&lt;/p></description></item><item><title>Static Site Generation</title><link>https://bennypowers.dev/cem/docs/usage/static-site/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/static-site/</guid><description>&lt;info-callout type="info">
+ &lt;template shadowrootmode="open">
+ &lt;style>
+ #content {
+ display: block;
+ margin: 1rem 0;
+ border-radius: 0.5rem;
+ background: var(--color-accent);
+ border-left: 4px solid var(--callout-color);
+ overflow: hidden;
+
+ &amp;.info { --callout-color: var(--color-theme); }
+ &amp;.warning { --callout-color: #fbbf24; }
+ &amp;.error { --callout-color: #ef4444; }
+ &amp;.success { --callout-color: #10b981; }
+
+ .inner {
+ padding: 1rem;
+ color: var(--color-text);
+
+ ::slotted(*:first-child) {
+ margin-top: 0;
+ }
+
+ ::slotted(*:last-child) {
+ margin-bottom: 0;
+ }
+ }
+ }
+ &lt;/style>
+
+ &lt;div id="content" class="info" part="callout">
+ &lt;div class="inner" part="content">
+ &lt;slot>&lt;/slot>
+ &lt;/div>
+ &lt;/div>
+ &lt;/template>
+
+ &lt;strong>TL;DR&lt;/strong>: Run &lt;code>cem serve --build&lt;/code> to generate a static website from your component demos. The output includes server-rendered HTML with Declarative Shadow DOM, transformed source files, and vendored dependencies &amp;ndash; ready to deploy anywhere.
+&lt;/info-callout>
+
+&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
+
+&lt;h2 id="overview">Overview&lt;/h2>
+&lt;p>The &lt;code>--build&lt;/code> flag renders all your demo pages into a self-contained static site. Each page goes through the same middleware pipeline as the dev server: TypeScript transformation, CSS module wrapping, import map injection, and Lit SSR for Declarative Shadow DOM.&lt;/p></description></item><item><title>Import Maps</title><link>https://bennypowers.dev/cem/docs/usage/import-maps/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/import-maps/</guid><description>&lt;p>The dev server automatically generates 
 &lt;a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap" 
  target="_blank" 
  rel="noopener">import maps

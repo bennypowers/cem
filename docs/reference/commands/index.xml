@@ -49,6 +49,33 @@
  &lt;/tr>
  &lt;/tbody>
 &lt;/table>
+&lt;h3 id="static-build-flags">Static Build Flags&lt;/h3>
+&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>Flag&lt;/th>
+ &lt;th>Description&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>&lt;code>--build&lt;/code>&lt;/td>
+ &lt;td>Build a static site instead of starting a dev server&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>-o&lt;/code>, &lt;code>--output&lt;/code>&lt;/td>
+ &lt;td>Output directory for static build (default: &lt;code>dist&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--base-path&lt;/code>&lt;/td>
+ &lt;td>URL base path for deployment (e.g., &lt;code>/docs/components/&lt;/code>)&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>&lt;code>--import&lt;/code>&lt;/td>
+ &lt;td>Dependency resolution: &lt;code>vendor&lt;/code> (default), &lt;code>esm&lt;/code>, &lt;code>jspm&lt;/code>, &lt;code>unpkg&lt;/code>&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
 &lt;h3 id="global-flags">Global Flags&lt;/h3>
 &lt;table>
  &lt;thead>
