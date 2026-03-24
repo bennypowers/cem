@@ -74,8 +74,11 @@ describe('cem-serve-chrome', () => {
     el = document.createElement('cem-serve-chrome');
     document.body.appendChild(el);
 
-    // Wait for CemElement to load template from real server
-    await el.rendered;
+    // Wait for Lit to render and async connectedCallback to complete
+    await el.updateComplete;
+    // connectedCallback awaits dynamic imports before super, so
+    // wait for another update cycle after modules load
+    await el.updateComplete;
   });
 
   afterEach(() => {
@@ -91,7 +94,7 @@ describe('cem-serve-chrome', () => {
       expect(element).to.be.instanceOf(HTMLElement);
     });
 
-    it('extends CemElement', () => {
+    it('extends LitElement', () => {
       expect(el.constructor.name).to.equal('CemServeChrome');
       expect(el.shadowRoot).to.exist;
     });
