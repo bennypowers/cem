@@ -242,7 +242,9 @@ var serveCmd = &cobra.Command{
 				// Successfully loaded existing manifest
 				pterm.Success.Printf("Loaded cached manifest from disk (%d bytes)\n", size)
 
-				// Schedule background regeneration to ensure it's up-to-date
+				// Schedule background regeneration (skip in build mode - Build() is synchronous)
+				buildMode, _ := cmd.Flags().GetBool("build")
+				if !buildMode {
 				go func(log logger.Logger, shutdownCh <-chan struct{}) {
 					// Wait a moment for server to fully start and become idle, or cancel if shutting down
 					select {
@@ -261,6 +263,7 @@ var serveCmd = &cobra.Command{
 						log.Info("Background manifest regeneration complete (%d bytes)", newSize)
 					}
 				}(log, server.Done())
+				}
 			} else {
 				// No existing manifest found, generate fresh one
 				pterm.Info.Println("Generating initial manifest...")

@@ -53,7 +53,7 @@ func (s *Server) Build(config BuildConfig) error {
 		config.OutputDir = "dist"
 	}
 
-	// Normalize base path: ensure leading slash, trailing slash
+	// Normalize base path: ensure leading slash, no trailing slash
 	if config.BasePath != "" {
 		config.BasePath = "/" + strings.Trim(config.BasePath, "/")
 	}
@@ -151,12 +151,16 @@ func (s *Server) Build(config BuildConfig) error {
 
 // buildPage fetches a page from the internal server and writes it to disk.
 // The template's {{if .StaticBuild}} block handles chrome-bundle.js injection.
-func (s *Server) buildPage(ts *httptest.Server, route string, config BuildConfig) error {
+func (s *Server) buildPage(ts *httptest.Server, route string, config BuildConfig) (retErr error) {
 	resp, err := ts.Client().Get(ts.URL + route)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil && retErr == nil {
+			retErr = closeErr
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("HTTP %d for %s", resp.StatusCode, route)
@@ -192,6 +196,7 @@ func (s *Server) copyChrome(config BuildConfig) error {
 	for _, name := range []string{"chrome-bundle.js", "chrome-bundle.js.map"} {
 		data, err := routes.TemplatesFS.ReadFile("templates/" + name)
 		if err != nil {
+			s.logger.Warning("Chrome bundle missing: %s: %v", name, err)
 			continue
 		}
 		outPath := filepath.Join(cemDir, name)
@@ -269,26 +274,25 @@ func (s *Server) copyStaticAssets(config BuildConfig) error {
 func (s *Server) buildLightdomCSS(config BuildConfig) error {
 	var combined strings.Builder
 
-	_ = fs.WalkDir(routes.InternalModules, "templates/elements", func(path string, d fs.DirEntry, err error) error {
+	if err := fs.WalkDir(routes.InternalModules, "templates/elements", func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
 		}
 		if !strings.Contains(filepath.Base(path), "lightdom") || !strings.HasSuffix(path, ".css") {
 			return nil
 		}
-		data, err := routes.InternalModules.ReadFile(path)
-		if err != nil {
-			return nil
+		data, readErr := routes.InternalModules.ReadFile(path)
+		if readErr != nil {
+			return readErr
 		}
 		combined.Write(data)
 		combined.WriteByte('\n')
 		return nil
-	})
-
-	if combined.Len() == 0 {
-		return nil
+	}); err != nil {
+		return err
 	}
 
+	// Always write the file so the <link> in demo-chrome.html resolves
 	outPath := filepath.Join(config.siteRoot(), "__cem", "lightdom.css")
 	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return err
@@ -297,12 +301,16 @@ func (s *Server) buildLightdomCSS(config BuildConfig) error {
 }
 
 // buildHealthJSON fetches health data from the internal server and writes it as static JSON.
-func (s *Server) buildHealthJSON(ts *httptest.Server, config BuildConfig) error {
+func (s *Server) buildHealthJSON(ts *httptest.Server, config BuildConfig) (retErr error) {
 	resp, err := ts.Client().Get(ts.URL + "/__cem/api/health")
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil && retErr == nil {
+			retErr = closeErr
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("health API returned %d", resp.StatusCode)
@@ -578,7 +586,7 @@ func rewriteNodeModulesToCDN(html, mode string) string {
 			break
 		}
 
-		// Also check for base-path-prefixed paths
+		// Write everything before /node_modules/ and skip the prefix
 		result.WriteString(html[:idx])
 		html = html[idx+len(prefix):]
 
@@ -662,12 +670,16 @@ func cdnURL(mode, pkg, subpath string) string {
 }
 
 // fetchURL fetches a URL path from the test server, returning the body bytes.
-func fetchURL(ts *httptest.Server, urlPath string) ([]byte, error) {
+func fetchURL(ts *httptest.Server, urlPath string) (retBody []byte, retErr error) {
 	resp, err := ts.Client().Get(ts.URL + urlPath)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil && retErr == nil {
+			retErr = closeErr
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
@@ -691,7 +703,9 @@ func rewriteBasePath(body []byte, basePath string) []byte {
 	s = rewriteJSONPaths(s, basePath)
 
 	// Rewrite dynamic import() paths in inline scripts
-	s = strings.ReplaceAll(s, `'/__cem/`, `'`+basePath+`/__cem/`)
+	for _, quote := range []string{`'`, `"`} {
+		s = rewriteAttrPaths(s, "import("+quote, basePath)
+	}
 
 	return []byte(s)
 }

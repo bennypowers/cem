@@ -276,9 +276,11 @@ func TestBuildLightdomCSS(t *testing.T) {
 	}
 }
 
-func TestBuildConfigDefaultOutput(t *testing.T) {
-	config := BuildConfig{}
-	if config.OutputDir != "" {
-		t.Error("default OutputDir should be empty before Build() sets it")
+func TestBuildConfig_SiteRoot_WithBasePath(t *testing.T) {
+	config := BuildConfig{OutputDir: "dist", BasePath: "/docs/api"}
+	got := config.siteRoot()
+	want := filepath.Join("dist", "/docs/api")
+	if got != want {
+		t.Errorf("siteRoot() = %q, want %q", got, want)
 	}
 }
