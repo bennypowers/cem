@@ -246,7 +246,7 @@ func (s *Server) copyStaticAssets(config BuildConfig) error {
 
 		data, err := routes.InternalModules.ReadFile(path)
 		if err != nil {
-			return nil
+			return fmt.Errorf("reading internal module %s: %w", path, err)
 		}
 
 		// Reverse the route handler's path mapping:
@@ -615,8 +615,10 @@ func rewriteNodeModulesToCDN(html, mode string) string {
 // parseNodeModulePath extracts package name and subpath from a path
 // starting after /node_modules/. Returns (pkg, subpath).
 func parseNodeModulePath(s string) (string, string) {
-	// Find the end of the path (quote or whitespace)
-	end := strings.IndexAny(s, `"' `)
+	// Find the end of the path (quote, whitespace, or HTML delimiter)
+	end := strings.IndexFunc(s, func(r rune) bool {
+		return r == '"' || r == '\'' || r == ' ' || r == '>' || r == '\n' || r == '\r' || r == '\t'
+	})
 	if end == -1 {
 		return "", ""
 	}

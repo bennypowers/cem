@@ -279,12 +279,7 @@ var serveCmd = &cobra.Command{
 			pterm.Success.Println("Workspace mode initialized")
 		}
 
-		// Start live rendering area AFTER initial setup
-		if l, ok := log.(interface{ Start() }); ok {
-			l.Start()
-		}
-
-		// Build mode: render all pages to disk and exit
+		// Build mode: render all pages to disk and exit (before live rendering)
 		if buildMode, _ := cmd.Flags().GetBool("build"); buildMode {
 			outputDir, _ := cmd.Flags().GetString("output")
 			basePath, _ := cmd.Flags().GetString("base-path")
@@ -294,6 +289,11 @@ var serveCmd = &cobra.Command{
 				BasePath:   basePath,
 				ImportMode: importMode,
 			})
+		}
+
+		// Start live rendering area AFTER initial setup
+		if l, ok := log.(interface{ Start() }); ok {
+			l.Start()
 		}
 
 		// Start server
