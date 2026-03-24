@@ -79,6 +79,7 @@ type Server struct {
 	pathResolverSourceFiles []string                      // Files that pathResolver depends on (for hot-reload)
 	warnedSpecifiers        sync.Map                      // Deduplicates transitive dependency warnings (keyed by specifier)
 	healthCache             *health.HealthResult          // Cached health analysis result
+	litSSR                  litSSRRenderer                // Lit SSR renderer for DSD injection
 }
 
 // NewServer creates a new server with the given port
@@ -137,6 +138,12 @@ func NewServerWithConfig(config Config) (*Server, error) {
 	maxWorkers := min(max(runtime.NumCPU()/2, 2), 8)
 	queueDepth := maxWorkers * 12 // Proportional buffering for burst traffic
 	s.transformPool = transform.NewPool(maxWorkers, queueDepth)
+
+	// Initialize Lit SSR renderer (before middleware setup so the
+	// shadowroot middleware gets the initialized renderer)
+	if err := s.initLitSSR(context.Background()); err != nil {
+		s.logger.Warning("Lit SSR initialization failed, running without SSR: %v", err)
+	}
 
 	// Set up handler with middleware pipeline
 	s.setupMiddleware()
@@ -378,6 +385,12 @@ func (s *Server) Close() error {
 
 	if s.generateSession != nil {
 		s.generateSession.Close()
+	}
+
+	if s.litSSR != nil {
+		if err := s.litSSR.Close(context.Background()); err != nil {
+			s.logger.Error("Failed to close Lit SSR renderer: %v", err)
+		}
 	}
 
 	s.running = false

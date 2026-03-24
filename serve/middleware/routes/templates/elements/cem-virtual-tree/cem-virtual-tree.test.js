@@ -66,7 +66,7 @@ describe('cem-virtual-tree', () => {
     document.body.appendChild(el);
 
     // Wait for CemElement to load template from real server
-    await el.rendered;
+    await el.updateComplete;
 
     // Wait for virtual tree to build and render
     await new Promise(resolve => setTimeout(resolve, 50));

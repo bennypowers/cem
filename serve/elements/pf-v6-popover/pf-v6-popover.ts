@@ -32,7 +32,7 @@ export class PfPopoverHideEvent extends Event {
 }
 
 // Cache feature detection for CSS Anchor Positioning
-const supportsAnchorPositioning = CSS.supports?.('anchor-name: --test') ?? false;
+const supportsAnchorPositioning = globalThis.CSS?.supports?.('anchor-name: --test') ?? false;
 
 /**
  * PatternFly v6 Popover

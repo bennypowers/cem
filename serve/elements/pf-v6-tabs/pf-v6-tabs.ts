@@ -58,6 +58,9 @@ export class PfV6Tabs extends LitElement {
     this.addEventListener('pf-v6-tab-disconnected', this.#onTabsChanged);
     this.#mutationObserver = new MutationObserver(this.#onTabsChanged);
     this.#mutationObserver.observe(this, { childList: true });
+  }
+
+  firstUpdated() {
     this.#syncTabs();
   }
 

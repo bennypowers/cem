@@ -2,6 +2,7 @@ import { LitElement, html, nothing } from 'lit';
 import { customElement } from 'lit/decorators/custom-element.js';
 import { property } from 'lit/decorators/property.js';
 import { state } from 'lit/decorators/state.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 
 import styles from './cem-serve-chrome.css' with { type: 'css' };
 
@@ -48,12 +49,19 @@ import '../pf-v6-toolbar/pf-v6-toolbar.js';
 import '../pf-v6-tree-item/pf-v6-tree-item.js';
 import '../pf-v6-tree-view/pf-v6-tree-view.js';
 
-// @ts-ignore -- plain JS module served at runtime by Go server
-import { CEMReloadClient } from '/__cem/websocket-client.js';
-// @ts-ignore -- plain JS module served at runtime by Go server
-import { StatePersistence } from '/__cem/state-persistence.js';
-// @ts-ignore -- plain JS module served at runtime by Go server
-import '/__cem/health-badges.js';
+// Client-only modules loaded dynamically to avoid breaking SSR.
+// These are plain JS modules served at runtime by the Go server.
+type CEMReloadClientType = { new(opts: any): any };
+type StatePersistenceType = {
+  getState(): any;
+  updateState(s: any): void;
+  getTreeState(): any;
+  setTreeState(s: any): void;
+  updateTreeState(s: any): void;
+  migrateFromLocalStorage(): void;
+};
+let CEMReloadClient: CEMReloadClientType;
+let StatePersistence: StatePersistenceType;
 
 interface EventInfo {
   eventNames: Set<string>;
@@ -318,7 +326,10 @@ export class CemServeChrome extends LitElement {
   });
   /* c8 ignore stop */
 
-  #wsClient = new CEMReloadClient({
+  #wsClient: any;
+
+  #initWsClient() {
+    this.#wsClient = new CEMReloadClient({
     jitterMax: 1000,
     overlayThreshold: 15,
     badgeFadeDelay: 2000,
@@ -357,7 +368,8 @@ export class CemServeChrome extends LitElement {
       }
     }
     /* c8 ignore stop */
-  });
+    });
+  }
 
   get demo(): Element | null {
     return this.querySelector('cem-serve-demo');
@@ -556,7 +568,7 @@ export class CemServeChrome extends LitElement {
                   </div>
                 </pf-v6-tab>
                 <pf-v6-tab title="Health">
-                  <cem-health-panel ${this.primaryTagName ? html`component="${this.primaryTagName}"` : nothing}>
+                  <cem-health-panel component=${ifDefined(this.primaryTagName)}>
                   </cem-health-panel>
                 </pf-v6-tab>
               </pf-v6-tabs>
@@ -674,10 +686,44 @@ export class CemServeChrome extends LitElement {
     `;
   }
 
-  connectedCallback() {
+  /** Resolves when client-only modules are loaded. */
+  #modulesReady: Promise<void> = this.#loadClientModules();
+
+  #loadClientModules(): Promise<void> {
+    return Promise.all([
+      // @ts-ignore -- plain JS modules served at runtime by Go server
+      import('/__cem/websocket-client.js'),
+      // @ts-ignore
+      import('/__cem/state-persistence.js'),
+    ]).then(([ws, sp]) => {
+      CEMReloadClient = ws.CEMReloadClient;
+      StatePersistence = sp.StatePersistence;
+      // @ts-ignore
+      import('/__cem/health-badges.js').catch((e: unknown) =>
+        console.error('[cem-serve] Failed to load health-badges:', e));
+    }).catch((e: unknown) => {
+      console.error('[cem-serve] Failed to load client modules:', e);
+      // Degraded fallbacks so the component still renders
+      CEMReloadClient ??= class { init() {} retry() {} destroy() {} } as any;
+      StatePersistence ??= {
+        getState: () => ({ colorScheme: 'system' }),
+        updateState() {},
+        getTreeState: () => ({ expanded: [], selected: null }),
+        setTreeState() {},
+        updateTreeState() {},
+        migrateFromLocalStorage() {},
+      };
+    });
+  }
+
+  async connectedCallback() {
+    // Modules must load before super so firstUpdated() can use StatePersistence
+    await this.#modulesReady;
     super.connectedCallback();
 
-    // Check if we need to migrate from localStorage
+    if (this.#wsClient == null) {
+      this.#initWsClient();
+    }
     this.#migrateFromLocalStorageIfNeeded();
   }
 

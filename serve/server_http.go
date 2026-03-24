@@ -87,15 +87,7 @@ func (s *Server) setupMiddleware() {
 	// Terminal handler: static files
 	s.handler = middleware.Chain(
 		http.HandlerFunc(s.serveStaticFiles), // Static file server (terminal handler)
-		shadowroot.New(
-			s.logger,
-			errorBroadcaster{s},
-			routes.TemplatesFS,
-			func(elementName string, data any) (string, error) {
-				html, err := routes.RenderElementShadowRoot(s.templates, elementName, data)
-				return string(html), err
-			},
-		), // Shadow root injection (last - processes final HTML)
+		shadowroot.New(s.logger, s.litSSR), // Lit SSR shadow root injection
 		inject.New(s.config.Reload, "/__cem/websocket-client.js"), // WebSocket injection
 		importmappkg.New(importmappkg.MiddlewareConfig{ // Import map injection
 			Context: s,

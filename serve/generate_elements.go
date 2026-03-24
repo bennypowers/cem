@@ -12,13 +12,19 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	G "bennypowers.dev/cem/generate"
+	M "bennypowers.dev/cem/manifest"
+	W "bennypowers.dev/cem/workspace"
 	"github.com/evanw/esbuild/pkg/api"
+
+	litssr "bennypowers.dev/lit-ssr-wasm/go"
 )
 
 func main() {
@@ -35,6 +41,78 @@ func run() error {
 	if err := transpileElements(); err != nil {
 		return fmt.Errorf("transpile elements: %w", err)
 	}
+	if err := generateManifests(); err != nil {
+		return fmt.Errorf("generate manifests: %w", err)
+	}
+	if err := bundleSSR(); err != nil {
+		return fmt.Errorf("bundle SSR: %w", err)
+	}
+	if err := compileSSRBytecode(); err != nil {
+		return fmt.Errorf("compile SSR bytecode: %w", err)
+	}
+	return nil
+}
+
+// compileSSRBytecode compiles the SSR bundle to QuickJS bytecode for
+// faster worker init (~100ms vs ~1s per worker).
+func compileSSRBytecode() error {
+	source, err := os.ReadFile("middleware/routes/templates/ssr-bundle.js")
+	if err != nil {
+		return err
+	}
+	bytecode, err := litssr.CompileSource(context.Background(), string(source))
+	if err != nil {
+		return fmt.Errorf("compile bytecode: %w", err)
+	}
+	return os.WriteFile("middleware/routes/templates/ssr-bundle.qbc", bytecode, 0o644)
+}
+
+// generateManifests runs cem generate on the element sources to produce
+// custom-elements.json manifests for the two internal packages.
+func generateManifests() error {
+	pkgs := []struct {
+		glob    string
+		outPath string
+	}{
+		{"pf-v6-*/*.ts", "elements/patternfly/custom-elements.json"},
+		{"cem-*/*.ts", "elements/chrome/custom-elements.json"},
+	}
+
+	for _, pkg := range pkgs {
+		wsCtx := W.NewFileSystemWorkspaceContext("elements")
+		if err := wsCtx.Init(); err != nil {
+			return fmt.Errorf("init workspace for %s: %w", pkg.glob, err)
+		}
+		cfg, err := wsCtx.Config()
+		if err != nil {
+			return fmt.Errorf("config for %s: %w", pkg.glob, err)
+		}
+		cfg.Generate.Files = []string{pkg.glob}
+
+		session, err := G.NewGenerateSession(wsCtx)
+		if err != nil {
+			return fmt.Errorf("session for %s: %w", pkg.glob, err)
+		}
+
+		manifest, err := session.GenerateFullManifest(context.Background())
+		session.Close()
+		if err != nil {
+			return fmt.Errorf("generate %s: %w", pkg.glob, err)
+		}
+
+		jsonStr, err := M.SerializeToString(manifest)
+		if err != nil {
+			return fmt.Errorf("serialize %s: %w", pkg.glob, err)
+		}
+
+		if err := os.MkdirAll(filepath.Dir(pkg.outPath), 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(pkg.outPath, []byte(jsonStr), 0o644); err != nil {
+			return fmt.Errorf("write %s: %w", pkg.outPath, err)
+		}
+	}
+
 	return nil
 }
 
@@ -62,6 +140,7 @@ func vendorLit() error {
 		{"lit/directives/if-defined.js", "lit/directives/if-defined.js"},
 		{"lit/directives/repeat.js", "lit/directives/repeat.js"},
 		{"lit/directives/live.js", "lit/directives/live.js"},
+		{"@lit-labs/ssr-client/lit-element-hydrate-support.js", "lit-element-hydrate-support.js"},
 		{"lit/directives/unsafe-html.js", "lit/directives/unsafe-html.js"},
 	}
 
@@ -101,9 +180,12 @@ func litCSSPlugin() api.Plugin {
 	return api.Plugin{
 		Name: "lit-css",
 		Setup: func(build api.PluginBuild) {
-			// Resolve .css imports to our custom namespace
+			// Resolve .css imports from our elements to our custom namespace
 			build.OnResolve(api.OnResolveOptions{Filter: `\.css$`}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
-				// Resolve relative to the importer
+				// Only handle CSS from our element sources, not from node_modules
+				if strings.Contains(args.Importer, "node_modules") {
+					return api.OnResolveResult{}, nil
+				}
 				absPath := filepath.Join(filepath.Dir(args.Importer), args.Path)
 				return api.OnResolveResult{
 					Path:      absPath,
@@ -231,6 +313,84 @@ func transpileElements() error {
 	return nil
 }
 
+// stubCemExternals stubs client-only /__cem/* imports for the SSR bundle.
+func stubCemExternals() api.Plugin {
+	return api.Plugin{
+		Name: "stub-cem-externals",
+		Setup: func(build api.PluginBuild) {
+			build.OnResolve(api.OnResolveOptions{Filter: `^/__cem/`}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
+				return api.OnResolveResult{Path: args.Path, Namespace: "cem-stub"}, nil
+			})
+			build.OnLoad(api.OnLoadOptions{Filter: `.*`, Namespace: "cem-stub"}, func(_ api.OnLoadArgs) (api.OnLoadResult, error) {
+				contents := "export default {}; export class CEMReloadClient {}; export class StatePersistence {}"
+				return api.OnLoadResult{Contents: &contents, Loader: api.LoaderJS}, nil
+			})
+		},
+	}
+}
+
+// litSsrWasmPlugin resolves @lit-labs/ssr-dom-shim to globalThis re-exports,
+// so the consumer's Lit copy shares the same customElements registry and DOM
+// shims that the lit-ssr-wasm runtime provides.
+// Port of lit-ssr-wasm's src/esbuild-plugin.ts.
+func litSsrWasmPlugin() api.Plugin {
+	shimBridge := `
+export const customElements = globalThis.customElements;
+export const HTMLElement = globalThis.HTMLElement;
+export const Element = globalThis.Element;
+export const CSSStyleSheet = globalThis.CSSStyleSheet;
+export const CustomElementRegistry = globalThis.CustomElementRegistry;
+export const Event = globalThis.Event;
+export const CustomEvent = globalThis.CustomEvent;
+export const EventTarget = globalThis.EventTarget;
+export const ariaMixinAttributes = globalThis.ariaMixinAttributes ?? {};
+export const HYDRATE_INTERNALS_ATTR_PREFIX = globalThis.HYDRATE_INTERNALS_ATTR_PREFIX ?? 'internals-';
+export const ElementInternals = globalThis.ElementInternals ?? class ElementInternals {};
+`
+	return api.Plugin{
+		Name: "lit-ssr-wasm",
+		Setup: func(build api.PluginBuild) {
+			build.OnResolve(api.OnResolveOptions{Filter: `^@lit-labs/ssr-dom-shim`}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
+				return api.OnResolveResult{Path: args.Path, Namespace: "lit-ssr-wasm-shim"}, nil
+			})
+			build.OnLoad(api.OnLoadOptions{Filter: `.*`, Namespace: "lit-ssr-wasm-shim"}, func(_ api.OnLoadArgs) (api.OnLoadResult, error) {
+				return api.OnLoadResult{Contents: &shimBridge, Loader: api.LoaderJS}, nil
+			})
+		},
+	}
+}
+
+// stubNodeBuiltins stubs Node.js built-in modules for QuickJS.
+// Port of lit-ssr-wasm's src/esbuild-stubs.ts.
+func stubNodeBuiltins() api.Plugin {
+	bufferStub := `export default {};
+export const Buffer = {
+  from(x, encoding) {
+    if (typeof x === "string") {
+      if (encoding === "binary") {
+        return { toString(enc) { if (enc === "base64") return globalThis.btoa(x); return x; } };
+      }
+      return new TextEncoder().encode(x);
+    }
+    return new Uint8Array(x);
+  },
+  isBuffer: () => false,
+  alloc: n => new Uint8Array(n),
+};
+export const readFileSync = () => "";`
+	return api.Plugin{
+		Name: "stub-node-builtins",
+		Setup: func(build api.PluginBuild) {
+			build.OnResolve(api.OnResolveOptions{Filter: `^(?:node:)?(?:buffer|fs|path|stream|util|events|crypto|os|url|http|https|net|tls|child_process|module|vm|zlib|node-fetch)(?:/|$)`}, func(args api.OnResolveArgs) (api.OnResolveResult, error) {
+				return api.OnResolveResult{Path: args.Path, Namespace: "node-stub"}, nil
+			})
+			build.OnLoad(api.OnLoadOptions{Filter: `.*`, Namespace: "node-stub"}, func(_ api.OnLoadArgs) (api.OnLoadResult, error) {
+				return api.OnLoadResult{Contents: &bufferStub, Loader: api.LoaderJS}, nil
+			})
+		},
+	}
+}
+
 // rewriteLitImports replaces bare lit specifiers with /__cem/vendor/ paths.
 func rewriteLitImports(code string) string {
 	replacements := []struct {
@@ -255,4 +415,58 @@ func rewriteLitImports(code string) string {
 		code = strings.ReplaceAll(code, r.from, r.to)
 	}
 	return code
+}
+
+// bundleSSR creates a single fully-bundled JS file containing all element
+// components with lit included. This bundle is used by the lit-ssr-wasm
+// renderer for server-side rendering. Unlike the browser-served modules
+// (which use external imports), this bundle is self-contained.
+func bundleSSR() error {
+	// Find all element .ts files
+	entries, err := filepath.Glob("elements/*/*.ts")
+	if err != nil {
+		return err
+	}
+	if len(entries) == 0 {
+		return nil
+	}
+
+	// SSR bundle: lit + all chrome components.
+	// The lit-ssr-wasm runtime provides DOM shims via globalThis.
+	// litSsrWasmPlugin bridges @lit-labs/ssr-dom-shim to those globals.
+	var imports strings.Builder
+	for _, entry := range entries {
+		fmt.Fprintf(&imports, "import './%s';\n", entry)
+	}
+
+	outfile := "middleware/routes/templates/ssr-bundle.js"
+	source := stripImportAttributes(imports.String())
+
+	result := api.Build(api.BuildOptions{
+		Stdin: &api.StdinOptions{
+			Contents:   source,
+			Sourcefile: "ssr-entry.ts",
+			Loader:     api.LoaderTS,
+			ResolveDir: ".",
+		},
+		Outfile:    outfile,
+		Bundle:     true,
+		Format:     api.FormatESModule,
+		Target:     api.ES2022,
+		Platform:   api.PlatformNode,
+		Conditions: []string{"node"},
+		Write:      true,
+		TsconfigRaw: `{"compilerOptions":{}}`,
+		LogLevel:   api.LogLevelWarning,
+		NodePaths:  []string{"elements/node_modules"},
+		Define:     map[string]string{"process.env.NODE_ENV": `"production"`},
+		Plugins:    []api.Plugin{litCSSPlugin(), stubCemExternals(), litSsrWasmPlugin(), stubNodeBuiltins()},
+	})
+
+	if len(result.Errors) > 0 {
+		msgs := api.FormatMessages(result.Errors, api.FormatMessagesOptions{})
+		return fmt.Errorf("bundling SSR:\n%s", strings.Join(msgs, "\n"))
+	}
+
+	return nil
 }
