@@ -17,8 +17,10 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
+	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/importmap"
 	"bennypowers.dev/cem/serve/middleware/routes"
 )
@@ -124,6 +126,11 @@ func (s *Server) Build(config BuildConfig) error {
 	// Concatenate lightdom CSS into a single file
 	if err := s.buildLightdomCSS(config); err != nil {
 		return fmt.Errorf("build lightdom CSS: %w", err)
+	}
+
+	// Generate sitemap
+	if err := s.buildSitemap(demoRoutes, config); err != nil {
+		s.logger.Warning("Failed to generate sitemap: %v", err)
 	}
 
 	s.logger.Info("Built %d pages", len(demoRoutes)+1)
@@ -481,6 +488,32 @@ func (s *Server) buildDependencies(ts *httptest.Server, config BuildConfig) erro
 
 	s.logger.Info("Vendored %d dependencies", count)
 	return nil
+}
+
+// buildSitemap generates a sitemap.xml listing all built pages.
+func (s *Server) buildSitemap(demoRoutes map[string]*middleware.DemoRouteEntry, config BuildConfig) error {
+	// Collect and sort routes for deterministic output
+	urls := make([]string, 0, len(demoRoutes)+1)
+	urls = append(urls, "/")
+	for route := range demoRoutes {
+		urls = append(urls, route)
+	}
+	sort.Strings(urls)
+
+	var sb strings.Builder
+	sb.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
+	sb.WriteString(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` + "\n")
+	for _, u := range urls {
+		loc := config.BasePath + u
+		sb.WriteString("  <url><loc>" + loc + "</loc></url>\n")
+	}
+	sb.WriteString("</urlset>\n")
+
+	outPath := filepath.Join(config.siteRoot(), "sitemap.xml")
+	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(outPath, []byte(sb.String()), 0o644)
 }
 
 // fetchURL fetches a URL path from the test server, returning the body bytes.
