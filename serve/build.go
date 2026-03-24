@@ -31,12 +31,26 @@ type BuildConfig struct {
 	BasePath string
 }
 
+// siteRoot returns the output directory including the base path.
+// All files are written under this directory so URLs resolve correctly.
+func (c BuildConfig) siteRoot() string {
+	if c.BasePath == "" {
+		return c.OutputDir
+	}
+	return filepath.Join(c.OutputDir, c.BasePath)
+}
+
 // Build generates a static site from the dev server's demo pages.
 // It spins up the full middleware chain, renders each page via internal
 // HTTP requests, and writes the results to disk.
 func (s *Server) Build(config BuildConfig) error {
 	if config.OutputDir == "" {
 		config.OutputDir = "dist"
+	}
+
+	// Normalize base path: ensure leading slash, trailing slash
+	if config.BasePath != "" {
+		config.BasePath = "/" + strings.Trim(config.BasePath, "/")
 	}
 
 	s.logger.Info("Building static site to %s", config.OutputDir)
@@ -96,7 +110,7 @@ func (s *Server) Build(config BuildConfig) error {
 
 	// Write manifest as static JSON
 	if manifest, err := s.Manifest(); err == nil && len(manifest) > 0 {
-		outPath := filepath.Join(config.OutputDir, "custom-elements.json")
+		outPath := filepath.Join(config.siteRoot(), "custom-elements.json")
 		if err := os.WriteFile(outPath, manifest, 0o644); err != nil {
 			return fmt.Errorf("write manifest: %w", err)
 		}
@@ -134,8 +148,13 @@ func (s *Server) buildPage(ts *httptest.Server, route string, config BuildConfig
 		return err
 	}
 
+	// Rewrite absolute URLs with base path prefix
+	if config.BasePath != "" {
+		body = rewriteBasePath(body, config.BasePath)
+	}
+
 	// Determine output path
-	outPath := filepath.Join(config.OutputDir, route)
+	outPath := filepath.Join(config.siteRoot(), route)
 	if strings.HasSuffix(route, "/") || filepath.Ext(route) == "" {
 		outPath = filepath.Join(outPath, "index.html")
 	}
@@ -149,7 +168,7 @@ func (s *Server) buildPage(ts *httptest.Server, route string, config BuildConfig
 
 // copyChrome copies the chrome bundle and sourcemap to the output directory.
 func (s *Server) copyChrome(config BuildConfig) error {
-	cemDir := filepath.Join(config.OutputDir, "__cem")
+	cemDir := filepath.Join(config.siteRoot(), "__cem")
 
 	for _, name := range []string{"chrome-bundle.js", "chrome-bundle.js.map"} {
 		data, err := routes.TemplatesFS.ReadFile("templates/" + name)
@@ -170,7 +189,7 @@ func (s *Server) copyChrome(config BuildConfig) error {
 
 // copyStaticAssets copies CSS, images, JS, and lightdom CSS from the embedded FS.
 func (s *Server) copyStaticAssets(config BuildConfig) error {
-	cemDir := filepath.Join(config.OutputDir, "__cem")
+	cemDir := filepath.Join(config.siteRoot(), "__cem")
 
 	// Copy all assets from the embedded FS that the HTML references.
 	// Copy assets using the same path mapping as the route handler.
@@ -251,7 +270,7 @@ func (s *Server) buildLightdomCSS(config BuildConfig) error {
 		return nil
 	}
 
-	outPath := filepath.Join(config.OutputDir, "__cem", "lightdom.css")
+	outPath := filepath.Join(config.siteRoot(), "__cem", "lightdom.css")
 	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return err
 	}
@@ -275,7 +294,7 @@ func (s *Server) buildHealthJSON(ts *httptest.Server, config BuildConfig) error 
 		return err
 	}
 
-	outPath := filepath.Join(config.OutputDir, "__cem", "api", "health")
+	outPath := filepath.Join(config.siteRoot(), "__cem", "api", "health")
 	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return err
 	}
@@ -293,7 +312,7 @@ export class CEMReloadClient {
   destroy() {}
 }
 `
-	outPath := filepath.Join(config.OutputDir, "__cem", "websocket-client.js")
+	outPath := filepath.Join(config.siteRoot(), "__cem", "websocket-client.js")
 	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return err
 	}
@@ -354,7 +373,7 @@ func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig) error
 			}
 
 			// Write to the CWD-relative path so import map URLs resolve
-			outPath := filepath.Join(config.OutputDir, relDir, rel)
+			outPath := filepath.Join(config.siteRoot(), relDir, rel)
 			if ext == ".ts" {
 				outPath = strings.TrimSuffix(outPath, ".ts") + ".js"
 			}
@@ -440,7 +459,7 @@ func (s *Server) buildDependencies(ts *httptest.Server, config BuildConfig) erro
 			continue
 		}
 
-		outPath := filepath.Join(config.OutputDir, urlPath)
+		outPath := filepath.Join(config.siteRoot(), urlPath)
 		if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 			return err
 		}
@@ -477,4 +496,80 @@ func fetchURL(ts *httptest.Server, urlPath string) ([]byte, error) {
 	}
 
 	return io.ReadAll(resp.Body)
+}
+
+// rewriteBasePath prefixes absolute URLs in HTML with the base path.
+// Uses a simple but correct approach: rewrite all absolute URL patterns
+// that appear in HTML attributes and import map JSON.
+func rewriteBasePath(body []byte, basePath string) []byte {
+	s := string(body)
+
+	// Rewrite HTML attributes with absolute paths: href="/...", src="/..."
+	for _, attr := range []string{`href="`, `src="`} {
+		s = rewriteAttrPaths(s, attr, basePath)
+	}
+
+	// Rewrite import map JSON values: ": "/..."
+	s = rewriteJSONPaths(s, basePath)
+
+	// Rewrite dynamic import() paths in inline scripts
+	s = strings.ReplaceAll(s, `'/__cem/`, `'`+basePath+`/__cem/`)
+
+	return []byte(s)
+}
+
+// rewriteAttrPaths rewrites absolute paths in HTML attributes.
+// e.g., href="/foo" → href="/base/foo"
+func rewriteAttrPaths(s, attrPrefix, basePath string) string {
+	var result strings.Builder
+	result.Grow(len(s))
+
+	for {
+		idx := strings.Index(s, attrPrefix)
+		if idx == -1 {
+			result.WriteString(s)
+			break
+		}
+
+		// Write everything up to and including the attr prefix
+		result.WriteString(s[:idx+len(attrPrefix)])
+		s = s[idx+len(attrPrefix):]
+
+		// Check if the value starts with "/" (absolute path) but not "//" (protocol-relative)
+		if len(s) > 0 && s[0] == '/' && (len(s) < 2 || s[1] != '/') {
+			// Don't double-prefix if already has the base path
+			if !strings.HasPrefix(s, basePath+"/") && !strings.HasPrefix(s, basePath+`"`) {
+				result.WriteString(basePath)
+			}
+		}
+	}
+
+	return result.String()
+}
+
+// rewriteJSONPaths rewrites absolute paths in import map JSON.
+// e.g., ": "/node_modules/lit" → ": "/base/node_modules/lit"
+func rewriteJSONPaths(s, basePath string) string {
+	var result strings.Builder
+	result.Grow(len(s))
+
+	pattern := `": "/`
+	for {
+		idx := strings.Index(s, pattern)
+		if idx == -1 {
+			result.WriteString(s)
+			break
+		}
+
+		// Write up to and including ": "
+		result.WriteString(s[:idx+len(`": "`)])
+		s = s[idx+len(`": "`):]
+
+		// s now starts with "/" - prefix with base path
+		if !strings.HasPrefix(s, basePath[1:]+"/") {
+			result.WriteString(basePath)
+		}
+	}
+
+	return result.String()
 }
