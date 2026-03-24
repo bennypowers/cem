@@ -242,7 +242,9 @@ var serveCmd = &cobra.Command{
 				// Successfully loaded existing manifest
 				pterm.Success.Printf("Loaded cached manifest from disk (%d bytes)\n", size)
 
-				// Schedule background regeneration to ensure it's up-to-date
+				// Schedule background regeneration (skip in build mode - Build() is synchronous)
+				buildMode, _ := cmd.Flags().GetBool("build")
+				if !buildMode {
 				go func(log logger.Logger, shutdownCh <-chan struct{}) {
 					// Wait a moment for server to fully start and become idle, or cancel if shutting down
 					select {
@@ -261,6 +263,7 @@ var serveCmd = &cobra.Command{
 						log.Info("Background manifest regeneration complete (%d bytes)", newSize)
 					}
 				}(log, server.Done())
+				}
 			} else {
 				// No existing manifest found, generate fresh one
 				pterm.Info.Println("Generating initial manifest...")
@@ -274,6 +277,18 @@ var serveCmd = &cobra.Command{
 			}
 		} else {
 			pterm.Success.Println("Workspace mode initialized")
+		}
+
+		// Build mode: render all pages to disk and exit (before live rendering)
+		if buildMode, _ := cmd.Flags().GetBool("build"); buildMode {
+			outputDir, _ := cmd.Flags().GetString("output")
+			basePath, _ := cmd.Flags().GetString("base-path")
+			importMode, _ := cmd.Flags().GetString("import")
+			return server.Build(serve.BuildConfig{
+				OutputDir:  outputDir,
+				BasePath:   basePath,
+				ImportMode: importMode,
+			})
 		}
 
 		// Start live rendering area AFTER initial setup
@@ -495,6 +510,10 @@ func init() {
 	serveCmd.Flags().StringSlice("watch-ignore", nil, "Glob patterns to ignore in file watcher (comma-separated, e.g., '_site/**,dist/**')")
 	serveCmd.Flags().StringSlice("css-transform", nil, "Glob patterns for CSS files to transform to JavaScript modules (e.g., 'src/**/*.css,elements/**/*.css')")
 	serveCmd.Flags().StringSlice("css-transform-exclude", nil, "Glob patterns for CSS files to exclude from transformation (e.g., 'demo/**/*.css')")
+	serveCmd.Flags().Bool("build", false, "Build a static site instead of starting a dev server")
+	serveCmd.Flags().StringP("output", "o", "dist", "Output directory for static build")
+	serveCmd.Flags().String("base-path", "", "URL base path for static build deployment (e.g., /docs/components/)")
+	serveCmd.Flags().String("import", "vendor", "Dependency resolution for static builds: vendor, esm, jspm, unpkg")
 
 	if err := viper.BindPFlag("serve.port", serveCmd.Flags().Lookup("port")); err != nil {
 		panic(fmt.Sprintf("failed to bind flag serve.port: %v", err))

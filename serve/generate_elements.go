@@ -50,6 +50,9 @@ func run() error {
 	if err := compileSSRBytecode(); err != nil {
 		return fmt.Errorf("compile SSR bytecode: %w", err)
 	}
+	if err := bundleChromeBrowser(); err != nil {
+		return fmt.Errorf("bundle chrome browser: %w", err)
+	}
 	return nil
 }
 
@@ -466,6 +469,64 @@ func bundleSSR() error {
 	if len(result.Errors) > 0 {
 		msgs := api.FormatMessages(result.Errors, api.FormatMessagesOptions{})
 		return fmt.Errorf("bundling SSR:\n%s", strings.Join(msgs, "\n"))
+	}
+
+	return nil
+}
+
+// bundleChromeBrowser creates a single browser-targeted JS bundle containing
+// all chrome components with lit inlined. Unlike the SSR bundle (which includes
+// @lit-labs/ssr shims for QuickJS), this bundle is for the browser and uses
+// standard lit without any SSR bridging.
+//
+// Used by `cem serve --build` for static site output: one <script> tag for
+// the entire chrome UI instead of 53+ individual module requests.
+func bundleChromeBrowser() error {
+	entries, err := filepath.Glob("elements/*/*.ts")
+	if err != nil {
+		return err
+	}
+	if len(entries) == 0 {
+		return nil
+	}
+
+	var imports strings.Builder
+	for _, entry := range entries {
+		fmt.Fprintf(&imports, "import './%s';\n", entry)
+	}
+
+	// Hydration support must load before any LitElement definitions
+	// so Lit can pick up SSR-rendered DSD content instead of re-rendering
+	source := "import '@lit-labs/ssr-client/lit-element-hydrate-support.js';\n" +
+		stripImportAttributes(imports.String())
+	outfile := "middleware/routes/templates/chrome-bundle.js"
+
+	result := api.Build(api.BuildOptions{
+		Stdin: &api.StdinOptions{
+			Contents:   source,
+			Sourcefile: "chrome-entry.ts",
+			Loader:     api.LoaderTS,
+			ResolveDir: ".",
+		},
+		Outfile:          outfile,
+		Bundle:           true,
+		Format:           api.FormatESModule,
+		Target:           api.ES2022,
+		Write:            true,
+		MinifySyntax:     true,
+		MinifyWhitespace: true,
+		MinifyIdentifiers: true,
+		Sourcemap:        api.SourceMapLinked,
+		TsconfigRaw:      `{"compilerOptions":{}}`,
+		LogLevel:         api.LogLevelWarning,
+		NodePaths:        []string{"elements/node_modules"},
+		Plugins:          []api.Plugin{litCSSPlugin()},
+		External:         []string{"/__cem/*"},
+	})
+
+	if len(result.Errors) > 0 {
+		msgs := api.FormatMessages(result.Errors, api.FormatMessagesOptions{})
+		return fmt.Errorf("bundling chrome browser:\n%s", strings.Join(msgs, "\n"))
 	}
 
 	return nil

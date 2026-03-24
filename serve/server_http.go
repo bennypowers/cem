@@ -88,7 +88,7 @@ func (s *Server) setupMiddleware() {
 	s.handler = middleware.Chain(
 		http.HandlerFunc(s.serveStaticFiles), // Static file server (terminal handler)
 		shadowroot.New(s.logger, s.litSSR), // Lit SSR shadow root injection
-		inject.New(s.config.Reload, "/__cem/websocket-client.js"), // WebSocket injection
+		inject.New(s.config.Reload && !s.staticBuild, "/__cem/websocket-client.js"), // WebSocket injection
 		importmappkg.New(importmappkg.MiddlewareConfig{ // Import map injection
 			Context: s,
 		}),

@@ -80,6 +80,7 @@ type Server struct {
 	warnedSpecifiers        sync.Map                      // Deduplicates transitive dependency warnings (keyed by specifier)
 	healthCache             *health.HealthResult          // Cached health analysis result
 	litSSR                  litSSRRenderer                // Lit SSR renderer for DSD injection
+	staticBuild             bool                          // True during static site build
 }
 
 // NewServer creates a new server with the given port
@@ -198,6 +199,10 @@ func (s *Server) Logger() middleware.Logger {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.logger
+}
+
+func (s *Server) IsStaticBuild() bool {
+	return s.staticBuild
 }
 
 // SetLogger sets the server's logger

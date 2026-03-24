@@ -827,7 +827,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 		ManifestJSON:   template.JS(manifestBytes),
 		Manifest:       parsedManifest,
 		Packages:       packages, // Workspace packages with modules (for package-level tree)
-		State:          state,    // Persisted UI state for SSR
+		State:          state, // Persisted UI state for SSR
 	}
 
 	// Render demo in the appropriate mode

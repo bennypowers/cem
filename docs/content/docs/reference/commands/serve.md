@@ -23,6 +23,15 @@ cem serve [flags]
 | `--css-transform-exclude` | Glob patterns for CSS files to exclude from transformation (e.g., `demo/**/*.css`) |
 | `--watch-ignore` | Glob patterns to ignore in file watcher (comma-separated, e.g., `_site/**,dist/**`) |
 
+### Static Build Flags
+
+| Flag | Description |
+| ---- | ----------- |
+| `--build` | Build a static site instead of starting a dev server |
+| `-o`, `--output` | Output directory for static build (default: `dist`) |
+| `--base-path` | URL base path for deployment (e.g., `/docs/components/`) |
+| `--import` | Dependency resolution: `vendor` (default), `esm`, `jspm`, `unpkg` |
+
 ### Global Flags
 
 | Flag | Description |
@@ -62,6 +71,19 @@ cem serve --target es2020
 cem serve --watch-ignore 'dist/**,_site/**'
 ```
 
+### Static site build
+
+```sh
+# Build a static site
+cem serve --build -o dist/
+
+# Build with a base path for deployment under a subdirectory
+cem serve --build -o dist/ --base-path /docs/components/
+
+# Use a CDN instead of vendoring dependencies
+cem serve --build -o dist/ --import esm
+```
+
 ## Configuration
 
 All command-line flags have corresponding configuration file options. See **[Configuration](/docs/reference/configuration/)** for the complete reference.
@@ -95,6 +117,7 @@ serve:
 ## See Also
 
 - **[Development Workflow](/docs/usage/workflow/)** - Using the dev server in your workflow
+- **[Static Site Generation](/docs/usage/static-site/)** - Building a static site from your demos
 - **[Buildless Development](/docs/usage/buildless-development/)** - TypeScript and CSS transformation
 - **[Rendering Modes](/docs/usage/rendering-modes/)** - Light, shadow, and chromeless modes
 - **[Import Maps](/docs/usage/import-maps/)** - Using npm packages without bundling
