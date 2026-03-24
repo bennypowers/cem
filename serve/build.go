@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"bennypowers.dev/cem/serve/middleware/importmap"
 	"bennypowers.dev/cem/serve/middleware/routes"
 )
 
@@ -81,6 +82,16 @@ func (s *Server) Build(config BuildConfig) error {
 	// Stub out websocket client (no live reload in static builds)
 	if err := s.writeWebSocketStub(config); err != nil {
 		return fmt.Errorf("write websocket stub: %w", err)
+	}
+
+	// Transform and copy user source files (TS→JS, CSS modules, etc.)
+	if err := s.buildUserSources(ts, config); err != nil {
+		return fmt.Errorf("build user sources: %w", err)
+	}
+
+	// Vendor node_modules dependencies referenced by import map
+	if err := s.buildDependencies(ts, config); err != nil {
+		return fmt.Errorf("build dependencies: %w", err)
 	}
 
 	// Write manifest as static JSON
@@ -287,4 +298,148 @@ export class CEMReloadClient {
 		return err
 	}
 	return os.WriteFile(outPath, []byte(stub), 0o644)
+}
+
+// buildUserSources walks the user's source directory and fetches each file
+// through the test server, which applies TS→JS and CSS transforms.
+func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig) error {
+	watchDir := s.WatchDir()
+	if watchDir == "" {
+		return nil
+	}
+
+	// Compute the URL prefix: the relative path from CWD to watchDir
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	relDir, err := filepath.Rel(cwd, watchDir)
+	if err != nil {
+		return err
+	}
+
+	count := 0
+	err = filepath.WalkDir(watchDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+
+		// Skip node_modules (handled by buildDependencies)
+		rel, _ := filepath.Rel(watchDir, path)
+		if strings.HasPrefix(rel, "node_modules") {
+			return nil
+		}
+
+		ext := filepath.Ext(path)
+		switch ext {
+		case ".ts", ".js", ".css", ".html", ".json", ".svg", ".png", ".jpg", ".gif", ".woff", ".woff2":
+			// Dev server serves files relative to watchDir
+			urlPath := "/" + rel
+			if ext == ".ts" {
+				urlPath = strings.TrimSuffix(urlPath, ".ts") + ".js"
+			}
+
+			body, fetchErr := fetchURL(ts, urlPath)
+			if fetchErr != nil {
+				// Non-fatal: file may not be directly servable
+				return nil
+			}
+
+			// Write to the CWD-relative path so import map URLs resolve
+			outPath := filepath.Join(config.OutputDir, relDir, rel)
+			if ext == ".ts" {
+				outPath = strings.TrimSuffix(outPath, ".ts") + ".js"
+			}
+			if mkErr := os.MkdirAll(filepath.Dir(outPath), 0o755); mkErr != nil {
+				return mkErr
+			}
+			count++
+			return os.WriteFile(outPath, body, 0o644)
+		default:
+			return nil
+		}
+	})
+
+	if err != nil {
+		return err
+	}
+
+	s.logger.Info("Transformed %d user source files", count)
+	return nil
+}
+
+// buildDependencies copies node_modules files referenced by the import map.
+// Fetches through the test server so transforms are applied.
+func (s *Server) buildDependencies(ts *httptest.Server, config BuildConfig) error {
+	im := s.ImportMap()
+	if im == nil {
+		return nil
+	}
+	importMap, ok := im.(*importmap.ImportMap)
+	if !ok || importMap == nil {
+		return nil
+	}
+
+	// Collect unique target paths from import map
+	seen := make(map[string]bool)
+	var paths []string
+	for _, target := range importMap.Imports {
+		if !strings.HasPrefix(target, "/node_modules/") {
+			continue
+		}
+		if seen[target] {
+			continue
+		}
+		seen[target] = true
+		paths = append(paths, target)
+	}
+	// Also check scopes
+	for _, scope := range importMap.Scopes {
+		for _, target := range scope {
+			if !strings.HasPrefix(target, "/node_modules/") {
+				continue
+			}
+			if seen[target] {
+				continue
+			}
+			seen[target] = true
+			paths = append(paths, target)
+		}
+	}
+
+	count := 0
+	for _, urlPath := range paths {
+		body, err := fetchURL(ts, urlPath)
+		if err != nil {
+			s.logger.Debug("Skip dependency %s: %v", urlPath, err)
+			continue
+		}
+
+		outPath := filepath.Join(config.OutputDir, urlPath)
+		if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(outPath, body, 0o644); err != nil {
+			return err
+		}
+		count++
+	}
+
+	s.logger.Info("Vendored %d dependencies", count)
+	return nil
+}
+
+// fetchURL fetches a URL path from the test server, returning the body bytes.
+func fetchURL(ts *httptest.Server, urlPath string) ([]byte, error) {
+	resp, err := ts.Client().Get(ts.URL + urlPath)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
+
+	return io.ReadAll(resp.Body)
 }
