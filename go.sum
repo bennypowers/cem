@@ -12,6 +12,8 @@ bennypowers.dev/lit-ssr-wasm/go v0.3.0 h1:4jtrSOquqd4STOP4VdPjs+CsliNx/eLDulNdzH
 bennypowers.dev/lit-ssr-wasm/go v0.3.0/go.mod h1:9EUR4yaHBUqs7I8mZmbJmZEzyNh1fUC4Q+j+JTWl1eo=
 bennypowers.dev/lit-ssr-wasm/go v0.4.0 h1:U2xGxh52+Px8Y3QWWCVn9Ee+7B5lzEpn2v8BnuPLNRU=
 bennypowers.dev/lit-ssr-wasm/go v0.4.0/go.mod h1:9EUR4yaHBUqs7I8mZmbJmZEzyNh1fUC4Q+j+JTWl1eo=
+bennypowers.dev/lit-ssr-wasm/go v0.4.1 h1:tn0NMgtMbrPbwG2075lhSQN6uOHl/oYcAyHrQmhDjHI=
+bennypowers.dev/lit-ssr-wasm/go v0.4.1/go.mod h1:9EUR4yaHBUqs7I8mZmbJmZEzyNh1fUC4Q+j+JTWl1eo=
 bennypowers.dev/mappa v0.0.2 h1:Q7rtEcGFxpV+8NKu+3UfBu8z3rYLikbSJdoebGcBlN8=
 bennypowers.dev/mappa v0.0.2/go.mod h1:gXGMKrZninSBx1WzulCq9B8QtBUWoookzUZ9VxEXyhY=
 github.com/IBM/fp-go v1.0.153 h1:KkzjWvInCfW1queBSpb1DV2/ZkaTIKVqV3dO8WfOvas=

@@ -51,7 +51,7 @@ require github.com/tetratelabs/wazero v1.9.0 // indirect
 require (
 	atomicgo.dev/cursor v0.2.0 // indirect
 	atomicgo.dev/schedule v0.1.0 // indirect
-	bennypowers.dev/lit-ssr-wasm/go v0.4.0
+	bennypowers.dev/lit-ssr-wasm/go v0.4.1
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/bitfield/gotestdox v0.2.2 // indirect

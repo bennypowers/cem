@@ -11,7 +11,9 @@ package serve
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"testing"
 
 	litssr "bennypowers.dev/lit-ssr-wasm/go"
@@ -45,8 +47,11 @@ func (s *Server) initLitSSR(ctx context.Context) error {
 
 	// Fallback to source eval
 	source, err := routes.TemplatesFS.ReadFile("templates/ssr-bundle.js")
-	if err != nil || len(source) == 0 {
-		return nil
+	if errors.Is(err, fs.ErrNotExist) || len(source) == 0 {
+		return nil // No bundle available (e.g., test environment)
+	}
+	if err != nil {
+		return fmt.Errorf("read SSR bundle: %w", err)
 	}
 
 	renderer, err := litssr.New(ctx, string(source), 1)
