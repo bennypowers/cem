@@ -86,6 +86,11 @@ func (s *Server) Build(config BuildConfig) error {
 		}
 	}
 
+	// Pre-render health API as static JSON
+	if err := s.buildHealthJSON(ts, config); err != nil {
+		s.logger.Warning("Failed to build health JSON: %v", err)
+	}
+
 	// Concatenate lightdom CSS into a single file
 	if err := s.buildLightdomCSS(config); err != nil {
 		return fmt.Errorf("build lightdom CSS: %w", err)
@@ -231,4 +236,28 @@ func (s *Server) buildLightdomCSS(config BuildConfig) error {
 		return err
 	}
 	return os.WriteFile(outPath, []byte(combined.String()), 0o644)
+}
+
+// buildHealthJSON fetches health data from the internal server and writes it as static JSON.
+func (s *Server) buildHealthJSON(ts *httptest.Server, config BuildConfig) error {
+	resp, err := ts.Client().Get(ts.URL + "/__cem/api/health")
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("health API returned %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	outPath := filepath.Join(config.OutputDir, "__cem", "api", "health")
+	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(outPath, body, 0o644)
 }

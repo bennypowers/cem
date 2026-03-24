@@ -495,8 +495,11 @@ func bundleChromeBrowser() error {
 		fmt.Fprintf(&imports, "import './%s';\n", entry)
 	}
 
+	// Hydration support must load before any LitElement definitions
+	// so Lit can pick up SSR-rendered DSD content instead of re-rendering
+	source := "import '@lit-labs/ssr-client/lit-element-hydrate-support.js';\n" +
+		stripImportAttributes(imports.String())
 	outfile := "middleware/routes/templates/chrome-bundle.js"
-	source := stripImportAttributes(imports.String())
 
 	result := api.Build(api.BuildOptions{
 		Stdin: &api.StdinOptions{
