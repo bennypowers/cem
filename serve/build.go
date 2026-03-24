@@ -78,6 +78,11 @@ func (s *Server) Build(config BuildConfig) error {
 		return fmt.Errorf("copy assets: %w", err)
 	}
 
+	// Stub out websocket client (no live reload in static builds)
+	if err := s.writeWebSocketStub(config); err != nil {
+		return fmt.Errorf("write websocket stub: %w", err)
+	}
+
 	// Write manifest as static JSON
 	if manifest, err := s.Manifest(); err == nil && len(manifest) > 0 {
 		outPath := filepath.Join(config.OutputDir, "custom-elements.json")
@@ -169,9 +174,13 @@ func (s *Server) copyStaticAssets(config BuildConfig) error {
 
 		rel := strings.TrimPrefix(path, "templates/")
 
-		// Skip SSR artifacts and element JS (chrome bundle replaces them)
+		// Skip SSR artifacts, element JS (chrome bundle replaces them),
+		// and websocket client (replaced by stub)
 		base := filepath.Base(rel)
 		if base == "ssr-bundle.js" || strings.HasSuffix(rel, ".qbc") {
+			return nil
+		}
+		if base == "websocket-client.js" || base == "websocket-client.js.map" || base == "websocket-client.test.js" {
 			return nil
 		}
 		if strings.HasPrefix(rel, "elements/") && strings.HasSuffix(rel, ".js") {
@@ -260,4 +269,22 @@ func (s *Server) buildHealthJSON(ts *httptest.Server, config BuildConfig) error 
 		return err
 	}
 	return os.WriteFile(outPath, body, 0o644)
+}
+
+// writeWebSocketStub writes a no-op websocket client module for static builds.
+// The chrome component dynamically imports this, so it must exist and export
+// the expected CEMReloadClient class.
+func (s *Server) writeWebSocketStub(config BuildConfig) error {
+	stub := `// Static build stub - no live reload
+export class CEMReloadClient {
+  init() {}
+  retry() {}
+  destroy() {}
+}
+`
+	outPath := filepath.Join(config.OutputDir, "__cem", "websocket-client.js")
+	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(outPath, []byte(stub), 0o644)
 }
