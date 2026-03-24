@@ -31,6 +31,8 @@ type BuildConfig struct {
 	OutputDir string
 	// BasePath is the URL base path for deployment (e.g., "/docs/components/").
 	BasePath string
+	// ImportMode controls dependency resolution: vendor (default), esm, jspm, unpkg.
+	ImportMode string
 }
 
 // siteRoot returns the output directory including the base path.
@@ -105,9 +107,18 @@ func (s *Server) Build(config BuildConfig) error {
 		return fmt.Errorf("build user sources: %w", err)
 	}
 
-	// Vendor node_modules dependencies referenced by import map
-	if err := s.buildDependencies(ts, config); err != nil {
-		return fmt.Errorf("build dependencies: %w", err)
+	// Handle dependencies based on import mode
+	switch config.ImportMode {
+	case "esm", "jspm", "unpkg":
+		// CDN mode: rewrite import map in all HTML files to use CDN URLs
+		if err := s.rewriteImportMapToCDN(config); err != nil {
+			return fmt.Errorf("rewrite import map to CDN: %w", err)
+		}
+	default:
+		// Vendor mode (default): copy node_modules to output
+		if err := s.buildDependencies(ts, config); err != nil {
+			return fmt.Errorf("build dependencies: %w", err)
+		}
 	}
 
 	// Write manifest as static JSON
@@ -514,6 +525,139 @@ func (s *Server) buildSitemap(demoRoutes map[string]*middleware.DemoRouteEntry, 
 		return err
 	}
 	return os.WriteFile(outPath, []byte(sb.String()), 0o644)
+}
+
+// rewriteImportMapToCDN rewrites import map entries in all HTML files
+// to use CDN URLs instead of local /node_modules/ paths.
+func (s *Server) rewriteImportMapToCDN(config BuildConfig) error {
+	root := config.siteRoot()
+	count := 0
+
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".html") {
+			return err
+		}
+
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return readErr
+		}
+
+		original := string(data)
+		rewritten := rewriteNodeModulesToCDN(original, config.ImportMode)
+		if rewritten == original {
+			return nil
+		}
+
+		count++
+		return os.WriteFile(path, []byte(rewritten), 0o644)
+	})
+
+	if err != nil {
+		return err
+	}
+
+	s.logger.Info("Rewrote import maps to %s CDN in %d files", config.ImportMode, count)
+	return nil
+}
+
+// rewriteNodeModulesToCDN replaces /node_modules/ paths with CDN URLs.
+// Handles both import map JSON and HTML attribute references.
+func rewriteNodeModulesToCDN(html, mode string) string {
+	// Find and replace /node_modules/PKG/path patterns
+	// Package names: bare (lit) or scoped (@lit/reactive-element)
+	var result strings.Builder
+	result.Grow(len(html))
+
+	prefix := "/node_modules/"
+	for {
+		idx := strings.Index(html, prefix)
+		if idx == -1 {
+			result.WriteString(html)
+			break
+		}
+
+		// Also check for base-path-prefixed paths
+		result.WriteString(html[:idx])
+		html = html[idx+len(prefix):]
+
+		// Extract package name and subpath
+		pkg, subpath := parseNodeModulePath(html)
+		if pkg == "" {
+			result.WriteString(prefix)
+			continue
+		}
+
+		// Advance past the consumed path
+		consumed := pkg
+		if subpath != "" {
+			consumed += "/" + subpath
+		}
+		html = html[len(consumed):]
+
+		// Generate CDN URL
+		cdnURL := cdnURL(mode, pkg, subpath)
+		result.WriteString(cdnURL)
+	}
+
+	return result.String()
+}
+
+// parseNodeModulePath extracts package name and subpath from a path
+// starting after /node_modules/. Returns (pkg, subpath).
+func parseNodeModulePath(s string) (string, string) {
+	// Find the end of the path (quote or whitespace)
+	end := strings.IndexAny(s, `"' `)
+	if end == -1 {
+		return "", ""
+	}
+	fullPath := s[:end]
+
+	var pkg, subpath string
+	if strings.HasPrefix(fullPath, "@") {
+		// Scoped package: @scope/name/subpath
+		parts := strings.SplitN(fullPath, "/", 3)
+		if len(parts) < 2 {
+			return "", ""
+		}
+		pkg = parts[0] + "/" + parts[1]
+		if len(parts) == 3 {
+			subpath = parts[2]
+		}
+	} else {
+		// Bare package: name/subpath
+		parts := strings.SplitN(fullPath, "/", 2)
+		pkg = parts[0]
+		if len(parts) == 2 {
+			subpath = parts[1]
+		}
+	}
+
+	return pkg, subpath
+}
+
+// cdnURL constructs a CDN URL for a package.
+func cdnURL(mode, pkg, subpath string) string {
+	switch mode {
+	case "esm":
+		if subpath != "" {
+			return "https://esm.sh/" + pkg + "/" + subpath
+		}
+		return "https://esm.sh/" + pkg
+	case "jspm":
+		if subpath != "" {
+			return "https://ga.jspm.io/npm:" + pkg + "/" + subpath
+		}
+		return "https://ga.jspm.io/npm:" + pkg
+	case "unpkg":
+		if subpath != "" {
+			return "https://unpkg.com/" + pkg + "/" + subpath
+		}
+		return "https://unpkg.com/" + pkg
+	default:
+		// Shouldn't happen, return original
+		return "/node_modules/" + pkg
+	}
 }
 
 // fetchURL fetches a URL path from the test server, returning the body bytes.

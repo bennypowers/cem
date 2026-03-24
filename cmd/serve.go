@@ -285,9 +285,11 @@ var serveCmd = &cobra.Command{
 		if buildMode, _ := cmd.Flags().GetBool("build"); buildMode {
 			outputDir, _ := cmd.Flags().GetString("output")
 			basePath, _ := cmd.Flags().GetString("base-path")
+			importMode, _ := cmd.Flags().GetString("import")
 			return server.Build(serve.BuildConfig{
-				OutputDir: outputDir,
-				BasePath:  basePath,
+				OutputDir:  outputDir,
+				BasePath:   basePath,
+				ImportMode: importMode,
 			})
 		}
 
@@ -508,6 +510,7 @@ func init() {
 	serveCmd.Flags().Bool("build", false, "Build a static site instead of starting a dev server")
 	serveCmd.Flags().StringP("output", "o", "dist", "Output directory for static build")
 	serveCmd.Flags().String("base-path", "", "URL base path for static build deployment (e.g., /docs/components/)")
+	serveCmd.Flags().String("import", "vendor", "Dependency resolution for static builds: vendor, esm, jspm, unpkg")
 
 	if err := viper.BindPFlag("serve.port", serveCmd.Flags().Lookup("port")); err != nil {
 		panic(fmt.Sprintf("failed to bind flag serve.port: %v", err))
