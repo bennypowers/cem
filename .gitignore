@@ -45,3 +45,5 @@ serve/elements/patternfly/custom-elements.json
 serve/elements/chrome/custom-elements.json
 serve/middleware/routes/templates/vendor/
 serve/middleware/routes/templates/ssr-bundle.qbc
+serve/middleware/routes/templates/chrome-bundle.js
+serve/middleware/routes/templates/chrome-bundle.js.map
