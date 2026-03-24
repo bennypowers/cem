@@ -7698,6 +7698,8 @@ loadClientModules_fn = function() {
       getTreeState: () => ({ expanded: [], selected: null }),
       setTreeState() {
       },
+      updateTreeState() {
+      },
       migrateFromLocalStorage() {
       }
     };

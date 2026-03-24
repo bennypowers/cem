@@ -57,6 +57,7 @@ type StatePersistenceType = {
   updateState(s: any): void;
   getTreeState(): any;
   setTreeState(s: any): void;
+  updateTreeState(s: any): void;
   migrateFromLocalStorage(): void;
 };
 let CEMReloadClient: CEMReloadClientType;
@@ -709,6 +710,7 @@ export class CemServeChrome extends LitElement {
         updateState() {},
         getTreeState: () => ({ expanded: [], selected: null }),
         setTreeState() {},
+        updateTreeState() {},
         migrateFromLocalStorage() {},
       };
     });
