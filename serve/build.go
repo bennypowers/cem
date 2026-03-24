@@ -11,6 +11,7 @@ package serve
 
 import (
 	"fmt"
+	"html"
 	"io"
 	"io/fs"
 	"net/http"
@@ -516,7 +517,7 @@ func (s *Server) buildSitemap(demoRoutes map[string]*middleware.DemoRouteEntry, 
 	sb.WriteString(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` + "\n")
 	for _, u := range urls {
 		loc := config.BasePath + u
-		sb.WriteString("  <url><loc>" + loc + "</loc></url>\n")
+		sb.WriteString("  <url><loc>" + html.EscapeString(loc) + "</loc></url>\n")
 	}
 	sb.WriteString("</urlset>\n")
 
@@ -742,8 +743,8 @@ func rewriteJSONPaths(s, basePath string) string {
 		result.WriteString(s[:idx+len(`": "`)])
 		s = s[idx+len(`": "`):]
 
-		// s now starts with "/" - prefix with base path
-		if !strings.HasPrefix(s, basePath[1:]+"/") {
+		// s now starts with "/" - prefix with base path if not already present
+		if !strings.HasPrefix(s, basePath+"/") {
 			result.WriteString(basePath)
 		}
 	}
