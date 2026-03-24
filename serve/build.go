@@ -345,6 +345,14 @@ func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig) error
 				return nil
 			}
 
+			// For JS/TS files, rewrite CSS import attribute query params to .js extension
+			// The dev server uses ?__cem-import-attrs[type]=css but static servers
+			// don't handle query params, so we write CSS-as-JS wrappers as .css.js files
+			if ext == ".ts" || ext == ".js" {
+				body = []byte(strings.ReplaceAll(string(body),
+					"?__cem-import-attrs[type]=css", ".js"))
+			}
+
 			// Write to the CWD-relative path so import map URLs resolve
 			outPath := filepath.Join(config.OutputDir, relDir, rel)
 			if ext == ".ts" {
@@ -353,8 +361,25 @@ func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig) error
 			if mkErr := os.MkdirAll(filepath.Dir(outPath), 0o755); mkErr != nil {
 				return mkErr
 			}
+			if writeErr := os.WriteFile(outPath, body, 0o644); writeErr != nil {
+				return writeErr
+			}
 			count++
-			return os.WriteFile(outPath, body, 0o644)
+
+			// For CSS files, also create a .css.js wrapper (CSS module for JS import)
+			if ext == ".css" {
+				cssModuleURL := urlPath + "?__cem-import-attrs[type]=css"
+				jsBody, jsErr := fetchURL(ts, cssModuleURL)
+				if jsErr == nil {
+					jsPath := outPath + ".js"
+					if writeErr := os.WriteFile(jsPath, jsBody, 0o644); writeErr != nil {
+						return writeErr
+					}
+					count++
+				}
+			}
+
+			return nil
 		default:
 			return nil
 		}
@@ -423,6 +448,16 @@ func (s *Server) buildDependencies(ts *httptest.Server, config BuildConfig) erro
 			return err
 		}
 		count++
+
+		// Also copy source map if it exists
+		if strings.HasSuffix(urlPath, ".js") {
+			mapURL := urlPath + ".map"
+			mapBody, mapErr := fetchURL(ts, mapURL)
+			if mapErr == nil {
+				mapPath := outPath + ".map"
+				_ = os.WriteFile(mapPath, mapBody, 0o644)
+			}
+		}
 	}
 
 	s.logger.Info("Vendored %d dependencies", count)
