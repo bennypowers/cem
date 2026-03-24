@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	litssr "bennypowers.dev/lit-ssr-wasm/go"
+	"bennypowers.dev/cem/serve/middleware/routes"
 )
 
 var (
@@ -28,22 +29,13 @@ var (
 func getSharedRenderer(t *testing.T) *litssr.Renderer {
 	t.Helper()
 	sharedRendererOnce.Do(func() {
-		source, err := buildComponentSource()
+		source, err := routes.TemplatesFS.ReadFile("templates/ssr-bundle.js")
 		if err != nil {
-			sharedRendererErr = err
+			sharedRendererErr = fmt.Errorf("no SSR bundle: %w", err)
 			return
 		}
-		if source == "" {
-			sharedRendererErr = fmt.Errorf("no SSR bundle available")
-			return
-		}
-		elements := discoverChromeElements()
-		if len(elements) == 0 {
-			sharedRendererErr = fmt.Errorf("no chrome elements found in manifests")
-			return
-		}
-		sharedRenderer, sharedRendererErr = litssr.NewWithElements(
-			context.Background(), source, elements, 1)
+		sharedRenderer, sharedRendererErr = litssr.New(
+			context.Background(), string(source), 1)
 	})
 	if sharedRendererErr != nil {
 		t.Skip(sharedRendererErr)
@@ -192,8 +184,6 @@ func TestSSR_ButtonConditionalRendering(t *testing.T) {
 func TestSSR_ModuleScopeBrowserAPIs(t *testing.T) {
 	r := getSharedRenderer(t)
 
-	// These components reference document/window/CSS at module scope
-	// but with guards (optional chaining, globalThis checks)
 	tests := []struct {
 		name  string
 		input string
@@ -215,13 +205,12 @@ func TestSSR_ModuleScopeBrowserAPIs(t *testing.T) {
 
 // TestSSR_BytecodeLifecycle verifies the bytecode path works end-to-end.
 func TestSSR_BytecodeLifecycle(t *testing.T) {
-	source, err := buildComponentSource()
-	if err != nil || source == "" {
+	source, err := routes.TemplatesFS.ReadFile("templates/ssr-bundle.js")
+	if err != nil || len(source) == 0 {
 		t.Skip("no SSR bundle available")
 	}
 
-	// Compile to bytecode
-	bytecode, err := litssr.CompileSource(context.Background(), source)
+	bytecode, err := litssr.CompileSource(context.Background(), string(source))
 	if err != nil {
 		t.Fatalf("CompileSource: %v", err)
 	}
@@ -230,15 +219,12 @@ func TestSSR_BytecodeLifecycle(t *testing.T) {
 	}
 	t.Logf("Source: %d KB, Bytecode: %d KB", len(source)/1024, len(bytecode)/1024)
 
-	// Create renderer from bytecode
-	elements := discoverChromeElements()
-	r, err := litssr.NewFromBytecode(context.Background(), bytecode, elements, 1)
+	r, err := litssr.NewFromBytecode(context.Background(), bytecode, 1)
 	if err != nil {
 		t.Fatalf("NewFromBytecode: %v", err)
 	}
 	t.Cleanup(func() { _ = r.Close(context.Background()) })
 
-	// Render and verify
 	out := render(t, r, "<pf-v6-badge>42</pf-v6-badge>")
 	if !strings.Contains(out, `shadowrootmode="open"`) {
 		t.Error("bytecode render missing DSD")
