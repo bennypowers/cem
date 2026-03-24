@@ -50,6 +50,7 @@ type ChromeData struct {
 	Manifest       *M.Package            // Parsed manifest for server-side tree rendering
 	Packages       []PackageWithManifest // Workspace packages with modules (for package-level tree)
 	State          CemServeState         // Persisted UI state for SSR (color scheme, drawer, tree)
+	StaticBuild    bool                  // True when rendering for static site output
 }
 
 // TemplateErrorData represents template data for the error page

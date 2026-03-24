@@ -17,7 +17,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"bennypowers.dev/cem/serve/middleware/routes"
@@ -41,9 +40,14 @@ func (s *Server) Build(config BuildConfig) error {
 
 	s.logger.Info("Building static site to %s", config.OutputDir)
 
+	// Enable static build mode so templates render chrome-bundle.js
+	// instead of individual module scripts + hydration support
+	s.staticBuild = true
+	s.setupMiddleware()
+
 	// Get demo routes from the pre-computed routing table
 	demoRoutes := s.DemoRoutes()
-	if demoRoutes == nil || len(demoRoutes) == 0 {
+	if len(demoRoutes) == 0 {
 		return fmt.Errorf("no demo routes found")
 	}
 
@@ -91,12 +95,8 @@ func (s *Server) Build(config BuildConfig) error {
 	return nil
 }
 
-var cemModuleRe = regexp.MustCompile(`\s*<link rel="modulepreload" href="/__cem/(?:elements|vendor)/[^"]*">\n?`)
-var cemScriptRe = regexp.MustCompile(`\s*<script type="module" src="/__cem/vendor/lit-element-hydrate-support\.js"></script>\n?`)
-var lightdomCSSRe = regexp.MustCompile(`\s*<link rel="stylesheet" href="/__cem/elements/[^"]*lightdom[^"]*\.css">\n?`)
-
 // buildPage fetches a page from the internal server and writes it to disk.
-// Rewrites HTML to use the chrome bundle instead of individual module scripts.
+// The template's {{if .StaticBuild}} block handles chrome-bundle.js injection.
 func (s *Server) buildPage(ts *httptest.Server, route string, config BuildConfig) error {
 	resp, err := ts.Client().Get(ts.URL + route)
 	if err != nil {
@@ -113,21 +113,6 @@ func (s *Server) buildPage(ts *httptest.Server, route string, config BuildConfig
 		return err
 	}
 
-	html := string(body)
-
-	// Remove individual element modulepreloads, vendor scripts, lightdom CSS
-	html = cemModuleRe.ReplaceAllString(html, "")
-	html = cemScriptRe.ReplaceAllString(html, "")
-	html = lightdomCSSRe.ReplaceAllString(html, "")
-
-	// Inject chrome bundle and combined lightdom CSS before </head>
-	inject := "  <link rel=\"stylesheet\" href=\"/__cem/lightdom.css\">\n" +
-		"  <script type=\"module\" src=\"/__cem/chrome-bundle.js\"></script>\n"
-	html = strings.Replace(html, "</head>", inject+"</head>", 1)
-
-	// Remove websocket script injection (no live reload in static builds)
-	html = strings.ReplaceAll(html, `<script type="module" src="/__cem/websocket-client.js"></script>`, "")
-
 	// Determine output path
 	outPath := filepath.Join(config.OutputDir, route)
 	if strings.HasSuffix(route, "/") || filepath.Ext(route) == "" {
@@ -138,7 +123,7 @@ func (s *Server) buildPage(ts *httptest.Server, route string, config BuildConfig
 		return err
 	}
 
-	return os.WriteFile(outPath, []byte(html), 0o644)
+	return os.WriteFile(outPath, body, 0o644)
 }
 
 // copyChrome copies the chrome bundle and sourcemap to the output directory.
@@ -217,7 +202,7 @@ func (s *Server) copyStaticAssets(config BuildConfig) error {
 	})
 }
 
-// buildLightdomCSS concatenates all lightdom CSS files into one minified sheet.
+// buildLightdomCSS concatenates all lightdom CSS files into one sheet.
 func (s *Server) buildLightdomCSS(config BuildConfig) error {
 	var combined strings.Builder
 
@@ -232,7 +217,6 @@ func (s *Server) buildLightdomCSS(config BuildConfig) error {
 		if err != nil {
 			return nil
 		}
-		combined.WriteString("/* " + filepath.Base(path) + " */\n")
 		combined.Write(data)
 		combined.WriteByte('\n')
 		return nil
