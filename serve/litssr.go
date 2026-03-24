@@ -47,11 +47,14 @@ func (s *Server) initLitSSR(ctx context.Context) error {
 
 	// Fallback to source eval
 	source, err := routes.TemplatesFS.ReadFile("templates/ssr-bundle.js")
-	if errors.Is(err, fs.ErrNotExist) || len(source) == 0 {
-		return nil // No bundle available (e.g., test environment)
-	}
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
 		return fmt.Errorf("read SSR bundle: %w", err)
+	}
+	if len(source) == 0 {
+		return fmt.Errorf("empty SSR bundle")
 	}
 
 	renderer, err := litssr.New(ctx, string(source), 1)
