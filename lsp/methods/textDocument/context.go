@@ -80,14 +80,3 @@ func splitLines(content string) []string {
 	return strings.Split(content, "\n")
 }
 
-// IsCustomElementTag checks if a tag name is a custom element
-func IsCustomElementTag(tagName string) bool {
-	// Custom elements must contain a hyphen and start with lowercase letter
-	if len(tagName) == 0 || !strings.Contains(tagName, "-") {
-		return false
-	}
-
-	// Must start with lowercase letter
-	firstChar := tagName[0]
-	return firstChar >= 'a' && firstChar <= 'z'
-}

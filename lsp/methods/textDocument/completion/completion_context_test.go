@@ -24,6 +24,7 @@ import (
 
 	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/lsp/document"
+	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
@@ -219,7 +220,7 @@ func TestCustomElementTagValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := textDocument.IsCustomElementTag(tt.tagName)
+			result := helpers.IsCustomElementTag(tt.tagName)
 			if result != tt.expected {
 				t.Errorf("Expected %v for tag %q, got %v", tt.expected, tt.tagName, result)
 			}

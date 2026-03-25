@@ -23,7 +23,6 @@ import (
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
-	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
@@ -78,7 +77,7 @@ func Definition(ctx types.ServerContext, context *glsp.Context, params *protocol
 	}
 
 	// Only provide definitions for custom elements
-	if !textDocument.IsCustomElementTag(request.ElementName) {
+	if !helpers.IsCustomElementTag(request.ElementName) {
 		return nil, nil
 	}
 
