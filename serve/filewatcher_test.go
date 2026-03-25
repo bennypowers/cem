@@ -242,6 +242,74 @@ func TestFileWatcher_IgnorePatterns(t *testing.T) {
 	t.Logf("Server successfully started with ignore patterns for: _site, node_modules, ignored/**")
 }
 
+// TestFileWatcher_NewFileCreation verifies new files trigger reload with file-structure-change reason
+func TestFileWatcher_NewFileCreation(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create an initial source file so the directory is not empty
+	srcDir := filepath.Join(tmpDir, "src")
+	err := os.MkdirAll(srcDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create src directory: %v", err)
+	}
+
+	err = os.WriteFile(filepath.Join(srcDir, "existing.ts"), []byte("export class Existing {}"), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write initial file: %v", err)
+	}
+
+	server, err := serve.NewServer(9105)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer server.Close()
+
+	err = server.SetWatchDir(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to set watch directory: %v", err)
+	}
+
+	err = server.Start()
+	if err != nil {
+		t.Fatalf("Failed to start server: %v", err)
+	}
+
+	time.Sleep(100 * time.Millisecond)
+
+	wsClient := testutil.NewWebSocketTestClient(t, "ws://localhost:9105/__cem/reload")
+
+	time.Sleep(200 * time.Millisecond) // Let watcher initialize
+
+	// Create a brand new element directory and file immediately
+	// (no pause -- the watcher must handle this via directory walk)
+	newElementDir := filepath.Join(srcDir, "new-element")
+	err = os.MkdirAll(newElementDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create new element directory: %v", err)
+	}
+
+	err = os.WriteFile(
+		filepath.Join(newElementDir, "new-element.ts"),
+		[]byte("export class NewElement extends HTMLElement {}\ncustomElements.define('new-element', NewElement);\n"),
+		0644,
+	)
+	if err != nil {
+		t.Fatalf("Failed to write new element file: %v", err)
+	}
+
+	// Should receive reload event with file-structure-change reason
+	msg := wsClient.ReceiveMessage(t, 3*time.Second)
+	msgStr := string(msg)
+
+	if !strings.Contains(msgStr, "reload") {
+		t.Errorf("Expected reload event, got: %s", msgStr)
+	}
+
+	if !strings.Contains(msgStr, "file-structure-change") {
+		t.Errorf("Expected file-structure-change reason, got: %s", msgStr)
+	}
+}
+
 // TestFileWatcher_ConfigFileHotReload verifies config file changes trigger automatic path resolver rebuild
 func TestFileWatcher_ConfigFileHotReload(t *testing.T) {
 	tmpDir := t.TempDir()

@@ -194,21 +194,32 @@ func (s *Server) collectAffectedFiles(changedPath string) []string {
 	return result
 }
 
-// regenerateManifestIfNeeded regenerates manifest when TS/JS files change
-func (s *Server) regenerateManifestIfNeeded(tsJsFiles []string) {
+// regenerateManifestIfNeeded regenerates manifest when TS/JS files change.
+// When files are created or deleted, a full regeneration is performed since
+// the incremental dependency tracker has no knowledge of new files.
+func (s *Server) regenerateManifestIfNeeded(tsJsFiles []string, hasStructuralChange bool) {
 	if len(tsJsFiles) == 0 {
 		return
 	}
 
 	manifestStart := time.Now()
-	s.logger.Debug("Regenerating manifest incrementally for %d file(s)...", len(tsJsFiles))
-	manifestSize, err := s.RegenerateManifestIncremental(tsJsFiles)
+
+	var manifestSize int
+	var err error
+	if hasStructuralChange {
+		s.logger.Debug("Regenerating manifest fully for %d new/deleted file(s)...", len(tsJsFiles))
+		manifestSize, err = s.RegenerateManifest()
+	} else {
+		s.logger.Debug("Regenerating manifest incrementally for %d file(s)...", len(tsJsFiles))
+		manifestSize, err = s.RegenerateManifestIncremental(tsJsFiles)
+	}
+
 	manifestDuration := time.Since(manifestStart)
 	if err != nil {
-		s.logger.Error("Failed to regenerate manifest incrementally: %v", err)
+		s.logger.Error("Failed to regenerate manifest: %v", err)
 		// Continue anyway - we still want to reload the page
 	} else {
-		s.logger.Debug("Manifest regenerated incrementally (%d bytes) in %v", manifestSize, manifestDuration)
+		s.logger.Debug("Manifest regenerated (%d bytes) in %v", manifestSize, manifestDuration)
 	}
 }
 
@@ -490,13 +501,30 @@ func (s *Server) handleFileChanges() {
 			}
 
 			// Regenerate manifest if TS/JS files changed
-			s.regenerateManifestIfNeeded(tsJsFiles)
+			hasStructuralChange := event.HasCreates || event.HasDeletes
+			s.regenerateManifestIfNeeded(tsJsFiles, hasStructuralChange)
 
 			// Regenerate import map if package.json or file structure changed
 			s.regenerateImportMapIfNeeded(event)
 
-			// Broadcast smart reload to affected pages
-			s.broadcastSmartReload(changedPath, relPath, invalidatedFiles)
+			// For structural changes (new/deleted files), broadcast to all clients
+			// since the element list in the sidebar may have changed
+			if hasStructuralChange && len(tsJsFiles) > 0 {
+				files := make([]string, 0, len(relevantFiles))
+				for _, f := range relevantFiles {
+					if rel, err := filepath.Rel(s.watchDir, f); err == nil {
+						files = append(files, rel)
+					} else {
+						files = append(files, f)
+					}
+				}
+				if err := s.BroadcastReload(files, "file-structure-change"); err != nil {
+					s.logger.Error("Failed to broadcast reload: %v", err)
+				}
+			} else {
+				// Broadcast smart reload to affected pages
+				s.broadcastSmartReload(changedPath, relPath, invalidatedFiles)
+			}
 		}() // End panic recovery function
 	}
 }
