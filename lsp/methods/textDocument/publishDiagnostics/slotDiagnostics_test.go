@@ -76,9 +76,6 @@ func TestSlotDiagnostics_Fixtures(t *testing.T) {
 		}
 
 		for i, exp := range expected {
-			if i >= len(diagnostics) {
-				break
-			}
 			act := diagnostics[i]
 
 			if act.Range.Start.Line != exp.Range.Start.Line ||

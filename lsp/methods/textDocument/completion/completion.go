@@ -175,9 +175,9 @@ func GetAttributeCompletionsWithContext(ctx types.ServerContext, doc types.Docum
 	helpers.SafeDebugLog("[COMPLETION] getAttributeCompletions called for tagName: '%s'", tagName)
 
 	// Only provide attribute completions for custom elements
-	if tagName == "" || !textDocument.IsCustomElementTag(tagName) {
+	if tagName == "" || !helpers.IsCustomElementTag(tagName) {
 		helpers.SafeDebugLog("[COMPLETION] Skipping attribute completions - tagName empty (%t) or not custom element (%t)",
-			tagName == "", !textDocument.IsCustomElementTag(tagName))
+			tagName == "", !helpers.IsCustomElementTag(tagName))
 
 		// However, we should still check for slot attribute if we have document context
 		// and this element is a child of a custom element with slots
@@ -260,7 +260,7 @@ func GetAttributeValueCompletionsWithContext(ctx types.ServerContext, doc types.
 	}
 
 	// Only provide value completions for custom elements
-	if tagName == "" || !textDocument.IsCustomElementTag(tagName) || attributeName == "" {
+	if tagName == "" || !helpers.IsCustomElementTag(tagName) || attributeName == "" {
 		return items
 	}
 
@@ -549,7 +549,7 @@ func getLitEventCompletions(ctx types.ServerContext, tagName string) []protocol.
 	var items []protocol.CompletionItem
 
 	// Only provide event completions for custom elements
-	if tagName == "" || !textDocument.IsCustomElementTag(tagName) {
+	if tagName == "" || !helpers.IsCustomElementTag(tagName) {
 		return items
 	}
 
@@ -578,7 +578,7 @@ func getLitPropertyCompletions(ctx types.ServerContext, tagName string) []protoc
 	var items []protocol.CompletionItem
 
 	// Only provide property completions for custom elements
-	if tagName == "" || !textDocument.IsCustomElementTag(tagName) {
+	if tagName == "" || !helpers.IsCustomElementTag(tagName) {
 		return items
 	}
 
@@ -608,7 +608,7 @@ func getLitBooleanAttributeCompletions(ctx types.ServerContext, tagName string) 
 	var items []protocol.CompletionItem
 
 	// Only provide boolean attribute completions for custom elements
-	if tagName == "" || !textDocument.IsCustomElementTag(tagName) {
+	if tagName == "" || !helpers.IsCustomElementTag(tagName) {
 		return items
 	}
 
@@ -657,7 +657,7 @@ func getSlotAttributeCompletions(ctx types.ServerContext, doc types.Document, po
 	helpers.SafeDebugLog("[COMPLETION] Found potential parent element: %s", parentTagName)
 
 	// Check if the parent element is a custom element with slots
-	if !textDocument.IsCustomElementTag(parentTagName) {
+	if !helpers.IsCustomElementTag(parentTagName) {
 		helpers.SafeDebugLog("[COMPLETION] Parent element %s is not a custom element", parentTagName)
 		return items
 	}
@@ -728,7 +728,7 @@ func findParentElementTag(doc types.Document, position protocol.Position) string
 							start, end := tagNameNode.ByteRange()
 							if start < end && end <= uint(len(contentBytes)) {
 								tagName := string(contentBytes[start:end])
-								if textDocument.IsCustomElementTag(tagName) {
+								if helpers.IsCustomElementTag(tagName) {
 									return tagName
 								}
 							}
@@ -815,7 +815,7 @@ func findParentElementTagFallback(doc types.Document, position protocol.Position
 					}
 
 					// If this is a custom element
-					if textDocument.IsCustomElementTag(tagName) {
+					if helpers.IsCustomElementTag(tagName) {
 						// If this is the first element we found (any element), it's likely the current element
 						// Skip it and continue looking for the parent
 						if !foundAnyElement {
@@ -886,7 +886,7 @@ func shouldSuggestSlotAttribute(ctx types.ServerContext, doc types.Document, pos
 	}
 
 	// Check if the parent element is a custom element
-	if !textDocument.IsCustomElementTag(parentTagName) {
+	if !helpers.IsCustomElementTag(parentTagName) {
 		return false, ""
 	}
 

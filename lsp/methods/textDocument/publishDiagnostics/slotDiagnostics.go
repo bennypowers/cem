@@ -296,12 +296,12 @@ func findParentElementFallback(doc types.Document, position protocol.Position) s
 	for i := offset - 1; i >= 0; i-- {
 		// Track HTML comments when walking backward: we see --> first,
 		// then <!-- later. Skip everything between them.
-		if !inComment && i >= 2 && content[i-2:i+1] == "-->" {
+		if !inComment && i >= 2 && content[i] == '>' && content[i-2:i+1] == "-->" {
 			inComment = true
 			continue
 		}
 		if inComment {
-			if i+4 <= len(content) && content[i:i+4] == "<!--" {
+			if content[i] == '<' && i+4 <= len(content) && content[i:i+4] == "<!--" {
 				inComment = false
 			}
 			continue
