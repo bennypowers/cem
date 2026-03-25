@@ -245,15 +245,39 @@ func (fw *fileWatcher) processEvents() {
 				continue
 			}
 
-			// When a new directory is created, add it to the watcher
-			// so that files created inside it generate events
+			// When a new directory is created, walk it to add all nested
+			// directories to the watcher and record any files already present
+			// as create changes (handles mkdir + immediate file write race)
 			if event.Op&fsnotify.Create == fsnotify.Create {
 				if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
-					if addErr := fw.watcher.Add(event.Name); addErr == nil {
-						if fw.logger != nil {
-							fw.logger.Debug("Watching new directory: %s", event.Name)
+					_ = filepath.Walk(event.Name, func(p string, fi os.FileInfo, walkErr error) error {
+						if walkErr != nil {
+							return walkErr
 						}
-					}
+						if fi.IsDir() {
+							if fw.shouldIgnore(p) {
+								return filepath.SkipDir
+							}
+							if addErr := fw.watcher.Add(p); addErr == nil {
+								if fw.logger != nil {
+									fw.logger.Debug("Watching new directory: %s", p)
+								}
+							}
+						} else {
+							// Record pre-existing file as a create change
+							fw.mu.Lock()
+							fw.debouncedFiles[p] = time.Now()
+							if fw.fileEventTypes == nil {
+								fw.fileEventTypes = make(map[string]string)
+							}
+							fw.fileEventTypes[p] = "create"
+							fw.mu.Unlock()
+							if fw.logger != nil {
+								fw.logger.Debug("File create: %s", p)
+							}
+						}
+						return nil
+					})
 				}
 			}
 

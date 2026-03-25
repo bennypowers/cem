@@ -280,15 +280,13 @@ func TestFileWatcher_NewFileCreation(t *testing.T) {
 
 	time.Sleep(200 * time.Millisecond) // Let watcher initialize
 
-	// Create a brand new element file
+	// Create a brand new element directory and file immediately
+	// (no pause -- the watcher must handle this via directory walk)
 	newElementDir := filepath.Join(srcDir, "new-element")
 	err = os.MkdirAll(newElementDir, 0755)
 	if err != nil {
 		t.Fatalf("Failed to create new element directory: %v", err)
 	}
-
-	// Wait for the watcher to pick up the new directory before creating files in it
-	time.Sleep(200 * time.Millisecond)
 
 	err = os.WriteFile(
 		filepath.Join(newElementDir, "new-element.ts"),
