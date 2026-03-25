@@ -803,13 +803,55 @@ func rewriteAttrPaths(s, attrPrefix, basePath string) string {
 	return result.String()
 }
 
-// rewriteJSONPaths rewrites absolute paths in import map JSON.
-// e.g., ": "/node_modules/lit" → ": "/base/node_modules/lit"
+// rewriteJSONPaths rewrites absolute paths in import map JSON,
+// both values (": "/...") and scope keys ("/node_modules/...": {).
 func rewriteJSONPaths(s, basePath string) string {
+	// Rewrite JSON values: ": "/..."
+	for _, pattern := range []string{`": "/`, `": '/`} {
+		quote := pattern[len(pattern)-2 : len(pattern)-1] // extract the quote char
+		var result strings.Builder
+		result.Grow(len(s))
+
+		for {
+			idx := strings.Index(s, pattern)
+			if idx == -1 {
+				result.WriteString(s)
+				break
+			}
+
+			// Write up to and including ": <quote>
+			prefix := `": ` + quote
+			result.WriteString(s[:idx+len(prefix)])
+			s = s[idx+len(prefix):]
+
+			// s now starts with "/" - prefix with base path if not already present
+			if !strings.HasPrefix(s, basePath+"/") {
+				result.WriteString(basePath)
+			}
+		}
+
+		s = result.String()
+	}
+
+	// Rewrite scope keys: "/node_modules/...": { and similar
+	// Pattern: start-of-key quote, slash, ...path..., quote, colon
+	// We look for `"/` at the start of a JSON key in scopes
+	s = rewriteJSONScopeKeys(s, basePath)
+
+	return s
+}
+
+// rewriteJSONScopeKeys rewrites absolute paths used as JSON object keys.
+// e.g., "/node_modules/lit/": { → "/base/node_modules/lit/": {
+// Only matches keys that look like scope entries: "/path/": {
+func rewriteJSONScopeKeys(s, basePath string) string {
 	var result strings.Builder
 	result.Grow(len(s))
 
-	pattern := `": "/`
+	// Scope keys appear as: "/path/": {
+	// We match `"/` but exclude `"//` (protocol-relative URLs)
+	// and `": "/` (JSON values, handled by rewriteJSONPaths)
+	pattern := `"/`
 	for {
 		idx := strings.Index(s, pattern)
 		if idx == -1 {
@@ -817,12 +859,27 @@ func rewriteJSONPaths(s, basePath string) string {
 			break
 		}
 
-		// Write up to and including ": "
-		result.WriteString(s[:idx+len(`": "`)])
-		s = s[idx+len(`": "`):]
+		// Check what precedes this match to distinguish keys from values
+		// JSON values: `: "/...` or `= "/...`
+		// Scope keys: whitespace or comma before `"/...`
+		prefix := s[:idx]
+		isValue := strings.HasSuffix(prefix, `: `) || strings.HasSuffix(prefix, `= `)
 
-		// s now starts with "/" - prefix with base path if not already present
-		if !strings.HasPrefix(s, basePath+"/") {
+		// Write everything up to and including the opening quote
+		result.WriteString(s[:idx+1]) // include the "
+		s = s[idx+1:]                 // s starts with /
+
+		if isValue {
+			continue
+		}
+
+		// Skip protocol-relative URLs: //...
+		if len(s) > 1 && s[1] == '/' {
+			continue
+		}
+
+		// Prefix with base path if not already present
+		if !strings.HasPrefix(s, basePath+"/") && !strings.HasPrefix(s, basePath+`"`) {
 			result.WriteString(basePath)
 		}
 	}
