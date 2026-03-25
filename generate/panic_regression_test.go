@@ -23,7 +23,7 @@ import (
 	"testing"
 )
 
-// TestGenerateConfigFileNotFoundNoPanic tests that --config with a relative path
+// TestGenerateConfigRelativePathNoPanic tests that --config with a relative path
 // correctly derives the project root and does not panic.
 //
 // Original bug: --config .config/cem.yaml used filepath.Dir() which gave ".config/"
@@ -32,7 +32,7 @@ import (
 //
 // After the unified config fix, --config .config/cem.yaml correctly identifies
 // the parent of .config/ as the project root, and the command succeeds.
-func TestGenerateConfigFileNotFoundNoPanic(t *testing.T) {
+func TestGenerateConfigRelativePathNoPanic(t *testing.T) {
 	fixtureDir := filepath.Join("testdata", "fixtures", "project-source-hrefs")
 
 	cmd := exec.Command("go", "run", "../../../../main.go", "generate", "--config", ".config/cem.yaml", "src/source-hrefs.ts")
@@ -54,6 +54,29 @@ func TestGenerateConfigFileNotFoundNoPanic(t *testing.T) {
 	// derives the project root as the parent of .config/, so the command succeeds.
 	if err != nil {
 		t.Errorf("Command should succeed with --config .config/cem.yaml, but failed: %v\nOutput: %s", err, outputStr)
+	}
+}
+
+// TestGenerateConfigMissingFileNoPanic tests that --config with a nonexistent
+// path fails with a clean error, not a panic.
+func TestGenerateConfigMissingFileNoPanic(t *testing.T) {
+	fixtureDir := filepath.Join("testdata", "fixtures", "project-source-hrefs")
+
+	cmd := exec.Command("go", "run", "../../../../main.go", "generate", "--config", "./nonexistent/cem.yaml", "src/source-hrefs.ts")
+	cmd.Dir = fixtureDir
+
+	cmdOutput, err := cmd.CombinedOutput()
+	outputStr := string(cmdOutput)
+
+	hasPanic := strings.Contains(outputStr, "panic:") ||
+		strings.Contains(outputStr, "runtime error:")
+
+	if hasPanic {
+		t.Errorf("Command panicked with missing config. Output:\n%s", outputStr)
+	}
+
+	if err == nil {
+		t.Error("Expected command to fail with missing config file, but it succeeded")
 	}
 }
 
