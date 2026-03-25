@@ -1,0 +1,15 @@
+{
+  "slots": {
+    "rh-surface": [
+      {"name": ""}
+    ],
+    "rh-card": [
+      {"name": "header"},
+      {"name": ""},
+      {"name": "footer"}
+    ],
+    "rh-cta": [
+      {"name": ""}
+    ]
+  }
+}

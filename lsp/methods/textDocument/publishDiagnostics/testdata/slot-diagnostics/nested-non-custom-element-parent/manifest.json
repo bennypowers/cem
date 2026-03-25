@@ -1,0 +1,9 @@
+{
+  "slots": {
+    "rh-card": [
+      {"name": "header"},
+      {"name": ""},
+      {"name": "footer"}
+    ]
+  }
+}

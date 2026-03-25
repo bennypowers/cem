@@ -1,0 +1,29 @@
+/*
+Copyright © 2025 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+package helpers
+
+import "strings"
+
+// IsCustomElementTag checks if a tag name is a custom element.
+// Custom elements must contain a hyphen and start with a lowercase letter.
+func IsCustomElementTag(tagName string) bool {
+	if len(tagName) == 0 || !strings.Contains(tagName, "-") {
+		return false
+	}
+	firstChar := tagName[0]
+	return firstChar >= 'a' && firstChar <= 'z'
+}

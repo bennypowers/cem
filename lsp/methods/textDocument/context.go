@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strings"
 
+	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -80,14 +81,8 @@ func splitLines(content string) []string {
 	return strings.Split(content, "\n")
 }
 
-// IsCustomElementTag checks if a tag name is a custom element
+// IsCustomElementTag checks if a tag name is a custom element.
+// Deprecated: Use helpers.IsCustomElementTag instead.
 func IsCustomElementTag(tagName string) bool {
-	// Custom elements must contain a hyphen and start with lowercase letter
-	if len(tagName) == 0 || !strings.Contains(tagName, "-") {
-		return false
-	}
-
-	// Must start with lowercase letter
-	firstChar := tagName[0]
-	return firstChar >= 'a' && firstChar <= 'z'
+	return helpers.IsCustomElementTag(tagName)
 }

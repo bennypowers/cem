@@ -1,0 +1,20 @@
+[
+  {
+    "range": {
+      "start": {"line": 3, "character": 16},
+      "end": {"line": 3, "character": 21}
+    },
+    "severity": 1,
+    "source": "cem-lsp",
+    "message": "Unknown slot 'heaer' for element 'rh-card'. Did you mean 'header'?"
+  },
+  {
+    "range": {
+      "start": {"line": 4, "character": 20},
+      "end": {"line": 4, "character": 26}
+    },
+    "severity": 1,
+    "source": "cem-lsp",
+    "message": "Unknown slot 'fotter' for element 'rh-card'. Did you mean 'footer'?"
+  }
+]
