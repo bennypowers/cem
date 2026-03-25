@@ -46,10 +46,4 @@ docs/data/lsp-benchmark-results*.json
 serve/elements/node_modules/
 serve/elements/patternfly/custom-elements.json
 serve/elements/chrome/custom-elements.json
-serve/middleware/routes/templates/vendor/
 serve/middleware/routes/templates/ssr-bundle.qbc
-serve/middleware/routes/templates/ssr-bundle.js
-serve/middleware/routes/templates/chrome-bundle.js
-serve/middleware/routes/templates/chrome-bundle.js.map
-serve/middleware/routes/templates/elements/**/*.js
-!serve/middleware/routes/templates/elements/**/*.test.js
