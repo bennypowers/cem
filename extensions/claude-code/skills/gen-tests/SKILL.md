@@ -99,7 +99,7 @@ export class MyButtonPage {
   constructor(page: Page) {
     this.page = page;
     this.host = page.locator('my-button');
-    this.slotDefault = this.host.locator(':scope > :not([slot])');
+    this.slotDefault = this.host.locator('> :not([slot])');
     this.slotIcon = this.host.locator('[slot="icon"]');
   }
 
@@ -217,7 +217,7 @@ For each manifest feature, generate the corresponding page object members:
 | Each attribute | Getter method + setter method (typed for enums) |
 | Each property (no attribute) | Setter via `evaluate` |
 | Each named slot | `Locator` field: `this.host.locator('[slot="name"]')` |
-| Default slot | `Locator` field: `this.host.locator(':scope > :not([slot])')` |
+| Default slot | `Locator` field: `this.host.locator('> :not([slot])')` |
 | Each CSS part | Helper method using `evaluate` to query shadow root |
 | Each CSS custom property | Helper via `setCssProperty` / `computedStyle` |
 | Each CSS state | `matchesState(name)` boolean helper |
