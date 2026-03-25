@@ -190,8 +190,15 @@ func litCSSPlugin() api.Plugin {
 					return api.OnResolveResult{}, nil
 				}
 				absPath := filepath.Join(filepath.Dir(args.Importer), args.Path)
+				// Use path relative to cwd so source maps are stable
+				// across machines and worktrees
+				cwd, _ := os.Getwd()
+				relPath, err := filepath.Rel(cwd, absPath)
+				if err != nil {
+					relPath = absPath
+				}
 				return api.OnResolveResult{
-					Path:      absPath,
+					Path:      relPath,
 					Namespace: "lit-css",
 				}, nil
 			})
