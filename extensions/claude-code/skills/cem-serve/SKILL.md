@@ -70,7 +70,7 @@ Additional demos show specific features or variants.
 Use `<meta itemprop="name">` and `<meta itemprop="description">` on non-index
 demos for display in the dev server UI.
 
-For demo authoring conventions, see the `write-docs` and `design-api` skills.
+For demo authoring conventions, see the `write-demos` skill.
 
 ### Testing with Chromeless Mode
 

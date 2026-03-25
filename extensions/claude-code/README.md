@@ -33,6 +33,7 @@ Custom Elements Manifest tooling for Claude Code, providing both Language Server
 - **`/react`**: Use custom elements in React with version-appropriate patterns (React 18 wrappers vs React 19 native)
 - **`/vue`**: Use custom elements in Vue with `isCustomElement` config, slot syntax, and v-model setup
 - **`/angular`**: Use custom elements in Angular with `CUSTOM_ELEMENTS_SCHEMA`, forms integration, and typing
+- **`/write-demos`**: Write demo HTML partials for `cem serve` with correct metadata, imports, and structure
 - **`/cem-serve`**: Set up and configure `cem serve` for custom element development with live reload and demos
 
 ## Installation

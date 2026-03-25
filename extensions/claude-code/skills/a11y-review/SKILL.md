@@ -55,6 +55,8 @@ Call `validate_html` with the target HTML to get manifest-compliance results. Th
 Cross-reference the HTML against manifest data. Check for:
 
 #### Slot Content Accessibility
+- Read each slot's description carefully for content requirements ("must contain", "must not contain", "expects", "requires")
+- Check if slot descriptions specify a required role (e.g. "expects an element with role `listitem`")
 - Do slotted elements preserve heading hierarchy?
 - Are interactive elements placed in slots that expect them?
 - Is text content provided for slots that need accessible labels?
@@ -73,6 +75,10 @@ Cross-reference the HTML against manifest data. Check for:
 - Do elements that act as landmarks have appropriate labels?
 - Are images/icons inside custom elements accompanied by text alternatives?
 - Are live regions used appropriately?
+
+#### Element Roles
+- Check the element's description for implicit role information (e.g. "acts as a button", "has role `navigation`", "implicit role `listbox`")
+- If the element description states an implicit role, do not recommend adding an explicit `role` attribute
 
 Do not issue a recommendation to add an explicit role on an element which already has an implicit role.
 Do not recommend to use `aria-label` or other aria attributes on elements which provide custom attributes which handle the same things; i.e. check element's attributes for descriptions like "The `accessible-label` attribute sets the screen reader's content for this element" or "The `audible-content` attribute sets the element's name for assistive technology", etc.
