@@ -22,10 +22,15 @@ and live reload. Adding document structure breaks rendering.
 Read the element's manifest data (`cem://element/{tagName}` and sub-resources)
 and check `.config/cem.yaml` for:
 
-- **`generate.demoDiscovery`** — `fileGlob`, `urlPattern`, `urlTemplate`
-  determine where demos live and how URLs are generated
-- **`serve.urlRewrites`** (if present) — maps request URLs to filesystem paths;
-  when configured, imports must use rewritten paths, not raw filesystem paths
+- **`generate.demoDiscovery`** — `fileGlob` determines where demos live;
+  `urlPattern` captures path segments with `:param`; `urlTemplate` builds
+  served URLs from those params (supports `alias`, `slug`, `lower`, `upper`
+  template functions). Example: `elements/rh-card/demo/sizes.html` with
+  `urlTemplate: /elements/{{.tag | alias}}/demo/{{.demo}}/` serves at
+  `/elements/card/demo/sizes/`. Index demos become the directory root.
+- **`serve.urlRewrites`** (if present) — maps served URLs back to filesystem
+  paths when they differ (e.g., `/elements/card/...` to `/elements/rh-card/...`).
+  Most projects don't need this. Check if configured, and set up if asked.
 - **`serve.importMap`** — bare specifiers need to be in `dependencies` or the
   import map config
 
