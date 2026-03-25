@@ -415,6 +415,67 @@ func TestRewriteAssetPaths(t *testing.T) {
 	}
 }
 
+func TestRewriteJSONScopeKeys(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		basePath string
+		want     string
+	}{
+		{
+			name: "rewrites scope keys",
+			input: `{
+    "scopes": {
+      "/node_modules/lit/": {
+        "@lit/reactive-element": "/node_modules/@lit/reactive-element/reactive-element.js"
+      }
+    }
+  }`,
+			basePath: "/base",
+			want: `{
+    "scopes": {
+      "/base/node_modules/lit/": {
+        "@lit/reactive-element": "/node_modules/@lit/reactive-element/reactive-element.js"
+      }
+    }
+  }`,
+		},
+		{
+			name:     "does not double-prefix scope keys",
+			input:    `"/base/node_modules/lit/": {`,
+			basePath: "/base",
+			want:     `"/base/node_modules/lit/": {`,
+		},
+		{
+			name:     "preserves protocol-relative URLs",
+			input:    `src="//cdn.example.com/lib.js"`,
+			basePath: "/base",
+			want:     `src="//cdn.example.com/lib.js"`,
+		},
+		{
+			name:     "does not rewrite JSON values",
+			input:    `": "/node_modules/lit/index.js"`,
+			basePath: "/base",
+			want:     `": "/node_modules/lit/index.js"`,
+		},
+		{
+			name:     "does not rewrite HTML attributes",
+			input:    `<a href="/foo/bar">link</a>`,
+			basePath: "/base",
+			want:     `<a href="/foo/bar">link</a>`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := rewriteJSONScopeKeys(tt.input, tt.basePath)
+			if got != tt.want {
+				t.Errorf("rewriteJSONScopeKeys() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestBuildConfig_SiteRoot_WithBasePath(t *testing.T) {
 	config := BuildConfig{OutputDir: "dist", BasePath: "/docs/api"}
 	got := config.siteRoot()
