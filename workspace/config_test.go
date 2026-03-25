@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	C "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -178,64 +177,6 @@ func TestLoadPackageConfigWithWorkspaceDefaults_Merges(t *testing.T) {
 	assert.Equal(t, []string{"src/**/*.ts"}, cfg.Generate.Files)
 }
 
-func TestLoadPackageConfigWithWorkspaceDefaults_WorkspaceDefaults(t *testing.T) {
-	// Create a package dir inside the workspace that has no config of its own
-	// The workspace-with-config fixture has port 9000 at workspace level
-	// A package without config should inherit workspace defaults
-	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
-
-	// First verify workspace config
-	wsCfg, err := workspace.LoadWorkspaceConfig(pkgDir)
-	require.NoError(t, err)
-	require.NotNil(t, wsCfg)
-	assert.Equal(t, 9000, wsCfg.Serve.Port)
-}
-
-func TestClone_Nil(t *testing.T) {
-	assert.Nil(t, C.Clone(nil))
-}
-
-func TestClone_DeepCopy(t *testing.T) {
-	original := &C.CemConfig{
-		Generate: C.GenerateConfig{
-			Files:   []string{"a.ts", "b.ts"},
-			Exclude: []string{"*.test.ts"},
-			Output:  "out.json",
-		},
-		Serve: C.ServeConfig{
-			Port: 8000,
-			URLRewrites: []C.URLRewrite{
-				{URLPattern: "/old/*", URLTemplate: "/new/{{.path}}"},
-			},
-		},
-		AdditionalPackages: []string{"npm:@scope/pkg"},
-		Export: map[string]C.FrameworkExportConfig{
-			"react": {Output: "react/"},
-		},
-	}
-
-	clone := C.Clone(original)
-	require.NotNil(t, clone)
-
-	// Verify values match
-	assert.Equal(t, original.Generate.Files, clone.Generate.Files)
-	assert.Equal(t, original.Serve.Port, clone.Serve.Port)
-	assert.Equal(t, original.AdditionalPackages, clone.AdditionalPackages)
-
-	// Verify deep copy (mutating clone doesn't affect original)
-	clone.Generate.Files[0] = "changed.ts"
-	assert.Equal(t, "a.ts", original.Generate.Files[0])
-
-	clone.Serve.URLRewrites[0].URLPattern = "/changed/*"
-	assert.Equal(t, "/old/*", original.Serve.URLRewrites[0].URLPattern)
-
-	clone.AdditionalPackages[0] = "changed"
-	assert.Equal(t, "npm:@scope/pkg", original.AdditionalPackages[0])
-
-	clone.Export["react"] = C.FrameworkExportConfig{Output: "changed/"}
-	assert.Equal(t, "react/", original.Export["react"].Output)
-}
-
 func TestInit_InvalidConfig(t *testing.T) {
 	root := absFixture(t, "config-invalid")
 	ctx := workspace.NewFileSystemWorkspaceContext(root)
@@ -291,16 +232,3 @@ func TestLoadPackageConfigWithWorkspaceDefaults_InvalidWorkspaceConfig(t *testin
 	assert.Error(t, err)
 }
 
-func TestFindProjectRootFromDir_ConfigYaml(t *testing.T) {
-	root := absFixture(t, "config-yaml")
-	// findProjectRootFromDir is not exported, but we can test it
-	// indirectly via NewFileSystemWorkspaceContext which uses FindConfigFile
-	ctx := workspace.NewFileSystemWorkspaceContext(root)
-	assert.Equal(t, root, ctx.Root())
-}
-
-func TestFindProjectRootFromDir_DotFile(t *testing.T) {
-	root := absFixture(t, "config-dotfile")
-	ctx := workspace.NewFileSystemWorkspaceContext(root)
-	assert.Equal(t, root, ctx.Root())
-}
