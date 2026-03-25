@@ -245,6 +245,18 @@ func (fw *fileWatcher) processEvents() {
 				continue
 			}
 
+			// When a new directory is created, add it to the watcher
+			// so that files created inside it generate events
+			if event.Op&fsnotify.Create == fsnotify.Create {
+				if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
+					if addErr := fw.watcher.Add(event.Name); addErr == nil {
+						if fw.logger != nil {
+							fw.logger.Debug("Watching new directory: %s", event.Name)
+						}
+					}
+				}
+			}
+
 			// Determine event type
 			var eventType string
 			if event.Op&fsnotify.Create == fsnotify.Create {
@@ -262,11 +274,14 @@ func (fw *fileWatcher) processEvents() {
 			// Track file change with event type
 			fw.mu.Lock()
 			fw.debouncedFiles[event.Name] = time.Now()
-			// Store event type for this file (we'll use the last one if multiple events)
 			if fw.fileEventTypes == nil {
 				fw.fileEventTypes = make(map[string]string)
 			}
-			fw.fileEventTypes[event.Name] = eventType
+			// Preserve "create" event type: a file that was created and then immediately
+			// modified (e.g. os.WriteFile) is still a new file for structural change detection
+			if existing, ok := fw.fileEventTypes[event.Name]; !ok || existing != "create" {
+				fw.fileEventTypes[event.Name] = eventType
+			}
 
 			// Reset debounce timer
 			if fw.debounceTimer != nil {
