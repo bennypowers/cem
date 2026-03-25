@@ -354,6 +354,67 @@ func TestBuildUserSources_SkipsOutputDir(t *testing.T) {
 	}
 }
 
+func TestRewriteAssetPaths(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		basePath string
+		want     string
+	}{
+		{
+			name:     "rewrites JS dynamic import",
+			input:    `import("/__cem/websocket-client.js")`,
+			basePath: "/docs",
+			want:     `import("/docs/__cem/websocket-client.js")`,
+		},
+		{
+			name:     "rewrites JS fetch",
+			input:    `fetch("/custom-elements.json")`,
+			basePath: "/docs",
+			want:     `fetch("/docs/custom-elements.json")`,
+		},
+		{
+			name:     "rewrites JS single-quote import",
+			input:    `import('/__cem/state-persistence.js')`,
+			basePath: "/docs",
+			want:     `import('/docs/__cem/state-persistence.js')`,
+		},
+		{
+			name:     "rewrites CSS import url",
+			input:    `@import url('/__cem/elements/pf-v6-card/pf-v6-card-lightdom.css');`,
+			basePath: "/docs",
+			want:     `@import url('/docs/__cem/elements/pf-v6-card/pf-v6-card-lightdom.css');`,
+		},
+		{
+			name:     "rewrites new URL pattern",
+			input:    `new URL("/__cem/api/health", location.origin)`,
+			basePath: "/docs",
+			want:     `new URL("/docs/__cem/api/health", location.origin)`,
+		},
+		{
+			name:     "does not double-prefix",
+			input:    `import("/docs/__cem/websocket-client.js")`,
+			basePath: "/docs",
+			want:     `import("/docs/__cem/websocket-client.js")`,
+		},
+		{
+			name:     "preserves non-absolute paths",
+			input:    `import("./local-module.js")`,
+			basePath: "/docs",
+			want:     `import("./local-module.js")`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := string(rewriteAssetPaths([]byte(tt.input), tt.basePath))
+			if got != tt.want {
+				t.Errorf("rewriteAssetPaths() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestBuildConfig_SiteRoot_WithBasePath(t *testing.T) {
 	config := BuildConfig{OutputDir: "dist", BasePath: "/docs/api"}
 	got := config.siteRoot()
