@@ -253,25 +253,28 @@
   --pf-v6-c-label--m-outline--BorderColor: var(--pf-v6-c-label--m-red--m-outline--BorderColor);
 }
 
-/* WCAG contrast fix: orange/yellow/orangered backgrounds are light in both
-   schemes, so text must always be dark. PF tokens incorrectly resolve
-   on-nonstatus text to white in dark mode, producing ~1.6:1 contrast. */
+/* Nonstatus backgrounds are pastel in both schemes, so force light-mode
+   token resolution to ensure dark text meets WCAG contrast minimums. */
+:host([color]) {
+  color-scheme: light only;
+}
+
 :host([color="orange"]) {
   --pf-v6-c-label--BackgroundColor: var(--pf-v6-c-label--m-orange--BackgroundColor);
-  --pf-v6-c-label--Color: var(--pf-t--color--orange--80, #4d1f00);
-  --pf-v6-c-label__icon--Color: var(--pf-t--color--orange--70, #732e00);
+  --pf-v6-c-label--Color: var(--pf-v6-c-label--m-orange--Color);
+  --pf-v6-c-label__icon--Color: var(--pf-v6-c-label--m-orange__icon--Color);
 }
 
 :host([color="orangered"]) {
   --pf-v6-c-label--BackgroundColor: var(--pf-v6-c-label--m-orangered--BackgroundColor);
-  --pf-v6-c-label--Color: var(--pf-t--color--red-orange--80, #4c1405);
-  --pf-v6-c-label__icon--Color: var(--pf-t--color--red-orange--70, #731f00);
+  --pf-v6-c-label--Color: var(--pf-v6-c-label--m-orangered--Color);
+  --pf-v6-c-label__icon--Color: var(--pf-v6-c-label--m-orangered__icon--Color);
 }
 
 :host([color="yellow"]) {
   --pf-v6-c-label--BackgroundColor: var(--pf-v6-c-label--m-yellow--BackgroundColor);
-  --pf-v6-c-label--Color: var(--pf-t--color--yellow--80, #54330b);
-  --pf-v6-c-label__icon--Color: var(--pf-t--color--yellow--70, #73480b);
+  --pf-v6-c-label--Color: var(--pf-v6-c-label--m-yellow--Color);
+  --pf-v6-c-label__icon--Color: var(--pf-v6-c-label--m-yellow__icon--Color);
 }
 
 :host([color="green"]) {
