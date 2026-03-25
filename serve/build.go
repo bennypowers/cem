@@ -104,7 +104,7 @@ func (s *Server) Build(config BuildConfig) error {
 	}
 
 	// Transform and copy user source files (TS→JS, CSS modules, etc.)
-	if err := s.buildUserSources(ts, config); err != nil {
+	if err := s.buildUserSources(ts, config, demoRoutes); err != nil {
 		return fmt.Errorf("build user sources: %w", err)
 	}
 
@@ -199,6 +199,10 @@ func (s *Server) copyChrome(config BuildConfig) error {
 			s.logger.Warning("Chrome bundle missing: %s: %v", name, err)
 			continue
 		}
+		// Rewrite absolute paths in JS bundle for base path deployment
+		if config.BasePath != "" && strings.HasSuffix(name, ".js") {
+			data = rewriteAssetPaths(data, config.BasePath)
+		}
 		outPath := filepath.Join(cemDir, name)
 		if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 			return err
@@ -259,6 +263,14 @@ func (s *Server) copyStaticAssets(config BuildConfig) error {
 			if after, found := strings.CutPrefix(rel, prefix); found {
 				outRel = after
 				break
+			}
+		}
+
+		// Rewrite absolute paths in JS/CSS assets for base path deployment
+		if config.BasePath != "" {
+			ext := filepath.Ext(outRel)
+			if ext == ".js" || ext == ".css" {
+				data = rewriteAssetPaths(data, config.BasePath)
 			}
 		}
 
@@ -348,7 +360,7 @@ export class CEMReloadClient {
 
 // buildUserSources walks the user's source directory and fetches each file
 // through the test server, which applies TS→JS and CSS transforms.
-func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig) error {
+func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig, demoRoutes map[string]*middleware.DemoRouteEntry) error {
 	watchDir := s.WatchDir()
 	if watchDir == "" {
 		return nil
@@ -368,6 +380,12 @@ func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig) error
 	absOutputDir, err := filepath.Abs(config.OutputDir)
 	if err != nil {
 		return err
+	}
+
+	// Build set of demo source file paths to skip (already rendered with chrome by buildPage)
+	demoSourceFiles := make(map[string]bool, len(demoRoutes))
+	for _, entry := range demoRoutes {
+		demoSourceFiles[entry.FilePath] = true
 	}
 
 	count := 0
@@ -392,6 +410,11 @@ func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig) error
 		}
 
 		if d.IsDir() {
+			return nil
+		}
+
+		// Skip demo source files (already rendered with chrome by buildPage)
+		if demoSourceFiles[rel] {
 			return nil
 		}
 
@@ -707,6 +730,26 @@ func fetchURL(ts *httptest.Server, urlPath string) (retBody []byte, retErr error
 	}
 
 	return io.ReadAll(resp.Body)
+}
+
+// rewriteAssetPaths rewrites absolute paths in JS and CSS assets for base path deployment.
+// Handles patterns like:
+//   - JS: import("/__cem/..."), fetch("/custom-elements.json"), new URL("/__cem/...", ...)
+//   - CSS: @import url('/__cem/...')
+func rewriteAssetPaths(data []byte, basePath string) []byte {
+	s := string(data)
+
+	// Rewrite JS patterns: import("/...", fetch("/..., new URL("/...
+	for _, prefix := range []string{
+		`import("`, `import('`,
+		`fetch("`, `fetch('`,
+		`URL("`, `URL('`,
+		`url('`, `url("`,
+	} {
+		s = rewriteAttrPaths(s, prefix, basePath)
+	}
+
+	return []byte(s)
 }
 
 // rewriteBasePath prefixes absolute URLs in HTML with the base path.
