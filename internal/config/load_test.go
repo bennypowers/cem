@@ -1,23 +1,18 @@
 package config_test
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
 	"bennypowers.dev/cem/internal/config"
 )
 
-func TestLoadConfig_Yaml(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "cem.yaml")
-	os.WriteFile(path, []byte(`generate:
-  files:
-    - "src/**/*.ts"
-  output: custom-elements.json
-`), 0o644)
+func fixture(name string) string {
+	return filepath.Join("testdata", name)
+}
 
-	cfg, err := config.LoadConfig(path)
+func TestLoadConfig_Yaml(t *testing.T) {
+	cfg, err := config.LoadConfig(fixture("valid.yaml"))
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
@@ -30,16 +25,7 @@ func TestLoadConfig_Yaml(t *testing.T) {
 }
 
 func TestLoadConfig_Json(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "cem.json")
-	os.WriteFile(path, []byte(`{
-  "generate": {
-    "files": ["src/**/*.ts"],
-    "output": "custom-elements.json"
-  }
-}`), 0o644)
-
-	cfg, err := config.LoadConfig(path)
+	cfg, err := config.LoadConfig(fixture("valid.json"))
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
@@ -49,17 +35,7 @@ func TestLoadConfig_Json(t *testing.T) {
 }
 
 func TestLoadConfig_Jsonc(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "cem.jsonc")
-	os.WriteFile(path, []byte(`{
-  // Generate configuration
-  "generate": {
-    "files": ["src/**/*.ts"],
-    "output": "custom-elements.json"
-  }
-}`), 0o644)
-
-	cfg, err := config.LoadConfig(path)
+	cfg, err := config.LoadConfig(fixture("valid.jsonc"))
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
@@ -69,19 +45,7 @@ func TestLoadConfig_Jsonc(t *testing.T) {
 }
 
 func TestLoadConfig_JsoncTrailingCommas(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "cem.jsonc")
-	os.WriteFile(path, []byte(`{
-  "generate": {
-    "files": [
-      "src/**/*.ts",
-      "lib/**/*.ts",
-    ],
-    "output": "custom-elements.json",
-  },
-}`), 0o644)
-
-	cfg, err := config.LoadConfig(path)
+	cfg, err := config.LoadConfig(fixture("trailing-commas.jsonc"))
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
@@ -98,73 +62,38 @@ func TestLoadConfig_MissingFile(t *testing.T) {
 }
 
 func TestLoadConfig_InvalidYaml(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "cem.yaml")
-	os.WriteFile(path, []byte("{{{{invalid yaml"), 0o644)
-
-	_, err := config.LoadConfig(path)
+	_, err := config.LoadConfig(fixture("invalid.yaml"))
 	if err == nil {
 		t.Error("LoadConfig() expected error for invalid yaml, got nil")
 	}
 }
 
 func TestLoadConfig_InvalidJson(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "cem.json")
-	os.WriteFile(path, []byte("{not valid json"), 0o644)
-
-	_, err := config.LoadConfig(path)
+	_, err := config.LoadConfig(fixture("invalid.json"))
 	if err == nil {
 		t.Error("LoadConfig() expected error for invalid json, got nil")
 	}
 }
 
-func TestLoadConfig_EmptyFile(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "cem.yaml")
-	os.WriteFile(path, []byte(""), 0o644)
+func TestLoadConfig_InvalidJsonc(t *testing.T) {
+	_, err := config.LoadConfig(fixture("invalid.jsonc"))
+	if err == nil {
+		t.Error("LoadConfig() expected error for invalid jsonc, got nil")
+	}
+}
 
-	cfg, err := config.LoadConfig(path)
+func TestLoadConfig_EmptyYaml(t *testing.T) {
+	cfg, err := config.LoadConfig(fixture("empty.yaml"))
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
-	// Should return a valid zero-value config
 	if cfg == nil {
 		t.Fatal("LoadConfig() returned nil config for empty file")
 	}
 }
 
-func TestLoadConfig_JsoncOnlyComments(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "cem.jsonc")
-	os.WriteFile(path, []byte("// just a comment\n/* nothing else */"), 0o644)
-
-	cfg, err := config.LoadConfig(path)
-	if err != nil {
-		t.Fatalf("LoadConfig() error: %v", err)
-	}
-	if cfg == nil {
-		t.Fatal("LoadConfig() returned nil config for comment-only jsonc file")
-	}
-}
-
-func TestLoadConfig_UnsupportedFormat(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "cem.toml")
-	os.WriteFile(path, []byte("[generate]\nfiles = ['*.ts']"), 0o644)
-
-	_, err := config.LoadConfig(path)
-	if err == nil {
-		t.Error("LoadConfig() expected error for unsupported format, got nil")
-	}
-}
-
 func TestLoadConfig_EmptyJson(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "cem.json")
-	os.WriteFile(path, []byte(""), 0o644)
-
-	cfg, err := config.LoadConfig(path)
+	cfg, err := config.LoadConfig(fixture("empty.json"))
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
@@ -174,11 +103,7 @@ func TestLoadConfig_EmptyJson(t *testing.T) {
 }
 
 func TestLoadConfig_EmptyJsonc(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "cem.jsonc")
-	os.WriteFile(path, []byte(""), 0o644)
-
-	cfg, err := config.LoadConfig(path)
+	cfg, err := config.LoadConfig(fixture("empty.jsonc"))
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
@@ -187,51 +112,25 @@ func TestLoadConfig_EmptyJsonc(t *testing.T) {
 	}
 }
 
-func TestLoadConfig_InvalidJsonc(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "cem.jsonc")
-	os.WriteFile(path, []byte("// comment\n{not valid json even after stripping}"), 0o644)
+func TestLoadConfig_JsoncOnlyComments(t *testing.T) {
+	cfg, err := config.LoadConfig(fixture("comments-only.jsonc"))
+	if err != nil {
+		t.Fatalf("LoadConfig() error: %v", err)
+	}
+	if cfg == nil {
+		t.Fatal("LoadConfig() returned nil config for comment-only jsonc file")
+	}
+}
 
-	_, err := config.LoadConfig(path)
+func TestLoadConfig_UnsupportedFormat(t *testing.T) {
+	_, err := config.LoadConfig(fixture("unsupported.toml"))
 	if err == nil {
-		t.Error("LoadConfig() expected error for invalid jsonc, got nil")
+		t.Error("LoadConfig() expected error for unsupported format, got nil")
 	}
 }
 
 func TestLoadConfig_AllFields(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "cem.yaml")
-	os.WriteFile(path, []byte(`generate:
-  files:
-    - "src/**/*.ts"
-  exclude:
-    - "**/*.test.ts"
-  output: custom-elements.json
-  noDefaultExcludes: true
-  designTokens:
-    spec: tokens/tokens.json
-    prefix: my-prefix
-  demoDiscovery:
-    fileGlob: elements/*/demo/*.html
-    urlPattern: /elements/:tag/demo/:demo.html
-    urlTemplate: /elements/{{.tag}}/demo/{{.demo}}/
-serve:
-  port: 3000
-  transforms:
-    css:
-      enabled: true
-      include:
-        - "src/**/*.css"
-mcp:
-  maxDescriptionLength: 1500
-health:
-  failBelow: 80
-  disable:
-    - demos
-sourceControlRootUrl: https://github.com/example/repo/tree/main/
-`), 0o644)
-
-	cfg, err := config.LoadConfig(path)
+	cfg, err := config.LoadConfig(fixture("all-fields.yaml"))
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}

@@ -50,16 +50,25 @@ func GetWorkspaceContext(cmd *cobra.Command) (types.WorkspaceContext, error) {
 		spec = p
 	}
 
+	// Check for explicit --config flag
+	var explicitConfigPath string
+	if p, _ := cmd.Flags().GetString("config"); p != "" {
+		explicitConfigPath = p
+	} else if p := viper.GetString("configFile"); p != "" {
+		explicitConfigPath = p
+	}
+
 	// If no package specified, determine project root
 	if spec == "" {
-		configPath := viper.GetString("configFile")
-		if p, _ := cmd.Flags().GetString("configFile"); p != "" {
-			configPath = p
-		}
-
-		if configPath != "" {
-			// Use explicit config file path
-			spec = filepath.Dir(configPath)
+		if explicitConfigPath != "" {
+			// Derive project root from config path.
+			// If config is in a .config/ subdir, go up two levels.
+			dir := filepath.Dir(explicitConfigPath)
+			if filepath.Base(dir) == ".config" {
+				spec = filepath.Dir(dir)
+			} else {
+				spec = dir
+			}
 		} else {
 			// Auto-detect project root by looking for common project files
 			if detectedRoot, found := findProjectRootFromCommand(cmd); found {
@@ -72,9 +81,16 @@ func GetWorkspaceContext(cmd *cobra.Command) (types.WorkspaceContext, error) {
 
 	if ctx, err := getAppropriateContextForSpec(spec, cmd.Name()); err != nil {
 		return nil, err
-	} else if err := ctx.Init(); err != nil {
-		return nil, err
 	} else {
+		// If an explicit config path was given, inject it before Init
+		if explicitConfigPath != "" {
+			if fsCtx, ok := ctx.(*FileSystemWorkspaceContext); ok {
+				WithConfigFile(explicitConfigPath)(fsCtx)
+			}
+		}
+		if err := ctx.Init(); err != nil {
+			return nil, err
+		}
 		// Store in cmd.Context for future calls
 		newCtx := context.WithValue(cmd.Context(), WorkspaceContextKey, ctx)
 		cmd.SetContext(newCtx)

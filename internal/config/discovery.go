@@ -23,7 +23,7 @@ var ConfigPaths = []string{
 func FindConfigFile(root string) string {
 	for _, relPath := range ConfigPaths {
 		absPath := filepath.Join(root, relPath)
-		if _, err := os.Stat(absPath); err == nil {
+		if info, err := os.Stat(absPath); err == nil && !info.IsDir() {
 			return absPath
 		}
 	}

@@ -1,0 +1,7 @@
+{
+  // Generate configuration
+  "generate": {
+    "files": ["src/**/*.ts"],
+    "output": "custom-elements.json"
+  }
+}

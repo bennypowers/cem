@@ -8,11 +8,25 @@ import (
 	"bennypowers.dev/cem/internal/config"
 )
 
+func mkdirAll(t *testing.T, path string) {
+	t.Helper()
+	if err := os.MkdirAll(path, 0o755); err != nil {
+		t.Fatalf("MkdirAll(%q) failed: %v", path, err)
+	}
+}
+
+func writeFile(t *testing.T, path string, data []byte) {
+	t.Helper()
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatalf("WriteFile(%q) failed: %v", path, err)
+	}
+}
+
 func TestFindConfigFile_YamlInDotConfig(t *testing.T) {
 	root := t.TempDir()
 	cfgDir := filepath.Join(root, ".config")
-	os.MkdirAll(cfgDir, 0o755)
-	os.WriteFile(filepath.Join(cfgDir, "cem.yaml"), []byte("generate:\n  files: ['*.ts']"), 0o644)
+	mkdirAll(t, cfgDir)
+	writeFile(t, filepath.Join(cfgDir, "cem.yaml"), []byte("generate:\n  files: ['*.ts']"))
 
 	got := config.FindConfigFile(root)
 	want := filepath.Join(root, ".config", "cem.yaml")
@@ -24,8 +38,8 @@ func TestFindConfigFile_YamlInDotConfig(t *testing.T) {
 func TestFindConfigFile_YmlInDotConfig(t *testing.T) {
 	root := t.TempDir()
 	cfgDir := filepath.Join(root, ".config")
-	os.MkdirAll(cfgDir, 0o755)
-	os.WriteFile(filepath.Join(cfgDir, "cem.yml"), []byte("generate:\n  files: ['*.ts']"), 0o644)
+	mkdirAll(t, cfgDir)
+	writeFile(t, filepath.Join(cfgDir, "cem.yml"), []byte("generate:\n  files: ['*.ts']"))
 
 	got := config.FindConfigFile(root)
 	want := filepath.Join(root, ".config", "cem.yml")
@@ -37,8 +51,8 @@ func TestFindConfigFile_YmlInDotConfig(t *testing.T) {
 func TestFindConfigFile_JsonInDotConfig(t *testing.T) {
 	root := t.TempDir()
 	cfgDir := filepath.Join(root, ".config")
-	os.MkdirAll(cfgDir, 0o755)
-	os.WriteFile(filepath.Join(cfgDir, "cem.json"), []byte(`{"generate":{"files":["*.ts"]}}`), 0o644)
+	mkdirAll(t, cfgDir)
+	writeFile(t, filepath.Join(cfgDir, "cem.json"), []byte(`{"generate":{"files":["*.ts"]}}`))
 
 	got := config.FindConfigFile(root)
 	want := filepath.Join(root, ".config", "cem.json")
@@ -50,8 +64,8 @@ func TestFindConfigFile_JsonInDotConfig(t *testing.T) {
 func TestFindConfigFile_JsoncInDotConfig(t *testing.T) {
 	root := t.TempDir()
 	cfgDir := filepath.Join(root, ".config")
-	os.MkdirAll(cfgDir, 0o755)
-	os.WriteFile(filepath.Join(cfgDir, "cem.jsonc"), []byte("// comment\n{\"generate\":{}}"), 0o644)
+	mkdirAll(t, cfgDir)
+	writeFile(t, filepath.Join(cfgDir, "cem.jsonc"), []byte("// comment\n{\"generate\":{}}"))
 
 	got := config.FindConfigFile(root)
 	want := filepath.Join(root, ".config", "cem.jsonc")
@@ -62,7 +76,7 @@ func TestFindConfigFile_JsoncInDotConfig(t *testing.T) {
 
 func TestFindConfigFile_DotCemYaml(t *testing.T) {
 	root := t.TempDir()
-	os.WriteFile(filepath.Join(root, ".cem.yaml"), []byte("generate:\n  files: ['*.ts']"), 0o644)
+	writeFile(t, filepath.Join(root, ".cem.yaml"), []byte("generate:\n  files: ['*.ts']"))
 
 	got := config.FindConfigFile(root)
 	want := filepath.Join(root, ".cem.yaml")
@@ -73,7 +87,7 @@ func TestFindConfigFile_DotCemYaml(t *testing.T) {
 
 func TestFindConfigFile_DotCemYml(t *testing.T) {
 	root := t.TempDir()
-	os.WriteFile(filepath.Join(root, ".cem.yml"), []byte("generate:\n  files: ['*.ts']"), 0o644)
+	writeFile(t, filepath.Join(root, ".cem.yml"), []byte("generate:\n  files: ['*.ts']"))
 
 	got := config.FindConfigFile(root)
 	want := filepath.Join(root, ".cem.yml")
@@ -84,7 +98,7 @@ func TestFindConfigFile_DotCemYml(t *testing.T) {
 
 func TestFindConfigFile_DotCemJson(t *testing.T) {
 	root := t.TempDir()
-	os.WriteFile(filepath.Join(root, ".cem.json"), []byte(`{"generate":{}}`), 0o644)
+	writeFile(t, filepath.Join(root, ".cem.json"), []byte(`{"generate":{}}`))
 
 	got := config.FindConfigFile(root)
 	want := filepath.Join(root, ".cem.json")
@@ -95,7 +109,7 @@ func TestFindConfigFile_DotCemJson(t *testing.T) {
 
 func TestFindConfigFile_DotCemJsonc(t *testing.T) {
 	root := t.TempDir()
-	os.WriteFile(filepath.Join(root, ".cem.jsonc"), []byte("// comment\n{}"), 0o644)
+	writeFile(t, filepath.Join(root, ".cem.jsonc"), []byte("// comment\n{}"))
 
 	got := config.FindConfigFile(root)
 	want := filepath.Join(root, ".cem.jsonc")
@@ -104,12 +118,25 @@ func TestFindConfigFile_DotCemJsonc(t *testing.T) {
 	}
 }
 
+func TestFindConfigFile_SkipsDirectories(t *testing.T) {
+	root := t.TempDir()
+	cfgDir := filepath.Join(root, ".config")
+	mkdirAll(t, cfgDir)
+	// Create a directory named "cem.yaml" — should be skipped
+	mkdirAll(t, filepath.Join(cfgDir, "cem.yaml"))
+
+	got := config.FindConfigFile(root)
+	if got != "" {
+		t.Errorf("FindConfigFile() = %q, want empty (should skip directories)", got)
+	}
+}
+
 func TestFindConfigFile_Precedence_DotConfigWinsOverDotFile(t *testing.T) {
 	root := t.TempDir()
 	cfgDir := filepath.Join(root, ".config")
-	os.MkdirAll(cfgDir, 0o755)
-	os.WriteFile(filepath.Join(cfgDir, "cem.yaml"), []byte("# primary"), 0o644)
-	os.WriteFile(filepath.Join(root, ".cem.yaml"), []byte("# secondary"), 0o644)
+	mkdirAll(t, cfgDir)
+	writeFile(t, filepath.Join(cfgDir, "cem.yaml"), []byte("# primary"))
+	writeFile(t, filepath.Join(root, ".cem.yaml"), []byte("# secondary"))
 
 	got := config.FindConfigFile(root)
 	want := filepath.Join(root, ".config", "cem.yaml")
@@ -121,9 +148,9 @@ func TestFindConfigFile_Precedence_DotConfigWinsOverDotFile(t *testing.T) {
 func TestFindConfigFile_Precedence_YamlWinsOverYml(t *testing.T) {
 	root := t.TempDir()
 	cfgDir := filepath.Join(root, ".config")
-	os.MkdirAll(cfgDir, 0o755)
-	os.WriteFile(filepath.Join(cfgDir, "cem.yaml"), []byte("# yaml"), 0o644)
-	os.WriteFile(filepath.Join(cfgDir, "cem.yml"), []byte("# yml"), 0o644)
+	mkdirAll(t, cfgDir)
+	writeFile(t, filepath.Join(cfgDir, "cem.yaml"), []byte("# yaml"))
+	writeFile(t, filepath.Join(cfgDir, "cem.yml"), []byte("# yml"))
 
 	got := config.FindConfigFile(root)
 	want := filepath.Join(root, ".config", "cem.yaml")
