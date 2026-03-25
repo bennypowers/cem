@@ -256,8 +256,8 @@ func (s *Server) copyStaticAssets(config BuildConfig) error {
 		// elements/... stays as-is
 		outRel := rel
 		for _, prefix := range []string{"js/", "css/", "images/"} {
-			if strings.HasPrefix(rel, prefix) {
-				outRel = strings.TrimPrefix(rel, prefix)
+			if after, found := strings.CutPrefix(rel, prefix); found {
+				outRel = after
 				break
 			}
 		}
@@ -364,15 +364,34 @@ func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig) error
 		return err
 	}
 
+	// Resolve output directory to an absolute path for skipping during walk
+	absOutputDir, err := filepath.Abs(config.OutputDir)
+	if err != nil {
+		return err
+	}
+
 	count := 0
 	err = filepath.WalkDir(watchDir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
+		if err != nil {
 			return err
 		}
 
 		// Skip node_modules (handled by buildDependencies)
 		rel, _ := filepath.Rel(watchDir, path)
 		if strings.HasPrefix(rel, "node_modules") {
+			if d.IsDir() {
+				return fs.SkipDir
+			}
+			return nil
+		}
+
+		// Skip the output directory to avoid infinite recursion
+		absPath, _ := filepath.Abs(path)
+		if d.IsDir() && absPath == absOutputDir {
+			return fs.SkipDir
+		}
+
+		if d.IsDir() {
 			return nil
 		}
 

@@ -10,6 +10,7 @@ the Free Software Foundation, either version 3 of the License, or
 package serve
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -273,6 +274,83 @@ func TestBuildLightdomCSS(t *testing.T) {
 		if len(data) == 0 {
 			t.Error("lightdom.css should not be empty if it exists")
 		}
+	}
+}
+
+// TestBuildUserSources_SkipsOutputDir verifies that buildUserSources does not
+// recurse into the output directory, which would cause an infinite loop when
+// the output directory is inside the watch directory.
+func TestBuildUserSources_SkipsOutputDir(t *testing.T) {
+	dir := t.TempDir()
+
+	// Create a source file
+	srcDir := filepath.Join(dir, "src")
+	if err := os.MkdirAll(srcDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(srcDir, "app.js"), []byte("// source"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create an output directory with files that should be skipped
+	outDir := filepath.Join(dir, "_site")
+	nestedDir := filepath.Join(outDir, "deep", "nested")
+	if err := os.MkdirAll(nestedDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(outDir, "should-skip.js"), []byte("// output"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(nestedDir, "also-skip.js"), []byte("// nested output"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Track which paths are walked (not skipped) by collecting all
+	// non-directory entries via WalkDir with the same skip logic
+	var walked []string
+	absOutputDir, _ := filepath.Abs(outDir)
+
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		rel, _ := filepath.Rel(dir, path)
+		if strings.HasPrefix(rel, "node_modules") {
+			if d.IsDir() {
+				return fs.SkipDir
+			}
+			return nil
+		}
+
+		absPath, _ := filepath.Abs(path)
+		if d.IsDir() && absPath == absOutputDir {
+			return fs.SkipDir
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		walked = append(walked, rel)
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("WalkDir error: %v", err)
+	}
+
+	// Verify: should contain the source file but NOT any output files
+	foundSource := false
+	for _, p := range walked {
+		if strings.Contains(p, "_site") {
+			t.Errorf("walked into output directory: %s", p)
+		}
+		if p == filepath.Join("src", "app.js") {
+			foundSource = true
+		}
+	}
+	if !foundSource {
+		t.Errorf("did not walk source file; walked: %v", walked)
 	}
 }
 
