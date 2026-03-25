@@ -7,6 +7,8 @@ import (
 	"os"
 
 	"gopkg.in/yaml.v3"
+
+	"bennypowers.dev/cem/serve/middleware/types"
 )
 
 // CemConfig holds the complete CEM configuration.
@@ -50,11 +52,12 @@ type MCPConfig struct {
 }
 
 type ServeConfig struct {
-	Port        int              `mapstructure:"port" yaml:"port" json:"port"`
-	OpenBrowser bool             `mapstructure:"openBrowser" yaml:"openBrowser" json:"openBrowser"`
-	Transforms  TransformsConfig `mapstructure:"transforms" yaml:"transforms" json:"transforms"`
-	URLRewrites []URLRewrite     `mapstructure:"urlRewrites" yaml:"urlRewrites" json:"urlRewrites"`
-	Demos       DemosConfig      `mapstructure:"demos" yaml:"demos" json:"demos"`
+	Port        int                    `mapstructure:"port" yaml:"port" json:"port"`
+	OpenBrowser bool                   `mapstructure:"openBrowser" yaml:"openBrowser" json:"openBrowser"`
+	ImportMap   types.ImportMapConfig  `mapstructure:"importMap" yaml:"importMap" json:"importMap"`
+	Transforms  TransformsConfig       `mapstructure:"transforms" yaml:"transforms" json:"transforms"`
+	URLRewrites []URLRewrite           `mapstructure:"urlRewrites" yaml:"urlRewrites" json:"urlRewrites"`
+	Demos       DemosConfig            `mapstructure:"demos" yaml:"demos" json:"demos"`
 }
 
 type TransformsConfig struct {

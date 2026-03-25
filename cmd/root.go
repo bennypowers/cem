@@ -17,12 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 
+	IC "bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/internal/logging"
 	W "bennypowers.dev/cem/workspace"
 	"github.com/pterm/pterm"
@@ -53,9 +54,6 @@ var rootCmd = &cobra.Command{
 		if p, _ := cmd.Flags().GetString("package"); p == "" {
 			viper.Set("package", rootDir)
 		}
-		viper.AddConfigPath(filepath.Join(rootDir, ".config"))
-		viper.SetConfigType("yaml")
-		viper.SetConfigName("cem")
 
 		// Handle verbose and quiet flags (mutually exclusive)
 		verbose := viper.GetBool("verbose")
@@ -76,15 +74,34 @@ var rootCmd = &cobra.Command{
 
 		pterm.Debug.Printfln("Project directory: %q", rootDir)
 
+		// Load config into viper using the discovered config file path.
+		// The workspace context already discovered the file via internal/config.FindConfigFile.
 		cfgFile := wctx.ConfigFile()
 		if cfgFile != "" {
-			viper.SetConfigFile(cfgFile)
-			viper.Set("configFile", cfgFile)
-			if err := viper.ReadInConfig(); err != nil && !errors.Is(err, os.ErrNotExist) {
-				return err
+			format := IC.FormatFromPath(cfgFile)
+			if format == "jsonc" {
+				// Viper doesn't support JSONC natively. Read the file,
+				// strip comments, and feed clean JSON to viper.
+				data, readErr := os.ReadFile(cfgFile)
+				if readErr != nil {
+					return fmt.Errorf("failed to read config file %s: %w", cfgFile, readErr)
+				}
+				stripped := IC.StripComments(data)
+				viper.SetConfigType("json")
+				if err := viper.ReadConfig(bytes.NewReader(stripped)); err != nil {
+					return fmt.Errorf("failed to parse config file %s: %w", cfgFile, err)
+				}
 			} else {
-				pterm.Debug.Printfln("Config file: %q", cfgFile)
+				viper.SetConfigFile(cfgFile)
+				if format != "" {
+					viper.SetConfigType(format)
+				}
+				if err := viper.ReadInConfig(); err != nil && !errors.Is(err, os.ErrNotExist) {
+					return err
+				}
 			}
+			viper.Set("configFile", cfgFile)
+			pterm.Debug.Printfln("Config file: %q", cfgFile)
 		}
 		viper.AutomaticEnv()
 		return nil

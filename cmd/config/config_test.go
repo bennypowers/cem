@@ -35,7 +35,7 @@ func TestValidate_ValidRenderingModes(t *testing.T) {
 				},
 			}
 
-			if err := cfg.Validate(); err != nil {
+			if err := Validate(cfg); err != nil {
 				t.Errorf("Expected mode '%s' to be valid, got error: %v", mode, err)
 			}
 		})
@@ -55,7 +55,7 @@ func TestValidate_InvalidRenderingMode(t *testing.T) {
 				},
 			}
 
-			err := cfg.Validate()
+			err := Validate(cfg)
 			if err == nil {
 				t.Errorf("Expected mode '%s' to be rejected, but validation passed", mode)
 			}
@@ -82,7 +82,7 @@ func TestValidate_IframeRenderingMode(t *testing.T) {
 		},
 	}
 
-	err := cfg.Validate()
+	err := Validate(cfg)
 	if err == nil {
 		t.Error("Expected 'iframe' mode to be rejected, but validation passed")
 	}
@@ -96,7 +96,7 @@ func TestValidate_IframeRenderingMode(t *testing.T) {
 func TestValidate_EmptyConfigValid(t *testing.T) {
 	cfg := &CemConfig{}
 
-	if err := cfg.Validate(); err != nil {
+	if err := Validate(cfg); err != nil {
 		t.Errorf("Empty config should be valid, got error: %v", err)
 	}
 }

@@ -24,19 +24,20 @@ import (
 	"os"
 	"path/filepath"
 
+	IC "bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/types"
 	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-// Files that indicate project root, in order of preference
-var projectFiles = []string{
-	".config/cem.yaml",
+// Files that indicate project root, in order of preference.
+// CEM config paths are checked first, then common project markers.
+var projectFiles = append(IC.ConfigPaths,
 	"package.json",
 	".git",
 	"tsconfig.json",
-}
+)
 
 func GetWorkspaceContext(cmd *cobra.Command) (types.WorkspaceContext, error) {
 	val := cmd.Context().Value(WorkspaceContextKey)

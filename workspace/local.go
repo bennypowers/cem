@@ -28,11 +28,11 @@ import (
 
 	C "bennypowers.dev/cem/cmd/config"
 	DT "bennypowers.dev/cem/designtokens"
+	IC "bennypowers.dev/cem/internal/config"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
 	"github.com/bmatcuk/doublestar"
 	"github.com/pterm/pterm"
-	"gopkg.in/yaml.v3"
 )
 
 var _ types.WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
@@ -41,6 +41,7 @@ var _ types.WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
 // package.
 type FileSystemWorkspaceContext struct {
 	root                       string
+	configFilePath             string
 	config                     *C.CemConfig
 	customElementsManifestPath string
 	// Cache parsed results if desired
@@ -50,54 +51,68 @@ type FileSystemWorkspaceContext struct {
 }
 
 func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
-	var config C.CemConfig
-	config.ProjectDir = c.Root()
-	config.ConfigFile = c.ConfigFile()
+	cfgPath := c.ConfigFile()
 
-	if _, err := os.Stat(config.ConfigFile); os.IsNotExist(err) {
+	var cfg *C.CemConfig
+	if cfgPath == "" {
 		pterm.Debug.Println("no config file found")
-	} else if err != nil {
-		return nil, err
+		cfg = &C.CemConfig{}
 	} else {
-		rc, err := c.ReadFile(config.ConfigFile)
+		loaded, err := IC.LoadConfig(cfgPath)
 		if err != nil {
 			return nil, err
 		}
-		defer func() { _ = rc.Close() }()
-		if err := yaml.NewDecoder(rc).Decode(&config); err != nil {
-			return nil, err
-		}
+		cfg = loaded
 	}
+
+	cfg.ProjectDir = c.Root()
+	cfg.ConfigFile = cfgPath
+
 	// Make output path package-root-relative if needed
-	if config.Generate.Output != "" && !filepath.IsAbs(config.Generate.Output) {
-		config.Generate.Output = filepath.Join(config.ProjectDir, config.Generate.Output)
+	if cfg.Generate.Output != "" && !filepath.IsAbs(cfg.Generate.Output) {
+		cfg.Generate.Output = filepath.Join(cfg.ProjectDir, cfg.Generate.Output)
 	}
-	if config.Generate.Files == nil {
-		config.Generate.Files = make([]string, 0)
+	if cfg.Generate.Files == nil {
+		cfg.Generate.Files = make([]string, 0)
 	}
-	if config.Generate.Exclude == nil {
-		config.Generate.Exclude = make([]string, 0)
+	if cfg.Generate.Exclude == nil {
+		cfg.Generate.Exclude = make([]string, 0)
 	}
 	// Set debug verbosity
-	if config.Verbose {
+	if cfg.Verbose {
 		pterm.EnableDebugMessages()
 	} else {
 		pterm.DisableDebugMessages()
 	}
 
-	return &config, nil
+	return cfg, nil
 }
 
-func NewFileSystemWorkspaceContext(root string) *FileSystemWorkspaceContext {
-	return &FileSystemWorkspaceContext{
-		root:              root,
-		designTokensCache: NewDesignTokensCache(DT.NewLoader()),
+// Option configures a FileSystemWorkspaceContext.
+type Option func(*FileSystemWorkspaceContext)
+
+// WithConfigFile overrides the discovered config file path.
+func WithConfigFile(path string) Option {
+	return func(c *FileSystemWorkspaceContext) {
+		c.configFilePath = path
 	}
 }
 
-// ConfigFile Returns the path to the config file, or an empty string if it does not exist.
+func NewFileSystemWorkspaceContext(root string, opts ...Option) *FileSystemWorkspaceContext {
+	ctx := &FileSystemWorkspaceContext{
+		root:              root,
+		configFilePath:    IC.FindConfigFile(root),
+		designTokensCache: NewDesignTokensCache(DT.NewLoader()),
+	}
+	for _, opt := range opts {
+		opt(ctx)
+	}
+	return ctx
+}
+
+// ConfigFile returns the discovered config file path, or "" if none found.
 func (c *FileSystemWorkspaceContext) ConfigFile() string {
-	return filepath.Join(c.root, ".config", "cem.yaml")
+	return c.configFilePath
 }
 
 func (c *FileSystemWorkspaceContext) PackageJSON() (*M.PackageJSON, error) {
