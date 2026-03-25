@@ -87,7 +87,19 @@ make verify-npm || {
 }
 echo ""
 
-echo "Step 2: Updating version files and committing..."
+echo "Step 2: Ensuring generated files are up to date..."
+go generate ./...
+if ! git diff --quiet serve/middleware/routes/templates/; then
+  echo "  Generated files have changed, committing..."
+  git add serve/middleware/routes/templates/
+  git commit -m "chore: regenerate embedded assets"
+  echo "  Done."
+else
+  echo "  Generated files are up to date."
+fi
+echo ""
+
+echo "Step 3: Updating version files and committing..."
 ./scripts/version.sh "$VERSION" || {
   echo ""
   echo "Error: Version update was rejected or failed"
@@ -99,7 +111,7 @@ echo ""
 # Strip 'v' prefix for version comparison
 CHECK_VERSION="${VERSION#v}"
 
-echo "Step 3: Verifying version sync across all packages..."
+echo "Step 4: Verifying version sync across all packages..."
 MISMATCH=0
 
 VSCODE_VERSION=$(node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('extensions/vscode/package.json','utf8')).version)")
@@ -132,9 +144,9 @@ if [ "$MISMATCH" -eq 1 ]; then
 fi
 echo ""
 
-echo "Step 4: Pushing version commit..."
+echo "Step 5: Pushing version commit..."
 git push
 echo ""
 
-echo "Step 5: Creating GitHub release (gh will tag and push)..."
+echo "Step 6: Creating GitHub release (gh will tag and push)..."
 gh release create "$VERSION"
