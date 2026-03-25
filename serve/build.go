@@ -876,6 +876,12 @@ func rewriteJSONScopeKeys(s, basePath string) string {
 			continue
 		}
 
+		// Verify this is actually a scope key: "/path/": {
+		// Look ahead for closing quote, colon, optional whitespace, opening brace
+		if !looksLikeScopeKey(s) {
+			continue
+		}
+
 		// Prefix with base path if not already present
 		if !strings.HasPrefix(s, basePath+"/") && !strings.HasPrefix(s, basePath+`"`) {
 			result.WriteString(basePath)
@@ -883,4 +889,20 @@ func rewriteJSONScopeKeys(s, basePath string) string {
 	}
 
 	return result.String()
+}
+
+// looksLikeScopeKey checks whether the text starting at s (after the opening
+// quote and slash) matches the pattern for a JSON scope key: /path/": {
+// i.e., there is a closing `"` followed by `:` and `{` with optional whitespace.
+func looksLikeScopeKey(s string) bool {
+	closeQuote := strings.IndexByte(s, '"')
+	if closeQuote == -1 {
+		return false
+	}
+	rest := strings.TrimLeft(s[closeQuote+1:], " \t\n\r")
+	if len(rest) == 0 || rest[0] != ':' {
+		return false
+	}
+	rest = strings.TrimLeft(rest[1:], " \t\n\r")
+	return len(rest) > 0 && rest[0] == '{'
 }

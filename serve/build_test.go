@@ -458,6 +458,12 @@ func TestRewriteJSONScopeKeys(t *testing.T) {
 			basePath: "/base",
 			want:     `": "/node_modules/lit/index.js"`,
 		},
+		{
+			name:     "does not rewrite HTML attributes",
+			input:    `<a href="/foo/bar">link</a>`,
+			basePath: "/base",
+			want:     `<a href="/foo/bar">link</a>`,
+		},
 	}
 
 	for _, tt := range tests {
