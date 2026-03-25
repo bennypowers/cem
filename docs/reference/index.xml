@@ -43,4 +43,4 @@
 
 &lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
 
-&lt;p>You can configure &lt;code>cem&lt;/code> via a &lt;code>cem.yaml&lt;/code> file in your project&amp;rsquo;s &lt;code>.config&lt;/code> directory, or by using command-line flags.&lt;/p></description></item></channel></rss>
+&lt;p>You can configure &lt;code>cem&lt;/code> via a config file or command-line flags.&lt;/p></description></item></channel></rss>

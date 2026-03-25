@@ -64,7 +64,7 @@ examples and explanations for each step.&lt;/p></description></item><item><title
 
 &lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
 
-&lt;p>You can configure &lt;code>cem&lt;/code> via a &lt;code>cem.yaml&lt;/code> file in your project&amp;rsquo;s &lt;code>.config&lt;/code> directory, or by using command-line flags.&lt;/p></description></item><item><title>Development Workflow</title><link>https://bennypowers.dev/cem/docs/usage/workflow/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/workflow/</guid><description>&lt;info-callout type="info">
+&lt;p>You can configure &lt;code>cem&lt;/code> via a config file or command-line flags.&lt;/p></description></item><item><title>Development Workflow</title><link>https://bennypowers.dev/cem/docs/usage/workflow/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/workflow/</guid><description>&lt;info-callout type="info">
  &lt;template shadowrootmode="open">
  &lt;style>
  #content {
@@ -252,7 +252,7 @@ comments—it becomes the foundation for your entire development experience.&lt;
  &lt;tbody>
  &lt;tr>
  &lt;td>&lt;code>--config&lt;/code>&lt;/td>
- &lt;td>Path to config file (default: &lt;code>.config/cem.yaml&lt;/code>)&lt;/td>
+ &lt;td>Path to config file (auto-discovers &lt;code>.config/cem.yaml&lt;/code>, &lt;code>.cem.yaml&lt;/code>, etc.)&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;code>--package&lt;/code>, &lt;code>-p&lt;/code>&lt;/td>

@@ -87,7 +87,7 @@
  &lt;tbody>
  &lt;tr>
  &lt;td>&lt;code>--config&lt;/code>&lt;/td>
- &lt;td>Path to config file (default: &lt;code>.config/cem.yaml&lt;/code>)&lt;/td>
+ &lt;td>Path to config file (auto-discovers &lt;code>.config/cem.yaml&lt;/code>, &lt;code>.cem.yaml&lt;/code>, etc.)&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;code>--package&lt;/code>, &lt;code>-p&lt;/code>&lt;/td>
