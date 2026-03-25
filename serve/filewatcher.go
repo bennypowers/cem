@@ -264,6 +264,9 @@ func (fw *fileWatcher) processEvents() {
 								}
 							}
 						} else {
+							if fw.shouldIgnore(p) {
+								return nil
+							}
 							// Record pre-existing file as a create change
 							fw.mu.Lock()
 							fw.debouncedFiles[p] = time.Now()
