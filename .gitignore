@@ -35,6 +35,9 @@ docs/**/custom-elements.json
 
 RELEASE_NOTES.md
 
+# Skills reference material (not shipped)
+extensions/claude-code/skills/**/ADVICE.md
+
 lsp/benchmark/results
 docs/data/lsp-benchmark-results*.json
 .worktrees

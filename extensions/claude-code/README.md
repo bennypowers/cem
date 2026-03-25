@@ -21,6 +21,21 @@ Custom Elements Manifest tooling for Claude Code, providing both Language Server
 - **Documentation Access**: Access component descriptions and usage guidelines
 - **Design System Compliance**: Automatic adherence to your design tokens
 
+### Skills (Guided Workflows)
+
+- **`/a11y-review`**: Review custom element HTML for accessibility issues using manifest-documented patterns
+- **`/docs-health`**: Audit element manifests for documentation completeness — find missing descriptions, undocumented APIs
+- **`/design-api`**: Design a custom element's public API with consistency checks against existing elements
+- **`/gen-tests`**: Generate test scaffolding for custom elements based on their manifest API surface
+- **`/write-docs`**: Generate element documentation with usage examples, attribute tables, and integration guidance
+- **`/compose`**: Suggest which elements to combine for a UI goal, with validated composed HTML
+- **`/migrate`**: Compare manifest versions to find breaking changes and generate migration steps
+- **`/react`**: Use custom elements in React with version-appropriate patterns (React 18 wrappers vs React 19 native)
+- **`/vue`**: Use custom elements in Vue with `isCustomElement` config, slot syntax, and v-model setup
+- **`/angular`**: Use custom elements in Angular with `CUSTOM_ELEMENTS_SCHEMA`, forms integration, and typing
+- **`/write-demos`**: Write demo HTML partials for `cem serve` with correct metadata, imports, and structure
+- **`/cem-serve`**: Set up and configure `cem serve` for custom element development with live reload and demos
+
 ## Installation
 
 ### 1. Install CEM Binary
