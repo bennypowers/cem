@@ -87,6 +87,9 @@ type DevServerContext interface {
 	// Logger returns the server's logger
 	Logger() Logger
 
+	// IsStaticBuild returns true during static site generation
+	IsStaticBuild() bool
+
 	// PackageJSON returns parsed package.json (single-package mode only)
 	PackageJSON() (*PackageJSON, error)
 

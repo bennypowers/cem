@@ -13,7 +13,7 @@ require (
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/bmatcuk/doublestar/v4 v4.9.2
 	github.com/dunglas/go-urlpattern v0.0.0-20241020164140-716dfa1c80b1
-	github.com/evanw/esbuild v0.27.0
+	github.com/evanw/esbuild v0.27.4
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/jsonschema-go v0.3.0
@@ -29,13 +29,13 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
-	github.com/tdewolff/minify/v2 v2.24.8
 	github.com/tidwall/gjson v1.18.0
 	github.com/tliron/glsp v0.2.2
 	github.com/tree-sitter/go-tree-sitter v0.24.0
 	github.com/tree-sitter/tree-sitter-css v0.23.2
 	github.com/tree-sitter/tree-sitter-html v0.23.2
 	github.com/tree-sitter/tree-sitter-jsdoc v0.23.2
+	github.com/tree-sitter/tree-sitter-php v0.23.12
 	github.com/tree-sitter/tree-sitter-typescript v0.23.2
 	github.com/yuin/goldmark v1.7.13
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc
@@ -46,9 +46,12 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
+require github.com/tetratelabs/wazero v1.9.0 // indirect
+
 require (
 	atomicgo.dev/cursor v0.2.0 // indirect
 	atomicgo.dev/schedule v0.1.0 // indirect
+	bennypowers.dev/lit-ssr-wasm/go v0.4.1
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/bitfield/gotestdox v0.2.2 // indirect
@@ -92,7 +95,6 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/tdewolff/parse/v2 v2.8.5 // indirect
 	github.com/tidwall/jsonc v0.3.2 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
@@ -105,7 +107,7 @@ require (
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
 	gotest.tools/gotestsum v1.13.0 // indirect
 )

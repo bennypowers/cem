@@ -46,12 +46,22 @@ func ExtractDocumentManager(dm any) types.Manager {
 	return nil
 }
 
-// getLanguageFromURI determines the language from file extension
+// getLanguageFromURI determines the language from file extension.
+// Twig templates use the HTML handler directly because Twig syntax ({% %}, {{ }})
+// is valid text content in HTML and does not interfere with element extraction.
 func getLanguageFromURI(uri string) string {
+	// Handle compound extensions like .html.twig
+	base := strings.ToLower(uri)
+	if strings.HasSuffix(base, ".html.twig") || strings.HasSuffix(base, ".twig") {
+		return "html"
+	}
+
 	ext := strings.ToLower(filepath.Ext(uri))
 	switch ext {
 	case ".html", ".htm":
 		return "html"
+	case ".php":
+		return "php"
 	case ".ts":
 		return "typescript"
 	case ".js":

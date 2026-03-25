@@ -19,7 +19,7 @@ else
     RACE_LDFLAGS :=
 endif
 
-.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend update watch bench bench-generate bench-lookup bench-lsp bench-lsp-cem bench-lsp-wc setup-wc-toolkit profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image build-shared-windows-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major examples-analyze examples-verify examples-clean linux-x64 linux-arm64 darwin-x64 darwin-arm64 win32-x64 win32-arm64 verify-npm
+.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend install-elements update watch bench bench-generate bench-lookup bench-lsp bench-lsp-cem bench-lsp-wc setup-wc-toolkit profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image build-shared-windows-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major examples-analyze examples-verify examples-clean linux-x64 linux-arm64 darwin-x64 darwin-arm64 win32-x64 win32-arm64 verify-npm
 
 build: generate
 	@mkdir -p dist
@@ -108,20 +108,23 @@ build-shared-windows-image:
 		echo "Image $(SHARED_WINDOWS_CC_IMAGE) already exists, skipping build."; \
 	fi
 
-win32-x64: build-shared-windows-image
+win32-x64: generate build-shared-windows-image
 	@mkdir -p dist/bin
 	podman run --rm -v $(PWD):/app:Z -w /app \
 		-e GOARCH=amd64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(SHARED_WINDOWS_CC_IMAGE)
 	@mv dist/bin/cem-windows-amd64.exe dist/bin/cem-win32-x64.exe
 
-win32-arm64: build-shared-windows-image
+win32-arm64: generate build-shared-windows-image
 	@mkdir -p dist/bin
 	podman run --rm -v $(PWD):/app:Z -w /app \
 		-e GOARCH=arm64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(SHARED_WINDOWS_CC_IMAGE)
 	@mv dist/bin/cem-windows-arm64.exe dist/bin/cem-win32-arm64.exe
 
 ## Code generation and dependencies
-generate:
+install-elements:
+	cd serve/elements && npm ci
+
+generate: install-elements
 	go generate ./...
 
 install-bindings: generate

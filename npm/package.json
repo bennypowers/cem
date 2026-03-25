@@ -24,5 +24,10 @@
     "bin/cem.js",
     "install-platform-binary.js",
     "README.md"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bennypowers/cem.git",
+    "directory": "npm"
+  }
 }

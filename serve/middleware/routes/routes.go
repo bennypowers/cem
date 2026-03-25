@@ -160,8 +160,8 @@ func serveInternalModules(w http.ResponseWriter, r *http.Request, config Config)
 	// Determine subdirectory based on file extension and path
 	var path string
 	switch {
-	case strings.HasPrefix(reqPath, "elements/"):
-		// Element files (e.g., elements/cem-drawer/cem-drawer.js)
+	case strings.HasPrefix(reqPath, "elements/"), strings.HasPrefix(reqPath, "vendor/"):
+		// Element and vendor files (e.g., elements/cem-drawer/cem-drawer.js, vendor/lit.js)
 		path = "templates/" + reqPath
 	case strings.HasSuffix(reqPath, ".js"):
 		path = "templates/js/" + reqPath
@@ -189,6 +189,8 @@ func serveInternalModules(w http.ResponseWriter, r *http.Request, config Config)
 		contentType = "text/css; charset=utf-8"
 	case strings.HasSuffix(reqPath, ".html"):
 		contentType = "text/html; charset=utf-8"
+	case strings.HasSuffix(reqPath, ".map"):
+		contentType = "application/json; charset=utf-8"
 	case strings.HasSuffix(reqPath, ".svg"):
 		contentType = "image/svg+xml"
 	case strings.HasSuffix(reqPath, ".png"):
@@ -825,7 +827,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 		ManifestJSON:   template.JS(manifestBytes),
 		Manifest:       parsedManifest,
 		Packages:       packages, // Workspace packages with modules (for package-level tree)
-		State:          state,    // Persisted UI state for SSR
+		State:          state, // Persisted UI state for SSR
 	}
 
 	// Render demo in the appropriate mode

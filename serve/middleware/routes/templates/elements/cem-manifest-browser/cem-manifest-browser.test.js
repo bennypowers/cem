@@ -1,7 +1,9 @@
 import { expect, waitUntil } from '@open-wc/testing';
 import sinon from 'sinon';
 import './cem-manifest-browser.js';
-import { CemVirtualTree } from '/__cem/elements/cem-virtual-tree/cem-virtual-tree.js';
+// Get CemVirtualTree from the registry to avoid double-registration
+// (importing from /__cem/ proxy loads a separate module instance)
+const CemVirtualTree = customElements.get('cem-virtual-tree');
 
 describe('cem-manifest-browser', () => {
   let el;
@@ -28,8 +30,8 @@ describe('cem-manifest-browser', () => {
     el = document.createElement('cem-manifest-browser');
     document.body.appendChild(el);
 
-    // Wait for CemElement to load template from real server
-    await el.rendered;
+    // Wait for Lit to render
+    await el.updateComplete;
   });
 
   afterEach(() => {
@@ -47,7 +49,7 @@ describe('cem-manifest-browser', () => {
       expect(element).to.be.instanceOf(HTMLElement);
     });
 
-    it('extends CemElement', () => {
+    it('extends LitElement', () => {
       expect(el.constructor.name).to.equal('CemManifestBrowser');
       expect(el.shadowRoot).to.exist;
     });
@@ -142,7 +144,7 @@ describe('cem-manifest-browser', () => {
       drawer = el.shadowRoot.getElementById('drawer');
 
       // Trigger manifest reload
-      await virtualTree.rendered;
+      await virtualTree.updateComplete;
     });
 
     it('listens for item-select events from virtual tree', async () => {
@@ -195,7 +197,7 @@ describe('cem-manifest-browser', () => {
     beforeEach(async () => {
       searchInput = el.shadowRoot.getElementById('search');
       virtualTree = el.shadowRoot.getElementById('virtual-tree');
-      await virtualTree.rendered;
+      await virtualTree.updateComplete;
     });
 
     it('shows clear button when search has value', () => {
@@ -312,7 +314,7 @@ describe('cem-manifest-browser', () => {
 
     beforeEach(async () => {
       virtualTree = el.shadowRoot.getElementById('virtual-tree');
-      await virtualTree.rendered;
+      await virtualTree.updateComplete;
     });
 
     it('delegates expandAll to virtual tree', () => {

@@ -1,606 +1,548 @@
-import { CemElement } from '/__cem/cem-element.js';
-
-/**
- * Detail panel that renders manifest item details on-demand
- * @customElement cem-detail-panel
- */
-export class CemDetailPanel extends CemElement {
-  static is = 'cem-detail-panel';
-
-  #cache = new Map();
-
-  afterTemplateLoaded() {
-    // Template is loaded, ready to render items
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __knownSymbol = (name, symbol) => (symbol = Symbol[name]) ? symbol : /* @__PURE__ */ Symbol.for("Symbol." + name);
+var __typeError = (msg) => {
+  throw TypeError(msg);
+};
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __decoratorStart = (base) => [, , , __create(base?.[__knownSymbol("metadata")] ?? null)];
+var __decoratorStrings = ["class", "method", "getter", "setter", "accessor", "field", "value", "get", "set"];
+var __expectFn = (fn) => fn !== void 0 && typeof fn !== "function" ? __typeError("Function expected") : fn;
+var __decoratorContext = (kind, name, done, metadata, fns) => ({ kind: __decoratorStrings[kind], name, metadata, addInitializer: (fn) => done._ ? __typeError("Already initialized") : fns.push(__expectFn(fn || null)) });
+var __decoratorMetadata = (array, target) => __defNormalProp(target, __knownSymbol("metadata"), array[3]);
+var __runInitializers = (array, flags, self, value) => {
+  for (var i = 0, fns = array[flags >> 1], n = fns && fns.length; i < n; i++) flags & 1 ? fns[i].call(self) : value = fns[i].call(self, value);
+  return value;
+};
+var __decorateElement = (array, flags, name, decorators, target, extra) => {
+  var fn, it, done, ctx, access, k = flags & 7, s2 = !!(flags & 8), p = !!(flags & 16);
+  var j = k > 3 ? array.length + 1 : k ? s2 ? 1 : 2 : 0, key = __decoratorStrings[k + 5];
+  var initializers = k > 3 && (array[j - 1] = []), extraInitializers = array[j] || (array[j] = []);
+  var desc = k && (!p && !s2 && (target = target.prototype), k < 5 && (k > 3 || !p) && __getOwnPropDesc(k < 4 ? target : { get [name]() {
+    return __privateGet(this, extra);
+  }, set [name](x) {
+    return __privateSet(this, extra, x);
+  } }, name));
+  k ? p && k < 4 && __name(extra, (k > 2 ? "set " : k > 1 ? "get " : "") + name) : __name(target, name);
+  for (var i = decorators.length - 1; i >= 0; i--) {
+    ctx = __decoratorContext(k, name, done = {}, array[3], extraInitializers);
+    if (k) {
+      ctx.static = s2, ctx.private = p, access = ctx.access = { has: p ? (x) => __privateIn(target, x) : (x) => name in x };
+      if (k ^ 3) access.get = p ? (x) => (k ^ 1 ? __privateGet : __privateMethod)(x, target, k ^ 4 ? extra : desc.get) : (x) => x[name];
+      if (k > 2) access.set = p ? (x, y) => __privateSet(x, target, y, k ^ 4 ? extra : desc.set) : (x, y) => x[name] = y;
+    }
+    it = (0, decorators[i])(k ? k < 4 ? p ? extra : desc[key] : k > 4 ? void 0 : { get: desc.get, set: desc.set } : target, ctx), done._ = 1;
+    if (k ^ 4 || it === void 0) __expectFn(it) && (k > 4 ? initializers.unshift(it) : k ? p ? extra = it : desc[key] = it : target = it);
+    else if (typeof it !== "object" || it === null) __typeError("Object expected");
+    else __expectFn(fn = it.get) && (desc.get = fn), __expectFn(fn = it.set) && (desc.set = fn), __expectFn(fn = it.init) && initializers.unshift(fn);
   }
+  return k || __decoratorMetadata(array, target), desc && __defProp(target, name, desc), p ? k ^ 4 ? extra : desc : target;
+};
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateIn = (member, obj) => Object(obj) !== obj ? __typeError('Cannot use the "in" operator on this value') : member.has(obj);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
 
+// elements/cem-detail-panel/cem-detail-panel.ts
+import { LitElement, html } from "/__cem/vendor/lit.js";
+import { customElement } from "/__cem/vendor/lit/decorators/custom-element.js";
+import { state } from "/__cem/vendor/lit/decorators/state.js";
+import { unsafeHTML } from "/__cem/vendor/lit/directives/unsafe-html.js";
+
+// lit-css:/home/bennyp/Developer/cem/serve/elements/cem-detail-panel/cem-detail-panel.css
+var s = new CSSStyleSheet();
+s.replaceSync(JSON.parse('"/* Detail Panel - Displays manifest item details on-demand */\\n\\n:host {\\n  display: block;\\n  padding: var(--pf-t--global--spacer--md, 1rem);\\n}\\n\\n#details-content {\\n  h3 {\\n    margin-top: 0;\\n    margin-bottom: var(--pf-t--global--spacer--sm, 0.5rem);\\n    font-size: var(--pf-t--global--font--size--heading--lg, 1.25rem);\\n  }\\n\\n  dl {\\n    margin: 0;\\n  }\\n\\n  dt {\\n    font-weight: var(--pf-t--global--font--weight--body--bold, 600);\\n    margin-top: var(--pf-t--global--spacer--sm, 0.5rem);\\n  }\\n\\n  dd {\\n    margin-left: 0;\\n    margin-bottom: var(--pf-v6-c-description-list--m-horizontal__description--MarginBlockEnd, 0.5rem);\\n  }\\n\\n  .empty-state {\\n    color: var(--pf-t--global--text--color--subtle, #6c757d);\\n    font-style: italic;\\n  }\\n\\n  code {\\n    background-color: var(--pf-t--global--background--color--secondary--default, #f5f5f5);\\n    padding: 0.125rem 0.25rem;\\n    border-radius: 0.25rem;\\n    font-family: var(--pf-t--global--font--family--mono, monospace);\\n    font-size: 0.875em;\\n  }\\n}\\n"'));
+var cem_detail_panel_default = s;
+
+// elements/cem-detail-panel/cem-detail-panel.ts
+var _contentHTML_dec, _a, _CemDetailPanel_decorators, _init, _contentHTML, _b, contentHTML_get, contentHTML_set, _CemDetailPanel_instances, _cache, getItemId_fn, buildDetailHTML_fn, buildPackageDetails_fn, buildModuleDetails_fn, buildCustomElementDetails_fn, buildAttributeDetails_fn, buildPropertyDetails_fn, buildMethodDetails_fn, buildEventDetails_fn, buildSlotDetails_fn, buildCSSPropertyDetails_fn, buildCSSPartDetails_fn, buildCSSStateDetails_fn, buildDemoDetails_fn, buildClassDetails_fn, buildFunctionDetails_fn, buildVariableDetails_fn, buildMixinDetails_fn, renderMarkdown_fn, findModule_fn, findCustomElement_fn, findDeclaration_fn, escapeHtml_fn;
+_CemDetailPanel_decorators = [customElement("cem-detail-panel")];
+var CemDetailPanel = class extends (_a = LitElement, _contentHTML_dec = [state()], _a) {
+  constructor() {
+    super(...arguments);
+    __privateAdd(this, _CemDetailPanel_instances);
+    __privateAdd(this, _contentHTML, __runInitializers(_init, 8, this, '<div class="empty-state">Select an item to view details</div>')), __runInitializers(_init, 11, this);
+    __privateAdd(this, _cache, /* @__PURE__ */ new Map());
+  }
+  render() {
+    return html`
+      <div id="details-content">
+        ${unsafeHTML(__privateGet(this, _CemDetailPanel_instances, contentHTML_get))}
+      </div>
+    `;
+  }
   /**
    * Render details for a manifest item
-   * @param {Object} item - The manifest item to render
-   * @param {Object} manifest - The full manifest for context
    */
   async renderItem(item, manifest) {
     if (!item) {
-      this.#clearContent();
+      __privateSet(this, _CemDetailPanel_instances, '<div class="empty-state">Select an item to view details</div>', contentHTML_set);
       return;
     }
-
-    const itemId = this.#getItemId(item);
-
-    // Check cache first
-    if (this.#cache.has(itemId)) {
-      this.#setContent(this.#cache.get(itemId));
+    const itemId = __privateMethod(this, _CemDetailPanel_instances, getItemId_fn).call(this, item);
+    if (__privateGet(this, _cache).has(itemId)) {
+      __privateSet(this, _CemDetailPanel_instances, __privateGet(this, _cache).get(itemId), contentHTML_set);
       return;
     }
-
-    // Build the detail HTML
-    const html = await this.#buildDetailHTML(item, manifest);
-    this.#cache.set(itemId, html);
-    this.#setContent(html);
+    const contentHTML = await __privateMethod(this, _CemDetailPanel_instances, buildDetailHTML_fn).call(this, item, manifest);
+    __privateGet(this, _cache).set(itemId, contentHTML);
+    __privateSet(this, _CemDetailPanel_instances, contentHTML, contentHTML_set);
   }
-
-  /**
-   * Generate a unique ID for a manifest item
-   */
-  #getItemId(item) {
-    const parts = [item.type];
-    if (item.modulePath) parts.push(item.modulePath);
-    if (item.tagName) parts.push(item.tagName);
-    if (item.name) parts.push(item.name);
-    return parts.join(':');
+};
+_init = __decoratorStart(_a);
+_contentHTML = new WeakMap();
+_CemDetailPanel_instances = new WeakSet();
+_cache = new WeakMap();
+/**
+ * Generate a unique ID for a manifest item
+ */
+getItemId_fn = function(item) {
+  const parts = [item.type];
+  if (item.modulePath) parts.push(item.modulePath);
+  if (item.tagName) parts.push(item.tagName);
+  if (item.name) parts.push(item.name);
+  return parts.join(":");
+};
+buildDetailHTML_fn = async function(item, manifest) {
+  const type = item.type;
+  switch (type) {
+    case "package":
+      return __privateMethod(this, _CemDetailPanel_instances, buildPackageDetails_fn).call(this, item, manifest);
+    case "module":
+      return __privateMethod(this, _CemDetailPanel_instances, buildModuleDetails_fn).call(this, item, manifest);
+    case "custom-element":
+      return __privateMethod(this, _CemDetailPanel_instances, buildCustomElementDetails_fn).call(this, item, manifest);
+    case "category":
+    case "group":
+      return '<div class="empty-state">Select an item to view details</div>';
+    case "attribute":
+      return __privateMethod(this, _CemDetailPanel_instances, buildAttributeDetails_fn).call(this, item, manifest);
+    case "property":
+      return __privateMethod(this, _CemDetailPanel_instances, buildPropertyDetails_fn).call(this, item, manifest);
+    case "method":
+      return __privateMethod(this, _CemDetailPanel_instances, buildMethodDetails_fn).call(this, item, manifest);
+    case "event":
+      return __privateMethod(this, _CemDetailPanel_instances, buildEventDetails_fn).call(this, item, manifest);
+    case "slot":
+      return __privateMethod(this, _CemDetailPanel_instances, buildSlotDetails_fn).call(this, item, manifest);
+    case "css-property":
+      return __privateMethod(this, _CemDetailPanel_instances, buildCSSPropertyDetails_fn).call(this, item, manifest);
+    case "css-part":
+      return __privateMethod(this, _CemDetailPanel_instances, buildCSSPartDetails_fn).call(this, item, manifest);
+    case "css-state":
+      return __privateMethod(this, _CemDetailPanel_instances, buildCSSStateDetails_fn).call(this, item, manifest);
+    case "demo":
+      return __privateMethod(this, _CemDetailPanel_instances, buildDemoDetails_fn).call(this, item, manifest);
+    case "class":
+      return __privateMethod(this, _CemDetailPanel_instances, buildClassDetails_fn).call(this, item, manifest);
+    case "function":
+      return __privateMethod(this, _CemDetailPanel_instances, buildFunctionDetails_fn).call(this, item, manifest);
+    case "variable":
+      return __privateMethod(this, _CemDetailPanel_instances, buildVariableDetails_fn).call(this, item, manifest);
+    case "mixin":
+      return __privateMethod(this, _CemDetailPanel_instances, buildMixinDetails_fn).call(this, item, manifest);
+    default:
+      return `<div class="empty-state">No details available for ${type}</div>`;
   }
-
-  /**
-   * Build HTML for detail panel based on item type
-   */
-  async #buildDetailHTML(item, manifest) {
-    const type = item.type;
-
-    switch (type) {
-      case 'package':
-        return this.#buildPackageDetails(item, manifest);
-      case 'module':
-        return this.#buildModuleDetails(item, manifest);
-      case 'custom-element':
-        return this.#buildCustomElementDetails(item, manifest);
-      case 'category':
-      case 'group':
-        // Categories/groups are organizational only - show a simple message
-        return `<div class="empty-state">Select an item to view details</div>`;
-      case 'attribute':
-        return this.#buildAttributeDetails(item, manifest);
-      case 'property':
-        return this.#buildPropertyDetails(item, manifest);
-      case 'method':
-        return this.#buildMethodDetails(item, manifest);
-      case 'event':
-        return this.#buildEventDetails(item, manifest);
-      case 'slot':
-        return this.#buildSlotDetails(item, manifest);
-      case 'css-property':
-        return this.#buildCSSPropertyDetails(item, manifest);
-      case 'css-part':
-        return this.#buildCSSPartDetails(item, manifest);
-      case 'css-state':
-        return this.#buildCSSStateDetails(item, manifest);
-      case 'demo':
-        return this.#buildDemoDetails(item, manifest);
-      case 'class':
-        return this.#buildClassDetails(item, manifest);
-      case 'function':
-        return this.#buildFunctionDetails(item, manifest);
-      case 'variable':
-        return this.#buildVariableDetails(item, manifest);
-      case 'mixin':
-        return this.#buildMixinDetails(item, manifest);
-      default:
-        return `<div class="empty-state">No details available for ${type}</div>`;
-    }
-  }
-
-  async #buildPackageDetails(item, manifest) {
-    const pkg = manifest.packages?.find(p => p.name === item.packageName);
-    if (!pkg) return '<div class="empty-state">Package not found</div>';
-
-    return `
-      <h3>${this.#escapeHtml(pkg.name)}</h3>
+};
+buildPackageDetails_fn = async function(item, manifest) {
+  const pkg = manifest.packages?.find((p) => p.name === item.packageName);
+  if (!pkg) return '<div class="empty-state">Package not found</div>';
+  return `
+      <h3>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, pkg.name)}</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
         <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Package</dd></div>
         <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Modules</dt><dd class="pf-v6-c-description-list__description">${pkg.modules?.length || 0}</dd></div>
-        ${pkg.schemaVersion ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Schema Version</dt><dd class="pf-v6-c-description-list__description">${this.#escapeHtml(pkg.schemaVersion)}</dd></div>` : ''}
+        ${pkg.schemaVersion ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Schema Version</dt><dd class="pf-v6-c-description-list__description">${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, pkg.schemaVersion)}</dd></div>` : ""}
       </dl>
     `;
-  }
-
-  async #buildModuleDetails(item, manifest) {
-    const module = this.#findModule(manifest, item.modulePath);
-    if (!module) return '<div class="empty-state">Module not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const summaryPath = module.summary ? `modules.#(path=="${escapedPath}").summary` : '';
-    const descriptionPath = module.description ? `modules.#(path=="${escapedPath}").description` : '';
-
-    const summary = await this.#renderMarkdown(summaryPath);
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
-      <h3>${this.#escapeHtml(module.path)}</h3>
+};
+buildModuleDetails_fn = async function(item, manifest) {
+  const module = __privateMethod(this, _CemDetailPanel_instances, findModule_fn).call(this, manifest, item.modulePath);
+  if (!module) return '<div class="empty-state">Module not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const summaryPath = module.summary ? `modules.#(path=="${escapedPath}").summary` : "";
+  const descriptionPath = module.description ? `modules.#(path=="${escapedPath}").description` : "";
+  const summary = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, summaryPath);
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
+      <h3>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, module.path)}</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
         <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Declarations</dt><dd class="pf-v6-c-description-list__description">${module.declarations?.length || 0}</dd></div>
       </dl>
     `;
+};
+buildCustomElementDetails_fn = async function(item, manifest) {
+  if (!item.tagName) {
+    return '<div class="empty-state">Invalid custom element (missing tagName)</div>';
   }
-
-  async #buildCustomElementDetails(item, manifest) {
-    // Defensive check - if no tagName, this isn't a valid custom element
-    if (!item.tagName) {
-      return '<div class="empty-state">Invalid custom element (missing tagName)</div>';
-    }
-
-    const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
-    if (!ce) return '<div class="empty-state">Custom element not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const summaryPath = ce.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").summary` : '';
-    const descriptionPath = ce.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").description` : '';
-
-    const summary = await this.#renderMarkdown(summaryPath);
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
-      <h3>&lt;${this.#escapeHtml(ce.tagName)}&gt;</h3>
+  const ce = __privateMethod(this, _CemDetailPanel_instances, findCustomElement_fn).call(this, manifest, item.modulePath, item.tagName);
+  if (!ce) return '<div class="empty-state">Custom element not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedTagName = item.tagName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const summaryPath = ce.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").summary` : "";
+  const descriptionPath = ce.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").description` : "";
+  const summary = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, summaryPath);
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
+      <h3>&lt;${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, ce.tagName)}&gt;</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Name</dt><dd class="pf-v6-c-description-list__description">${this.#escapeHtml(ce.name)}</dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${ce.superclass?.name ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Extends</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(ce.superclass.name)}</code></dd></div>` : ''}
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Name</dt><dd class="pf-v6-c-description-list__description">${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, ce.name)}</dd></div>
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
+        ${ce.superclass?.name ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Extends</dt><dd class="pf-v6-c-description-list__description"><code>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, ce.superclass.name)}</code></dd></div>` : ""}
         <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Attributes</dt><dd class="pf-v6-c-description-list__description">${ce.attributes?.length || 0}</dd></div>
         <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Events</dt><dd class="pf-v6-c-description-list__description">${ce.events?.length || 0}</dd></div>
         <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Slots</dt><dd class="pf-v6-c-description-list__description">${ce.slots?.length || 0}</dd></div>
       </dl>
     `;
-  }
-
-  async #buildAttributeDetails(item, manifest) {
-    const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
-    if (!ce) return '<div class="empty-state">Custom element not found</div>';
-
-    const attr = ce.attributes?.find(a => a.name === item.name);
-    if (!attr) return '<div class="empty-state">Attribute not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const summaryPath = attr.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").attributes.#(name=="${escapedName}").summary` : '';
-    const descriptionPath = attr.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").attributes.#(name=="${escapedName}").description` : '';
-
-    const summary = await this.#renderMarkdown(summaryPath);
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
-      <h3>${this.#escapeHtml(attr.name)}</h3>
+};
+buildAttributeDetails_fn = async function(item, manifest) {
+  const ce = __privateMethod(this, _CemDetailPanel_instances, findCustomElement_fn).call(this, manifest, item.modulePath, item.tagName);
+  if (!ce) return '<div class="empty-state">Custom element not found</div>';
+  const attr = ce.attributes?.find((a) => a.name === item.name);
+  if (!attr) return '<div class="empty-state">Attribute not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedTagName = item.tagName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedName = item.name.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const summaryPath = attr.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").attributes.#(name=="${escapedName}").summary` : "";
+  const descriptionPath = attr.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").attributes.#(name=="${escapedName}").description` : "";
+  const summary = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, summaryPath);
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
+      <h3>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, attr.name)}</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName)}&gt;</code></dd></div>
-        ${attr.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(attr.type.text)}</code></dd></div>` : ''}
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${attr.default ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(attr.default)}</code></dd></div>` : ''}
-        ${attr.fieldName ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Reflects to</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(attr.fieldName)}</code></dd></div>` : ''}
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, ce.tagName)}&gt;</code></dd></div>
+        ${attr.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description"><code>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, attr.type.text)}</code></dd></div>` : ""}
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
+        ${attr.default ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, attr.default)}</code></dd></div>` : ""}
+        ${attr.fieldName ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Reflects to</dt><dd class="pf-v6-c-description-list__description"><code>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, attr.fieldName)}</code></dd></div>` : ""}
       </dl>
     `;
-  }
-
-  async #buildPropertyDetails(item, manifest) {
-    const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
-    if (!ce) return '<div class="empty-state">Custom element not found</div>';
-
-    const prop = ce.members?.find(m => m.kind === 'field' && m.name === item.name);
-    if (!prop) return '<div class="empty-state">Property not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const summaryPath = prop.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").members.#(name=="${escapedName}").summary` : '';
-    const descriptionPath = prop.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").members.#(name=="${escapedName}").description` : '';
-
-    const summary = await this.#renderMarkdown(summaryPath);
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
-      <h3>${this.#escapeHtml(prop.name)}</h3>
+};
+buildPropertyDetails_fn = async function(item, manifest) {
+  const ce = __privateMethod(this, _CemDetailPanel_instances, findCustomElement_fn).call(this, manifest, item.modulePath, item.tagName);
+  if (!ce) return '<div class="empty-state">Custom element not found</div>';
+  const prop = ce.members?.find((m) => m.kind === "field" && m.name === item.name);
+  if (!prop) return '<div class="empty-state">Property not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedTagName = item.tagName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedName = item.name.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const summaryPath = prop.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").members.#(name=="${escapedName}").summary` : "";
+  const descriptionPath = prop.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").members.#(name=="${escapedName}").description` : "";
+  const summary = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, summaryPath);
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
+      <h3>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, prop.name)}</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName)}&gt;</code></dd></div>
-        ${prop.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(prop.type.text)}</code></dd></div>` : ''}
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${prop.default ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(prop.default)}</code></dd></div>` : ''}
-        ${prop.privacy ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Privacy</dt><dd class="pf-v6-c-description-list__description">${this.#escapeHtml(prop.privacy)}</dd></div>` : ''}
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, ce.tagName)}&gt;</code></dd></div>
+        ${prop.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description"><code>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, prop.type.text)}</code></dd></div>` : ""}
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
+        ${prop.default ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, prop.default)}</code></dd></div>` : ""}
+        ${prop.privacy ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Privacy</dt><dd class="pf-v6-c-description-list__description">${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, prop.privacy)}</dd></div>` : ""}
       </dl>
     `;
-  }
-
-  async #buildMethodDetails(item, manifest) {
-    const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
-    if (!ce) return '<div class="empty-state">Custom element not found</div>';
-
-    const method = ce.members?.find(m => m.kind === 'method' && m.name === item.name);
-    if (!method) return '<div class="empty-state">Method not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const summaryPath = method.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").members.#(name=="${escapedName}").summary` : '';
-    const descriptionPath = method.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").members.#(name=="${escapedName}").description` : '';
-
-    const summary = await this.#renderMarkdown(summaryPath);
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
-      <h3>${this.#escapeHtml(method.name)}()</h3>
+};
+buildMethodDetails_fn = async function(item, manifest) {
+  const ce = __privateMethod(this, _CemDetailPanel_instances, findCustomElement_fn).call(this, manifest, item.modulePath, item.tagName);
+  if (!ce) return '<div class="empty-state">Custom element not found</div>';
+  const method = ce.members?.find((m) => m.kind === "method" && m.name === item.name);
+  if (!method) return '<div class="empty-state">Method not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedTagName = item.tagName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedName = item.name.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const summaryPath = method.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").members.#(name=="${escapedName}").summary` : "";
+  const descriptionPath = method.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").members.#(name=="${escapedName}").description` : "";
+  const summary = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, summaryPath);
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
+      <h3>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, method.name)}()</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName)}&gt;</code></dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${method.return?.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Returns</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(method.return.type.text)}</code></dd></div>` : ''}
-        ${method.privacy ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Privacy</dt><dd class="pf-v6-c-description-list__description">${this.#escapeHtml(method.privacy)}</dd></div>` : ''}
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, ce.tagName)}&gt;</code></dd></div>
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
+        ${method.return?.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Returns</dt><dd class="pf-v6-c-description-list__description"><code>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, method.return.type.text)}</code></dd></div>` : ""}
+        ${method.privacy ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Privacy</dt><dd class="pf-v6-c-description-list__description">${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, method.privacy)}</dd></div>` : ""}
       </dl>
     `;
-  }
-
-  async #buildEventDetails(item, manifest) {
-    const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
-    if (!ce) return '<div class="empty-state">Custom element not found</div>';
-
-    const event = ce.events?.find(e => e.name === item.name);
-    if (!event) return '<div class="empty-state">Event not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const summaryPath = event.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").events.#(name=="${escapedName}").summary` : '';
-    const descriptionPath = event.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").events.#(name=="${escapedName}").description` : '';
-
-    const summary = await this.#renderMarkdown(summaryPath);
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
-      <h3>${this.#escapeHtml(event.name)}</h3>
+};
+buildEventDetails_fn = async function(item, manifest) {
+  const ce = __privateMethod(this, _CemDetailPanel_instances, findCustomElement_fn).call(this, manifest, item.modulePath, item.tagName);
+  if (!ce) return '<div class="empty-state">Custom element not found</div>';
+  const event = ce.events?.find((e) => e.name === item.name);
+  if (!event) return '<div class="empty-state">Event not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedTagName = item.tagName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedName = item.name.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const summaryPath = event.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").events.#(name=="${escapedName}").summary` : "";
+  const descriptionPath = event.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").events.#(name=="${escapedName}").description` : "";
+  const summary = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, summaryPath);
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
+      <h3>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, event.name)}</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName)}&gt;</code></dd></div>
-        ${event.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Detail Type</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(event.type.text)}</code></dd></div>` : ''}
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, ce.tagName)}&gt;</code></dd></div>
+        ${event.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Detail Type</dt><dd class="pf-v6-c-description-list__description"><code>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, event.type.text)}</code></dd></div>` : ""}
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
       </dl>
     `;
-  }
-
-  async #buildSlotDetails(item, manifest) {
-    const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
-    if (!ce) return '<div class="empty-state">Custom element not found</div>';
-
-    const slot = ce.slots?.find(s => s.name === item.name);
-    if (!slot) return '<div class="empty-state">Slot not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const summaryPath = slot.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").slots.#(name=="${escapedName}").summary` : '';
-    const descriptionPath = slot.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").slots.#(name=="${escapedName}").description` : '';
-
-    const summary = await this.#renderMarkdown(summaryPath);
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
-      <h3>${this.#escapeHtml(slot.name) || '(default)'}</h3>
+};
+buildSlotDetails_fn = async function(item, manifest) {
+  const ce = __privateMethod(this, _CemDetailPanel_instances, findCustomElement_fn).call(this, manifest, item.modulePath, item.tagName);
+  if (!ce) return '<div class="empty-state">Custom element not found</div>';
+  const slot = ce.slots?.find((s2) => s2.name === item.name);
+  if (!slot) return '<div class="empty-state">Slot not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedTagName = item.tagName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedName = item.name.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const summaryPath = slot.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").slots.#(name=="${escapedName}").summary` : "";
+  const descriptionPath = slot.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").slots.#(name=="${escapedName}").description` : "";
+  const summary = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, summaryPath);
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
+      <h3>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, slot.name) || "(default)"}</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName)}&gt;</code></dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, ce.tagName)}&gt;</code></dd></div>
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
       </dl>
     `;
-  }
-
-  async #buildCSSPropertyDetails(item, manifest) {
-    const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
-    if (!ce) return '<div class="empty-state">Custom element not found</div>';
-
-    const cssProp = ce.cssProperties?.find(p => p.name === item.name);
-    if (!cssProp) return '<div class="empty-state">CSS property not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const summaryPath = cssProp.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssProperties.#(name=="${escapedName}").summary` : '';
-    const descriptionPath = cssProp.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssProperties.#(name=="${escapedName}").description` : '';
-
-    const summary = await this.#renderMarkdown(summaryPath);
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
-      <h3>${this.#escapeHtml(cssProp.name)}</h3>
+};
+buildCSSPropertyDetails_fn = async function(item, manifest) {
+  const ce = __privateMethod(this, _CemDetailPanel_instances, findCustomElement_fn).call(this, manifest, item.modulePath, item.tagName);
+  if (!ce) return '<div class="empty-state">Custom element not found</div>';
+  const cssProp = ce.cssProperties?.find((p) => p.name === item.name);
+  if (!cssProp) return '<div class="empty-state">CSS property not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedTagName = item.tagName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedName = item.name.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const summaryPath = cssProp.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssProperties.#(name=="${escapedName}").summary` : "";
+  const descriptionPath = cssProp.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssProperties.#(name=="${escapedName}").description` : "";
+  const summary = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, summaryPath);
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
+      <h3>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, cssProp.name)}</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName)}&gt;</code></dd></div>
-        ${cssProp.syntax ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Syntax</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(cssProp.syntax)}</code></dd></div>` : ''}
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${cssProp.default ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(cssProp.default)}</code></dd></div>` : ''}
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, ce.tagName)}&gt;</code></dd></div>
+        ${cssProp.syntax ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Syntax</dt><dd class="pf-v6-c-description-list__description"><code>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, cssProp.syntax)}</code></dd></div>` : ""}
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
+        ${cssProp.default ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, cssProp.default)}</code></dd></div>` : ""}
       </dl>
     `;
-  }
-
-  async #buildCSSPartDetails(item, manifest) {
-    const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
-    if (!ce) return '<div class="empty-state">Custom element not found</div>';
-
-    const cssPart = ce.cssParts?.find(p => p.name === item.name);
-    if (!cssPart) return '<div class="empty-state">CSS part not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const summaryPath = cssPart.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssParts.#(name=="${escapedName}").summary` : '';
-    const descriptionPath = cssPart.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssParts.#(name=="${escapedName}").description` : '';
-
-    const summary = await this.#renderMarkdown(summaryPath);
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
-      <h3>${this.#escapeHtml(cssPart.name)}</h3>
+};
+buildCSSPartDetails_fn = async function(item, manifest) {
+  const ce = __privateMethod(this, _CemDetailPanel_instances, findCustomElement_fn).call(this, manifest, item.modulePath, item.tagName);
+  if (!ce) return '<div class="empty-state">Custom element not found</div>';
+  const cssPart = ce.cssParts?.find((p) => p.name === item.name);
+  if (!cssPart) return '<div class="empty-state">CSS part not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedTagName = item.tagName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedName = item.name.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const summaryPath = cssPart.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssParts.#(name=="${escapedName}").summary` : "";
+  const descriptionPath = cssPart.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssParts.#(name=="${escapedName}").description` : "";
+  const summary = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, summaryPath);
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
+      <h3>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, cssPart.name)}</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName)}&gt;</code></dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, ce.tagName)}&gt;</code></dd></div>
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
       </dl>
     `;
-  }
-
-  async #buildCSSStateDetails(item, manifest) {
-    const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
-    if (!ce) return '<div class="empty-state">Custom element not found</div>';
-
-    const cssState = ce.cssStates?.find(s => s.name === item.name);
-    if (!cssState) return '<div class="empty-state">CSS state not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const summaryPath = cssState.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssStates.#(name=="${escapedName}").summary` : '';
-    const descriptionPath = cssState.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssStates.#(name=="${escapedName}").description` : '';
-
-    const summary = await this.#renderMarkdown(summaryPath);
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
-      <h3>:--${this.#escapeHtml(cssState.name)}</h3>
+};
+buildCSSStateDetails_fn = async function(item, manifest) {
+  const ce = __privateMethod(this, _CemDetailPanel_instances, findCustomElement_fn).call(this, manifest, item.modulePath, item.tagName);
+  if (!ce) return '<div class="empty-state">Custom element not found</div>';
+  const cssState = ce.cssStates?.find((s2) => s2.name === item.name);
+  if (!cssState) return '<div class="empty-state">CSS state not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedTagName = item.tagName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedName = item.name.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const summaryPath = cssState.summary ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssStates.#(name=="${escapedName}").summary` : "";
+  const descriptionPath = cssState.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").cssStates.#(name=="${escapedName}").description` : "";
+  const summary = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, summaryPath);
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
+      <h3>:--${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, cssState.name)}</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName)}&gt;</code></dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, ce.tagName)}&gt;</code></dd></div>
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
       </dl>
     `;
-  }
-
-  async #buildDemoDetails(item, manifest) {
-    const ce = this.#findCustomElement(manifest, item.modulePath, item.tagName);
-    if (!ce) return '<div class="empty-state">Custom element not found</div>';
-
-    const demo = ce.demos?.find(d => d.url === item.url);
-    if (!demo) return '<div class="empty-state">Demo not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedTagName = item.tagName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedUrl = demo.url.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const descriptionPath = demo.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").demos.#(url=="${escapedUrl}").description` : '';
-
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
+};
+buildDemoDetails_fn = async function(item, manifest) {
+  const ce = __privateMethod(this, _CemDetailPanel_instances, findCustomElement_fn).call(this, manifest, item.modulePath, item.tagName);
+  if (!ce) return '<div class="empty-state">Custom element not found</div>';
+  const demo = ce.demos?.find((d) => d.url === item.url);
+  if (!demo) return '<div class="empty-state">Demo not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedTagName = item.tagName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedUrl = demo.url.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const descriptionPath = demo.description ? `modules.#(path=="${escapedPath}").declarations.#(tagName=="${escapedTagName}").demos.#(url=="${escapedUrl}").description` : "";
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
       <h3>Demo</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName)}&gt;</code></dd></div>
-        ${demo.url ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">URL</dt><dd class="pf-v6-c-description-list__description"><a href="${this.#escapeHtml(demo.url)}" target="_blank" rel="noopener noreferrer">${this.#escapeHtml(demo.url)}</a></dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, ce.tagName)}&gt;</code></dd></div>
+        ${demo.url ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">URL</dt><dd class="pf-v6-c-description-list__description"><a href="${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, demo.url)}" target="_blank" rel="noopener noreferrer">${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, demo.url)}</a></dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
       </dl>
     `;
-  }
-
-  async #buildClassDetails(item, manifest) {
-    const cls = this.#findDeclaration(manifest, item.modulePath, item.name, 'class');
-    if (!cls) return '<div class="empty-state">Class not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const summaryPath = cls.summary ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").summary` : '';
-    const descriptionPath = cls.description ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").description` : '';
-
-    const summary = await this.#renderMarkdown(summaryPath);
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
-      <h3>${this.#escapeHtml(cls.name)}</h3>
+};
+buildClassDetails_fn = async function(item, manifest) {
+  const cls = __privateMethod(this, _CemDetailPanel_instances, findDeclaration_fn).call(this, manifest, item.modulePath, item.name, "class");
+  if (!cls) return '<div class="empty-state">Class not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedName = item.name.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const summaryPath = cls.summary ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").summary` : "";
+  const descriptionPath = cls.description ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").description` : "";
+  const summary = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, summaryPath);
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
+      <h3>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, cls.name)}</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
         <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Class</dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${cls.superclass?.name ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Extends</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(cls.superclass.name)}</code></dd></div>` : ''}
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
+        ${cls.superclass?.name ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Extends</dt><dd class="pf-v6-c-description-list__description"><code>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, cls.superclass.name)}</code></dd></div>` : ""}
       </dl>
     `;
-  }
-
-  async #buildFunctionDetails(item, manifest) {
-    const func = this.#findDeclaration(manifest, item.modulePath, item.name, 'function');
-    if (!func) return '<div class="empty-state">Function not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const summaryPath = func.summary ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").summary` : '';
-    const descriptionPath = func.description ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").description` : '';
-
-    const summary = await this.#renderMarkdown(summaryPath);
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
-      <h3>${this.#escapeHtml(func.name)}()</h3>
+};
+buildFunctionDetails_fn = async function(item, manifest) {
+  const func = __privateMethod(this, _CemDetailPanel_instances, findDeclaration_fn).call(this, manifest, item.modulePath, item.name, "function");
+  if (!func) return '<div class="empty-state">Function not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedName = item.name.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const summaryPath = func.summary ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").summary` : "";
+  const descriptionPath = func.description ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").description` : "";
+  const summary = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, summaryPath);
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
+      <h3>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, func.name)}()</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
         <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Function</dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${func.return?.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Returns</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(func.return.type.text)}</code></dd></div>` : ''}
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
+        ${func.return?.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Returns</dt><dd class="pf-v6-c-description-list__description"><code>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, func.return.type.text)}</code></dd></div>` : ""}
       </dl>
     `;
-  }
-
-  async #buildVariableDetails(item, manifest) {
-    const variable = this.#findDeclaration(manifest, item.modulePath, item.name, 'variable');
-    if (!variable) return '<div class="empty-state">Variable not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const summaryPath = variable.summary ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").summary` : '';
-    const descriptionPath = variable.description ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").description` : '';
-
-    const summary = await this.#renderMarkdown(summaryPath);
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
-      <h3>${this.#escapeHtml(variable.name)}</h3>
+};
+buildVariableDetails_fn = async function(item, manifest) {
+  const variable = __privateMethod(this, _CemDetailPanel_instances, findDeclaration_fn).call(this, manifest, item.modulePath, item.name, "variable");
+  if (!variable) return '<div class="empty-state">Variable not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedName = item.name.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const summaryPath = variable.summary ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").summary` : "";
+  const descriptionPath = variable.description ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").description` : "";
+  const summary = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, summaryPath);
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
+      <h3>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, variable.name)}</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
         <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Variable</dd></div>
-        ${variable.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Value Type</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(variable.type.text)}</code></dd></div>` : ''}
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${variable.default ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(variable.default)}</code></dd></div>` : ''}
+        ${variable.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Value Type</dt><dd class="pf-v6-c-description-list__description"><code>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, variable.type.text)}</code></dd></div>` : ""}
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
+        ${variable.default ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, variable.default)}</code></dd></div>` : ""}
       </dl>
     `;
-  }
-
-  async #buildMixinDetails(item, manifest) {
-    const mixin = this.#findDeclaration(manifest, item.modulePath, item.name, 'mixin');
-    if (!mixin) return '<div class="empty-state">Mixin not found</div>';
-
-    const escapedPath = item.modulePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const escapedName = item.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const summaryPath = mixin.summary ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").summary` : '';
-    const descriptionPath = mixin.description ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").description` : '';
-
-    const summary = await this.#renderMarkdown(summaryPath);
-    const description = await this.#renderMarkdown(descriptionPath);
-
-    return `
-      <h3>${this.#escapeHtml(mixin.name)}()</h3>
+};
+buildMixinDetails_fn = async function(item, manifest) {
+  const mixin = __privateMethod(this, _CemDetailPanel_instances, findDeclaration_fn).call(this, manifest, item.modulePath, item.name, "mixin");
+  if (!mixin) return '<div class="empty-state">Mixin not found</div>';
+  const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const escapedName = item.name.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const summaryPath = mixin.summary ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").summary` : "";
+  const descriptionPath = mixin.description ? `modules.#(path=="${escapedPath}").declarations.#(name=="${escapedName}").description` : "";
+  const summary = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, summaryPath);
+  const description = await __privateMethod(this, _CemDetailPanel_instances, renderMarkdown_fn).call(this, descriptionPath);
+  return `
+      <h3>${__privateMethod(this, _CemDetailPanel_instances, escapeHtml_fn).call(this, mixin.name)}()</h3>
       <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
         <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Mixin</dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ""}
+        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ""}
       </dl>
     `;
-  }
-
-  /**
-   * Call markdown API to render markdown from a manifest path
-   */
-  async #renderMarkdown(path) {
-    if (!path) return '';
-
-    try {
-      const response = await fetch('/__cem/api/markdown', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path })
-      });
-
-      if (!response.ok) {
-        console.error('Markdown API returned error:', response.status);
-        return '';
-      }
-
-      const data = await response.json();
-      return data.html;
-    } catch (error) {
-      console.error('Failed to render markdown:', error);
-      return '';
+};
+renderMarkdown_fn = async function(path) {
+  if (!path) return "";
+  try {
+    const response = await fetch("/__cem/api/markdown", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path })
+    });
+    if (!response.ok) {
+      console.error("Markdown API returned error:", response.status);
+      return "";
     }
+    const data = await response.json();
+    return data.html;
+  } catch (error) {
+    console.error("Failed to render markdown:", error);
+    return "";
   }
-
-  /**
-   * Find a module in the manifest
-   * Handles both single-package format (manifest.modules) and
-   * workspace format (manifest.packages[*].modules)
-   */
-  #findModule(manifest, modulePath) {
-    // Try single-package format first
-    if (manifest.modules) {
-      const module = manifest.modules.find(m => m.path === modulePath);
+};
+/**
+ * Find a module in the manifest.
+ * Handles both single-package format (manifest.modules) and
+ * workspace format (manifest.packages[*].modules)
+ */
+findModule_fn = function(manifest, modulePath) {
+  if (manifest.modules) {
+    const module = manifest.modules.find((m) => m.path === modulePath);
+    if (module) return module;
+  }
+  if (manifest.packages) {
+    for (const pkg of manifest.packages) {
+      const module = pkg.modules?.find((m) => m.path === modulePath);
       if (module) return module;
     }
-
-    // Try workspace format with packages array
-    if (manifest.packages) {
-      for (const pkg of manifest.packages) {
-        const module = pkg.modules?.find(m => m.path === modulePath);
-        if (module) return module;
-      }
-    }
-
-    return null;
   }
-
-  /**
-   * Find a custom element in the manifest
-   */
-  #findCustomElement(manifest, modulePath, tagName) {
-    const module = this.#findModule(manifest, modulePath);
-    if (!module) return null;
-
-    return module.declarations?.find(d => d.kind === 'class' && d.customElement && d.tagName === tagName);
-  }
-
-  /**
-   * Find a declaration (class, function, variable, mixin) in the manifest
-   */
-  #findDeclaration(manifest, modulePath, name, kind) {
-    const module = this.#findModule(manifest, modulePath);
-    if (!module) return null;
-
-    return module.declarations?.find(d => d.kind === kind && d.name === name);
-  }
-
-  /**
-   * Escape HTML to prevent XSS
-   */
-  #escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
-
-  /**
-   * Set content in the details panel
-   */
-  #setContent(html) {
-    const container = this.shadowRoot.getElementById('details-content');
-    if (container) {
-      container.innerHTML = html;
-    }
-  }
-
-  /**
-   * Clear content from the details panel
-   */
-  #clearContent() {
-    const container = this.shadowRoot.getElementById('details-content');
-    if (container) {
-      container.innerHTML = '<div class="empty-state">Select an item to view details</div>';
-    }
-  }
-
-  static {
-    customElements.define(this.is, this);
-  }
-}
+  return null;
+};
+/**
+ * Find a custom element in the manifest
+ */
+findCustomElement_fn = function(manifest, modulePath, tagName) {
+  const module = __privateMethod(this, _CemDetailPanel_instances, findModule_fn).call(this, manifest, modulePath);
+  if (!module) return null;
+  return module.declarations?.find((d) => d.kind === "class" && d.customElement && d.tagName === tagName) ?? null;
+};
+/**
+ * Find a declaration (class, function, variable, mixin) in the manifest
+ */
+findDeclaration_fn = function(manifest, modulePath, name, kind) {
+  const module = __privateMethod(this, _CemDetailPanel_instances, findModule_fn).call(this, manifest, modulePath);
+  if (!module) return null;
+  return module.declarations?.find((d) => d.kind === kind && d.name === name) ?? null;
+};
+/**
+ * Escape HTML to prevent XSS
+ */
+escapeHtml_fn = function(str) {
+  if (!str) return "";
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+};
+_b = __decorateElement(_init, 20, "#contentHTML", _contentHTML_dec, _CemDetailPanel_instances, _contentHTML), contentHTML_get = _b.get, contentHTML_set = _b.set;
+CemDetailPanel = __decorateElement(_init, 0, "CemDetailPanel", _CemDetailPanel_decorators, CemDetailPanel);
+__publicField(CemDetailPanel, "styles", cem_detail_panel_default);
+__runInitializers(_init, 1, CemDetailPanel);
+export {
+  CemDetailPanel
+};
+//# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsiLi4vLi4vLi4vLi4vLi4vZWxlbWVudHMvY2VtLWRldGFpbC1wYW5lbC9jZW0tZGV0YWlsLXBhbmVsLnRzIiwgImxpdC1jc3M6L2hvbWUvYmVubnlwL0RldmVsb3Blci9jZW0vc2VydmUvZWxlbWVudHMvY2VtLWRldGFpbC1wYW5lbC9jZW0tZGV0YWlsLXBhbmVsLmNzcyJdLAogICJzb3VyY2VzQ29udGVudCI6IFsiaW1wb3J0IHsgTGl0RWxlbWVudCwgaHRtbCB9IGZyb20gJ2xpdCc7XG5pbXBvcnQgeyBjdXN0b21FbGVtZW50IH0gZnJvbSAnbGl0L2RlY29yYXRvcnMvY3VzdG9tLWVsZW1lbnQuanMnO1xuaW1wb3J0IHsgc3RhdGUgfSBmcm9tICdsaXQvZGVjb3JhdG9ycy9zdGF0ZS5qcyc7XG5pbXBvcnQgeyB1bnNhZmVIVE1MIH0gZnJvbSAnbGl0L2RpcmVjdGl2ZXMvdW5zYWZlLWh0bWwuanMnO1xuXG5pbXBvcnQgc3R5bGVzIGZyb20gJy4vY2VtLWRldGFpbC1wYW5lbC5jc3MnO1xuXG5pbnRlcmZhY2UgTWFuaWZlc3RJdGVtIHtcbiAgdHlwZTogc3RyaW5nO1xuICBuYW1lPzogc3RyaW5nO1xuICB0YWdOYW1lPzogc3RyaW5nO1xuICBtb2R1bGVQYXRoPzogc3RyaW5nO1xuICBwYWNrYWdlTmFtZT86IHN0cmluZztcbiAgdXJsPzogc3RyaW5nO1xufVxuXG5pbnRlcmZhY2UgTWFuaWZlc3Qge1xuICBtb2R1bGVzPzogTW9kdWxlW107XG4gIHBhY2thZ2VzPzogUGFja2FnZVtdO1xufVxuXG5pbnRlcmZhY2UgUGFja2FnZSB7XG4gIG5hbWU6IHN0cmluZztcbiAgc2NoZW1hVmVyc2lvbj86IHN0cmluZztcbiAgbW9kdWxlcz86IE1vZHVsZVtdO1xufVxuXG5pbnRlcmZhY2UgTW9kdWxlIHtcbiAgcGF0aDogc3RyaW5nO1xuICBzdW1tYXJ5Pzogc3RyaW5nO1xuICBkZXNjcmlwdGlvbj86IHN0cmluZztcbiAgZGVjbGFyYXRpb25zPzogRGVjbGFyYXRpb25bXTtcbn1cblxuaW50ZXJmYWNlIERlY2xhcmF0aW9uIHtcbiAga2luZDogc3RyaW5nO1xuICBuYW1lOiBzdHJpbmc7XG4gIHRhZ05hbWU/OiBzdHJpbmc7XG4gIGN1c3RvbUVsZW1lbnQ/OiBib29sZWFuO1xuICBzdW1tYXJ5Pzogc3RyaW5nO1xuICBkZXNjcmlwdGlvbj86IHN0cmluZztcbiAgc3VwZXJjbGFzcz86IHsgbmFtZTogc3RyaW5nIH07XG4gIGF0dHJpYnV0ZXM/OiBBdHRyaWJ1dGVbXTtcbiAgbWVtYmVycz86IE1lbWJlcltdO1xuICBldmVudHM/OiBDZW1FdmVudFtdO1xuICBzbG90cz86IFNsb3RbXTtcbiAgY3NzUHJvcGVydGllcz86IENTU1Byb3BlcnR5W107XG4gIGNzc1BhcnRzPzogQ1NTUGFydFtdO1xuICBjc3NTdGF0ZXM/OiBDU1NTdGF0ZVtdO1xuICBkZW1vcz86IERlbW9bXTtcbiAgdHlwZT86IHsgdGV4dDogc3RyaW5nIH07XG4gIGRlZmF1bHQ/OiBzdHJpbmc7XG4gIHJldHVybj86IHsgdHlwZT86IHsgdGV4dDogc3RyaW5nIH0gfTtcbiAgcHJpdmFjeT86IHN0cmluZztcbn1cblxuaW50ZXJmYWNlIEF0dHJpYnV0ZSB7XG4gIG5hbWU6IHN0cmluZztcbiAgdHlwZT86IHsgdGV4dDogc3RyaW5nIH07XG4gIHN1bW1hcnk/OiBzdHJpbmc7XG4gIGRlc2NyaXB0aW9uPzogc3RyaW5nO1xuICBkZWZhdWx0Pzogc3RyaW5nO1xuICBmaWVsZE5hbWU/OiBzdHJpbmc7XG59XG5cbmludGVyZmFjZSBNZW1iZXIge1xuICBraW5kOiBzdHJpbmc7XG4gIG5hbWU6IHN0cmluZztcbiAgdHlwZT86IHsgdGV4dDogc3RyaW5nIH07XG4gIHN1bW1hcnk/OiBzdHJpbmc7XG4gIGRlc2NyaXB0aW9uPzogc3RyaW5nO1xuICBkZWZhdWx0Pzogc3RyaW5nO1xuICBwcml2YWN5Pzogc3RyaW5nO1xuICByZXR1cm4/OiB7IHR5cGU/OiB7IHRleHQ6IHN0cmluZyB9IH07XG59XG5cbmludGVyZmFjZSBDZW1FdmVudCB7XG4gIG5hbWU6IHN0cmluZztcbiAgdHlwZT86IHsgdGV4dDogc3RyaW5nIH07XG4gIHN1bW1hcnk/OiBzdHJpbmc7XG4gIGRlc2NyaXB0aW9uPzogc3RyaW5nO1xufVxuXG5pbnRlcmZhY2UgU2xvdCB7XG4gIG5hbWU6IHN0cmluZztcbiAgc3VtbWFyeT86IHN0cmluZztcbiAgZGVzY3JpcHRpb24/OiBzdHJpbmc7XG59XG5cbmludGVyZmFjZSBDU1NQcm9wZXJ0eSB7XG4gIG5hbWU6IHN0cmluZztcbiAgc3ludGF4Pzogc3RyaW5nO1xuICBzdW1tYXJ5Pzogc3RyaW5nO1xuICBkZXNjcmlwdGlvbj86IHN0cmluZztcbiAgZGVmYXVsdD86IHN0cmluZztcbn1cblxuaW50ZXJmYWNlIENTU1BhcnQge1xuICBuYW1lOiBzdHJpbmc7XG4gIHN1bW1hcnk/OiBzdHJpbmc7XG4gIGRlc2NyaXB0aW9uPzogc3RyaW5nO1xufVxuXG5pbnRlcmZhY2UgQ1NTU3RhdGUge1xuICBuYW1lOiBzdHJpbmc7XG4gIHN1bW1hcnk/OiBzdHJpbmc7XG4gIGRlc2NyaXB0aW9uPzogc3RyaW5nO1xufVxuXG5pbnRlcmZhY2UgRGVtbyB7XG4gIHVybDogc3RyaW5nO1xuICBkZXNjcmlwdGlvbj86IHN0cmluZztcbn1cblxuLyoqXG4gKiBEZXRhaWwgcGFuZWwgdGhhdCByZW5kZXJzIG1hbmlmZXN0IGl0ZW0gZGV0YWlscyBvbi1kZW1hbmRcbiAqIEBjdXN0b21FbGVtZW50IGNlbS1kZXRhaWwtcGFuZWxcbiAqL1xuQGN1c3RvbUVsZW1lbnQoJ2NlbS1kZXRhaWwtcGFuZWwnKVxuZXhwb3J0IGNsYXNzIENlbURldGFpbFBhbmVsIGV4dGVuZHMgTGl0RWxlbWVudCB7XG4gIHN0YXRpYyBzdHlsZXMgPSBzdHlsZXM7XG5cbiAgQHN0YXRlKClcbiAgYWNjZXNzb3IgI2NvbnRlbnRIVE1MID0gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPlNlbGVjdCBhbiBpdGVtIHRvIHZpZXcgZGV0YWlsczwvZGl2Pic7XG5cbiAgI2NhY2hlID0gbmV3IE1hcDxzdHJpbmcsIHN0cmluZz4oKTtcblxuICByZW5kZXIoKSB7XG4gICAgcmV0dXJuIGh0bWxgXG4gICAgICA8ZGl2IGlkPVwiZGV0YWlscy1jb250ZW50XCI+XG4gICAgICAgICR7dW5zYWZlSFRNTCh0aGlzLiNjb250ZW50SFRNTCl9XG4gICAgICA8L2Rpdj5cbiAgICBgO1xuICB9XG5cbiAgLyoqXG4gICAqIFJlbmRlciBkZXRhaWxzIGZvciBhIG1hbmlmZXN0IGl0ZW1cbiAgICovXG4gIGFzeW5jIHJlbmRlckl0ZW0oaXRlbTogTWFuaWZlc3RJdGVtIHwgbnVsbCwgbWFuaWZlc3Q6IE1hbmlmZXN0KTogUHJvbWlzZTx2b2lkPiB7XG4gICAgaWYgKCFpdGVtKSB7XG4gICAgICB0aGlzLiNjb250ZW50SFRNTCA9ICc8ZGl2IGNsYXNzPVwiZW1wdHktc3RhdGVcIj5TZWxlY3QgYW4gaXRlbSB0byB2aWV3IGRldGFpbHM8L2Rpdj4nO1xuICAgICAgcmV0dXJuO1xuICAgIH1cblxuICAgIGNvbnN0IGl0ZW1JZCA9IHRoaXMuI2dldEl0ZW1JZChpdGVtKTtcblxuICAgIC8vIENoZWNrIGNhY2hlIGZpcnN0XG4gICAgaWYgKHRoaXMuI2NhY2hlLmhhcyhpdGVtSWQpKSB7XG4gICAgICB0aGlzLiNjb250ZW50SFRNTCA9IHRoaXMuI2NhY2hlLmdldChpdGVtSWQpITtcbiAgICAgIHJldHVybjtcbiAgICB9XG5cbiAgICAvLyBCdWlsZCB0aGUgZGV0YWlsIEhUTUxcbiAgICBjb25zdCBjb250ZW50SFRNTCA9IGF3YWl0IHRoaXMuI2J1aWxkRGV0YWlsSFRNTChpdGVtLCBtYW5pZmVzdCk7XG4gICAgdGhpcy4jY2FjaGUuc2V0KGl0ZW1JZCwgY29udGVudEhUTUwpO1xuICAgIHRoaXMuI2NvbnRlbnRIVE1MID0gY29udGVudEhUTUw7XG4gIH1cblxuICAvKipcbiAgICogR2VuZXJhdGUgYSB1bmlxdWUgSUQgZm9yIGEgbWFuaWZlc3QgaXRlbVxuICAgKi9cbiAgI2dldEl0ZW1JZChpdGVtOiBNYW5pZmVzdEl0ZW0pOiBzdHJpbmcge1xuICAgIGNvbnN0IHBhcnRzID0gW2l0ZW0udHlwZV07XG4gICAgaWYgKGl0ZW0ubW9kdWxlUGF0aCkgcGFydHMucHVzaChpdGVtLm1vZHVsZVBhdGgpO1xuICAgIGlmIChpdGVtLnRhZ05hbWUpIHBhcnRzLnB1c2goaXRlbS50YWdOYW1lKTtcbiAgICBpZiAoaXRlbS5uYW1lKSBwYXJ0cy5wdXNoKGl0ZW0ubmFtZSk7XG4gICAgcmV0dXJuIHBhcnRzLmpvaW4oJzonKTtcbiAgfVxuXG4gIC8qKlxuICAgKiBCdWlsZCBIVE1MIGZvciBkZXRhaWwgcGFuZWwgYmFzZWQgb24gaXRlbSB0eXBlXG4gICAqL1xuICBhc3luYyAjYnVpbGREZXRhaWxIVE1MKGl0ZW06IE1hbmlmZXN0SXRlbSwgbWFuaWZlc3Q6IE1hbmlmZXN0KTogUHJvbWlzZTxzdHJpbmc+IHtcbiAgICBjb25zdCB0eXBlID0gaXRlbS50eXBlO1xuXG4gICAgc3dpdGNoICh0eXBlKSB7XG4gICAgICBjYXNlICdwYWNrYWdlJzpcbiAgICAgICAgcmV0dXJuIHRoaXMuI2J1aWxkUGFja2FnZURldGFpbHMoaXRlbSwgbWFuaWZlc3QpO1xuICAgICAgY2FzZSAnbW9kdWxlJzpcbiAgICAgICAgcmV0dXJuIHRoaXMuI2J1aWxkTW9kdWxlRGV0YWlscyhpdGVtLCBtYW5pZmVzdCk7XG4gICAgICBjYXNlICdjdXN0b20tZWxlbWVudCc6XG4gICAgICAgIHJldHVybiB0aGlzLiNidWlsZEN1c3RvbUVsZW1lbnREZXRhaWxzKGl0ZW0sIG1hbmlmZXN0KTtcbiAgICAgIGNhc2UgJ2NhdGVnb3J5JzpcbiAgICAgIGNhc2UgJ2dyb3VwJzpcbiAgICAgICAgcmV0dXJuICc8ZGl2IGNsYXNzPVwiZW1wdHktc3RhdGVcIj5TZWxlY3QgYW4gaXRlbSB0byB2aWV3IGRldGFpbHM8L2Rpdj4nO1xuICAgICAgY2FzZSAnYXR0cmlidXRlJzpcbiAgICAgICAgcmV0dXJuIHRoaXMuI2J1aWxkQXR0cmlidXRlRGV0YWlscyhpdGVtLCBtYW5pZmVzdCk7XG4gICAgICBjYXNlICdwcm9wZXJ0eSc6XG4gICAgICAgIHJldHVybiB0aGlzLiNidWlsZFByb3BlcnR5RGV0YWlscyhpdGVtLCBtYW5pZmVzdCk7XG4gICAgICBjYXNlICdtZXRob2QnOlxuICAgICAgICByZXR1cm4gdGhpcy4jYnVpbGRNZXRob2REZXRhaWxzKGl0ZW0sIG1hbmlmZXN0KTtcbiAgICAgIGNhc2UgJ2V2ZW50JzpcbiAgICAgICAgcmV0dXJuIHRoaXMuI2J1aWxkRXZlbnREZXRhaWxzKGl0ZW0sIG1hbmlmZXN0KTtcbiAgICAgIGNhc2UgJ3Nsb3QnOlxuICAgICAgICByZXR1cm4gdGhpcy4jYnVpbGRTbG90RGV0YWlscyhpdGVtLCBtYW5pZmVzdCk7XG4gICAgICBjYXNlICdjc3MtcHJvcGVydHknOlxuICAgICAgICByZXR1cm4gdGhpcy4jYnVpbGRDU1NQcm9wZXJ0eURldGFpbHMoaXRlbSwgbWFuaWZlc3QpO1xuICAgICAgY2FzZSAnY3NzLXBhcnQnOlxuICAgICAgICByZXR1cm4gdGhpcy4jYnVpbGRDU1NQYXJ0RGV0YWlscyhpdGVtLCBtYW5pZmVzdCk7XG4gICAgICBjYXNlICdjc3Mtc3RhdGUnOlxuICAgICAgICByZXR1cm4gdGhpcy4jYnVpbGRDU1NTdGF0ZURldGFpbHMoaXRlbSwgbWFuaWZlc3QpO1xuICAgICAgY2FzZSAnZGVtbyc6XG4gICAgICAgIHJldHVybiB0aGlzLiNidWlsZERlbW9EZXRhaWxzKGl0ZW0sIG1hbmlmZXN0KTtcbiAgICAgIGNhc2UgJ2NsYXNzJzpcbiAgICAgICAgcmV0dXJuIHRoaXMuI2J1aWxkQ2xhc3NEZXRhaWxzKGl0ZW0sIG1hbmlmZXN0KTtcbiAgICAgIGNhc2UgJ2Z1bmN0aW9uJzpcbiAgICAgICAgcmV0dXJuIHRoaXMuI2J1aWxkRnVuY3Rpb25EZXRhaWxzKGl0ZW0sIG1hbmlmZXN0KTtcbiAgICAgIGNhc2UgJ3ZhcmlhYmxlJzpcbiAgICAgICAgcmV0dXJuIHRoaXMuI2J1aWxkVmFyaWFibGVEZXRhaWxzKGl0ZW0sIG1hbmlmZXN0KTtcbiAgICAgIGNhc2UgJ21peGluJzpcbiAgICAgICAgcmV0dXJuIHRoaXMuI2J1aWxkTWl4aW5EZXRhaWxzKGl0ZW0sIG1hbmlmZXN0KTtcbiAgICAgIGRlZmF1bHQ6XG4gICAgICAgIHJldHVybiBgPGRpdiBjbGFzcz1cImVtcHR5LXN0YXRlXCI+Tm8gZGV0YWlscyBhdmFpbGFibGUgZm9yICR7dHlwZX08L2Rpdj5gO1xuICAgIH1cbiAgfVxuXG4gIGFzeW5jICNidWlsZFBhY2thZ2VEZXRhaWxzKGl0ZW06IE1hbmlmZXN0SXRlbSwgbWFuaWZlc3Q6IE1hbmlmZXN0KTogUHJvbWlzZTxzdHJpbmc+IHtcbiAgICBjb25zdCBwa2cgPSBtYW5pZmVzdC5wYWNrYWdlcz8uZmluZChwID0+IHAubmFtZSA9PT0gaXRlbS5wYWNrYWdlTmFtZSk7XG4gICAgaWYgKCFwa2cpIHJldHVybiAnPGRpdiBjbGFzcz1cImVtcHR5LXN0YXRlXCI+UGFja2FnZSBub3QgZm91bmQ8L2Rpdj4nO1xuXG4gICAgcmV0dXJuIGBcbiAgICAgIDxoMz4ke3RoaXMuI2VzY2FwZUh0bWwocGtnLm5hbWUpfTwvaDM+XG4gICAgICA8ZGwgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3QgcGYtbS1ob3Jpem9udGFsIHBmLW0tY29tcGFjdFwiPlxuICAgICAgICA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPlR5cGU8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj5QYWNrYWdlPC9kZD48L2Rpdj5cbiAgICAgICAgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5Nb2R1bGVzPC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHtwa2cubW9kdWxlcz8ubGVuZ3RoIHx8IDB9PC9kZD48L2Rpdj5cbiAgICAgICAgJHtwa2cuc2NoZW1hVmVyc2lvbiA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPlNjaGVtYSBWZXJzaW9uPC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHt0aGlzLiNlc2NhcGVIdG1sKHBrZy5zY2hlbWFWZXJzaW9uKX08L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgIDwvZGw+XG4gICAgYDtcbiAgfVxuXG4gIGFzeW5jICNidWlsZE1vZHVsZURldGFpbHMoaXRlbTogTWFuaWZlc3RJdGVtLCBtYW5pZmVzdDogTWFuaWZlc3QpOiBQcm9taXNlPHN0cmluZz4ge1xuICAgIGNvbnN0IG1vZHVsZSA9IHRoaXMuI2ZpbmRNb2R1bGUobWFuaWZlc3QsIGl0ZW0ubW9kdWxlUGF0aCEpO1xuICAgIGlmICghbW9kdWxlKSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPk1vZHVsZSBub3QgZm91bmQ8L2Rpdj4nO1xuXG4gICAgY29uc3QgZXNjYXBlZFBhdGggPSBpdGVtLm1vZHVsZVBhdGghLnJlcGxhY2UoL1xcXFwvZywgJ1xcXFxcXFxcJykucmVwbGFjZSgvXCIvZywgJ1xcXFxcIicpO1xuICAgIGNvbnN0IHN1bW1hcnlQYXRoID0gbW9kdWxlLnN1bW1hcnkgPyBgbW9kdWxlcy4jKHBhdGg9PVwiJHtlc2NhcGVkUGF0aH1cIikuc3VtbWFyeWAgOiAnJztcbiAgICBjb25zdCBkZXNjcmlwdGlvblBhdGggPSBtb2R1bGUuZGVzY3JpcHRpb24gPyBgbW9kdWxlcy4jKHBhdGg9PVwiJHtlc2NhcGVkUGF0aH1cIikuZGVzY3JpcHRpb25gIDogJyc7XG5cbiAgICBjb25zdCBzdW1tYXJ5ID0gYXdhaXQgdGhpcy4jcmVuZGVyTWFya2Rvd24oc3VtbWFyeVBhdGgpO1xuICAgIGNvbnN0IGRlc2NyaXB0aW9uID0gYXdhaXQgdGhpcy4jcmVuZGVyTWFya2Rvd24oZGVzY3JpcHRpb25QYXRoKTtcblxuICAgIHJldHVybiBgXG4gICAgICA8aDM+JHt0aGlzLiNlc2NhcGVIdG1sKG1vZHVsZS5wYXRoKX08L2gzPlxuICAgICAgPGRsIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0IHBmLW0taG9yaXpvbnRhbCBwZi1tLWNvbXBhY3RcIj5cbiAgICAgICAgJHtzdW1tYXJ5ID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+U3VtbWFyeTwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPiR7c3VtbWFyeX08L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgICAgJHtkZXNjcmlwdGlvbiA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPkRlc2NyaXB0aW9uPC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHtkZXNjcmlwdGlvbn08L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgICAgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5EZWNsYXJhdGlvbnM8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj4ke21vZHVsZS5kZWNsYXJhdGlvbnM/Lmxlbmd0aCB8fCAwfTwvZGQ+PC9kaXY+XG4gICAgICA8L2RsPlxuICAgIGA7XG4gIH1cblxuICBhc3luYyAjYnVpbGRDdXN0b21FbGVtZW50RGV0YWlscyhpdGVtOiBNYW5pZmVzdEl0ZW0sIG1hbmlmZXN0OiBNYW5pZmVzdCk6IFByb21pc2U8c3RyaW5nPiB7XG4gICAgaWYgKCFpdGVtLnRhZ05hbWUpIHtcbiAgICAgIHJldHVybiAnPGRpdiBjbGFzcz1cImVtcHR5LXN0YXRlXCI+SW52YWxpZCBjdXN0b20gZWxlbWVudCAobWlzc2luZyB0YWdOYW1lKTwvZGl2Pic7XG4gICAgfVxuXG4gICAgY29uc3QgY2UgPSB0aGlzLiNmaW5kQ3VzdG9tRWxlbWVudChtYW5pZmVzdCwgaXRlbS5tb2R1bGVQYXRoISwgaXRlbS50YWdOYW1lKTtcbiAgICBpZiAoIWNlKSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPkN1c3RvbSBlbGVtZW50IG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBlc2NhcGVkUGF0aCA9IGl0ZW0ubW9kdWxlUGF0aCEucmVwbGFjZSgvXFxcXC9nLCAnXFxcXFxcXFwnKS5yZXBsYWNlKC9cIi9nLCAnXFxcXFwiJyk7XG4gICAgY29uc3QgZXNjYXBlZFRhZ05hbWUgPSBpdGVtLnRhZ05hbWUucmVwbGFjZSgvXFxcXC9nLCAnXFxcXFxcXFwnKS5yZXBsYWNlKC9cIi9nLCAnXFxcXFwiJyk7XG4gICAgY29uc3Qgc3VtbWFyeVBhdGggPSBjZS5zdW1tYXJ5ID8gYG1vZHVsZXMuIyhwYXRoPT1cIiR7ZXNjYXBlZFBhdGh9XCIpLmRlY2xhcmF0aW9ucy4jKHRhZ05hbWU9PVwiJHtlc2NhcGVkVGFnTmFtZX1cIikuc3VtbWFyeWAgOiAnJztcbiAgICBjb25zdCBkZXNjcmlwdGlvblBhdGggPSBjZS5kZXNjcmlwdGlvbiA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyh0YWdOYW1lPT1cIiR7ZXNjYXBlZFRhZ05hbWV9XCIpLmRlc2NyaXB0aW9uYCA6ICcnO1xuXG4gICAgY29uc3Qgc3VtbWFyeSA9IGF3YWl0IHRoaXMuI3JlbmRlck1hcmtkb3duKHN1bW1hcnlQYXRoKTtcbiAgICBjb25zdCBkZXNjcmlwdGlvbiA9IGF3YWl0IHRoaXMuI3JlbmRlck1hcmtkb3duKGRlc2NyaXB0aW9uUGF0aCk7XG5cbiAgICByZXR1cm4gYFxuICAgICAgPGgzPiZsdDske3RoaXMuI2VzY2FwZUh0bWwoY2UudGFnTmFtZSEpfSZndDs8L2gzPlxuICAgICAgPGRsIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0IHBmLW0taG9yaXpvbnRhbCBwZi1tLWNvbXBhY3RcIj5cbiAgICAgICAgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5OYW1lPC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHt0aGlzLiNlc2NhcGVIdG1sKGNlLm5hbWUpfTwvZGQ+PC9kaXY+XG4gICAgICAgICR7c3VtbWFyeSA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPlN1bW1hcnk8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj4ke3N1bW1hcnl9PC9kZD48L2Rpdj5gIDogJyd9XG4gICAgICAgICR7ZGVzY3JpcHRpb24gPyBgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5EZXNjcmlwdGlvbjwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPiR7ZGVzY3JpcHRpb259PC9kZD48L2Rpdj5gIDogJyd9XG4gICAgICAgICR7Y2Uuc3VwZXJjbGFzcz8ubmFtZSA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPkV4dGVuZHM8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj48Y29kZT4ke3RoaXMuI2VzY2FwZUh0bWwoY2Uuc3VwZXJjbGFzcy5uYW1lKX08L2NvZGU+PC9kZD48L2Rpdj5gIDogJyd9XG4gICAgICAgIDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+QXR0cmlidXRlczwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPiR7Y2UuYXR0cmlidXRlcz8ubGVuZ3RoIHx8IDB9PC9kZD48L2Rpdj5cbiAgICAgICAgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5FdmVudHM8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj4ke2NlLmV2ZW50cz8ubGVuZ3RoIHx8IDB9PC9kZD48L2Rpdj5cbiAgICAgICAgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5TbG90czwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPiR7Y2Uuc2xvdHM/Lmxlbmd0aCB8fCAwfTwvZGQ+PC9kaXY+XG4gICAgICA8L2RsPlxuICAgIGA7XG4gIH1cblxuICBhc3luYyAjYnVpbGRBdHRyaWJ1dGVEZXRhaWxzKGl0ZW06IE1hbmlmZXN0SXRlbSwgbWFuaWZlc3Q6IE1hbmlmZXN0KTogUHJvbWlzZTxzdHJpbmc+IHtcbiAgICBjb25zdCBjZSA9IHRoaXMuI2ZpbmRDdXN0b21FbGVtZW50KG1hbmlmZXN0LCBpdGVtLm1vZHVsZVBhdGghLCBpdGVtLnRhZ05hbWUhKTtcbiAgICBpZiAoIWNlKSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPkN1c3RvbSBlbGVtZW50IG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBhdHRyID0gY2UuYXR0cmlidXRlcz8uZmluZChhID0+IGEubmFtZSA9PT0gaXRlbS5uYW1lKTtcbiAgICBpZiAoIWF0dHIpIHJldHVybiAnPGRpdiBjbGFzcz1cImVtcHR5LXN0YXRlXCI+QXR0cmlidXRlIG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBlc2NhcGVkUGF0aCA9IGl0ZW0ubW9kdWxlUGF0aCEucmVwbGFjZSgvXFxcXC9nLCAnXFxcXFxcXFwnKS5yZXBsYWNlKC9cIi9nLCAnXFxcXFwiJyk7XG4gICAgY29uc3QgZXNjYXBlZFRhZ05hbWUgPSBpdGVtLnRhZ05hbWUhLnJlcGxhY2UoL1xcXFwvZywgJ1xcXFxcXFxcJykucmVwbGFjZSgvXCIvZywgJ1xcXFxcIicpO1xuICAgIGNvbnN0IGVzY2FwZWROYW1lID0gaXRlbS5uYW1lIS5yZXBsYWNlKC9cXFxcL2csICdcXFxcXFxcXCcpLnJlcGxhY2UoL1wiL2csICdcXFxcXCInKTtcbiAgICBjb25zdCBzdW1tYXJ5UGF0aCA9IGF0dHIuc3VtbWFyeSA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyh0YWdOYW1lPT1cIiR7ZXNjYXBlZFRhZ05hbWV9XCIpLmF0dHJpYnV0ZXMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLnN1bW1hcnlgIDogJyc7XG4gICAgY29uc3QgZGVzY3JpcHRpb25QYXRoID0gYXR0ci5kZXNjcmlwdGlvbiA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyh0YWdOYW1lPT1cIiR7ZXNjYXBlZFRhZ05hbWV9XCIpLmF0dHJpYnV0ZXMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLmRlc2NyaXB0aW9uYCA6ICcnO1xuXG4gICAgY29uc3Qgc3VtbWFyeSA9IGF3YWl0IHRoaXMuI3JlbmRlck1hcmtkb3duKHN1bW1hcnlQYXRoKTtcbiAgICBjb25zdCBkZXNjcmlwdGlvbiA9IGF3YWl0IHRoaXMuI3JlbmRlck1hcmtkb3duKGRlc2NyaXB0aW9uUGF0aCk7XG5cbiAgICByZXR1cm4gYFxuICAgICAgPGgzPiR7dGhpcy4jZXNjYXBlSHRtbChhdHRyLm5hbWUpfTwvaDM+XG4gICAgICA8ZGwgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3QgcGYtbS1ob3Jpem9udGFsIHBmLW0tY29tcGFjdFwiPlxuICAgICAgICA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPkVsZW1lbnQ8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj48Y29kZT4mbHQ7JHt0aGlzLiNlc2NhcGVIdG1sKGNlLnRhZ05hbWUhKX0mZ3Q7PC9jb2RlPjwvZGQ+PC9kaXY+XG4gICAgICAgICR7YXR0ci50eXBlPy50ZXh0ID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+VHlwZTwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPjxjb2RlPiR7dGhpcy4jZXNjYXBlSHRtbChhdHRyLnR5cGUudGV4dCl9PC9jb2RlPjwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgICAke3N1bW1hcnkgPyBgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5TdW1tYXJ5PC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHtzdW1tYXJ5fTwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgICAke2Rlc2NyaXB0aW9uID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+RGVzY3JpcHRpb248L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj4ke2Rlc2NyaXB0aW9ufTwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgICAke2F0dHIuZGVmYXVsdCA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPkRlZmF1bHQ8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj48Y29kZT4ke3RoaXMuI2VzY2FwZUh0bWwoYXR0ci5kZWZhdWx0KX08L2NvZGU+PC9kZD48L2Rpdj5gIDogJyd9XG4gICAgICAgICR7YXR0ci5maWVsZE5hbWUgPyBgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5SZWZsZWN0cyB0bzwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPjxjb2RlPiR7dGhpcy4jZXNjYXBlSHRtbChhdHRyLmZpZWxkTmFtZSl9PC9jb2RlPjwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgPC9kbD5cbiAgICBgO1xuICB9XG5cbiAgYXN5bmMgI2J1aWxkUHJvcGVydHlEZXRhaWxzKGl0ZW06IE1hbmlmZXN0SXRlbSwgbWFuaWZlc3Q6IE1hbmlmZXN0KTogUHJvbWlzZTxzdHJpbmc+IHtcbiAgICBjb25zdCBjZSA9IHRoaXMuI2ZpbmRDdXN0b21FbGVtZW50KG1hbmlmZXN0LCBpdGVtLm1vZHVsZVBhdGghLCBpdGVtLnRhZ05hbWUhKTtcbiAgICBpZiAoIWNlKSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPkN1c3RvbSBlbGVtZW50IG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBwcm9wID0gY2UubWVtYmVycz8uZmluZChtID0+IG0ua2luZCA9PT0gJ2ZpZWxkJyAmJiBtLm5hbWUgPT09IGl0ZW0ubmFtZSk7XG4gICAgaWYgKCFwcm9wKSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPlByb3BlcnR5IG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBlc2NhcGVkUGF0aCA9IGl0ZW0ubW9kdWxlUGF0aCEucmVwbGFjZSgvXFxcXC9nLCAnXFxcXFxcXFwnKS5yZXBsYWNlKC9cIi9nLCAnXFxcXFwiJyk7XG4gICAgY29uc3QgZXNjYXBlZFRhZ05hbWUgPSBpdGVtLnRhZ05hbWUhLnJlcGxhY2UoL1xcXFwvZywgJ1xcXFxcXFxcJykucmVwbGFjZSgvXCIvZywgJ1xcXFxcIicpO1xuICAgIGNvbnN0IGVzY2FwZWROYW1lID0gaXRlbS5uYW1lIS5yZXBsYWNlKC9cXFxcL2csICdcXFxcXFxcXCcpLnJlcGxhY2UoL1wiL2csICdcXFxcXCInKTtcbiAgICBjb25zdCBzdW1tYXJ5UGF0aCA9IHByb3Auc3VtbWFyeSA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyh0YWdOYW1lPT1cIiR7ZXNjYXBlZFRhZ05hbWV9XCIpLm1lbWJlcnMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLnN1bW1hcnlgIDogJyc7XG4gICAgY29uc3QgZGVzY3JpcHRpb25QYXRoID0gcHJvcC5kZXNjcmlwdGlvbiA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyh0YWdOYW1lPT1cIiR7ZXNjYXBlZFRhZ05hbWV9XCIpLm1lbWJlcnMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLmRlc2NyaXB0aW9uYCA6ICcnO1xuXG4gICAgY29uc3Qgc3VtbWFyeSA9IGF3YWl0IHRoaXMuI3JlbmRlck1hcmtkb3duKHN1bW1hcnlQYXRoKTtcbiAgICBjb25zdCBkZXNjcmlwdGlvbiA9IGF3YWl0IHRoaXMuI3JlbmRlck1hcmtkb3duKGRlc2NyaXB0aW9uUGF0aCk7XG5cbiAgICByZXR1cm4gYFxuICAgICAgPGgzPiR7dGhpcy4jZXNjYXBlSHRtbChwcm9wLm5hbWUpfTwvaDM+XG4gICAgICA8ZGwgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3QgcGYtbS1ob3Jpem9udGFsIHBmLW0tY29tcGFjdFwiPlxuICAgICAgICA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPkVsZW1lbnQ8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj48Y29kZT4mbHQ7JHt0aGlzLiNlc2NhcGVIdG1sKGNlLnRhZ05hbWUhKX0mZ3Q7PC9jb2RlPjwvZGQ+PC9kaXY+XG4gICAgICAgICR7cHJvcC50eXBlPy50ZXh0ID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+VHlwZTwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPjxjb2RlPiR7dGhpcy4jZXNjYXBlSHRtbChwcm9wLnR5cGUudGV4dCl9PC9jb2RlPjwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgICAke3N1bW1hcnkgPyBgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5TdW1tYXJ5PC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHtzdW1tYXJ5fTwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgICAke2Rlc2NyaXB0aW9uID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+RGVzY3JpcHRpb248L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj4ke2Rlc2NyaXB0aW9ufTwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgICAke3Byb3AuZGVmYXVsdCA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPkRlZmF1bHQ8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj48Y29kZT4ke3RoaXMuI2VzY2FwZUh0bWwocHJvcC5kZWZhdWx0KX08L2NvZGU+PC9kZD48L2Rpdj5gIDogJyd9XG4gICAgICAgICR7cHJvcC5wcml2YWN5ID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+UHJpdmFjeTwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPiR7dGhpcy4jZXNjYXBlSHRtbChwcm9wLnByaXZhY3kpfTwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgPC9kbD5cbiAgICBgO1xuICB9XG5cbiAgYXN5bmMgI2J1aWxkTWV0aG9kRGV0YWlscyhpdGVtOiBNYW5pZmVzdEl0ZW0sIG1hbmlmZXN0OiBNYW5pZmVzdCk6IFByb21pc2U8c3RyaW5nPiB7XG4gICAgY29uc3QgY2UgPSB0aGlzLiNmaW5kQ3VzdG9tRWxlbWVudChtYW5pZmVzdCwgaXRlbS5tb2R1bGVQYXRoISwgaXRlbS50YWdOYW1lISk7XG4gICAgaWYgKCFjZSkgcmV0dXJuICc8ZGl2IGNsYXNzPVwiZW1wdHktc3RhdGVcIj5DdXN0b20gZWxlbWVudCBub3QgZm91bmQ8L2Rpdj4nO1xuXG4gICAgY29uc3QgbWV0aG9kID0gY2UubWVtYmVycz8uZmluZChtID0+IG0ua2luZCA9PT0gJ21ldGhvZCcgJiYgbS5uYW1lID09PSBpdGVtLm5hbWUpO1xuICAgIGlmICghbWV0aG9kKSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPk1ldGhvZCBub3QgZm91bmQ8L2Rpdj4nO1xuXG4gICAgY29uc3QgZXNjYXBlZFBhdGggPSBpdGVtLm1vZHVsZVBhdGghLnJlcGxhY2UoL1xcXFwvZywgJ1xcXFxcXFxcJykucmVwbGFjZSgvXCIvZywgJ1xcXFxcIicpO1xuICAgIGNvbnN0IGVzY2FwZWRUYWdOYW1lID0gaXRlbS50YWdOYW1lIS5yZXBsYWNlKC9cXFxcL2csICdcXFxcXFxcXCcpLnJlcGxhY2UoL1wiL2csICdcXFxcXCInKTtcbiAgICBjb25zdCBlc2NhcGVkTmFtZSA9IGl0ZW0ubmFtZSEucmVwbGFjZSgvXFxcXC9nLCAnXFxcXFxcXFwnKS5yZXBsYWNlKC9cIi9nLCAnXFxcXFwiJyk7XG4gICAgY29uc3Qgc3VtbWFyeVBhdGggPSBtZXRob2Quc3VtbWFyeSA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyh0YWdOYW1lPT1cIiR7ZXNjYXBlZFRhZ05hbWV9XCIpLm1lbWJlcnMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLnN1bW1hcnlgIDogJyc7XG4gICAgY29uc3QgZGVzY3JpcHRpb25QYXRoID0gbWV0aG9kLmRlc2NyaXB0aW9uID8gYG1vZHVsZXMuIyhwYXRoPT1cIiR7ZXNjYXBlZFBhdGh9XCIpLmRlY2xhcmF0aW9ucy4jKHRhZ05hbWU9PVwiJHtlc2NhcGVkVGFnTmFtZX1cIikubWVtYmVycy4jKG5hbWU9PVwiJHtlc2NhcGVkTmFtZX1cIikuZGVzY3JpcHRpb25gIDogJyc7XG5cbiAgICBjb25zdCBzdW1tYXJ5ID0gYXdhaXQgdGhpcy4jcmVuZGVyTWFya2Rvd24oc3VtbWFyeVBhdGgpO1xuICAgIGNvbnN0IGRlc2NyaXB0aW9uID0gYXdhaXQgdGhpcy4jcmVuZGVyTWFya2Rvd24oZGVzY3JpcHRpb25QYXRoKTtcblxuICAgIHJldHVybiBgXG4gICAgICA8aDM+JHt0aGlzLiNlc2NhcGVIdG1sKG1ldGhvZC5uYW1lKX0oKTwvaDM+XG4gICAgICA8ZGwgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3QgcGYtbS1ob3Jpem9udGFsIHBmLW0tY29tcGFjdFwiPlxuICAgICAgICA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPkVsZW1lbnQ8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj48Y29kZT4mbHQ7JHt0aGlzLiNlc2NhcGVIdG1sKGNlLnRhZ05hbWUhKX0mZ3Q7PC9jb2RlPjwvZGQ+PC9kaXY+XG4gICAgICAgICR7c3VtbWFyeSA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPlN1bW1hcnk8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj4ke3N1bW1hcnl9PC9kZD48L2Rpdj5gIDogJyd9XG4gICAgICAgICR7ZGVzY3JpcHRpb24gPyBgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5EZXNjcmlwdGlvbjwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPiR7ZGVzY3JpcHRpb259PC9kZD48L2Rpdj5gIDogJyd9XG4gICAgICAgICR7bWV0aG9kLnJldHVybj8udHlwZT8udGV4dCA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPlJldHVybnM8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj48Y29kZT4ke3RoaXMuI2VzY2FwZUh0bWwobWV0aG9kLnJldHVybi50eXBlLnRleHQpfTwvY29kZT48L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgICAgJHttZXRob2QucHJpdmFjeSA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPlByaXZhY3k8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj4ke3RoaXMuI2VzY2FwZUh0bWwobWV0aG9kLnByaXZhY3kpfTwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgPC9kbD5cbiAgICBgO1xuICB9XG5cbiAgYXN5bmMgI2J1aWxkRXZlbnREZXRhaWxzKGl0ZW06IE1hbmlmZXN0SXRlbSwgbWFuaWZlc3Q6IE1hbmlmZXN0KTogUHJvbWlzZTxzdHJpbmc+IHtcbiAgICBjb25zdCBjZSA9IHRoaXMuI2ZpbmRDdXN0b21FbGVtZW50KG1hbmlmZXN0LCBpdGVtLm1vZHVsZVBhdGghLCBpdGVtLnRhZ05hbWUhKTtcbiAgICBpZiAoIWNlKSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPkN1c3RvbSBlbGVtZW50IG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBldmVudCA9IGNlLmV2ZW50cz8uZmluZChlID0+IGUubmFtZSA9PT0gaXRlbS5uYW1lKTtcbiAgICBpZiAoIWV2ZW50KSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPkV2ZW50IG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBlc2NhcGVkUGF0aCA9IGl0ZW0ubW9kdWxlUGF0aCEucmVwbGFjZSgvXFxcXC9nLCAnXFxcXFxcXFwnKS5yZXBsYWNlKC9cIi9nLCAnXFxcXFwiJyk7XG4gICAgY29uc3QgZXNjYXBlZFRhZ05hbWUgPSBpdGVtLnRhZ05hbWUhLnJlcGxhY2UoL1xcXFwvZywgJ1xcXFxcXFxcJykucmVwbGFjZSgvXCIvZywgJ1xcXFxcIicpO1xuICAgIGNvbnN0IGVzY2FwZWROYW1lID0gaXRlbS5uYW1lIS5yZXBsYWNlKC9cXFxcL2csICdcXFxcXFxcXCcpLnJlcGxhY2UoL1wiL2csICdcXFxcXCInKTtcbiAgICBjb25zdCBzdW1tYXJ5UGF0aCA9IGV2ZW50LnN1bW1hcnkgPyBgbW9kdWxlcy4jKHBhdGg9PVwiJHtlc2NhcGVkUGF0aH1cIikuZGVjbGFyYXRpb25zLiModGFnTmFtZT09XCIke2VzY2FwZWRUYWdOYW1lfVwiKS5ldmVudHMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLnN1bW1hcnlgIDogJyc7XG4gICAgY29uc3QgZGVzY3JpcHRpb25QYXRoID0gZXZlbnQuZGVzY3JpcHRpb24gPyBgbW9kdWxlcy4jKHBhdGg9PVwiJHtlc2NhcGVkUGF0aH1cIikuZGVjbGFyYXRpb25zLiModGFnTmFtZT09XCIke2VzY2FwZWRUYWdOYW1lfVwiKS5ldmVudHMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLmRlc2NyaXB0aW9uYCA6ICcnO1xuXG4gICAgY29uc3Qgc3VtbWFyeSA9IGF3YWl0IHRoaXMuI3JlbmRlck1hcmtkb3duKHN1bW1hcnlQYXRoKTtcbiAgICBjb25zdCBkZXNjcmlwdGlvbiA9IGF3YWl0IHRoaXMuI3JlbmRlck1hcmtkb3duKGRlc2NyaXB0aW9uUGF0aCk7XG5cbiAgICByZXR1cm4gYFxuICAgICAgPGgzPiR7dGhpcy4jZXNjYXBlSHRtbChldmVudC5uYW1lKX08L2gzPlxuICAgICAgPGRsIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0IHBmLW0taG9yaXpvbnRhbCBwZi1tLWNvbXBhY3RcIj5cbiAgICAgICAgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5FbGVtZW50PC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+PGNvZGU+Jmx0OyR7dGhpcy4jZXNjYXBlSHRtbChjZS50YWdOYW1lISl9Jmd0OzwvY29kZT48L2RkPjwvZGl2PlxuICAgICAgICAke2V2ZW50LnR5cGU/LnRleHQgPyBgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5EZXRhaWwgVHlwZTwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPjxjb2RlPiR7dGhpcy4jZXNjYXBlSHRtbChldmVudC50eXBlLnRleHQpfTwvY29kZT48L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgICAgJHtzdW1tYXJ5ID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+U3VtbWFyeTwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPiR7c3VtbWFyeX08L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgICAgJHtkZXNjcmlwdGlvbiA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPkRlc2NyaXB0aW9uPC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHtkZXNjcmlwdGlvbn08L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgIDwvZGw+XG4gICAgYDtcbiAgfVxuXG4gIGFzeW5jICNidWlsZFNsb3REZXRhaWxzKGl0ZW06IE1hbmlmZXN0SXRlbSwgbWFuaWZlc3Q6IE1hbmlmZXN0KTogUHJvbWlzZTxzdHJpbmc+IHtcbiAgICBjb25zdCBjZSA9IHRoaXMuI2ZpbmRDdXN0b21FbGVtZW50KG1hbmlmZXN0LCBpdGVtLm1vZHVsZVBhdGghLCBpdGVtLnRhZ05hbWUhKTtcbiAgICBpZiAoIWNlKSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPkN1c3RvbSBlbGVtZW50IG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBzbG90ID0gY2Uuc2xvdHM/LmZpbmQocyA9PiBzLm5hbWUgPT09IGl0ZW0ubmFtZSk7XG4gICAgaWYgKCFzbG90KSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPlNsb3Qgbm90IGZvdW5kPC9kaXY+JztcblxuICAgIGNvbnN0IGVzY2FwZWRQYXRoID0gaXRlbS5tb2R1bGVQYXRoIS5yZXBsYWNlKC9cXFxcL2csICdcXFxcXFxcXCcpLnJlcGxhY2UoL1wiL2csICdcXFxcXCInKTtcbiAgICBjb25zdCBlc2NhcGVkVGFnTmFtZSA9IGl0ZW0udGFnTmFtZSEucmVwbGFjZSgvXFxcXC9nLCAnXFxcXFxcXFwnKS5yZXBsYWNlKC9cIi9nLCAnXFxcXFwiJyk7XG4gICAgY29uc3QgZXNjYXBlZE5hbWUgPSBpdGVtLm5hbWUhLnJlcGxhY2UoL1xcXFwvZywgJ1xcXFxcXFxcJykucmVwbGFjZSgvXCIvZywgJ1xcXFxcIicpO1xuICAgIGNvbnN0IHN1bW1hcnlQYXRoID0gc2xvdC5zdW1tYXJ5ID8gYG1vZHVsZXMuIyhwYXRoPT1cIiR7ZXNjYXBlZFBhdGh9XCIpLmRlY2xhcmF0aW9ucy4jKHRhZ05hbWU9PVwiJHtlc2NhcGVkVGFnTmFtZX1cIikuc2xvdHMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLnN1bW1hcnlgIDogJyc7XG4gICAgY29uc3QgZGVzY3JpcHRpb25QYXRoID0gc2xvdC5kZXNjcmlwdGlvbiA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyh0YWdOYW1lPT1cIiR7ZXNjYXBlZFRhZ05hbWV9XCIpLnNsb3RzLiMobmFtZT09XCIke2VzY2FwZWROYW1lfVwiKS5kZXNjcmlwdGlvbmAgOiAnJztcblxuICAgIGNvbnN0IHN1bW1hcnkgPSBhd2FpdCB0aGlzLiNyZW5kZXJNYXJrZG93bihzdW1tYXJ5UGF0aCk7XG4gICAgY29uc3QgZGVzY3JpcHRpb24gPSBhd2FpdCB0aGlzLiNyZW5kZXJNYXJrZG93bihkZXNjcmlwdGlvblBhdGgpO1xuXG4gICAgcmV0dXJuIGBcbiAgICAgIDxoMz4ke3RoaXMuI2VzY2FwZUh0bWwoc2xvdC5uYW1lKSB8fCAnKGRlZmF1bHQpJ308L2gzPlxuICAgICAgPGRsIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0IHBmLW0taG9yaXpvbnRhbCBwZi1tLWNvbXBhY3RcIj5cbiAgICAgICAgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5FbGVtZW50PC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+PGNvZGU+Jmx0OyR7dGhpcy4jZXNjYXBlSHRtbChjZS50YWdOYW1lISl9Jmd0OzwvY29kZT48L2RkPjwvZGl2PlxuICAgICAgICAke3N1bW1hcnkgPyBgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5TdW1tYXJ5PC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHtzdW1tYXJ5fTwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgICAke2Rlc2NyaXB0aW9uID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+RGVzY3JpcHRpb248L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj4ke2Rlc2NyaXB0aW9ufTwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgPC9kbD5cbiAgICBgO1xuICB9XG5cbiAgYXN5bmMgI2J1aWxkQ1NTUHJvcGVydHlEZXRhaWxzKGl0ZW06IE1hbmlmZXN0SXRlbSwgbWFuaWZlc3Q6IE1hbmlmZXN0KTogUHJvbWlzZTxzdHJpbmc+IHtcbiAgICBjb25zdCBjZSA9IHRoaXMuI2ZpbmRDdXN0b21FbGVtZW50KG1hbmlmZXN0LCBpdGVtLm1vZHVsZVBhdGghLCBpdGVtLnRhZ05hbWUhKTtcbiAgICBpZiAoIWNlKSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPkN1c3RvbSBlbGVtZW50IG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBjc3NQcm9wID0gY2UuY3NzUHJvcGVydGllcz8uZmluZChwID0+IHAubmFtZSA9PT0gaXRlbS5uYW1lKTtcbiAgICBpZiAoIWNzc1Byb3ApIHJldHVybiAnPGRpdiBjbGFzcz1cImVtcHR5LXN0YXRlXCI+Q1NTIHByb3BlcnR5IG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBlc2NhcGVkUGF0aCA9IGl0ZW0ubW9kdWxlUGF0aCEucmVwbGFjZSgvXFxcXC9nLCAnXFxcXFxcXFwnKS5yZXBsYWNlKC9cIi9nLCAnXFxcXFwiJyk7XG4gICAgY29uc3QgZXNjYXBlZFRhZ05hbWUgPSBpdGVtLnRhZ05hbWUhLnJlcGxhY2UoL1xcXFwvZywgJ1xcXFxcXFxcJykucmVwbGFjZSgvXCIvZywgJ1xcXFxcIicpO1xuICAgIGNvbnN0IGVzY2FwZWROYW1lID0gaXRlbS5uYW1lIS5yZXBsYWNlKC9cXFxcL2csICdcXFxcXFxcXCcpLnJlcGxhY2UoL1wiL2csICdcXFxcXCInKTtcbiAgICBjb25zdCBzdW1tYXJ5UGF0aCA9IGNzc1Byb3Auc3VtbWFyeSA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyh0YWdOYW1lPT1cIiR7ZXNjYXBlZFRhZ05hbWV9XCIpLmNzc1Byb3BlcnRpZXMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLnN1bW1hcnlgIDogJyc7XG4gICAgY29uc3QgZGVzY3JpcHRpb25QYXRoID0gY3NzUHJvcC5kZXNjcmlwdGlvbiA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyh0YWdOYW1lPT1cIiR7ZXNjYXBlZFRhZ05hbWV9XCIpLmNzc1Byb3BlcnRpZXMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLmRlc2NyaXB0aW9uYCA6ICcnO1xuXG4gICAgY29uc3Qgc3VtbWFyeSA9IGF3YWl0IHRoaXMuI3JlbmRlck1hcmtkb3duKHN1bW1hcnlQYXRoKTtcbiAgICBjb25zdCBkZXNjcmlwdGlvbiA9IGF3YWl0IHRoaXMuI3JlbmRlck1hcmtkb3duKGRlc2NyaXB0aW9uUGF0aCk7XG5cbiAgICByZXR1cm4gYFxuICAgICAgPGgzPiR7dGhpcy4jZXNjYXBlSHRtbChjc3NQcm9wLm5hbWUpfTwvaDM+XG4gICAgICA8ZGwgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3QgcGYtbS1ob3Jpem9udGFsIHBmLW0tY29tcGFjdFwiPlxuICAgICAgICA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPkVsZW1lbnQ8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj48Y29kZT4mbHQ7JHt0aGlzLiNlc2NhcGVIdG1sKGNlLnRhZ05hbWUhKX0mZ3Q7PC9jb2RlPjwvZGQ+PC9kaXY+XG4gICAgICAgICR7Y3NzUHJvcC5zeW50YXggPyBgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5TeW50YXg8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj48Y29kZT4ke3RoaXMuI2VzY2FwZUh0bWwoY3NzUHJvcC5zeW50YXgpfTwvY29kZT48L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgICAgJHtzdW1tYXJ5ID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+U3VtbWFyeTwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPiR7c3VtbWFyeX08L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgICAgJHtkZXNjcmlwdGlvbiA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPkRlc2NyaXB0aW9uPC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHtkZXNjcmlwdGlvbn08L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgICAgJHtjc3NQcm9wLmRlZmF1bHQgPyBgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5EZWZhdWx0PC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+PGNvZGU+JHt0aGlzLiNlc2NhcGVIdG1sKGNzc1Byb3AuZGVmYXVsdCl9PC9jb2RlPjwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgPC9kbD5cbiAgICBgO1xuICB9XG5cbiAgYXN5bmMgI2J1aWxkQ1NTUGFydERldGFpbHMoaXRlbTogTWFuaWZlc3RJdGVtLCBtYW5pZmVzdDogTWFuaWZlc3QpOiBQcm9taXNlPHN0cmluZz4ge1xuICAgIGNvbnN0IGNlID0gdGhpcy4jZmluZEN1c3RvbUVsZW1lbnQobWFuaWZlc3QsIGl0ZW0ubW9kdWxlUGF0aCEsIGl0ZW0udGFnTmFtZSEpO1xuICAgIGlmICghY2UpIHJldHVybiAnPGRpdiBjbGFzcz1cImVtcHR5LXN0YXRlXCI+Q3VzdG9tIGVsZW1lbnQgbm90IGZvdW5kPC9kaXY+JztcblxuICAgIGNvbnN0IGNzc1BhcnQgPSBjZS5jc3NQYXJ0cz8uZmluZChwID0+IHAubmFtZSA9PT0gaXRlbS5uYW1lKTtcbiAgICBpZiAoIWNzc1BhcnQpIHJldHVybiAnPGRpdiBjbGFzcz1cImVtcHR5LXN0YXRlXCI+Q1NTIHBhcnQgbm90IGZvdW5kPC9kaXY+JztcblxuICAgIGNvbnN0IGVzY2FwZWRQYXRoID0gaXRlbS5tb2R1bGVQYXRoIS5yZXBsYWNlKC9cXFxcL2csICdcXFxcXFxcXCcpLnJlcGxhY2UoL1wiL2csICdcXFxcXCInKTtcbiAgICBjb25zdCBlc2NhcGVkVGFnTmFtZSA9IGl0ZW0udGFnTmFtZSEucmVwbGFjZSgvXFxcXC9nLCAnXFxcXFxcXFwnKS5yZXBsYWNlKC9cIi9nLCAnXFxcXFwiJyk7XG4gICAgY29uc3QgZXNjYXBlZE5hbWUgPSBpdGVtLm5hbWUhLnJlcGxhY2UoL1xcXFwvZywgJ1xcXFxcXFxcJykucmVwbGFjZSgvXCIvZywgJ1xcXFxcIicpO1xuICAgIGNvbnN0IHN1bW1hcnlQYXRoID0gY3NzUGFydC5zdW1tYXJ5ID8gYG1vZHVsZXMuIyhwYXRoPT1cIiR7ZXNjYXBlZFBhdGh9XCIpLmRlY2xhcmF0aW9ucy4jKHRhZ05hbWU9PVwiJHtlc2NhcGVkVGFnTmFtZX1cIikuY3NzUGFydHMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLnN1bW1hcnlgIDogJyc7XG4gICAgY29uc3QgZGVzY3JpcHRpb25QYXRoID0gY3NzUGFydC5kZXNjcmlwdGlvbiA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyh0YWdOYW1lPT1cIiR7ZXNjYXBlZFRhZ05hbWV9XCIpLmNzc1BhcnRzLiMobmFtZT09XCIke2VzY2FwZWROYW1lfVwiKS5kZXNjcmlwdGlvbmAgOiAnJztcblxuICAgIGNvbnN0IHN1bW1hcnkgPSBhd2FpdCB0aGlzLiNyZW5kZXJNYXJrZG93bihzdW1tYXJ5UGF0aCk7XG4gICAgY29uc3QgZGVzY3JpcHRpb24gPSBhd2FpdCB0aGlzLiNyZW5kZXJNYXJrZG93bihkZXNjcmlwdGlvblBhdGgpO1xuXG4gICAgcmV0dXJuIGBcbiAgICAgIDxoMz4ke3RoaXMuI2VzY2FwZUh0bWwoY3NzUGFydC5uYW1lKX08L2gzPlxuICAgICAgPGRsIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0IHBmLW0taG9yaXpvbnRhbCBwZi1tLWNvbXBhY3RcIj5cbiAgICAgICAgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5FbGVtZW50PC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+PGNvZGU+Jmx0OyR7dGhpcy4jZXNjYXBlSHRtbChjZS50YWdOYW1lISl9Jmd0OzwvY29kZT48L2RkPjwvZGl2PlxuICAgICAgICAke3N1bW1hcnkgPyBgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5TdW1tYXJ5PC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHtzdW1tYXJ5fTwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgICAke2Rlc2NyaXB0aW9uID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+RGVzY3JpcHRpb248L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj4ke2Rlc2NyaXB0aW9ufTwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgPC9kbD5cbiAgICBgO1xuICB9XG5cbiAgYXN5bmMgI2J1aWxkQ1NTU3RhdGVEZXRhaWxzKGl0ZW06IE1hbmlmZXN0SXRlbSwgbWFuaWZlc3Q6IE1hbmlmZXN0KTogUHJvbWlzZTxzdHJpbmc+IHtcbiAgICBjb25zdCBjZSA9IHRoaXMuI2ZpbmRDdXN0b21FbGVtZW50KG1hbmlmZXN0LCBpdGVtLm1vZHVsZVBhdGghLCBpdGVtLnRhZ05hbWUhKTtcbiAgICBpZiAoIWNlKSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPkN1c3RvbSBlbGVtZW50IG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBjc3NTdGF0ZSA9IGNlLmNzc1N0YXRlcz8uZmluZChzID0+IHMubmFtZSA9PT0gaXRlbS5uYW1lKTtcbiAgICBpZiAoIWNzc1N0YXRlKSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPkNTUyBzdGF0ZSBub3QgZm91bmQ8L2Rpdj4nO1xuXG4gICAgY29uc3QgZXNjYXBlZFBhdGggPSBpdGVtLm1vZHVsZVBhdGghLnJlcGxhY2UoL1xcXFwvZywgJ1xcXFxcXFxcJykucmVwbGFjZSgvXCIvZywgJ1xcXFxcIicpO1xuICAgIGNvbnN0IGVzY2FwZWRUYWdOYW1lID0gaXRlbS50YWdOYW1lIS5yZXBsYWNlKC9cXFxcL2csICdcXFxcXFxcXCcpLnJlcGxhY2UoL1wiL2csICdcXFxcXCInKTtcbiAgICBjb25zdCBlc2NhcGVkTmFtZSA9IGl0ZW0ubmFtZSEucmVwbGFjZSgvXFxcXC9nLCAnXFxcXFxcXFwnKS5yZXBsYWNlKC9cIi9nLCAnXFxcXFwiJyk7XG4gICAgY29uc3Qgc3VtbWFyeVBhdGggPSBjc3NTdGF0ZS5zdW1tYXJ5ID8gYG1vZHVsZXMuIyhwYXRoPT1cIiR7ZXNjYXBlZFBhdGh9XCIpLmRlY2xhcmF0aW9ucy4jKHRhZ05hbWU9PVwiJHtlc2NhcGVkVGFnTmFtZX1cIikuY3NzU3RhdGVzLiMobmFtZT09XCIke2VzY2FwZWROYW1lfVwiKS5zdW1tYXJ5YCA6ICcnO1xuICAgIGNvbnN0IGRlc2NyaXB0aW9uUGF0aCA9IGNzc1N0YXRlLmRlc2NyaXB0aW9uID8gYG1vZHVsZXMuIyhwYXRoPT1cIiR7ZXNjYXBlZFBhdGh9XCIpLmRlY2xhcmF0aW9ucy4jKHRhZ05hbWU9PVwiJHtlc2NhcGVkVGFnTmFtZX1cIikuY3NzU3RhdGVzLiMobmFtZT09XCIke2VzY2FwZWROYW1lfVwiKS5kZXNjcmlwdGlvbmAgOiAnJztcblxuICAgIGNvbnN0IHN1bW1hcnkgPSBhd2FpdCB0aGlzLiNyZW5kZXJNYXJrZG93bihzdW1tYXJ5UGF0aCk7XG4gICAgY29uc3QgZGVzY3JpcHRpb24gPSBhd2FpdCB0aGlzLiNyZW5kZXJNYXJrZG93bihkZXNjcmlwdGlvblBhdGgpO1xuXG4gICAgcmV0dXJuIGBcbiAgICAgIDxoMz46LS0ke3RoaXMuI2VzY2FwZUh0bWwoY3NzU3RhdGUubmFtZSl9PC9oMz5cbiAgICAgIDxkbCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdCBwZi1tLWhvcml6b250YWwgcGYtbS1jb21wYWN0XCI+XG4gICAgICAgIDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+RWxlbWVudDwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPjxjb2RlPiZsdDske3RoaXMuI2VzY2FwZUh0bWwoY2UudGFnTmFtZSEpfSZndDs8L2NvZGU+PC9kZD48L2Rpdj5cbiAgICAgICAgJHtzdW1tYXJ5ID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+U3VtbWFyeTwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPiR7c3VtbWFyeX08L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgICAgJHtkZXNjcmlwdGlvbiA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPkRlc2NyaXB0aW9uPC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHtkZXNjcmlwdGlvbn08L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgIDwvZGw+XG4gICAgYDtcbiAgfVxuXG4gIGFzeW5jICNidWlsZERlbW9EZXRhaWxzKGl0ZW06IE1hbmlmZXN0SXRlbSwgbWFuaWZlc3Q6IE1hbmlmZXN0KTogUHJvbWlzZTxzdHJpbmc+IHtcbiAgICBjb25zdCBjZSA9IHRoaXMuI2ZpbmRDdXN0b21FbGVtZW50KG1hbmlmZXN0LCBpdGVtLm1vZHVsZVBhdGghLCBpdGVtLnRhZ05hbWUhKTtcbiAgICBpZiAoIWNlKSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPkN1c3RvbSBlbGVtZW50IG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBkZW1vID0gY2UuZGVtb3M/LmZpbmQoZCA9PiBkLnVybCA9PT0gaXRlbS51cmwpO1xuICAgIGlmICghZGVtbykgcmV0dXJuICc8ZGl2IGNsYXNzPVwiZW1wdHktc3RhdGVcIj5EZW1vIG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBlc2NhcGVkUGF0aCA9IGl0ZW0ubW9kdWxlUGF0aCEucmVwbGFjZSgvXFxcXC9nLCAnXFxcXFxcXFwnKS5yZXBsYWNlKC9cIi9nLCAnXFxcXFwiJyk7XG4gICAgY29uc3QgZXNjYXBlZFRhZ05hbWUgPSBpdGVtLnRhZ05hbWUhLnJlcGxhY2UoL1xcXFwvZywgJ1xcXFxcXFxcJykucmVwbGFjZSgvXCIvZywgJ1xcXFxcIicpO1xuICAgIGNvbnN0IGVzY2FwZWRVcmwgPSBkZW1vLnVybC5yZXBsYWNlKC9cXFxcL2csICdcXFxcXFxcXCcpLnJlcGxhY2UoL1wiL2csICdcXFxcXCInKTtcbiAgICBjb25zdCBkZXNjcmlwdGlvblBhdGggPSBkZW1vLmRlc2NyaXB0aW9uID8gYG1vZHVsZXMuIyhwYXRoPT1cIiR7ZXNjYXBlZFBhdGh9XCIpLmRlY2xhcmF0aW9ucy4jKHRhZ05hbWU9PVwiJHtlc2NhcGVkVGFnTmFtZX1cIikuZGVtb3MuIyh1cmw9PVwiJHtlc2NhcGVkVXJsfVwiKS5kZXNjcmlwdGlvbmAgOiAnJztcblxuICAgIGNvbnN0IGRlc2NyaXB0aW9uID0gYXdhaXQgdGhpcy4jcmVuZGVyTWFya2Rvd24oZGVzY3JpcHRpb25QYXRoKTtcblxuICAgIHJldHVybiBgXG4gICAgICA8aDM+RGVtbzwvaDM+XG4gICAgICA8ZGwgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3QgcGYtbS1ob3Jpem9udGFsIHBmLW0tY29tcGFjdFwiPlxuICAgICAgICA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPkVsZW1lbnQ8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj48Y29kZT4mbHQ7JHt0aGlzLiNlc2NhcGVIdG1sKGNlLnRhZ05hbWUhKX0mZ3Q7PC9jb2RlPjwvZGQ+PC9kaXY+XG4gICAgICAgICR7ZGVtby51cmwgPyBgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5VUkw8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj48YSBocmVmPVwiJHt0aGlzLiNlc2NhcGVIdG1sKGRlbW8udXJsKX1cIiB0YXJnZXQ9XCJfYmxhbmtcIiByZWw9XCJub29wZW5lciBub3JlZmVycmVyXCI+JHt0aGlzLiNlc2NhcGVIdG1sKGRlbW8udXJsKX08L2E+PC9kZD48L2Rpdj5gIDogJyd9XG4gICAgICAgICR7ZGVzY3JpcHRpb24gPyBgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5EZXNjcmlwdGlvbjwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPiR7ZGVzY3JpcHRpb259PC9kZD48L2Rpdj5gIDogJyd9XG4gICAgICA8L2RsPlxuICAgIGA7XG4gIH1cblxuICBhc3luYyAjYnVpbGRDbGFzc0RldGFpbHMoaXRlbTogTWFuaWZlc3RJdGVtLCBtYW5pZmVzdDogTWFuaWZlc3QpOiBQcm9taXNlPHN0cmluZz4ge1xuICAgIGNvbnN0IGNscyA9IHRoaXMuI2ZpbmREZWNsYXJhdGlvbihtYW5pZmVzdCwgaXRlbS5tb2R1bGVQYXRoISwgaXRlbS5uYW1lISwgJ2NsYXNzJyk7XG4gICAgaWYgKCFjbHMpIHJldHVybiAnPGRpdiBjbGFzcz1cImVtcHR5LXN0YXRlXCI+Q2xhc3Mgbm90IGZvdW5kPC9kaXY+JztcblxuICAgIGNvbnN0IGVzY2FwZWRQYXRoID0gaXRlbS5tb2R1bGVQYXRoIS5yZXBsYWNlKC9cXFxcL2csICdcXFxcXFxcXCcpLnJlcGxhY2UoL1wiL2csICdcXFxcXCInKTtcbiAgICBjb25zdCBlc2NhcGVkTmFtZSA9IGl0ZW0ubmFtZSEucmVwbGFjZSgvXFxcXC9nLCAnXFxcXFxcXFwnKS5yZXBsYWNlKC9cIi9nLCAnXFxcXFwiJyk7XG4gICAgY29uc3Qgc3VtbWFyeVBhdGggPSBjbHMuc3VtbWFyeSA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLnN1bW1hcnlgIDogJyc7XG4gICAgY29uc3QgZGVzY3JpcHRpb25QYXRoID0gY2xzLmRlc2NyaXB0aW9uID8gYG1vZHVsZXMuIyhwYXRoPT1cIiR7ZXNjYXBlZFBhdGh9XCIpLmRlY2xhcmF0aW9ucy4jKG5hbWU9PVwiJHtlc2NhcGVkTmFtZX1cIikuZGVzY3JpcHRpb25gIDogJyc7XG5cbiAgICBjb25zdCBzdW1tYXJ5ID0gYXdhaXQgdGhpcy4jcmVuZGVyTWFya2Rvd24oc3VtbWFyeVBhdGgpO1xuICAgIGNvbnN0IGRlc2NyaXB0aW9uID0gYXdhaXQgdGhpcy4jcmVuZGVyTWFya2Rvd24oZGVzY3JpcHRpb25QYXRoKTtcblxuICAgIHJldHVybiBgXG4gICAgICA8aDM+JHt0aGlzLiNlc2NhcGVIdG1sKGNscy5uYW1lKX08L2gzPlxuICAgICAgPGRsIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0IHBmLW0taG9yaXpvbnRhbCBwZi1tLWNvbXBhY3RcIj5cbiAgICAgICAgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5UeXBlPC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+Q2xhc3M8L2RkPjwvZGl2PlxuICAgICAgICAke3N1bW1hcnkgPyBgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5TdW1tYXJ5PC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHtzdW1tYXJ5fTwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgICAke2Rlc2NyaXB0aW9uID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+RGVzY3JpcHRpb248L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj4ke2Rlc2NyaXB0aW9ufTwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgICAke2Nscy5zdXBlcmNsYXNzPy5uYW1lID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+RXh0ZW5kczwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPjxjb2RlPiR7dGhpcy4jZXNjYXBlSHRtbChjbHMuc3VwZXJjbGFzcy5uYW1lKX08L2NvZGU+PC9kZD48L2Rpdj5gIDogJyd9XG4gICAgICA8L2RsPlxuICAgIGA7XG4gIH1cblxuICBhc3luYyAjYnVpbGRGdW5jdGlvbkRldGFpbHMoaXRlbTogTWFuaWZlc3RJdGVtLCBtYW5pZmVzdDogTWFuaWZlc3QpOiBQcm9taXNlPHN0cmluZz4ge1xuICAgIGNvbnN0IGZ1bmMgPSB0aGlzLiNmaW5kRGVjbGFyYXRpb24obWFuaWZlc3QsIGl0ZW0ubW9kdWxlUGF0aCEsIGl0ZW0ubmFtZSEsICdmdW5jdGlvbicpO1xuICAgIGlmICghZnVuYykgcmV0dXJuICc8ZGl2IGNsYXNzPVwiZW1wdHktc3RhdGVcIj5GdW5jdGlvbiBub3QgZm91bmQ8L2Rpdj4nO1xuXG4gICAgY29uc3QgZXNjYXBlZFBhdGggPSBpdGVtLm1vZHVsZVBhdGghLnJlcGxhY2UoL1xcXFwvZywgJ1xcXFxcXFxcJykucmVwbGFjZSgvXCIvZywgJ1xcXFxcIicpO1xuICAgIGNvbnN0IGVzY2FwZWROYW1lID0gaXRlbS5uYW1lIS5yZXBsYWNlKC9cXFxcL2csICdcXFxcXFxcXCcpLnJlcGxhY2UoL1wiL2csICdcXFxcXCInKTtcbiAgICBjb25zdCBzdW1tYXJ5UGF0aCA9IGZ1bmMuc3VtbWFyeSA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLnN1bW1hcnlgIDogJyc7XG4gICAgY29uc3QgZGVzY3JpcHRpb25QYXRoID0gZnVuYy5kZXNjcmlwdGlvbiA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLmRlc2NyaXB0aW9uYCA6ICcnO1xuXG4gICAgY29uc3Qgc3VtbWFyeSA9IGF3YWl0IHRoaXMuI3JlbmRlck1hcmtkb3duKHN1bW1hcnlQYXRoKTtcbiAgICBjb25zdCBkZXNjcmlwdGlvbiA9IGF3YWl0IHRoaXMuI3JlbmRlck1hcmtkb3duKGRlc2NyaXB0aW9uUGF0aCk7XG5cbiAgICByZXR1cm4gYFxuICAgICAgPGgzPiR7dGhpcy4jZXNjYXBlSHRtbChmdW5jLm5hbWUpfSgpPC9oMz5cbiAgICAgIDxkbCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdCBwZi1tLWhvcml6b250YWwgcGYtbS1jb21wYWN0XCI+XG4gICAgICAgIDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+VHlwZTwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPkZ1bmN0aW9uPC9kZD48L2Rpdj5cbiAgICAgICAgJHtzdW1tYXJ5ID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+U3VtbWFyeTwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPiR7c3VtbWFyeX08L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgICAgJHtkZXNjcmlwdGlvbiA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPkRlc2NyaXB0aW9uPC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHtkZXNjcmlwdGlvbn08L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgICAgJHtmdW5jLnJldHVybj8udHlwZT8udGV4dCA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPlJldHVybnM8L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj48Y29kZT4ke3RoaXMuI2VzY2FwZUh0bWwoZnVuYy5yZXR1cm4udHlwZS50ZXh0KX08L2NvZGU+PC9kZD48L2Rpdj5gIDogJyd9XG4gICAgICA8L2RsPlxuICAgIGA7XG4gIH1cblxuICBhc3luYyAjYnVpbGRWYXJpYWJsZURldGFpbHMoaXRlbTogTWFuaWZlc3RJdGVtLCBtYW5pZmVzdDogTWFuaWZlc3QpOiBQcm9taXNlPHN0cmluZz4ge1xuICAgIGNvbnN0IHZhcmlhYmxlID0gdGhpcy4jZmluZERlY2xhcmF0aW9uKG1hbmlmZXN0LCBpdGVtLm1vZHVsZVBhdGghLCBpdGVtLm5hbWUhLCAndmFyaWFibGUnKTtcbiAgICBpZiAoIXZhcmlhYmxlKSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPlZhcmlhYmxlIG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBlc2NhcGVkUGF0aCA9IGl0ZW0ubW9kdWxlUGF0aCEucmVwbGFjZSgvXFxcXC9nLCAnXFxcXFxcXFwnKS5yZXBsYWNlKC9cIi9nLCAnXFxcXFwiJyk7XG4gICAgY29uc3QgZXNjYXBlZE5hbWUgPSBpdGVtLm5hbWUhLnJlcGxhY2UoL1xcXFwvZywgJ1xcXFxcXFxcJykucmVwbGFjZSgvXCIvZywgJ1xcXFxcIicpO1xuICAgIGNvbnN0IHN1bW1hcnlQYXRoID0gdmFyaWFibGUuc3VtbWFyeSA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLnN1bW1hcnlgIDogJyc7XG4gICAgY29uc3QgZGVzY3JpcHRpb25QYXRoID0gdmFyaWFibGUuZGVzY3JpcHRpb24gPyBgbW9kdWxlcy4jKHBhdGg9PVwiJHtlc2NhcGVkUGF0aH1cIikuZGVjbGFyYXRpb25zLiMobmFtZT09XCIke2VzY2FwZWROYW1lfVwiKS5kZXNjcmlwdGlvbmAgOiAnJztcblxuICAgIGNvbnN0IHN1bW1hcnkgPSBhd2FpdCB0aGlzLiNyZW5kZXJNYXJrZG93bihzdW1tYXJ5UGF0aCk7XG4gICAgY29uc3QgZGVzY3JpcHRpb24gPSBhd2FpdCB0aGlzLiNyZW5kZXJNYXJrZG93bihkZXNjcmlwdGlvblBhdGgpO1xuXG4gICAgcmV0dXJuIGBcbiAgICAgIDxoMz4ke3RoaXMuI2VzY2FwZUh0bWwodmFyaWFibGUubmFtZSl9PC9oMz5cbiAgICAgIDxkbCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdCBwZi1tLWhvcml6b250YWwgcGYtbS1jb21wYWN0XCI+XG4gICAgICAgIDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+VHlwZTwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPlZhcmlhYmxlPC9kZD48L2Rpdj5cbiAgICAgICAgJHt2YXJpYWJsZS50eXBlPy50ZXh0ID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+VmFsdWUgVHlwZTwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPjxjb2RlPiR7dGhpcy4jZXNjYXBlSHRtbCh2YXJpYWJsZS50eXBlLnRleHQpfTwvY29kZT48L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgICAgJHtzdW1tYXJ5ID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+U3VtbWFyeTwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPiR7c3VtbWFyeX08L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgICAgJHtkZXNjcmlwdGlvbiA/IGA8ZGl2IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19ncm91cFwiPjxkdCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fdGVybVwiPkRlc2NyaXB0aW9uPC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHtkZXNjcmlwdGlvbn08L2RkPjwvZGl2PmAgOiAnJ31cbiAgICAgICAgJHt2YXJpYWJsZS5kZWZhdWx0ID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+RGVmYXVsdDwvZHQ+PGRkIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X19kZXNjcmlwdGlvblwiPjxjb2RlPiR7dGhpcy4jZXNjYXBlSHRtbCh2YXJpYWJsZS5kZWZhdWx0KX08L2NvZGU+PC9kZD48L2Rpdj5gIDogJyd9XG4gICAgICA8L2RsPlxuICAgIGA7XG4gIH1cblxuICBhc3luYyAjYnVpbGRNaXhpbkRldGFpbHMoaXRlbTogTWFuaWZlc3RJdGVtLCBtYW5pZmVzdDogTWFuaWZlc3QpOiBQcm9taXNlPHN0cmluZz4ge1xuICAgIGNvbnN0IG1peGluID0gdGhpcy4jZmluZERlY2xhcmF0aW9uKG1hbmlmZXN0LCBpdGVtLm1vZHVsZVBhdGghLCBpdGVtLm5hbWUhLCAnbWl4aW4nKTtcbiAgICBpZiAoIW1peGluKSByZXR1cm4gJzxkaXYgY2xhc3M9XCJlbXB0eS1zdGF0ZVwiPk1peGluIG5vdCBmb3VuZDwvZGl2Pic7XG5cbiAgICBjb25zdCBlc2NhcGVkUGF0aCA9IGl0ZW0ubW9kdWxlUGF0aCEucmVwbGFjZSgvXFxcXC9nLCAnXFxcXFxcXFwnKS5yZXBsYWNlKC9cIi9nLCAnXFxcXFwiJyk7XG4gICAgY29uc3QgZXNjYXBlZE5hbWUgPSBpdGVtLm5hbWUhLnJlcGxhY2UoL1xcXFwvZywgJ1xcXFxcXFxcJykucmVwbGFjZSgvXCIvZywgJ1xcXFxcIicpO1xuICAgIGNvbnN0IHN1bW1hcnlQYXRoID0gbWl4aW4uc3VtbWFyeSA/IGBtb2R1bGVzLiMocGF0aD09XCIke2VzY2FwZWRQYXRofVwiKS5kZWNsYXJhdGlvbnMuIyhuYW1lPT1cIiR7ZXNjYXBlZE5hbWV9XCIpLnN1bW1hcnlgIDogJyc7XG4gICAgY29uc3QgZGVzY3JpcHRpb25QYXRoID0gbWl4aW4uZGVzY3JpcHRpb24gPyBgbW9kdWxlcy4jKHBhdGg9PVwiJHtlc2NhcGVkUGF0aH1cIikuZGVjbGFyYXRpb25zLiMobmFtZT09XCIke2VzY2FwZWROYW1lfVwiKS5kZXNjcmlwdGlvbmAgOiAnJztcblxuICAgIGNvbnN0IHN1bW1hcnkgPSBhd2FpdCB0aGlzLiNyZW5kZXJNYXJrZG93bihzdW1tYXJ5UGF0aCk7XG4gICAgY29uc3QgZGVzY3JpcHRpb24gPSBhd2FpdCB0aGlzLiNyZW5kZXJNYXJrZG93bihkZXNjcmlwdGlvblBhdGgpO1xuXG4gICAgcmV0dXJuIGBcbiAgICAgIDxoMz4ke3RoaXMuI2VzY2FwZUh0bWwobWl4aW4ubmFtZSl9KCk8L2gzPlxuICAgICAgPGRsIGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0IHBmLW0taG9yaXpvbnRhbCBwZi1tLWNvbXBhY3RcIj5cbiAgICAgICAgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5UeXBlPC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+TWl4aW48L2RkPjwvZGl2PlxuICAgICAgICAke3N1bW1hcnkgPyBgPGRpdiBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZ3JvdXBcIj48ZHQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX3Rlcm1cIj5TdW1tYXJ5PC9kdD48ZGQgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2Rlc2NyaXB0aW9uXCI+JHtzdW1tYXJ5fTwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgICAke2Rlc2NyaXB0aW9uID8gYDxkaXYgY2xhc3M9XCJwZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3RfX2dyb3VwXCI+PGR0IGNsYXNzPVwicGYtdjYtYy1kZXNjcmlwdGlvbi1saXN0X190ZXJtXCI+RGVzY3JpcHRpb248L2R0PjxkZCBjbGFzcz1cInBmLXY2LWMtZGVzY3JpcHRpb24tbGlzdF9fZGVzY3JpcHRpb25cIj4ke2Rlc2NyaXB0aW9ufTwvZGQ+PC9kaXY+YCA6ICcnfVxuICAgICAgPC9kbD5cbiAgICBgO1xuICB9XG5cbiAgLyoqXG4gICAqIENhbGwgbWFya2Rvd24gQVBJIHRvIHJlbmRlciBtYXJrZG93biBmcm9tIGEgbWFuaWZlc3QgcGF0aFxuICAgKi9cbiAgYXN5bmMgI3JlbmRlck1hcmtkb3duKHBhdGg6IHN0cmluZyk6IFByb21pc2U8c3RyaW5nPiB7XG4gICAgaWYgKCFwYXRoKSByZXR1cm4gJyc7XG5cbiAgICB0cnkge1xuICAgICAgY29uc3QgcmVzcG9uc2UgPSBhd2FpdCBmZXRjaCgnL19fY2VtL2FwaS9tYXJrZG93bicsIHtcbiAgICAgICAgbWV0aG9kOiAnUE9TVCcsXG4gICAgICAgIGhlYWRlcnM6IHsgJ0NvbnRlbnQtVHlwZSc6ICdhcHBsaWNhdGlvbi9qc29uJyB9LFxuICAgICAgICBib2R5OiBKU09OLnN0cmluZ2lmeSh7IHBhdGggfSlcbiAgICAgIH0pO1xuXG4gICAgICBpZiAoIXJlc3BvbnNlLm9rKSB7XG4gICAgICAgIGNvbnNvbGUuZXJyb3IoJ01hcmtkb3duIEFQSSByZXR1cm5lZCBlcnJvcjonLCByZXNwb25zZS5zdGF0dXMpO1xuICAgICAgICByZXR1cm4gJyc7XG4gICAgICB9XG5cbiAgICAgIGNvbnN0IGRhdGEgPSBhd2FpdCByZXNwb25zZS5qc29uKCk7XG4gICAgICByZXR1cm4gZGF0YS5odG1sO1xuICAgIH0gY2F0Y2ggKGVycm9yKSB7XG4gICAgICBjb25zb2xlLmVycm9yKCdGYWlsZWQgdG8gcmVuZGVyIG1hcmtkb3duOicsIGVycm9yKTtcbiAgICAgIHJldHVybiAnJztcbiAgICB9XG4gIH1cblxuICAvKipcbiAgICogRmluZCBhIG1vZHVsZSBpbiB0aGUgbWFuaWZlc3QuXG4gICAqIEhhbmRsZXMgYm90aCBzaW5nbGUtcGFja2FnZSBmb3JtYXQgKG1hbmlmZXN0Lm1vZHVsZXMpIGFuZFxuICAgKiB3b3Jrc3BhY2UgZm9ybWF0IChtYW5pZmVzdC5wYWNrYWdlc1sqXS5tb2R1bGVzKVxuICAgKi9cbiAgI2ZpbmRNb2R1bGUobWFuaWZlc3Q6IE1hbmlmZXN0LCBtb2R1bGVQYXRoOiBzdHJpbmcpOiBNb2R1bGUgfCBudWxsIHtcbiAgICBpZiAobWFuaWZlc3QubW9kdWxlcykge1xuICAgICAgY29uc3QgbW9kdWxlID0gbWFuaWZlc3QubW9kdWxlcy5maW5kKG0gPT4gbS5wYXRoID09PSBtb2R1bGVQYXRoKTtcbiAgICAgIGlmIChtb2R1bGUpIHJldHVybiBtb2R1bGU7XG4gICAgfVxuXG4gICAgaWYgKG1hbmlmZXN0LnBhY2thZ2VzKSB7XG4gICAgICBmb3IgKGNvbnN0IHBrZyBvZiBtYW5pZmVzdC5wYWNrYWdlcykge1xuICAgICAgICBjb25zdCBtb2R1bGUgPSBwa2cubW9kdWxlcz8uZmluZChtID0+IG0ucGF0aCA9PT0gbW9kdWxlUGF0aCk7XG4gICAgICAgIGlmIChtb2R1bGUpIHJldHVybiBtb2R1bGU7XG4gICAgICB9XG4gICAgfVxuXG4gICAgcmV0dXJuIG51bGw7XG4gIH1cblxuICAvKipcbiAgICogRmluZCBhIGN1c3RvbSBlbGVtZW50IGluIHRoZSBtYW5pZmVzdFxuICAgKi9cbiAgI2ZpbmRDdXN0b21FbGVtZW50KG1hbmlmZXN0OiBNYW5pZmVzdCwgbW9kdWxlUGF0aDogc3RyaW5nLCB0YWdOYW1lOiBzdHJpbmcpOiBEZWNsYXJhdGlvbiB8IG51bGwge1xuICAgIGNvbnN0IG1vZHVsZSA9IHRoaXMuI2ZpbmRNb2R1bGUobWFuaWZlc3QsIG1vZHVsZVBhdGgpO1xuICAgIGlmICghbW9kdWxlKSByZXR1cm4gbnVsbDtcblxuICAgIHJldHVybiBtb2R1bGUuZGVjbGFyYXRpb25zPy5maW5kKGQgPT4gZC5raW5kID09PSAnY2xhc3MnICYmIGQuY3VzdG9tRWxlbWVudCAmJiBkLnRhZ05hbWUgPT09IHRhZ05hbWUpID8/IG51bGw7XG4gIH1cblxuICAvKipcbiAgICogRmluZCBhIGRlY2xhcmF0aW9uIChjbGFzcywgZnVuY3Rpb24sIHZhcmlhYmxlLCBtaXhpbikgaW4gdGhlIG1hbmlmZXN0XG4gICAqL1xuICAjZmluZERlY2xhcmF0aW9uKG1hbmlmZXN0OiBNYW5pZmVzdCwgbW9kdWxlUGF0aDogc3RyaW5nLCBuYW1lOiBzdHJpbmcsIGtpbmQ6IHN0cmluZyk6IERlY2xhcmF0aW9uIHwgbnVsbCB7XG4gICAgY29uc3QgbW9kdWxlID0gdGhpcy4jZmluZE1vZHVsZShtYW5pZmVzdCwgbW9kdWxlUGF0aCk7XG4gICAgaWYgKCFtb2R1bGUpIHJldHVybiBudWxsO1xuXG4gICAgcmV0dXJuIG1vZHVsZS5kZWNsYXJhdGlvbnM/LmZpbmQoZCA9PiBkLmtpbmQgPT09IGtpbmQgJiYgZC5uYW1lID09PSBuYW1lKSA/PyBudWxsO1xuICB9XG5cbiAgLyoqXG4gICAqIEVzY2FwZSBIVE1MIHRvIHByZXZlbnQgWFNTXG4gICAqL1xuICAjZXNjYXBlSHRtbChzdHI6IHN0cmluZyB8IHVuZGVmaW5lZCk6IHN0cmluZyB7XG4gICAgaWYgKCFzdHIpIHJldHVybiAnJztcbiAgICByZXR1cm4gU3RyaW5nKHN0cilcbiAgICAgIC5yZXBsYWNlKC8mL2csICcmYW1wOycpXG4gICAgICAucmVwbGFjZSgvPC9nLCAnJmx0OycpXG4gICAgICAucmVwbGFjZSgvPi9nLCAnJmd0OycpXG4gICAgICAucmVwbGFjZSgvXCIvZywgJyZxdW90OycpXG4gICAgICAucmVwbGFjZSgvJy9nLCAnJiMwMzk7Jyk7XG4gIH1cbn1cblxuZGVjbGFyZSBnbG9iYWwge1xuICBpbnRlcmZhY2UgSFRNTEVsZW1lbnRUYWdOYW1lTWFwIHtcbiAgICAnY2VtLWRldGFpbC1wYW5lbCc6IENlbURldGFpbFBhbmVsO1xuICB9XG59XG4iLCAiY29uc3Qgcz1uZXcgQ1NTU3R5bGVTaGVldCgpO3MucmVwbGFjZVN5bmMoSlNPTi5wYXJzZShcIlxcXCIvKiBEZXRhaWwgUGFuZWwgLSBEaXNwbGF5cyBtYW5pZmVzdCBpdGVtIGRldGFpbHMgb24tZGVtYW5kICovXFxcXG5cXFxcbjpob3N0IHtcXFxcbiAgZGlzcGxheTogYmxvY2s7XFxcXG4gIHBhZGRpbmc6IHZhcigtLXBmLXQtLWdsb2JhbC0tc3BhY2VyLS1tZCwgMXJlbSk7XFxcXG59XFxcXG5cXFxcbiNkZXRhaWxzLWNvbnRlbnQge1xcXFxuICBoMyB7XFxcXG4gICAgbWFyZ2luLXRvcDogMDtcXFxcbiAgICBtYXJnaW4tYm90dG9tOiB2YXIoLS1wZi10LS1nbG9iYWwtLXNwYWNlci0tc20sIDAuNXJlbSk7XFxcXG4gICAgZm9udC1zaXplOiB2YXIoLS1wZi10LS1nbG9iYWwtLWZvbnQtLXNpemUtLWhlYWRpbmctLWxnLCAxLjI1cmVtKTtcXFxcbiAgfVxcXFxuXFxcXG4gIGRsIHtcXFxcbiAgICBtYXJnaW46IDA7XFxcXG4gIH1cXFxcblxcXFxuICBkdCB7XFxcXG4gICAgZm9udC13ZWlnaHQ6IHZhcigtLXBmLXQtLWdsb2JhbC0tZm9udC0td2VpZ2h0LS1ib2R5LS1ib2xkLCA2MDApO1xcXFxuICAgIG1hcmdpbi10b3A6IHZhcigtLXBmLXQtLWdsb2JhbC0tc3BhY2VyLS1zbSwgMC41cmVtKTtcXFxcbiAgfVxcXFxuXFxcXG4gIGRkIHtcXFxcbiAgICBtYXJnaW4tbGVmdDogMDtcXFxcbiAgICBtYXJnaW4tYm90dG9tOiB2YXIoLS1wZi12Ni1jLWRlc2NyaXB0aW9uLWxpc3QtLW0taG9yaXpvbnRhbF9fZGVzY3JpcHRpb24tLU1hcmdpbkJsb2NrRW5kLCAwLjVyZW0pO1xcXFxuICB9XFxcXG5cXFxcbiAgLmVtcHR5LXN0YXRlIHtcXFxcbiAgICBjb2xvcjogdmFyKC0tcGYtdC0tZ2xvYmFsLS10ZXh0LS1jb2xvci0tc3VidGxlLCAjNmM3NTdkKTtcXFxcbiAgICBmb250LXN0eWxlOiBpdGFsaWM7XFxcXG4gIH1cXFxcblxcXFxuICBjb2RlIHtcXFxcbiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB2YXIoLS1wZi10LS1nbG9iYWwtLWJhY2tncm91bmQtLWNvbG9yLS1zZWNvbmRhcnktLWRlZmF1bHQsICNmNWY1ZjUpO1xcXFxuICAgIHBhZGRpbmc6IDAuMTI1cmVtIDAuMjVyZW07XFxcXG4gICAgYm9yZGVyLXJhZGl1czogMC4yNXJlbTtcXFxcbiAgICBmb250LWZhbWlseTogdmFyKC0tcGYtdC0tZ2xvYmFsLS1mb250LS1mYW1pbHktLW1vbm8sIG1vbm9zcGFjZSk7XFxcXG4gICAgZm9udC1zaXplOiAwLjg3NWVtO1xcXFxuICB9XFxcXG59XFxcXG5cXFwiXCIpKTtleHBvcnQgZGVmYXVsdCBzOyJdLAogICJtYXBwaW5ncyI6ICI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQUFBLFNBQVMsWUFBWSxZQUFZO0FBQ2pDLFNBQVMscUJBQXFCO0FBQzlCLFNBQVMsYUFBYTtBQUN0QixTQUFTLGtCQUFrQjs7O0FDSDNCLElBQU0sSUFBRSxJQUFJLGNBQWM7QUFBRSxFQUFFLFlBQVksS0FBSyxNQUFNLGtqQ0FBb2pDLENBQUM7QUFBRSxJQUFPLDJCQUFROzs7QURBM25DO0FBc0hBLDhCQUFDLGNBQWMsa0JBQWtCO0FBQzFCLElBQU0s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

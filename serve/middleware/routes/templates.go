@@ -35,9 +35,6 @@ var navigationTemplate string
 //go:embed templates/404.html
 var notFoundTemplate string
 
-//go:embed templates/element-wrapper.html
-var elementWrapperTemplate string
-
 //go:embed templates/knobs.html
 var knobsTemplate string
 
@@ -53,7 +50,7 @@ var templateErrorTemplate string
 //go:embed templates/**
 var TemplatesFS embed.FS
 
-//go:embed templates/js/*.js templates/css/*.css templates/images/* templates/elements/*.css templates/elements/**/*
+//go:embed templates/js/*.js templates/css/*.css templates/images/* templates/elements/*.css templates/elements/**/* templates/vendor/* templates/vendor/**/*
 var InternalModules embed.FS
 
 // TemplateRegistry holds parsed templates and the context for error broadcasting
@@ -61,7 +58,6 @@ type TemplateRegistry struct {
 	WorkspaceListingTemplate *template.Template
 	NavigationTemplate       *template.Template
 	NotFoundTemplate         *template.Template
-	ElementWrapperTemplate   *template.Template
 	KnobsTemplate            *template.Template
 	DemoChromeTemplate       *template.Template
 	DemoChromelessTemplate   *template.Template
@@ -82,7 +78,6 @@ func NewTemplateRegistry(ctx middleware.DevServerContext) *TemplateRegistry {
 	registry.WorkspaceListingTemplate = template.Must(template.New("workspace-listing").Funcs(funcs).Parse(workspaceListingTemplate))
 	registry.NavigationTemplate = template.Must(template.New("navigation").Funcs(funcs).Parse(navigationTemplate))
 	registry.NotFoundTemplate = template.Must(template.New("404").Funcs(funcs).Parse(notFoundTemplate))
-	registry.ElementWrapperTemplate = template.Must(template.New("element-wrapper").Parse(elementWrapperTemplate))
 	registry.KnobsTemplate = template.Must(template.New("knobs").Funcs(funcs).Parse(knobsTemplate))
 	registry.DemoChromeTemplate = template.Must(template.New("demo-chrome").Funcs(funcs).Parse(demoChromeTemplate))
 	registry.DemoChromelessTemplate = template.Must(template.New("demo-chromeless").Parse(demoChromelessTemplate))

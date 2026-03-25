@@ -1,0 +1,11 @@
+{
+  "name": "@cem/serve-elements",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "LitElement components for CEM dev server chrome",
+  "dependencies": {
+    "@lit-labs/ssr-client": "^1.1.8",
+    "lit": "^3.0.0"
+  }
+}

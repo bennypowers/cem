@@ -4,9 +4,10 @@ import './cem-serve-demo.js';
 describe('cem-serve-demo', () => {
   let el;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     el = document.createElement('cem-serve-demo');
     document.body.appendChild(el);
+    await el.updateComplete;
   });
 
   afterEach(() => {
@@ -21,8 +22,9 @@ describe('cem-serve-demo', () => {
       expect(element).to.be.instanceOf(HTMLElement);
     });
 
-    it('does not have shadow root by default', () => {
-      expect(el.shadowRoot).to.be.null;
+    it('has shadow root with slot', () => {
+      expect(el.shadowRoot).to.exist;
+      expect(el.shadowRoot.querySelector('slot')).to.exist;
     });
   });
 
@@ -361,15 +363,15 @@ describe('cem-serve-demo', () => {
     });
   });
 
-  describe('shadow DOM support', () => {
-    beforeEach(() => {
-      // Create element with shadow DOM
-      el.attachShadow({ mode: 'open' });
+  describe('shadow DOM and slot support', () => {
+    it('has Lit-rendered shadow root with slot', () => {
+      expect(el.shadowRoot).to.exist;
+      expect(el.shadowRoot.querySelector('slot')).to.exist;
     });
 
-    it('applies changes to elements in shadow DOM', () => {
+    it('applies changes to slotted light DOM elements', () => {
       const targetElement = document.createElement('test-element');
-      el.shadowRoot.appendChild(targetElement);
+      el.appendChild(targetElement);
 
       const result = el.applyKnobChange('attribute', 'label', 'Test', 'test-element', 0);
 
@@ -377,10 +379,10 @@ describe('cem-serve-demo', () => {
       expect(targetElement.getAttribute('label')).to.equal('Test');
     });
 
-    it('setDemoAttribute works with shadow DOM', () => {
+    it('setDemoAttribute works with slotted elements', () => {
       const targetElement = document.createElement('test-element');
       targetElement.id = 'target';
-      el.shadowRoot.appendChild(targetElement);
+      el.appendChild(targetElement);
 
       const result = el.setDemoAttribute('#target', 'label', 'Test');
 
@@ -388,10 +390,10 @@ describe('cem-serve-demo', () => {
       expect(targetElement.getAttribute('label')).to.equal('Test');
     });
 
-    it('setDemoProperty works with shadow DOM', () => {
+    it('setDemoProperty works with slotted elements', () => {
       const targetElement = document.createElement('test-element');
       targetElement.id = 'target';
-      el.shadowRoot.appendChild(targetElement);
+      el.appendChild(targetElement);
 
       const result = el.setDemoProperty('#target', 'variant', 'primary');
 
@@ -399,10 +401,10 @@ describe('cem-serve-demo', () => {
       expect(targetElement.variant).to.equal('primary');
     });
 
-    it('setDemoCssCustomProperty works with shadow DOM', () => {
+    it('setDemoCssCustomProperty works with slotted elements', () => {
       const targetElement = document.createElement('test-element');
       targetElement.id = 'target';
-      el.shadowRoot.appendChild(targetElement);
+      el.appendChild(targetElement);
 
       const result = el.setDemoCssCustomProperty('#target', '--color', 'red');
 

@@ -50,6 +50,7 @@ type ChromeData struct {
 	Manifest       *M.Package            // Parsed manifest for server-side tree rendering
 	Packages       []PackageWithManifest // Workspace packages with modules (for package-level tree)
 	State          CemServeState         // Persisted UI state for SSR (color scheme, drawer, tree)
+	StaticBuild    bool                  // True when rendering for static site output
 }
 
 // TemplateErrorData represents template data for the error page
@@ -73,6 +74,11 @@ func executeTemplate(tmpl *template.Template, data any) (string, error) {
 // For chromeless mode, renders minimal HTML with live reload.
 // For chrome modes (light/shadow), renders full dev UI with PatternFly chrome.
 func renderDemo(templates *TemplateRegistry, ctx middleware.DevServerContext, data ChromeData) (string, error) {
+	// Set StaticBuild from context so callers don't need to repeat it
+	if ctx != nil {
+		data.StaticBuild = ctx.IsStaticBuild()
+	}
+
 	switch data.RenderingMode {
 	case "chromeless":
 		// Chromeless mode: minimal template, no markdown conversion

@@ -9,14 +9,14 @@ describe('pf-v6-menu', () => {
 
     beforeEach(async () => {
       el = await fixture('<pf-v6-menu></pf-v6-menu>');
-      await el.rendered;
+      await el.updateComplete;
     });
 
     it('is defined as custom element', () => {
       expect(el).to.be.instanceOf(HTMLElement);
     });
 
-    it('extends CemElement', () => {
+    it('extends LitElement', () => {
       expect(el.constructor.name).to.equal('PfV6Menu');
       expect(el.shadowRoot).to.exist;
     });
@@ -56,15 +56,15 @@ describe('pf-v6-menu', () => {
       expect(el.label).to.equal('File menu');
     });
 
-    it('sets label attribute', () => {
+    it('sets label property', () => {
       el.label = 'Edit menu';
-      expect(el.getAttribute('label')).to.equal('Edit menu');
+      expect(el.label).to.equal('Edit menu');
     });
 
-    it('removes label attribute when set to empty', () => {
-      el.setAttribute('label', 'Test');
+    it('clears label property when set to empty', () => {
+      el.label = 'Test';
       el.label = '';
-      expect(el.hasAttribute('label')).to.be.false;
+      expect(el.label).to.equal('');
     });
   });
 

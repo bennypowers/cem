@@ -57,6 +57,7 @@ func (m *mockContext) DemoRenderingMode() string                         { retur
 func (m *mockContext) URLRewrites() []config.URLRewrite                  { return nil }
 func (m *mockContext) PathResolver() middleware.PathResolver             { return nil }
 func (m *mockContext) HealthResult() (*health.HealthResult, error)       { return nil, nil }
+func (m *mockContext) IsStaticBuild() bool                               { return false }
 
 func TestServeMarkdownAPI_ValidPaths(t *testing.T) {
 	// Create test manifest with markdown content
