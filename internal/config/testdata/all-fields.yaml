@@ -1,0 +1,28 @@
+generate:
+  files:
+    - "src/**/*.ts"
+  exclude:
+    - "**/*.test.ts"
+  output: custom-elements.json
+  noDefaultExcludes: true
+  designTokens:
+    spec: tokens/tokens.json
+    prefix: my-prefix
+  demoDiscovery:
+    fileGlob: elements/*/demo/*.html
+    urlPattern: /elements/:tag/demo/:demo.html
+    urlTemplate: /elements/{{.tag}}/demo/{{.demo}}/
+serve:
+  port: 3000
+  transforms:
+    css:
+      enabled: true
+      include:
+        - "src/**/*.css"
+mcp:
+  maxDescriptionLength: 1500
+health:
+  failBelow: 80
+  disable:
+    - demos
+sourceControlRootUrl: https://github.com/example/repo/tree/main/

@@ -20,139 +20,26 @@ import (
 	"fmt"
 	"maps"
 
-	"bennypowers.dev/cem/serve/middleware/types"
+	IC "bennypowers.dev/cem/internal/config"
 )
 
-type DemoDiscoveryConfig struct {
-	FileGlob string `mapstructure:"fileGlob" yaml:"fileGlob"`
-	// URLPattern uses standard URLPattern syntax (e.g., "/components/:element/demo/:demo.html")
-	URLPattern string `mapstructure:"urlPattern" yaml:"urlPattern"`
-	// URLTemplate defines how to generate URLs from captured parameters
-	// Uses {{.param}} syntax to interpolate URLPattern parameters
-	URLTemplate string `mapstructure:"urlTemplate" yaml:"urlTemplate"`
-}
-
-type DesignTokensConfig struct {
-	// Path or `npm:@scope/package/path/to/file.json` spec to DTCG format design tokens json module
-	Spec string `mapstructure:"spec" yaml:"spec"`
-	// Prefix those design tokens use in CSS. If the design tokens are generated
-	// by style dictionary and have a `name` field, that will be used instead.
-	Prefix string `mapstructure:"prefix" yaml:"prefix"`
-}
-
-// CLI or config arguments passed to the generate command
-type GenerateConfig struct {
-	// List of files or file globs to include in the manifest
-	Files []string `mapstructure:"files" yaml:"files"`
-	// List of files or file globs to exclude from the manifest
-	Exclude []string `mapstructure:"exclude" yaml:"exclude"`
-	// Do not exclude files that are excluded by default e.g. *.d.ts files.
-	NoDefaultExcludes bool `mapstructure:"noDefaultExcludes" yaml:"noDefaultExcludes"`
-	// File path to write output to. If omitted, output will be written to stdout.
-	Output string `mapstructure:"output" yaml:"output"`
-	// Configuration for design tokens discovery
-	DesignTokens DesignTokensConfig `mapstructure:"designTokens" yaml:"designTokens"`
-	// Configuration for demo file discovery
-	DemoDiscovery DemoDiscoveryConfig `mapstructure:"demoDiscovery" yaml:"demoDiscovery"`
-}
-
-type MCPConfig struct {
-	// Maximum length for description fields before truncation (default: 2000)
-	MaxDescriptionLength int `mapstructure:"maxDescriptionLength" yaml:"maxDescriptionLength"`
-}
-
-type URLRewrite struct {
-	// URLPattern uses standard URLPattern syntax (e.g., "/dist/:path*")
-	URLPattern string `mapstructure:"urlPattern" yaml:"urlPattern"`
-	// URLTemplate defines the filesystem path using Go template syntax (e.g., "/src/{{.path}}")
-	URLTemplate string `mapstructure:"urlTemplate" yaml:"urlTemplate"`
-}
-
-type ServeConfig struct {
-	// Port to run the development server on (default: 8000)
-	Port int `mapstructure:"port" yaml:"port"`
-	// Whether to automatically open browser on server start
-	OpenBrowser bool `mapstructure:"openBrowser" yaml:"openBrowser"`
-	// Import map configuration
-	ImportMap types.ImportMapConfig `mapstructure:"importMap" yaml:"importMap"`
-	// Transform configuration
-	Transforms TransformsConfig `mapstructure:"transforms" yaml:"transforms"`
-	// URL rewrites for transforming request URLs to filesystem paths
-	URLRewrites []URLRewrite `mapstructure:"urlRewrites" yaml:"urlRewrites"`
-	// Demo configuration
-	Demos DemosConfig `mapstructure:"demos" yaml:"demos"`
-}
-
-type TransformsConfig struct {
-	TypeScript TypeScriptTransformConfig `mapstructure:"typescript" yaml:"typescript"`
-	CSS        CSSTransformConfig        `mapstructure:"css" yaml:"css"`
-}
-
-type TypeScriptTransformConfig struct {
-	// Enable TypeScript transformation (default: true)
-	Enabled bool `mapstructure:"enabled" yaml:"enabled"`
-	// Transform target (e.g., "es2022", "es2020") - overridden by --target flag
-	Target string `mapstructure:"target" yaml:"target"`
-}
-
-type CSSTransformConfig struct {
-	// Enable CSS transformation (default: true)
-	Enabled bool `mapstructure:"enabled" yaml:"enabled"`
-	// Glob patterns for CSS files to include (default: all .css files)
-	Include []string `mapstructure:"include" yaml:"include"`
-	// Glob patterns for CSS files to exclude
-	Exclude []string `mapstructure:"exclude" yaml:"exclude"`
-}
-
-type DemosConfig struct {
-	// Default rendering mode for demos: "light", "shadow", or "iframe" (default: "light")
-	// Can be overridden per-demo with ?rendering=shadow|light|iframe query parameter
-	Rendering string `mapstructure:"rendering" yaml:"rendering"`
-}
-
-type FrameworkExportConfig struct {
-	// Output directory for generated wrapper files
-	Output string `mapstructure:"output" yaml:"output"`
-	// Prefix to strip from tag names when generating component names
-	StripPrefix string `mapstructure:"stripPrefix" yaml:"stripPrefix"`
-	// Override the package name used in import paths
-	PackageName string `mapstructure:"packageName" yaml:"packageName"`
-	// Angular NgModule name (defaults to "ComponentsModule")
-	ModuleName string `mapstructure:"moduleName" yaml:"moduleName"`
-}
-
-type HealthConfig struct {
-	FailBelow int      `mapstructure:"failBelow" yaml:"failBelow"`
-	Disable   []string `mapstructure:"disable" yaml:"disable"`
-}
-
-type CemConfig struct {
-	ProjectDir string `mapstructure:"projectDir" yaml:"projectDir"`
-	ConfigFile string `mapstructure:"configFile" yaml:"configFile"`
-	// Package name, as would appear in a package.json "name" field
-	PackageName string `mapstructure:"packageName" yaml:"packageName"`
-	// Generate command options
-	Generate GenerateConfig `mapstructure:"generate" yaml:"generate"`
-	// MCP server options
-	MCP MCPConfig `mapstructure:"mcp" yaml:"mcp"`
-	// Health command options
-	Health HealthConfig `mapstructure:"health" yaml:"health"`
-	// Serve command options
-	Serve ServeConfig `mapstructure:"serve" yaml:"serve"`
-	// Export command options: maps framework name to its config
-	Export map[string]FrameworkExportConfig `mapstructure:"export" yaml:"export"`
-	// Canonical public source control URL corresponding to project root on primary branch.
-	// e.g. https://github.com/bennypowers/cem/tree/main/
-	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl" yaml:"sourceControlRootUrl"`
-	// Verbose logging output
-	Verbose bool `mapstructure:"verbose" yaml:"verbose"`
-	// Additional packages to load manifests from.
-	// Accepts URLs (https://cdn.example.com/pkg/), npm specifiers (npm:@scope/pkg), or jsr specifiers.
-	AdditionalPackages []string `mapstructure:"additionalPackages" yaml:"additionalPackages"`
-}
+// Type aliases re-exported from internal/config for backward compatibility.
+type CemConfig = IC.CemConfig
+type GenerateConfig = IC.GenerateConfig
+type DemoDiscoveryConfig = IC.DemoDiscoveryConfig
+type DesignTokensConfig = IC.DesignTokensConfig
+type MCPConfig = IC.MCPConfig
+type ServeConfig = IC.ServeConfig
+type TransformsConfig = IC.TransformsConfig
+type TypeScriptTransformConfig = IC.TypeScriptTransformConfig
+type CSSTransformConfig = IC.CSSTransformConfig
+type DemosConfig = IC.DemosConfig
+type URLRewrite = IC.URLRewrite
+type FrameworkExportConfig = IC.FrameworkExportConfig
+type HealthConfig = IC.HealthConfig
 
 // Validate validates the configuration and returns an error if invalid
-func (c *CemConfig) Validate() error {
+func Validate(c *CemConfig) error {
 	if c == nil {
 		return nil
 	}
@@ -173,7 +60,7 @@ func (c *CemConfig) Validate() error {
 	return nil
 }
 
-func (c *CemConfig) Clone() *CemConfig {
+func Clone(c *CemConfig) *CemConfig {
 	if c == nil {
 		return nil
 	}

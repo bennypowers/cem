@@ -36,7 +36,7 @@ cem serve [flags]
 
 | Flag | Description |
 | ---- | ----------- |
-| `--config` | Path to config file (default: `.config/cem.yaml`) |
+| `--config` | Path to config file (auto-discovers `.config/cem.yaml`, `.cem.yaml`, etc.) |
 | `--package`, `-p` | Deno-style package specifier (e.g., `npm:@scope/package`) or path to package directory |
 | `--source-control-root-url` | Canonical public source control URL for primary branch (e.g., `https://github.com/user/repo/tree/main/`) |
 | `--quiet`, `-q` | Quiet output (only warnings and errors) |

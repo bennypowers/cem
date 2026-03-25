@@ -23,56 +23,61 @@ import (
 	"testing"
 )
 
-// TestGenerateConfigFileNotFoundNoPanic tests the exact scenario that originally caused a panic.
-// This is a regression test for the nil pointer dereference that occurred when using --config
-// with a file path that caused path resolution issues.
+// TestGenerateConfigRelativePathNoPanic tests that --config with a relative path
+// correctly derives the project root and does not panic.
 //
-// Original panic:
-// panic: runtime error: invalid memory address or nil pointer dereference
-// [signal SIGSEGV: segmentation violation code=0x1 addr=0x0 pc=0x9eeb8e]
-// goroutine 1 [running]:
-// bennypowers.dev/cem/cmd.init.func1(0x147b3c0, {0xc000325f50, 0x1, 0x3})
+// Original bug: --config .config/cem.yaml used filepath.Dir() which gave ".config/"
+// as the project root, causing files to resolve to ".config/src/source-hrefs.ts"
+// and either panicking or failing with a confusing error.
 //
-//	/home/bennyp/Developer/cem/cmd/generate.go:150 +0xc0e
-func TestGenerateConfigFileNotFoundNoPanic(t *testing.T) {
-	// Change to the test fixture directory to test the exact problematic scenario
+// After the unified config fix, --config .config/cem.yaml correctly identifies
+// the parent of .config/ as the project root, and the command succeeds.
+func TestGenerateConfigRelativePathNoPanic(t *testing.T) {
 	fixtureDir := filepath.Join("testdata", "fixtures", "project-source-hrefs")
 
-	// Use go run from the project root but run the command in the fixture directory
-	// This simulates the exact path resolution issue that caused the original panic
 	cmd := exec.Command("go", "run", "../../../../main.go", "generate", "--config", ".config/cem.yaml", "src/source-hrefs.ts")
 	cmd.Dir = fixtureDir
 
 	cmdOutput, err := cmd.CombinedOutput()
-
-	// Should exit with error (not panic)
-	if err == nil {
-		t.Error("Expected command to fail due to file path resolution, but it succeeded")
-	}
-
 	outputStr := string(cmdOutput)
 
-	// The main check: Should NOT contain panic trace
-	// This is what we're testing for - the original issue was a panic
+	// Should NOT contain panic trace
 	hasPanic := strings.Contains(outputStr, "panic:") ||
 		strings.Contains(outputStr, "runtime error:") ||
 		strings.Contains(outputStr, "nil pointer dereference")
 
 	if hasPanic {
-		t.Errorf("REGRESSION: Command panicked (this was the original bug that was fixed). Output:\n%s", outputStr)
-	} else {
-		// This is the expected behavior after the fix
-		t.Logf("✓ Command correctly failed with clean error (no panic)")
+		t.Errorf("REGRESSION: Command panicked. Output:\n%s", outputStr)
 	}
 
-	// Should contain proper error message about file resolution
-	if !strings.Contains(outputStr, "no such file or directory") {
-		t.Errorf("Expected file resolution error, got: %s", outputStr)
+	// With the unified config fix, --config .config/cem.yaml now correctly
+	// derives the project root as the parent of .config/, so the command succeeds.
+	if err != nil {
+		t.Errorf("Command should succeed with --config .config/cem.yaml, but failed: %v\nOutput: %s", err, outputStr)
+	}
+}
+
+// TestGenerateConfigMissingFileNoPanic tests that --config with a nonexistent
+// path fails with a clean error, not a panic.
+func TestGenerateConfigMissingFileNoPanic(t *testing.T) {
+	fixtureDir := filepath.Join("testdata", "fixtures", "project-source-hrefs")
+
+	cmd := exec.Command("go", "run", "../../../../main.go", "generate", "--config", "./nonexistent/cem.yaml", "src/source-hrefs.ts")
+	cmd.Dir = fixtureDir
+
+	cmdOutput, err := cmd.CombinedOutput()
+	outputStr := string(cmdOutput)
+
+	hasPanic := strings.Contains(outputStr, "panic:") ||
+		strings.Contains(outputStr, "runtime error:") ||
+		strings.Contains(outputStr, "nil pointer dereference")
+
+	if hasPanic {
+		t.Errorf("Command panicked with missing config. Output:\n%s", outputStr)
 	}
 
-	// Should contain the incorrectly resolved path that causes the issue
-	if !strings.Contains(outputStr, ".config/src/source-hrefs.ts") {
-		t.Errorf("Expected to see the problematic path resolution, got: %s", outputStr)
+	if err == nil {
+		t.Error("Expected command to fail with missing config file, but it succeeded")
 	}
 }
 

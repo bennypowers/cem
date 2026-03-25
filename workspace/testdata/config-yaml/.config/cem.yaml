@@ -1,0 +1,4 @@
+generate:
+  files:
+    - "elements/**/*.ts"
+  output: custom-elements.json

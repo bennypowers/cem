@@ -8,11 +8,26 @@ weight: 20
 **TL;DR**: Create `.config/cem.yaml` to configure file patterns, output paths, and dev server options. Most users only need `generate.files` and `generate.output`. See the [complete example](#configuration-file) below for all options.
 {{< /tip >}}
 
-You can configure `cem` via a `cem.yaml` file in your project's `.config` directory, or by using command-line flags.
+You can configure `cem` via a config file or command-line flags.
 
 ## Configuration File
 
-Here is a complete example of a `.config/cem.yaml` file with all available options explained.
+CEM searches for config files in this order, using the first one found:
+
+1. `.config/cem.yaml`
+2. `.config/cem.yml`
+3. `.config/cem.json`
+4. `.config/cem.jsonc`
+5. `.cem.yaml`
+6. `.cem.yml`
+7. `.cem.json`
+8. `.cem.jsonc`
+
+JSONC files support `//` line comments, `/* */` block comments, and trailing commas.
+
+Use `--config <path>` to specify a config file explicitly.
+
+Here is a complete example config file with all available options explained.
 
 ```yaml
 # The canonical public source control URL for your repository root.

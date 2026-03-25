@@ -20,6 +20,8 @@ package config
 import (
 	"strings"
 	"testing"
+
+	importMapTypes "bennypowers.dev/cem/serve/middleware/types"
 )
 
 func TestValidate_ValidRenderingModes(t *testing.T) {
@@ -35,7 +37,7 @@ func TestValidate_ValidRenderingModes(t *testing.T) {
 				},
 			}
 
-			if err := cfg.Validate(); err != nil {
+			if err := Validate(cfg); err != nil {
 				t.Errorf("Expected mode '%s' to be valid, got error: %v", mode, err)
 			}
 		})
@@ -55,7 +57,7 @@ func TestValidate_InvalidRenderingMode(t *testing.T) {
 				},
 			}
 
-			err := cfg.Validate()
+			err := Validate(cfg)
 			if err == nil {
 				t.Errorf("Expected mode '%s' to be rejected, but validation passed", mode)
 			}
@@ -82,7 +84,7 @@ func TestValidate_IframeRenderingMode(t *testing.T) {
 		},
 	}
 
-	err := cfg.Validate()
+	err := Validate(cfg)
 	if err == nil {
 		t.Error("Expected 'iframe' mode to be rejected, but validation passed")
 	}
@@ -96,7 +98,84 @@ func TestValidate_IframeRenderingMode(t *testing.T) {
 func TestValidate_EmptyConfigValid(t *testing.T) {
 	cfg := &CemConfig{}
 
-	if err := cfg.Validate(); err != nil {
+	if err := Validate(cfg); err != nil {
 		t.Errorf("Empty config should be valid, got error: %v", err)
+	}
+}
+
+func TestValidate_Nil(t *testing.T) {
+	if err := Validate(nil); err != nil {
+		t.Errorf("Validate(nil) should return nil, got: %v", err)
+	}
+}
+
+func TestClone_Nil(t *testing.T) {
+	if Clone(nil) != nil {
+		t.Error("Clone(nil) should return nil")
+	}
+}
+
+func TestClone_DeepCopy(t *testing.T) {
+	original := &CemConfig{
+		Generate: GenerateConfig{
+			Files:   []string{"a.ts", "b.ts"},
+			Exclude: []string{"*.test.ts"},
+			Output:  "out.json",
+		},
+		Serve: ServeConfig{
+			Port: 8000,
+			ImportMap: importMapTypes.ImportMapConfig{
+				Generate: true,
+				Override: importMapTypes.ImportMapOverride{
+					Imports: map[string]string{"lit": "/vendor/lit.js"},
+					Scopes: map[string]map[string]string{
+						"/vendor/": {"dep": "/vendor/dep.js"},
+					},
+				},
+			},
+			URLRewrites: []URLRewrite{
+				{URLPattern: "/old/*", URLTemplate: "/new/{{.path}}"},
+			},
+		},
+		AdditionalPackages: []string{"npm:@scope/pkg"},
+		Export: map[string]FrameworkExportConfig{
+			"react": {Output: "react/"},
+		},
+	}
+
+	clone := Clone(original)
+	if clone == nil {
+		t.Fatal("Clone returned nil")
+	}
+
+	// Verify values match
+	if clone.Generate.Files[0] != "a.ts" {
+		t.Errorf("Files[0] = %q, want a.ts", clone.Generate.Files[0])
+	}
+
+	// Verify deep copy
+	clone.Generate.Files[0] = "changed.ts"
+	if original.Generate.Files[0] != "a.ts" {
+		t.Error("Clone did not deep copy Generate.Files")
+	}
+
+	clone.Serve.URLRewrites[0].URLPattern = "/changed/*"
+	if original.Serve.URLRewrites[0].URLPattern != "/old/*" {
+		t.Error("Clone did not deep copy URLRewrites")
+	}
+
+	clone.AdditionalPackages[0] = "changed"
+	if original.AdditionalPackages[0] != "npm:@scope/pkg" {
+		t.Error("Clone did not deep copy AdditionalPackages")
+	}
+
+	clone.Serve.ImportMap.Override.Imports["lit"] = "/changed/lit.js"
+	if original.Serve.ImportMap.Override.Imports["lit"] != "/vendor/lit.js" {
+		t.Error("Clone did not deep copy ImportMap.Override.Imports")
+	}
+
+	clone.Serve.ImportMap.Override.Scopes["/vendor/"]["dep"] = "/changed/dep.js"
+	if original.Serve.ImportMap.Override.Scopes["/vendor/"]["dep"] != "/vendor/dep.js" {
+		t.Error("Clone did not deep copy ImportMap.Override.Scopes")
 	}
 }

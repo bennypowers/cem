@@ -25,7 +25,7 @@ import (
 	"strings"
 
 	C "bennypowers.dev/cem/cmd/config"
-	"gopkg.in/yaml.v3"
+	IC "bennypowers.dev/cem/internal/config"
 )
 
 // PackageInfo represents a discovered workspace package
@@ -200,26 +200,20 @@ func LoadWorkspaceConfig(packageDir string) (*C.CemConfig, error) {
 		return nil, nil // Not in a workspace
 	}
 
-	configPath := filepath.Join(workspaceRoot, ".config", "cem.yaml")
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+	configPath := IC.FindConfigFile(workspaceRoot)
+	if configPath == "" {
 		return nil, nil // No workspace config
 	}
 
-	// Read and parse config
-	data, err := os.ReadFile(configPath)
+	config, err := IC.LoadConfig(configPath)
 	if err != nil {
-		return nil, err
-	}
-
-	var config C.CemConfig
-	if err := yaml.Unmarshal(data, &config); err != nil {
 		return nil, err
 	}
 
 	config.ProjectDir = workspaceRoot
 	config.ConfigFile = configPath
 
-	return &config, nil
+	return config, nil
 }
 
 // LoadPackageConfigWithWorkspaceDefaults loads package config and merges with workspace defaults
@@ -232,21 +226,20 @@ func LoadPackageConfigWithWorkspaceDefaults(packageDir string) (*C.CemConfig, er
 	}
 
 	// Load package config
-	packageConfigPath := filepath.Join(packageDir, ".config", "cem.yaml")
+	packageConfigPath := IC.FindConfigFile(packageDir)
 	packageConfig := &C.CemConfig{
 		ProjectDir: packageDir,
 		ConfigFile: packageConfigPath,
 	}
 
-	if _, err := os.Stat(packageConfigPath); err == nil {
-		data, err := os.ReadFile(packageConfigPath)
+	if packageConfigPath != "" {
+		loaded, err := IC.LoadConfig(packageConfigPath)
 		if err != nil {
 			return nil, err
 		}
-
-		if err := yaml.Unmarshal(data, packageConfig); err != nil {
-			return nil, err
-		}
+		loaded.ProjectDir = packageDir
+		loaded.ConfigFile = packageConfigPath
+		packageConfig = loaded
 	}
 
 	// If no workspace config, just return package config

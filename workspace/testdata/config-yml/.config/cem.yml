@@ -1,0 +1,4 @@
+generate:
+  files:
+    - "src/**/*.ts"
+  output: manifest.json
