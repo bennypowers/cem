@@ -36,7 +36,7 @@ func (s *Server) initLitSSR(ctx context.Context) error {
 
 	// Try bytecode first (fast path: ~400ms vs ~1s for source eval)
 	if bytecode, err := routes.TemplatesFS.ReadFile("templates/ssr-bundle.qbc"); err == nil && len(bytecode) > 0 {
-		renderer, err := litssr.NewFromBytecode(ctx, bytecode, 1)
+		renderer, err := litssr.NewFromBytecode(ctx, bytecode, 0)
 		if err == nil {
 			s.litSSR = renderer
 			s.logger.Info("Lit SSR renderer initialized from bytecode")
@@ -57,7 +57,7 @@ func (s *Server) initLitSSR(ctx context.Context) error {
 		return fmt.Errorf("empty SSR bundle")
 	}
 
-	renderer, err := litssr.New(ctx, string(source), 1)
+	renderer, err := litssr.New(ctx, string(source), 0)
 	if err != nil {
 		return fmt.Errorf("init lit-ssr renderer: %w", err)
 	}
