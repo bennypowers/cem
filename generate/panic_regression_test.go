@@ -69,7 +69,8 @@ func TestGenerateConfigMissingFileNoPanic(t *testing.T) {
 	outputStr := string(cmdOutput)
 
 	hasPanic := strings.Contains(outputStr, "panic:") ||
-		strings.Contains(outputStr, "runtime error:")
+		strings.Contains(outputStr, "runtime error:") ||
+		strings.Contains(outputStr, "nil pointer dereference")
 
 	if hasPanic {
 		t.Errorf("Command panicked with missing config. Output:\n%s", outputStr)
