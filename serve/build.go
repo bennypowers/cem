@@ -859,11 +859,9 @@ func rewriteJSONScopeKeys(s, basePath string) string {
 			break
 		}
 
-		// Check what precedes this match to distinguish keys from values
-		// JSON values: `: "/...` or `= "/...`
-		// Scope keys: whitespace or comma before `"/...`
+		// Distinguish JSON keys from values: values are preceded by `: `
 		prefix := s[:idx]
-		isValue := strings.HasSuffix(prefix, `: `) || strings.HasSuffix(prefix, `= `)
+		isValue := strings.HasSuffix(prefix, `: `)
 
 		// Write everything up to and including the opening quote
 		result.WriteString(s[:idx+1]) // include the "
