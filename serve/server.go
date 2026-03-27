@@ -315,6 +315,13 @@ func (s *Server) Start() error {
 		go s.logCacheStats(5 * time.Minute)
 	}
 
+	// Set up dev watcher for internal modules (cemdev build tag only)
+	// This must be called before server starts to override ReadInternalModule
+	if err := setupDevWatcher(s); err != nil {
+		s.logger.Warning("Failed to set up dev watcher: %v", err)
+		// Continue anyway - not critical for server operation
+	}
+
 	// Start server in goroutine with pre-bound listener
 	go func() {
 		if err := s.server.Serve(listener); err != nil && err != http.ErrServerClosed {
