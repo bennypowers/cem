@@ -232,11 +232,18 @@
   justify-content: center;
 }
 
-/* Color variants */
+/* Nonstatus backgrounds are pastel in both schemes. The text color tokens
+   all chain down to light-dark(), which resolves to white in dark mode,
+   producing poor contrast on pastel backgrounds. Bypass the token chain
+   and use the light-mode base palette color directly. */
+:host([color]) {
+  --pf-v6-c-label--Color: var(--pf-t--color--gray--95);
+  --pf-v6-c-label__icon--Color: var(--pf-t--color--gray--95);
+}
+
+/* Color variants - only set background; text/icon color handled by :host([color]) */
 :host([color="blue"]) {
   --pf-v6-c-label--BackgroundColor: var(--pf-v6-c-label--m-blue--BackgroundColor);
-  --pf-v6-c-label--Color: var(--pf-v6-c-label--m-blue--Color);
-  --pf-v6-c-label__icon--Color: var(--pf-v6-c-label--m-blue__icon--Color);
 }
 
 :host([color="blue"][variant="outline"]) {
@@ -245,54 +252,34 @@
 
 :host([color="red"]) {
   --pf-v6-c-label--BackgroundColor: var(--pf-v6-c-label--m-red--BackgroundColor);
-  --pf-v6-c-label--Color: var(--pf-v6-c-label--m-red--Color);
-  --pf-v6-c-label__icon--Color: var(--pf-v6-c-label--m-red__icon--Color);
 }
 
 :host([color="red"][variant="outline"]) {
   --pf-v6-c-label--m-outline--BorderColor: var(--pf-v6-c-label--m-red--m-outline--BorderColor);
 }
 
-/* Nonstatus backgrounds are pastel in both schemes, so force light-mode
-   token resolution to ensure dark text meets WCAG contrast minimums. */
-:host([color]) {
-  color-scheme: light only;
-}
-
 :host([color="orange"]) {
   --pf-v6-c-label--BackgroundColor: var(--pf-v6-c-label--m-orange--BackgroundColor);
-  --pf-v6-c-label--Color: var(--pf-v6-c-label--m-orange--Color);
-  --pf-v6-c-label__icon--Color: var(--pf-v6-c-label--m-orange__icon--Color);
 }
 
 :host([color="orangered"]) {
   --pf-v6-c-label--BackgroundColor: var(--pf-v6-c-label--m-orangered--BackgroundColor);
-  --pf-v6-c-label--Color: var(--pf-v6-c-label--m-orangered--Color);
-  --pf-v6-c-label__icon--Color: var(--pf-v6-c-label--m-orangered__icon--Color);
 }
 
 :host([color="yellow"]) {
   --pf-v6-c-label--BackgroundColor: var(--pf-v6-c-label--m-yellow--BackgroundColor);
-  --pf-v6-c-label--Color: var(--pf-v6-c-label--m-yellow--Color);
-  --pf-v6-c-label__icon--Color: var(--pf-v6-c-label--m-yellow__icon--Color);
 }
 
 :host([color="green"]) {
   --pf-v6-c-label--BackgroundColor: var(--pf-v6-c-label--m-green--BackgroundColor);
-  --pf-v6-c-label--Color: var(--pf-v6-c-label--m-green--Color);
-  --pf-v6-c-label__icon--Color: var(--pf-v6-c-label--m-green__icon--Color);
 }
 
 :host([color="teal"]) {
   --pf-v6-c-label--BackgroundColor: var(--pf-v6-c-label--m-teal--BackgroundColor);
-  --pf-v6-c-label--Color: var(--pf-v6-c-label--m-teal--Color);
-  --pf-v6-c-label__icon--Color: var(--pf-v6-c-label--m-teal__icon--Color);
 }
 
 :host([color="purple"]) {
   --pf-v6-c-label--BackgroundColor: var(--pf-v6-c-label--m-purple--BackgroundColor);
-  --pf-v6-c-label--Color: var(--pf-v6-c-label--m-purple--Color);
-  --pf-v6-c-label__icon--Color: var(--pf-v6-c-label--m-purple__icon--Color);
 }
 
 /* Status variants */
