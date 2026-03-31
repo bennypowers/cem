@@ -58,7 +58,7 @@ func (mp *ModuleProcessor) generateClassDeclarationParsed(
 	if jsdocNodes, ok := captures["class.jsdoc"]; ok && len(jsdocNodes) > 0 {
 		has, err := jsdoc.HasElementTag(jsdocNodes[0].Text, mp.queryManager)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to check JSDoc element tag for class %s: %w", className, err)
 		}
 		hasJSDocElementTag = has
 	}
