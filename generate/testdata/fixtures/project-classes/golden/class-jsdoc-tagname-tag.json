@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-jsdoc-tagname-tag.js",
+      "declarations": [
+        {
+          "name": "Bar",
+          "description": "Bar element",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-jsdoc-tagname-tag.ts#L7"
+          },
+          "kind": "class",
+          "tagName": "my-bar",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-bar",
+          "declaration": {
+            "name": "Bar",
+            "module": "src/class-jsdoc-tagname-tag.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "Bar",
+          "declaration": {
+            "name": "Bar",
+            "module": "src/class-jsdoc-tagname-tag.js"
+          }
+        }
+      ]
+    }
+  ]
+}
