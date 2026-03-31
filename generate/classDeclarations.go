@@ -53,7 +53,17 @@ func (mp *ModuleProcessor) generateClassDeclarationParsed(
 		}
 	}
 
-	isCustomElement := hasCustomElementDecorator || isHTMLElement
+	// Check if JSDoc contains @element, @tagName, or @customElement tags
+	hasJSDocElementTag := false
+	if jsdocNodes, ok := captures["class.jsdoc"]; ok && len(jsdocNodes) > 0 {
+		has, err := jsdoc.HasElementTag(jsdocNodes[0].Text, mp.queryManager)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check JSDoc element tag for class %s: %w", className, err)
+		}
+		hasJSDocElementTag = has
+	}
+
+	isCustomElement := hasCustomElementDecorator || isHTMLElement || hasJSDocElementTag
 	classDeclarationCaptures, hasClassDeclaration := captures["class.declaration"]
 	if !hasClassDeclaration || len(classDeclarationCaptures) <= 0 {
 		return nil, NewError("could not find class declaration")
@@ -308,8 +318,6 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		if tagName != "" {
 			declaration.TagName = tagName
 		}
-	} else {
-		errs = errors.Join(errs, &Q.NoCaptureError{Capture: "tag-name", Query: "classes"})
 	}
 
 	declaration.CustomElement.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {

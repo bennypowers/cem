@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-jsdoc-element-no-known-superclass.js",
+      "declarations": [
+        {
+          "name": "SomeBase",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-jsdoc-element-no-known-superclass.ts#L1"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "MyWidget",
+          "description": "A custom element extending an unknown base class",
+          "superclass": {
+            "name": "SomeBase"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-jsdoc-element-no-known-superclass.ts#L7"
+          },
+          "kind": "class",
+          "tagName": "my-widget",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-widget",
+          "declaration": {
+            "name": "MyWidget",
+            "module": "src/class-jsdoc-element-no-known-superclass.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyWidget",
+          "declaration": {
+            "name": "MyWidget",
+            "module": "src/class-jsdoc-element-no-known-superclass.js"
+          }
+        }
+      ]
+    }
+  ]
+}

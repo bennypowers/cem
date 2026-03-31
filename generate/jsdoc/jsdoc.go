@@ -123,3 +123,15 @@ func ExtractAliasFromJSDoc(jsdocText string, queryManager *Q.QueryManager) (stri
 	}
 	return info.Alias, nil
 }
+
+// HasElementTag checks whether JSDoc contains an @element, @tagName, or @customElement tag.
+func HasElementTag(jsdocText string, queryManager *Q.QueryManager) (bool, error) {
+	if strings.TrimSpace(jsdocText) == "" {
+		return false, nil
+	}
+	info, err := parseForClass(jsdocText, queryManager)
+	if err != nil {
+		return false, err
+	}
+	return info.TagName != "", nil
+}
