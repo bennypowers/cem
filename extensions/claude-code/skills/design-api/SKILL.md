@@ -123,7 +123,14 @@ Work through each API surface systematically:
 - Map to existing CSS pseudo-classes where appropriate
 - Document state transitions
 
-### Phase 4: Consistency Check
+### Phase 4: Source Documentation
+
+When presenting the designed API, show how each part should be documented
+in source code.
+
+!`cat ${CLAUDE_SKILL_DIR}/html-comment-syntax.md`
+
+### Phase 5: Consistency Check
 
 Compare the proposed API against existing elements:
 - Are similar concepts named the same way?
@@ -131,7 +138,7 @@ Compare the proposed API against existing elements:
 - Are event patterns consistent?
 - Do CSS property names follow the same scheme?
 
-### Phase 5: Output
+### Phase 6: Output
 
 Present the designed API as a structured summary:
 

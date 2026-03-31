@@ -130,7 +130,11 @@ something as `deprecated`, use multi-key YAML syntax inside the comment:
 ### Combined Slot and Part
 
 When the same element has both a `slot` and `part` attribute and you want
-separate documentation for each, use nested `slot:` and `part:` keys:
+separate documentation for each, use nested `slot:` and `part:` keys.
+
+A scalar string is shorthand for `description`, so you can mix scalar and
+object forms when one side only needs a description and the other needs
+full metadata:
 
 ```html
 <!-- slot:
@@ -138,6 +142,18 @@ separate documentation for each, use nested `slot:` and `part:` keys:
      part:
        summary: The `info-part` part -->
 <slot name="info" part="info-part"></slot>
+
+<!-- slot: The info slot
+     part:
+       summary: Short label
+       description: Longer description of the part -->
+<slot name="info" part="info-part"></slot>
+
+<!-- part: The overlay container
+     slot:
+       summary: Overlay
+       description: Content shown in the overlay -->
+<slot name="overlay" part="overlay"></slot>
 ```
 
 {{<tip "warning">}}

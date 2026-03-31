@@ -35,6 +35,17 @@ type HtmlDocYaml struct {
 	Deprecated  any    `yaml:"deprecated"`
 }
 
+func (h *HtmlDocYaml) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind == yaml.ScalarNode {
+		h.Description = value.Value
+		return nil
+	}
+
+	// For mapping nodes, decode normally
+	type plain HtmlDocYaml
+	return value.Decode((*plain)(h))
+}
+
 type NestedHtmlDocYaml struct {
 	Slot        *HtmlDocYaml `yaml:"slot"`
 	Part        *HtmlDocYaml `yaml:"part"`

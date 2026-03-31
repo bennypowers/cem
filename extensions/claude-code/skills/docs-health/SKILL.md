@@ -149,6 +149,12 @@ cem://element/{tagName}/slots
 
 This provides the full manifest data so you can show exactly what's missing and suggest what to document.
 
+### Phase 5: Suggesting Fixes
+
+When reporting gaps, show the user how to fix them.
+
+!`cat ${CLAUDE_SKILL_DIR}/html-comment-syntax.md`
+
 ## Guidelines
 
 - **Use `cem health` as the source of truth**: Don't reinvent the scoring — it already checks descriptions, types, defaults, etc.
