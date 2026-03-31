@@ -276,7 +276,9 @@ func (mp *ModuleProcessor) processImports() error {
 		}
 		spec := specCaptures[0].Text
 		resolved := mp.resolveImportSpec(spec)
-		mp.sideEffectImports = append(mp.sideEffectImports, resolved)
+		if !slices.Contains(mp.sideEffectImports, resolved) {
+			mp.sideEffectImports = append(mp.sideEffectImports, resolved)
+		}
 	}
 
 	return nil
@@ -566,7 +568,9 @@ func (mp *ModuleProcessor) processDeclarations() error {
 				continue
 			}
 			sourcePath := mp.resolveImportSpec(sourceNodes[0].Text)
-			mp.reExportAllSources = append(mp.reExportAllSources, sourcePath)
+			if !slices.Contains(mp.reExportAllSources, sourcePath) {
+				mp.reExportAllSources = append(mp.reExportAllSources, sourcePath)
+			}
 		}
 
 		// namespace alias re-exports: export * as Namespace from './module.js'
