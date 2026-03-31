@@ -40,25 +40,9 @@ Also read project-level guidelines for tone and conventions:
 cem://guidelines
 ```
 
-### Phase 1b: Consult CEM Documentation Guides
+### Phase 1b: Source Comment Syntax
 
-Fetch and follow CEM's own guidance on writing effective documentation:
-
-- **Documenting Components**: https://bennypowers.dev/cem/docs/usage/documenting-components/
-  Covers JSDoc tags (`@summary`, `@cssprop`, `@csspart`, `@slot`, `@fires`),
-  CSS file documentation, and how manifest descriptions are generated from source.
-
-- **Writing Demos**: https://bennypowers.dev/cem/docs/usage/demos/
-  Covers demo file structure, `<meta>` tags for demo metadata, and how
-  `cem serve` discovers and renders demos from the manifest's `demos` array.
-
-- **Effective MCP Descriptions**: https://bennypowers.dev/cem/docs/usage/effective-mcp-descriptions/
-  Covers writing element and attribute descriptions that work well with
-  AI tools — concise, specific, and machine-readable.
-
-These guides define how documentation *feeds into* the manifest and tooling.
-When writing docs, ensure the source-level JSDoc will produce a good manifest,
-not just a good standalone doc page.
+!`cat ${CLAUDE_SKILL_DIR}/html-comment-syntax.md`
 
 ### Phase 2: Detect Documentation Conventions
 

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-render-scalar-shorthand.js",
+      "declarations": [
+        {
+          "name": "ClassRenderScalarShorthand",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-html/src/class-render-scalar-shorthand.ts#L1"
+          },
+          "kind": "class",
+          "tagName": "class-render-scalar-shorthand",
+          "slots": [
+            {
+              "name": "nav",
+              "description": "Sub navigation links"
+            },
+            {
+              "name": "overlay",
+              "summary": "Overlay",
+              "description": "Content shown in the overlay"
+            },
+            {
+              "name": "info",
+              "description": "Info content"
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "nav-container",
+              "summary": "Nav container",
+              "description": "The scrollable link list container"
+            },
+            {
+              "name": "overlay",
+              "description": "The overlay container"
+            },
+            {
+              "name": "info",
+              "description": "Info container"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-render-scalar-shorthand",
+          "declaration": {
+            "name": "ClassRenderScalarShorthand",
+            "module": "src/class-render-scalar-shorthand.js"
+          }
+        }
+      ]
+    }
+  ]
+}
