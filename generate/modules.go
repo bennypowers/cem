@@ -57,6 +57,8 @@ type ModuleProcessor struct {
 	}
 	styleImportsBindingToSpecMap map[string]string
 	classNamesAdded              S.Set[string]
+	reExportAllSources           []string // source module paths for `export * from`
+	sideEffectImports            []string // source module paths for `import './x.js'`
 	module                       *M.Module
 	errors                       error
 	packageJSON                  *M.PackageJSON
@@ -208,6 +210,10 @@ func (mp *ModuleProcessor) Collect() (
 			}
 		}
 	}
+	// Attach re-export tracking info to module for cross-module resolution
+	mp.module.ReExportAllSources = mp.reExportAllSources
+	mp.module.SideEffectImports = mp.sideEffectImports
+
 	return mp.module, mp.tagAliases, typeAliasesCopy, importsCopy, allErrors
 }
 
@@ -252,6 +258,26 @@ func (mp *ModuleProcessor) processImports() error {
 				name string
 				spec string
 			}{original, spec}
+		}
+	}
+
+	// side-effect imports: import './child.js'
+	// Excludes type-only imports (import type { X }, import { type X }, import type * as Ns)
+	// which are elided at compile time and don't execute the source module.
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "staticImport") {
+		specCaptures, hasSpec := captures["staticImport.spec"]
+		if !hasSpec || len(specCaptures) == 0 {
+			continue
+		}
+		// Find the full import statement by scanning backward from spec to find line start
+		stmtText := statementTextBefore(mp.code, specCaptures[0].StartByte)
+		if isTypeOnlyImport(stmtText) {
+			continue
+		}
+		spec := specCaptures[0].Text
+		resolved := mp.resolveImportSpec(spec)
+		if !slices.Contains(mp.sideEffectImports, resolved) {
+			mp.sideEffectImports = append(mp.sideEffectImports, resolved)
 		}
 	}
 
@@ -493,6 +519,75 @@ func (mp *ModuleProcessor) processDeclarations() error {
 					))
 				}
 			}
+		}
+	}
+
+	// re-exports: export { X } from './module.js'
+	// and: export * from './module.js'
+	// and: export * as Namespace from './module.js'
+	exQm, exErr := Q.NewQueryMatcher(mp.queryManager, "typescript", "exports")
+	if exErr != nil {
+		mp.errors = errors.Join(mp.errors, exErr)
+	} else {
+		defer exQm.Close()
+
+		// named re-exports: export { X } from './module.js'
+		// Excludes type-only exports (export type { X }, export { type X })
+		for captures := range exQm.ParentCaptures(mp.root, mp.code, "export.named.from") {
+			nameNodes, hasName := captures["export.name"]
+			sourceNodes, hasSource := captures["export.source"]
+			parentNodes, hasParent := captures["export.named.from"]
+			if !hasName || !hasSource || len(nameNodes) == 0 || len(sourceNodes) == 0 {
+				continue
+			}
+			if hasParent && len(parentNodes) > 0 {
+				stmtText := string(mp.code[parentNodes[0].StartByte:parentNodes[0].EndByte])
+				if isTypeOnlyExport(stmtText) {
+					continue
+				}
+			}
+			exportName := nameNodes[0].Text
+			// Use alias if present
+			if aliasNodes, ok := captures["export.alias"]; ok && len(aliasNodes) > 0 {
+				exportName = aliasNodes[0].Text
+			}
+			sourcePath := mp.resolveImportSpec(sourceNodes[0].Text)
+			reference := M.NewReference(nameNodes[0].Text, "", sourcePath)
+			mp.module.Exports = append(mp.module.Exports, &M.JavaScriptExport{
+				Kind:        "js",
+				Name:        exportName,
+				Declaration: reference,
+				StartByte:   nameNodes[0].StartByte,
+			})
+		}
+
+		// namespace re-exports: export * from './module.js'
+		for captures := range exQm.ParentCaptures(mp.root, mp.code, "export.namespace.from") {
+			sourceNodes, hasSource := captures["export.source"]
+			if !hasSource || len(sourceNodes) == 0 {
+				continue
+			}
+			sourcePath := mp.resolveImportSpec(sourceNodes[0].Text)
+			if !slices.Contains(mp.reExportAllSources, sourcePath) {
+				mp.reExportAllSources = append(mp.reExportAllSources, sourcePath)
+			}
+		}
+
+		// namespace alias re-exports: export * as Namespace from './module.js'
+		for captures := range exQm.ParentCaptures(mp.root, mp.code, "export.namespace.alias.from") {
+			aliasNodes, hasAlias := captures["export.namespace.alias"]
+			sourceNodes, hasSource := captures["export.source"]
+			if !hasAlias || !hasSource || len(aliasNodes) == 0 || len(sourceNodes) == 0 {
+				continue
+			}
+			sourcePath := mp.resolveImportSpec(sourceNodes[0].Text)
+			reference := M.NewReference("*", "", sourcePath)
+			mp.module.Exports = append(mp.module.Exports, &M.JavaScriptExport{
+				Kind:        "js",
+				Name:        aliasNodes[0].Text,
+				Declaration: reference,
+				StartByte:   aliasNodes[0].StartByte,
+			})
 		}
 	}
 

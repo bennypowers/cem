@@ -87,6 +87,16 @@
   )
 ) @export.namespace.from
 
+;; Namespace alias export: export * as Namespace from "./module"
+(export_statement
+  (namespace_export
+    (identifier) @export.namespace.alias
+  )
+  source: (string
+    (string_fragment) @export.source
+  )
+) @export.namespace.alias.from
+
 ;; Default export with re-export: export { default } from "./module"
 (export_statement
   (export_clause

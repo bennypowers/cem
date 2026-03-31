@@ -39,6 +39,10 @@ type JavaScriptModule struct {
 	Exports      []Export      `json:"exports,omitempty"`
 	Deprecated   Deprecated    `json:"deprecated,omitempty"` // bool or string
 	Package      *Package      `json:"-"`                    // Backreference to containing package
+
+	// Internal tracking for cross-module re-export resolution (not serialized)
+	ReExportAllSources []string `json:"-"` // module paths for `export * from`
+	SideEffectImports  []string `json:"-"` // module paths for `import './x.js'`
 }
 
 func NewModule(file string) *Module {

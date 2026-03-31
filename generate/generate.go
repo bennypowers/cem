@@ -205,6 +205,9 @@ func postprocess(
 	slices.SortStableFunc(pkg.Modules, func(a, b M.Module) int {
 		return cmp.Compare(a.Path, b.Path)
 	})
+	// Resolve re-exported custom element definitions across modules
+	resolveReExportedCEDefinitions(&pkg)
+
 	// Resolve type aliases (including cross-package external types)
 	externalResolver := NewExternalTypeResolver(ctx, qm)
 	if err := ResolveTypeAliases(&pkg, typeAliases, imports, externalResolver); err != nil {
