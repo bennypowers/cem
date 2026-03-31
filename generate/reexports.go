@@ -80,6 +80,9 @@ func resolveReExportedCEDefinitions(pkg *M.Package) {
 			for _, export := range sourceMod.Exports {
 				switch e := export.(type) {
 				case *M.JavaScriptExport:
+					if e.Declaration == nil {
+						continue
+					}
 					key := exportKey{e.Kind, e.Name}
 					if seen[key] {
 						continue
@@ -92,6 +95,9 @@ func resolveReExportedCEDefinitions(pkg *M.Package) {
 					})
 					seen[key] = true
 				case *M.CustomElementExport:
+					if e.Declaration == nil {
+						continue
+					}
 					key := exportKey{e.Kind, e.Name}
 					if seen[key] {
 						continue
@@ -115,7 +121,7 @@ func resolveReExportedCEDefinitions(pkg *M.Package) {
 				continue
 			}
 			for _, export := range sourceMod.Exports {
-				if ceExport, ok := export.(*M.CustomElementExport); ok {
+				if ceExport, ok := export.(*M.CustomElementExport); ok && ceExport.Declaration != nil {
 					key := exportKey{ceExport.Kind, ceExport.Name}
 					if seen[key] {
 						continue
@@ -169,7 +175,7 @@ func addAllCEExports(mod *M.Module, sourceModulePath string, moduleByPath map[st
 		return
 	}
 	for _, export := range sourceMod.Exports {
-		if ceExport, ok := export.(*M.CustomElementExport); ok {
+		if ceExport, ok := export.(*M.CustomElementExport); ok && ceExport.Declaration != nil {
 			key := exportKey{ceExport.Kind, ceExport.Name}
 			if seen[key] {
 				continue
