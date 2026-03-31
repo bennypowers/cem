@@ -56,9 +56,11 @@ func (mp *ModuleProcessor) generateClassDeclarationParsed(
 	// Check if JSDoc contains @element, @tagName, or @customElement tags
 	hasJSDocElementTag := false
 	if jsdocNodes, ok := captures["class.jsdoc"]; ok && len(jsdocNodes) > 0 {
-		if has, err := jsdoc.HasElementTag(jsdocNodes[0].Text, mp.queryManager); err == nil && has {
-			hasJSDocElementTag = true
+		has, err := jsdoc.HasElementTag(jsdocNodes[0].Text, mp.queryManager)
+		if err != nil {
+			return nil, err
 		}
+		hasJSDocElementTag = has
 	}
 
 	isCustomElement := hasCustomElementDecorator || isHTMLElement || hasJSDocElementTag
