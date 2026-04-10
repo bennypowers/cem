@@ -93,3 +93,53 @@
           .
           ")"))))) @cssProperty
 
+( ; /** comment before calc/min/max wrapping var */
+  ; padding: calc(var(--blue, 24px));
+  ; min-width: min(var(--blue, 24px), 100%);
+  ; Matches comment before declaration where var() is a direct argument
+  ; of a wrapping function (calc, min, max, clamp, etc.)
+  (rule_set
+    (block (
+      (comment)? @comment (#match? @comment "^/\\*\\*")
+      .
+      (declaration
+        (property_name) @prop.name (#not-match? @prop.name "^--[^_]")
+        ":"
+        (call_expression
+          (function_name) @fn.outer (#not-eq? @fn.outer "var")
+          (arguments
+            (call_expression
+              (function_name) @fn (#eq? @fn "var")
+              (arguments
+                "("
+                .
+                (plain_value) @property (#match? @property "^--[^_]")
+                ("," [_(_)]* @default)?
+                .
+                ")")))))) @cssProperty)))
+
+( ; /** comment before calc wrapping var in binary expression */
+  ; width: calc(var(--blue, 24px) + 4px);
+  ; Matches comment before declaration where var() is inside a binary
+  ; expression within a wrapping function's arguments
+  (rule_set
+    (block (
+      (comment)? @comment (#match? @comment "^/\\*\\*")
+      .
+      (declaration
+        (property_name) @prop.name (#not-match? @prop.name "^--[^_]")
+        ":"
+        (call_expression
+          (function_name) @fn.outer (#not-eq? @fn.outer "var")
+          (arguments
+            (_
+              (call_expression
+                (function_name) @fn (#eq? @fn "var")
+                (arguments
+                  "("
+                  .
+                  (plain_value) @property (#match? @property "^--[^_]")
+                  ("," [_(_)]* @default)?
+                  .
+                  ")"))))))) @cssProperty)))
+

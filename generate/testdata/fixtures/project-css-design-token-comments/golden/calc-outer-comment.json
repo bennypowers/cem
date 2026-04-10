@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/calc-outer-comment.js",
+      "declarations": [
+        {
+          "name": "CalcOuterComment",
+          "description": "Element that demonstrates comments before declarations with calc/min/max wrapping var()",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css-design-token-comments/src/calc-outer-comment.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "calc-outer-comment",
+          "cssProperties": [
+            {
+              "name": "--cem-length-xl",
+              "summary": "Outer comment on calc with fallback",
+              "description": "DESIGN TOKEN description for XL length",
+              "default": "24px",
+              "syntax": "\u003clength\u003e"
+            },
+            {
+              "name": "--cem-color-secondary",
+              "summary": "Non-host calc outer comment",
+              "description": "DESIGN TOKEN description for secondary color",
+              "default": "#6666cc",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--cem-color-primary",
+              "summary": "Token inside container query",
+              "description": "DESIGN TOKEN description for primary color",
+              "default": "#0066cc",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--cem-spacing-base",
+              "summary": "Outer comment on calc with no fallback\n\nNon-host token inside named container query",
+              "description": "DESIGN TOKEN description for base spacing",
+              "default": "1rem",
+              "syntax": "\u003clength\u003e"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "calc-outer-comment",
+          "declaration": {
+            "name": "CalcOuterComment",
+            "module": "src/calc-outer-comment.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "CalcOuterComment",
+          "declaration": {
+            "name": "CalcOuterComment",
+            "module": "src/calc-outer-comment.js"
+          }
+        }
+      ]
+    }
+  ]
+}
