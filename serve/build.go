@@ -416,8 +416,7 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 
 			body, fetchErr := renderPkg.Page(handler, urlPath)
 			if fetchErr != nil {
-				// Non-fatal: file may not be directly servable
-				return nil
+				return fmt.Errorf("transform %s: %w", urlPath, fetchErr)
 			}
 
 			// For JS/TS files, rewrite CSS import attribute query params to .js extension
@@ -511,8 +510,7 @@ func (s *Server) buildDependencies(handler http.Handler, config BuildConfig) err
 	for _, urlPath := range paths {
 		body, err := renderPkg.Page(handler, urlPath)
 		if err != nil {
-			s.logger.Debug("Skip dependency %s: %v", urlPath, err)
-			continue
+			return fmt.Errorf("vendor dependency %s: %w", urlPath, err)
 		}
 
 		outPath := filepath.Join(config.siteRoot(), urlPath)

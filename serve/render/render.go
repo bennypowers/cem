@@ -29,10 +29,7 @@ type PageResult struct {
 // No HTTP server or TCP connection is involved. Panics in the handler
 // are recovered and returned as errors.
 func Page(handler http.Handler, urlPath string) (body []byte, err error) {
-	req, reqErr := http.NewRequest("GET", urlPath, nil)
-	if reqErr != nil {
-		return nil, fmt.Errorf("creating request for %s: %w", urlPath, reqErr)
-	}
+	req := httptest.NewRequest("GET", urlPath, nil)
 	w := httptest.NewRecorder()
 
 	defer func() {
