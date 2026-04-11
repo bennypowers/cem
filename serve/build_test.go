@@ -484,6 +484,21 @@ func TestRewriteJSONScopeKeys(t *testing.T) {
 	}
 }
 
+// forceCloseConnection hijacks an HTTP connection and closes it immediately,
+// causing the client to see an EOF error. Panics if hijacking fails (which
+// would indicate a broken test server, not a test failure).
+func forceCloseConnection(w http.ResponseWriter) {
+	hj, ok := w.(http.Hijacker)
+	if !ok {
+		panic("test server does not support hijacking")
+	}
+	conn, _, err := hj.Hijack()
+	if err != nil {
+		panic(fmt.Sprintf("hijack failed: %v", err))
+	}
+	_ = conn.Close()
+}
+
 func TestRetryFetch_SucceedsOnFirstAttempt(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte("ok"))
@@ -506,15 +521,7 @@ func TestRetryFetch_RetriesOnEOF(t *testing.T) {
 		n := attempts.Add(1)
 		if n <= 2 {
 			// Simulate EOF by hijacking the connection and closing it
-			hj, ok := w.(http.Hijacker)
-			if !ok {
-				t.Fatal("server does not support hijacking")
-			}
-			conn, _, err := hj.Hijack()
-			if err != nil {
-				t.Fatal(err)
-			}
-			_ = conn.Close()
+			forceCloseConnection(w)
 			return
 		}
 		_, _ = w.Write([]byte("recovered"))
@@ -556,15 +563,7 @@ func TestRetryFetch_ExhaustsRetries(t *testing.T) {
 	var attempts atomic.Int32
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		attempts.Add(1)
-		hj, ok := w.(http.Hijacker)
-		if !ok {
-			t.Fatal("server does not support hijacking")
-		}
-		conn, _, err := hj.Hijack()
-		if err != nil {
-			t.Fatal(err)
-		}
-		_ = conn.Close()
+		forceCloseConnection(w)
 	}))
 	defer ts.Close()
 
