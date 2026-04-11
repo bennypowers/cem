@@ -586,8 +586,11 @@ func TestIsTransientError(t *testing.T) {
 	}{
 		{"EOF", io.EOF, true},
 		{"unexpected EOF", io.ErrUnexpectedEOF, true},
+		{"wrapped EOF", fmt.Errorf("Get http://...: %w", io.EOF), true},
 		{"connection reset", &net.OpError{Op: "read", Err: &os.SyscallError{Syscall: "read", Err: fmt.Errorf("connection reset by peer")}}, true},
-		{"not found", fmt.Errorf("HTTP 404"), false},
+		{"connection refused", &net.OpError{Op: "dial", Err: &os.SyscallError{Syscall: "connect", Err: fmt.Errorf("connection refused")}}, true},
+		{"HTTP 404", fmt.Errorf("HTTP 404"), false},
+		{"timeout", &net.OpError{Op: "read", Err: &os.SyscallError{Syscall: "read", Err: fmt.Errorf("i/o timeout")}}, false},
 	}
 
 	for _, tt := range tests {
