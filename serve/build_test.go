@@ -10,11 +10,19 @@ the Free Software Foundation, either version 3 of the License, or
 package serve
 
 import (
+	"fmt"
+	"io"
 	"io/fs"
+	"net"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
+
+	"bennypowers.dev/cem/serve/logger"
 )
 
 func TestSiteRoot(t *testing.T) {
@@ -471,6 +479,121 @@ func TestRewriteJSONScopeKeys(t *testing.T) {
 			got := rewriteJSONScopeKeys(tt.input, tt.basePath)
 			if got != tt.want {
 				t.Errorf("rewriteJSONScopeKeys() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRetryFetch_SucceedsOnFirstAttempt(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("ok"))
+	}))
+	defer ts.Close()
+
+	s := &Server{logger: logger.NewDefaultLogger()}
+	body, err := s.retryFetch(ts, "/test")
+	if err != nil {
+		t.Fatalf("retryFetch() error: %v", err)
+	}
+	if string(body) != "ok" {
+		t.Errorf("retryFetch() = %q, want %q", string(body), "ok")
+	}
+}
+
+func TestRetryFetch_RetriesOnEOF(t *testing.T) {
+	var attempts atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		n := attempts.Add(1)
+		if n <= 2 {
+			// Simulate EOF by hijacking the connection and closing it
+			hj, ok := w.(http.Hijacker)
+			if !ok {
+				t.Fatal("server does not support hijacking")
+			}
+			conn, _, err := hj.Hijack()
+			if err != nil {
+				t.Fatal(err)
+			}
+			_ = conn.Close()
+			return
+		}
+		_, _ = w.Write([]byte("recovered"))
+	}))
+	defer ts.Close()
+
+	s := &Server{logger: logger.NewDefaultLogger()}
+	body, err := s.retryFetch(ts, "/test")
+	if err != nil {
+		t.Fatalf("retryFetch() error after retries: %v", err)
+	}
+	if string(body) != "recovered" {
+		t.Errorf("retryFetch() = %q, want %q", string(body), "recovered")
+	}
+	if got := attempts.Load(); got != 3 {
+		t.Errorf("expected 3 attempts, got %d", got)
+	}
+}
+
+func TestRetryFetch_DoesNotRetryHTTPErrors(t *testing.T) {
+	var attempts atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		attempts.Add(1)
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer ts.Close()
+
+	s := &Server{logger: logger.NewDefaultLogger()}
+	_, err := s.retryFetch(ts, "/missing")
+	if err == nil {
+		t.Fatal("expected error for 404 response")
+	}
+	if got := attempts.Load(); got != 1 {
+		t.Errorf("expected 1 attempt for HTTP error, got %d", got)
+	}
+}
+
+func TestRetryFetch_ExhaustsRetries(t *testing.T) {
+	var attempts atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		attempts.Add(1)
+		hj, ok := w.(http.Hijacker)
+		if !ok {
+			t.Fatal("server does not support hijacking")
+		}
+		conn, _, err := hj.Hijack()
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = conn.Close()
+	}))
+	defer ts.Close()
+
+	s := &Server{logger: logger.NewDefaultLogger()}
+	_, err := s.retryFetch(ts, "/always-fail")
+	if err == nil {
+		t.Fatal("expected error after exhausting retries")
+	}
+	if got := attempts.Load(); got != 4 {
+		t.Errorf("expected 4 attempts (1 + 3 retries), got %d", got)
+	}
+}
+
+func TestIsTransientError(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"EOF", io.EOF, true},
+		{"unexpected EOF", io.ErrUnexpectedEOF, true},
+		{"connection reset", &net.OpError{Op: "read", Err: &os.SyscallError{Syscall: "read", Err: fmt.Errorf("connection reset by peer")}}, true},
+		{"not found", fmt.Errorf("HTTP 404"), false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isTransientError(tt.err); got != tt.want {
+				t.Errorf("isTransientError(%v) = %v, want %v", tt.err, got, tt.want)
 			}
 		})
 	}

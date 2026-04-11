@@ -10,6 +10,7 @@ the Free Software Foundation, either version 3 of the License, or
 package serve
 
 import (
+	"errors"
 	"fmt"
 	"html"
 	"io"
@@ -20,6 +21,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/importmap"
@@ -81,11 +83,16 @@ func (s *Server) Build(config BuildConfig) error {
 	}
 
 	// Write each demo page
+	var pageErrors error
 	for route := range demoRoutes {
 		if err := s.buildPage(ts, route, config); err != nil {
-			s.logger.Warning("Failed to build %s: %v", route, err)
+			s.logger.Error("Failed to build %s: %v", route, err)
+			pageErrors = errors.Join(pageErrors, fmt.Errorf("%s: %w", route, err))
 			continue
 		}
+	}
+	if pageErrors != nil {
+		return fmt.Errorf("failed to build pages: %w", pageErrors)
 	}
 
 	// Copy chrome bundle
@@ -151,22 +158,8 @@ func (s *Server) Build(config BuildConfig) error {
 
 // buildPage fetches a page from the internal server and writes it to disk.
 // The template's {{if .StaticBuild}} block handles chrome-bundle.js injection.
-func (s *Server) buildPage(ts *httptest.Server, route string, config BuildConfig) (retErr error) {
-	resp, err := ts.Client().Get(ts.URL + route)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil && retErr == nil {
-			retErr = closeErr
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("HTTP %d for %s", resp.StatusCode, route)
-	}
-
-	body, err := io.ReadAll(resp.Body)
+func (s *Server) buildPage(ts *httptest.Server, route string, config BuildConfig) error {
+	body, err := s.retryFetch(ts, route)
 	if err != nil {
 		return err
 	}
@@ -313,22 +306,8 @@ func (s *Server) buildLightdomCSS(config BuildConfig) error {
 }
 
 // buildHealthJSON fetches health data from the internal server and writes it as static JSON.
-func (s *Server) buildHealthJSON(ts *httptest.Server, config BuildConfig) (retErr error) {
-	resp, err := ts.Client().Get(ts.URL + "/__cem/api/health")
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil && retErr == nil {
-			retErr = closeErr
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("health API returned %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
+func (s *Server) buildHealthJSON(ts *httptest.Server, config BuildConfig) error {
+	body, err := s.retryFetch(ts, "/__cem/api/health")
 	if err != nil {
 		return err
 	}
@@ -427,7 +406,7 @@ func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig, demoR
 				urlPath = strings.TrimSuffix(urlPath, ".ts") + ".js"
 			}
 
-			body, fetchErr := fetchURL(ts, urlPath)
+			body, fetchErr := s.retryFetch(ts, urlPath)
 			if fetchErr != nil {
 				// Non-fatal: file may not be directly servable
 				return nil
@@ -457,7 +436,7 @@ func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig, demoR
 			// For CSS files, also create a .css.js wrapper (CSS module for JS import)
 			if ext == ".css" {
 				cssModuleURL := urlPath + "?__cem-import-attrs[type]=css"
-				jsBody, jsErr := fetchURL(ts, cssModuleURL)
+				jsBody, jsErr := s.retryFetch(ts, cssModuleURL)
 				if jsErr == nil {
 					jsPath := outPath + ".js"
 					if writeErr := os.WriteFile(jsPath, jsBody, 0o644); writeErr != nil {
@@ -522,7 +501,7 @@ func (s *Server) buildDependencies(ts *httptest.Server, config BuildConfig) erro
 
 	count := 0
 	for _, urlPath := range paths {
-		body, err := fetchURL(ts, urlPath)
+		body, err := s.retryFetch(ts, urlPath)
 		if err != nil {
 			s.logger.Debug("Skip dependency %s: %v", urlPath, err)
 			continue
@@ -540,7 +519,7 @@ func (s *Server) buildDependencies(ts *httptest.Server, config BuildConfig) erro
 		// Also copy source map if it exists
 		if strings.HasSuffix(urlPath, ".js") {
 			mapURL := urlPath + ".map"
-			mapBody, mapErr := fetchURL(ts, mapURL)
+			mapBody, mapErr := s.retryFetch(ts, mapURL)
 			if mapErr == nil {
 				mapPath := outPath + ".map"
 				_ = os.WriteFile(mapPath, mapBody, 0o644)
@@ -711,6 +690,40 @@ func cdnURL(mode, pkg, subpath string) string {
 		// Shouldn't happen, return original
 		return "/node_modules/" + pkg
 	}
+}
+
+// retryFetch wraps fetchURL with exponential backoff for transient errors.
+// It retries up to 3 times with delays of 100ms, 200ms, and 400ms.
+func (s *Server) retryFetch(ts *httptest.Server, urlPath string) ([]byte, error) {
+	const maxRetries = 3
+	delay := 100 * time.Millisecond
+	var lastErr error
+	for attempt := range maxRetries + 1 {
+		body, err := fetchURL(ts, urlPath)
+		if err == nil {
+			return body, nil
+		}
+		lastErr = err
+		if attempt < maxRetries && isTransientError(err) {
+			s.logger.Debug("Retry %d/%d for %s: %v", attempt+1, maxRetries, urlPath, err)
+			time.Sleep(delay)
+			delay *= 2
+			continue
+		}
+		break
+	}
+	return nil, lastErr
+}
+
+// isTransientError reports whether err looks like a temporary network
+// problem that may resolve on retry (EOF, connection reset/refused).
+func isTransientError(err error) bool {
+	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+		return true
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "connection reset") ||
+		strings.Contains(msg, "connection refused")
 }
 
 // fetchURL fetches a URL path from the test server, returning the body bytes.
