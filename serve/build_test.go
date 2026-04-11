@@ -22,6 +22,7 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/logger"
 )
 
@@ -595,6 +596,69 @@ func TestIsTransientError(t *testing.T) {
 				t.Errorf("isTransientError(%v) = %v, want %v", tt.err, got, tt.want)
 			}
 		})
+	}
+}
+
+// TestBuild_ReturnsErrorOnPageFailure verifies that Build() returns a non-nil
+// error when a demo page fetch fails, instead of silently succeeding.
+func TestBuild_ReturnsErrorOnPageFailure(t *testing.T) {
+	// Manifest with two elements: one demo file will exist, one won't.
+	manifest := []byte(`{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/el-ok.ts",
+      "declarations": [{
+        "kind": "class",
+        "customElement": true,
+        "name": "ElOk",
+        "tagName": "el-ok",
+        "demos": [{"description": "OK", "url": "./demo/exists.html"}]
+      }]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/el-bad.ts",
+      "declarations": [{
+        "kind": "class",
+        "customElement": true,
+        "name": "ElBad",
+        "tagName": "el-bad",
+        "demos": [{"description": "Bad", "url": "./demo/missing.html"}]
+      }]
+    }
+  ]
+}`)
+
+	// Create a MapFileSystem with only the "exists" demo file present.
+	mfs := platform.NewMapFileSystem(nil)
+	mfs.AddFile("/test/demo/exists.html", `<el-ok>hello</el-ok>`, 0o644)
+	// Deliberately omit /test/demo/missing.html
+
+	server, err := NewServerWithConfig(Config{
+		Port:   0,
+		Reload: false,
+		FS:     mfs,
+	})
+	if err != nil {
+		t.Fatalf("NewServerWithConfig: %v", err)
+	}
+
+	if err := server.SetWatchDir("/test"); err != nil {
+		t.Fatalf("SetWatchDir: %v", err)
+	}
+	if err := server.SetManifest(manifest); err != nil {
+		t.Fatalf("SetManifest: %v", err)
+	}
+
+	// Build should fail because the missing demo file causes HTTP 500.
+	buildErr := server.Build(BuildConfig{OutputDir: t.TempDir()})
+	if buildErr == nil {
+		t.Fatal("expected Build() to return an error when a page fetch fails, got nil")
+	}
+	if !strings.Contains(buildErr.Error(), "failed to build pages") {
+		t.Errorf("expected error about failed pages, got: %v", buildErr)
 	}
 }
 
