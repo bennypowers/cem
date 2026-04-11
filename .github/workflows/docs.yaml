@@ -17,13 +17,13 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GH_PAT }}
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-      - uses: peaceiris/actions-hugo@v2
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+      - uses: peaceiris/actions-hugo@v3
         with:
           hugo-version: '0.147.9'
           extended: true
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
 
@@ -40,7 +40,7 @@ jobs:
           npm install -g tree-sitter-cli@0.26.3
 
       - name: Cache Neovim plugins and parsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.local/share/nvim

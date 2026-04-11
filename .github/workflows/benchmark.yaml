@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout PR branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
@@ -39,7 +39,7 @@ jobs:
           npm install -g tree-sitter-cli@0.26.3
 
       - name: Cache Neovim plugins and parsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.local/share/nvim
@@ -123,7 +123,7 @@ jobs:
         run: scripts/lsp-benchmark-ci-run.sh pr
 
       - name: Checkout target branch (base)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.base_ref }}
           clean: false
@@ -169,7 +169,7 @@ jobs:
           fi
 
       - name: Restore PR context for comparison
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.sha }}
           clean: false
@@ -185,14 +185,14 @@ jobs:
 
       - name: Find previous benchmark comment
         id: find-comment
-        uses: peter-evans/find-comment@v3
+        uses: peter-evans/find-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "github-actions[bot]"
           body-includes: "### Generate Benchmarks"
 
       - name: Create or update sticky benchmark comment
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body-file: combined_bench_report.md
@@ -200,7 +200,7 @@ jobs:
           edit-mode: replace
 
       - name: Upload benchmark artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-artifacts
           path: |

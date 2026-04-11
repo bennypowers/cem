@@ -29,10 +29,10 @@ jobs:
     needs: npm  # Wait for npm packages to be published
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: extensions/vscode/.nvmrc
           cache: npm
@@ -96,14 +96,11 @@ jobs:
           echo "Found VSIX file: $VSIX_FILE"
 
       - name: Upload VSIX to release
-        uses: actions/upload-release-asset@v1
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} \
+            "extensions/vscode/${{ steps.find_vsix.outputs.vsix_file }}#cem-vscode-${{ github.event.release.tag_name }}.vsix"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: extensions/vscode/${{ steps.find_vsix.outputs.vsix_file }}
-          asset_name: cem-vscode-${{ github.event.release.tag_name }}.vsix
-          asset_content_type: application/zip
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   zed-extension:
     name: Build and publish Zed extension
@@ -111,7 +108,7 @@ jobs:
     needs: npm  # Wait for npm packages to be published
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Get extension version
         id: version
@@ -121,7 +118,7 @@ jobs:
           echo "Extension version: $VERSION"
 
       - name: Checkout zed-extensions fork
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: bennypowers/zed-extensions
           path: zed-extensions
