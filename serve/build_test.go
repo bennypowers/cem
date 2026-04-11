@@ -10,20 +10,14 @@ the Free Software Foundation, either version 3 of the License, or
 package serve
 
 import (
-	"fmt"
-	"io"
 	"io/fs"
-	"net"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
-	"sync/atomic"
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform"
-	"bennypowers.dev/cem/serve/logger"
 )
 
 func TestSiteRoot(t *testing.T) {
@@ -485,120 +479,31 @@ func TestRewriteJSONScopeKeys(t *testing.T) {
 	}
 }
 
-// forceCloseConnection hijacks an HTTP connection and closes it immediately,
-// causing the client to see an EOF error. Panics if hijacking fails (which
-// would indicate a broken test server, not a test failure).
-func forceCloseConnection(w http.ResponseWriter) {
-	hj, ok := w.(http.Hijacker)
-	if !ok {
-		panic("test server does not support hijacking")
-	}
-	conn, _, err := hj.Hijack()
-	if err != nil {
-		panic(fmt.Sprintf("hijack failed: %v", err))
-	}
-	_ = conn.Close()
-}
+func TestRenderURL_Success(t *testing.T) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("hello"))
+	})
 
-func TestRetryFetch_SucceedsOnFirstAttempt(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte("ok"))
-	}))
-	defer ts.Close()
-
-	s := &Server{logger: logger.NewDefaultLogger()}
-	body, err := s.retryFetch(ts, "/test")
+	body, err := renderURL(handler, "/test")
 	if err != nil {
-		t.Fatalf("retryFetch() error: %v", err)
+		t.Fatalf("renderURL() error: %v", err)
 	}
-	if string(body) != "ok" {
-		t.Errorf("retryFetch() = %q, want %q", string(body), "ok")
+	if string(body) != "hello" {
+		t.Errorf("renderURL() = %q, want %q", string(body), "hello")
 	}
 }
 
-func TestRetryFetch_RetriesOnEOF(t *testing.T) {
-	var attempts atomic.Int32
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		n := attempts.Add(1)
-		if n <= 2 {
-			// Simulate EOF by hijacking the connection and closing it
-			forceCloseConnection(w)
-			return
-		}
-		_, _ = w.Write([]byte("recovered"))
-	}))
-	defer ts.Close()
+func TestRenderURL_NonOKStatus(t *testing.T) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	})
 
-	s := &Server{logger: logger.NewDefaultLogger()}
-	body, err := s.retryFetch(ts, "/test")
-	if err != nil {
-		t.Fatalf("retryFetch() error after retries: %v", err)
-	}
-	if string(body) != "recovered" {
-		t.Errorf("retryFetch() = %q, want %q", string(body), "recovered")
-	}
-	if got := attempts.Load(); got != 3 {
-		t.Errorf("expected 3 attempts, got %d", got)
-	}
-}
-
-func TestRetryFetch_DoesNotRetryHTTPErrors(t *testing.T) {
-	var attempts atomic.Int32
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		attempts.Add(1)
-		w.WriteHeader(http.StatusNotFound)
-	}))
-	defer ts.Close()
-
-	s := &Server{logger: logger.NewDefaultLogger()}
-	_, err := s.retryFetch(ts, "/missing")
+	_, err := renderURL(handler, "/fail")
 	if err == nil {
-		t.Fatal("expected error for 404 response")
+		t.Fatal("expected error for 500 response")
 	}
-	if got := attempts.Load(); got != 1 {
-		t.Errorf("expected 1 attempt for HTTP error, got %d", got)
-	}
-}
-
-func TestRetryFetch_ExhaustsRetries(t *testing.T) {
-	var attempts atomic.Int32
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		attempts.Add(1)
-		forceCloseConnection(w)
-	}))
-	defer ts.Close()
-
-	s := &Server{logger: logger.NewDefaultLogger()}
-	_, err := s.retryFetch(ts, "/always-fail")
-	if err == nil {
-		t.Fatal("expected error after exhausting retries")
-	}
-	if got := attempts.Load(); got != 4 {
-		t.Errorf("expected 4 attempts (1 + 3 retries), got %d", got)
-	}
-}
-
-func TestIsTransientError(t *testing.T) {
-	tests := []struct {
-		name string
-		err  error
-		want bool
-	}{
-		{"EOF", io.EOF, true},
-		{"unexpected EOF", io.ErrUnexpectedEOF, true},
-		{"wrapped EOF", fmt.Errorf("Get http://...: %w", io.EOF), true},
-		{"connection reset", &net.OpError{Op: "read", Err: &os.SyscallError{Syscall: "read", Err: fmt.Errorf("connection reset by peer")}}, true},
-		{"connection refused", &net.OpError{Op: "dial", Err: &os.SyscallError{Syscall: "connect", Err: fmt.Errorf("connection refused")}}, true},
-		{"HTTP 404", fmt.Errorf("HTTP 404"), false},
-		{"timeout", &net.OpError{Op: "read", Err: &os.SyscallError{Syscall: "read", Err: fmt.Errorf("i/o timeout")}}, false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := isTransientError(tt.err); got != tt.want {
-				t.Errorf("isTransientError(%v) = %v, want %v", tt.err, got, tt.want)
-			}
-		})
+	if !strings.Contains(err.Error(), "HTTP 500") {
+		t.Errorf("expected HTTP 500 error, got: %v", err)
 	}
 }
 

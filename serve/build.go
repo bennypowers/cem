@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"html"
-	"io"
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
@@ -21,7 +20,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
 
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/importmap"
@@ -48,8 +46,8 @@ func (c BuildConfig) siteRoot() string {
 }
 
 // Build generates a static site from the dev server's demo pages.
-// It spins up the full middleware chain, renders each page via internal
-// HTTP requests, and writes the results to disk.
+// It renders each page in-process through the middleware chain
+// and writes the results to disk.
 func (s *Server) Build(config BuildConfig) error {
 	if config.OutputDir == "" {
 		config.OutputDir = "dist"
@@ -73,19 +71,21 @@ func (s *Server) Build(config BuildConfig) error {
 		return fmt.Errorf("no demo routes found")
 	}
 
-	// Create a test server backed by the real handler
-	ts := httptest.NewServer(s.Handler())
-	defer ts.Close()
+	// Render pages in-process through the middleware chain.
+	// No HTTP server is started -- requests are handled directly via
+	// handler.ServeHTTP, avoiding TCP connections and the EOF errors
+	// that httptest.Server causes on resource-constrained CI runners.
+	handler := s.Handler()
 
 	// Write the index listing page
-	if err := s.buildPage(ts, "/", config); err != nil {
+	if err := s.buildPage(handler, "/", config); err != nil {
 		return fmt.Errorf("build index: %w", err)
 	}
 
 	// Write each demo page
 	var pageErrors error
 	for route := range demoRoutes {
-		if err := s.buildPage(ts, route, config); err != nil {
+		if err := s.buildPage(handler, route, config); err != nil {
 			s.logger.Error("Failed to build %s: %v", route, err)
 			pageErrors = errors.Join(pageErrors, fmt.Errorf("%s: %w", route, err))
 			continue
@@ -111,7 +111,7 @@ func (s *Server) Build(config BuildConfig) error {
 	}
 
 	// Transform and copy user source files (TS→JS, CSS modules, etc.)
-	if err := s.buildUserSources(ts, config, demoRoutes); err != nil {
+	if err := s.buildUserSources(handler, config, demoRoutes); err != nil {
 		return fmt.Errorf("build user sources: %w", err)
 	}
 
@@ -124,7 +124,7 @@ func (s *Server) Build(config BuildConfig) error {
 		}
 	default:
 		// Vendor mode (default): copy node_modules to output
-		if err := s.buildDependencies(ts, config); err != nil {
+		if err := s.buildDependencies(handler, config); err != nil {
 			return fmt.Errorf("build dependencies: %w", err)
 		}
 	}
@@ -138,7 +138,7 @@ func (s *Server) Build(config BuildConfig) error {
 	}
 
 	// Pre-render health API as static JSON
-	if err := s.buildHealthJSON(ts, config); err != nil {
+	if err := s.buildHealthJSON(handler, config); err != nil {
 		s.logger.Warning("Failed to build health JSON: %v", err)
 	}
 
@@ -156,10 +156,10 @@ func (s *Server) Build(config BuildConfig) error {
 	return nil
 }
 
-// buildPage fetches a page from the internal server and writes it to disk.
+// buildPage renders a page through the handler and writes it to disk.
 // The template's {{if .StaticBuild}} block handles chrome-bundle.js injection.
-func (s *Server) buildPage(ts *httptest.Server, route string, config BuildConfig) error {
-	body, err := s.retryFetch(ts, route)
+func (s *Server) buildPage(handler http.Handler, route string, config BuildConfig) error {
+	body, err := renderURL(handler, route)
 	if err != nil {
 		return err
 	}
@@ -305,9 +305,9 @@ func (s *Server) buildLightdomCSS(config BuildConfig) error {
 	return os.WriteFile(outPath, []byte(combined.String()), 0o644)
 }
 
-// buildHealthJSON fetches health data from the internal server and writes it as static JSON.
-func (s *Server) buildHealthJSON(ts *httptest.Server, config BuildConfig) error {
-	body, err := s.retryFetch(ts, "/__cem/api/health")
+// buildHealthJSON renders the health API endpoint and writes it as static JSON.
+func (s *Server) buildHealthJSON(handler http.Handler, config BuildConfig) error {
+	body, err := renderURL(handler, "/__cem/api/health")
 	if err != nil {
 		return err
 	}
@@ -337,9 +337,9 @@ export class CEMReloadClient {
 	return os.WriteFile(outPath, []byte(stub), 0o644)
 }
 
-// buildUserSources walks the user's source directory and fetches each file
-// through the test server, which applies TS→JS and CSS transforms.
-func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig, demoRoutes map[string]*middleware.DemoRouteEntry) error {
+// buildUserSources walks the user's source directory and renders each file
+// through the handler, which applies TS→JS and CSS transforms.
+func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demoRoutes map[string]*middleware.DemoRouteEntry) error {
 	watchDir := s.WatchDir()
 	if watchDir == "" {
 		return nil
@@ -406,7 +406,7 @@ func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig, demoR
 				urlPath = strings.TrimSuffix(urlPath, ".ts") + ".js"
 			}
 
-			body, fetchErr := s.retryFetch(ts, urlPath)
+			body, fetchErr := renderURL(handler, urlPath)
 			if fetchErr != nil {
 				// Non-fatal: file may not be directly servable
 				return nil
@@ -436,7 +436,7 @@ func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig, demoR
 			// For CSS files, also create a .css.js wrapper (CSS module for JS import)
 			if ext == ".css" {
 				cssModuleURL := urlPath + "?__cem-import-attrs[type]=css"
-				jsBody, jsErr := s.retryFetch(ts, cssModuleURL)
+				jsBody, jsErr := renderURL(handler, cssModuleURL)
 				if jsErr == nil {
 					jsPath := outPath + ".js"
 					if writeErr := os.WriteFile(jsPath, jsBody, 0o644); writeErr != nil {
@@ -461,8 +461,8 @@ func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig, demoR
 }
 
 // buildDependencies copies node_modules files referenced by the import map.
-// Fetches through the test server so transforms are applied.
-func (s *Server) buildDependencies(ts *httptest.Server, config BuildConfig) error {
+// Renders through the handler so transforms are applied.
+func (s *Server) buildDependencies(handler http.Handler, config BuildConfig) error {
 	im := s.ImportMap()
 	if im == nil {
 		return nil
@@ -501,7 +501,7 @@ func (s *Server) buildDependencies(ts *httptest.Server, config BuildConfig) erro
 
 	count := 0
 	for _, urlPath := range paths {
-		body, err := s.retryFetch(ts, urlPath)
+		body, err := renderURL(handler, urlPath)
 		if err != nil {
 			s.logger.Debug("Skip dependency %s: %v", urlPath, err)
 			continue
@@ -519,7 +519,7 @@ func (s *Server) buildDependencies(ts *httptest.Server, config BuildConfig) erro
 		// Also copy source map if it exists
 		if strings.HasSuffix(urlPath, ".js") {
 			mapURL := urlPath + ".map"
-			mapBody, mapErr := s.retryFetch(ts, mapURL)
+			mapBody, mapErr := renderURL(handler, mapURL)
 			if mapErr == nil {
 				mapPath := outPath + ".map"
 				_ = os.WriteFile(mapPath, mapBody, 0o644)
@@ -692,57 +692,21 @@ func cdnURL(mode, pkg, subpath string) string {
 	}
 }
 
-// retryFetch wraps fetchURL with exponential backoff for transient errors.
-// It retries up to 3 times with delays of 100ms, 200ms, and 400ms.
-func (s *Server) retryFetch(ts *httptest.Server, urlPath string) ([]byte, error) {
-	const maxRetries = 3
-	delay := 100 * time.Millisecond
-	var lastErr error
-	for attempt := range maxRetries + 1 {
-		body, err := fetchURL(ts, urlPath)
-		if err == nil {
-			return body, nil
-		}
-		lastErr = err
-		if attempt < maxRetries && isTransientError(err) {
-			s.logger.Debug("Retry %d/%d for %s: %v", attempt+1, maxRetries, urlPath, err)
-			time.Sleep(delay)
-			delay *= 2
-			continue
-		}
-		break
-	}
-	return nil, lastErr
-}
-
-// isTransientError reports whether err looks like a temporary network
-// problem that may resolve on retry (EOF, connection reset/refused).
-func isTransientError(err error) bool {
-	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
-		return true
-	}
-	msg := err.Error()
-	return strings.Contains(msg, "connection reset") ||
-		strings.Contains(msg, "connection refused")
-}
-
-// fetchURL fetches a URL path from the test server, returning the body bytes.
-func fetchURL(ts *httptest.Server, urlPath string) (retBody []byte, retErr error) {
-	resp, err := ts.Client().Get(ts.URL + urlPath)
+// renderURL renders a URL path through the handler in-process, returning the body bytes.
+// No HTTP server or TCP connection is involved.
+func renderURL(handler http.Handler, urlPath string) ([]byte, error) {
+	req, err := http.NewRequest("GET", urlPath, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating request for %s: %w", urlPath, err)
 	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil && retErr == nil {
-			retErr = closeErr
-		}
-	}()
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
+	if w.Code != http.StatusOK {
+		return nil, fmt.Errorf("HTTP %d", w.Code)
 	}
 
-	return io.ReadAll(resp.Body)
+	return w.Body.Bytes(), nil
 }
 
 // rewriteAssetPaths rewrites absolute paths in JS and CSS assets for base path deployment.
