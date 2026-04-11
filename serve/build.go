@@ -92,6 +92,7 @@ func (s *Server) Build(config BuildConfig) error {
 	for route := range demoRoutes {
 		routeList = append(routeList, route)
 	}
+	sort.Strings(routeList)
 	results := renderPkg.Pages(handler, routeList, runtime.NumCPU())
 
 	var pageErrors error
@@ -444,13 +445,14 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 			if ext == ".css" {
 				cssModuleURL := urlPath + "?__cem-import-attrs[type]=css"
 				jsBody, jsErr := renderPkg.Page(handler, cssModuleURL)
-				if jsErr == nil {
-					jsPath := outPath + ".js"
-					if writeErr := os.WriteFile(jsPath, jsBody, 0o644); writeErr != nil {
-						return writeErr
-					}
-					count++
+				if jsErr != nil {
+					return fmt.Errorf("transform CSS module %s: %w", cssModuleURL, jsErr)
 				}
+				jsPath := outPath + ".js"
+				if writeErr := os.WriteFile(jsPath, jsBody, 0o644); writeErr != nil {
+					return writeErr
+				}
+				count++
 			}
 
 			return nil
