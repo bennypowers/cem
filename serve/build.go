@@ -10,20 +10,21 @@ the Free Software Foundation, either version 3 of the License, or
 package serve
 
 import (
+	"errors"
 	"fmt"
 	"html"
-	"io"
 	"io/fs"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/importmap"
 	"bennypowers.dev/cem/serve/middleware/routes"
+	renderPkg "bennypowers.dev/cem/serve/render"
 )
 
 // BuildConfig holds configuration for static site generation.
@@ -46,8 +47,8 @@ func (c BuildConfig) siteRoot() string {
 }
 
 // Build generates a static site from the dev server's demo pages.
-// It spins up the full middleware chain, renders each page via internal
-// HTTP requests, and writes the results to disk.
+// It renders each page in-process through the middleware chain
+// and writes the results to disk.
 func (s *Server) Build(config BuildConfig) error {
 	if config.OutputDir == "" {
 		config.OutputDir = "dist"
@@ -71,21 +72,42 @@ func (s *Server) Build(config BuildConfig) error {
 		return fmt.Errorf("no demo routes found")
 	}
 
-	// Create a test server backed by the real handler
-	ts := httptest.NewServer(s.Handler())
-	defer ts.Close()
+	// Render pages in-process through the middleware chain.
+	// No HTTP server is started -- requests are handled directly via
+	// handler.ServeHTTP, avoiding TCP connections and the EOF errors
+	// that httptest.Server causes on resource-constrained CI runners.
+	handler := s.Handler()
 
 	// Write the index listing page
-	if err := s.buildPage(ts, "/", config); err != nil {
+	indexBody, err := renderPkg.Page(handler, "/")
+	if err != nil {
 		return fmt.Errorf("build index: %w", err)
 	}
+	if err := writePage("/", indexBody, config); err != nil {
+		return fmt.Errorf("write index: %w", err)
+	}
 
-	// Write each demo page
+	// Render all demo pages concurrently
+	routeList := make([]string, 0, len(demoRoutes))
 	for route := range demoRoutes {
-		if err := s.buildPage(ts, route, config); err != nil {
-			s.logger.Warning("Failed to build %s: %v", route, err)
+		routeList = append(routeList, route)
+	}
+	sort.Strings(routeList)
+	results := renderPkg.Pages(handler, routeList, runtime.NumCPU())
+
+	var pageErrors error
+	for _, res := range results {
+		if res.Err != nil {
+			s.logger.Error("Failed to build %s: %v", res.Route, res.Err)
+			pageErrors = errors.Join(pageErrors, fmt.Errorf("%s: %w", res.Route, res.Err))
 			continue
 		}
+		if err := writePage(res.Route, res.Body, config); err != nil {
+			return fmt.Errorf("write %s: %w", res.Route, err)
+		}
+	}
+	if pageErrors != nil {
+		return fmt.Errorf("failed to build pages: %w", pageErrors)
 	}
 
 	// Copy chrome bundle
@@ -104,7 +126,7 @@ func (s *Server) Build(config BuildConfig) error {
 	}
 
 	// Transform and copy user source files (TS→JS, CSS modules, etc.)
-	if err := s.buildUserSources(ts, config, demoRoutes); err != nil {
+	if err := s.buildUserSources(handler, config, demoRoutes); err != nil {
 		return fmt.Errorf("build user sources: %w", err)
 	}
 
@@ -117,7 +139,7 @@ func (s *Server) Build(config BuildConfig) error {
 		}
 	default:
 		// Vendor mode (default): copy node_modules to output
-		if err := s.buildDependencies(ts, config); err != nil {
+		if err := s.buildDependencies(handler, config); err != nil {
 			return fmt.Errorf("build dependencies: %w", err)
 		}
 	}
@@ -131,7 +153,7 @@ func (s *Server) Build(config BuildConfig) error {
 	}
 
 	// Pre-render health API as static JSON
-	if err := s.buildHealthJSON(ts, config); err != nil {
+	if err := s.buildHealthJSON(handler, config); err != nil {
 		s.logger.Warning("Failed to build health JSON: %v", err)
 	}
 
@@ -149,28 +171,8 @@ func (s *Server) Build(config BuildConfig) error {
 	return nil
 }
 
-// buildPage fetches a page from the internal server and writes it to disk.
-// The template's {{if .StaticBuild}} block handles chrome-bundle.js injection.
-func (s *Server) buildPage(ts *httptest.Server, route string, config BuildConfig) (retErr error) {
-	resp, err := ts.Client().Get(ts.URL + route)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil && retErr == nil {
-			retErr = closeErr
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("HTTP %d for %s", resp.StatusCode, route)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
+// writePage writes rendered page bytes to disk, applying base path rewrites.
+func writePage(route string, body []byte, config BuildConfig) error {
 	// Rewrite absolute URLs with base path prefix
 	if config.BasePath != "" {
 		body = rewriteBasePath(body, config.BasePath)
@@ -312,23 +314,9 @@ func (s *Server) buildLightdomCSS(config BuildConfig) error {
 	return os.WriteFile(outPath, []byte(combined.String()), 0o644)
 }
 
-// buildHealthJSON fetches health data from the internal server and writes it as static JSON.
-func (s *Server) buildHealthJSON(ts *httptest.Server, config BuildConfig) (retErr error) {
-	resp, err := ts.Client().Get(ts.URL + "/__cem/api/health")
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil && retErr == nil {
-			retErr = closeErr
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("health API returned %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
+// buildHealthJSON renders the health API endpoint and writes it as static JSON.
+func (s *Server) buildHealthJSON(handler http.Handler, config BuildConfig) error {
+	body, err := renderPkg.Page(handler, "/__cem/api/health")
 	if err != nil {
 		return err
 	}
@@ -358,9 +346,9 @@ export class CEMReloadClient {
 	return os.WriteFile(outPath, []byte(stub), 0o644)
 }
 
-// buildUserSources walks the user's source directory and fetches each file
-// through the test server, which applies TS→JS and CSS transforms.
-func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig, demoRoutes map[string]*middleware.DemoRouteEntry) error {
+// buildUserSources walks the user's source directory and renders each file
+// through the handler, which applies TS→JS and CSS transforms.
+func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demoRoutes map[string]*middleware.DemoRouteEntry) error {
 	watchDir := s.WatchDir()
 	if watchDir == "" {
 		return nil
@@ -427,10 +415,9 @@ func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig, demoR
 				urlPath = strings.TrimSuffix(urlPath, ".ts") + ".js"
 			}
 
-			body, fetchErr := fetchURL(ts, urlPath)
+			body, fetchErr := renderPkg.Page(handler, urlPath)
 			if fetchErr != nil {
-				// Non-fatal: file may not be directly servable
-				return nil
+				return fmt.Errorf("transform %s: %w", urlPath, fetchErr)
 			}
 
 			// For JS/TS files, rewrite CSS import attribute query params to .js extension
@@ -457,14 +444,15 @@ func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig, demoR
 			// For CSS files, also create a .css.js wrapper (CSS module for JS import)
 			if ext == ".css" {
 				cssModuleURL := urlPath + "?__cem-import-attrs[type]=css"
-				jsBody, jsErr := fetchURL(ts, cssModuleURL)
-				if jsErr == nil {
-					jsPath := outPath + ".js"
-					if writeErr := os.WriteFile(jsPath, jsBody, 0o644); writeErr != nil {
-						return writeErr
-					}
-					count++
+				jsBody, jsErr := renderPkg.Page(handler, cssModuleURL)
+				if jsErr != nil {
+					return fmt.Errorf("transform CSS module %s: %w", cssModuleURL, jsErr)
 				}
+				jsPath := outPath + ".js"
+				if writeErr := os.WriteFile(jsPath, jsBody, 0o644); writeErr != nil {
+					return writeErr
+				}
+				count++
 			}
 
 			return nil
@@ -482,8 +470,8 @@ func (s *Server) buildUserSources(ts *httptest.Server, config BuildConfig, demoR
 }
 
 // buildDependencies copies node_modules files referenced by the import map.
-// Fetches through the test server so transforms are applied.
-func (s *Server) buildDependencies(ts *httptest.Server, config BuildConfig) error {
+// Renders through the handler so transforms are applied.
+func (s *Server) buildDependencies(handler http.Handler, config BuildConfig) error {
 	im := s.ImportMap()
 	if im == nil {
 		return nil
@@ -522,10 +510,9 @@ func (s *Server) buildDependencies(ts *httptest.Server, config BuildConfig) erro
 
 	count := 0
 	for _, urlPath := range paths {
-		body, err := fetchURL(ts, urlPath)
+		body, err := renderPkg.Page(handler, urlPath)
 		if err != nil {
-			s.logger.Debug("Skip dependency %s: %v", urlPath, err)
-			continue
+			return fmt.Errorf("vendor dependency %s: %w", urlPath, err)
 		}
 
 		outPath := filepath.Join(config.siteRoot(), urlPath)
@@ -540,7 +527,7 @@ func (s *Server) buildDependencies(ts *httptest.Server, config BuildConfig) erro
 		// Also copy source map if it exists
 		if strings.HasSuffix(urlPath, ".js") {
 			mapURL := urlPath + ".map"
-			mapBody, mapErr := fetchURL(ts, mapURL)
+			mapBody, mapErr := renderPkg.Page(handler, mapURL)
 			if mapErr == nil {
 				mapPath := outPath + ".map"
 				_ = os.WriteFile(mapPath, mapBody, 0o644)
@@ -711,25 +698,6 @@ func cdnURL(mode, pkg, subpath string) string {
 		// Shouldn't happen, return original
 		return "/node_modules/" + pkg
 	}
-}
-
-// fetchURL fetches a URL path from the test server, returning the body bytes.
-func fetchURL(ts *httptest.Server, urlPath string) (retBody []byte, retErr error) {
-	resp, err := ts.Client().Get(ts.URL + urlPath)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil && retErr == nil {
-			retErr = closeErr
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
-	}
-
-	return io.ReadAll(resp.Body)
 }
 
 // rewriteAssetPaths rewrites absolute paths in JS and CSS assets for base path deployment.

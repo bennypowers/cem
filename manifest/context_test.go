@@ -233,6 +233,62 @@ func TestTagRenderableClassMethods(t *testing.T) {
 	}
 }
 
+// TestRenderableCustomElementDeclarations_ExportWithoutDeclaration verifies that
+// a CustomElementExport with no matching CustomElementDeclaration in the same
+// module does not panic (regression test for #288).
+func TestRenderableCustomElementDeclarations_ExportWithoutDeclaration(t *testing.T) {
+	pkg := &Package{
+		Modules: []Module{
+			{
+				Kind: "javascript-module",
+				Path: "src/wrapper.js",
+				Declarations: []Declaration{
+					// No CustomElementDeclaration here
+				},
+				Exports: []Export{
+					// Re-export of an element defined elsewhere
+					&CustomElementExport{
+						Name:      "other-element",
+						StartByte: 1,
+					},
+				},
+			},
+			{
+				Kind: "javascript-module",
+				Path: "src/my-element.js",
+				Declarations: []Declaration{
+					&CustomElementDeclaration{
+						ClassDeclaration: ClassDeclaration{
+							ClassLike: ClassLike{
+								FullyQualified: FullyQualified{Name: "MyElement"},
+							},
+							Kind: "class",
+						},
+						CustomElement: CustomElement{
+							TagName:       "my-element",
+							CustomElement: true,
+						},
+					},
+				},
+				Exports: []Export{
+					&CustomElementExport{Name: "my-element", StartByte: 1},
+				},
+			},
+		},
+	}
+
+	// Must not panic
+	tags := pkg.RenderableCustomElementDeclarations()
+
+	// Should contain only the module with a matching declaration+export
+	if len(tags) != 1 {
+		t.Fatalf("expected 1 tag, got %d", len(tags))
+	}
+	if tags[0].Name() != "my-element" {
+		t.Errorf("expected tag 'my-element', got %q", tags[0].Name())
+	}
+}
+
 func TestGetTagAttrsWithContext_TagNotFound(t *testing.T) {
 	pkg := makeTestPackage()
 	_, err := pkg.TagRenderableAttributes("does-not-exist")

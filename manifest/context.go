@@ -133,6 +133,10 @@ func (x *Package) RenderableCustomElementDeclarations() (tags []*RenderableCusto
 		for _, e := range m.Exports {
 			if cee, ok := e.(*CustomElementExport); ok {
 				r := mrs[cee.Name]
+				if r == nil {
+					// Export has no matching declaration in this module (e.g., re-export)
+					continue
+				}
 				r.CustomElementExport = cee
 				mrs[cee.Name] = r
 			}
