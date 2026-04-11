@@ -11,7 +11,6 @@ package serve
 
 import (
 	"io/fs"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -476,34 +475,6 @@ func TestRewriteJSONScopeKeys(t *testing.T) {
 				t.Errorf("rewriteJSONScopeKeys() = %q, want %q", got, tt.want)
 			}
 		})
-	}
-}
-
-func TestRenderURL_Success(t *testing.T) {
-	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte("hello"))
-	})
-
-	body, err := renderURL(handler, "/test")
-	if err != nil {
-		t.Fatalf("renderURL() error: %v", err)
-	}
-	if string(body) != "hello" {
-		t.Errorf("renderURL() = %q, want %q", string(body), "hello")
-	}
-}
-
-func TestRenderURL_NonOKStatus(t *testing.T) {
-	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusInternalServerError)
-	})
-
-	_, err := renderURL(handler, "/fail")
-	if err == nil {
-		t.Fatal("expected error for 500 response")
-	}
-	if !strings.Contains(err.Error(), "HTTP 500") {
-		t.Errorf("expected HTTP 500 error, got: %v", err)
 	}
 }
 

@@ -15,15 +15,16 @@ import (
 	"html"
 	"io/fs"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/importmap"
 	"bennypowers.dev/cem/serve/middleware/routes"
+	renderPkg "bennypowers.dev/cem/serve/render"
 )
 
 // BuildConfig holds configuration for static site generation.
@@ -78,17 +79,30 @@ func (s *Server) Build(config BuildConfig) error {
 	handler := s.Handler()
 
 	// Write the index listing page
-	if err := s.buildPage(handler, "/", config); err != nil {
+	indexBody, err := renderPkg.Page(handler, "/")
+	if err != nil {
 		return fmt.Errorf("build index: %w", err)
 	}
+	if err := writePage("/", indexBody, config); err != nil {
+		return fmt.Errorf("write index: %w", err)
+	}
 
-	// Write each demo page
-	var pageErrors error
+	// Render all demo pages concurrently
+	routeList := make([]string, 0, len(demoRoutes))
 	for route := range demoRoutes {
-		if err := s.buildPage(handler, route, config); err != nil {
-			s.logger.Error("Failed to build %s: %v", route, err)
-			pageErrors = errors.Join(pageErrors, fmt.Errorf("%s: %w", route, err))
+		routeList = append(routeList, route)
+	}
+	results := renderPkg.Pages(handler, routeList, runtime.NumCPU())
+
+	var pageErrors error
+	for _, res := range results {
+		if res.Err != nil {
+			s.logger.Error("Failed to build %s: %v", res.Route, res.Err)
+			pageErrors = errors.Join(pageErrors, fmt.Errorf("%s: %w", res.Route, res.Err))
 			continue
+		}
+		if err := writePage(res.Route, res.Body, config); err != nil {
+			return fmt.Errorf("write %s: %w", res.Route, err)
 		}
 	}
 	if pageErrors != nil {
@@ -156,14 +170,8 @@ func (s *Server) Build(config BuildConfig) error {
 	return nil
 }
 
-// buildPage renders a page through the handler and writes it to disk.
-// The template's {{if .StaticBuild}} block handles chrome-bundle.js injection.
-func (s *Server) buildPage(handler http.Handler, route string, config BuildConfig) error {
-	body, err := renderURL(handler, route)
-	if err != nil {
-		return err
-	}
-
+// writePage writes rendered page bytes to disk, applying base path rewrites.
+func writePage(route string, body []byte, config BuildConfig) error {
 	// Rewrite absolute URLs with base path prefix
 	if config.BasePath != "" {
 		body = rewriteBasePath(body, config.BasePath)
@@ -307,7 +315,7 @@ func (s *Server) buildLightdomCSS(config BuildConfig) error {
 
 // buildHealthJSON renders the health API endpoint and writes it as static JSON.
 func (s *Server) buildHealthJSON(handler http.Handler, config BuildConfig) error {
-	body, err := renderURL(handler, "/__cem/api/health")
+	body, err := renderPkg.Page(handler, "/__cem/api/health")
 	if err != nil {
 		return err
 	}
@@ -406,7 +414,7 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 				urlPath = strings.TrimSuffix(urlPath, ".ts") + ".js"
 			}
 
-			body, fetchErr := renderURL(handler, urlPath)
+			body, fetchErr := renderPkg.Page(handler, urlPath)
 			if fetchErr != nil {
 				// Non-fatal: file may not be directly servable
 				return nil
@@ -436,7 +444,7 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 			// For CSS files, also create a .css.js wrapper (CSS module for JS import)
 			if ext == ".css" {
 				cssModuleURL := urlPath + "?__cem-import-attrs[type]=css"
-				jsBody, jsErr := renderURL(handler, cssModuleURL)
+				jsBody, jsErr := renderPkg.Page(handler, cssModuleURL)
 				if jsErr == nil {
 					jsPath := outPath + ".js"
 					if writeErr := os.WriteFile(jsPath, jsBody, 0o644); writeErr != nil {
@@ -501,7 +509,7 @@ func (s *Server) buildDependencies(handler http.Handler, config BuildConfig) err
 
 	count := 0
 	for _, urlPath := range paths {
-		body, err := renderURL(handler, urlPath)
+		body, err := renderPkg.Page(handler, urlPath)
 		if err != nil {
 			s.logger.Debug("Skip dependency %s: %v", urlPath, err)
 			continue
@@ -519,7 +527,7 @@ func (s *Server) buildDependencies(handler http.Handler, config BuildConfig) err
 		// Also copy source map if it exists
 		if strings.HasSuffix(urlPath, ".js") {
 			mapURL := urlPath + ".map"
-			mapBody, mapErr := renderURL(handler, mapURL)
+			mapBody, mapErr := renderPkg.Page(handler, mapURL)
 			if mapErr == nil {
 				mapPath := outPath + ".map"
 				_ = os.WriteFile(mapPath, mapBody, 0o644)
@@ -690,23 +698,6 @@ func cdnURL(mode, pkg, subpath string) string {
 		// Shouldn't happen, return original
 		return "/node_modules/" + pkg
 	}
-}
-
-// renderURL renders a URL path through the handler in-process, returning the body bytes.
-// No HTTP server or TCP connection is involved.
-func renderURL(handler http.Handler, urlPath string) ([]byte, error) {
-	req, err := http.NewRequest("GET", urlPath, nil)
-	if err != nil {
-		return nil, fmt.Errorf("creating request for %s: %w", urlPath, err)
-	}
-	w := httptest.NewRecorder()
-	handler.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d", w.Code)
-	}
-
-	return w.Body.Bytes(), nil
 }
 
 // rewriteAssetPaths rewrites absolute paths in JS and CSS assets for base path deployment.
