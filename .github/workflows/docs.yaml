@@ -32,19 +32,47 @@ jobs:
         with:
           node-version-file: .nvmrc
 
+      - name: Update HTML attributes
+        run: make update-html-attributes
+
+      # Cache benchmark results keyed on source files that affect output.
+      # On cache hit, all benchmark and neovim setup steps are skipped.
+      - name: Restore benchmark cache
+        id: bench-cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            docs/data/benchmarks.json
+            docs/data/lsp-benchmark-results.json
+            docs/static/lit-last-output.json
+            docs/static/cea-last-output.json
+            docs/static/cem-last-output.json
+          key: benchmarks-${{ runner.os }}-runs${{ github.event.inputs.runs || '100' }}-${{ hashFiles('**/*.go', '**/*.scm', 'go.mod', 'go.sum', 'scripts/benchmark.sh', 'docs/benchmark/components/**', 'docs/package.json', 'lsp/benchmark/**') }}
+
+      - name: Build
+        if: steps.bench-cache.outputs.cache-hit != 'true'
+        run: make build
+
+      - name: Run generate benchmarks
+        if: steps.bench-cache.outputs.cache-hit != 'true'
+        run: ./scripts/benchmark.sh ${{ github.event.inputs.runs || 100 }}
+
       - name: Setup Neovim
+        if: steps.bench-cache.outputs.cache-hit != 'true'
         uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
           version: stable
 
       - name: Install tree-sitter CLI
+        if: steps.bench-cache.outputs.cache-hit != 'true'
         run: |
           # Pin to v0.26.3 for reproducible builds (latest stable as of 2025-01)
           # Unpinned installs can cause CI failures when breaking changes are released
           npm install -g tree-sitter-cli@0.26.3
 
       - name: Cache Neovim plugins and parsers
+        if: steps.bench-cache.outputs.cache-hit != 'true'
         uses: actions/cache@v5
         with:
           path: |
@@ -55,6 +83,7 @@ jobs:
             ${{ runner.os }}-neovim-
 
       - name: Install nvim-treesitter and parsers
+        if: steps.bench-cache.outputs.cache-hit != 'true'
         run: |
           set -e  # Exit on any error
 
@@ -116,7 +145,20 @@ jobs:
             exit 1
           fi
 
-      - run: make docs-ci RUNS=${{ github.event.inputs.runs || 100 }}
+      - name: Run LSP benchmarks
+        if: steps.bench-cache.outputs.cache-hit != 'true'
+        run: |
+          make bench-lsp
+          cd lsp/benchmark && nvim --headless --clean -l combine_results.lua
+
+      - name: Build docs
+        run: |
+          cp -f docs/content/docs/contributing.md /tmp/cem-contributing.md
+          cat CONTRIBUTING.md >> docs/content/docs/contributing.md
+          hugo mod clean
+          hugo --gc --minify --source docs
+          mv /tmp/cem-contributing.md docs/content/docs/contributing.md
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
