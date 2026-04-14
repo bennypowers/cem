@@ -4,7 +4,10 @@ weight: 40
 ---
 
 {{< tip >}}
-**TL;DR**: Create HTML files showcasing your components. Add `@demo` JSDoc tags for automatic discovery, or configure `demoDiscovery` patterns in `cem.yaml`. Demos are HTML partials—the server adds the wrapper, import maps, and live reload.
+**TL;DR**: Create HTML files showcasing your components.
+Add `@demo` JSDoc tags for automatic discovery, or configure `demoDiscovery`
+patterns in `cem.yaml`. Demos are HTML partials—the server adds the wrapper,
+import maps, and live reload.
 {{< /tip >}}
 
 Demos are HTML files that showcase your custom elements in action. They serve as
@@ -20,7 +23,7 @@ to showcase, and the dev server handles the document wrapper, import maps,
 TypeScript transformation, and error overlay. Demos fit naturally into the
 [development workflow][developmentworkflow]—create them as you build components,
 use them during the [test phase][testphase], and update them when you edit APIs.
-Use [HTML5 microdata][documenting-your-demos] to add descriptions, control URLs,
+Use [YAML frontmatter][documenting-your-demos] to add descriptions, control URLs,
 and explicitly associate demos with elements. For advanced URL generation and
 path-based discovery, configure [URLPattern matching][url-generation-with-urlpattern]
 and [URL templates][url-generation-with-urlpattern] in your `cem.yaml`.
@@ -176,8 +179,43 @@ You can include as many elements as you want in your demos:
 
 ## Documenting Your Demos
 
-Use HTML5 microdata to control demo metadata and association. You can modify the demo's URL, add a description, or explicitly associate that demo with a tag name.
+Add YAML frontmatter to your demo files to control metadata and association.
 
+```html
+---
+description: Basic button demonstration
+url: /elements/my-button/demo/
+---
+<my-button>Click me</my-button>
+```
+
+All frontmatter fields are optional:
+
+| Field | Description |
+|-------|-------------|
+| `description` | A description of the demo (plain text or markdown) |
+| `url` | Explicit URL for this demo, overriding URLPattern generation |
+| `for` | Space-separated list of element tag names this demo is for |
+
+By default, all custom elements used in the demo HTML are automatically
+associated with it. The `for` field is only needed when you want to override
+this, for example to associate the demo with elements it doesn't directly
+contain, or to prevent association with elements that appear only incidentally.
+
+```html
+---
+description: Shared accordion demo
+for: my-accordion my-accordion-header
+---
+<my-accordion>
+  <my-accordion-header>Header</my-accordion-header>
+</my-accordion>
+```
+
+### HTML5 Microdata (Alternative)
+
+You can also use HTML5 microdata attributes instead of frontmatter. Frontmatter
+takes precedence when both are present.
 
 ```html
 <meta itemprop="demo-url" content="/elements/my-button/demo/">
@@ -185,11 +223,10 @@ Use HTML5 microdata to control demo metadata and association. You can modify the
 <meta itemprop="description" content="Basic button demonstration">
 ```
 
-The `demo-for` property is useful when the demo file path doesn't indicate which element it's for, when a demo showcases multiple elements, or when you need to prevent incorrect auto-association.
-
 ### Rich Descriptions
 
-You can also add Markdown scripts to add rich content to your demo's description
+For rich content in your demo's description, use a Markdown script tag:
+
 ```html
 <script type="text/markdown" itemprop="description">
 Showcases all button variants:
@@ -203,9 +240,10 @@ Showcases all button variants:
 
 CEM uses this priority order to associate demos with elements:
 
-1. **Explicit microdata** - `<meta itemprop="demo-for" content="element-name">`
-2. **Path-based** - Elements whose aliases appear in demo file paths
-3. **Content-based** - Custom elements found in the demo HTML
+1. **Frontmatter** - `for: element-name` in YAML frontmatter
+2. **Explicit microdata** - `<meta itemprop="demo-for" content="element-name">`
+3. **Path-based** - Elements whose aliases appear in demo file paths
+4. **Content-based** - Custom elements found in the demo HTML
 
 ### Path-Based Association
 

@@ -98,14 +98,23 @@ func extractDemoTagsWithPattern(
 	if err != nil {
 		return nil, fmt.Errorf("could not extract demo tags from file: %w", err)
 	}
+
+	// Strip frontmatter before parsing HTML
+	fm, htmlContent := parseFrontmatter(code)
+
+	// Priority 0: Explicit frontmatter demoFor
+	if fm != nil && fm.DemoFor != "" {
+		return strings.Fields(fm.DemoFor), nil
+	}
+
 	parser := Q.GetHTMLParser()
 	defer Q.PutHTMLParser(parser)
-	tree := parser.Parse(code, nil)
+	tree := parser.Parse(htmlContent, nil)
 	defer tree.Close()
 	root := tree.RootNode()
 
 	// Priority 1: Explicit microdata association
-	if demoFor := extractMicrodata(root, code, "demo-for"); demoFor != "" {
+	if demoFor := extractMicrodata(root, htmlContent, "demo-for"); demoFor != "" {
 		fields := strings.Fields(demoFor)
 		return fields, nil
 	}
@@ -132,7 +141,7 @@ func extractDemoTagsWithPattern(
 			for i := range int(node.ChildCount()) {
 				child := node.Child(uint(i))
 				if child != nil && child.GrammarName() == "tag_name" {
-					name := child.Utf8Text(code)
+					name := child.Utf8Text(htmlContent)
 					if isCustomElementTagName(name) {
 						tagNameSet.Add(name)
 					}

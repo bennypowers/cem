@@ -30,6 +30,13 @@
               }
             },
             {
+              "description": "Demo with YAML frontmatter metadata",
+              "url": "https://bennypowers.dev/cem-demos/demo-discovery/frontmatter/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-discovery/demos/frontmatter.html"
+              }
+            },
+            {
               "description": "A complete HTML document demonstrating demo-discovery element",
               "url": "https://bennypowers.dev/cem-demos/demo-discovery/full-document/",
               "source": {

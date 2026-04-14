@@ -580,3 +580,79 @@ func TestValidateDemoDiscoveryConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestParseFrontmatter(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		wantFM      *demoFrontmatter
+		wantContent string
+	}{
+		{
+			name:        "no frontmatter",
+			input:       "<rh-button>Click</rh-button>",
+			wantFM:      nil,
+			wantContent: "<rh-button>Click</rh-button>",
+		},
+		{
+			name:        "frontmatter with description",
+			input:       "---\ndescription: A demo\n---\n<rh-button>Click</rh-button>\n",
+			wantFM:      &demoFrontmatter{Description: "A demo"},
+			wantContent: "<rh-button>Click</rh-button>\n",
+		},
+		{
+			name:        "frontmatter with all fields",
+			input:       "---\ndescription: A demo\nurl: /demo/\nfor: rh-button rh-card\n---\n<p>Content</p>\n",
+			wantFM:      &demoFrontmatter{Description: "A demo", URL: "/demo/", DemoFor: "rh-button rh-card"},
+			wantContent: "<p>Content</p>\n",
+		},
+		{
+			name:        "unclosed frontmatter",
+			input:       "---\ndescription: A demo\n<rh-button>Click</rh-button>\n",
+			wantFM:      nil,
+			wantContent: "---\ndescription: A demo\n<rh-button>Click</rh-button>\n",
+		},
+		{
+			name:        "--- in HTML body not treated as frontmatter",
+			input:       "<p>---</p>\n<rh-button>Click</rh-button>",
+			wantFM:      nil,
+			wantContent: "<p>---</p>\n<rh-button>Click</rh-button>",
+		},
+		{
+			name:        "CRLF line endings",
+			input:       "---\r\ndescription: CRLF demo\r\n---\r\n<rh-button>Click</rh-button>\r\n",
+			wantFM:      &demoFrontmatter{Description: "CRLF demo"},
+			wantContent: "<rh-button>Click</rh-button>\r\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fm, content := parseFrontmatter([]byte(tt.input))
+			gotContent := string(content)
+
+			if tt.wantFM == nil {
+				if fm != nil {
+					t.Errorf("expected nil frontmatter, got %+v", fm)
+				}
+			} else {
+				if fm == nil {
+					t.Fatalf("expected frontmatter %+v, got nil", tt.wantFM)
+				}
+				if fm.Description != tt.wantFM.Description {
+					t.Errorf("Description: got %q, want %q", fm.Description, tt.wantFM.Description)
+				}
+				if fm.URL != tt.wantFM.URL {
+					t.Errorf("URL: got %q, want %q", fm.URL, tt.wantFM.URL)
+				}
+				if fm.DemoFor != tt.wantFM.DemoFor {
+					t.Errorf("DemoFor: got %q, want %q", fm.DemoFor, tt.wantFM.DemoFor)
+				}
+			}
+
+			if gotContent != tt.wantContent {
+				t.Errorf("content mismatch:\ngot:  %q\nwant: %q", gotContent, tt.wantContent)
+			}
+		})
+	}
+}

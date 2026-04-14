@@ -36,6 +36,7 @@ import (
 	"github.com/gosimple/slug"
 	"github.com/pterm/pterm"
 	ts "github.com/tree-sitter/go-tree-sitter"
+	"gopkg.in/yaml.v3"
 )
 
 // DemoMetadata represents metadata extracted from demo files
@@ -43,6 +44,54 @@ type DemoMetadata struct {
 	URL         string
 	Description string
 	DemoFor     []string // Elements this demo is explicitly for
+}
+
+// demoFrontmatter represents YAML frontmatter in a demo HTML file
+type demoFrontmatter struct {
+	Description string `yaml:"description"`
+	URL         string `yaml:"url"`
+	DemoFor     string `yaml:"for"`
+}
+
+// parseFrontmatter extracts YAML frontmatter from file content.
+// Returns the parsed frontmatter and the remaining content after the closing "---".
+// If no frontmatter is present, returns nil and the original content.
+func parseFrontmatter(content []byte) (*demoFrontmatter, []byte) {
+	trimmed := bytes.TrimLeft(content, " \t\r\n")
+
+	// Check for opening "---" followed by a newline
+	var openLen int
+	switch {
+	case bytes.HasPrefix(trimmed, []byte("---\n")):
+		openLen = 4
+	case bytes.HasPrefix(trimmed, []byte("---\r\n")):
+		openLen = 5
+	default:
+		return nil, content
+	}
+
+	// Find the closing ---
+	rest := trimmed[openLen:]
+	idx := bytes.Index(rest, []byte("\n---"))
+	if idx < 0 {
+		return nil, content
+	}
+
+	yamlBlock := rest[:idx]
+	var fm demoFrontmatter
+	if err := yaml.Unmarshal(yamlBlock, &fm); err != nil {
+		return nil, content
+	}
+
+	// Content after the closing "---\n"
+	after := rest[idx+4:] // skip "\n---"
+	if len(after) > 0 && after[0] == '\n' {
+		after = after[1:]
+	} else if len(after) > 1 && after[0] == '\r' && after[1] == '\n' {
+		after = after[2:]
+	}
+
+	return &fm, after
 }
 
 // extractMicrodata extracts a specific microdata property from an HTML document
@@ -92,7 +141,9 @@ func extractMicrodata(root *ts.Node, code []byte, property string) string {
 	return walk(root)
 }
 
-// extractDemoMetadata extracts metadata from a demo file using HTML5 microdata
+// extractDemoMetadata extracts metadata from a demo file.
+// It first checks for YAML frontmatter, then falls back to HTML5 microdata.
+// Frontmatter values take precedence over microdata when both are present.
 func extractDemoMetadata(ctx types.WorkspaceContext, path string) (DemoMetadata, error) {
 	// Resolve path relative to workspace root if it's not absolute
 	var absPath string
@@ -107,27 +158,41 @@ func extractDemoMetadata(ctx types.WorkspaceContext, path string) (DemoMetadata,
 		return DemoMetadata{}, fmt.Errorf("could not read demo file: %w", err)
 	}
 
+	metadata := DemoMetadata{}
+
+	// Parse frontmatter first
+	fm, htmlContent := parseFrontmatter(code)
+	if fm != nil {
+		metadata.URL = fm.URL
+		metadata.Description = fm.Description
+		if fm.DemoFor != "" {
+			metadata.DemoFor = strings.Fields(fm.DemoFor)
+		}
+	}
+
+	// Fall back to microdata for any fields not set by frontmatter
 	parser := Q.GetHTMLParser()
 	defer Q.PutHTMLParser(parser)
-	tree := parser.Parse(code, nil)
+	tree := parser.Parse(htmlContent, nil)
 	defer tree.Close()
 	root := tree.RootNode()
 
-	metadata := DemoMetadata{}
-
-	// Extract demo URL
-	if url := extractMicrodata(root, code, "demo-url"); url != "" {
-		metadata.URL = url
+	if metadata.URL == "" {
+		if url := extractMicrodata(root, htmlContent, "demo-url"); url != "" {
+			metadata.URL = url
+		}
 	}
 
-	// Extract description from microdata
-	if desc := extractMicrodata(root, code, "description"); desc != "" {
-		metadata.Description = desc
+	if metadata.Description == "" {
+		if desc := extractMicrodata(root, htmlContent, "description"); desc != "" {
+			metadata.Description = desc
+		}
 	}
 
-	// Extract demo-for associations
-	if demoFor := extractMicrodata(root, code, "demo-for"); demoFor != "" {
-		metadata.DemoFor = strings.Fields(demoFor)
+	if len(metadata.DemoFor) == 0 {
+		if demoFor := extractMicrodata(root, htmlContent, "demo-for"); demoFor != "" {
+			metadata.DemoFor = strings.Fields(demoFor)
+		}
 	}
 
 	return metadata, nil
