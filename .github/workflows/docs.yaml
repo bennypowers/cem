@@ -19,6 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+        env:
+          GOTOOLCHAIN: auto
+          GOEXPERIMENT: jsonv2
       - uses: peaceiris/actions-hugo@v3
         with:
           hugo-version: '0.147.9'
