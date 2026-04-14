@@ -102,9 +102,9 @@ func extractDemoTagsWithPattern(
 	// Strip frontmatter before parsing HTML
 	fm, htmlContent := parseFrontmatter(code)
 
-	// Priority 0: Explicit frontmatter demoFor
-	if fm != nil && fm.DemoFor != "" {
-		return strings.Fields(fm.DemoFor), nil
+	// Priority 0: Explicit frontmatter for
+	if fm != nil && fm.DemoFor != nil {
+		return strings.Fields(*fm.DemoFor), nil
 	}
 
 	parser := Q.GetHTMLParser()

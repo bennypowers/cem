@@ -242,25 +242,18 @@ CEM uses this priority order to associate demos with elements:
 
 1. **Frontmatter** - `for: element-name` in YAML frontmatter
 2. **Explicit microdata** - `<meta itemprop="demo-for" content="element-name">`
-3. **Path-based** - Elements whose aliases appear in demo file paths
+3. **Path-based** - Elements whose tag names appear in demo file paths (requires `urlPattern`)
 4. **Content-based** - Custom elements found in the demo HTML
 
 ### Path-Based Association
 
-When elements use the `@alias` JSDoc tag, or have configured aliases in `cem.yaml`:
-
-```yaml
-aliases:
-  my-button: button
-  my-card: card
-```
-
-These paths match:
+When `urlPattern` is configured, the system extracts parameter values from demo
+file paths and matches them against element tag names directly.
 
 ```text
-✅ elements/button/demo/basic.html → my-button
-✅ elements/card/demo/index.html   → my-card
-❌ elements/btn/demo/index.html    → No match (alias is "button", not "btn")
+✅ elements/my-button/demo/basic.html → my-button (tag name matches)
+✅ elements/my-card/demo/index.html   → my-card
+❌ elements/button/demo/index.html    → No match (no element with tag name "button")
 ```
 
 ## See Also

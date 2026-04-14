@@ -46,11 +46,12 @@ type DemoMetadata struct {
 	DemoFor     []string // Elements this demo is explicitly for
 }
 
-// demoFrontmatter represents YAML frontmatter in a demo HTML file
+// demoFrontmatter represents YAML frontmatter in a demo HTML file.
+// Pointer fields distinguish "key omitted" (nil) from "key present but empty".
 type demoFrontmatter struct {
-	Description string `yaml:"description"`
-	URL         string `yaml:"url"`
-	DemoFor     string `yaml:"for"`
+	Description *string `yaml:"description"`
+	URL         *string `yaml:"url"`
+	DemoFor     *string `yaml:"for"`
 }
 
 // parseFrontmatter extracts YAML frontmatter from file content.
@@ -163,10 +164,14 @@ func extractDemoMetadata(ctx types.WorkspaceContext, path string) (DemoMetadata,
 	// Parse frontmatter first
 	fm, htmlContent := parseFrontmatter(code)
 	if fm != nil {
-		metadata.URL = fm.URL
-		metadata.Description = fm.Description
-		if fm.DemoFor != "" {
-			metadata.DemoFor = strings.Fields(fm.DemoFor)
+		if fm.URL != nil {
+			metadata.URL = *fm.URL
+		}
+		if fm.Description != nil {
+			metadata.Description = *fm.Description
+		}
+		if fm.DemoFor != nil {
+			metadata.DemoFor = strings.Fields(*fm.DemoFor)
 		}
 	}
 
@@ -177,19 +182,19 @@ func extractDemoMetadata(ctx types.WorkspaceContext, path string) (DemoMetadata,
 	defer tree.Close()
 	root := tree.RootNode()
 
-	if metadata.URL == "" {
+	if fm == nil || fm.URL == nil {
 		if url := extractMicrodata(root, htmlContent, "demo-url"); url != "" {
 			metadata.URL = url
 		}
 	}
 
-	if metadata.Description == "" {
+	if fm == nil || fm.Description == nil {
 		if desc := extractMicrodata(root, htmlContent, "description"); desc != "" {
 			metadata.Description = desc
 		}
 	}
 
-	if len(metadata.DemoFor) == 0 {
+	if fm == nil || fm.DemoFor == nil {
 		if demoFor := extractMicrodata(root, htmlContent, "demo-for"); demoFor != "" {
 			metadata.DemoFor = strings.Fields(demoFor)
 		}

@@ -581,6 +581,8 @@ func TestValidateDemoDiscoveryConfig(t *testing.T) {
 	}
 }
 
+func ptr(s string) *string { return &s }
+
 func TestParseFrontmatter(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -597,13 +599,13 @@ func TestParseFrontmatter(t *testing.T) {
 		{
 			name:        "frontmatter with description",
 			input:       "---\ndescription: A demo\n---\n<rh-button>Click</rh-button>\n",
-			wantFM:      &demoFrontmatter{Description: "A demo"},
+			wantFM:      &demoFrontmatter{Description: ptr("A demo")},
 			wantContent: "<rh-button>Click</rh-button>\n",
 		},
 		{
 			name:        "frontmatter with all fields",
 			input:       "---\ndescription: A demo\nurl: /demo/\nfor: rh-button rh-card\n---\n<p>Content</p>\n",
-			wantFM:      &demoFrontmatter{Description: "A demo", URL: "/demo/", DemoFor: "rh-button rh-card"},
+			wantFM:      &demoFrontmatter{Description: ptr("A demo"), URL: ptr("/demo/"), DemoFor: ptr("rh-button rh-card")},
 			wantContent: "<p>Content</p>\n",
 		},
 		{
@@ -621,8 +623,14 @@ func TestParseFrontmatter(t *testing.T) {
 		{
 			name:        "CRLF line endings",
 			input:       "---\r\ndescription: CRLF demo\r\n---\r\n<rh-button>Click</rh-button>\r\n",
-			wantFM:      &demoFrontmatter{Description: "CRLF demo"},
+			wantFM:      &demoFrontmatter{Description: ptr("CRLF demo")},
 			wantContent: "<rh-button>Click</rh-button>\r\n",
+		},
+		{
+			name:        "empty description suppresses microdata fallback",
+			input:       "---\ndescription: \"\"\n---\n<meta itemprop=\"description\" content=\"should not appear\">\n",
+			wantFM:      &demoFrontmatter{Description: ptr("")},
+			wantContent: "<meta itemprop=\"description\" content=\"should not appear\">\n",
 		},
 	}
 
@@ -639,20 +647,28 @@ func TestParseFrontmatter(t *testing.T) {
 				if fm == nil {
 					t.Fatalf("expected frontmatter %+v, got nil", tt.wantFM)
 				}
-				if fm.Description != tt.wantFM.Description {
-					t.Errorf("Description: got %q, want %q", fm.Description, tt.wantFM.Description)
-				}
-				if fm.URL != tt.wantFM.URL {
-					t.Errorf("URL: got %q, want %q", fm.URL, tt.wantFM.URL)
-				}
-				if fm.DemoFor != tt.wantFM.DemoFor {
-					t.Errorf("DemoFor: got %q, want %q", fm.DemoFor, tt.wantFM.DemoFor)
-				}
+				comparePtrField(t, "Description", fm.Description, tt.wantFM.Description)
+				comparePtrField(t, "URL", fm.URL, tt.wantFM.URL)
+				comparePtrField(t, "DemoFor", fm.DemoFor, tt.wantFM.DemoFor)
 			}
 
 			if gotContent != tt.wantContent {
 				t.Errorf("content mismatch:\ngot:  %q\nwant: %q", gotContent, tt.wantContent)
 			}
 		})
+	}
+}
+
+func comparePtrField(t *testing.T, name string, got, want *string) {
+	t.Helper()
+	switch {
+	case got == nil && want == nil:
+		return
+	case got == nil:
+		t.Errorf("%s: got nil, want %q", name, *want)
+	case want == nil:
+		t.Errorf("%s: got %q, want nil", name, *got)
+	case *got != *want:
+		t.Errorf("%s: got %q, want %q", name, *got, *want)
 	}
 }
