@@ -386,7 +386,10 @@ comments—it becomes the foundation for your entire development experience.&lt;
  &lt;/div>
  &lt;/template>
 
- &lt;strong>TL;DR&lt;/strong>: Create HTML files showcasing your components. Add &lt;code>@demo&lt;/code> JSDoc tags for automatic discovery, or configure &lt;code>demoDiscovery&lt;/code> patterns in &lt;code>cem.yaml&lt;/code>. Demos are HTML partials—the server adds the wrapper, import maps, and live reload.
+ &lt;strong>TL;DR&lt;/strong>: Create HTML files showcasing your components.
+Add &lt;code>@demo&lt;/code> JSDoc tags for automatic discovery, or configure &lt;code>demoDiscovery&lt;/code>
+patterns in &lt;code>cem.yaml&lt;/code>. Demos are HTML partials—the server adds the wrapper,
+import maps, and live reload.
 &lt;/info-callout>
 
 &lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
