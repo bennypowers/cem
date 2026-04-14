@@ -474,9 +474,31 @@ PathResolver: mapped source found: /dist/button.js -> /src/button.ts (pattern: /
 
 The demo discovery system supports multiple ways to control how demos are associated with elements and how their URLs are generated.
 
+### YAML Frontmatter
+
+Demos can use YAML frontmatter to declare metadata, URLs, and element associations:
+
+```html
+---
+description: Primary variant demonstration
+url: /elements/call-to-action/demo/
+for: rh-button pf-button
+---
+<rh-button>Click me</rh-button>
+```
+
+All frontmatter fields are optional:
+
+| Field | Description |
+|-------|-------------|
+| `description` | A description of the demo (plain text or markdown) |
+| `url` | Explicit URL for this demo, overriding URLPattern generation |
+| `for` | Space-separated list of element tag names this demo is for (by default, all custom elements used in the demo are associated automatically) |
+
 ### HTML5 Microdata
 
-Demos can use HTML5 microdata to explicitly declare their URLs and associations:
+Demos can also use HTML5 microdata to declare their URLs and associations.
+Frontmatter takes precedence when both are present in the same file.
 
 ```html
 <!-- Explicit URL declaration -->
@@ -497,11 +519,12 @@ Showcases primary variant with styling, accessibility, and interaction states.
 
 The system uses the following priority order to associate demos with elements:
 
-1. **Explicit microdata**: `<meta itemprop="demo-for" content="element-name">`
-2. **Path-based** (only when `urlPattern` is configured): Elements whose tag names appear in demo file paths
-3. **Content-based**: Custom elements found in the demo HTML
+1. **Frontmatter**: `for` field in YAML frontmatter
+2. **Explicit microdata**: `<meta itemprop="demo-for" content="element-name">`
+3. **Path-based** (only when `urlPattern` is configured): Elements whose tag names appear in demo file paths
+4. **Content-based**: Custom elements found in the demo HTML
 
-**Note**: Path-based association is disabled when `urlPattern` is not configured. In that case, the system uses only explicit microdata (priority 1) and content-based discovery (priority 3).
+**Note**: Path-based association is disabled when `urlPattern` is not configured. In that case, the system uses frontmatter (priority 1), explicit microdata (priority 2), and content-based discovery (priority 4).
 
 #### Path-Based Association with URLPattern
 
@@ -534,18 +557,20 @@ demoDiscovery:
 
 ### Description Sources
 
-Demo descriptions are extracted exclusively from microdata:
+Demo descriptions are extracted from (in priority order):
 
-- **Meta tags**: `<meta itemprop="description" content="Simple description">`
-- **Script tags**: `<script type="text/markdown" itemprop="description">Rich **markdown** content</script>`
+1. **Frontmatter**: `description` field in YAML frontmatter
+2. **Meta tags**: `<meta itemprop="description" content="Simple description">`
+3. **Script tags**: `<script type="text/markdown" itemprop="description">Rich **markdown** content</script>`
 
 ### URL Generation Priority
 
 URLs are generated using the following priority:
 
-1. **Explicit microdata**: `<meta itemprop="demo-url" content="/path/to/demo/">`
-2. **URLPattern fallback**: Using `urlPattern` and `urlTemplate` configuration
-3. **No URL**: Demo is skipped if no pattern matches
+1. **Frontmatter**: `url` field in YAML frontmatter
+2. **Explicit microdata**: `<meta itemprop="demo-url" content="/path/to/demo/">`
+3. **URLPattern fallback**: Using `urlPattern` and `urlTemplate` configuration
+4. **No URL**: Demo is skipped if no pattern matches
 
 ### URL Template Functions
 
@@ -578,7 +603,7 @@ urlTemplate: "https://example.com/{{alias .component}}/{{slug .demo}}/"
 
 ### Configuration Examples
 
-**Minimal (microdata-driven):**
+**Minimal (frontmatter-driven):**
 ```yaml
 demoDiscovery:
   fileGlob: elements/**/demo/*.html
