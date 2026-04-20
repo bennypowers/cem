@@ -124,6 +124,18 @@ func ExtractAliasFromJSDoc(jsdocText string, queryManager *Q.QueryManager) (stri
 	return info.Alias, nil
 }
 
+// HasIgnoreTag checks whether JSDoc contains an @ignore tag.
+func HasIgnoreTag(jsdocText string, queryManager *Q.QueryManager) (bool, error) {
+	if strings.TrimSpace(jsdocText) == "" {
+		return false, nil
+	}
+	info, err := parseForProperty(jsdocText, queryManager)
+	if err != nil {
+		return false, err
+	}
+	return info.Ignore, nil
+}
+
 // HasElementTag checks whether JSDoc contains an @element, @tagName, or @customElement tag.
 func HasElementTag(jsdocText string, queryManager *Q.QueryManager) (bool, error) {
 	if strings.TrimSpace(jsdocText) == "" {
