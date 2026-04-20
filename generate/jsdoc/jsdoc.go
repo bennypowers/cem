@@ -25,7 +25,7 @@ import (
 )
 
 // ExtractFromNode returns the immediately preceding JSDoc comment (/** ... */) for the given node,
-// skipping over decorator nodes. If there is no such comment, returns "".
+// skipping over decorator nodes and non-JSDoc comments. If there is no such comment, returns "".
 func ExtractFromNode(node *ts.Node, source []byte) string {
 	if node == nil {
 		return ""
@@ -39,9 +39,8 @@ func ExtractFromNode(node *ts.Node, source []byte) string {
 			text := prev.Utf8Text(source)
 			if strings.HasPrefix(text, "/**") {
 				return text
-			} else {
-				return ""
 			}
+			continue
 		default:
 			return ""
 		}

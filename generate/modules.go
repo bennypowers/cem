@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"bennypowers.dev/cem/generate/jsdoc"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 	S "bennypowers.dev/cem/set"
@@ -341,6 +342,20 @@ func (mp *ModuleProcessor) processClasses() error {
 		className := nameNodes[0].Text
 		if _, exists := processed[className]; exists {
 			continue
+		}
+
+		if _, hasJSDoc := captures["class.jsdoc"]; !hasJSDoc {
+			if declCaptures, ok := captures["class.declaration"]; ok && len(declCaptures) > 0 {
+				node := Q.GetDescendantById(mp.root, declCaptures[0].NodeId)
+				if node != nil {
+					if p := node.Parent(); p != nil && p.Kind() == "export_statement" {
+						node = p
+					}
+					if text := jsdoc.ExtractFromNode(node, mp.code); text != "" {
+						captures["class.jsdoc"] = []Q.CaptureInfo{{Text: text}}
+					}
+				}
+			}
 		}
 
 		parsed := &ParsedClass{
