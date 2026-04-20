@@ -151,6 +151,9 @@ func applyToPropertyLike(info *propertyInfo, declaration *M.PropertyLike) {
 	declaration.Description = appendWithSeparator(declaration.Description, info.Description, "\n\n")
 	declaration.Summary = appendWithSeparator(declaration.Summary, info.Summary, "\n\n")
 	declaration.Deprecated = info.Deprecated
+	if info.Default != "" {
+		declaration.Default = info.Default
+	}
 	if info.Type != "" {
 		declaration.Type = &M.Type{
 			Text: info.Type,

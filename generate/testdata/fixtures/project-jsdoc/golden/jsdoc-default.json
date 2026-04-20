@@ -1,0 +1,139 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-default.js",
+      "declarations": [
+        {
+          "name": "JsdocDefaultBare",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "default": "hello",
+              "kind": "field",
+              "attribute": "value"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-default.ts#L1"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-default-bare",
+          "attributes": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "default": "hello",
+              "fieldName": "value"
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "JsdocDefaultNumber",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "count",
+              "type": {
+                "text": "number"
+              },
+              "default": "42",
+              "kind": "field",
+              "attribute": "count"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-default.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-default-number",
+          "attributes": [
+            {
+              "name": "count",
+              "type": {
+                "text": "number"
+              },
+              "default": "42",
+              "fieldName": "count"
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "JsdocDefaultQuoted",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "color",
+              "type": {
+                "text": "string"
+              },
+              "default": "'red'",
+              "kind": "field",
+              "attribute": "color"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-default.ts#L17"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-default-quoted",
+          "attributes": [
+            {
+              "name": "color",
+              "type": {
+                "text": "string"
+              },
+              "default": "'red'",
+              "fieldName": "color"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-default-bare",
+          "declaration": {
+            "name": "JsdocDefaultBare",
+            "module": "src/jsdoc-default.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-default-number",
+          "declaration": {
+            "name": "JsdocDefaultNumber",
+            "module": "src/jsdoc-default.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-default-quoted",
+          "declaration": {
+            "name": "JsdocDefaultQuoted",
+            "module": "src/jsdoc-default.js"
+          }
+        }
+      ]
+    }
+  ]
+}
