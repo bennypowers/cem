@@ -74,6 +74,7 @@ These tags apply to class properties:
 
 - `@deprecated` — Marks property as deprecated
 - `@example` — Code examples for property usage
+- `@ignore` / `@internal` — Exclude property from the manifest
 - `@summary` — Short summary for the property
 - `@type` — Property type annotation
 
@@ -83,6 +84,7 @@ These tags apply to class methods:
 
 - `@deprecated` — Marks method as deprecated
 - `@example` — Code examples for method usage
+- `@ignore` / `@internal` — Exclude method from the manifest
 - `@param` / `@parameter` — Method parameter documentation
 - `@return` / `@returns` — Return value documentation
 - `@summary` — Short summary for the method
