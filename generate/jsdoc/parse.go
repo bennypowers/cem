@@ -51,6 +51,7 @@ type propertyInfo struct {
 	Description string
 	Summary     string
 	Type        string
+	Default     string
 	Deprecated  M.Deprecated
 	Ignore      bool
 }
@@ -188,6 +189,9 @@ func parseForProperty(code string, queryManager *Q.QueryManager) (*propertyInfo,
 				info.Summary += normalizeJsdocLines(content)
 			case "@type":
 				info.Type = tagType
+			case "@default",
+				"@defaultvalue":
+				info.Default = content
 			case "@example":
 				info.Description = handleExampleTag(info.Description, tagName, content)
 			case "@deprecated":
