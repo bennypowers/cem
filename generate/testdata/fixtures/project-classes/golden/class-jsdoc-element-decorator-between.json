@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-jsdoc-element-decorator-between.js",
+      "declarations": [
+        {
+          "name": "Breadcrumbs",
+          "description": "A component to display a breadcrumb trail.",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-jsdoc-element-decorator-between.ts#L13"
+          },
+          "kind": "class",
+          "tagName": "sl-breadcrumbs",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "sl-breadcrumbs",
+          "declaration": {
+            "name": "Breadcrumbs",
+            "module": "src/class-jsdoc-element-decorator-between.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "Breadcrumbs",
+          "declaration": {
+            "name": "Breadcrumbs",
+            "module": "src/class-jsdoc-element-decorator-between.js"
+          }
+        }
+      ]
+    }
+  ]
+}
