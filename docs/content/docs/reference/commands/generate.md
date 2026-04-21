@@ -72,7 +72,7 @@ These tags apply to the custom element class:
 
 These tags apply to class properties:
 
-- `@default` / `@defaultvalue` — Default value for the property. Use this when the property does not have a default value of itself. If a property has both, the jsdoc tag wins.
+- `@default` / `@defaultvalue` — Default value for the field. Not needed when the field has an initializer. If a field has both, the jsdoc tag wins.
 - `@deprecated` — Marks property as deprecated
 - `@example` — Code examples for property usage
 - `@ignore` / `@internal` — Exclude property from the manifest
