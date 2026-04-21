@@ -52,6 +52,7 @@ type propertyInfo struct {
 	Summary     string
 	Type        string
 	Deprecated  M.Deprecated
+	Ignore      bool
 }
 
 type cssPropertyInfo struct {
@@ -195,6 +196,9 @@ func parseForProperty(code string, queryManager *Q.QueryManager) (*propertyInfo,
 				} else {
 					info.Deprecated = M.NewDeprecated(content)
 				}
+			case "@ignore",
+				"@internal":
+				info.Ignore = true
 			}
 		}
 	}

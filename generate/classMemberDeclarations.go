@@ -340,6 +340,16 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			continue
 		}
 
+		if members, ok := captures["member"]; ok && len(members) > 0 {
+			jsdocText := jsdoc.ExtractFromNode(Q.GetDescendantById(mp.root, members[0].NodeId), mp.code)
+			ignored, err := jsdoc.HasIgnoreTag(jsdocText, mp.queryManager)
+			if err != nil {
+				errs = errors.Join(errs, err)
+			} else if ignored {
+				continue
+			}
+		}
+
 		// Debug: log all variant property processing
 		if memberName == "variant" {
 			mp.logger.Debug("Processing variant member: kind=%s, static=%v", kind, isStatic)

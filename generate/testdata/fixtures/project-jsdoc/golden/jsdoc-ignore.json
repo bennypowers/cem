@@ -1,0 +1,157 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-ignore.js",
+      "declarations": [
+        {
+          "name": "JsdocIgnoreField",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "visibleProp",
+              "type": {
+                "text": "number"
+              },
+              "kind": "field",
+              "attribute": "visibleprop"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-jsdoc/src/jsdoc-ignore.ts#L1"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-ignore-field",
+          "attributes": [
+            {
+              "name": "visibleprop",
+              "type": {
+                "text": "number"
+              },
+              "fieldName": "visibleProp"
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "JsdocInternalField",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "visibleProp",
+              "type": {
+                "text": "number"
+              },
+              "kind": "field",
+              "attribute": "visibleprop"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-jsdoc/src/jsdoc-ignore.ts#L11"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-internal-field",
+          "attributes": [
+            {
+              "name": "visibleprop",
+              "type": {
+                "text": "number"
+              },
+              "fieldName": "visibleProp"
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "JsdocIgnoreMethod",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "name": "visibleMethod",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-jsdoc/src/jsdoc-ignore.ts#L21"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-ignore-method",
+          "customElement": true
+        },
+        {
+          "name": "JsdocInternalMethod",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "name": "visibleMethod",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-jsdoc/src/jsdoc-ignore.ts#L31"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-internal-method",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-ignore-field",
+          "declaration": {
+            "name": "JsdocIgnoreField",
+            "module": "src/jsdoc-ignore.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-internal-field",
+          "declaration": {
+            "name": "JsdocInternalField",
+            "module": "src/jsdoc-ignore.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-ignore-method",
+          "declaration": {
+            "name": "JsdocIgnoreMethod",
+            "module": "src/jsdoc-ignore.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-internal-method",
+          "declaration": {
+            "name": "JsdocInternalMethod",
+            "module": "src/jsdoc-ignore.js"
+          }
+        }
+      ]
+    }
+  ]
+}
