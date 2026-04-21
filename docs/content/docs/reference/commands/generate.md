@@ -72,6 +72,7 @@ These tags apply to the custom element class:
 
 These tags apply to class properties:
 
+- `@default` / `@defaultvalue` — Default value for the property
 - `@deprecated` — Marks property as deprecated
 - `@example` — Code examples for property usage
 - `@summary` — Short summary for the property
