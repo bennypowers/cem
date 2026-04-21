@@ -8,7 +8,6 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
       contents: read
 
     steps:
@@ -183,27 +182,15 @@ jobs:
       - name: Combine benchmark reports
         run: scripts/combine-benchmark-reports.sh
 
-      - name: Find previous benchmark comment
-        id: find-comment
-        uses: peter-evans/find-comment@v4
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: "github-actions[bot]"
-          body-includes: "### Generate Benchmarks"
-
-      - name: Create or update sticky benchmark comment
-        uses: peter-evans/create-or-update-comment@v5
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body-file: combined_bench_report.md
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          edit-mode: replace
+      - name: Save PR number
+        run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
 
       - name: Upload benchmark artifacts
         uses: actions/upload-artifact@v7
         with:
           name: benchmark-artifacts
           path: |
+            pr_number.txt
             pr_bench.txt
             base_bench.txt
             pr_bench_time.txt
