@@ -12,7 +12,7 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css/src/class-css-default-description.ts#L2"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-css/src/class-css-default-description.ts#L2"
           },
           "kind": "class",
           "tagName": "class-css-default-description",
@@ -66,55 +66,7 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css/src/class-css-described-declaration.ts#L2"
-          },
-          "kind": "class",
-          "tagName": "class-css-described-declaration",
-          "cssProperties": [
-            {
-              "name": "--single-call",
-              "description": "single var call in declaration"
-            },
-            {
-              "name": "--another-call",
-              "description": "another var call in declaration"
-            },
-            {
-              "name": "--a"
-            },
-            {
-              "name": "--b"
-            },
-            {
-              "name": "--c"
-            }
-          ],
-          "customElement": true
-        }
-      ],
-      "exports": [
-        {
-          "kind": "custom-element-definition",
-          "name": "class-css-described-declaration",
-          "declaration": {
-            "name": "ClassCssDescribedDeclaration",
-            "module": "src/class-css-described-declaration.js"
-          }
-        }
-      ]
-    },
-    {
-      "kind": "javascript-module",
-      "path": "src/class-css-described-declaration.js",
-      "declarations": [
-        {
-          "name": "ClassCssDescribedDeclaration",
-          "superclass": {
-            "name": "LitElement",
-            "package": "lit"
-          },
-          "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css/src/class-css-described-declaration.ts#L2"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-css/src/class-css-described-declaration.ts#L2"
           },
           "kind": "class",
           "tagName": "class-css-described-declaration",
@@ -162,7 +114,7 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css/src/class-css-host-props.ts#L2"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-css/src/class-css-host-props.ts#L2"
           },
           "kind": "class",
           "tagName": "class-css-host-props",

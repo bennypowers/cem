@@ -23,7 +23,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-jsdoc/src/jsdoc-default.ts#L1"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-jsdoc/src/jsdoc-default.ts#L1"
           },
           "kind": "class",
           "tagName": "jsdoc-default-bare",
@@ -57,7 +57,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-jsdoc/src/jsdoc-default.ts#L9"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-jsdoc/src/jsdoc-default.ts#L9"
           },
           "kind": "class",
           "tagName": "jsdoc-default-number",
@@ -91,7 +91,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-jsdoc/src/jsdoc-default.ts#L17"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-jsdoc/src/jsdoc-default.ts#L17"
           },
           "kind": "class",
           "tagName": "jsdoc-default-quoted",
@@ -125,7 +125,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-jsdoc/src/jsdoc-default.ts#L25"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-jsdoc/src/jsdoc-default.ts#L25"
           },
           "kind": "class",
           "tagName": "jsdoc-default-override",
@@ -159,7 +159,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-jsdoc/src/jsdoc-default.ts#L33"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-jsdoc/src/jsdoc-default.ts#L33"
           },
           "kind": "class",
           "tagName": "jsdoc-defaultvalue-alias",

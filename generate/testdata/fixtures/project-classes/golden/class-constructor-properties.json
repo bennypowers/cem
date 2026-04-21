@@ -56,7 +56,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-constructor-properties.ts#L1"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-constructor-properties.ts#L1"
           },
           "kind": "class"
         }

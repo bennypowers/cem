@@ -53,7 +53,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-property-decorator-with-type-option.ts#L12"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-property-decorator-with-type-option.ts#L12"
           },
           "kind": "class",
           "tagName": "class-property-decorator-with-type-option",

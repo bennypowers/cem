@@ -1,0 +1,220 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/demo-alias/demo-alias.js",
+      "declarations": [
+        {
+          "name": "DemoAlias",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-alias/demo-alias.ts#L4"
+          },
+          "kind": "class",
+          "tagName": "demo-alias",
+          "demos": [
+            {
+              "url": "https://bennypowers.dev/cem-demos/aliased/alias/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-alias/demos/alias.html"
+              }
+            },
+            {
+              "url": "https://bennypowers.dev/cem-demos/aliased/multiple/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-alias/demos/multiple.html"
+              }
+            },
+            {
+              "url": "https://bennypowers.dev/cem-demos/aliased/slugified/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-alias/demos/slugified.html"
+              }
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "DemoSlugifyAlias",
+          "summary": "demo urls must not contain spaces or parens",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-alias/demo-alias.ts#L10"
+          },
+          "kind": "class",
+          "tagName": "demo-slugify-alias",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-alias",
+          "declaration": {
+            "name": "DemoAlias",
+            "module": "src/demo-alias/demo-alias.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-slugify-alias",
+          "declaration": {
+            "name": "DemoSlugifyAlias",
+            "module": "src/demo-alias/demo-alias.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/demo-discovery/demo-discovery.js",
+      "declarations": [
+        {
+          "name": "DemoDiscovery",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-discovery/demo-discovery.ts#L1"
+          },
+          "kind": "class",
+          "tagName": "demo-discovery",
+          "demos": [
+            {
+              "url": "https://bennypowers.dev/cem-demos/aliased/multiple-comment/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-alias/demos/multiple-comment.html"
+              }
+            },
+            {
+              "url": "https://bennypowers.dev/cem-demos/demo-discovery/discovery/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-discovery/demos/discovery.html"
+              }
+            },
+            {
+              "description": "Demo with YAML frontmatter metadata",
+              "url": "https://bennypowers.dev/cem-demos/demo-discovery/frontmatter/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-discovery/demos/frontmatter.html"
+              }
+            },
+            {
+              "description": "A complete HTML document demonstrating demo-discovery element",
+              "url": "https://bennypowers.dev/cem-demos/demo-discovery/full-document/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-discovery/demos/full-document.html"
+              }
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-discovery",
+          "declaration": {
+            "name": "DemoDiscovery",
+            "module": "src/demo-discovery/demo-discovery.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/demo-subset/demo-subset.js",
+      "declarations": [
+        {
+          "name": "DemoSubsetOne",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-subset/demo-subset.ts#L1"
+          },
+          "kind": "class",
+          "tagName": "demo-subset-one",
+          "demos": [
+            {
+              "url": "https://bennypowers.dev/cem-demos/demo-subset/subset/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-subset/demos/subset.html"
+              }
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "DemoSubsetTwo",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-subset/demo-subset.ts#L4"
+          },
+          "kind": "class",
+          "tagName": "demo-subset-two",
+          "demos": [
+            {
+              "url": "https://bennypowers.dev/cem-demos/demo-subset/subset/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-subset/demos/subset.html"
+              }
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "DemoSubsetThree",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-subset/demo-subset.ts#L7"
+          },
+          "kind": "class",
+          "tagName": "demo-subset-three",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-subset-one",
+          "declaration": {
+            "name": "DemoSubsetOne",
+            "module": "src/demo-subset/demo-subset.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-subset-two",
+          "declaration": {
+            "name": "DemoSubsetTwo",
+            "module": "src/demo-subset/demo-subset.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-subset-three",
+          "declaration": {
+            "name": "DemoSubsetThree",
+            "module": "src/demo-subset/demo-subset.js"
+          }
+        }
+      ]
+    }
+  ]
+}

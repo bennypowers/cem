@@ -12,21 +12,21 @@
           },
           "kind": "variable",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-var.ts#L1"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-var.ts#L1"
           }
         },
         {
           "name": "$let",
           "kind": "variable",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-var.ts#L2"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-var.ts#L2"
           }
         },
         {
           "name": "$var",
           "kind": "variable",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-var.ts#L3"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-var.ts#L3"
           }
         }
       ],

@@ -1,4 +1,4 @@
-sourceControlRootUrl: https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-tokens/
+sourceControlRootUrl: https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-tokens/
 generate:
   designTokens:
     spec: design-tokens.json

@@ -303,7 +303,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/wa-button.ts#L43"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/wa-button.ts#L43"
           },
           "kind": "class",
           "tagName": "wa-button",

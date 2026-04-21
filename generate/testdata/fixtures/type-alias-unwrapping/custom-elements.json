@@ -1,0 +1,494 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/circular-alias.js",
+      "declarations": [
+        {
+          "name": "MyElement",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "value",
+              "type": {
+                "text": "A | 'y' | 'x'",
+                "references": [
+                  {
+                    "name": "A",
+                    "module": "src/circular-alias.js"
+                  },
+                  {
+                    "name": "B",
+                    "module": "src/circular-alias.js"
+                  }
+                ]
+              },
+              "default": "'x'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "MyElement",
+            "module": "src/circular-alias.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyElement",
+          "declaration": {
+            "name": "MyElement",
+            "module": "src/circular-alias.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/cross-module.js",
+      "declarations": [
+        {
+          "name": "MyComponent",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "'primary' | 'secondary' | 'success'",
+                "references": [
+                  {
+                    "name": "Variant",
+                    "module": "src/types.js"
+                  }
+                ]
+              },
+              "default": "'primary'",
+              "kind": "field"
+            },
+            {
+              "name": "size",
+              "type": {
+                "text": "'small' | 'medium' | 'large'",
+                "references": [
+                  {
+                    "name": "Size",
+                    "module": "src/types.js"
+                  }
+                ]
+              },
+              "default": "'medium'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "MyComponent",
+            "module": "src/cross-module.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyComponent",
+          "declaration": {
+            "name": "MyComponent",
+            "module": "src/cross-module.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/lowercase-alias.js",
+      "declarations": [
+        {
+          "name": "MyElement",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "type",
+              "type": {
+                "text": "'submit' | 'reset' | 'button'",
+                "references": [
+                  {
+                    "name": "buttonType",
+                    "module": "src/lowercase-alias.js"
+                  }
+                ]
+              },
+              "default": "'submit'",
+              "kind": "field"
+            },
+            {
+              "name": "visibility",
+              "type": {
+                "text": "'internal' | 'external'",
+                "references": [
+                  {
+                    "name": "_privateType",
+                    "module": "src/lowercase-alias.js"
+                  }
+                ]
+              },
+              "default": "'external'",
+              "kind": "field"
+            },
+            {
+              "name": "currency",
+              "type": {
+                "text": "'usd' | 'eur'",
+                "references": [
+                  {
+                    "name": "$dollarType",
+                    "module": "src/lowercase-alias.js"
+                  }
+                ]
+              },
+              "default": "'usd'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "MyElement",
+            "module": "src/lowercase-alias.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyElement",
+          "declaration": {
+            "name": "MyElement",
+            "module": "src/lowercase-alias.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/nested-alias.js",
+      "declarations": [
+        {
+          "name": "MyButton",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "type",
+              "type": {
+                "text": "'submit' | 'reset' | 'button'",
+                "references": [
+                  {
+                    "name": "ButtonType",
+                    "module": "src/nested-alias.js"
+                  },
+                  {
+                    "name": "SubmitType",
+                    "module": "src/nested-alias.js"
+                  },
+                  {
+                    "name": "ResetType",
+                    "module": "src/nested-alias.js"
+                  }
+                ]
+              },
+              "default": "'submit'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "MyButton",
+            "module": "src/nested-alias.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyButton",
+          "declaration": {
+            "name": "MyButton",
+            "module": "src/nested-alias.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/no-alias.js",
+      "declarations": [
+        {
+          "name": "MyElement",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "count",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field"
+            },
+            {
+              "name": "variant",
+              "type": {
+                "text": "'primary' | 'secondary'"
+              },
+              "default": "'primary'",
+              "kind": "field"
+            },
+            {
+              "name": "name",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "MyElement",
+            "module": "src/no-alias.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyElement",
+          "declaration": {
+            "name": "MyElement",
+            "module": "src/no-alias.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/simple-alias.js",
+      "declarations": [
+        {
+          "name": "MyButton",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "type",
+              "type": {
+                "text": "'submit' | 'reset' | 'button'",
+                "references": [
+                  {
+                    "name": "ButtonType",
+                    "module": "src/simple-alias.js"
+                  }
+                ]
+              },
+              "default": "'submit'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "MyButton",
+            "module": "src/simple-alias.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyButton",
+          "declaration": {
+            "name": "MyButton",
+            "module": "src/simple-alias.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/types.js"
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/union-alias.js",
+      "declarations": [
+        {
+          "name": "MyButton",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "type",
+              "type": {
+                "text": "'submit' | 'reset' | 'button'",
+                "references": [
+                  {
+                    "name": "ButtonType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "SubmitType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "ResetType",
+                    "module": "src/union-alias.js"
+                  }
+                ]
+              },
+              "default": "'submit'",
+              "kind": "field"
+            },
+            {
+              "name": "nullableType",
+              "type": {
+                "text": "'submit' | 'reset' | 'button' | null",
+                "references": [
+                  {
+                    "name": "NullableButtonType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "ButtonType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "SubmitType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "ResetType",
+                    "module": "src/union-alias.js"
+                  }
+                ]
+              },
+              "default": "null",
+              "kind": "field"
+            },
+            {
+              "name": "optionalType",
+              "type": {
+                "text": "'submit' | 'reset' | 'button' | undefined",
+                "references": [
+                  {
+                    "name": "OptionalButtonType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "ButtonType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "SubmitType",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "ResetType",
+                    "module": "src/union-alias.js"
+                  }
+                ]
+              },
+              "default": "undefined",
+              "kind": "field"
+            },
+            {
+              "name": "complexType",
+              "type": {
+                "text": "'submit' | 'custom' | null",
+                "references": [
+                  {
+                    "name": "ComplexUnion",
+                    "module": "src/union-alias.js"
+                  },
+                  {
+                    "name": "SubmitType",
+                    "module": "src/union-alias.js"
+                  }
+                ]
+              },
+              "default": "'submit'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "MyButton",
+            "module": "src/union-alias.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MyButton",
+          "declaration": {
+            "name": "MyButton",
+            "module": "src/union-alias.js"
+          }
+        }
+      ]
+    }
+  ]
+}

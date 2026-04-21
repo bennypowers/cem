@@ -9,7 +9,7 @@
           "name": "simple",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L1"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function.ts#L1"
           }
         },
         {
@@ -17,7 +17,7 @@
           "description": "description",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L3"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function.ts#L3"
           }
         },
         {
@@ -25,28 +25,28 @@
           "summary": "summary",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L5"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function.ts#L5"
           }
         },
         {
           "name": "async",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L6"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function.ts#L6"
           }
         },
         {
           "name": "generator",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L7"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function.ts#L7"
           }
         },
         {
           "name": "arrowsimple",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L9"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function.ts#L9"
           }
         },
         {
@@ -54,7 +54,7 @@
           "description": "arrow description",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L11"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function.ts#L11"
           }
         },
         {
@@ -62,14 +62,14 @@
           "summary": "arrow summary",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L13"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function.ts#L13"
           }
         },
         {
           "name": "arrowasync",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L14"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function.ts#L14"
           }
         },
         {
@@ -84,7 +84,7 @@
           "name": "param",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L16"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function.ts#L16"
           }
         },
         {
@@ -104,7 +104,7 @@
           "description": "description",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L22"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function.ts#L22"
           }
         },
         {
@@ -120,7 +120,7 @@
           "name": "rest",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L23"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function.ts#L23"
           }
         },
         {
@@ -141,7 +141,7 @@
           "description": "description",
           "kind": "function",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/export-function.ts#L29"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function.ts#L29"
           }
         }
       ],

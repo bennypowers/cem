@@ -8,7 +8,7 @@
         {
           "name": "CustomBase",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-export-default-custom-base.ts#L3"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-export-default-custom-base.ts#L3"
           },
           "kind": "class"
         },
@@ -25,7 +25,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-export-default-custom-base.ts#L9"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-export-default-custom-base.ts#L9"
           },
           "kind": "class",
           "tagName": "class-export-default-custom-base-ce",

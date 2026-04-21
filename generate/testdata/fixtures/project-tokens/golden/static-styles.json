@@ -12,7 +12,7 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-tokens/src/static-styles.ts#L4"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-tokens/src/static-styles.ts#L4"
           },
           "kind": "class",
           "tagName": "static-styles",
@@ -47,8 +47,8 @@
             },
             {
               "name": "--token-color",
-              "default": "red",
               "description": "--token-color",
+              "default": "red",
               "syntax": "\u003ccolor\u003e"
             }
           ],

@@ -1,0 +1,202 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/child.js",
+      "declarations": [
+        {
+          "name": "ChildElement",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "child-element",
+          "slots": [
+            {
+              "name": ""
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "child-element",
+          "declaration": {
+            "name": "ChildElement",
+            "module": "src/child.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ChildElement",
+          "declaration": {
+            "name": "ChildElement",
+            "module": "src/child.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-named-export.js",
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "child-element",
+          "declaration": {
+            "name": "ChildElement",
+            "module": "src/child.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ChildElement",
+          "declaration": {
+            "name": "ChildElement",
+            "module": "src/child.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-named-import.js",
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "child-element",
+          "declaration": {
+            "name": "ChildElement",
+            "module": "src/child.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-namespace-alias-export.js",
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "child-element",
+          "declaration": {
+            "name": "ChildElement",
+            "module": "src/child.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ChildNamespace",
+          "declaration": {
+            "name": "*",
+            "module": "src/child.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-namespace-export.js",
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "child-element",
+          "declaration": {
+            "name": "ChildElement",
+            "module": "src/child.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ChildElement",
+          "declaration": {
+            "name": "ChildElement",
+            "module": "src/child.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-namespace-import.js",
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "child-element",
+          "declaration": {
+            "name": "ChildElement",
+            "module": "src/child.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-side-effect.js",
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "child-element",
+          "declaration": {
+            "name": "ChildElement",
+            "module": "src/child.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/side-effect-with-type-export.js",
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "child-element",
+          "declaration": {
+            "name": "ChildElement",
+            "module": "src/child.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/type-export-alias.js"
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/type-export.js"
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/type-import-alias.js"
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/type-import.js"
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/type-namespace-import.js"
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/type-specifier-export-alias.js"
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/type-specifier-export.js"
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/type-specifier-import-alias.js"
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/type-specifier-import.js"
+    }
+  ]
+}
