@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-jsdoc-element-comment-between.js",
+      "declarations": [
+        {
+          "name": "GridColumn",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-jsdoc-element-comment-between.ts#L7"
+          },
+          "kind": "class",
+          "tagName": "sl-grid-column",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "sl-grid-column",
+          "declaration": {
+            "name": "GridColumn",
+            "module": "src/class-jsdoc-element-comment-between.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "GridColumn",
+          "declaration": {
+            "name": "GridColumn",
+            "module": "src/class-jsdoc-element-comment-between.js"
+          }
+        }
+      ]
+    }
+  ]
+}

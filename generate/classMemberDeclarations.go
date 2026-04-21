@@ -51,9 +51,10 @@ var ignoredInstanceMethodsHTML = S.NewSet(
 )
 
 var ignoredInstanceMethodsLit = S.NewSet(
+	"firstUpdated",
+	"getUpdateComplete",
 	"render",
 	"update",
-	"getUpdateComplete",
 	"updated",
 	"willUpdate",
 )

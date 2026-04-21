@@ -17,4 +17,5 @@ class ClassIgnoredMembers extends LitElement {
   getUpdateComplete() {}
   updated() {}
   willUpdate() {}
+  firstUpdated() {}
 }
