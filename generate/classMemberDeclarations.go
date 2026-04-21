@@ -344,9 +344,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			ignored, err := jsdoc.HasIgnoreTag(jsdocText, mp.queryManager)
 			if err != nil {
 				errs = errors.Join(errs, err)
-				continue
-			}
-			if ignored {
+			} else if ignored {
 				continue
 			}
 		}
