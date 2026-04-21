@@ -22,7 +22,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-attr.ts#L19"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-jsdoc/src/jsdoc-attr.ts#L19"
           },
           "kind": "class",
           "tagName": "jsdoc-attr",
