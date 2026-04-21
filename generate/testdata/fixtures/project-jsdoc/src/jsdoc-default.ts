@@ -21,3 +21,12 @@ class JsdocDefaultQuoted extends LitElement {
    */
   @property() color: string;
 }
+
+@customElement('jsdoc-default-override')
+class JsdocDefaultOverride extends LitElement {
+  /**
+   * @default 'blue'
+   */
+  @property() color: string = 'red';
+}
+
