@@ -30,3 +30,11 @@ class JsdocDefaultOverride extends LitElement {
   @property() color: string = 'red';
 }
 
+@customElement('jsdoc-defaultvalue-alias')
+class JsdocDefaultvalueAlias extends LitElement {
+  /**
+   * @defaultvalue world
+   */
+  @property() value: string;
+}
+

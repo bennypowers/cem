@@ -140,6 +140,40 @@
             }
           ],
           "customElement": true
+        },
+        {
+          "name": "JsdocDefaultvalueAlias",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "default": "world",
+              "kind": "field",
+              "attribute": "value"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-jsdoc/src/jsdoc-default.ts#L33"
+          },
+          "kind": "class",
+          "tagName": "jsdoc-defaultvalue-alias",
+          "attributes": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              },
+              "default": "world",
+              "fieldName": "value"
+            }
+          ],
+          "customElement": true
         }
       ],
       "exports": [
@@ -172,6 +206,14 @@
           "name": "jsdoc-default-override",
           "declaration": {
             "name": "JsdocDefaultOverride",
+            "module": "src/jsdoc-default.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "jsdoc-defaultvalue-alias",
+          "declaration": {
+            "name": "JsdocDefaultvalueAlias",
             "module": "src/jsdoc-default.js"
           }
         }
