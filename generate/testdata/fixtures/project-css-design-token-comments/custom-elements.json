@@ -1,0 +1,331 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/calc-outer-comment.js",
+      "declarations": [
+        {
+          "name": "CalcOuterComment",
+          "description": "Element that demonstrates comments before declarations with calc/min/max wrapping var()",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-css-design-token-comments/src/calc-outer-comment.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "calc-outer-comment",
+          "cssProperties": [
+            {
+              "name": "--cem-length-xl",
+              "summary": "Outer comment on calc with fallback",
+              "description": "DESIGN TOKEN description for XL length",
+              "default": "24px",
+              "syntax": "\u003clength\u003e"
+            },
+            {
+              "name": "--cem-color-secondary",
+              "summary": "Non-host calc outer comment",
+              "description": "DESIGN TOKEN description for secondary color",
+              "default": "#6666cc",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--cem-color-primary",
+              "summary": "Token inside container query",
+              "description": "DESIGN TOKEN description for primary color",
+              "default": "#0066cc",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--cem-spacing-base",
+              "summary": "Outer comment on calc with no fallback\n\nNon-host token inside named container query",
+              "description": "DESIGN TOKEN description for base spacing",
+              "default": "1rem",
+              "syntax": "\u003clength\u003e"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "calc-outer-comment",
+          "declaration": {
+            "name": "CalcOuterComment",
+            "module": "src/calc-outer-comment.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "CalcOuterComment",
+          "declaration": {
+            "name": "CalcOuterComment",
+            "module": "src/calc-outer-comment.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/calc-with-token.js",
+      "declarations": [
+        {
+          "name": "CalcWithToken",
+          "description": "Element that demonstrates CSS comments in calc() with design tokens",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-css-design-token-comments/src/calc-with-token.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "calc-with-token",
+          "cssProperties": [
+            {
+              "name": "--cem-length-xl",
+              "summary": "Base icon container size",
+              "description": "DESIGN TOKEN description for XL length",
+              "default": "24px",
+              "syntax": "\u003clength\u003e"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "calc-with-token",
+          "declaration": {
+            "name": "CalcWithToken",
+            "module": "src/calc-with-token.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "CalcWithToken",
+          "declaration": {
+            "name": "CalcWithToken",
+            "module": "src/calc-with-token.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/empty-comment.js",
+      "declarations": [
+        {
+          "name": "EmptyComment",
+          "description": "Element that has empty comments with design tokens",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-css-design-token-comments/src/empty-comment.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "empty-comment",
+          "cssProperties": [
+            {
+              "name": "--cem-color-primary",
+              "description": "DESIGN TOKEN description for primary color",
+              "default": "#0066cc",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--cem-spacing-base",
+              "description": "DESIGN TOKEN description for base spacing",
+              "default": "1rem",
+              "syntax": "\u003clength\u003e"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "empty-comment",
+          "declaration": {
+            "name": "EmptyComment",
+            "module": "src/empty-comment.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "EmptyComment",
+          "declaration": {
+            "name": "EmptyComment",
+            "module": "src/empty-comment.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/no-user-comment.js",
+      "declarations": [
+        {
+          "name": "NoUserComment",
+          "description": "Element that uses design tokens without user comments",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-css-design-token-comments/src/no-user-comment.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "no-user-comment",
+          "cssProperties": [
+            {
+              "name": "--cem-color-primary",
+              "description": "DESIGN TOKEN description for primary color",
+              "default": "#0066cc",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--cem-spacing-base",
+              "description": "DESIGN TOKEN description for base spacing",
+              "default": "1rem",
+              "syntax": "\u003clength\u003e"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "no-user-comment",
+          "declaration": {
+            "name": "NoUserComment",
+            "module": "src/no-user-comment.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "NoUserComment",
+          "declaration": {
+            "name": "NoUserComment",
+            "module": "src/no-user-comment.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/user-comment-only.js",
+      "declarations": [
+        {
+          "name": "UserCommentOnly",
+          "description": "Element that has CSS comments but no matching design tokens",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-css-design-token-comments/src/user-comment-only.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "user-comment-only",
+          "cssProperties": [
+            {
+              "name": "--my-custom-color",
+              "description": "USER description for a custom property without design token"
+            },
+            {
+              "name": "--my-custom-background",
+              "description": "USER comment for custom background"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "user-comment-only",
+          "declaration": {
+            "name": "UserCommentOnly",
+            "module": "src/user-comment-only.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "UserCommentOnly",
+          "declaration": {
+            "name": "UserCommentOnly",
+            "module": "src/user-comment-only.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/user-comment-with-token.js",
+      "declarations": [
+        {
+          "name": "UserCommentWithToken",
+          "description": "Element that demonstrates CSS comments merging with design tokens",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-css-design-token-comments/src/user-comment-with-token.ts#L9"
+          },
+          "kind": "class",
+          "tagName": "user-comment-with-token",
+          "cssProperties": [
+            {
+              "name": "--cem-color-primary",
+              "description": "USER description for the primary color, specified on the token fallback for a _private var\n\nDESIGN TOKEN description for primary color",
+              "default": "#0066cc",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--cem-color-secondary",
+              "description": "USER description for secondary color\nThis is a multiline comment that explains\nthe usage of the secondary color token\n\nDESIGN TOKEN description for secondary color",
+              "default": "#6666cc",
+              "syntax": "\u003ccolor\u003e"
+            },
+            {
+              "name": "--cem-spacing-base",
+              "summary": "Nested comment on spacing token inside private var fallback\n\nDirect summary comment on design token",
+              "description": "DESIGN TOKEN description for base spacing",
+              "default": "1rem",
+              "syntax": "\u003clength\u003e"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "user-comment-with-token",
+          "declaration": {
+            "name": "UserCommentWithToken",
+            "module": "src/user-comment-with-token.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "UserCommentWithToken",
+          "declaration": {
+            "name": "UserCommentWithToken",
+            "module": "src/user-comment-with-token.js"
+          }
+        }
+      ]
+    }
+  ]
+}

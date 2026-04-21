@@ -124,6 +124,19 @@ func TestGenerate(t *testing.T) {
 				})
 			}
 
+			if *update {
+				if manifestPath := ctx.CustomElementsManifestPath(); manifestPath != "" {
+					cfg.Generate.Files = originalFiles
+					actual, err := generate.Generate(ctx)
+					if err != nil {
+						t.Fatalf("failed to generate full manifest: %v", err)
+					}
+					if err := os.WriteFile(manifestPath, []byte(*actual), 0644); err != nil {
+						t.Fatalf("failed to write manifest %s: %v", manifestPath, err)
+					}
+				}
+			}
+
 			for _, tc := range cases {
 				// capture range variable
 				t.Run(tc.name, func(t *testing.T) {

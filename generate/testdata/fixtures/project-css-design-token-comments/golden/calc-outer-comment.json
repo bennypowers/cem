@@ -13,7 +13,7 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css-design-token-comments/src/calc-outer-comment.ts#L9"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-css-design-token-comments/src/calc-outer-comment.ts#L9"
           },
           "kind": "class",
           "tagName": "calc-outer-comment",

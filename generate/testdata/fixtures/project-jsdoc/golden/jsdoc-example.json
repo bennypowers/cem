@@ -13,7 +13,7 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L8"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-jsdoc/src/jsdoc-example.ts#L8"
           },
           "kind": "class",
           "tagName": "example-inline",
@@ -27,7 +27,7 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L19"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-jsdoc/src/jsdoc-example.ts#L19"
           },
           "kind": "class",
           "tagName": "example-explicit",
@@ -41,7 +41,7 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L29"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-jsdoc/src/jsdoc-example.ts#L29"
           },
           "kind": "class",
           "tagName": "example-no-caption",
@@ -55,7 +55,7 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L43"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-jsdoc/src/jsdoc-example.ts#L43"
           },
           "kind": "class",
           "tagName": "example-multiple",
@@ -69,7 +69,7 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L56"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-jsdoc/src/jsdoc-example.ts#L56"
           },
           "kind": "class",
           "tagName": "example-multiline",
@@ -99,7 +99,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L62"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-jsdoc/src/jsdoc-example.ts#L62"
           },
           "kind": "class",
           "tagName": "example-with-methods",
@@ -123,7 +123,7 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-example.ts#L90"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-jsdoc/src/jsdoc-example.ts#L90"
           },
           "kind": "class",
           "tagName": "example-no-lang",

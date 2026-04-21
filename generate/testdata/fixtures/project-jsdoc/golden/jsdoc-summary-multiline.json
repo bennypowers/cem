@@ -13,7 +13,7 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-yaml/src/jsdoc-summary-multiline.ts#L5"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-jsdoc/src/jsdoc-summary-multiline.ts#L5"
           },
           "kind": "class",
           "tagName": "jsdoc-summary",

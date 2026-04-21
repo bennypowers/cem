@@ -8,7 +8,7 @@
         {
           "name": "WebAwesomeFormAssociatedElement",
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/wa-button-multi-decorators.ts#L3"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/wa-button-multi-decorators.ts#L3"
           },
           "kind": "class"
         },
@@ -33,7 +33,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/wa-button-multi-decorators.ts#L9"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/wa-button-multi-decorators.ts#L9"
           },
           "kind": "class",
           "tagName": "wa-button-multi",

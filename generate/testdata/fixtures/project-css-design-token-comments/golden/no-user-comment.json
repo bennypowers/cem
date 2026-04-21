@@ -13,21 +13,21 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-css-design-token-comments/src/no-user-comment.ts#L9"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-css-design-token-comments/src/no-user-comment.ts#L9"
           },
           "kind": "class",
           "tagName": "no-user-comment",
           "cssProperties": [
             {
               "name": "--cem-color-primary",
-              "default": "#0066cc",
               "description": "DESIGN TOKEN description for primary color",
+              "default": "#0066cc",
               "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--cem-spacing-base",
-              "default": "1rem",
               "description": "DESIGN TOKEN description for base spacing",
+              "default": "1rem",
               "syntax": "\u003clength\u003e"
             }
           ],

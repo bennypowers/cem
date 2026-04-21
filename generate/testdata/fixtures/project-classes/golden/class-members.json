@@ -59,7 +59,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/test/fixtures/project-classes/src/class-members.ts#L8"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-members.ts#L8"
           },
           "kind": "class",
           "tagName": "class-members",
