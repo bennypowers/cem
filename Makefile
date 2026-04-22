@@ -25,6 +25,10 @@ build: generate
 	@mkdir -p dist
 	go build -ldflags="$(shell ./scripts/ldflags.sh)" -o dist/cem .
 
+dev-serve: generate
+	@mkdir -p dist
+	go build -tags cemdev -ldflags="$(shell ./scripts/ldflags.sh)" -o dist/cem .
+
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
 # It's mostly intended for local development, not for distribution
 install: build
