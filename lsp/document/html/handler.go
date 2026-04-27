@@ -26,6 +26,7 @@ import (
 	"bennypowers.dev/cem/lsp/types"
 	Q "bennypowers.dev/cem/queries"
 	protocol "github.com/tliron/glsp/protocol_3_16"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 // Handler implements language-specific operations for HTML documents
@@ -70,6 +71,37 @@ func (h *Handler) CreateDocument(uri, content string, version int32) types.Docum
 	}
 
 	// Parse import map (must be called after script tags are parsed)
+	if importMap, err := h.ParseImportMap(doc); err != nil {
+		helpers.SafeDebugLog("[HTML] Failed to parse import map: %v", err)
+	} else if importMap != nil {
+		doc.SetImportMap(importMap)
+	}
+
+	return doc
+}
+
+// CreateDocumentWithRanges creates an HTML document using tree-sitter language
+// injection. The HTML parser is restricted to the given byte ranges, so only
+// those regions are parsed as HTML while byte positions map to the original
+// source. Used by template and PHP handlers instead of whitespace-fill.
+func (h *Handler) CreateDocumentWithRanges(uri, content string, version int32, ranges []ts.Range) types.Document {
+	doc := &HTMLDocument{
+		uri:      uri,
+		content:  content,
+		version:  version,
+		language: "html",
+	}
+
+	if err := doc.ParseWithRanges(content, ranges); err != nil {
+		helpers.SafeDebugLog("[HTML] Failed to parse document with ranges %s: %v", uri, err)
+	}
+
+	if scriptTags, err := h.ParseScriptTags(doc); err != nil {
+		helpers.SafeDebugLog("[HTML] Failed to parse script tags with handler: %v", err)
+	} else {
+		doc.SetScriptTags(scriptTags)
+	}
+
 	if importMap, err := h.ParseImportMap(doc); err != nil {
 		helpers.SafeDebugLog("[HTML] Failed to parse import map: %v", err)
 	} else if importMap != nil {

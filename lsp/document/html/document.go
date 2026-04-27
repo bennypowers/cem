@@ -213,6 +213,33 @@ func (d *HTMLDocument) Parse(content string) error {
 	return nil
 }
 
+// ParseWithRanges parses using tree-sitter language injection: the HTML parser
+// is restricted to the given byte ranges (e.g. HTML regions extracted from a
+// template grammar). Byte positions in the resulting tree refer to the original
+// source, so line/column mapping works without a whitespace-filled buffer.
+func (d *HTMLDocument) ParseWithRanges(content string, ranges []ts.Range) error {
+	d.UpdateContent(content, d.version)
+
+	parser := Q.GetHTMLParser()
+	if parser == nil {
+		return fmt.Errorf("failed to get HTML parser")
+	}
+	d.SetParser(parser)
+
+	if err := parser.SetIncludedRanges(ranges); err != nil {
+		return fmt.Errorf("failed to set included ranges: %w", err)
+	}
+
+	tree := parser.Parse([]byte(content), nil)
+
+	// Clear included ranges so the parser doesn't carry stale state
+	_ = parser.SetIncludedRanges(nil)
+
+	d.SetTree(tree)
+
+	return nil
+}
+
 // findCustomElements finds custom elements in the HTML document
 func (d *HTMLDocument) findCustomElements(handler *Handler) ([]types.CustomElementMatch, error) {
 	var elements []types.CustomElementMatch
