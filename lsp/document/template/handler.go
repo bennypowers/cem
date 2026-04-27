@@ -134,12 +134,6 @@ func templateFamily(uri string) string {
 	}
 }
 
-// rangeParser is implemented by handlers that support tree-sitter language
-// injection via SetIncludedRanges.
-type rangeParser interface {
-	CreateDocumentWithRanges(uri, content string, version int32, ranges []sitter.Range) types.Document
-}
-
 // htmlRanges uses tree-sitter to find text/content nodes (HTML content) and
 // returns their byte ranges for use with tree-sitter language injection.
 func (h *Handler) htmlRanges(source []byte, uri string) []sitter.Range {
@@ -191,12 +185,12 @@ func (h *Handler) htmlRanges(source []byte, uri string) []sitter.Range {
 
 func (h *Handler) CreateDocument(uri, content string, version int32) types.Document {
 	ranges := h.htmlRanges([]byte(content), uri)
-	if ranges == nil {
+	if len(ranges) == 0 {
 		helpers.SafeDebugLog("[TEMPLATE] failed to extract HTML ranges from %s, falling back to raw content", uri)
 		return h.htmlHandler.CreateDocument(uri, content, version)
 	}
 
-	if rp, ok := h.htmlHandler.(rangeParser); ok {
+	if rp, ok := h.htmlHandler.(types.RangeParser); ok {
 		return rp.CreateDocumentWithRanges(uri, content, version, ranges)
 	}
 

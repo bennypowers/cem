@@ -158,6 +158,7 @@ func (d *HTMLDocument) Close() {
 	}
 
 	if d.parser != nil {
+		Q.PutHTMLParser(d.parser)
 		d.parser = nil
 	}
 }
@@ -781,6 +782,23 @@ func (d *HTMLDocument) FindInlineModuleScript() (protocol.Position, bool) {
 	return d.FindModuleScript()
 }
 
+func getQueryManager(dm any) *Q.QueryManager {
+	dmValue := reflect.ValueOf(dm)
+	if dmValue.Kind() != reflect.Pointer || dmValue.IsNil() {
+		return nil
+	}
+	method := dmValue.MethodByName("QueryManager")
+	if !method.IsValid() {
+		return nil
+	}
+	results := method.Call(nil)
+	if len(results) == 0 || results[0].IsNil() {
+		return nil
+	}
+	qm, _ := results[0].Interface().(*Q.QueryManager)
+	return qm
+}
+
 // FindHeadInsertionPoint finds insertion point in <head> section using
 // tree-sitter queries. Returns position just before </head>.
 func (d *HTMLDocument) FindHeadInsertionPoint(dm any) (protocol.Position, bool) {
@@ -794,26 +812,15 @@ func (d *HTMLDocument) FindHeadInsertionPoint(dm any) (protocol.Position, bool) 
 
 	content := d.content
 
-	// Get queryManager from dm via reflection
-	dmValue := reflect.ValueOf(dm)
-	if dmValue.Kind() != reflect.Pointer || dmValue.IsNil() {
-		return protocol.Position{}, false
-	}
-	method := dmValue.MethodByName("QueryManager")
-	if !method.IsValid() {
-		return protocol.Position{}, false
-	}
-	results := method.Call(nil)
-	if len(results) == 0 || results[0].IsNil() {
-		return protocol.Position{}, false
-	}
-	qm, ok := results[0].Interface().(*Q.QueryManager)
-	if !ok {
+	qm := getQueryManager(dm)
+	if qm == nil {
+		helpers.SafeDebugLog("[HTML] FindHeadInsertionPoint: QueryManager not available")
 		return protocol.Position{}, false
 	}
 
 	matcher, err := Q.GetCachedQueryMatcher(qm, "html", "headElements")
 	if err != nil {
+		helpers.SafeDebugLog("[HTML] FindHeadInsertionPoint: failed to create matcher: %v", err)
 		return protocol.Position{}, false
 	}
 	defer matcher.Close()

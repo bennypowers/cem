@@ -563,3 +563,61 @@ func TestNunjucks_HeadInsertionPoint(t *testing.T) {
 		t.Errorf("Expected head insertion at line 4, got %d", pos.Line)
 	}
 }
+
+func TestHandlebars_CompletionContext_TemplateLessThan(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := "{{#if (lt count max)}}\n<my-element>\n{{/if}}"
+	doc := dm.OpenDocument("test://cmp.hbs", content, 1)
+
+	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 1, Character: 1}, dm)
+	if analysis.Type != types.CompletionTagName {
+		t.Errorf("Expected CompletionTagName, got %d", analysis.Type)
+	}
+}
+
+func TestERB_CompletionContext_TemplateLessThan(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := "<% if count < max %>\n<my-element>\n<% end %>"
+	doc := dm.OpenDocument("test://cmp.erb", content, 1)
+
+	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 1, Character: 1}, dm)
+	if analysis.Type != types.CompletionTagName {
+		t.Errorf("Expected CompletionTagName, got %d", analysis.Type)
+	}
+}
+
+func TestEJS_CompletionContext_TemplateLessThan(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := "<% if (count < max) { %>\n<my-element>\n<% } %>"
+	doc := dm.OpenDocument("test://cmp.ejs", content, 1)
+
+	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 1, Character: 1}, dm)
+	if analysis.Type != types.CompletionTagName {
+		t.Errorf("Expected CompletionTagName, got %d", analysis.Type)
+	}
+}
+
+func TestNunjucks_HeadInsertionPoint_NoHead(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := "{% block content %}\n<my-element></my-element>\n{% endblock %}"
+	doc := dm.OpenDocument("test://nohead.njk", content, 1)
+
+	_, found := doc.FindHeadInsertionPoint(dm)
+	if found {
+		t.Error("Expected no head insertion point in headless template")
+	}
+}
+
+func TestNunjucks_CompletionContext_MultiByte(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := "{% if title == \"Héllo Wörld\" %}\n<my-element></my-element>\n{% endif %}"
+	doc := dm.OpenDocument("test://utf8.njk", content, 1)
+
+	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 1, Character: 1}, dm)
+	if analysis.Type != types.CompletionTagName {
+		t.Errorf("Expected CompletionTagName with multi-byte content, got %d", analysis.Type)
+	}
+	if analysis.TagName != "my-element" {
+		t.Errorf("Expected TagName 'my-element', got %q", analysis.TagName)
+	}
+}
