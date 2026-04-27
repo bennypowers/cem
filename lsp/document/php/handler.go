@@ -28,16 +28,16 @@ import (
 )
 
 // Handler implements language-specific operations for PHP documents.
-// It uses a two-stage pipeline:
-//  1. tree-sitter-php extracts HTML text nodes from PHP source
-//  2. The HTML handler parses the reconstructed HTML for custom elements
+// It uses tree-sitter language injection:
+//  1. tree-sitter-php extracts HTML region byte ranges from PHP source
+//  2. The HTML parser is restricted to those ranges via SetIncludedRanges
 //
-// PHP blocks are replaced with whitespace to preserve line/column positions.
+// Byte positions in the resulting tree map to the original source automatically.
 type Handler struct {
 	htmlHandler types.LanguageHandler
 	phpParser   *sitter.Parser
 	textQuery   *sitter.Query
-	mu          sync.RWMutex
+	mu          sync.Mutex
 }
 
 var phpLang = sitter.NewLanguage(tree_sitter_php.LanguagePHP())
@@ -67,60 +67,49 @@ func (h *Handler) Language() string {
 	return "php"
 }
 
-// extractHTML uses tree-sitter-php to find HTML text nodes, then replaces
-// PHP blocks with whitespace to produce valid HTML with preserved positions.
-func (h *Handler) extractHTML(source []byte) []byte {
+// htmlRanges uses tree-sitter-php to find HTML text nodes and returns their
+// byte ranges for use with tree-sitter language injection.
+func (h *Handler) htmlRanges(source []byte) []sitter.Range {
 	h.mu.Lock()
+	defer h.mu.Unlock()
+
 	parser := h.phpParser
 	query := h.textQuery
 	if parser == nil || query == nil {
-		h.mu.Unlock()
 		return nil
 	}
 	parser.Reset()
 	tree := parser.Parse(source, nil)
-	h.mu.Unlock()
 
 	if tree == nil {
 		return nil
 	}
 	defer tree.Close()
 
-	// Start with a buffer where PHP blocks are whitespace
-	buf := make([]byte, len(source))
-	for i, b := range source {
-		if b == '\n' {
-			buf[i] = '\n'
-		} else {
-			buf[i] = ' '
-		}
-	}
-
-	// Copy HTML text nodes back into position
 	cursor := sitter.NewQueryCursor()
 	defer cursor.Close()
 
+	var ranges []sitter.Range
 	matches := cursor.Matches(query, tree.RootNode(), source)
 	for m := matches.Next(); m != nil; m = matches.Next() {
 		for _, c := range m.Captures {
 			n := c.Node
-			copy(buf[n.StartByte():n.EndByte()], source[n.StartByte():n.EndByte()])
+			ranges = append(ranges, n.Range())
 		}
 	}
 
-	return buf
+	return ranges
 }
 
-// CreateDocument creates a new PHP document by extracting HTML and delegating
-// to the HTML handler
+// CreateDocument creates a new PHP document by extracting HTML ranges and
+// delegating to the HTML handler with tree-sitter language injection.
 func (h *Handler) CreateDocument(uri, content string, version int32) types.Document {
-	htmlContent := h.extractHTML([]byte(content))
-	if htmlContent == nil {
-		helpers.SafeDebugLog("[PHP] Failed to extract HTML from %s, falling back to raw content", uri)
-		return h.htmlHandler.CreateDocument(uri, content, version)
+	ranges := h.htmlRanges([]byte(content))
+	if rp, ok := h.htmlHandler.(types.RangeParser); ok {
+		return rp.CreateDocumentWithRanges(uri, content, version, ranges)
 	}
-
-	return h.htmlHandler.CreateDocument(uri, string(htmlContent), version)
+	helpers.SafeDebugLog("[PHP] htmlHandler does not implement RangeParser for %s", uri)
+	return h.htmlHandler.CreateDocument(uri, content, version)
 }
 
 // FindCustomElements delegates to the HTML handler

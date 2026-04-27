@@ -24,6 +24,7 @@ import (
 
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/types"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 const phpTwigFixtureDir = "testdata/integration/php-twig-support"
@@ -312,5 +313,89 @@ func TestTwig_TwigExtension(t *testing.T) {
 
 	if len(elements) == 0 {
 		t.Error("Expected custom elements to be found for .twig extension")
+	}
+}
+
+// PHP Completion Context (injection safety)
+// ============================================================================
+
+func newPHPDM(t *testing.T) types.Manager {
+	t.Helper()
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create document manager: %v", err)
+	}
+	t.Cleanup(dm.Close)
+	return dm
+}
+
+func TestPHP_CompletionContext(t *testing.T) {
+	dm := newPHPDM(t)
+
+	tests := []struct {
+		name     string
+		fixture  string
+		position protocol.Position
+		wantType types.CompletionContextType
+		wantTag  string
+	}{
+		{"at-element", "comparison-operator.php", protocol.Position{Line: 1, Character: 1}, types.CompletionTagName, "my-element"},
+		{"in-php-region", "comparison-operator.php", protocol.Position{Line: 0, Character: 15}, types.CompletionUnknown, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content := readPHPTwigFixture(t, tt.fixture)
+			doc := dm.OpenDocument("test://cmp.php", content, 1)
+
+			analysis := doc.AnalyzeCompletionContextTS(tt.position, dm)
+			if analysis.Type != tt.wantType {
+				t.Errorf("Expected completion type %d, got %d", tt.wantType, analysis.Type)
+			}
+			if tt.wantTag != "" && analysis.TagName != tt.wantTag {
+				t.Errorf("Expected TagName %q, got %q", tt.wantTag, analysis.TagName)
+			}
+		})
+	}
+}
+
+func TestPHP_EdgeCases(t *testing.T) {
+	dm := newPHPDM(t)
+
+	tests := []struct {
+		name         string
+		fixture      string
+		wantElements []string
+	}{
+		{"pure-php", "pure-php.php", nil},
+		{"pure-html", "pure-html.php", []string{"my-element"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content := readPHPTwigFixture(t, tt.fixture)
+			elements := openAndFindElements(t, dm, "test://edge.php", content)
+			if tt.wantElements == nil {
+				if len(elements) != 0 {
+					t.Errorf("Expected no elements, got %d", len(elements))
+				}
+			} else {
+				assertElementsFound(t, elements, tt.wantElements)
+			}
+		})
+	}
+}
+
+func TestPHP_HeadInsertionPoint(t *testing.T) {
+	dm := newPHPDM(t)
+	content := readPHPTwigFixture(t, "head-section.php")
+	doc := dm.OpenDocument("test://head.php", content, 1)
+
+	pos, found := doc.FindHeadInsertionPoint(dm)
+	if !found {
+		t.Fatal("Expected to find head insertion point")
+	}
+	if pos.Line != 4 {
+		t.Errorf("Expected head insertion at line 4, got %d", pos.Line)
 	}
 }

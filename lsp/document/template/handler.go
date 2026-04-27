@@ -32,11 +32,11 @@ import (
 
 // Handler implements language-specific operations for template documents
 // (Nunjucks, Jinja2, Twig, Liquid, Handlebars, ERB, EJS).
-// It uses a two-stage pipeline:
-//  1. tree-sitter grammar extracts text/content nodes (HTML) from template source
-//  2. The HTML handler parses the reconstructed HTML for custom elements
+// It uses tree-sitter language injection:
+//  1. tree-sitter grammar extracts HTML region byte ranges from template source
+//  2. The HTML parser is restricted to those ranges via SetIncludedRanges
 //
-// Template blocks are replaced with whitespace to preserve line/column positions.
+// Byte positions in the resulting tree map to the original source automatically.
 type Handler struct {
 	htmlHandler types.LanguageHandler
 	jinjaParser *sitter.Parser
@@ -134,11 +134,9 @@ func templateFamily(uri string) string {
 	}
 }
 
-// extractHTML uses tree-sitter to find text/content nodes (HTML content), then
-// replaces template blocks with whitespace to produce valid HTML with preserved
-// positions. The mutex is held for the entire operation to prevent Close from
-// freeing the parser or query while they are in use.
-func (h *Handler) extractHTML(source []byte, uri string) []byte {
+// htmlRanges uses tree-sitter to find text/content nodes (HTML content) and
+// returns their byte ranges for use with tree-sitter language injection.
+func (h *Handler) htmlRanges(source []byte, uri string) []sitter.Range {
 	family := templateFamily(uri)
 
 	h.mu.Lock()
@@ -170,37 +168,28 @@ func (h *Handler) extractHTML(source []byte, uri string) []byte {
 	}
 	defer tree.Close()
 
-	buf := make([]byte, len(source))
-	for i, b := range source {
-		if b == '\n' {
-			buf[i] = '\n'
-		} else {
-			buf[i] = ' '
-		}
-	}
-
 	cursor := sitter.NewQueryCursor()
 	defer cursor.Close()
 
+	var ranges []sitter.Range
 	matches := cursor.Matches(query, tree.RootNode(), source)
 	for m := matches.Next(); m != nil; m = matches.Next() {
 		for _, c := range m.Captures {
 			n := c.Node
-			copy(buf[n.StartByte():n.EndByte()], source[n.StartByte():n.EndByte()])
+			ranges = append(ranges, n.Range())
 		}
 	}
 
-	return buf
+	return ranges
 }
 
 func (h *Handler) CreateDocument(uri, content string, version int32) types.Document {
-	htmlContent := h.extractHTML([]byte(content), uri)
-	if htmlContent == nil {
-		helpers.SafeDebugLog("[TEMPLATE] failed to extract HTML from %s, falling back to raw content", uri)
-		return h.htmlHandler.CreateDocument(uri, content, version)
+	ranges := h.htmlRanges([]byte(content), uri)
+	if rp, ok := h.htmlHandler.(types.RangeParser); ok {
+		return rp.CreateDocumentWithRanges(uri, content, version, ranges)
 	}
-
-	return h.htmlHandler.CreateDocument(uri, string(htmlContent), version)
+	helpers.SafeDebugLog("[TEMPLATE] htmlHandler does not implement RangeParser for %s", uri)
+	return h.htmlHandler.CreateDocument(uri, content, version)
 }
 
 func (h *Handler) FindCustomElements(doc types.Document) ([]types.CustomElementMatch, error) {

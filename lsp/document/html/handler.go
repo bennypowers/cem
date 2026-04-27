@@ -26,6 +26,7 @@ import (
 	"bennypowers.dev/cem/lsp/types"
 	Q "bennypowers.dev/cem/queries"
 	protocol "github.com/tliron/glsp/protocol_3_16"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 // Handler implements language-specific operations for HTML documents
@@ -57,26 +58,46 @@ func (h *Handler) CreateDocument(uri, content string, version int32) types.Docum
 		language: "html",
 	}
 
-	// Parse the document
 	if err := doc.Parse(content); err != nil {
 		helpers.SafeDebugLog("[HTML] Failed to parse document %s: %v", uri, err)
 	}
 
-	// Parse script tags using the handler's tree-sitter implementation
+	h.finalizeDocument(doc)
+	return doc
+}
+
+// CreateDocumentWithRanges creates an HTML document using tree-sitter language
+// injection. The HTML parser is restricted to the given byte ranges, so only
+// those regions are parsed as HTML while byte positions map to the original
+// source. Used by template and PHP handlers instead of whitespace-fill.
+func (h *Handler) CreateDocumentWithRanges(uri, content string, version int32, ranges []ts.Range) types.Document {
+	doc := &HTMLDocument{
+		uri:      uri,
+		content:  content,
+		version:  version,
+		language: "html",
+	}
+
+	if err := doc.ParseWithRanges(content, ranges); err != nil {
+		helpers.SafeDebugLog("[HTML] Failed to parse document with ranges %s: %v", uri, err)
+	}
+
+	h.finalizeDocument(doc)
+	return doc
+}
+
+func (h *Handler) finalizeDocument(doc *HTMLDocument) {
 	if scriptTags, err := h.ParseScriptTags(doc); err != nil {
 		helpers.SafeDebugLog("[HTML] Failed to parse script tags with handler: %v", err)
 	} else {
 		doc.SetScriptTags(scriptTags)
 	}
 
-	// Parse import map (must be called after script tags are parsed)
 	if importMap, err := h.ParseImportMap(doc); err != nil {
 		helpers.SafeDebugLog("[HTML] Failed to parse import map: %v", err)
 	} else if importMap != nil {
 		doc.SetImportMap(importMap)
 	}
-
-	return doc
 }
 
 // FindCustomElements finds custom elements in the document
@@ -141,6 +162,15 @@ func (h *Handler) FindAttributeAtPosition(doc types.Document, position protocol.
 	}
 
 	return nil, ""
+}
+
+// FindHeadInsertionPoint finds the position just before </head> using tree-sitter.
+func (h *Handler) FindHeadInsertionPoint(doc types.Document) (protocol.Position, bool) {
+	htmlDoc, ok := doc.(*HTMLDocument)
+	if !ok {
+		return protocol.Position{}, false
+	}
+	return htmlDoc.findHeadInsertionPoint(h)
 }
 
 // ParseScriptTags parses script tags in the HTML document using tree-sitter

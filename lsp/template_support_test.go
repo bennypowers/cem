@@ -23,6 +23,7 @@ import (
 
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/types"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 const templateFixtureDir = "testdata/integration/template-support"
@@ -490,6 +491,124 @@ func TestTemplateCompoundExtensionRouting(t *testing.T) {
 			}
 			if _, ok := el.Attributes["{%"]; ok {
 				t.Errorf("Template syntax leaked as attribute for %s", uri)
+			}
+		})
+	}
+}
+
+// Template Completion Context (injection safety)
+// ============================================================================
+
+func TestTemplate_CompletionContext_ComparisonOperator(t *testing.T) {
+	dm := newTemplateDM(t)
+
+	tests := []struct {
+		name     string
+		fixture  string
+		uri      string
+		position protocol.Position
+		wantType types.CompletionContextType
+		wantTag  string
+	}{
+		{"nunjucks", "comparison-operator.njk", "test://cmp.njk", protocol.Position{Line: 2, Character: 1}, types.CompletionTagName, "my-element"},
+		{"handlebars", "comparison-operator.hbs", "test://cmp.hbs", protocol.Position{Line: 1, Character: 1}, types.CompletionTagName, ""},
+		{"erb", "comparison-operator.erb", "test://cmp.erb", protocol.Position{Line: 1, Character: 1}, types.CompletionTagName, ""},
+		{"ejs", "comparison-operator.ejs", "test://cmp.ejs", protocol.Position{Line: 1, Character: 1}, types.CompletionTagName, ""},
+		{"nunjucks-in-template", "comparison-operator.njk", "test://cmp.njk", protocol.Position{Line: 1, Character: 10}, types.CompletionUnknown, ""},
+		{"multibyte", "multibyte.njk", "test://utf8.njk", protocol.Position{Line: 1, Character: 1}, types.CompletionTagName, "my-element"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content := readTemplateFixture(t, tt.fixture)
+			doc := dm.OpenDocument(tt.uri, content, 1)
+
+			analysis := doc.AnalyzeCompletionContextTS(tt.position, dm)
+			if analysis.Type != tt.wantType {
+				t.Errorf("Expected completion type %d, got %d", tt.wantType, analysis.Type)
+			}
+			if tt.wantTag != "" && analysis.TagName != tt.wantTag {
+				t.Errorf("Expected TagName %q, got %q", tt.wantTag, analysis.TagName)
+			}
+		})
+	}
+}
+
+func TestTemplate_AttributeAfterTemplateBlock(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "intag-conditional-attr.njk")
+
+	elements := openAndFindElements(t, dm, "test://attr.njk", content)
+	assertElementsFound(t, elements, []string{"my-element"})
+
+	el := findElement(elements, "my-element")
+	if el == nil {
+		t.Fatal("my-element not found")
+	}
+	if _, ok := el.Attributes["variant"]; !ok {
+		t.Error("Expected variant attribute to be found")
+	}
+
+	for _, bad := range []string{"{%", "if", "endif", "%}"} {
+		if _, ok := el.Attributes[bad]; ok {
+			t.Errorf("Template syntax %q should not be an attribute", bad)
+		}
+	}
+}
+
+func TestTemplate_HeadInsertionPoint(t *testing.T) {
+	dm := newTemplateDM(t)
+
+	tests := []struct {
+		name      string
+		fixture   string
+		uri       string
+		wantFound bool
+		wantLine  uint32
+	}{
+		{"with-head", "head-section.njk", "test://head.njk", true, 4},
+		{"headless", "headless.njk", "test://nohead.njk", false, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content := readTemplateFixture(t, tt.fixture)
+			doc := dm.OpenDocument(tt.uri, content, 1)
+
+			pos, found := doc.FindHeadInsertionPoint(dm)
+			if found != tt.wantFound {
+				t.Errorf("Expected found=%v, got %v", tt.wantFound, found)
+			}
+			if found && pos.Line != tt.wantLine {
+				t.Errorf("Expected line %d, got %d", tt.wantLine, pos.Line)
+			}
+		})
+	}
+}
+
+func TestTemplate_EdgeCases(t *testing.T) {
+	dm := newTemplateDM(t)
+
+	tests := []struct {
+		name         string
+		fixture      string
+		uri          string
+		wantElements []string
+	}{
+		{"pure-template", "pure-template.njk", "test://pure.njk", nil},
+		{"pure-html", "pure-html.njk", "test://pure.njk", []string{"my-element"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content := readTemplateFixture(t, tt.fixture)
+			elements := openAndFindElements(t, dm, tt.uri, content)
+			if tt.wantElements == nil {
+				if len(elements) != 0 {
+					t.Errorf("Expected no elements, got %d", len(elements))
+				}
+			} else {
+				assertElementsFound(t, elements, tt.wantElements)
 			}
 		})
 	}

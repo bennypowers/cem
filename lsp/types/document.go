@@ -61,6 +61,13 @@ type LanguageHandler interface {
 	Close()
 }
 
+// RangeParser is implemented by LanguageHandlers that support tree-sitter
+// language injection via SetIncludedRanges. Template and PHP handlers use this
+// to parse only the HTML regions of their source files.
+type RangeParser interface {
+	CreateDocumentWithRanges(uri, content string, version int32, ranges []ts.Range) Document
+}
+
 // Manager interface for document lifecycle management
 type Manager interface {
 	// Document lifecycle
