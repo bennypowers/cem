@@ -87,6 +87,7 @@ func NewHandler(htmlHandler types.LanguageHandler) (*Handler, error) {
 		jinjaQuery.Close()
 		hbsParser.Close()
 		hbsQuery.Close()
+		etParser.Close()
 		return nil, fmt.Errorf("failed to set embedded-template language: %w", err)
 	}
 
