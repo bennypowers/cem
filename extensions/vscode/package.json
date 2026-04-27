@@ -41,6 +41,8 @@
     "onLanguage:jinja",
     "onLanguage:twig",
     "onLanguage:liquid",
+    "onLanguage:erb",
+    "onLanguage:ejs",
     "onLanguage:typescript",
     "onLanguage:javascript"
   ],

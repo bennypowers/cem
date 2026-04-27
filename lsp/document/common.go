@@ -62,7 +62,7 @@ func getLanguageFromURI(uri string) string {
 		return "typescript"
 	case ".tsx", ".jsx":
 		return "tsx"
-	case ".njk", ".j2", ".jinja", ".jinja2", ".liquid", ".hbs", ".twig":
+	case ".njk", ".j2", ".jinja", ".jinja2", ".liquid", ".hbs", ".twig", ".erb", ".ejs":
 		return "template"
 	default:
 		return "html"

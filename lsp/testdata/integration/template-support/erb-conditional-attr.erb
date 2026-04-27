@@ -1,0 +1,14 @@
+<%# ERB template with conditional attributes inside start tags %>
+
+<site-header theme="<%= theme_mode %>">
+  <h1><%= site_name %></h1>
+</site-header>
+
+<% tiles.each do |tile| %>
+  <rh-tile compact bleed <% if tile.coming_soon %>disabled<% end %>>
+    <uxdot-example slot="image" no-border transparent>
+      <img src="<%= tile.screenshot_path %>" alt="<%= tile.tag_name %>">
+    </uxdot-example>
+    <h3 slot="headline"><%= tile.title %></h3>
+  </rh-tile>
+<% end %>

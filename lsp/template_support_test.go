@@ -335,6 +335,104 @@ func TestTwig_InTagTemplateSyntax_TwigExtension(t *testing.T) {
 	}
 }
 
+// ERB Custom Element Extraction
+// ============================================================================
+
+func TestERB_FindCustomElements(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "erb-conditional-attr.erb")
+	elements := openAndFindElements(t, dm, "test://page.erb", content)
+
+	assertElementsFound(t, elements, []string{"site-header", "rh-tile", "uxdot-example"})
+}
+
+func TestERB_InTagTemplateSyntax(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "erb-conditional-attr.erb")
+	elements := openAndFindElements(t, dm, "test://page.erb", content)
+
+	el := findElement(elements, "rh-tile")
+	if el == nil {
+		t.Fatal("rh-tile not found")
+	}
+
+	for _, bad := range []string{"<%", "if", "tile.coming_soon", "%>disabled<%", "end", "%>"} {
+		if _, ok := el.Attributes[bad]; ok {
+			t.Errorf("Template syntax %q should not be an attribute", bad)
+		}
+	}
+
+	if _, ok := el.Attributes["compact"]; !ok {
+		t.Error("Expected 'compact' attribute on rh-tile")
+	}
+	if _, ok := el.Attributes["bleed"]; !ok {
+		t.Error("Expected 'bleed' attribute on rh-tile")
+	}
+	if _, ok := el.Attributes["disabled"]; !ok {
+		t.Error("Expected 'disabled' attribute on rh-tile (from conditional template block)")
+	}
+}
+
+func TestERB_PositionPreservation(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "erb-conditional-attr.erb")
+	elements := openAndFindElements(t, dm, "test://page.erb", content)
+
+	// site-header is on line 3 (1-indexed) = line 2 (0-indexed)
+	el := findElement(elements, "site-header")
+	if el == nil {
+		t.Fatal("site-header not found")
+	}
+	if el.Range.Start.Line != 2 {
+		t.Errorf("Expected site-header on line 2, got line %d", el.Range.Start.Line)
+	}
+}
+
+func TestERB_NoCustomElements(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "no-elements.erb")
+	elements := openAndFindElements(t, dm, "test://plain.erb", content)
+
+	if len(elements) != 0 {
+		t.Errorf("Expected 0 custom elements, got %d: %v", len(elements), tagNames(elements))
+	}
+}
+
+// EJS Custom Element Extraction
+// ============================================================================
+
+func TestEJS_FindCustomElements(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "ejs-conditional-attr.ejs")
+	elements := openAndFindElements(t, dm, "test://page.ejs", content)
+
+	assertElementsFound(t, elements, []string{"site-header", "rh-tile", "uxdot-example"})
+}
+
+func TestEJS_InTagTemplateSyntax(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "ejs-conditional-attr.ejs")
+	elements := openAndFindElements(t, dm, "test://page.ejs", content)
+
+	el := findElement(elements, "rh-tile")
+	if el == nil {
+		t.Fatal("rh-tile not found")
+	}
+
+	for _, bad := range []string{"<%", "if", "(tile.comingSoon)", "%>disabled<%", "%>"} {
+		if _, ok := el.Attributes[bad]; ok {
+			t.Errorf("Template syntax %q should not be an attribute", bad)
+		}
+	}
+
+	if _, ok := el.Attributes["compact"]; !ok {
+		t.Error("Expected 'compact' attribute on rh-tile")
+	}
+	if _, ok := el.Attributes["disabled"]; !ok {
+		t.Error("Expected 'disabled' attribute on rh-tile (from conditional template block)")
+	}
+}
+
 // Extension Routing
 // ============================================================================
 

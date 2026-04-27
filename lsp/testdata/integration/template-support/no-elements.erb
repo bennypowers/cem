@@ -1,0 +1,10 @@
+<%# ERB template with no custom elements %>
+
+<div class="container">
+  <h1><%= title %></h1>
+  <ul>
+    <% items.each do |item| %>
+      <li><%= item.name %></li>
+    <% end %>
+  </ul>
+</div>
