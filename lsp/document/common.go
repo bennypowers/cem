@@ -50,15 +50,6 @@ func ExtractDocumentManager(dm any) types.Manager {
 // Template files (Nunjucks, Jinja2, Twig, Liquid, Handlebars) use a dedicated
 // template handler that strips template syntax before HTML parsing.
 func getLanguageFromURI(uri string) string {
-	// Handle compound extensions
-	base := strings.ToLower(uri)
-	if strings.HasSuffix(base, ".html.twig") || strings.HasSuffix(base, ".twig") {
-		return "template"
-	}
-	if strings.HasSuffix(base, ".html.j2") || strings.HasSuffix(base, ".html.jinja2") {
-		return "template"
-	}
-
 	ext := strings.ToLower(filepath.Ext(uri))
 	switch ext {
 	case ".html", ".htm":
@@ -68,10 +59,10 @@ func getLanguageFromURI(uri string) string {
 	case ".ts":
 		return "typescript"
 	case ".js":
-		return "typescript" // Use TypeScript parser for JS too
+		return "typescript"
 	case ".tsx", ".jsx":
 		return "tsx"
-	case ".njk", ".j2", ".jinja", ".jinja2", ".liquid", ".hbs":
+	case ".njk", ".j2", ".jinja", ".jinja2", ".liquid", ".hbs", ".twig":
 		return "template"
 	default:
 		return "html"

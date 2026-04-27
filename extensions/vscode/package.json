@@ -40,6 +40,7 @@
     "onLanguage:handlebars",
     "onLanguage:jinja",
     "onLanguage:twig",
+    "onLanguage:liquid",
     "onLanguage:typescript",
     "onLanguage:javascript"
   ],
@@ -90,32 +91,6 @@
         "extensions": [
           ".js",
           ".mjs"
-        ]
-      },
-      {
-        "id": "nunjucks",
-        "extensions": [
-          ".njk"
-        ]
-      },
-      {
-        "id": "handlebars",
-        "extensions": [
-          ".hbs"
-        ]
-      },
-      {
-        "id": "jinja",
-        "extensions": [
-          ".j2",
-          ".jinja",
-          ".jinja2"
-        ]
-      },
-      {
-        "id": "twig",
-        "extensions": [
-          ".twig"
         ]
       }
     ],

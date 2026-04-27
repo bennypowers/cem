@@ -42,7 +42,7 @@ type Handler struct {
 	jinjaQuery  *sitter.Query
 	hbsParser   *sitter.Parser
 	hbsQuery    *sitter.Query
-	mu          sync.RWMutex
+	mu          sync.Mutex
 }
 
 var (
@@ -90,7 +90,11 @@ func (h *Handler) Language() string {
 	return "template"
 }
 
-// templateFamily determines which tree-sitter grammar to use based on file extension.
+// templateFamily determines which tree-sitter grammar to use based on file
+// extension. Liquid files use the Jinja grammar since Liquid shares the same
+// delimiter syntax ({%...%}, {{...}}). Liquid-specific constructs like
+// {% raw %}...{% endraw %} are handled as custom statements by the Jinja
+// grammar; the HTML content within them is still correctly extracted.
 func templateFamily(uri string) string {
 	if strings.HasSuffix(strings.ToLower(uri), ".hbs") {
 		return "handlebars"
@@ -100,10 +104,14 @@ func templateFamily(uri string) string {
 
 // extractHTML uses tree-sitter to find text nodes (HTML content), then replaces
 // template blocks with whitespace to produce valid HTML with preserved positions.
+// The mutex is held for the entire operation to prevent Close from freeing
+// the parser or query while they are in use.
 func (h *Handler) extractHTML(source []byte, uri string) []byte {
 	family := templateFamily(uri)
 
 	h.mu.Lock()
+	defer h.mu.Unlock()
+
 	var parser *sitter.Parser
 	var query *sitter.Query
 
@@ -117,12 +125,10 @@ func (h *Handler) extractHTML(source []byte, uri string) []byte {
 	}
 
 	if parser == nil || query == nil {
-		h.mu.Unlock()
 		return nil
 	}
 	parser.Reset()
 	tree := parser.Parse(source, nil)
-	h.mu.Unlock()
 
 	if tree == nil {
 		return nil

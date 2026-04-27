@@ -4,7 +4,7 @@ weight: 20
 ---
 
 {{< tip >}}
-**TL;DR**: Install CEM, then configure your editor to run `cem lsp`. VS Code users can install the extension. Neovim/Zed users configure their LSP client to start `cem lsp` for HTML, Twig, PHP, JavaScript, and TypeScript files.
+**TL;DR**: Install CEM, then configure your editor to run `cem lsp`. VS Code users can install the extension. Neovim/Zed users configure their LSP client to start `cem lsp` for HTML, Nunjucks, Jinja2, Handlebars, Twig, Liquid, PHP, JavaScript, and TypeScript files.
 {{< /tip >}}
 
 Configure the CEM Language Server Protocol integration for your editor to get intelligent autocomplete, hover documentation, and validation for custom elements.
@@ -15,7 +15,7 @@ Configure the CEM Language Server Protocol integration for your editor to get in
 
 ## What is LSP?
 
-The Language Server Protocol provides a standard way to add language-specific features to any editor. The CEM language server analyzes your custom elements manifests to offer contextual autocomplete, hover documentation, go-to-definition, and other IDE enhancements for HTML, Twig, PHP, JavaScript, and TypeScript files. This includes HTML embedded in languages like PHP (e.g. WordPress themes) or in Twig templates (e.g. Drupal themes).
+The Language Server Protocol provides a standard way to add language-specific features to any editor. The CEM language server analyzes your custom elements manifests to offer contextual autocomplete, hover documentation, go-to-definition, and other IDE enhancements for HTML, Nunjucks, Jinja2, Handlebars, Twig, Liquid, PHP, JavaScript, and TypeScript files. This includes HTML embedded in template languages like Nunjucks, Jinja2, Handlebars, Twig, and Liquid, as well as PHP (e.g. WordPress themes).
 
 ## Features
 
