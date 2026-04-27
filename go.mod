@@ -6,12 +6,12 @@ require (
 	atomicgo.dev/keyboard v0.2.9
 	bennypowers.dev/asimonim v0.1.1
 	bennypowers.dev/mappa v0.0.2
+	bennypowers.dev/tree-sitter-handlebars v0.1.1
+	bennypowers.dev/tree-sitter-jinja-dialects v0.1.1
 	github.com/IBM/fp-go v1.0.153
 	github.com/adrg/xdg v0.5.3
 	github.com/agext/levenshtein v1.2.3
 	github.com/alecthomas/chroma/v2 v2.20.0
-	github.com/bennypowers/tree-sitter-handlebars v0.1.0
-	github.com/bennypowers/tree-sitter-jinja v0.1.0
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/bmatcuk/doublestar/v4 v4.9.2
 	github.com/dunglas/go-urlpattern v0.0.0-20241020164140-716dfa1c80b1

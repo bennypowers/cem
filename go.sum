@@ -12,6 +12,10 @@ bennypowers.dev/lit-ssr-wasm/go v0.4.1 h1:tn0NMgtMbrPbwG2075lhSQN6uOHl/oYcAyHrQm
 bennypowers.dev/lit-ssr-wasm/go v0.4.1/go.mod h1:9EUR4yaHBUqs7I8mZmbJmZEzyNh1fUC4Q+j+JTWl1eo=
 bennypowers.dev/mappa v0.0.2 h1:Q7rtEcGFxpV+8NKu+3UfBu8z3rYLikbSJdoebGcBlN8=
 bennypowers.dev/mappa v0.0.2/go.mod h1:gXGMKrZninSBx1WzulCq9B8QtBUWoookzUZ9VxEXyhY=
+bennypowers.dev/tree-sitter-handlebars v0.1.1 h1:JqzXwslMjbtH1Z73iJbtqTCW/ET0MFkvVw02jlvFZLk=
+bennypowers.dev/tree-sitter-handlebars v0.1.1/go.mod h1:U2HyV0nhqQZAWU5SjpvTKT/ahOcLHYAQgM1z6nJ3YJI=
+bennypowers.dev/tree-sitter-jinja-dialects v0.1.1 h1:04RG/fGUgOQnmI0NzkBFTY249y/s+xAG1lP35T5QJaM=
+bennypowers.dev/tree-sitter-jinja-dialects v0.1.1/go.mod h1:CwooWUonL1YUBFVF/tDf7muTjIUtc/4PczSO3zokpro=
 github.com/IBM/fp-go v1.0.153 h1:KkzjWvInCfW1queBSpb1DV2/ZkaTIKVqV3dO8WfOvas=
 github.com/IBM/fp-go v1.0.153/go.mod h1:nP/DzXfi+FphWiZw4Iivp+ZT2lCWuP/H1hkRPNmC+OM=
 github.com/MarvinJWendt/testza v0.1.0/go.mod h1:7AxNvlfeHP7Z/hDQ5JtE3OKYT3XFUeLCDE2DQninSqs=
@@ -42,10 +46,6 @@ github.com/aymanbagabas/go-udiff v0.2.0 h1:TK0fH4MteXUDspT88n8CKzvK0X9O2xu9yQjWp
 github.com/aymanbagabas/go-udiff v0.2.0/go.mod h1:RE4Ex0qsGkTAJoQdQQCA0uG+nAzJO/pI/QwceO5fgrA=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
-github.com/bennypowers/tree-sitter-handlebars v0.1.0 h1:m/j6ScFyKfUgAQMIWkaVEduG0FAwsJfQZSxmfUutfN8=
-github.com/bennypowers/tree-sitter-handlebars v0.1.0/go.mod h1:uDMDzsomOPaP0JEhWfj0GSqDPcy/sz2fdAgmUh0Riyo=
-github.com/bennypowers/tree-sitter-jinja v0.1.0 h1:22RTMLz57ndVAaEQvSBA5xEkIX22rQkDWrcCbqhDXzo=
-github.com/bennypowers/tree-sitter-jinja v0.1.0/go.mod h1:XAylfEia/4AJ5JGn8D2tCRKFYTL41FOPbqMIoYvDcSo=
 github.com/bitfield/gotestdox v0.2.2 h1:x6RcPAbBbErKLnapz1QeAlf3ospg8efBsedU93CDsnE=
 github.com/bitfield/gotestdox v0.2.2/go.mod h1:D+gwtS0urjBrzguAkTM2wodsTQYFHdpx8eqRJ3N+9pY=
 github.com/bits-and-blooms/bitset v1.13.0/go.mod h1:7hO7Gc7Pp1vODcmWvKMRA9BNmbv6a/7QIWpPxHddWR8=

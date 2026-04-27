@@ -23,8 +23,8 @@ import (
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	tree_sitter_handlebars "github.com/bennypowers/tree-sitter-handlebars/bindings/go"
-	tree_sitter_jinja "github.com/bennypowers/tree-sitter-jinja/bindings/go"
+	tree_sitter_handlebars "bennypowers.dev/tree-sitter-handlebars/bindings/go"
+	tree_sitter_jinja "bennypowers.dev/tree-sitter-jinja-dialects/bindings/go"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 )
