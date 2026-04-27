@@ -380,7 +380,7 @@ func TestTemplateCompoundExtensionRouting(t *testing.T) {
 	dm := newTemplateDM(t)
 	content := readTemplateFixture(t, "nunjucks-conditional-attr.njk")
 
-	for _, uri := range []string{"test://page.html.twig", "test://page.twig"} {
+	for _, uri := range []string{"test://page.html.twig", "test://page.twig", "test://page.html.j2", "test://page.html.jinja2"} {
 		t.Run(uri, func(t *testing.T) {
 			elements := openAndFindElements(t, dm, uri, content)
 			if len(elements) == 0 {

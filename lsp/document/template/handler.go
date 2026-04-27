@@ -94,7 +94,8 @@ func (h *Handler) Language() string {
 // extension. Liquid files use the Jinja grammar since Liquid shares the same
 // delimiter syntax ({%...%}, {{...}}). Liquid-specific constructs like
 // {% raw %}...{% endraw %} are handled as custom statements by the Jinja
-// grammar; the HTML content within them is still correctly extracted.
+// grammar; HTML inside raw blocks is extracted on a best-effort basis
+// depending on how the grammar parses the block content.
 func templateFamily(uri string) string {
 	if strings.HasSuffix(strings.ToLower(uri), ".hbs") {
 		return "handlebars"

@@ -83,14 +83,14 @@ Depending on which LSP plugin you use, configure Emacs to run `cem` for HTML, Ja
 (lsp-register-client
  (make-lsp-client
   :new-connection (lsp-stdio-connection '("cem" "lsp"))
-  :major-modes '(html-mode twig-mode nunjucks-mode jinja2-mode handlebars-mode php-mode typescript-mode js-mode)
+  :major-modes '(html-mode twig-mode nunjucks-mode jinja2-mode handlebars-mode liquid-mode php-mode typescript-mode js-mode)
   :server-id 'cem-lsp))
 ```
 
 **eglot:**
 ```elisp
 (add-to-list 'eglot-server-programs
-             '((html-mode twig-mode nunjucks-mode jinja2-mode handlebars-mode php-mode typescript-mode js-mode) . ("cem" "lsp")))
+             '((html-mode twig-mode nunjucks-mode jinja2-mode handlebars-mode liquid-mode php-mode typescript-mode js-mode) . ("cem" "lsp")))
 ```
 
 ### Claude Code
