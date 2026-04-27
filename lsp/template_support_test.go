@@ -499,37 +499,44 @@ func TestTemplateCompoundExtensionRouting(t *testing.T) {
 // Template Completion Context (injection safety)
 // ============================================================================
 
-func TestNunjucks_CompletionContext_TemplateLessThan(t *testing.T) {
+func TestTemplate_CompletionContext_ComparisonOperator(t *testing.T) {
 	dm := newTemplateDM(t)
-	// Template comparison operator < must not be mistaken for HTML tag start
-	content := "{% if count < max %}\n<my-element>\n{% endif %}"
-	doc := dm.OpenDocument("test://cmp.njk", content, 1)
 
-	// Cursor at start of <my-element> on line 1
-	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 1, Character: 1}, dm)
-	if analysis.Type != types.CompletionTagName {
-		t.Errorf("Expected CompletionTagName at element position, got %d", analysis.Type)
+	tests := []struct {
+		name     string
+		fixture  string
+		uri      string
+		position protocol.Position
+		wantType types.CompletionContextType
+		wantTag  string
+	}{
+		{"nunjucks", "comparison-operator.njk", "test://cmp.njk", protocol.Position{Line: 2, Character: 1}, types.CompletionTagName, "my-element"},
+		{"handlebars", "comparison-operator.hbs", "test://cmp.hbs", protocol.Position{Line: 1, Character: 1}, types.CompletionTagName, ""},
+		{"erb", "comparison-operator.erb", "test://cmp.erb", protocol.Position{Line: 1, Character: 1}, types.CompletionTagName, ""},
+		{"ejs", "comparison-operator.ejs", "test://cmp.ejs", protocol.Position{Line: 1, Character: 1}, types.CompletionTagName, ""},
+		{"nunjucks-in-template", "comparison-operator.njk", "test://cmp.njk", protocol.Position{Line: 1, Character: 10}, types.CompletionUnknown, ""},
+		{"multibyte", "multibyte.njk", "test://utf8.njk", protocol.Position{Line: 1, Character: 1}, types.CompletionTagName, "my-element"},
 	}
-	if analysis.TagName != "my-element" {
-		t.Errorf("Expected TagName 'my-element', got %q", analysis.TagName)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content := readTemplateFixture(t, tt.fixture)
+			doc := dm.OpenDocument(tt.uri, content, 1)
+
+			analysis := doc.AnalyzeCompletionContextTS(tt.position, dm)
+			if analysis.Type != tt.wantType {
+				t.Errorf("Expected completion type %d, got %d", tt.wantType, analysis.Type)
+			}
+			if tt.wantTag != "" && analysis.TagName != tt.wantTag {
+				t.Errorf("Expected TagName %q, got %q", tt.wantTag, analysis.TagName)
+			}
+		})
 	}
 }
 
-func TestNunjucks_CompletionContext_CursorInTemplateRegion(t *testing.T) {
+func TestTemplate_AttributeAfterTemplateBlock(t *testing.T) {
 	dm := newTemplateDM(t)
-	content := "{% if count < max %}\n<my-element>\n{% endif %}"
-	doc := dm.OpenDocument("test://cmp.njk", content, 1)
-
-	// Cursor inside template region (line 0, inside {% if ... %})
-	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 0, Character: 10}, dm)
-	if analysis.Type != types.CompletionUnknown {
-		t.Errorf("Expected CompletionUnknown in template region, got %d", analysis.Type)
-	}
-}
-
-func TestNunjucks_CompletionContext_AttributeAfterTemplate(t *testing.T) {
-	dm := newTemplateDM(t)
-	content := "<my-element {% if x %}disabled{% endif %} variant=\"primary\">"
+	content := readTemplateFixture(t, "intag-conditional-attr.njk")
 
 	elements := openAndFindElements(t, dm, "test://attr.njk", content)
 	assertElementsFound(t, elements, []string{"my-element"})
@@ -542,7 +549,6 @@ func TestNunjucks_CompletionContext_AttributeAfterTemplate(t *testing.T) {
 		t.Error("Expected variant attribute to be found")
 	}
 
-	// Verify template tokens don't leak as attributes
 	for _, bad := range []string{"{%", "if", "endif", "%}"} {
 		if _, ok := el.Attributes[bad]; ok {
 			t.Errorf("Template syntax %q should not be an attribute", bad)
@@ -550,98 +556,60 @@ func TestNunjucks_CompletionContext_AttributeAfterTemplate(t *testing.T) {
 	}
 }
 
-func TestNunjucks_HeadInsertionPoint(t *testing.T) {
+func TestTemplate_HeadInsertionPoint(t *testing.T) {
 	dm := newTemplateDM(t)
-	content := "{% extends 'base.njk' %}\n<html>\n<head>\n  <title>Test</title>\n</head>\n<body>\n  <my-element></my-element>\n</body>\n</html>"
-	doc := dm.OpenDocument("test://head.njk", content, 1)
 
-	pos, found := doc.FindHeadInsertionPoint(dm)
-	if !found {
-		t.Fatal("Expected to find head insertion point")
+	tests := []struct {
+		name      string
+		fixture   string
+		uri       string
+		wantFound bool
+		wantLine  uint32
+	}{
+		{"with-head", "head-section.njk", "test://head.njk", true, 4},
+		{"headless", "headless.njk", "test://nohead.njk", false, 0},
 	}
-	if pos.Line != 4 {
-		t.Errorf("Expected head insertion at line 4, got %d", pos.Line)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content := readTemplateFixture(t, tt.fixture)
+			doc := dm.OpenDocument(tt.uri, content, 1)
+
+			pos, found := doc.FindHeadInsertionPoint(dm)
+			if found != tt.wantFound {
+				t.Errorf("Expected found=%v, got %v", tt.wantFound, found)
+			}
+			if found && pos.Line != tt.wantLine {
+				t.Errorf("Expected line %d, got %d", tt.wantLine, pos.Line)
+			}
+		})
 	}
 }
 
-func TestHandlebars_CompletionContext_TemplateLessThan(t *testing.T) {
+func TestTemplate_EdgeCases(t *testing.T) {
 	dm := newTemplateDM(t)
-	content := "{{#if (lt count max)}}\n<my-element>\n{{/if}}"
-	doc := dm.OpenDocument("test://cmp.hbs", content, 1)
 
-	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 1, Character: 1}, dm)
-	if analysis.Type != types.CompletionTagName {
-		t.Errorf("Expected CompletionTagName, got %d", analysis.Type)
+	tests := []struct {
+		name         string
+		fixture      string
+		uri          string
+		wantElements []string
+	}{
+		{"pure-template", "pure-template.njk", "test://pure.njk", nil},
+		{"pure-html", "pure-html.njk", "test://pure.njk", []string{"my-element"}},
 	}
-}
 
-func TestERB_CompletionContext_TemplateLessThan(t *testing.T) {
-	dm := newTemplateDM(t)
-	content := "<% if count < max %>\n<my-element>\n<% end %>"
-	doc := dm.OpenDocument("test://cmp.erb", content, 1)
-
-	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 1, Character: 1}, dm)
-	if analysis.Type != types.CompletionTagName {
-		t.Errorf("Expected CompletionTagName, got %d", analysis.Type)
-	}
-}
-
-func TestEJS_CompletionContext_TemplateLessThan(t *testing.T) {
-	dm := newTemplateDM(t)
-	content := "<% if (count < max) { %>\n<my-element>\n<% } %>"
-	doc := dm.OpenDocument("test://cmp.ejs", content, 1)
-
-	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 1, Character: 1}, dm)
-	if analysis.Type != types.CompletionTagName {
-		t.Errorf("Expected CompletionTagName, got %d", analysis.Type)
-	}
-}
-
-func TestNunjucks_HeadInsertionPoint_NoHead(t *testing.T) {
-	dm := newTemplateDM(t)
-	content := "{% block content %}\n<my-element></my-element>\n{% endblock %}"
-	doc := dm.OpenDocument("test://nohead.njk", content, 1)
-
-	_, found := doc.FindHeadInsertionPoint(dm)
-	if found {
-		t.Error("Expected no head insertion point in headless template")
-	}
-}
-
-func TestNunjucks_CompletionContext_MultiByte(t *testing.T) {
-	dm := newTemplateDM(t)
-	content := "{% if title == \"Héllo Wörld\" %}\n<my-element></my-element>\n{% endif %}"
-	doc := dm.OpenDocument("test://utf8.njk", content, 1)
-
-	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 1, Character: 1}, dm)
-	if analysis.Type != types.CompletionTagName {
-		t.Errorf("Expected CompletionTagName with multi-byte content, got %d", analysis.Type)
-	}
-	if analysis.TagName != "my-element" {
-		t.Errorf("Expected TagName 'my-element', got %q", analysis.TagName)
-	}
-}
-
-func TestNunjucks_EntirelyTemplateSyntax(t *testing.T) {
-	dm := newTemplateDM(t)
-	content := "{% set x = 1 %}\n{% if x < 2 %}\n{% set y = x + 1 %}\n{% endif %}"
-	elements := openAndFindElements(t, dm, "test://pure.njk", content)
-	if len(elements) != 0 {
-		t.Errorf("Expected no elements in pure template file, got %d", len(elements))
-	}
-}
-
-func TestNunjucks_EntirelyHTML(t *testing.T) {
-	dm := newTemplateDM(t)
-	content := "<html>\n<body>\n<my-element attr=\"val\"></my-element>\n</body>\n</html>"
-	elements := openAndFindElements(t, dm, "test://pure.njk", content)
-	assertElementsFound(t, elements, []string{"my-element"})
-
-	el := findElement(elements, "my-element")
-	if el == nil {
-		t.Fatal("my-element not found")
-	}
-	if v, ok := el.Attributes["attr"]; !ok || v.Value != "val" {
-		t.Errorf("Expected attr='val', got %+v", el.Attributes)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content := readTemplateFixture(t, tt.fixture)
+			elements := openAndFindElements(t, dm, tt.uri, content)
+			if tt.wantElements == nil {
+				if len(elements) != 0 {
+					t.Errorf("Expected no elements, got %d", len(elements))
+				}
+			} else {
+				assertElementsFound(t, elements, tt.wantElements)
+			}
+		})
 	}
 }

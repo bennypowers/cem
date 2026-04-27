@@ -319,86 +319,76 @@ func TestTwig_TwigExtension(t *testing.T) {
 // PHP Completion Context (injection safety)
 // ============================================================================
 
-func TestPHP_CompletionContext_PHPLessThan(t *testing.T) {
+func newPHPDM(t *testing.T) types.Manager {
+	t.Helper()
 	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
-	defer dm.Close()
+	t.Cleanup(dm.Close)
+	return dm
+}
 
-	// PHP comparison operator < must not be mistaken for HTML tag start
-	content := "<?php if ($count < $max) { ?>\n<my-element>\n<?php } ?>"
-	doc := dm.OpenDocument("test://cmp.php", content, 1)
+func TestPHP_CompletionContext(t *testing.T) {
+	dm := newPHPDM(t)
 
-	// Cursor at start of <my-element> on line 1
-	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 1, Character: 1}, dm)
-	if analysis.Type != types.CompletionTagName {
-		t.Errorf("Expected CompletionTagName at element position, got %d", analysis.Type)
+	tests := []struct {
+		name     string
+		fixture  string
+		position protocol.Position
+		wantType types.CompletionContextType
+		wantTag  string
+	}{
+		{"at-element", "comparison-operator.php", protocol.Position{Line: 1, Character: 1}, types.CompletionTagName, "my-element"},
+		{"in-php-region", "comparison-operator.php", protocol.Position{Line: 0, Character: 15}, types.CompletionUnknown, ""},
 	}
-	if analysis.TagName != "my-element" {
-		t.Errorf("Expected TagName 'my-element', got %q", analysis.TagName)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content := readPHPTwigFixture(t, tt.fixture)
+			doc := dm.OpenDocument("test://cmp.php", content, 1)
+
+			analysis := doc.AnalyzeCompletionContextTS(tt.position, dm)
+			if analysis.Type != tt.wantType {
+				t.Errorf("Expected completion type %d, got %d", tt.wantType, analysis.Type)
+			}
+			if tt.wantTag != "" && analysis.TagName != tt.wantTag {
+				t.Errorf("Expected TagName %q, got %q", tt.wantTag, analysis.TagName)
+			}
+		})
 	}
 }
 
-func TestPHP_CompletionContext_CursorInPHPRegion(t *testing.T) {
-	dm, err := document.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create document manager: %v", err)
+func TestPHP_EdgeCases(t *testing.T) {
+	dm := newPHPDM(t)
+
+	tests := []struct {
+		name         string
+		fixture      string
+		wantElements []string
+	}{
+		{"pure-php", "pure-php.php", nil},
+		{"pure-html", "pure-html.php", []string{"my-element"}},
 	}
-	defer dm.Close()
 
-	content := "<?php if ($count < $max) { ?>\n<my-element>\n<?php } ?>"
-	doc := dm.OpenDocument("test://cmp.php", content, 1)
-
-	// Cursor inside PHP region (line 0, inside <?php ... ?>)
-	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 0, Character: 15}, dm)
-	if analysis.Type != types.CompletionUnknown {
-		t.Errorf("Expected CompletionUnknown in PHP region, got %d", analysis.Type)
-	}
-}
-
-func TestPHP_EntirelyPHP(t *testing.T) {
-	dm, err := document.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create document manager: %v", err)
-	}
-	defer dm.Close()
-
-	content := "<?php\n$x = 1;\nif ($x < 2) {\n  echo 'hello';\n}\n?>"
-	elements := openAndFindElements(t, dm, "test://pure.php", content)
-	if len(elements) != 0 {
-		t.Errorf("Expected no elements in pure PHP file, got %d", len(elements))
-	}
-}
-
-func TestPHP_EntirelyHTML(t *testing.T) {
-	dm, err := document.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create document manager: %v", err)
-	}
-	defer dm.Close()
-
-	content := "<html>\n<body>\n<my-element attr=\"val\"></my-element>\n</body>\n</html>"
-	elements := openAndFindElements(t, dm, "test://pure.php", content)
-	assertElementsFound(t, elements, []string{"my-element"})
-
-	el := findElement(elements, "my-element")
-	if el == nil {
-		t.Fatal("my-element not found")
-	}
-	if v, ok := el.Attributes["attr"]; !ok || v.Value != "val" {
-		t.Errorf("Expected attr='val', got %+v", el.Attributes)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content := readPHPTwigFixture(t, tt.fixture)
+			elements := openAndFindElements(t, dm, "test://edge.php", content)
+			if tt.wantElements == nil {
+				if len(elements) != 0 {
+					t.Errorf("Expected no elements, got %d", len(elements))
+				}
+			} else {
+				assertElementsFound(t, elements, tt.wantElements)
+			}
+		})
 	}
 }
 
 func TestPHP_HeadInsertionPoint(t *testing.T) {
-	dm, err := document.NewDocumentManager()
-	if err != nil {
-		t.Fatalf("Failed to create document manager: %v", err)
-	}
-	defer dm.Close()
-
-	content := "<?php include 'header.php'; ?>\n<html>\n<head>\n  <title>Test</title>\n</head>\n<body>\n  <my-element></my-element>\n</body>\n</html>"
+	dm := newPHPDM(t)
+	content := readPHPTwigFixture(t, "head-section.php")
 	doc := dm.OpenDocument("test://head.php", content, 1)
 
 	pos, found := doc.FindHeadInsertionPoint(dm)
