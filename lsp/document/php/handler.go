@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"sync"
 
-	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	sitter "github.com/tree-sitter/go-tree-sitter"
@@ -105,17 +104,7 @@ func (h *Handler) htmlRanges(source []byte) []sitter.Range {
 // delegating to the HTML handler with tree-sitter language injection.
 func (h *Handler) CreateDocument(uri, content string, version int32) types.Document {
 	ranges := h.htmlRanges([]byte(content))
-	if len(ranges) == 0 {
-		helpers.SafeDebugLog("[PHP] failed to extract HTML ranges from %s, falling back to raw content", uri)
-		return h.htmlHandler.CreateDocument(uri, content, version)
-	}
-
-	if rp, ok := h.htmlHandler.(types.RangeParser); ok {
-		return rp.CreateDocumentWithRanges(uri, content, version, ranges)
-	}
-
-	helpers.SafeDebugLog("[PHP] htmlHandler does not support range parsing, falling back to raw content")
-	return h.htmlHandler.CreateDocument(uri, content, version)
+	return h.htmlHandler.(types.RangeParser).CreateDocumentWithRanges(uri, content, version, ranges)
 }
 
 // FindCustomElements delegates to the HTML handler

@@ -21,7 +21,6 @@ import (
 	"strings"
 	"sync"
 
-	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	tree_sitter_handlebars "bennypowers.dev/tree-sitter-handlebars/bindings/go"
 	tree_sitter_jinja "bennypowers.dev/tree-sitter-jinja-dialects/bindings/go"
@@ -185,17 +184,7 @@ func (h *Handler) htmlRanges(source []byte, uri string) []sitter.Range {
 
 func (h *Handler) CreateDocument(uri, content string, version int32) types.Document {
 	ranges := h.htmlRanges([]byte(content), uri)
-	if len(ranges) == 0 {
-		helpers.SafeDebugLog("[TEMPLATE] failed to extract HTML ranges from %s, falling back to raw content", uri)
-		return h.htmlHandler.CreateDocument(uri, content, version)
-	}
-
-	if rp, ok := h.htmlHandler.(types.RangeParser); ok {
-		return rp.CreateDocumentWithRanges(uri, content, version, ranges)
-	}
-
-	helpers.SafeDebugLog("[TEMPLATE] htmlHandler does not support range parsing, falling back to raw content")
-	return h.htmlHandler.CreateDocument(uri, content, version)
+	return h.htmlHandler.(types.RangeParser).CreateDocumentWithRanges(uri, content, version, ranges)
 }
 
 func (h *Handler) FindCustomElements(doc types.Document) ([]types.CustomElementMatch, error) {

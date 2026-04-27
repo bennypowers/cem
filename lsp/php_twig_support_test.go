@@ -357,6 +357,40 @@ func TestPHP_CompletionContext_CursorInPHPRegion(t *testing.T) {
 	}
 }
 
+func TestPHP_EntirelyPHP(t *testing.T) {
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create document manager: %v", err)
+	}
+	defer dm.Close()
+
+	content := "<?php\n$x = 1;\nif ($x < 2) {\n  echo 'hello';\n}\n?>"
+	elements := openAndFindElements(t, dm, "test://pure.php", content)
+	if len(elements) != 0 {
+		t.Errorf("Expected no elements in pure PHP file, got %d", len(elements))
+	}
+}
+
+func TestPHP_EntirelyHTML(t *testing.T) {
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create document manager: %v", err)
+	}
+	defer dm.Close()
+
+	content := "<html>\n<body>\n<my-element attr=\"val\"></my-element>\n</body>\n</html>"
+	elements := openAndFindElements(t, dm, "test://pure.php", content)
+	assertElementsFound(t, elements, []string{"my-element"})
+
+	el := findElement(elements, "my-element")
+	if el == nil {
+		t.Fatal("my-element not found")
+	}
+	if v, ok := el.Attributes["attr"]; !ok || v.Value != "val" {
+		t.Errorf("Expected attr='val', got %+v", el.Attributes)
+	}
+}
+
 func TestPHP_HeadInsertionPoint(t *testing.T) {
 	dm, err := document.NewDocumentManager()
 	if err != nil {

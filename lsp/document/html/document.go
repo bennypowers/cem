@@ -224,6 +224,10 @@ func (d *HTMLDocument) Parse(content string) error {
 func (d *HTMLDocument) ParseWithRanges(content string, ranges []ts.Range) error {
 	d.UpdateContent(content, d.version)
 
+	if len(ranges) == 0 {
+		return nil
+	}
+
 	parser := Q.GetHTMLParser()
 	if parser == nil {
 		return fmt.Errorf("failed to get HTML parser")

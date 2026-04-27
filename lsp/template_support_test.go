@@ -621,3 +621,27 @@ func TestNunjucks_CompletionContext_MultiByte(t *testing.T) {
 		t.Errorf("Expected TagName 'my-element', got %q", analysis.TagName)
 	}
 }
+
+func TestNunjucks_EntirelyTemplateSyntax(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := "{% set x = 1 %}\n{% if x < 2 %}\n{% set y = x + 1 %}\n{% endif %}"
+	elements := openAndFindElements(t, dm, "test://pure.njk", content)
+	if len(elements) != 0 {
+		t.Errorf("Expected no elements in pure template file, got %d", len(elements))
+	}
+}
+
+func TestNunjucks_EntirelyHTML(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := "<html>\n<body>\n<my-element attr=\"val\"></my-element>\n</body>\n</html>"
+	elements := openAndFindElements(t, dm, "test://pure.njk", content)
+	assertElementsFound(t, elements, []string{"my-element"})
+
+	el := findElement(elements, "my-element")
+	if el == nil {
+		t.Fatal("my-element not found")
+	}
+	if v, ok := el.Attributes["attr"]; !ok || v.Value != "val" {
+		t.Errorf("Expected attr='val', got %+v", el.Attributes)
+	}
+}
