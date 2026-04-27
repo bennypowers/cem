@@ -164,6 +164,15 @@ func (h *Handler) FindAttributeAtPosition(doc types.Document, position protocol.
 	return nil, ""
 }
 
+// FindHeadInsertionPoint finds the position just before </head> using tree-sitter.
+func (h *Handler) FindHeadInsertionPoint(doc types.Document) (protocol.Position, bool) {
+	htmlDoc, ok := doc.(*HTMLDocument)
+	if !ok {
+		return protocol.Position{}, false
+	}
+	return htmlDoc.findHeadInsertionPoint(h)
+}
+
 // ParseScriptTags parses script tags in the HTML document using tree-sitter
 func (h *Handler) ParseScriptTags(doc types.Document) ([]types.ScriptTag, error) {
 	htmlDoc, ok := doc.(*HTMLDocument)
