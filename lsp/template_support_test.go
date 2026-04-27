@@ -23,6 +23,7 @@ import (
 
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/types"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 const templateFixtureDir = "testdata/integration/template-support"
@@ -492,5 +493,73 @@ func TestTemplateCompoundExtensionRouting(t *testing.T) {
 				t.Errorf("Template syntax leaked as attribute for %s", uri)
 			}
 		})
+	}
+}
+
+// Template Completion Context (injection safety)
+// ============================================================================
+
+func TestNunjucks_CompletionContext_TemplateLessThan(t *testing.T) {
+	dm := newTemplateDM(t)
+	// Template comparison operator < must not be mistaken for HTML tag start
+	content := "{% if count < max %}\n<my-element>\n{% endif %}"
+	doc := dm.OpenDocument("test://cmp.njk", content, 1)
+
+	// Cursor at start of <my-element> on line 1
+	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 1, Character: 1}, dm)
+	if analysis.Type != types.CompletionTagName {
+		t.Errorf("Expected CompletionTagName at element position, got %d", analysis.Type)
+	}
+	if analysis.TagName != "my-element" {
+		t.Errorf("Expected TagName 'my-element', got %q", analysis.TagName)
+	}
+}
+
+func TestNunjucks_CompletionContext_CursorInTemplateRegion(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := "{% if count < max %}\n<my-element>\n{% endif %}"
+	doc := dm.OpenDocument("test://cmp.njk", content, 1)
+
+	// Cursor inside template region (line 0, inside {% if ... %})
+	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 0, Character: 10}, dm)
+	if analysis.Type != types.CompletionUnknown {
+		t.Errorf("Expected CompletionUnknown in template region, got %d", analysis.Type)
+	}
+}
+
+func TestNunjucks_CompletionContext_AttributeAfterTemplate(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := "<my-element {% if x %}disabled{% endif %} variant=\"primary\">"
+
+	elements := openAndFindElements(t, dm, "test://attr.njk", content)
+	assertElementsFound(t, elements, []string{"my-element"})
+
+	el := findElement(elements, "my-element")
+	if el == nil {
+		t.Fatal("my-element not found")
+	}
+	if _, ok := el.Attributes["variant"]; !ok {
+		t.Error("Expected variant attribute to be found")
+	}
+
+	// Verify template tokens don't leak as attributes
+	for _, bad := range []string{"{%", "if", "endif", "%}"} {
+		if _, ok := el.Attributes[bad]; ok {
+			t.Errorf("Template syntax %q should not be an attribute", bad)
+		}
+	}
+}
+
+func TestNunjucks_HeadInsertionPoint(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := "{% extends 'base.njk' %}\n<html>\n<head>\n  <title>Test</title>\n</head>\n<body>\n  <my-element></my-element>\n</body>\n</html>"
+	doc := dm.OpenDocument("test://head.njk", content, 1)
+
+	pos, found := doc.FindHeadInsertionPoint(dm)
+	if !found {
+		t.Fatal("Expected to find head insertion point")
+	}
+	if pos.Line != 4 {
+		t.Errorf("Expected head insertion at line 4, got %d", pos.Line)
 	}
 }

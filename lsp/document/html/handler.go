@@ -58,25 +58,11 @@ func (h *Handler) CreateDocument(uri, content string, version int32) types.Docum
 		language: "html",
 	}
 
-	// Parse the document
 	if err := doc.Parse(content); err != nil {
 		helpers.SafeDebugLog("[HTML] Failed to parse document %s: %v", uri, err)
 	}
 
-	// Parse script tags using the handler's tree-sitter implementation
-	if scriptTags, err := h.ParseScriptTags(doc); err != nil {
-		helpers.SafeDebugLog("[HTML] Failed to parse script tags with handler: %v", err)
-	} else {
-		doc.SetScriptTags(scriptTags)
-	}
-
-	// Parse import map (must be called after script tags are parsed)
-	if importMap, err := h.ParseImportMap(doc); err != nil {
-		helpers.SafeDebugLog("[HTML] Failed to parse import map: %v", err)
-	} else if importMap != nil {
-		doc.SetImportMap(importMap)
-	}
-
+	h.finalizeDocument(doc)
 	return doc
 }
 
@@ -96,6 +82,11 @@ func (h *Handler) CreateDocumentWithRanges(uri, content string, version int32, r
 		helpers.SafeDebugLog("[HTML] Failed to parse document with ranges %s: %v", uri, err)
 	}
 
+	h.finalizeDocument(doc)
+	return doc
+}
+
+func (h *Handler) finalizeDocument(doc *HTMLDocument) {
 	if scriptTags, err := h.ParseScriptTags(doc); err != nil {
 		helpers.SafeDebugLog("[HTML] Failed to parse script tags with handler: %v", err)
 	} else {
@@ -107,8 +98,6 @@ func (h *Handler) CreateDocumentWithRanges(uri, content string, version int32, r
 	} else if importMap != nil {
 		doc.SetImportMap(importMap)
 	}
-
-	return doc
 }
 
 // FindCustomElements finds custom elements in the document

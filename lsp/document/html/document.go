@@ -418,12 +418,8 @@ func (d *HTMLDocument) analyzeCompletionContext(position protocol.Position, hand
 				!strings.Contains(captureText, "=") &&
 				!strings.Contains(captureText, ">") &&
 				!strings.Contains(captureText, "\n") {
-				// This looks like a pure tag name without attributes or other syntax
 				analysis.Type = types.CompletionTagName
-				// Don't set TagName if it's just "<" or contains "<" - let CompletionPrefix extract it
-				if !strings.Contains(captureText, "<") {
-					analysis.TagName = captureText
-				}
+				analysis.TagName = strings.TrimLeft(captureText, "<")
 				return analysis
 			}
 		}
@@ -558,35 +554,25 @@ func (d *HTMLDocument) analyzeCompletionContext(position protocol.Position, hand
 		}
 	}
 
-	// Final fallback: if no captures found, check if cursor is right after a '<' for tag name completion
-	if analysis.Type == types.CompletionUnknown {
-		// Check if the character immediately before the cursor is '<'
-		if byteOffset > 0 && byteOffset <= uint(len(content)) {
-			beforeCursor := content[:byteOffset]
-			// Look for the last '<' character
-			lastOpenBracket := strings.LastIndex(beforeCursor, "<")
-			if lastOpenBracket != -1 {
-				// Check if everything after the last '<' until cursor is just a valid tag name start (no spaces, attributes, etc.)
-				afterBracket := beforeCursor[lastOpenBracket+1:]
-
-				// If cursor is immediately after '<' or after a valid partial tag name
-				if afterBracket == "" || (strings.TrimSpace(afterBracket) == afterBracket &&
-					!strings.Contains(afterBracket, " ") &&
-					!strings.Contains(afterBracket, "=") &&
-					!strings.Contains(afterBracket, ">")) {
-					analysis.Type = types.CompletionTagName
-					// Don't set TagName - let the prefix extraction handle it
-					return analysis
-				}
+	// Tree-sitter fallback: check if cursor is at a bare "<" inside an ERROR
+	// node. The tree has an anonymous "<" child but no tag_name yet, so no
+	// query capture matches. Use DescendantForByteRange to verify the cursor
+	// is inside an ERROR or start_tag context.
+	if analysis.Type == types.CompletionUnknown && byteOffset > 0 {
+		node := tree.RootNode().DescendantForByteRange(byteOffset-1, byteOffset)
+		if node != nil {
+			kind := node.Kind()
+			parentKind := ""
+			if p := node.Parent(); p != nil {
+				parentKind = p.Kind()
+			}
+			if (kind == "<" || parentKind == "ERROR" || parentKind == "start_tag") &&
+				byteOffset > 0 && content[byteOffset-1] == '<' {
+				analysis.Type = types.CompletionTagName
 			}
 		}
 	}
 
-	if captureCount == 0 {
-		helpers.SafeDebugLog("[HTML] No captures found for completion context analysis")
-	}
-
-	// Debug logging for the result
 	helpers.SafeDebugLog("[HTML] analyzeCompletionContext result: Type=%d, TagName=%q", analysis.Type, analysis.TagName)
 
 	return analysis
@@ -615,61 +601,57 @@ func (d *HTMLDocument) positionToByteOffset(pos protocol.Position, content strin
 	return offset
 }
 
-// CompletionPrefix extracts the prefix being typed for filtering completions
+// CompletionPrefix extracts the prefix being typed for filtering completions.
+// Uses analysis struct fields and LineContent only — never searches full
+// document content, which may contain template tokens after injection parsing.
 func (d *HTMLDocument) CompletionPrefix(analysis *types.CompletionAnalysis) string {
 	if analysis == nil {
 		return ""
 	}
 
-	content, err := d.Content()
-	if err != nil {
-		return ""
-	}
-
 	switch analysis.Type {
 	case types.CompletionTagName:
-		// Extract the tag name being typed (after the last "<")
-		// Use LineContent if available to avoid searching the entire document
-		searchContent := content
-		if analysis.LineContent != "" {
-			searchContent = analysis.LineContent
+		if analysis.TagName != "" {
+			return analysis.TagName
 		}
-
-		if lastOpenBracket := strings.LastIndex(searchContent, "<"); lastOpenBracket != -1 {
-			afterBracket := searchContent[lastOpenBracket+1:]
-			// Extract up to first space, >, or end of content
-			for i, r := range afterBracket {
+		if analysis.LineContent == "" {
+			return ""
+		}
+		if i := strings.LastIndex(analysis.LineContent, "<"); i != -1 {
+			after := analysis.LineContent[i+1:]
+			for j, r := range after {
 				if r == ' ' || r == '>' || r == '\n' || r == '\t' {
-					return afterBracket[:i]
+					return after[:j]
 				}
 			}
-			return afterBracket
+			return after
 		}
 		return ""
 
 	case types.CompletionAttributeName:
-		// Extract the attribute name being typed (after the last space in the tag)
-		// Find the last occurrence of "<tagname" to locate the tag start
-		words := strings.Fields(content)
+		if analysis.AttributeName != "" {
+			return analysis.AttributeName
+		}
+		if analysis.LineContent == "" {
+			return ""
+		}
+		words := strings.Fields(analysis.LineContent)
 		if len(words) > 0 {
-			lastWord := words[len(words)-1]
-			// If the last word doesn't contain "<" or "=", it's likely a partial attribute name
-			if !strings.Contains(lastWord, "<") && !strings.Contains(lastWord, "=") {
-				return lastWord
+			last := words[len(words)-1]
+			if !strings.Contains(last, "<") && !strings.Contains(last, "=") {
+				return last
 			}
 		}
 		return ""
 
 	case types.CompletionAttributeValue:
-		// Extract the value being typed (after the last quote)
-		// Look for the last occurrence of " or '
-		lastDoubleQuote := strings.LastIndex(content, "\"")
-		lastSingleQuote := strings.LastIndex(content, "'")
-		lastQuote := max(lastSingleQuote, lastDoubleQuote)
+		line := analysis.LineContent
+		if line == "" {
+			return ""
+		}
+		lastQuote := max(strings.LastIndex(line, "\""), strings.LastIndex(line, "'"))
 		if lastQuote != -1 {
-			afterQuote := content[lastQuote+1:]
-			// Return everything after the quote (the partial value being typed)
-			return afterQuote
+			return line[lastQuote+1:]
 		}
 		return ""
 
@@ -799,19 +781,50 @@ func (d *HTMLDocument) FindInlineModuleScript() (protocol.Position, bool) {
 	return d.FindModuleScript()
 }
 
-// FindHeadInsertionPoint finds insertion point in <head> section
+// FindHeadInsertionPoint finds insertion point in <head> section using
+// tree-sitter queries. Returns position just before </head>.
 func (d *HTMLDocument) FindHeadInsertionPoint(dm any) (protocol.Position, bool) {
-	// Simple implementation - find </head> tag and insert before it
-	content, err := d.Content()
-	if err != nil {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	tree := d.tree
+	if tree == nil {
 		return protocol.Position{}, false
 	}
 
-	lines := strings.Split(content, "\n")
-	for i, line := range lines {
-		if strings.Contains(line, "</head>") {
-			return protocol.Position{Line: uint32(i), Character: 0}, true
+	content := d.content
+
+	// Get queryManager from dm via reflection
+	dmValue := reflect.ValueOf(dm)
+	if dmValue.Kind() != reflect.Pointer || dmValue.IsNil() {
+		return protocol.Position{}, false
+	}
+	method := dmValue.MethodByName("QueryManager")
+	if !method.IsValid() {
+		return protocol.Position{}, false
+	}
+	results := method.Call(nil)
+	if len(results) == 0 || results[0].IsNil() {
+		return protocol.Position{}, false
+	}
+	qm, ok := results[0].Interface().(*Q.QueryManager)
+	if !ok {
+		return protocol.Position{}, false
+	}
+
+	matcher, err := Q.GetCachedQueryMatcher(qm, "html", "headElements")
+	if err != nil {
+		return protocol.Position{}, false
+	}
+	defer matcher.Close()
+
+	root := tree.RootNode()
+	for captureMap := range matcher.ParentCaptures(root, []byte(content), "head.element") {
+		if endTags, exists := captureMap["end.tag"]; exists && len(endTags) > 0 {
+			pos := d.byteOffsetToPosition(endTags[0].StartByte)
+			return pos, true
 		}
 	}
+
 	return protocol.Position{}, false
 }

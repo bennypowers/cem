@@ -37,7 +37,7 @@ type Handler struct {
 	htmlHandler types.LanguageHandler
 	phpParser   *sitter.Parser
 	textQuery   *sitter.Query
-	mu          sync.RWMutex
+	mu          sync.Mutex
 }
 
 var phpLang = sitter.NewLanguage(tree_sitter_php.LanguagePHP())
@@ -77,15 +77,15 @@ type rangeParser interface {
 // byte ranges for use with tree-sitter language injection.
 func (h *Handler) htmlRanges(source []byte) []sitter.Range {
 	h.mu.Lock()
+	defer h.mu.Unlock()
+
 	parser := h.phpParser
 	query := h.textQuery
 	if parser == nil || query == nil {
-		h.mu.Unlock()
 		return nil
 	}
 	parser.Reset()
 	tree := parser.Parse(source, nil)
-	h.mu.Unlock()
 
 	if tree == nil {
 		return nil

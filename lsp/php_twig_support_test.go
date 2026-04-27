@@ -24,6 +24,7 @@ import (
 
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/types"
+	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
 const phpTwigFixtureDir = "testdata/integration/php-twig-support"
@@ -312,5 +313,65 @@ func TestTwig_TwigExtension(t *testing.T) {
 
 	if len(elements) == 0 {
 		t.Error("Expected custom elements to be found for .twig extension")
+	}
+}
+
+// PHP Completion Context (injection safety)
+// ============================================================================
+
+func TestPHP_CompletionContext_PHPLessThan(t *testing.T) {
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create document manager: %v", err)
+	}
+	defer dm.Close()
+
+	// PHP comparison operator < must not be mistaken for HTML tag start
+	content := "<?php if ($count < $max) { ?>\n<my-element>\n<?php } ?>"
+	doc := dm.OpenDocument("test://cmp.php", content, 1)
+
+	// Cursor at start of <my-element> on line 1
+	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 1, Character: 1}, dm)
+	if analysis.Type != types.CompletionTagName {
+		t.Errorf("Expected CompletionTagName at element position, got %d", analysis.Type)
+	}
+	if analysis.TagName != "my-element" {
+		t.Errorf("Expected TagName 'my-element', got %q", analysis.TagName)
+	}
+}
+
+func TestPHP_CompletionContext_CursorInPHPRegion(t *testing.T) {
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create document manager: %v", err)
+	}
+	defer dm.Close()
+
+	content := "<?php if ($count < $max) { ?>\n<my-element>\n<?php } ?>"
+	doc := dm.OpenDocument("test://cmp.php", content, 1)
+
+	// Cursor inside PHP region (line 0, inside <?php ... ?>)
+	analysis := doc.AnalyzeCompletionContextTS(protocol.Position{Line: 0, Character: 15}, dm)
+	if analysis.Type != types.CompletionUnknown {
+		t.Errorf("Expected CompletionUnknown in PHP region, got %d", analysis.Type)
+	}
+}
+
+func TestPHP_HeadInsertionPoint(t *testing.T) {
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create document manager: %v", err)
+	}
+	defer dm.Close()
+
+	content := "<?php include 'header.php'; ?>\n<html>\n<head>\n  <title>Test</title>\n</head>\n<body>\n  <my-element></my-element>\n</body>\n</html>"
+	doc := dm.OpenDocument("test://head.php", content, 1)
+
+	pos, found := doc.FindHeadInsertionPoint(dm)
+	if !found {
+		t.Fatal("Expected to find head insertion point")
+	}
+	if pos.Line != 4 {
+		t.Errorf("Expected head insertion at line 4, got %d", pos.Line)
 	}
 }

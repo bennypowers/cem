@@ -173,6 +173,20 @@ func TestCompletionPrefixExtraction(t *testing.T) {
 			attributeName:  "disabled",
 			expectedPrefix: "tr",
 		},
+		{
+			name:           "Tag name from struct field",
+			beforeCursor:   "",
+			completionType: types.CompletionTagName,
+			tagName:        "my-element",
+			expectedPrefix: "my-element",
+		},
+		{
+			name:           "Attribute name from struct field",
+			beforeCursor:   "",
+			completionType: types.CompletionAttributeName,
+			attributeName:  "dis",
+			expectedPrefix: "dis",
+		},
 	}
 
 	for _, tt := range tests {
