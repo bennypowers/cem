@@ -36,7 +36,7 @@
  &lt;/div>
  &lt;/template>
 
- &lt;strong>TL;DR&lt;/strong>: Install CEM, then configure your editor to run &lt;code>cem lsp&lt;/code>. VS Code users can install the extension. Neovim/Zed users configure their LSP client to start &lt;code>cem lsp&lt;/code> for HTML, Twig, PHP, JavaScript, and TypeScript files.
+ &lt;strong>TL;DR&lt;/strong>: Install CEM, then configure your editor to run &lt;code>cem lsp&lt;/code>. VS Code users can install the extension. Neovim/Zed users configure their LSP client to start &lt;code>cem lsp&lt;/code> for HTML, Nunjucks, Jinja2, Handlebars, Twig, Liquid, PHP, JavaScript, and TypeScript files.
 &lt;/info-callout>
 
 &lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
