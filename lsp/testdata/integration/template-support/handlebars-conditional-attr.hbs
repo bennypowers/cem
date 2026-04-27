@@ -1,0 +1,19 @@
+{{! Handlebars template with conditional attributes inside start tags }}
+
+<site-header theme="{{theme_mode}}">
+  <nav-menu orientation="horizontal">
+    {{#each menu_items}}
+    <nav-item href="{{this.url}}">{{this.label}}</nav-item>
+    {{/each}}
+  </nav-menu>
+</site-header>
+
+{{#each tiles}}
+  <rh-tile id="tile-{{this.tagName}}" compact bleed {{#if this.comingSoon}}disabled{{/if}}>
+    <uxdot-example slot="image" no-border transparent>
+      <img src="{{this.screenshotPath}}" alt="{{this.tagName}}">
+    </uxdot-example>
+    <h3 slot="headline"><a href="{{this.overviewHref}}">{{this.tagName}}</a></h3>
+    {{#if this.comingSoon}}<div slot="footer">Coming Soon</div>{{/if}}
+  </rh-tile>
+{{/each}}

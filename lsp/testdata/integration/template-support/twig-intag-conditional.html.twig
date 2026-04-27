@@ -1,0 +1,12 @@
+{# Twig template with conditional attributes inside start tags #}
+{% set theme_mode = theme.mode|default('light') %}
+
+<site-header theme="{{ theme_mode }}">
+  <h1>{{ site_name }}</h1>
+</site-header>
+
+{% for tile in tiles %}
+  <rh-tile compact bleed {% if tile.comingSoon %}disabled{% endif %}>
+    <h3 slot="headline">{{ tile.title }}</h3>
+  </rh-tile>
+{% endfor %}

@@ -1,0 +1,10 @@
+{# Nunjucks template with no custom elements #}
+{% set title = "Hello World" %}
+
+<div class="container">
+  <h1>{{ title }}</h1>
+  <p>No custom elements here.</p>
+  {% for item in items %}
+    <li>{{ item.name }}</li>
+  {% endfor %}
+</div>
