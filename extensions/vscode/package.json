@@ -36,6 +36,11 @@
   },
   "activationEvents": [
     "onLanguage:html",
+    "onLanguage:nunjucks",
+    "onLanguage:handlebars",
+    "onLanguage:jinja",
+    "onLanguage:twig",
+    "onLanguage:liquid",
     "onLanguage:typescript",
     "onLanguage:javascript"
   ],

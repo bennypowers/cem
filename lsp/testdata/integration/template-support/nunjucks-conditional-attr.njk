@@ -1,0 +1,20 @@
+{# Nunjucks template with conditional attributes inside start tags #}
+{% set theme_mode = "light" %}
+
+{% macro elementTile(doc, tagName, comingSoon) %}
+  <rh-tile id="tile-{{ tagName }}" compact bleed {% if comingSoon %}disabled{% endif %}>
+    <uxdot-example slot="image" no-border transparent>
+      <img src="{{ doc.screenshotPath }}" alt="{{ tagName }}">
+    </uxdot-example>
+    <h3 slot="headline"><a href="{{ doc.overviewHref }}">{{ tagName }}</a></h3>
+    {% if comingSoon %}<div slot="footer">Coming Soon</div>{% endif %}
+  </rh-tile>
+{% endmacro %}
+
+<site-header theme="{{ theme_mode }}">
+  <nav-menu orientation="horizontal">
+    {% for item in menu_items %}
+    <nav-item href="{{ item.url }}">{{ item.label }}</nav-item>
+    {% endfor %}
+  </nav-menu>
+</site-header>

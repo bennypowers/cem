@@ -23,6 +23,7 @@ import (
 
 	"bennypowers.dev/cem/lsp/document/html"
 	"bennypowers.dev/cem/lsp/document/php"
+	"bennypowers.dev/cem/lsp/document/template"
 	"bennypowers.dev/cem/lsp/document/tsx"
 	"bennypowers.dev/cem/lsp/document/typescript"
 	"bennypowers.dev/cem/lsp/helpers"
@@ -423,6 +424,12 @@ func (dm *documentManager) initializeLanguageHandlers() error {
 	}
 	dm.addLanguageHandler(phpHandler)
 
+	templateHandler, err := createTemplateHandler(htmlHandler)
+	if err != nil {
+		return fmt.Errorf("failed to create template handler: %w", err)
+	}
+	dm.addLanguageHandler(templateHandler)
+
 	return nil
 }
 
@@ -458,4 +465,9 @@ func createTSXHandler(queryManager *Q.QueryManager) (types.LanguageHandler, erro
 // createPHPHandler creates a new PHP language handler that delegates to HTML
 func createPHPHandler(htmlHandler types.LanguageHandler) (types.LanguageHandler, error) {
 	return php.NewHandler(htmlHandler)
+}
+
+// createTemplateHandler creates a new template language handler that delegates to HTML
+func createTemplateHandler(htmlHandler types.LanguageHandler) (types.LanguageHandler, error) {
+	return template.NewHandler(htmlHandler)
 }

@@ -107,6 +107,11 @@ export function activate(context: vscode.ExtensionContext) {
     const clientOptions: LanguageClientOptions = {
       documentSelector: [
         { scheme: 'file', language: 'html' },
+        { scheme: 'file', language: 'nunjucks' },
+        { scheme: 'file', language: 'handlebars' },
+        { scheme: 'file', language: 'jinja' },
+        { scheme: 'file', language: 'twig' },
+        { scheme: 'file', language: 'liquid' },
         { scheme: 'file', language: 'typescript' },
         { scheme: 'file', language: 'javascript' },
       ],

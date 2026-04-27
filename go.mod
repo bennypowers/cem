@@ -6,6 +6,8 @@ require (
 	atomicgo.dev/keyboard v0.2.9
 	bennypowers.dev/asimonim v0.1.1
 	bennypowers.dev/mappa v0.0.2
+	bennypowers.dev/tree-sitter-handlebars v0.1.1
+	bennypowers.dev/tree-sitter-jinja-dialects v0.1.1
 	github.com/IBM/fp-go v1.0.153
 	github.com/adrg/xdg v0.5.3
 	github.com/agext/levenshtein v1.2.3
@@ -31,7 +33,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.18.0
 	github.com/tliron/glsp v0.2.2
-	github.com/tree-sitter/go-tree-sitter v0.24.0
+	github.com/tree-sitter/go-tree-sitter v0.25.0
 	github.com/tree-sitter/tree-sitter-css v0.23.2
 	github.com/tree-sitter/tree-sitter-html v0.23.2
 	github.com/tree-sitter/tree-sitter-jsdoc v0.23.2

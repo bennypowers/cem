@@ -350,12 +350,12 @@
           ],
           "slots": [
             {
-              "name": "start",
-              "description": "An element, such as `\u003cwa-icon\u003e`, placed before the label."
-            },
-            {
               "name": "",
               "description": "The button's label."
+            },
+            {
+              "name": "start",
+              "description": "An element, such as `\u003cwa-icon\u003e`, placed before the label."
             },
             {
               "name": "end",

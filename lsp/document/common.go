@@ -47,15 +47,9 @@ func ExtractDocumentManager(dm any) types.Manager {
 }
 
 // getLanguageFromURI determines the language from file extension.
-// Twig templates use the HTML handler directly because Twig syntax ({% %}, {{ }})
-// is valid text content in HTML and does not interfere with element extraction.
+// Template files (Nunjucks, Jinja2, Twig, Liquid, Handlebars) use a dedicated
+// template handler that strips template syntax before HTML parsing.
 func getLanguageFromURI(uri string) string {
-	// Handle compound extensions like .html.twig
-	base := strings.ToLower(uri)
-	if strings.HasSuffix(base, ".html.twig") || strings.HasSuffix(base, ".twig") {
-		return "html"
-	}
-
 	ext := strings.ToLower(filepath.Ext(uri))
 	switch ext {
 	case ".html", ".htm":
@@ -65,10 +59,12 @@ func getLanguageFromURI(uri string) string {
 	case ".ts":
 		return "typescript"
 	case ".js":
-		return "typescript" // Use TypeScript parser for JS too
+		return "typescript"
 	case ".tsx", ".jsx":
-		return "tsx" // TSX files get their own language type
+		return "tsx"
+	case ".njk", ".j2", ".jinja", ".jinja2", ".liquid", ".hbs", ".twig":
+		return "template"
 	default:
-		return "html" // Default to HTML
+		return "html"
 	}
 }
