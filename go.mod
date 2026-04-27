@@ -35,6 +35,7 @@ require (
 	github.com/tliron/glsp v0.2.2
 	github.com/tree-sitter/go-tree-sitter v0.25.0
 	github.com/tree-sitter/tree-sitter-css v0.23.2
+	github.com/tree-sitter/tree-sitter-embedded-template v0.25.0
 	github.com/tree-sitter/tree-sitter-html v0.23.2
 	github.com/tree-sitter/tree-sitter-jsdoc v0.23.2
 	github.com/tree-sitter/tree-sitter-php v0.23.12

@@ -112,6 +112,8 @@ export function activate(context: vscode.ExtensionContext) {
         { scheme: 'file', language: 'jinja' },
         { scheme: 'file', language: 'twig' },
         { scheme: 'file', language: 'liquid' },
+        { scheme: 'file', language: 'erb' },
+        { scheme: 'file', language: 'ejs' },
         { scheme: 'file', language: 'typescript' },
         { scheme: 'file', language: 'javascript' },
       ],

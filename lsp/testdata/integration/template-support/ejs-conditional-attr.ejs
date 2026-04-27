@@ -1,0 +1,14 @@
+<%# EJS template with conditional attributes inside start tags %>
+
+<site-header theme="<%= theme_mode %>">
+  <h1><%= site_name %></h1>
+</site-header>
+
+<% tiles.forEach(function(tile) { %>
+  <rh-tile compact bleed <% if (tile.comingSoon) { %>disabled<% } %>>
+    <uxdot-example slot="image" no-border transparent>
+      <img src="<%= tile.screenshotPath %>" alt="<%= tile.tagName %>">
+    </uxdot-example>
+    <h3 slot="headline"><%= tile.title %></h3>
+  </rh-tile>
+<% }); %>

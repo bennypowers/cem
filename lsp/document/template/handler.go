@@ -26,13 +26,14 @@ import (
 	tree_sitter_handlebars "bennypowers.dev/tree-sitter-handlebars/bindings/go"
 	tree_sitter_jinja "bennypowers.dev/tree-sitter-jinja-dialects/bindings/go"
 	protocol "github.com/tliron/glsp/protocol_3_16"
+	tree_sitter_embedded_template "github.com/tree-sitter/tree-sitter-embedded-template/bindings/go"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 
 // Handler implements language-specific operations for template documents
-// (Nunjucks, Jinja2, Twig, Liquid, Handlebars).
+// (Nunjucks, Jinja2, Twig, Liquid, Handlebars, ERB, EJS).
 // It uses a two-stage pipeline:
-//  1. tree-sitter grammar extracts text nodes (HTML content) from template source
+//  1. tree-sitter grammar extracts text/content nodes (HTML) from template source
 //  2. The HTML handler parses the reconstructed HTML for custom elements
 //
 // Template blocks are replaced with whitespace to preserve line/column positions.
@@ -42,12 +43,15 @@ type Handler struct {
 	jinjaQuery  *sitter.Query
 	hbsParser   *sitter.Parser
 	hbsQuery    *sitter.Query
+	etParser    *sitter.Parser
+	etQuery     *sitter.Query
 	mu          sync.Mutex
 }
 
 var (
 	jinjaLang = sitter.NewLanguage(tree_sitter_jinja.Language())
 	hbsLang   = sitter.NewLanguage(tree_sitter_handlebars.Language())
+	etLang    = sitter.NewLanguage(tree_sitter_embedded_template.Language())
 )
 
 func NewHandler(htmlHandler types.LanguageHandler) (*Handler, error) {
@@ -77,12 +81,34 @@ func NewHandler(htmlHandler types.LanguageHandler) (*Handler, error) {
 		return nil, fmt.Errorf("failed to compile handlebars text query: %w", qerr)
 	}
 
+	etParser := sitter.NewParser()
+	if err := etParser.SetLanguage(etLang); err != nil {
+		jinjaParser.Close()
+		jinjaQuery.Close()
+		hbsParser.Close()
+		hbsQuery.Close()
+		etParser.Close()
+		return nil, fmt.Errorf("failed to set embedded-template language: %w", err)
+	}
+
+	etQuery, qerr := sitter.NewQuery(etLang, `(content) @html`)
+	if qerr != nil {
+		jinjaParser.Close()
+		jinjaQuery.Close()
+		hbsParser.Close()
+		hbsQuery.Close()
+		etParser.Close()
+		return nil, fmt.Errorf("failed to compile embedded-template content query: %w", qerr)
+	}
+
 	return &Handler{
 		htmlHandler: htmlHandler,
 		jinjaParser: jinjaParser,
 		jinjaQuery:  jinjaQuery,
 		hbsParser:   hbsParser,
 		hbsQuery:    hbsQuery,
+		etParser:    etParser,
+		etQuery:     etQuery,
 	}, nil
 }
 
@@ -97,16 +123,21 @@ func (h *Handler) Language() string {
 // grammar; HTML inside raw blocks is extracted on a best-effort basis
 // depending on how the grammar parses the block content.
 func templateFamily(uri string) string {
-	if strings.HasSuffix(strings.ToLower(uri), ".hbs") {
+	lower := strings.ToLower(uri)
+	switch {
+	case strings.HasSuffix(lower, ".hbs"):
 		return "handlebars"
+	case strings.HasSuffix(lower, ".erb"), strings.HasSuffix(lower, ".ejs"):
+		return "embedded-template"
+	default:
+		return "jinja"
 	}
-	return "jinja"
 }
 
-// extractHTML uses tree-sitter to find text nodes (HTML content), then replaces
-// template blocks with whitespace to produce valid HTML with preserved positions.
-// The mutex is held for the entire operation to prevent Close from freeing
-// the parser or query while they are in use.
+// extractHTML uses tree-sitter to find text/content nodes (HTML content), then
+// replaces template blocks with whitespace to produce valid HTML with preserved
+// positions. The mutex is held for the entire operation to prevent Close from
+// freeing the parser or query while they are in use.
 func (h *Handler) extractHTML(source []byte, uri string) []byte {
 	family := templateFamily(uri)
 
@@ -120,6 +151,9 @@ func (h *Handler) extractHTML(source []byte, uri string) []byte {
 	case "handlebars":
 		parser = h.hbsParser
 		query = h.hbsQuery
+	case "embedded-template":
+		parser = h.etParser
+		query = h.etQuery
 	default:
 		parser = h.jinjaParser
 		query = h.jinjaQuery
@@ -203,5 +237,13 @@ func (h *Handler) Close() {
 	if h.hbsQuery != nil {
 		h.hbsQuery.Close()
 		h.hbsQuery = nil
+	}
+	if h.etParser != nil {
+		h.etParser.Close()
+		h.etParser = nil
+	}
+	if h.etQuery != nil {
+		h.etQuery.Close()
+		h.etQuery = nil
 	}
 }

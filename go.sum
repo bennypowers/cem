@@ -239,8 +239,8 @@ github.com/tree-sitter/tree-sitter-cpp v0.23.4 h1:LaWZsiqQKvR65yHgKmnaqA+uz6tlDJ
 github.com/tree-sitter/tree-sitter-cpp v0.23.4/go.mod h1:doqNW64BriC7WBCQ1klf0KmJpdEvfxyXtoEybnBo6v8=
 github.com/tree-sitter/tree-sitter-css v0.23.2 h1:ep4nnzu384hr/QJm1nRKlpJ2vIGTBwPoZE/frwpJVP4=
 github.com/tree-sitter/tree-sitter-css v0.23.2/go.mod h1:Z8l6RvpxfFAHhecXFsMMiUhl6bdoPiGGscJgSlnwHhE=
-github.com/tree-sitter/tree-sitter-embedded-template v0.23.2 h1:nFkkH6Sbe56EXLmZBqHHcamTpmz3TId97I16EnGy4rg=
-github.com/tree-sitter/tree-sitter-embedded-template v0.23.2/go.mod h1:HNPOhN0qF3hWluYLdxWs5WbzP/iE4aaRVPMsdxuzIaQ=
+github.com/tree-sitter/tree-sitter-embedded-template v0.25.0 h1:fP3u58oKV05k7HLsZkCXwwDAEDoOVGWXHhb7ccXnLuw=
+github.com/tree-sitter/tree-sitter-embedded-template v0.25.0/go.mod h1:HNPOhN0qF3hWluYLdxWs5WbzP/iE4aaRVPMsdxuzIaQ=
 github.com/tree-sitter/tree-sitter-go v0.23.4 h1:yt5KMGnTHS+86pJmLIAZMWxukr8W7Ae1STPvQUuNROA=
 github.com/tree-sitter/tree-sitter-go v0.23.4/go.mod h1:Jrx8QqYN0v7npv1fJRH1AznddllYiCMUChtVjxPK040=
 github.com/tree-sitter/tree-sitter-html v0.23.2 h1:1UYDV+Yd05GGRhVnTcbP58GkKLSHHZwVaN+lBZV11Lc=
