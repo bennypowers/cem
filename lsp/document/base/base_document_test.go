@@ -11,22 +11,25 @@ import (
 	tsHtml "github.com/tree-sitter/tree-sitter-html/bindings/go"
 )
 
-func parseHTML(content string) *ts.Tree {
+func parseHTML(t *testing.T, content string) *ts.Tree {
+	t.Helper()
 	parser := ts.NewParser()
 	defer parser.Close()
-	parser.SetLanguage(ts.NewLanguage(tsHtml.Language()))
+	if err := parser.SetLanguage(ts.NewLanguage(tsHtml.Language())); err != nil {
+		t.Fatalf("failed to set language: %v", err)
+	}
 	return parser.Parse([]byte(content), nil)
 }
 
 func TestRefCountedTree_ReleaseFreesTree(t *testing.T) {
-	tree := parseHTML("<div>hello</div>")
+	tree := parseHTML(t,"<div>hello</div>")
 	rc := newRefCountedTree(tree)
 	rc.release()
 	// tree.Close() was called internally; no double-free means success
 }
 
 func TestRefCountedTree_AcquireKeepsTreeAlive(t *testing.T) {
-	tree := parseHTML("<div>hello</div>")
+	tree := parseHTML(t,"<div>hello</div>")
 	rc := newRefCountedTree(tree)
 
 	rc.acquire()
@@ -38,7 +41,7 @@ func TestRefCountedTree_AcquireKeepsTreeAlive(t *testing.T) {
 }
 
 func TestRefCountedTree_UnderflowPanics(t *testing.T) {
-	tree := parseHTML("<div>hello</div>")
+	tree := parseHTML(t,"<div>hello</div>")
 	rc := newRefCountedTree(tree)
 	rc.release() // legitimate release, refs=0, tree closed
 
@@ -48,7 +51,7 @@ func TestRefCountedTree_UnderflowPanics(t *testing.T) {
 }
 
 func TestRefCountedTree_ConcurrentAcquireRelease(t *testing.T) {
-	tree := parseHTML("<p>concurrent</p>")
+	tree := parseHTML(t,"<p>concurrent</p>")
 	rc := newRefCountedTree(tree)
 
 	var wg sync.WaitGroup
@@ -74,13 +77,13 @@ func TestAcquireTree_NilTreeReturnsNoopRelease(t *testing.T) {
 
 func TestAcquireTree_PreventsUseAfterSetTree(t *testing.T) {
 	doc := NewBaseDocument("test.html", "<div>v1</div>", 1, "html", nil, nil)
-	tree1 := parseHTML("<div>v1</div>")
+	tree1 := parseHTML(t,"<div>v1</div>")
 	doc.SetTree(tree1)
 
 	acquired, release := doc.AcquireTree()
 	assert.NotNil(t, acquired)
 
-	tree2 := parseHTML("<div>v2</div>")
+	tree2 := parseHTML(t,"<div>v2</div>")
 	doc.SetTree(tree2) // replaces tree1, but reader still holds ref
 
 	// tree1 should still be usable via the acquired reference
