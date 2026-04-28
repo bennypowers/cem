@@ -48,14 +48,8 @@ func (h *Handler) Language() string {
 
 // CreateDocument creates a new TypeScript document
 func (h *Handler) CreateDocument(uri, content string, version int32) types.Document {
-	doc := &TypeScriptDocument{
-		uri:      uri,
-		content:  content,
-		version:  version,
-		language: "typescript",
-	}
+	doc := NewTypeScriptDocument(uri, content, version)
 
-	// Parse the document
 	if err := doc.Parse(content); err != nil {
 		helpers.SafeDebugLog("[TypeScript] Failed to parse document %s: %v", uri, err)
 	}

@@ -25,20 +25,35 @@ import (
 
 // Document interface for LSP document operations
 type Document interface {
-	FindElementAtPosition(position protocol.Position, dm any) *CustomElementMatch
-	FindAttributeAtPosition(position protocol.Position, dm any) (*AttributeMatch, string)
-	Content() (string, error) // Returns content with proper error handling
+	// Content returns the document content with error handling
+	Content() (string, error)
+	// Version returns the document version
 	Version() int32
+	// URI returns the document URI
 	URI() string
-	Language() string // Returns the document language
-	FindCustomElements(dm any) ([]CustomElementMatch, error)
-	AnalyzeCompletionContextTS(position protocol.Position, dm any) *CompletionAnalysis
-	CompletionPrefix(analysis *CompletionAnalysis) string                            // Get completion prefix using tree-sitter
-	ScriptTags() []ScriptTag                                                         // Get parsed script tags
-	ImportMap() map[string]string                                                    // Get import map (if any) from <script type="importmap">
-	FindModuleScript() (protocol.Position, bool)                                     // Find insertion point in module script
-	FindInlineModuleScript() (protocol.Position, bool)                               // Find insertion point in inline module script (no src)
-	FindHeadInsertionPoint(dm any) (protocol.Position, bool)                         // Find insertion point in <head> section
+	// Language returns the document language identifier
+	Language() string
+	// ScriptTags returns parsed script tags for HTML documents
+	ScriptTags() []ScriptTag
+	// ImportMap returns import map entries from <script type="importmap">, if any
+	ImportMap() map[string]string
+
+	// FindElementAtPosition finds a custom element at the given position
+	FindElementAtPosition(position protocol.Position, hp HandlerProvider) *CustomElementMatch
+	// FindAttributeAtPosition finds an attribute at the given position
+	FindAttributeAtPosition(position protocol.Position, hp HandlerProvider) (*AttributeMatch, string)
+	// FindCustomElements finds all custom elements in the document
+	FindCustomElements(hp HandlerProvider) ([]CustomElementMatch, error)
+	// AnalyzeCompletionContextTS analyzes completion context using tree-sitter
+	AnalyzeCompletionContextTS(position protocol.Position, hp HandlerProvider) *CompletionAnalysis
+	// CompletionPrefix extracts the prefix being typed for filtering completions
+	CompletionPrefix(analysis *CompletionAnalysis) string
+	// FindModuleScript finds insertion point in a module script
+	FindModuleScript() (protocol.Position, bool)
+	// FindInlineModuleScript finds insertion point in an inline module script (no src)
+	FindInlineModuleScript() (protocol.Position, bool)
+	// FindHeadInsertionPoint finds insertion point in the <head> section
+	FindHeadInsertionPoint(hp HandlerProvider) (protocol.Position, bool)
 	ByteRangeToProtocolRange(content string, startByte, endByte uint) protocol.Range // Convert byte range to protocol range
 	Close()                                                                          // Clean up document resources
 
@@ -48,6 +63,12 @@ type Document interface {
 	Parser() *ts.Parser                          // Get the tree-sitter parser
 	SetParser(parser *ts.Parser)                 // Set the tree-sitter parser
 	UpdateContent(content string, version int32) // Update document content
+}
+
+// HandlerProvider looks up language handlers by name.
+// DocumentManager implements this; documents use it for handler delegation.
+type HandlerProvider interface {
+	GetLanguageHandler(language string) LanguageHandler
 }
 
 // LanguageHandler defines the interface for language-specific operations
@@ -70,18 +91,15 @@ type RangeParser interface {
 
 // Manager interface for document lifecycle management
 type Manager interface {
-	// Document lifecycle
+	HandlerProvider
+
 	OpenDocument(uri, content string, version int32) Document
 	UpdateDocument(uri, content string, version int32) Document
 	UpdateDocumentWithChanges(uri, content string, version int32, changes []protocol.TextDocumentContentChangeEvent) Document
 	CloseDocument(uri string)
 	Document(uri string) Document
 	AllDocuments() []Document
-
-	// Core query management (language-agnostic)
 	QueryManager() *Q.QueryManager
-
-	// Cleanup
 	Close()
 }
 

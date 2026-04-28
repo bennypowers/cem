@@ -48,14 +48,8 @@ func (h *Handler) Language() string {
 
 // CreateDocument creates a new TSX document
 func (h *Handler) CreateDocument(uri, content string, version int32) types.Document {
-	doc := &TSXDocument{
-		uri:      uri,
-		content:  content,
-		version:  version,
-		language: "tsx",
-	}
+	doc := NewTSXDocument(uri, content, version)
 
-	// Parse the document
 	if err := doc.Parse(content); err != nil {
 		helpers.SafeDebugLog("[TSX] Failed to parse document %s: %v", uri, err)
 	}

@@ -115,7 +115,7 @@ func Definition(ctx types.ServerContext, context *glsp.Context, params *protocol
 }
 
 // analyzeDefinitionTarget analyzes the cursor position to determine what definition is being requested
-func analyzeDefinitionTarget(doc types.Document, position protocol.Position, dm any) *DefinitionRequest {
+func analyzeDefinitionTarget(doc types.Document, position protocol.Position, dm types.HandlerProvider) *DefinitionRequest {
 	// Find if we're on an element
 	element := doc.FindElementAtPosition(position, dm)
 	if element != nil {

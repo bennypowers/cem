@@ -61,12 +61,7 @@ func (h *Handler) Language() string {
 
 // CreateDocument creates a new HTML document
 func (h *Handler) CreateDocument(uri, content string, version int32) types.Document {
-	doc := &HTMLDocument{
-		uri:      uri,
-		content:  content,
-		version:  version,
-		language: h.language,
-	}
+	doc := NewHTMLDocument(uri, content, version, h.language)
 
 	if err := doc.Parse(content); err != nil {
 		helpers.SafeDebugLog("[HTML] Failed to parse document %s: %v", uri, err)
@@ -81,12 +76,7 @@ func (h *Handler) CreateDocument(uri, content string, version int32) types.Docum
 // those regions are parsed as HTML while byte positions map to the original
 // source. Used by template and PHP handlers instead of whitespace-fill.
 func (h *Handler) CreateDocumentWithRanges(uri, content string, version int32, ranges []ts.Range) types.Document {
-	doc := &HTMLDocument{
-		uri:      uri,
-		content:  content,
-		version:  version,
-		language: h.language,
-	}
+	doc := NewHTMLDocument(uri, content, version, h.language)
 
 	if err := doc.ParseWithRanges(content, ranges); err != nil {
 		helpers.SafeDebugLog("[HTML] Failed to parse document with ranges %s: %v", uri, err)
@@ -100,12 +90,7 @@ func (h *Handler) CreateDocumentWithRanges(uri, content string, version int32, r
 // Used by Blade handler where the grammar produces HTML-compatible nodes
 // directly, so the same queries work without re-parsing.
 func (h *Handler) CreateDocumentWithTree(uri, content string, version int32, tree *ts.Tree) types.Document {
-	doc := &HTMLDocument{
-		uri:      uri,
-		content:  content,
-		version:  version,
-		language: h.language,
-	}
+	doc := NewHTMLDocument(uri, content, version, h.language)
 
 	doc.UpdateContent(content, version)
 	doc.SetTree(tree)
