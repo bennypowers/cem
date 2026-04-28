@@ -19,6 +19,7 @@ package treesitter
 import (
 	"fmt"
 
+	"bennypowers.dev/cem/internal/textutil"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -90,26 +91,21 @@ func NodeToRange(node *ts.Node, content []byte) Range {
 	}
 }
 
-// ByteOffsetToPosition converts a byte offset to line/character position
+// ByteOffsetToPosition converts a byte offset to line/character position.
+// Character is in UTF-16 code units per the LSP specification.
 func ByteOffsetToPosition(content []byte, offset uint) Position {
 	line := uint32(0)
-	char := uint32(0)
+	lineStart := uint(0)
 
-	for i, b := range content {
-		if uint(i) >= offset {
-			break
-		}
-
-		if b == '\n' {
+	for i := uint(0); i < offset && i < uint(len(content)); i++ {
+		if content[i] == '\n' {
 			line++
-			char = 0
-		} else {
-			char++
+			lineStart = i + 1
 		}
 	}
 
 	return Position{
 		Line:      line,
-		Character: char,
+		Character: textutil.ByteOffsetToUTF16Bytes(content[lineStart:], offset-lineStart),
 	}
 }

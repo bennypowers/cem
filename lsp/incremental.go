@@ -17,9 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package lsp
 
 import (
-	"unicode/utf16"
-	"unicode/utf8"
-
+	"bennypowers.dev/cem/internal/textutil"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -39,52 +37,14 @@ const (
 // LSP uses UTF-16 code units for character positions, while tree-sitter uses UTF-8 byte offsets.
 // We need to convert between these two encodings using stdlib unicode/utf16 package.
 
-// UTF16ToByteOffset converts a UTF-16 code unit offset to a UTF-8 byte offset
+// UTF16ToByteOffset converts a UTF-16 code unit offset to a UTF-8 byte offset.
 func UTF16ToByteOffset(text string, utf16Offset uint32) uint {
-	var byteOffset uint = 0
-	var utf16Count uint32 = 0
-
-	for byteOffset < uint(len(text)) && utf16Count < utf16Offset {
-		r, size := utf8.DecodeRuneInString(text[byteOffset:])
-		// Check for invalid UTF-8: RuneError with size == 1
-		// Note: Valid U+FFFD has size == 3, so we need to check both
-		if r == utf8.RuneError && size == 1 {
-			// Invalid UTF-8, treat as single byte
-			byteOffset++
-			utf16Count++
-			continue
-		}
-
-		byteOffset += uint(size)
-		// Use stdlib to count UTF-16 code units for this rune
-		utf16Count += uint32(utf16.RuneLen(r))
-	}
-
-	return byteOffset
+	return textutil.UTF16ToByteOffset(text, utf16Offset)
 }
 
-// ByteOffsetToUTF16 converts a UTF-8 byte offset to a UTF-16 code unit offset
+// ByteOffsetToUTF16 converts a UTF-8 byte offset to a UTF-16 code unit offset.
 func ByteOffsetToUTF16(text string, byteOffset uint) uint32 {
-	var currentByte uint = 0
-	var utf16Count uint32 = 0
-
-	for currentByte < byteOffset && currentByte < uint(len(text)) {
-		r, size := utf8.DecodeRuneInString(text[currentByte:])
-		// Check for invalid UTF-8: RuneError with size == 1
-		// Note: Valid U+FFFD has size == 3, so we need to check both
-		if r == utf8.RuneError && size == 1 {
-			// Invalid UTF-8, treat as single byte
-			currentByte++
-			utf16Count++
-			continue
-		}
-
-		currentByte += uint(size)
-		// Use stdlib to count UTF-16 code units
-		utf16Count += uint32(utf16.RuneLen(r))
-	}
-
-	return utf16Count
+	return textutil.ByteOffsetToUTF16(text, byteOffset)
 }
 
 // DocumentEdit represents a change to a document

@@ -20,6 +20,7 @@ import (
 	"strings"
 	"sync"
 
+	"bennypowers.dev/cem/internal/textutil"
 	"bennypowers.dev/cem/lsp/types"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -225,30 +226,26 @@ func (d *BaseDocument) ByteRangeToProtocolRange(content string, startByte, endBy
 }
 
 // ByteOffsetToPosition converts a byte offset to a protocol position within the given content.
+// Character is in UTF-16 code units per the LSP specification.
 func (d *BaseDocument) ByteOffsetToPosition(offset uint, content string) protocol.Position {
 	line := uint32(0)
-	char := uint32(0)
+	lineStart := uint(0)
 
-	for i, r := range content {
-		if uint(i) >= offset {
-			break
-		}
-
-		if r == '\n' {
+	for i := uint(0); i < offset && i < uint(len(content)); i++ {
+		if content[i] == '\n' {
 			line++
-			char = 0
-		} else {
-			char++
+			lineStart = i + 1
 		}
 	}
 
 	return protocol.Position{
 		Line:      line,
-		Character: char,
+		Character: textutil.ByteOffsetToUTF16(content[lineStart:], offset-lineStart),
 	}
 }
 
 // PositionToByteOffset converts a protocol position to a byte offset within the given content.
+// Character is interpreted as UTF-16 code units per the LSP specification.
 func (d *BaseDocument) PositionToByteOffset(pos protocol.Position, content string) uint {
 	var offset uint
 	lines := strings.Split(content, "\n")
@@ -259,11 +256,7 @@ func (d *BaseDocument) PositionToByteOffset(pos protocol.Position, content strin
 
 	if pos.Line < uint32(len(lines)) {
 		line := lines[pos.Line]
-		if pos.Character < uint32(len(line)) {
-			offset += uint(pos.Character)
-		} else {
-			offset += uint(len(line))
-		}
+		offset += textutil.UTF16ToByteOffset(line, pos.Character)
 	}
 
 	return offset
