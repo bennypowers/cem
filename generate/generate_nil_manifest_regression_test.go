@@ -7,7 +7,7 @@ import (
 	"testing/synctest"
 
 	G "bennypowers.dev/cem/generate"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -26,7 +26,7 @@ import (
 	C "bennypowers.dev/cem/cmd/config"
 	htmllang "bennypowers.dev/cem/internal/languages/html"
 	"bennypowers.dev/cem/internal/platform/testutil"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 )
 
 // Helper function to run fixture-based tests

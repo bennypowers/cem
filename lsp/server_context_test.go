@@ -23,7 +23,7 @@ import (
 
 	"bennypowers.dev/cem/lsp"
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 )
 
 func TestServer_Workspace(t *testing.T) {

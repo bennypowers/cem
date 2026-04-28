@@ -25,7 +25,7 @@ import (
 	"testing/synctest"
 
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 )
 
 // TestSourceHrefGeneration verifies that source hrefs are generated correctly when configured

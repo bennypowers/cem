@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
-	"bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

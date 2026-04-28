@@ -21,7 +21,7 @@ import (
 
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/resources"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

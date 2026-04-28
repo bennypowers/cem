@@ -24,13 +24,14 @@ import (
 	"strings"
 	"testing"
 
+	_ "bennypowers.dev/cem/internal/languages/registry"
+	"bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	"bennypowers.dev/cem/queries"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -175,7 +176,7 @@ func TestTagDiagnostics_TypeScriptImports(t *testing.T) {
 
 	// Set up QueryManager for tree-sitter functionality
 	// Create a dedicated QueryManager for this test to avoid global state contamination
-	queryManager, err := queries.NewQueryManager(queries.LSPQueries())
+	queryManager, err := treesitter.NewQueryManager(treesitter.LSPQueries())
 	if err != nil {
 		t.Fatalf("Failed to create query manager: %v", err)
 	}
@@ -712,7 +713,7 @@ func TestTagDiagnostics_JsDocExamples(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 
 	// Set up QueryManager for tree-sitter functionality
-	queryManager, err := queries.NewQueryManager(queries.LSPQueries())
+	queryManager, err := treesitter.NewQueryManager(treesitter.LSPQueries())
 	if err != nil {
 		t.Fatalf("Failed to create query manager: %v", err)
 	}

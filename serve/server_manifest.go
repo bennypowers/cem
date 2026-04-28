@@ -30,7 +30,7 @@ import (
 	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/routes"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 )
 
 // SetManifest sets the current manifest and builds the routing table

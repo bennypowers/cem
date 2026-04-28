@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	M "bennypowers.dev/cem/manifest"
-	Q "bennypowers.dev/cem/queries"
+	Q "bennypowers.dev/cem/internal/treesitter"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 

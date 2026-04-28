@@ -26,7 +26,7 @@ import (
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 )
 
 func TestTransitiveIntegration_ThreeLevelDependency(t *testing.T) {

@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 )
 
 func TestCssCache_Interface(t *testing.T) {

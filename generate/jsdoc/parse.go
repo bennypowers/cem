@@ -6,7 +6,7 @@ import (
 
 	jsdoclang "bennypowers.dev/cem/internal/languages/jsdoc"
 	M "bennypowers.dev/cem/manifest"
-	Q "bennypowers.dev/cem/queries"
+	Q "bennypowers.dev/cem/internal/treesitter"
 )
 
 type parameterInfo struct {

@@ -21,7 +21,7 @@ import (
 
 	G "bennypowers.dev/cem/generate"
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/evanw/esbuild/pkg/api"
 
 	litssr "bennypowers.dev/lit-ssr-wasm/go"

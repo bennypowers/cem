@@ -25,7 +25,7 @@ import (
 	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

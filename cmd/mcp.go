@@ -23,7 +23,7 @@ import (
 	"bennypowers.dev/cem/internal/logging"
 	MCP "bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/types"
-	"bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/internal/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

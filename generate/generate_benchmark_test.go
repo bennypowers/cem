@@ -23,7 +23,7 @@ import (
 
 	"bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/internal/logging"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	DS "github.com/bmatcuk/doublestar"
 )
 

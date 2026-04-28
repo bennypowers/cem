@@ -27,7 +27,7 @@ import (
 	C "bennypowers.dev/cem/cmd/config"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 )
 
 // mockDesignTokensLoader implements DesignTokensLoader interface for testing

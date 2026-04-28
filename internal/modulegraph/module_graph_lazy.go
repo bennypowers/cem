@@ -25,7 +25,7 @@ import (
 
 	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/lsp/helpers"
-	"bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/internal/treesitter"
 )
 
 // Lazy Module Graph Building Methods
@@ -301,7 +301,7 @@ func (mg *ModuleGraph) extractFileDependencies(filePath string) ([]string, error
 		return nil, fmt.Errorf("query manager not available for extracting dependencies from file %s", filePath)
 	}
 
-	exportMatcher, err := queries.GetCachedQueryMatcher(mg.queryManager, "typescript", "exports")
+	exportMatcher, err := treesitter.GetCachedQueryMatcher(mg.queryManager, "typescript", "exports")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cached export matcher for file %s: %w", filePath, err)
 	}

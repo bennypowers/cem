@@ -24,7 +24,7 @@ import (
 	"bennypowers.dev/cem/internal/platform"
 	LSP "bennypowers.dev/cem/lsp"
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

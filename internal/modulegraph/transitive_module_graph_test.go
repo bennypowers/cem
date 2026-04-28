@@ -22,9 +22,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/lsp/helpers"
+	_ "bennypowers.dev/cem/internal/languages/registry"
 	"bennypowers.dev/cem/internal/modulegraph"
-	"bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/internal/treesitter"
+	"bennypowers.dev/cem/lsp/helpers"
 )
 
 func TestModuleGraph_TransitiveElements_SingleLevel(t *testing.T) {
@@ -384,7 +385,7 @@ func TestModuleGraph_RecursiveDependencyBuilding(t *testing.T) {
 	}
 
 	// Get query manager for test
-	queryManager, err := queries.GetGlobalQueryManager()
+	queryManager, err := treesitter.GetGlobalQueryManager()
 	if err != nil {
 		t.Fatalf("Failed to get query manager: %v", err)
 	}

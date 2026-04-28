@@ -14,19 +14,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
-package queries
+package typescript
 
 import (
 	"slices"
+	"strings"
 
-	"bennypowers.dev/cem/internal/languages/typescript"
+	htmllang "bennypowers.dev/cem/internal/languages/html"
+	Q "bennypowers.dev/cem/internal/treesitter"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 // FindClassDeclarationInSource finds the class declaration position in TypeScript source content
-func FindClassDeclarationInSource(content []byte, className string, queryManager *QueryManager) (*Range, error) {
-	// Get TypeScript parser and parse
-	parser := typescript.BorrowParser()
-	defer typescript.ReturnParser(parser)
+func FindClassDeclarationInSource(content []byte, className string, queryManager *Q.QueryManager) (*Q.Range, error) {
+	parser := BorrowParser()
+	defer ReturnParser(parser)
 
 	tree := parser.Parse(content, nil)
 	if tree == nil {
@@ -34,21 +36,19 @@ func FindClassDeclarationInSource(content []byte, className string, queryManager
 	}
 	defer tree.Close()
 
-	// Get class queries
-	classQueries, err := NewQueryMatcher(queryManager, "typescript", "classes")
+	classQueries, err := Q.NewQueryMatcher(queryManager, "typescript", "classes")
 	if err != nil {
 		return nil, err
 	}
 	defer classQueries.Close()
 
-	// Find class declaration using ParentCaptures pattern
 	for captureMap := range classQueries.ParentCaptures(tree.RootNode(), content, "class") {
 		if classNames, ok := captureMap["class.name"]; ok {
 			for _, classNameCapture := range classNames {
 				if classNameCapture.Text == className {
-					node := GetDescendantById(tree.RootNode(), classNameCapture.NodeId)
+					node := Q.GetDescendantById(tree.RootNode(), classNameCapture.NodeId)
 					if node != nil {
-						r := NodeToRange(node, content)
+						r := Q.NodeToRange(node, content)
 						return &r, nil
 					}
 				}
@@ -60,10 +60,9 @@ func FindClassDeclarationInSource(content []byte, className string, queryManager
 }
 
 // FindTagNameDefinitionInSource finds where the tag name is defined (e.g., @customElement decorator)
-func FindTagNameDefinitionInSource(content []byte, tagName string, queryManager *QueryManager) (*Range, error) {
-	// Get TypeScript parser and parse
-	parser := typescript.BorrowParser()
-	defer typescript.ReturnParser(parser)
+func FindTagNameDefinitionInSource(content []byte, tagName string, queryManager *Q.QueryManager) (*Q.Range, error) {
+	parser := BorrowParser()
+	defer ReturnParser(parser)
 
 	tree := parser.Parse(content, nil)
 	if tree == nil {
@@ -71,21 +70,19 @@ func FindTagNameDefinitionInSource(content []byte, tagName string, queryManager 
 	}
 	defer tree.Close()
 
-	// Get class queries
-	classQueries, err := NewQueryMatcher(queryManager, "typescript", "classes")
+	classQueries, err := Q.NewQueryMatcher(queryManager, "typescript", "classes")
 	if err != nil {
 		return nil, err
 	}
 	defer classQueries.Close()
 
-	// Find tag name in decorator using ParentCaptures pattern
 	for captureMap := range classQueries.ParentCaptures(tree.RootNode(), content, "class") {
 		if tagNames, ok := captureMap["tag-name"]; ok {
 			for _, tagNameCapture := range tagNames {
 				if tagNameCapture.Text == tagName {
-					node := GetDescendantById(tree.RootNode(), tagNameCapture.NodeId)
+					node := Q.GetDescendantById(tree.RootNode(), tagNameCapture.NodeId)
 					if node != nil {
-						r := NodeToRange(node, content)
+						r := Q.NodeToRange(node, content)
 						return &r, nil
 					}
 				}
@@ -97,10 +94,9 @@ func FindTagNameDefinitionInSource(content []byte, tagName string, queryManager 
 }
 
 // FindAttributeDeclarationInSource finds the attribute/property declaration in source content
-func FindAttributeDeclarationInSource(content []byte, attributeName string, queryManager *QueryManager) (*Range, error) {
-	// Get TypeScript parser and parse
-	parser := typescript.BorrowParser()
-	defer typescript.ReturnParser(parser)
+func FindAttributeDeclarationInSource(content []byte, attributeName string, queryManager *Q.QueryManager) (*Q.Range, error) {
+	parser := BorrowParser()
+	defer ReturnParser(parser)
 
 	tree := parser.Parse(content, nil)
 	if tree == nil {
@@ -108,20 +104,17 @@ func FindAttributeDeclarationInSource(content []byte, attributeName string, quer
 	}
 	defer tree.Close()
 
-	// Get member queries
-	memberQueries, err := NewQueryMatcher(queryManager, "typescript", "classMemberDeclaration")
+	memberQueries, err := Q.NewQueryMatcher(queryManager, "typescript", "classMemberDeclaration")
 	if err != nil {
 		return nil, err
 	}
 	defer memberQueries.Close()
 
-	// Find attribute declaration using ParentCaptures pattern
 	for captureMap := range memberQueries.ParentCaptures(tree.RootNode(), content, "field") {
 		var memberName string
 		var attributeNameInDecorator string
 		var memberNodeId int
 
-		// Collect information from this field
 		if memberNames, ok := captureMap["member.name"]; ok && len(memberNames) > 0 {
 			memberName = memberNames[0].Text
 			memberNodeId = memberNames[0].NodeId
@@ -130,11 +123,10 @@ func FindAttributeDeclarationInSource(content []byte, attributeName string, quer
 			attributeNameInDecorator = attrNames[0].Text
 		}
 
-		// Check if this member matches our target attribute
 		if matchesAttribute(memberName, attributeNameInDecorator, attributeName) {
-			node := GetDescendantById(tree.RootNode(), memberNodeId)
+			node := Q.GetDescendantById(tree.RootNode(), memberNodeId)
 			if node != nil {
-				r := NodeToRange(node, content)
+				r := Q.NodeToRange(node, content)
 				return &r, nil
 			}
 		}
@@ -144,10 +136,9 @@ func FindAttributeDeclarationInSource(content []byte, attributeName string, quer
 }
 
 // FindSlotDefinitionInSource finds the slot definition in template within source content
-func FindSlotDefinitionInSource(content []byte, slotName string, queryManager *QueryManager) (*Range, error) {
-	// Get TypeScript parser and parse
-	parser := typescript.BorrowParser()
-	defer typescript.ReturnParser(parser)
+func FindSlotDefinitionInSource(content []byte, slotName string, queryManager *Q.QueryManager) (*Q.Range, error) {
+	parser := BorrowParser()
+	defer ReturnParser(parser)
 
 	tree := parser.Parse(content, nil)
 	if tree == nil {
@@ -155,27 +146,23 @@ func FindSlotDefinitionInSource(content []byte, slotName string, queryManager *Q
 	}
 	defer tree.Close()
 
-	// Get class queries to find render templates
-	classQueries, err := NewQueryMatcher(queryManager, "typescript", "classes")
+	classQueries, err := Q.NewQueryMatcher(queryManager, "typescript", "classes")
 	if err != nil {
 		return nil, err
 	}
 	defer classQueries.Close()
 
-	// Find HTML template strings in render methods
 	for captureMap := range classQueries.ParentCaptures(tree.RootNode(), content, "class") {
 		if templates, ok := captureMap["render.template"]; ok {
 			for _, template := range templates {
 				templateContent := template.Text
-				// Remove template literal backticks
 				if len(templateContent) >= 2 && templateContent[0] == '`' && templateContent[len(templateContent)-1] == '`' {
 					templateContent = templateContent[1 : len(templateContent)-1]
 				}
 
 				slotRange := findSlotInTemplate(templateContent, slotName, queryManager)
 				if slotRange != nil {
-					// Adjust range to account for position within the TypeScript file
-					templateNode := GetDescendantById(tree.RootNode(), template.NodeId)
+					templateNode := Q.GetDescendantById(tree.RootNode(), template.NodeId)
 					if templateNode != nil {
 						adjustedRange := adjustTemplateRange(slotRange, templateNode, content)
 						return adjustedRange, nil
@@ -191,9 +178,9 @@ func FindSlotDefinitionInSource(content []byte, slotName string, queryManager *Q
 // FindDefinedElementTags uses the definedElements.scm query to find
 // custom element tag names defined in TypeScript/JavaScript source code
 // via @customElement decorators or customElements.define calls.
-func FindDefinedElementTags(code []byte, qm *QueryManager) []string {
-	parser := typescript.BorrowParser()
-	defer typescript.ReturnParser(parser)
+func FindDefinedElementTags(code []byte, qm *Q.QueryManager) []string {
+	parser := BorrowParser()
+	defer ReturnParser(parser)
 
 	tree := parser.Parse(code, nil)
 	if tree == nil {
@@ -206,9 +193,7 @@ func FindDefinedElementTags(code []byte, qm *QueryManager) []string {
 		return nil
 	}
 
-	// Returns nil on error — consistent with the nil-return convention for
-	// parse failures above. Callers treat nil as "no definitions found".
-	matcher, err := GetCachedQueryMatcher(qm, "typescript", "definedElements")
+	matcher, err := Q.GetCachedQueryMatcher(qm, "typescript", "definedElements")
 	if err != nil {
 		return nil
 	}
@@ -232,4 +217,78 @@ func FindDefinedElementTags(code []byte, qm *QueryManager) []string {
 		}
 	}
 	return tags
+}
+
+func matchesAttribute(memberName, decoratorAttrName, targetAttr string) bool {
+	if decoratorAttrName != "" {
+		return decoratorAttrName == targetAttr
+	}
+	if memberName == targetAttr {
+		return true
+	}
+	return camelToKebab(memberName) == targetAttr
+}
+
+func camelToKebab(camelCase string) string {
+	var result strings.Builder
+	for i, r := range camelCase {
+		if r >= 'A' && r <= 'Z' {
+			if i > 0 {
+				result.WriteByte('-')
+			}
+			result.WriteRune(r + ('a' - 'A'))
+		} else {
+			result.WriteRune(r)
+		}
+	}
+	return result.String()
+}
+
+func findSlotInTemplate(htmlContent string, slotName string, queryManager *Q.QueryManager) *Q.Range {
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
+
+	tree := parser.Parse([]byte(htmlContent), nil)
+	if tree == nil {
+		return nil
+	}
+	defer tree.Close()
+
+	templateQueries, err := Q.NewQueryMatcher(queryManager, "html", "slotsAndParts")
+	if err != nil {
+		return nil
+	}
+	defer templateQueries.Close()
+
+	htmlBytes := []byte(htmlContent)
+	for captureMap := range templateQueries.ParentCaptures(tree.RootNode(), htmlBytes, "slot") {
+		if attrValues, ok := captureMap["attr.value"]; ok {
+			for _, attrValue := range attrValues {
+				if attrValue.Text == slotName {
+					node := Q.GetDescendantById(tree.RootNode(), attrValue.NodeId)
+					if node != nil {
+						r := Q.NodeToRange(node, htmlBytes)
+						return &r
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func adjustTemplateRange(templateRange *Q.Range, templateNode *ts.Node, content []byte) *Q.Range {
+	templateStart := Q.ByteOffsetToPosition(content, templateNode.StartByte())
+
+	return &Q.Range{
+		Start: Q.Position{
+			Line:      templateStart.Line + templateRange.Start.Line,
+			Character: templateStart.Character + templateRange.Start.Character,
+		},
+		End: Q.Position{
+			Line:      templateStart.Line + templateRange.End.Line,
+			Character: templateStart.Character + templateRange.End.Character,
+		},
+	}
 }

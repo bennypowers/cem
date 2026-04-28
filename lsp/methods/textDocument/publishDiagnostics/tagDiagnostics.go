@@ -26,7 +26,7 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/internal/modulegraph"
-	"bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/internal/treesitter"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -287,7 +287,7 @@ func ParseTypeScriptImportsDebugForTest(content string, ctx types.ServerContext)
 	}
 
 	// Get cached import matcher for performance
-	importMatcher, err := queries.GetCachedQueryMatcher(queryManager, "typescript", "imports")
+	importMatcher, err := treesitter.GetCachedQueryMatcher(queryManager, "typescript", "imports")
 	if err != nil {
 		debugInfo = append(debugInfo, fmt.Sprintf("Failed to get cached import matcher: %v", err))
 		return importedElements, debugInfo
@@ -371,7 +371,7 @@ func parseTypeScriptImports(content string, ctx types.ServerContext) []string {
 	// Note: Don't defer Close() on singleton
 
 	// Get cached import matcher for performance
-	importMatcher, err := queries.GetCachedQueryMatcher(queryManager, "typescript", "imports")
+	importMatcher, err := treesitter.GetCachedQueryMatcher(queryManager, "typescript", "imports")
 	if err != nil {
 		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get cached import matcher: %v", err)
 		return importedElements
@@ -426,7 +426,7 @@ func findLocallyDefinedElements(content string, ctx types.ServerContext, doc typ
 		return nil
 	}
 
-	return queries.FindDefinedElementTags([]byte(content), queryManager)
+	return typescript.FindDefinedElementTags([]byte(content), queryManager)
 }
 
 // parseModuleScriptImports parses <script type="module"> tags for imports using tree-sitter
@@ -483,7 +483,7 @@ func parseNonModuleScriptImports(content string, ctx types.ServerContext) []stri
 	}
 
 	// Get cached script tag matcher
-	scriptMatcher, err := queries.GetCachedQueryMatcher(queryManager, "html", "scriptTags")
+	scriptMatcher, err := treesitter.GetCachedQueryMatcher(queryManager, "html", "scriptTags")
 	if err != nil {
 		helpers.SafeDebugLog("[DIAGNOSTICS] Failed to get cached script matcher: %v", err)
 		return importedElements

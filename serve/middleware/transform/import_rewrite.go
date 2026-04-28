@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/internal/languages/typescript"
-	"bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/internal/treesitter"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -65,7 +65,7 @@ func RewriteImportAttributes(source []byte) ([]byte, error) {
 	defer tree.Close()
 
 	// Get the global query manager
-	queryManager, err := queries.GetGlobalQueryManager()
+	queryManager, err := treesitter.GetGlobalQueryManager()
 	if err != nil {
 		// If query manager unavailable, return original source unchanged
 		return source, nil
@@ -73,7 +73,7 @@ func RewriteImportAttributes(source []byte) ([]byte, error) {
 
 	// Create a query matcher for import attributes
 	// Note: This query needs to be added to the imports query or created as a new query
-	matcher, err := queries.NewQueryMatcher(queryManager, "typescript", "importAttributes")
+	matcher, err := treesitter.NewQueryMatcher(queryManager, "typescript", "importAttributes")
 	if err != nil {
 		// If query not available, return original source unchanged
 		return source, nil
@@ -119,7 +119,7 @@ func RewriteImportAttributes(source []byte) ([]byte, error) {
 }
 
 // findImportsWithAttributes finds all import statements with attributes in the AST
-func findImportsWithAttributes(root *ts.Node, source []byte, matcher *queries.QueryMatcher) []ImportRewrite {
+func findImportsWithAttributes(root *ts.Node, source []byte, matcher *treesitter.QueryMatcher) []ImportRewrite {
 	var rewrites []ImportRewrite
 
 	// Use ParentCaptures to group all captures by import statement
@@ -164,7 +164,7 @@ func findImportsWithAttributes(root *ts.Node, source []byte, matcher *queries.Qu
 		if rewrite.OriginalSource != "" && len(rewrite.Attributes) > 0 {
 			// Get the actual node for potential future use
 			if sourceNodeID != 0 {
-				rewrite.SourceNode = queries.GetDescendantById(root, sourceNodeID)
+				rewrite.SourceNode = treesitter.GetDescendantById(root, sourceNodeID)
 			}
 			rewrites = append(rewrites, rewrite)
 		}

@@ -20,7 +20,7 @@ import (
 	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/internal/modulegraph"
-	"bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/internal/treesitter"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -86,7 +86,7 @@ type ServerContext interface {
 	ElementDescription(tagName string) (string, bool)
 
 	// Query operations for tree-sitter
-	QueryManager() (*queries.QueryManager, error)
+	QueryManager() (*treesitter.QueryManager, error)
 
 	// Module graph operations for re-export analysis
 	ModuleGraph() *modulegraph.ModuleGraph

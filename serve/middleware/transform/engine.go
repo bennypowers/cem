@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/internal/modulegraph"
-	"bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/internal/treesitter"
 	"github.com/evanw/esbuild/pkg/api"
 )
 
@@ -188,7 +188,7 @@ func extractDependencies(source []byte, sourcePath string) []string {
 	exportTracker := modulegraph.NewExportTracker()
 
 	// Get global QueryManager for tree-sitter parsing
-	queryManager, err := queries.GetGlobalQueryManager()
+	queryManager, err := treesitter.GetGlobalQueryManager()
 	if err != nil {
 		// If QueryManager fails to initialize, dependency tracking won't work
 		// but the transform can still succeed

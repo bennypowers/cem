@@ -29,7 +29,7 @@ import (
 	"bennypowers.dev/cem/lsp/document/typescript"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	Q "bennypowers.dev/cem/queries"
+	Q "bennypowers.dev/cem/internal/treesitter"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 

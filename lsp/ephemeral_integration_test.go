@@ -24,7 +24,7 @@ import (
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 )
 
 // newEphemeralTestServer creates a server and opens the fixture's input.ts,

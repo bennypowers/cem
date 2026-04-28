@@ -27,7 +27,7 @@ import (
 	DT "bennypowers.dev/cem/internal/designtokens"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	M "bennypowers.dev/cem/manifest"
-	Q "bennypowers.dev/cem/queries"
+	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
 
 	DS "github.com/bmatcuk/doublestar"

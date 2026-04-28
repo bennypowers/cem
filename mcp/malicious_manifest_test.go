@@ -24,7 +24,7 @@ import (
 	"bennypowers.dev/cem/mcp/security"
 	"bennypowers.dev/cem/mcp/templates"
 	"bennypowers.dev/cem/mcp/tools"
-	"bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

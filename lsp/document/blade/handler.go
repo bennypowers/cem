@@ -20,7 +20,7 @@ import (
 	bladelang "bennypowers.dev/cem/internal/languages/blade"
 	"bennypowers.dev/cem/lsp/document/html"
 	"bennypowers.dev/cem/lsp/types"
-	Q "bennypowers.dev/cem/queries"
+	Q "bennypowers.dev/cem/internal/treesitter"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -28,7 +28,7 @@ import (
 // (.blade.php). Blade's tree-sitter grammar extends tree-sitter-html, producing
 // identical node names (element, start_tag, tag_name, attribute). The handler
 // parses with the Blade grammar and runs HTML query patterns compiled against
-// the Blade language via a shared html.Handler configured for "blade" queries.
+// the Blade language via a shared html.Handler configured for "blade" treesitter.
 type Handler struct {
 	htmlHandler *html.Handler
 }

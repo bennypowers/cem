@@ -32,9 +32,9 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/internal/modulegraph"
-	"bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
-	"bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/internal/workspace"
 	"gopkg.in/yaml.v3" // Required for parsing pnpm-workspace.yaml files
 )
 
@@ -124,7 +124,7 @@ type Registry struct {
 // For testing, pass platform.NewMockFileWatcher().
 func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
 	// Get QueryManager for dependency injection
-	queryManager, err := queries.GetGlobalQueryManager()
+	queryManager, err := treesitter.GetGlobalQueryManager()
 	if err != nil {
 		// For production, this should not happen, but handle gracefully
 		queryManager = nil
@@ -201,7 +201,7 @@ func (r *Registry) clear() {
 	r.ManifestPaths = r.ManifestPaths[:0]
 	r.ManifestPackageNames = make(map[string]string)
 	// Get QueryManager for dependency injection
-	queryManager, err := queries.GetGlobalQueryManager()
+	queryManager, err := treesitter.GetGlobalQueryManager()
 	if err != nil {
 		// For production, this should not happen, but handle gracefully
 		queryManager = nil
@@ -219,7 +219,7 @@ func (r *Registry) clearDataOnly() {
 	r.attributes = make(map[string]map[string]*M.Attribute)
 	r.Manifests = r.Manifests[:0]
 	// Get QueryManager for dependency injection
-	queryManager, err := queries.GetGlobalQueryManager()
+	queryManager, err := treesitter.GetGlobalQueryManager()
 	if err != nil {
 		// For production, this should not happen, but handle gracefully
 		queryManager = nil

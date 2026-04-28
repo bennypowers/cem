@@ -27,7 +27,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/generate"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/nsf/jsondiff"
 )
 

@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"bennypowers.dev/cem/search"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 )
 
 var searchCmd = &cobra.Command{

@@ -25,7 +25,7 @@ import (
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/internal/modulegraph"
-	"bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/internal/treesitter"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -42,7 +42,7 @@ type MockServerContext struct {
 	Manifests          []*M.Package
 	WorkspaceRootStr   string
 	DocumentMgr        types.DocumentManager
-	QueryMgr           *queries.QueryManager
+	QueryMgr           *treesitter.QueryManager
 	ModuleGraphInst    *modulegraph.ModuleGraph
 	FS                 platform.FileSystem
 	AdditionalPackages []string
@@ -363,7 +363,7 @@ func (m *MockServerContext) ElementDescription(tagName string) (string, bool) {
 }
 
 // Query operations for tree-sitter
-func (m *MockServerContext) QueryManager() (*queries.QueryManager, error) {
+func (m *MockServerContext) QueryManager() (*treesitter.QueryManager, error) {
 	if m.QueryMgr != nil {
 		return m.QueryMgr, nil
 	}
@@ -443,7 +443,7 @@ func (m *MockServerContext) SetDocumentManager(dm types.DocumentManager) {
 	m.DocumentMgr = dm
 	// If the document manager has a QueryManager method, extract it
 	// This handles the case where a real DocumentManager is provided with a QueryManager
-	if dmWithQM, ok := dm.(interface{ QueryManager() *queries.QueryManager }); ok {
+	if dmWithQM, ok := dm.(interface{ QueryManager() *treesitter.QueryManager }); ok {
 		m.QueryMgr = dmWithQM.QueryManager()
 	}
 }
@@ -454,7 +454,7 @@ func (m *MockServerContext) SetRegistry(registry types.Registry) {
 }
 
 // SetQueryManager sets the query manager for tests
-func (m *MockServerContext) SetQueryManager(qm *queries.QueryManager) {
+func (m *MockServerContext) SetQueryManager(qm *treesitter.QueryManager) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.QueryMgr = qm

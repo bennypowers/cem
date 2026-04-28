@@ -27,7 +27,7 @@ import (
 	"bennypowers.dev/cem/serve/middleware"
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
 	"bennypowers.dev/cem/serve/middleware/routes"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 )
 
 // contextWithShutdown creates a context that is cancelled when either:

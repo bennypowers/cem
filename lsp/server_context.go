@@ -29,8 +29,8 @@ import (
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/internal/modulegraph"
-	"bennypowers.dev/cem/queries"
-	W "bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/internal/treesitter"
+	W "bennypowers.dev/cem/internal/workspace"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -230,7 +230,7 @@ func (s *Server) FileSystem() platform.FileSystem {
 	return platform.NewOSFileSystem()
 }
 
-func (s *Server) QueryManager() (*queries.QueryManager, error) {
+func (s *Server) QueryManager() (*treesitter.QueryManager, error) {
 	if s.documents == nil {
 		return nil, fmt.Errorf("document manager not initialized")
 	}
@@ -322,14 +322,14 @@ func (s *Server) ElementDescription(tagName string) (string, bool) {
 // ephemeralQueryManager lazily creates a QueryManager with GenerateQueries()
 // for use by the ephemeral synthesis pipeline
 var (
-	ephemeralQM     *queries.QueryManager
+	ephemeralQM     *treesitter.QueryManager
 	ephemeralQMOnce sync.Once
 	ephemeralQMErr  error
 )
 
-func getEphemeralQueryManager() (*queries.QueryManager, error) {
+func getEphemeralQueryManager() (*treesitter.QueryManager, error) {
 	ephemeralQMOnce.Do(func() {
-		ephemeralQM, ephemeralQMErr = queries.NewQueryManager(queries.GenerateQueries())
+		ephemeralQM, ephemeralQMErr = treesitter.NewQueryManager(treesitter.GenerateQueries())
 	})
 	return ephemeralQM, ephemeralQMErr
 }
@@ -370,7 +370,7 @@ func (s *Server) SynthesizeEphemeralElements(uri string) {
 		return
 	}
 
-	definedTags := queries.FindDefinedElementTags(contentBytes, lspQM)
+	definedTags := typescript.FindDefinedElementTags(contentBytes, lspQM)
 	if len(definedTags) == 0 {
 		// No local definitions — remove any stale ephemeral data
 		s.ephemeralRegistry.Remove(uri)

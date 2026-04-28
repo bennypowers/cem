@@ -29,7 +29,7 @@ import (
 	"bennypowers.dev/cem/mcp/resources"
 	"bennypowers.dev/cem/mcp/types"
 	V "bennypowers.dev/cem/validate"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	mcpSDK "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

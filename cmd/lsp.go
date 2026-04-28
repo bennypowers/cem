@@ -24,7 +24,7 @@ import (
 
 	LSP "bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/types"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )

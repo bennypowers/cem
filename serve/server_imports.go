@@ -24,7 +24,7 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/internal/languages/typescript"
-	Q "bennypowers.dev/cem/queries"
+	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/serve/middleware"
 	"golang.org/x/net/html"
 )

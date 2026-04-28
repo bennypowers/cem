@@ -29,7 +29,7 @@ import (
 
 	"bennypowers.dev/cem/generate/jsdoc"
 	M "bennypowers.dev/cem/manifest"
-	Q "bennypowers.dev/cem/queries"
+	Q "bennypowers.dev/cem/internal/treesitter"
 	S "bennypowers.dev/cem/internal/set"
 	"bennypowers.dev/cem/types"
 	ts "github.com/tree-sitter/go-tree-sitter"
