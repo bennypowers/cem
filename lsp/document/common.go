@@ -47,8 +47,9 @@ func ExtractDocumentManager(dm any) types.Manager {
 }
 
 // getLanguageFromURI determines the language from file extension.
-// Template files (Nunjucks, Jinja2, Twig, Liquid, Handlebars, Blade) use
-// dedicated handlers that strip template syntax before HTML parsing.
+// Template files (Nunjucks, Jinja2, Twig, Liquid, Handlebars) use injection
+// handlers that strip template syntax before HTML parsing. Blade uses a
+// dedicated handler that parses with tree-sitter-blade directly.
 func getLanguageFromURI(uri string) string {
 	if strings.HasSuffix(strings.ToLower(uri), ".blade.php") {
 		return "blade"

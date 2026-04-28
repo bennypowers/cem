@@ -689,6 +689,17 @@ func TestBlade_DocumentUpdate(t *testing.T) {
 	if len(elements2) == count1 {
 		t.Error("Expected different element count after document update")
 	}
+
+	// Verify specific elements from updated content are present
+	for _, expected := range []string{"page-header", "content-grid", "post-card", "site-footer"} {
+		if findElement(elements2, expected) == nil {
+			t.Errorf("Expected %q in updated document", expected)
+		}
+	}
+	// Verify elements from old content are gone
+	if findElement(elements2, "rh-tile") != nil {
+		t.Error("Expected rh-tile from old content to be gone after update")
+	}
 }
 
 func TestBlade_DeepNesting(t *testing.T) {
