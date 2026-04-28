@@ -8,6 +8,7 @@ require (
 	bennypowers.dev/mappa v0.0.2
 	bennypowers.dev/tree-sitter-handlebars v0.1.1
 	bennypowers.dev/tree-sitter-jinja-dialects v0.1.1
+	github.com/EmranMR/tree-sitter-blade v0.12.3
 	github.com/IBM/fp-go v1.0.153
 	github.com/adrg/xdg v0.5.3
 	github.com/agext/levenshtein v1.2.3

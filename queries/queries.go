@@ -29,6 +29,7 @@ import (
 
 	"github.com/pterm/pterm"
 
+	tsBlade "github.com/EmranMR/tree-sitter-blade/bindings/go"
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsCss "github.com/tree-sitter/tree-sitter-css/bindings/go"
 	tsHtml "github.com/tree-sitter/tree-sitter-html/bindings/go"
@@ -57,12 +58,14 @@ var languages = struct {
 	css        *ts.Language
 	html       *ts.Language
 	tsx        *ts.Language
+	blade      *ts.Language
 }{
 	ts.NewLanguage(tsTypescript.LanguageTypescript()),
 	ts.NewLanguage(tsJsdoc.Language()),
 	ts.NewLanguage(tsCss.Language()),
 	ts.NewLanguage(tsHtml.Language()),
-	ts.NewLanguage(tsTypescript.LanguageTSX()), // TSX uses TypeScript's TSX dialect
+	ts.NewLanguage(tsTypescript.LanguageTSX()),
+	ts.NewLanguage(tsBlade.Language()),
 }
 
 // ---- Parser Pooling Section ----
@@ -195,6 +198,7 @@ type QuerySelector struct {
 	CSS        []string // CSS query names to load
 	JSDoc      []string // JSDoc query names to load
 	TSX        []string // TSX query names to load
+	Blade      []string // Blade query names to load (reuses html/*.scm)
 }
 
 // AllQueries returns a selector that loads all available queries
@@ -214,7 +218,8 @@ func LSPQueries() QuerySelector {
 		TypeScript: []string{"htmlTemplates", "completionContext", "imports", "classes", "classMemberDeclaration", "exports", "importAttributes", "definedElements"},
 		CSS:        []string{},
 		JSDoc:      []string{},
-		TSX:        []string{"customElements", "completionContext"}, // TSX queries for custom element detection
+		TSX:        []string{"customElements", "completionContext"},
+		Blade:      []string{"customElements", "completionContext", "scriptTags", "headElements", "attributes"},
 	}
 }
 
@@ -239,6 +244,7 @@ type QueryManager struct {
 	css        map[string]*ts.Query
 	html       map[string]*ts.Query
 	tsx        map[string]*ts.Query
+	blade      map[string]*ts.Query
 }
 
 func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
@@ -249,6 +255,7 @@ func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
 		css:        make(map[string]*ts.Query),
 		html:       make(map[string]*ts.Query),
 		tsx:        make(map[string]*ts.Query),
+		blade:      make(map[string]*ts.Query),
 	}
 
 	// Load only the requested queries
@@ -287,14 +294,25 @@ func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
 		}
 	}
 
+	for _, queryName := range selector.Blade {
+		if err := qm.loadQuery("blade", queryName); err != nil {
+			qm.Close()
+			return nil, fmt.Errorf("failed to load Blade query %s: %w", queryName, err)
+		}
+	}
+
 	pterm.Debug.Println("Constructing selected queries took", time.Since(start))
 	return qm, nil
 }
 
 func (qm *QueryManager) loadQuery(language, queryName string) error {
-	// Read the query file
+	// Blade reuses html/*.scm files compiled against the Blade grammar
+	sourceDir := language
+	if language == "blade" {
+		sourceDir = "html"
+	}
 	// Use path.Join (not filepath.Join) - embed.FS requires POSIX / separators
-	queryPath := path.Join(language, queryName+".scm")
+	queryPath := path.Join(sourceDir, queryName+".scm")
 	data, err := queries.ReadFile(queryPath)
 	if err != nil {
 		return fmt.Errorf("failed to read query file %s: %w", queryPath, err)
@@ -313,6 +331,8 @@ func (qm *QueryManager) loadQuery(language, queryName string) error {
 		tsLang = languages.html
 	case "tsx":
 		tsLang = languages.tsx
+	case "blade":
+		tsLang = languages.blade
 	default:
 		return fmt.Errorf("unknown language %s", language)
 	}
@@ -333,6 +353,8 @@ func (qm *QueryManager) loadQuery(language, queryName string) error {
 		qm.html[queryName] = query
 	case "tsx":
 		qm.tsx[queryName] = query
+	case "blade":
+		qm.blade[queryName] = query
 	}
 
 	return nil
@@ -354,6 +376,9 @@ func (qm *QueryManager) Close() {
 	for _, query := range qm.tsx {
 		query.Close()
 	}
+	for _, query := range qm.blade {
+		query.Close()
+	}
 }
 
 func (qm *QueryManager) getQuery(queryName string, language string) (*ts.Query, error) {
@@ -370,6 +395,8 @@ func (qm *QueryManager) getQuery(queryName string, language string) (*ts.Query, 
 		q, ok = qm.html[queryName]
 	case "tsx":
 		q, ok = qm.tsx[queryName]
+	case "blade":
+		q, ok = qm.blade[queryName]
 	}
 	if !ok {
 		return nil, fmt.Errorf("unknown query %s", queryName)

@@ -4,7 +4,7 @@ weight: 20
 ---
 
 {{< tip >}}
-**TL;DR**: Install CEM, then configure your editor to run `cem lsp`. VS Code users can install the extension. Neovim/Zed users configure their LSP client to start `cem lsp` for HTML, Nunjucks, Jinja2, Handlebars, Twig, Liquid, ERB, EJS, PHP, JavaScript, and TypeScript files.
+**TL;DR**: Install CEM, then configure your editor to run `cem lsp`. VS Code users can install the extension. Neovim/Zed users configure their LSP client to start `cem lsp` for HTML, template languages (Nunjucks, Jinja2, Handlebars, Twig, Liquid, ERB, EJS, Blade), PHP, JavaScript, and TypeScript files.
 {{< /tip >}}
 
 Configure the CEM Language Server Protocol integration for your editor to get intelligent autocomplete, hover documentation, and validation for custom elements.
@@ -15,7 +15,7 @@ Configure the CEM Language Server Protocol integration for your editor to get in
 
 ## What is LSP?
 
-The Language Server Protocol provides a standard way to add language-specific features to any editor. The CEM language server analyzes your custom elements manifests to offer contextual autocomplete, hover documentation, go-to-definition, and other IDE enhancements for HTML, Nunjucks, Jinja2, Handlebars, Twig, Liquid, ERB, EJS, PHP, JavaScript, and TypeScript files. This includes HTML embedded in template languages like Nunjucks, Jinja2, Handlebars, Twig, Liquid, ERB, and EJS, as well as PHP (e.g. WordPress themes).
+The Language Server Protocol provides a standard way to add language-specific features to any editor. The CEM language server analyzes your custom elements manifests to offer contextual autocomplete, hover documentation, go-to-definition, and other IDE enhancements for HTML, template languages (Nunjucks, Jinja2, Handlebars, Twig, Liquid, ERB, EJS, Blade), PHP, JavaScript, and TypeScript files.
 
 ## Features
 
@@ -55,7 +55,11 @@ For Neovim 0.12+'s native LSP configuration support, create `~/.config/nvim/lsp/
 return {
   cmd = { 'cem', 'lsp' },
   root_markers = { 'custom-elements.json', 'package.json', '.git' },
-  filetypes = { 'html', 'twig', 'nunjucks', 'jinja2', 'handlebars', 'liquid', 'eruby', 'ejs', 'php', 'typescript', 'javascript' },
+  filetypes = {
+    'html', 'twig', 'nunjucks', 'jinja2', 'handlebars',
+    'liquid', 'eruby', 'ejs', 'php', 'blade',
+    'typescript', 'javascript',
+  },
   -- Control debug logging via LSP trace levels
   trace = 'off', -- 'off' | 'messages' | 'verbose'
 }
@@ -83,14 +87,19 @@ Depending on which LSP plugin you use, configure Emacs to run `cem` for HTML, Ja
 (lsp-register-client
  (make-lsp-client
   :new-connection (lsp-stdio-connection '("cem" "lsp"))
-  :major-modes '(html-mode twig-mode nunjucks-mode jinja2-mode handlebars-mode liquid-mode erb-mode ejs-mode php-mode typescript-mode js-mode)
+  :major-modes '(html-mode twig-mode nunjucks-mode jinja2-mode
+                 handlebars-mode liquid-mode erb-mode ejs-mode
+                 php-mode blade-mode typescript-mode js-mode)
   :server-id 'cem-lsp))
 ```
 
 **eglot:**
 ```elisp
 (add-to-list 'eglot-server-programs
-             '((html-mode twig-mode nunjucks-mode jinja2-mode handlebars-mode liquid-mode erb-mode ejs-mode php-mode typescript-mode js-mode) . ("cem" "lsp")))
+             '((html-mode twig-mode nunjucks-mode jinja2-mode
+                handlebars-mode liquid-mode erb-mode ejs-mode
+                php-mode blade-mode typescript-mode js-mode)
+               . ("cem" "lsp")))
 ```
 
 ### Claude Code
@@ -119,7 +128,8 @@ Configure your LSP client to run `cem lsp` for file types listed below. The serv
 
 Typical configuration elements:
 - **Command**: `cem lsp`
-- **File types**: `html`, `twig`, `nunjucks`, `jinja2`, `handlebars`, `liquid`, `erb`, `ejs`, `php`, `typescript`, `javascript`
+- **File types**: `html`, `twig`, `nunjucks`, `jinja2`, `handlebars`, `liquid`,
+  `erb`, `ejs`, `php`, `blade`, `typescript`, `javascript`
 - **Root markers**: `custom-elements.json`, `package.json`, `.git`
 - **Transport**: stdio
 

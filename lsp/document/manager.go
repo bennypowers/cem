@@ -21,6 +21,7 @@ import (
 	"strings"
 	"sync"
 
+	"bennypowers.dev/cem/lsp/document/blade"
 	"bennypowers.dev/cem/lsp/document/html"
 	"bennypowers.dev/cem/lsp/document/php"
 	"bennypowers.dev/cem/lsp/document/template"
@@ -293,11 +294,6 @@ func (dm *documentManager) reparseDocumentMetadata(doc types.Document, handler t
 		return
 	}
 
-	// Only HTML documents have script tags and importmaps
-	if doc.Language() != "html" {
-		return
-	}
-
 	// Use type assertion to access HTML-specific handler methods
 	type scriptTagParser interface {
 		ParseScriptTags(doc types.Document) ([]types.ScriptTag, error)
@@ -430,6 +426,12 @@ func (dm *documentManager) initializeLanguageHandlers() error {
 	}
 	dm.addLanguageHandler(templateHandler)
 
+	bladeHandler, err := createBladeHandler(dm.queryManager)
+	if err != nil {
+		return fmt.Errorf("failed to create blade handler: %w", err)
+	}
+	dm.addLanguageHandler(bladeHandler)
+
 	return nil
 }
 
@@ -470,4 +472,9 @@ func createPHPHandler(htmlHandler types.LanguageHandler) (types.LanguageHandler,
 // createTemplateHandler creates a new template language handler that delegates to HTML
 func createTemplateHandler(htmlHandler types.LanguageHandler) (types.LanguageHandler, error) {
 	return template.NewHandler(htmlHandler)
+}
+
+// createBladeHandler creates a new Blade language handler
+func createBladeHandler(queryManager *Q.QueryManager) (types.LanguageHandler, error) {
+	return blade.NewHandler(queryManager)
 }
