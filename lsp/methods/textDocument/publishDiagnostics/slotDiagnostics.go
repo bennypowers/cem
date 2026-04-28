@@ -187,7 +187,8 @@ func findSlotAttributes(content string) []SlotMatch {
 // findParentElement finds the parent custom element for a slotted element
 // using tree-sitter AST traversal, with a string-scanning fallback.
 func findParentElement(doc types.Document, position protocol.Position) string {
-	if tree := doc.Tree(); tree != nil {
+	if tree, releaseTree := doc.AcquireTree(); tree != nil {
+		defer releaseTree()
 		if tag := findParentElementTreeSitter(doc, tree, position); tag != "" {
 			return tag
 		}

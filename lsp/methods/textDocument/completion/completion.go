@@ -695,7 +695,8 @@ func getSlotAttributeCompletions(ctx types.ServerContext, doc types.Document, po
 // findParentElementTag attempts to find the parent element tag name containing the current position
 func findParentElementTag(doc types.Document, position protocol.Position) string {
 	// Try tree-sitter approach first (fast O(log n))
-	if tree := doc.Tree(); tree != nil {
+	if tree, releaseTree := doc.AcquireTree(); tree != nil {
+		defer releaseTree()
 		content, err := doc.Content()
 		if err == nil {
 			// Convert position to byte offset

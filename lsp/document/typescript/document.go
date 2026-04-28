@@ -153,23 +153,18 @@ func (d *TypeScriptDocument) ReleaseCachedHTMLTree(tree *ts.Tree) {
 func (d *TypeScriptDocument) getCachedHTMLTree(templateContent string) *ts.Tree {
 	contentHash := sha256.Sum256([]byte(templateContent))
 
-	d.cacheMu.RLock()
+	d.cacheMu.Lock()
 	if d.cachedHTMLTrees != nil {
 		if cached, exists := d.cachedHTMLTrees[contentHash]; exists && cached != nil && cached.tree != nil {
-			d.cacheMu.RUnlock()
-
-			d.cacheMu.Lock()
-			if cached, exists := d.cachedHTMLTrees[contentHash]; exists && cached != nil && cached.tree != nil {
-				cached.refs++
-				tree := cached.tree
-				d.cacheMu.Unlock()
-				helpers.SafeDebugLog("[CACHE] HTML tree cache HIT (hash=%x, refs=%d)", contentHash[:8], cached.refs)
-				return tree
-			}
+			cached.refs++
+			refs := cached.refs
+			tree := cached.tree
 			d.cacheMu.Unlock()
+			helpers.SafeDebugLog("[CACHE] HTML tree cache HIT (hash=%x, refs=%d)", contentHash[:8], refs)
+			return tree
 		}
 	}
-	d.cacheMu.RUnlock()
+	d.cacheMu.Unlock()
 
 	helpers.SafeDebugLog("[CACHE] HTML tree cache MISS (hash=%x, content length=%d)", contentHash[:8], len(templateContent))
 
@@ -274,10 +269,11 @@ func (d *TypeScriptDocument) findCustomElements(handler *Handler) ([]types.Custo
 		currentVersion, d.cacheVersion, d.cachedCustomElements == nil)
 	d.cacheMu.RUnlock()
 
-	tree, docContent := d.TreeAndContent()
+	tree, docContent, releaseTree := d.TreeAndContent()
 	if tree == nil {
 		return nil, fmt.Errorf("no tree available for document")
 	}
+	defer releaseTree()
 
 	var elements []types.CustomElementMatch
 
@@ -322,10 +318,11 @@ func (d *TypeScriptDocument) findHTMLTemplates(handler *Handler) ([]TemplateCont
 		currentVersion, d.cacheVersion, d.cachedTemplates == nil)
 	d.cacheMu.RUnlock()
 
-	tree, content := d.TreeAndContent()
+	tree, content, releaseTree := d.TreeAndContent()
 	if tree == nil {
 		return nil, fmt.Errorf("no tree available")
 	}
+	defer releaseTree()
 
 	var templates []TemplateContext
 
@@ -498,10 +495,11 @@ func (d *TypeScriptDocument) analyzeCompletionContext(
 		Type: types.CompletionUnknown,
 	}
 
-	tree, content := d.TreeAndContent()
+	tree, content, releaseTree := d.TreeAndContent()
 	if tree == nil {
 		return analysis
 	}
+	defer releaseTree()
 
 	byteOffset := d.PositionToByteOffset(position, content)
 

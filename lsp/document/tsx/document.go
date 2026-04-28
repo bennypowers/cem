@@ -105,10 +105,11 @@ func (d *TSXDocument) CompletionPrefix(analysis *types.CompletionAnalysis) strin
 
 // findCustomElements finds custom elements in TSX documents
 func (d *TSXDocument) findCustomElements(handler *Handler) ([]types.CustomElementMatch, error) {
-	tree, content := d.TreeAndContent()
+	tree, content, releaseTree := d.TreeAndContent()
 	if tree == nil {
 		return nil, fmt.Errorf("no tree available for document")
 	}
+	defer releaseTree()
 
 	var elements []types.CustomElementMatch
 	elementMap := make(map[string]types.CustomElementMatch)
@@ -179,10 +180,11 @@ func (d *TSXDocument) analyzeCompletionContext(position protocol.Position, handl
 		Type: types.CompletionUnknown,
 	}
 
-	tree, content := d.TreeAndContent()
+	tree, content, releaseTree := d.TreeAndContent()
 	if tree == nil {
 		return analysis
 	}
+	defer releaseTree()
 
 	byteOffset := d.PositionToByteOffset(position, content)
 

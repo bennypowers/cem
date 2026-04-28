@@ -58,8 +58,9 @@ type Document interface {
 	Close()                                                                          // Clean up document resources
 
 	// Tree-sitter methods for incremental parsing support
-	Tree() *ts.Tree                              // Get the current syntax tree
-	SetTree(tree *ts.Tree)                       // Set the syntax tree
+	Tree() *ts.Tree              // Get the current syntax tree (for nil checks and use under URI lock only)
+	AcquireTree() (*ts.Tree, func()) // Get tree with ref counting; caller must call the release func when done
+	SetTree(tree *ts.Tree)       // Set the syntax tree
 	Parser() *ts.Parser                          // Get the tree-sitter parser
 	SetParser(parser *ts.Parser)                 // Set the tree-sitter parser
 	UpdateContent(content string, version int32) // Update document content
