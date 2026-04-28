@@ -23,77 +23,69 @@ import (
 	"sync"
 	"time"
 
+	"bennypowers.dev/cem/internal/languages"
 	"github.com/pterm/pterm"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
+// ErrNoQueryManager is returned when a nil QueryManager is passed.
 var ErrNoQueryManager = errors.New("QueryManager is nil")
 
+// QueryManagerI defines the minimal query manager interface.
 type QueryManagerI interface {
 	Close()
 	getQuery(name string) (*ts.Query, error)
 }
 
-type QueryManager struct {
-	typescript map[string]*ts.Query
-	jsdoc      map[string]*ts.Query
-	css        map[string]*ts.Query
-	html       map[string]*ts.Query
-	tsx        map[string]*ts.Query
-	blade      map[string]*ts.Query
+// QuerySelector maps language names to the query names to load.
+type QuerySelector map[string][]string
+
+// LSPQueries returns a selector loading queries needed for LSP operations.
+// Each registered language provides its own LSP query list.
+func LSPQueries() QuerySelector {
+	return queriesForScope(languages.ScopeLSP)
 }
 
+// GenerateQueries returns a selector loading queries needed for generation.
+func GenerateQueries() QuerySelector {
+	return queriesForScope(languages.ScopeGenerate)
+}
+
+// AllQueries returns a selector loading all available queries.
+func AllQueries() QuerySelector {
+	return queriesForScope(languages.ScopeAll)
+}
+
+func queriesForScope(scope languages.Scope) QuerySelector {
+	sel := QuerySelector{}
+	for _, lang := range languages.All() {
+		names := lang.QueryNames(scope)
+		if len(names) > 0 {
+			sel[lang.Name()] = names
+		}
+	}
+	return sel
+}
+
+// QueryManager holds compiled tree-sitter queries organized by language.
+type QueryManager struct {
+	queries map[string]map[string]*ts.Query // language -> queryName -> query
+}
+
+// NewQueryManager creates a QueryManager and loads queries per the selector.
 func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
 	start := time.Now()
 	qm := &QueryManager{
-		typescript: make(map[string]*ts.Query),
-		jsdoc:      make(map[string]*ts.Query),
-		css:        make(map[string]*ts.Query),
-		html:       make(map[string]*ts.Query),
-		tsx:        make(map[string]*ts.Query),
-		blade:      make(map[string]*ts.Query),
+		queries: make(map[string]map[string]*ts.Query),
 	}
 
-	// Load only the requested queries
-	for _, queryName := range selector.HTML {
-		if err := qm.loadQuery("html", queryName); err != nil {
-			qm.Close()
-			return nil, fmt.Errorf("failed to load HTML query %s: %w", queryName, err)
-		}
-	}
-
-	for _, queryName := range selector.TypeScript {
-		if err := qm.loadQuery("typescript", queryName); err != nil {
-			qm.Close()
-			return nil, fmt.Errorf("failed to load TypeScript query %s: %w", queryName, err)
-		}
-	}
-
-	for _, queryName := range selector.CSS {
-		if err := qm.loadQuery("css", queryName); err != nil {
-			qm.Close()
-			return nil, fmt.Errorf("failed to load CSS query %s: %w", queryName, err)
-		}
-	}
-
-	for _, queryName := range selector.JSDoc {
-		if err := qm.loadQuery("jsdoc", queryName); err != nil {
-			qm.Close()
-			return nil, fmt.Errorf("failed to load JSDoc query %s: %w", queryName, err)
-		}
-	}
-
-	for _, queryName := range selector.TSX {
-		if err := qm.loadQuery("tsx", queryName); err != nil {
-			qm.Close()
-			return nil, fmt.Errorf("failed to load TSX query %s: %w", queryName, err)
-		}
-	}
-
-	for _, queryName := range selector.Blade {
-		if err := qm.loadQuery("blade", queryName); err != nil {
-			qm.Close()
-			return nil, fmt.Errorf("failed to load Blade query %s: %w", queryName, err)
+	for langName, queryNames := range selector {
+		qm.queries[langName] = make(map[string]*ts.Query)
+		for _, queryName := range queryNames {
+			if err := qm.loadQuery(langName, queryName); err != nil {
+				qm.Close()
+				return nil, fmt.Errorf("failed to load %s query %s: %w", langName, queryName, err)
+			}
 		}
 	}
 
@@ -101,103 +93,44 @@ func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
 	return qm, nil
 }
 
-func (qm *QueryManager) loadQuery(language, queryName string) error {
-	// Blade reuses html/*.scm files compiled against the Blade grammar
-	sourceDir := language
-	if language == "blade" {
-		sourceDir = "html"
+func (qm *QueryManager) loadQuery(langName, queryName string) error {
+	lang := languages.Get(langName)
+	if lang == nil {
+		return fmt.Errorf("unknown language %s", langName)
 	}
+
 	// Use path.Join (not filepath.Join) - embed.FS requires POSIX / separators
-	queryPath := path.Join(sourceDir, queryName+".scm")
+	queryPath := path.Join(lang.QueryDir(), queryName+".scm")
 	data, err := queries.ReadFile(queryPath)
 	if err != nil {
 		return fmt.Errorf("failed to read query file %s: %w", queryPath, err)
 	}
 
-	queryText := string(data)
-	var tsLang *ts.Language
-	switch language {
-	case "typescript":
-		tsLang = languages.typescript
-	case "jsdoc":
-		tsLang = languages.jsdoc
-	case "css":
-		tsLang = languages.css
-	case "html":
-		tsLang = languages.html
-	case "tsx":
-		tsLang = languages.tsx
-	case "blade":
-		tsLang = languages.blade
-	default:
-		return fmt.Errorf("unknown language %s", language)
-	}
-
-	query, qerr := ts.NewQuery(tsLang, queryText)
+	query, qerr := ts.NewQuery(lang.TSLanguage(), string(data))
 	if qerr != nil {
 		return fmt.Errorf("failed to parse query %s: %w", queryName, qerr)
 	}
 
-	switch language {
-	case "typescript":
-		qm.typescript[queryName] = query
-	case "jsdoc":
-		qm.jsdoc[queryName] = query
-	case "css":
-		qm.css[queryName] = query
-	case "html":
-		qm.html[queryName] = query
-	case "tsx":
-		qm.tsx[queryName] = query
-	case "blade":
-		qm.blade[queryName] = query
-	}
-
+	qm.queries[langName][queryName] = query
 	return nil
 }
 
-func (qm *QueryManager) Close() {
-	for _, query := range qm.typescript {
-		query.Close()
+func (qm *QueryManager) getQuery(queryName string, language string) (*ts.Query, error) {
+	if langQueries, ok := qm.queries[language]; ok {
+		if q, ok := langQueries[queryName]; ok {
+			return q, nil
+		}
 	}
-	for _, query := range qm.jsdoc {
-		query.Close()
-	}
-	for _, query := range qm.css {
-		query.Close()
-	}
-	for _, query := range qm.html {
-		query.Close()
-	}
-	for _, query := range qm.tsx {
-		query.Close()
-	}
-	for _, query := range qm.blade {
-		query.Close()
-	}
+	return nil, fmt.Errorf("unknown query %s for language %s", queryName, language)
 }
 
-func (qm *QueryManager) getQuery(queryName string, language string) (*ts.Query, error) {
-	var q *ts.Query
-	var ok bool
-	switch language {
-	case "typescript":
-		q, ok = qm.typescript[queryName]
-	case "jsdoc":
-		q, ok = qm.jsdoc[queryName]
-	case "css":
-		q, ok = qm.css[queryName]
-	case "html":
-		q, ok = qm.html[queryName]
-	case "tsx":
-		q, ok = qm.tsx[queryName]
-	case "blade":
-		q, ok = qm.blade[queryName]
+// Close releases all compiled queries.
+func (qm *QueryManager) Close() {
+	for _, langQueries := range qm.queries {
+		for _, query := range langQueries {
+			query.Close()
+		}
 	}
-	if !ok {
-		return nil, fmt.Errorf("unknown query %s", queryName)
-	}
-	return q, nil
 }
 
 // Thread-safe singleton QueryManager (there can be only one!)
@@ -207,7 +140,7 @@ var (
 	globalQueryError   error
 )
 
-// GetGlobalQueryManager returns the singleton QueryManager instance
+// GetGlobalQueryManager returns the singleton QueryManager instance.
 func GetGlobalQueryManager() (*QueryManager, error) {
 	globalQueryOnce.Do(func() {
 		manager, err := NewQueryManager(LSPQueries())

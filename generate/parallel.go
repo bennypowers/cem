@@ -23,6 +23,7 @@ import (
 	"runtime"
 	"sync"
 
+	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
@@ -179,8 +180,8 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 	for range numWorkers {
 		go func() {
 			defer wg.Done()
-			parser := Q.RetrieveTypeScriptParser()
-			defer Q.PutTypeScriptParser(parser)
+			parser := typescript.GetParser()
+			defer typescript.PutParser(parser)
 
 			for job := range jobsChan {
 				// Check for cancellation

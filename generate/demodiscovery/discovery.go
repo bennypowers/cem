@@ -29,6 +29,7 @@ import (
 	"text/template"
 
 	C "bennypowers.dev/cem/cmd/config"
+	htmllang "bennypowers.dev/cem/internal/languages/html"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 	"bennypowers.dev/cem/types"
@@ -176,8 +177,8 @@ func extractDemoMetadata(ctx types.WorkspaceContext, path string) (DemoMetadata,
 	}
 
 	// Fall back to microdata for any fields not set by frontmatter
-	parser := Q.GetHTMLParser()
-	defer Q.PutHTMLParser(parser)
+	parser := htmllang.GetParser()
+	defer htmllang.PutParser(parser)
 	tree := parser.Parse(htmlContent, nil)
 	defer tree.Close()
 	root := tree.RootNode()

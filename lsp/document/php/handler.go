@@ -19,9 +19,9 @@ package php
 import (
 	"fmt"
 
+	phplang "bennypowers.dev/cem/internal/languages/php"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	Q "bennypowers.dev/cem/queries"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 )
@@ -41,7 +41,7 @@ type Handler struct {
 
 // NewHandler creates a new PHP language handler
 func NewHandler(htmlHandler types.LanguageHandler) (*Handler, error) {
-	textQuery, qerr := sitter.NewQuery(Q.PHPLanguage(), `(text) @html`)
+	textQuery, qerr := sitter.NewQuery(phplang.TSLanguage(), `(text) @html`)
 	if qerr != nil {
 		return nil, fmt.Errorf("failed to compile text query: %w", qerr)
 	}
@@ -60,8 +60,8 @@ func (h *Handler) Language() string {
 // htmlRanges uses tree-sitter-php to find HTML text nodes and returns their
 // byte ranges for use with tree-sitter language injection.
 func (h *Handler) htmlRanges(source []byte) []sitter.Range {
-	parser := Q.GetPHPParser()
-	defer Q.PutPHPParser(parser)
+	parser := phplang.GetParser()
+	defer phplang.PutParser(parser)
 
 	tree := parser.Parse(source, nil)
 	if tree == nil {

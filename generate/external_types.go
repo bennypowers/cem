@@ -27,6 +27,7 @@ import (
 	"unicode"
 
 	L "bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/languages/typescript"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 	"bennypowers.dev/cem/types"
@@ -377,8 +378,8 @@ func (r *ExternalTypeResolver) scanTypeAliasesFromFile(filePath string) (map[str
 		return nil, err
 	}
 
-	parser := Q.RetrieveTypeScriptParser()
-	defer Q.PutTypeScriptParser(parser)
+	parser := typescript.GetParser()
+	defer typescript.PutParser(parser)
 
 	tree := parser.Parse(content, nil)
 	if tree == nil {

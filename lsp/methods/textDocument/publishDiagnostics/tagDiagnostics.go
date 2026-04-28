@@ -21,6 +21,8 @@ import (
 	"slices"
 	"strings"
 
+	htmllang "bennypowers.dev/cem/internal/languages/html"
+	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/modulegraph"
@@ -256,8 +258,8 @@ func ParseTypeScriptImportsDebugForTest(content string, ctx types.ServerContext)
 	debugInfo = append(debugInfo, fmt.Sprintf("Input content: %q", content))
 
 	// Get TypeScript parser from pool
-	parser := queries.RetrieveTypeScriptParser()
-	defer queries.PutTypeScriptParser(parser)
+	parser := typescript.GetParser()
+	defer typescript.PutParser(parser)
 
 	// Parse the TypeScript content
 	contentBytes := []byte(content)
@@ -341,8 +343,8 @@ func parseTypeScriptImports(content string, ctx types.ServerContext) []string {
 	helpers.SafeDebugLog("[DIAGNOSTICS] Parsing TypeScript imports from content (length=%d)", len(content))
 
 	// Get TypeScript parser from pool
-	parser := queries.RetrieveTypeScriptParser()
-	defer queries.PutTypeScriptParser(parser)
+	parser := typescript.GetParser()
+	defer typescript.PutParser(parser)
 
 	// Parse the TypeScript content
 	contentBytes := []byte(content)
@@ -462,8 +464,8 @@ func parseNonModuleScriptImports(content string, ctx types.ServerContext) []stri
 	var importedElements []string
 
 	// Get HTML parser from pool
-	parser := queries.GetHTMLParser()
-	defer queries.PutHTMLParser(parser)
+	parser := htmllang.GetParser()
+	defer htmllang.PutParser(parser)
 
 	// Parse the HTML content
 	tree := parser.Parse([]byte(content), nil)

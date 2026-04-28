@@ -22,6 +22,7 @@ import (
 	"strings"
 	"sync"
 
+	htmllang "bennypowers.dev/cem/internal/languages/html"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	Q "bennypowers.dev/cem/queries"
@@ -131,7 +132,7 @@ func (d *HTMLDocument) SetParser(parser *ts.Parser) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	if d.parser != nil && d.parser != parser {
-		Q.PutHTMLParser(d.parser)
+		htmllang.PutParser(d.parser)
 	}
 	d.parser = parser
 }
@@ -161,7 +162,7 @@ func (d *HTMLDocument) Close() {
 	}
 
 	if d.parser != nil {
-		Q.PutHTMLParser(d.parser)
+		htmllang.PutParser(d.parser)
 		d.parser = nil
 	}
 }
@@ -202,7 +203,7 @@ func (d *HTMLDocument) byteOffsetToPosition(offset uint) protocol.Position {
 func (d *HTMLDocument) Parse(content string) error {
 	d.UpdateContent(content, d.version)
 
-	parser := Q.GetHTMLParser()
+	parser := htmllang.GetParser()
 	if parser == nil {
 		return fmt.Errorf("failed to get HTML parser")
 	}
@@ -228,7 +229,7 @@ func (d *HTMLDocument) ParseWithRanges(content string, ranges []ts.Range) error 
 		return nil
 	}
 
-	parser := Q.GetHTMLParser()
+	parser := htmllang.GetParser()
 	if parser == nil {
 		return fmt.Errorf("failed to get HTML parser")
 	}

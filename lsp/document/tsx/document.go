@@ -22,6 +22,7 @@ import (
 	"strings"
 	"sync"
 
+	tsxlang "bennypowers.dev/cem/internal/languages/tsx"
 	"bennypowers.dev/cem/lsp/types"
 	Q "bennypowers.dev/cem/queries"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -194,7 +195,7 @@ func (d *TSXDocument) byteOffsetToPosition(offset uint) protocol.Position {
 func (d *TSXDocument) Parse(content string) error {
 	d.UpdateContent(content, d.version)
 
-	parser := Q.GetTSXParser()
+	parser := tsxlang.GetParser()
 	if parser == nil {
 		return fmt.Errorf("failed to get TSX parser")
 	}

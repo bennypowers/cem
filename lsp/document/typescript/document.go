@@ -23,6 +23,8 @@ import (
 	"strings"
 	"sync"
 
+	htmllang "bennypowers.dev/cem/internal/languages/html"
+	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	Q "bennypowers.dev/cem/queries"
@@ -267,11 +269,11 @@ func (d *TypeScriptDocument) getCachedHTMLTree(templateContent string) *ts.Tree 
 	helpers.SafeDebugLog("[CACHE] HTML tree cache MISS (hash=%x, content length=%d)", contentHash[:8], len(templateContent))
 
 	// Parse outside lock to allow concurrent document operations
-	htmlParser := Q.GetHTMLParser()
+	htmlParser := htmllang.GetParser()
 	if htmlParser == nil {
 		return nil
 	}
-	defer Q.PutHTMLParser(htmlParser)
+	defer htmllang.PutParser(htmlParser)
 
 	htmlTree := htmlParser.Parse([]byte(templateContent), nil)
 	if htmlTree == nil {
@@ -344,7 +346,7 @@ func (d *TypeScriptDocument) Parse(content string) error {
 	helpers.SafeDebugLog("[CACHE] Parse() called for document version %d - THIS INVALIDATES CACHE", d.version)
 	d.UpdateContent(content, d.version)
 
-	parser := Q.RetrieveTypeScriptParser()
+	parser := typescript.GetParser()
 	if parser == nil {
 		return fmt.Errorf("failed to get TypeScript parser")
 	}

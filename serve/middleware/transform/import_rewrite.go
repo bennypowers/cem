@@ -21,6 +21,7 @@ import (
 	"net/url"
 	"strings"
 
+	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/queries"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
@@ -52,8 +53,8 @@ type ImportRewrite struct {
 // This allows the dev server to detect and handle these imports appropriately.
 func RewriteImportAttributes(source []byte) ([]byte, error) {
 	// Get a TypeScript parser
-	parser := queries.RetrieveTypeScriptParser()
-	defer queries.PutTypeScriptParser(parser)
+	parser := typescript.GetParser()
+	defer typescript.PutParser(parser)
 
 	// Parse the source
 	tree := parser.Parse(source, nil)

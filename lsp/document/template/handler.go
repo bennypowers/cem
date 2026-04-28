@@ -20,9 +20,11 @@ import (
 	"fmt"
 	"strings"
 
+	etlang "bennypowers.dev/cem/internal/languages/et"
+	hbslang "bennypowers.dev/cem/internal/languages/handlebars"
+	jinjalang "bennypowers.dev/cem/internal/languages/jinja"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	Q "bennypowers.dev/cem/queries"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 )
@@ -44,18 +46,18 @@ type Handler struct {
 }
 
 func NewHandler(htmlHandler types.LanguageHandler) (*Handler, error) {
-	jinjaQuery, qerr := sitter.NewQuery(Q.JinjaLanguage(), `(text) @html`)
+	jinjaQuery, qerr := sitter.NewQuery(jinjalang.TSLanguage(), `(text) @html`)
 	if qerr != nil {
 		return nil, fmt.Errorf("failed to compile jinja text query: %w", qerr)
 	}
 
-	hbsQuery, qerr := sitter.NewQuery(Q.HandlebarsLanguage(), `(text) @html`)
+	hbsQuery, qerr := sitter.NewQuery(hbslang.TSLanguage(), `(text) @html`)
 	if qerr != nil {
 		jinjaQuery.Close()
 		return nil, fmt.Errorf("failed to compile handlebars text query: %w", qerr)
 	}
 
-	etQuery, qerr := sitter.NewQuery(Q.EmbeddedTemplateLanguage(), `(content) @html`)
+	etQuery, qerr := sitter.NewQuery(etlang.TSLanguage(), `(content) @html`)
 	if qerr != nil {
 		jinjaQuery.Close()
 		hbsQuery.Close()
@@ -102,16 +104,16 @@ func (h *Handler) htmlRanges(source []byte, uri string) []sitter.Range {
 
 	switch family {
 	case "handlebars":
-		parser = Q.GetHandlebarsParser()
-		defer Q.PutHandlebarsParser(parser)
+		parser = hbslang.GetParser()
+		defer hbslang.PutParser(parser)
 		query = h.hbsQuery
 	case "embedded-template":
-		parser = Q.GetEmbeddedTemplateParser()
-		defer Q.PutEmbeddedTemplateParser(parser)
+		parser = etlang.GetParser()
+		defer etlang.PutParser(parser)
 		query = h.etQuery
 	default:
-		parser = Q.GetJinjaParser()
-		defer Q.PutJinjaParser(parser)
+		parser = jinjalang.GetParser()
+		defer jinjalang.PutParser(parser)
 		query = h.jinjaQuery
 	}
 

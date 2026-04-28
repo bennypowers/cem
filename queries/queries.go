@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"strings"
 
+	htmllang "bennypowers.dev/cem/internal/languages/html"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -34,48 +35,6 @@ type NoCaptureError struct {
 
 func (e *NoCaptureError) Error() string {
 	return fmt.Sprintf("No nodes for capture %s in query %s", e.Capture, e.Query)
-}
-
-// QuerySelector defines which queries to load for performance
-type QuerySelector struct {
-	HTML       []string // HTML query names to load
-	TypeScript []string // TypeScript query names to load
-	CSS        []string // CSS query names to load
-	JSDoc      []string // JSDoc query names to load
-	TSX        []string // TSX query names to load
-	Blade      []string // Blade query names to load (reuses html/*.scm)
-}
-
-// AllQueries returns a selector that loads all available queries
-func AllQueries() QuerySelector {
-	return QuerySelector{
-		HTML:       []string{"slotsAndParts", "customElements", "completionContext"},
-		TypeScript: []string{"classMemberDeclaration", "classes", "declarations", "imports", "htmlTemplates", "completionContext"},
-		CSS:        []string{"cssCustomProperties"},
-		JSDoc:      []string{"jsdoc"},
-	}
-}
-
-// LSPQueries returns a selector that loads only queries needed for LSP
-func LSPQueries() QuerySelector {
-	return QuerySelector{
-		HTML:       []string{"customElements", "completionContext", "scriptTags", "headElements", "attributes"},
-		TypeScript: []string{"htmlTemplates", "completionContext", "imports", "classes", "classMemberDeclaration", "exports", "importAttributes", "definedElements"},
-		CSS:        []string{},
-		JSDoc:      []string{},
-		TSX:        []string{"customElements", "completionContext"},
-		Blade:      []string{"customElements", "completionContext", "scriptTags", "headElements", "attributes"},
-	}
-}
-
-// GenerateQueries returns a selector that loads only queries needed for generate
-func GenerateQueries() QuerySelector {
-	return QuerySelector{
-		HTML:       []string{"slotsAndParts"},
-		TypeScript: []string{"classMemberDeclaration", "classes", "declarations", "imports", "typeAliases", "exports"},
-		CSS:        []string{"cssCustomProperties"},
-		JSDoc:      []string{"jsdoc"},
-	}
 }
 
 type ParentNodeCaptures struct {
@@ -192,8 +151,8 @@ func camelToKebab(camelCase string) string {
 
 func findSlotInTemplate(htmlContent string, slotName string, queryManager *QueryManager) *Range {
 	// Parse the HTML template content
-	parser := GetHTMLParser()
-	defer PutHTMLParser(parser)
+	parser := htmllang.GetParser()
+	defer htmllang.PutParser(parser)
 
 	tree := parser.Parse([]byte(htmlContent), nil)
 	if tree == nil {

@@ -24,8 +24,8 @@ import (
 	"testing"
 
 	C "bennypowers.dev/cem/cmd/config"
+	htmllang "bennypowers.dev/cem/internal/languages/html"
 	"bennypowers.dev/cem/internal/platform/testutil"
-	Q "bennypowers.dev/cem/queries"
 	W "bennypowers.dev/cem/workspace"
 )
 
@@ -465,8 +465,8 @@ func TestMicrodataExtraction(t *testing.T) {
 	expectedBytes := testutil.LoadFixtureFile(t, expectedPath)
 	expected := strings.TrimSpace(string(expectedBytes))
 
-	parser := Q.GetHTMLParser()
-	defer Q.PutHTMLParser(parser)
+	parser := htmllang.GetParser()
+	defer htmllang.PutParser(parser)
 	tree := parser.Parse(code, nil)
 	defer tree.Close()
 	root := tree.RootNode()
@@ -486,8 +486,8 @@ func TestScriptMarkdownExtraction(t *testing.T) {
 	expectedBytes := testutil.LoadFixtureFile(t, expectedPath)
 	expected := string(expectedBytes)
 
-	parser := Q.GetHTMLParser()
-	defer Q.PutHTMLParser(parser)
+	parser := htmllang.GetParser()
+	defer htmllang.PutParser(parser)
 	tree := parser.Parse(code, nil)
 	defer tree.Close()
 	root := tree.RootNode()

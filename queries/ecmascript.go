@@ -16,13 +16,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package queries
 
-import "slices"
+import (
+	"slices"
+
+	"bennypowers.dev/cem/internal/languages/typescript"
+)
 
 // FindClassDeclarationInSource finds the class declaration position in TypeScript source content
 func FindClassDeclarationInSource(content []byte, className string, queryManager *QueryManager) (*Range, error) {
 	// Get TypeScript parser and parse
-	parser := RetrieveTypeScriptParser()
-	defer PutTypeScriptParser(parser)
+	parser := typescript.GetParser()
+	defer typescript.PutParser(parser)
 
 	tree := parser.Parse(content, nil)
 	if tree == nil {
@@ -58,8 +62,8 @@ func FindClassDeclarationInSource(content []byte, className string, queryManager
 // FindTagNameDefinitionInSource finds where the tag name is defined (e.g., @customElement decorator)
 func FindTagNameDefinitionInSource(content []byte, tagName string, queryManager *QueryManager) (*Range, error) {
 	// Get TypeScript parser and parse
-	parser := RetrieveTypeScriptParser()
-	defer PutTypeScriptParser(parser)
+	parser := typescript.GetParser()
+	defer typescript.PutParser(parser)
 
 	tree := parser.Parse(content, nil)
 	if tree == nil {
@@ -95,8 +99,8 @@ func FindTagNameDefinitionInSource(content []byte, tagName string, queryManager 
 // FindAttributeDeclarationInSource finds the attribute/property declaration in source content
 func FindAttributeDeclarationInSource(content []byte, attributeName string, queryManager *QueryManager) (*Range, error) {
 	// Get TypeScript parser and parse
-	parser := RetrieveTypeScriptParser()
-	defer PutTypeScriptParser(parser)
+	parser := typescript.GetParser()
+	defer typescript.PutParser(parser)
 
 	tree := parser.Parse(content, nil)
 	if tree == nil {
@@ -142,8 +146,8 @@ func FindAttributeDeclarationInSource(content []byte, attributeName string, quer
 // FindSlotDefinitionInSource finds the slot definition in template within source content
 func FindSlotDefinitionInSource(content []byte, slotName string, queryManager *QueryManager) (*Range, error) {
 	// Get TypeScript parser and parse
-	parser := RetrieveTypeScriptParser()
-	defer PutTypeScriptParser(parser)
+	parser := typescript.GetParser()
+	defer typescript.PutParser(parser)
 
 	tree := parser.Parse(content, nil)
 	if tree == nil {
@@ -188,8 +192,8 @@ func FindSlotDefinitionInSource(content []byte, slotName string, queryManager *Q
 // custom element tag names defined in TypeScript/JavaScript source code
 // via @customElement decorators or customElements.define calls.
 func FindDefinedElementTags(code []byte, qm *QueryManager) []string {
-	parser := RetrieveTypeScriptParser()
-	defer PutTypeScriptParser(parser)
+	parser := typescript.GetParser()
+	defer typescript.PutParser(parser)
 
 	tree := parser.Parse(code, nil)
 	if tree == nil {
