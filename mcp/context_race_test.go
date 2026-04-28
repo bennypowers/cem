@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 )
 
 func TestMCPContext_ConcurrentCacheAccess(t *testing.T) {

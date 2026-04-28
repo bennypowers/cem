@@ -19,10 +19,12 @@ package definition_test
 import (
 	"testing"
 
+	_ "bennypowers.dev/cem/internal/languages/registry"
+	"bennypowers.dev/cem/internal/languages/typescript"
+	"bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/definition"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	"bennypowers.dev/cem/queries"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -31,7 +33,7 @@ func TestDefinition_LSPQueriesIncludeClasses(t *testing.T) {
 	// This prevents the issue where go-to-definition went to top of file instead of actual definition
 
 	// Verify classes query is included in LSP queries
-	lspQueries := queries.LSPQueries()
+	lspQueries := treesitter.LSPQueries()
 	hasClassesQuery := false
 	for _, query := range lspQueries["typescript"] {
 		if query == "classes" {
@@ -155,14 +157,14 @@ export class TestElement extends LitElement {
 }`
 
 	// Create query manager with LSP queries
-	qm, err := queries.NewQueryManager(queries.LSPQueries())
+	qm, err := treesitter.NewQueryManager(treesitter.LSPQueries())
 	if err != nil {
 		t.Fatalf("Failed to create query manager: %v", err)
 	}
 	defer qm.Close()
 
 	// Test FindTagNameDefinitionInSource
-	tagRange, err := queries.FindTagNameDefinitionInSource([]byte(tsContent), "test-element", qm)
+	tagRange, err := typescript.FindTagNameDefinitionInSource([]byte(tsContent), "test-element", qm)
 	if err != nil {
 		t.Fatalf("FindTagNameDefinitionInSource failed: %v", err)
 	}
@@ -180,7 +182,7 @@ export class TestElement extends LitElement {
 	}
 
 	// Test FindClassDeclarationInSource
-	classRange, err := queries.FindClassDeclarationInSource([]byte(tsContent), "TestElement", qm)
+	classRange, err := typescript.FindClassDeclarationInSource([]byte(tsContent), "TestElement", qm)
 	if err != nil {
 		t.Fatalf("FindClassDeclarationInSource failed: %v", err)
 	}

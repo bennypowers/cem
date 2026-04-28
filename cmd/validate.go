@@ -21,7 +21,7 @@ import (
 	"os"
 
 	V "bennypowers.dev/cem/validate"
-	"bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/internal/workspace"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

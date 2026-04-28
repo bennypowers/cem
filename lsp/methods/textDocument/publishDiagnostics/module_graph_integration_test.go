@@ -23,7 +23,7 @@ import (
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 )
 
 func TestModuleGraphIntegration_DirectVsReExport(t *testing.T) {

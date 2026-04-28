@@ -21,11 +21,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/internal/platform"
+	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
-	Q "bennypowers.dev/cem/queries"
 	"github.com/tliron/glsp"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
@@ -281,14 +282,14 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx t
 	case DefinitionTargetTagName:
 		// Look for @customElement decorator
 		helpers.SafeDebugLog("[DEFINITION] Looking for tag name definition for '%s' in %d bytes of content", request.ElementName, len(content))
-		targetRange, err = Q.FindTagNameDefinitionInSource(content, request.ElementName, queryManager)
+		targetRange, err = typescript.FindTagNameDefinitionInSource(content, request.ElementName, queryManager)
 		if err != nil {
 			helpers.SafeDebugLog("[DEFINITION] Tag name definition search error: %v", err)
 		}
 		if targetRange == nil {
 			helpers.SafeDebugLog("[DEFINITION] Tag name definition not found, trying class declaration")
 			// Fallback to class declaration
-			targetRange, _ = Q.FindClassDeclarationInSource(content, request.ElementName, queryManager)
+			targetRange, _ = typescript.FindClassDeclarationInSource(content, request.ElementName, queryManager)
 			if targetRange == nil {
 				helpers.SafeDebugLog("[DEFINITION] Class declaration also not found")
 			} else {
@@ -300,15 +301,15 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx t
 
 	case DefinitionTargetClass:
 		// Look for class declaration
-		targetRange, _ = Q.FindClassDeclarationInSource(content, request.ElementName, queryManager)
+		targetRange, _ = typescript.FindClassDeclarationInSource(content, request.ElementName, queryManager)
 
 	case DefinitionTargetAttribute:
 		// Look for @property decorator or field declaration
-		targetRange, _ = Q.FindAttributeDeclarationInSource(content, request.AttributeName, queryManager)
+		targetRange, _ = typescript.FindAttributeDeclarationInSource(content, request.AttributeName, queryManager)
 
 	case DefinitionTargetSlot:
 		// Look for <slot name="..."> in template
-		targetRange, _ = Q.FindSlotDefinitionInSource(content, request.SlotName, queryManager)
+		targetRange, _ = typescript.FindSlotDefinitionInSource(content, request.SlotName, queryManager)
 
 	case DefinitionTargetEvent:
 		// Look for event declaration (placeholder for now)

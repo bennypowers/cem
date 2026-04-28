@@ -29,7 +29,7 @@ import (
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 )
 
 func TestManifestFileWatchingIntegration(t *testing.T) {

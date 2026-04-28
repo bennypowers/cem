@@ -19,7 +19,7 @@ package workspace_test
 import (
 	"testing"
 
-	"bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 )
 

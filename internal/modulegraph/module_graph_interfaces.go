@@ -20,7 +20,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/internal/treesitter"
 )
 
 // DefaultMaxTransitiveDepth is the default maximum depth for transitive closure computation
@@ -47,7 +47,7 @@ type FileParser interface {
 type ExportParser interface {
 	// ParseExportsFromContent parses export statements from file content
 	// Returns any parsing errors, but implementations should be resilient
-	ParseExportsFromContent(modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker, queryManager *queries.QueryManager) error
+	ParseExportsFromContent(modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker, queryManager *treesitter.QueryManager) error
 }
 
 // ManifestResolver interface abstracts manifest-based path resolution

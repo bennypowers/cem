@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"bennypowers.dev/cem/lsp/helpers"
-	"bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/internal/treesitter"
 )
 
 // ModuleGraph tracks the import/export relationships between modules
@@ -51,11 +51,11 @@ type ModuleGraph struct {
 	exportParser     ExportParser
 	manifestResolver ManifestResolver
 	metrics          MetricsCollector
-	queryManager     *queries.QueryManager
+	queryManager     *treesitter.QueryManager
 }
 
 // NewModuleGraph creates a new empty module graph with default dependencies
-func NewModuleGraph(queryManager *queries.QueryManager) *ModuleGraph {
+func NewModuleGraph(queryManager *treesitter.QueryManager) *ModuleGraph {
 	return &ModuleGraph{
 		exportTracker:      NewExportTracker(),
 		dependencyTracker:  NewDependencyTracker(),
@@ -70,7 +70,7 @@ func NewModuleGraph(queryManager *queries.QueryManager) *ModuleGraph {
 }
 
 // NewModuleGraphWithMetrics creates a new module graph with metrics collection enabled
-func NewModuleGraphWithMetrics(queryManager *queries.QueryManager) *ModuleGraph {
+func NewModuleGraphWithMetrics(queryManager *treesitter.QueryManager) *ModuleGraph {
 	return &ModuleGraph{
 		exportTracker:      NewExportTracker(),
 		dependencyTracker:  NewDependencyTracker(),
@@ -86,7 +86,7 @@ func NewModuleGraphWithMetrics(queryManager *queries.QueryManager) *ModuleGraph 
 
 // NewModuleGraphWithDependencies creates a new module graph with custom dependencies
 // This is useful for testing and dependency injection
-func NewModuleGraphWithDependencies(fileParser FileParser, exportParser ExportParser, manifestResolver ManifestResolver, metrics MetricsCollector, queryManager *queries.QueryManager) *ModuleGraph {
+func NewModuleGraphWithDependencies(fileParser FileParser, exportParser ExportParser, manifestResolver ManifestResolver, metrics MetricsCollector, queryManager *treesitter.QueryManager) *ModuleGraph {
 	// Validate all parameters and provide safe defaults
 	if fileParser == nil {
 		fileParser = &OSFileParser{}
@@ -117,7 +117,7 @@ func NewModuleGraphWithDependencies(fileParser FileParser, exportParser ExportPa
 
 // NewModuleGraphWithFileParser creates a new module graph with a custom file parser
 // This is useful for testing with mock file systems (backwards compatibility)
-func NewModuleGraphWithFileParser(fileParser FileParser, queryManager *queries.QueryManager) *ModuleGraph {
+func NewModuleGraphWithFileParser(fileParser FileParser, queryManager *treesitter.QueryManager) *ModuleGraph {
 	return &ModuleGraph{
 		exportTracker:      NewExportTracker(),
 		dependencyTracker:  NewDependencyTracker(),

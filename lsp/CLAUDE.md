@@ -56,7 +56,7 @@ Implement diagnostics + code actions together; update server capabilities when a
 
 ### Tree-Sitter Patterns
 - Cache queries at startup, create fresh cursors per operation
-- Use `queries.GetGlobalQueryManager()` for shared query infrastructure
+- Use `treesitter.GetGlobalQueryManager()` for shared query infrastructure
 - Prefer tree-sitter parsing over regex for HTML/TypeScript content
 - Use parser pools for performance
 

@@ -25,7 +25,7 @@ import (
 
 	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/lsp/helpers"
-	"bennypowers.dev/cem/queries"
+	"bennypowers.dev/cem/internal/treesitter"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -90,7 +90,7 @@ func (m *mockFileInfo) Sys() interface{}   { return nil }
 type DefaultExportParser struct{}
 
 // ParseExportsFromContent implements ExportParser using tree-sitter
-func (p *DefaultExportParser) ParseExportsFromContent(modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker, queryManager *queries.QueryManager) error {
+func (p *DefaultExportParser) ParseExportsFromContent(modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker, queryManager *treesitter.QueryManager) error {
 	// Get TypeScript parser from pool
 	parser := typescript.BorrowParser()
 	defer typescript.ReturnParser(parser)
@@ -140,14 +140,14 @@ func (p *DefaultExportParser) ParseExportsFromContent(modulePath string, content
 }
 
 // parseExportsWithQueries uses tree-sitter queries to parse export statements
-func (p *DefaultExportParser) parseExportsWithQueries(tree *ts.Tree, modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker, queryManager *queries.QueryManager) error {
+func (p *DefaultExportParser) parseExportsWithQueries(tree *ts.Tree, modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker, queryManager *treesitter.QueryManager) error {
 	// PERFORMANCE OPTIMIZATION: Use injected QueryManager for dependency injection
 	if queryManager == nil {
 		return fmt.Errorf("query manager not available for parsing exports in module %s", modulePath)
 	}
 
 	// Get cached export matcher (thread-safe)
-	exportMatcher, err := queries.GetCachedQueryMatcher(queryManager, "typescript", "exports")
+	exportMatcher, err := treesitter.GetCachedQueryMatcher(queryManager, "typescript", "exports")
 	if err != nil {
 		return fmt.Errorf("failed to get cached export matcher for module %s: %w", modulePath, err)
 	}
@@ -162,7 +162,7 @@ func (p *DefaultExportParser) parseExportsWithQueries(tree *ts.Tree, modulePath 
 }
 
 // processExportMatch processes a single export/import match from tree-sitter
-func (p *DefaultExportParser) processExportMatch(match *ts.QueryMatch, matcher *queries.QueryMatcher, modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker) {
+func (p *DefaultExportParser) processExportMatch(match *ts.QueryMatch, matcher *treesitter.QueryMatcher, modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker) {
 	var exportName, sourceModule string
 	var importSource string
 	var isImport bool

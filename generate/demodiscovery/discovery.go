@@ -31,7 +31,7 @@ import (
 	C "bennypowers.dev/cem/cmd/config"
 	htmllang "bennypowers.dev/cem/internal/languages/html"
 	M "bennypowers.dev/cem/manifest"
-	Q "bennypowers.dev/cem/queries"
+	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
 	"github.com/dunglas/go-urlpattern"
 	"github.com/gosimple/slug"

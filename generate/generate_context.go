@@ -19,7 +19,7 @@ package generate
 import (
 	"fmt"
 
-	Q "bennypowers.dev/cem/queries"
+	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
 )
 

@@ -27,7 +27,7 @@ import (
 
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/mcp"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -26,7 +26,7 @@ import (
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/templates"
 	"bennypowers.dev/cem/mcp/tools"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	mcpSDK "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

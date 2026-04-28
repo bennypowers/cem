@@ -24,8 +24,9 @@ import (
 	"os"
 
 	IC "bennypowers.dev/cem/internal/config"
+	_ "bennypowers.dev/cem/internal/languages/registry"
 	"bennypowers.dev/cem/internal/logging"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

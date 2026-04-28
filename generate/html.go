@@ -24,7 +24,7 @@ import (
 
 	htmllang "bennypowers.dev/cem/internal/languages/html"
 	M "bennypowers.dev/cem/manifest"
-	Q "bennypowers.dev/cem/queries"
+	Q "bennypowers.dev/cem/internal/treesitter"
 	"gopkg.in/yaml.v3"
 )
 

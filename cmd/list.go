@@ -26,7 +26,7 @@ import (
 
 	"bennypowers.dev/cem/list"
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 )
 
 func requireTagName(cmd *cobra.Command) (string, error) {

@@ -34,7 +34,7 @@ import (
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware/transform"
 	"bennypowers.dev/cem/serve/middleware/types"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

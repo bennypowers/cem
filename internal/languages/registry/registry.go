@@ -1,6 +1,8 @@
-package queries
+// Package registry triggers registration of all tree-sitter language
+// packages. Import it with a blank identifier to ensure every language
+// is available to the query manager before queries are compiled.
+package registry
 
-// Blank imports ensure all language packages register via init().
 import (
 	_ "bennypowers.dev/cem/internal/languages/blade"
 	_ "bennypowers.dev/cem/internal/languages/css"

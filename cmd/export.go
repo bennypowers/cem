@@ -21,7 +21,7 @@ import (
 
 	C "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/export"
-	"bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/internal/workspace"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

@@ -26,7 +26,7 @@ import (
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/types"
-	W "bennypowers.dev/cem/workspace"
+	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

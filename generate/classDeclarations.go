@@ -23,7 +23,7 @@ import (
 
 	"bennypowers.dev/cem/generate/jsdoc"
 	M "bennypowers.dev/cem/manifest"
-	Q "bennypowers.dev/cem/queries"
+	Q "bennypowers.dev/cem/internal/treesitter"
 
 	A "github.com/IBM/fp-go/array"
 	ts "github.com/tree-sitter/go-tree-sitter"

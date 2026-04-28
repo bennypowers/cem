@@ -29,9 +29,9 @@ import (
 	L "bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/languages/typescript"
 	M "bennypowers.dev/cem/manifest"
-	Q "bennypowers.dev/cem/queries"
+	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
-	"bennypowers.dev/cem/workspace"
+	"bennypowers.dev/cem/internal/workspace"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 

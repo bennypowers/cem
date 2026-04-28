@@ -21,8 +21,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	_ "bennypowers.dev/cem/internal/languages/registry"
+	Q "bennypowers.dev/cem/internal/treesitter"
 	M "bennypowers.dev/cem/manifest"
-	Q "bennypowers.dev/cem/queries"
 )
 
 func TestExtractPackageName(t *testing.T) {
