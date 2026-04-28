@@ -208,15 +208,6 @@ func (d *BaseDocument) Close() {
 	}
 }
 
-// Default implementations that can be overridden by language-specific documents
-
-// Parse performs initial parsing of the document (default implementation)
-func (d *BaseDocument) Parse(content string) error {
-	d.UpdateContent(content, d.version)
-	// Language-specific parsing will be implemented by subclasses
-	return nil
-}
-
 // CompletionPrefix extracts the prefix being typed for filtering completions (default implementation)
 func (d *BaseDocument) CompletionPrefix(analysis *types.CompletionAnalysis) string {
 	// Default implementation - can be overridden by language-specific documents
