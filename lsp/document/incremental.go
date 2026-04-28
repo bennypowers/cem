@@ -196,6 +196,11 @@ func (ip *incrementalParser) attemptIncrementalParse(doc types.Document, newCont
 		return ip.performFullParse(doc, newContent)
 	}
 
+	if doc.Parser() == nil {
+		helpers.SafeDebugLog("[INCREMENTAL] No parser available, falling back to full recreation")
+		return types.ParseResult{Success: false}
+	}
+
 	// Keep reference to old tree
 	oldTree := doc.Tree()
 
@@ -238,6 +243,10 @@ func (ip *incrementalParser) attemptIncrementalParse(doc types.Document, newCont
 // performFullParse performs a full document parse
 func (ip *incrementalParser) performFullParse(doc types.Document, newContent string) types.ParseResult {
 	helpers.SafeDebugLog("[INCREMENTAL] Performing full parse for %s", doc.URI())
+
+	if doc.Parser() == nil {
+		return types.ParseResult{Success: false}
+	}
 
 	oldTree := doc.Tree()
 	newTree := doc.Parser().Parse([]byte(newContent), nil)

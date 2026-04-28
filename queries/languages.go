@@ -98,6 +98,8 @@ var (
 // Cursors maintain internal state that can affect subsequent queries,
 // leading to unpredictable behavior. Always create fresh cursors.
 
+// Get*Parser returns a pooled parser for the given language.
+// Always defer the matching Put*Parser call to return it to the pool.
 func GetHTMLParser() *ts.Parser        { return getParser(htmlParserPool) }
 func PutHTMLParser(parser *ts.Parser)  { putParser(htmlParserPool, parser) }
 func GetCSSParser() *ts.Parser         { return getParser(cssParserPool) }
@@ -121,7 +123,10 @@ func GetPHPParser() *ts.Parser                    { return getParser(phpParserPo
 func PutPHPParser(parser *ts.Parser)              { putParser(phpParserPool, parser) }
 
 // ---- Language Accessors ----
+// *Language returns the pre-initialized tree-sitter language grammar.
+// Used by handlers that need to compile queries against a specific language.
 
+// HTMLLanguage returns the tree-sitter HTML language.
 func HTMLLanguage() *ts.Language             { return languages.html }
 func CSSLanguage() *ts.Language              { return languages.css }
 func JSDocLanguage() *ts.Language            { return languages.jsdoc }

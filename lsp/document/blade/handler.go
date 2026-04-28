@@ -32,6 +32,9 @@ type Handler struct {
 	htmlHandler *html.Handler
 }
 
+// NewHandler creates a new Blade language handler. It configures an html.Handler
+// with "blade" query language so the same .scm patterns run against the Blade
+// grammar's node types.
 func NewHandler(queryManager *Q.QueryManager) (*Handler, error) {
 	htmlHandler, err := html.NewHandlerWithLanguage(queryManager, "blade")
 	if err != nil {
@@ -43,10 +46,14 @@ func NewHandler(queryManager *Q.QueryManager) (*Handler, error) {
 	}, nil
 }
 
+// Language returns the language identifier.
 func (h *Handler) Language() string {
 	return "blade"
 }
 
+// CreateDocument parses the content with the Blade grammar and creates an
+// HTMLDocument with the resulting tree. The document's queries use "blade"
+// language, so captures match the Blade grammar's node type IDs.
 func (h *Handler) CreateDocument(uri, content string, version int32) types.Document {
 	parser := Q.GetBladeParser()
 	defer Q.PutBladeParser(parser)
@@ -55,26 +62,32 @@ func (h *Handler) CreateDocument(uri, content string, version int32) types.Docum
 	return h.htmlHandler.CreateDocumentWithTree(uri, content, version, tree)
 }
 
+// FindCustomElements delegates to the blade-configured HTML handler.
 func (h *Handler) FindCustomElements(doc types.Document) ([]types.CustomElementMatch, error) {
 	return h.htmlHandler.FindCustomElements(doc)
 }
 
+// AnalyzeCompletionContext delegates to the blade-configured HTML handler.
 func (h *Handler) AnalyzeCompletionContext(doc types.Document, position protocol.Position) *types.CompletionAnalysis {
 	return h.htmlHandler.AnalyzeCompletionContext(doc, position)
 }
 
+// FindElementAtPosition delegates to the blade-configured HTML handler.
 func (h *Handler) FindElementAtPosition(doc types.Document, position protocol.Position) *types.CustomElementMatch {
 	return h.htmlHandler.FindElementAtPosition(doc, position)
 }
 
+// FindAttributeAtPosition delegates to the blade-configured HTML handler.
 func (h *Handler) FindAttributeAtPosition(doc types.Document, position protocol.Position) (*types.AttributeMatch, string) {
 	return h.htmlHandler.FindAttributeAtPosition(doc, position)
 }
 
+// FindHeadInsertionPoint delegates to the blade-configured HTML handler.
 func (h *Handler) FindHeadInsertionPoint(doc types.Document) (protocol.Position, bool) {
 	return h.htmlHandler.FindHeadInsertionPoint(doc)
 }
 
+// Close cleans up the underlying HTML handler.
 func (h *Handler) Close() {
 	if h.htmlHandler != nil {
 		h.htmlHandler.Close()
