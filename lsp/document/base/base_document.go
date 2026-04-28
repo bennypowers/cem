@@ -187,9 +187,21 @@ func (d *BaseDocument) FindModuleScript() (protocol.Position, bool) {
 	return protocol.Position{}, false
 }
 
-// FindInlineModuleScript delegates to FindModuleScript by default.
+// FindInlineModuleScript finds the first inline module script (no src attribute).
 func (d *BaseDocument) FindInlineModuleScript() (protocol.Position, bool) {
-	return d.FindModuleScript()
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	for _, script := range d.scriptTags {
+		if script.IsModule && script.Src == "" {
+			return protocol.Position{
+				Line:      script.ContentRange.End.Line,
+				Character: 0,
+			}, true
+		}
+	}
+
+	return protocol.Position{}, false
 }
 
 // TreeAndContent returns the tree and content atomically under one lock.
