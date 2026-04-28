@@ -61,10 +61,22 @@ Practice TDD. When writing tests, always use the fixture/golden patterns we've e
 
 ## Per-package guidelines
 
-- LSP: When working on LSP features, refer to `lsp/CLAUDE.md` for LSP-specific guidelines.
-- MCP: When working on MCP features, refer to `mcp/CLAUDE.md` for MCP-specific guidelines.
 - Docs: When working on the docs site, refer to `docs/CLAUDE.md` for docs-specific guidelines.
 - Generate and Validate: When touching code related to the custom-elements manifest schema, double-check with the canonical TypeScript schema.d.ts at https://github.com/webcomponents/custom-elements-manifest/. This is to avoid hallucinations. Note that different schema versions may have different types, and we'll have to deal with that if they do.
+
+### LSP
+
+- **Tree-sitter concurrency**: Never share `QueryMatcher` between goroutines. Cache queries, create fresh cursors per operation.
+- **Nil safety**: Check for nil `DocumentManager` before use; test with nil parameters.
+- **Protocol compliance**: Match LSP return types exactly; declare all capabilities in `initialize`.
+- **Testing**: Use `package lsp_test` for public API tests. Use `testhelpers.NewMockServerContext()` for test context. Fixtures in `testdata/` dirs, regression fixtures in `testdata-regression/`.
+- When adding LSP methods, implement diagnostics + code actions together and update server capabilities.
+
+### MCP
+
+- **Design principle**: Data + context + LLM decision-making. Provide rich manifest data and contextual templates; let the LLM decide. No hardcoded suggestions.
+- **Respect element authors**: Use their documented constraints and intent. Follow documented accessibility patterns, don't add generic ARIA advice.
+- **Template naming**: Use dashes (e.g., `element-attributes.md`), not underscores. Reference subresources (`cem://element/{tagName}/attributes`), not tool names.
 
 ## Git
 

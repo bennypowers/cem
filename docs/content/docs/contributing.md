@@ -45,10 +45,6 @@ You can build a specific Windows architecture:
 
 > Note: These builds are cross-compiled and cannot be run directly on macOS or Linux. Test on a Windows machine or VM if needed.
 
-## Workspace Package
-
-The `workspace` package provides a consistent interface for working with local and remote packages. It abstracts away the details of whether files are on the local filesystem or need to be fetched from a remote source like the npm registry. This allows the `list` command to work with both local and remote packages seamlessly.
-
 ## Testing
 
 This project includes both unit tests and end-to-end (E2E) tests.
