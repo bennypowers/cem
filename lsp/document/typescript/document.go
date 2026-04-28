@@ -231,8 +231,16 @@ func (d *TypeScriptDocument) FindModuleScript() (protocol.Position, bool) {
 	if err != nil {
 		return protocol.Position{}, false
 	}
+	if content == "" {
+		return protocol.Position{}, true
+	}
+
 	lines := strings.Split(content, "\n")
-	return protocol.Position{Line: uint32(len(lines)), Character: 0}, true
+	lastLine := len(lines) - 1
+	return protocol.Position{
+		Line:      uint32(lastLine),
+		Character: uint32(len(lines[lastLine])),
+	}, true
 }
 
 // CompletionPrefix extracts the prefix being typed for filtering completions

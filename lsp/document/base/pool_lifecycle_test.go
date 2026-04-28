@@ -17,8 +17,11 @@ func TestPoolLifecycle_CloseReturnsParserViaCallback(t *testing.T) {
 
 	doc.Close()
 
-	assert.Equal(t, parser, returned, "Close should return parser via callback")
+	assert.Same(t, parser, returned, "Close should return parser via callback")
 	assert.Nil(t, doc.Parser(), "parser should be nil after Close")
+	if returned != nil {
+		returned.Close()
+	}
 }
 
 func TestPoolLifecycle_SetParserReturnsOldParserViaCallback(t *testing.T) {
@@ -27,14 +30,14 @@ func TestPoolLifecycle_SetParserReturnsOldParserViaCallback(t *testing.T) {
 
 	doc := NewBaseDocument("test.ts", "", 1, "typescript", callback, nil)
 	old := ts.NewParser()
-	defer old.Close()
+	t.Cleanup(old.Close)
 	new := ts.NewParser()
-	defer new.Close()
+	t.Cleanup(new.Close)
 
 	doc.SetParser(old)
 	doc.SetParser(new)
 
-	assert.Equal(t, old, returned, "SetParser should return old parser via callback")
+	assert.Same(t, old, returned, "SetParser should return old parser via callback")
 }
 
 func TestPoolLifecycle_CrossPoolAssignment(t *testing.T) {
@@ -50,18 +53,20 @@ func TestPoolLifecycle_CrossPoolAssignment(t *testing.T) {
 	parser := ts.NewParser()
 
 	htmlDoc.SetParser(parser)
-	// Move parser from HTML doc to TS doc
 	tsDoc.SetParser(parser)
 
-	// Close TS doc -- should return via TS callback, not HTML callback
 	tsDoc.Close()
 
 	assert.Nil(t, htmlReturned, "HTML callback should not be called when TS doc closes")
-	assert.Equal(t, parser, tsReturned, "TS callback should receive the parser")
+	assert.Same(t, parser, tsReturned, "TS callback should receive the parser")
+	if tsReturned != nil {
+		tsReturned.Close()
+	}
 }
 
 func TestPoolLifecycle_DoubleCloseDoesNotPanic(t *testing.T) {
-	callback := func(p *ts.Parser) {}
+	var returned *ts.Parser
+	callback := func(p *ts.Parser) { returned = p }
 	doc := NewBaseDocument("test.html", "", 1, "html", callback, nil)
 	parser := ts.NewParser()
 	doc.SetParser(parser)
@@ -70,4 +75,7 @@ func TestPoolLifecycle_DoubleCloseDoesNotPanic(t *testing.T) {
 		doc.Close()
 		doc.Close()
 	}, "double Close should not panic")
+	if returned != nil {
+		returned.Close()
+	}
 }

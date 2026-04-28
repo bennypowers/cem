@@ -13,14 +13,14 @@ func TestSetParser_CallbackFiresWithOldParser(t *testing.T) {
 
 	doc := NewBaseDocument("test.html", "", 1, "html", callback, nil)
 	oldParser := ts.NewParser()
-	defer oldParser.Close()
+	t.Cleanup(oldParser.Close)
 	newParser := ts.NewParser()
-	defer newParser.Close()
+	t.Cleanup(newParser.Close)
 
 	doc.SetParser(oldParser)
 	doc.SetParser(newParser)
 
-	assert.Equal(t, oldParser, returned, "callback should receive the old parser")
+	assert.Same(t, oldParser, returned, "callback should receive the old parser")
 }
 
 func TestSetParser_SameParserDoesNotFireCallback(t *testing.T) {
@@ -29,7 +29,7 @@ func TestSetParser_SameParserDoesNotFireCallback(t *testing.T) {
 
 	doc := NewBaseDocument("test.html", "", 1, "html", callback, nil)
 	parser := ts.NewParser()
-	defer parser.Close()
+	t.Cleanup(parser.Close)
 
 	doc.SetParser(parser)
 	doc.SetParser(parser)
@@ -43,7 +43,7 @@ func TestSetParser_NoPreviousParserDoesNotFireCallback(t *testing.T) {
 
 	doc := NewBaseDocument("test.html", "", 1, "html", callback, nil)
 	parser := ts.NewParser()
-	defer parser.Close()
+	t.Cleanup(parser.Close)
 
 	doc.SetParser(parser)
 
@@ -52,15 +52,22 @@ func TestSetParser_NoPreviousParserDoesNotFireCallback(t *testing.T) {
 
 func TestClose_FiresCallbackWithParser(t *testing.T) {
 	var returned *ts.Parser
-	callback := func(p *ts.Parser) { returned = p }
+	callback := func(p *ts.Parser) {
+		returned = p
+	}
 
 	doc := NewBaseDocument("test.html", "", 1, "html", callback, nil)
 	parser := ts.NewParser()
+	t.Cleanup(func() {
+		if returned != nil {
+			returned.Close()
+		}
+	})
 
 	doc.SetParser(parser)
 	doc.Close()
 
-	assert.Equal(t, parser, returned, "Close should return parser via callback")
+	assert.Same(t, parser, returned, "Close should return parser via callback")
 	assert.Nil(t, doc.Parser(), "parser should be nil after Close")
 }
 
@@ -77,6 +84,7 @@ func TestClose_NoParserDoesNotFireCallback(t *testing.T) {
 func TestClose_NilCallbackDoesNotPanic(t *testing.T) {
 	doc := NewBaseDocument("test.html", "", 1, "html", nil, nil)
 	parser := ts.NewParser()
+	t.Cleanup(parser.Close)
 
 	doc.SetParser(parser)
 

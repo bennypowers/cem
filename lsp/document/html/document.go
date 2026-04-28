@@ -58,11 +58,16 @@ func (d *HTMLDocument) ImportMap() map[string]string {
 	return result
 }
 
-// SetImportMap sets the import map
+// SetImportMap sets the import map, copying the input to prevent external mutation.
 func (d *HTMLDocument) SetImportMap(importMap map[string]string) {
 	d.importMu.Lock()
 	defer d.importMu.Unlock()
-	d.importMap = importMap
+	if importMap == nil {
+		d.importMap = nil
+		return
+	}
+	d.importMap = make(map[string]string, len(importMap))
+	maps.Copy(d.importMap, importMap)
 }
 
 // Parse parses the HTML content using tree-sitter
@@ -89,6 +94,7 @@ func (d *HTMLDocument) ParseWithRanges(content string, ranges []ts.Range) error 
 	d.UpdateContent(content, d.Version())
 
 	if len(ranges) == 0 {
+		d.SetTree(nil)
 		return nil
 	}
 
