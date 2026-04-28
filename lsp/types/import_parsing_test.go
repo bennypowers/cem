@@ -19,7 +19,7 @@ package types_test
 import (
 	"testing"
 
-	"bennypowers.dev/cem/modulegraph"
+	"bennypowers.dev/cem/internal/modulegraph"
 )
 
 func TestModuleGraph_ImportParsing_Simple(t *testing.T) {

@@ -24,7 +24,7 @@ import (
 
 	"bennypowers.dev/cem/lsp/types"
 	mcpTypes "bennypowers.dev/cem/mcp/types"
-	"bennypowers.dev/cem/validations"
+	"bennypowers.dev/cem/internal/validations"
 	"github.com/agext/levenshtein"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )

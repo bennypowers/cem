@@ -31,7 +31,7 @@ import (
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
 	M "bennypowers.dev/cem/manifest"
-	"bennypowers.dev/cem/modulegraph"
+	"bennypowers.dev/cem/internal/modulegraph"
 	"bennypowers.dev/cem/queries"
 	"bennypowers.dev/cem/types"
 	"bennypowers.dev/cem/workspace"

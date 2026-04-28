@@ -27,7 +27,7 @@ import (
 	"bennypowers.dev/cem/mcp/helpers"
 	"bennypowers.dev/cem/mcp/types"
 	V "bennypowers.dev/cem/validate"
-	"bennypowers.dev/cem/validations"
+	"bennypowers.dev/cem/internal/validations"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

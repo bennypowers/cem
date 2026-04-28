@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp/helpers"
-	"bennypowers.dev/cem/modulegraph"
+	"bennypowers.dev/cem/internal/modulegraph"
 	"bennypowers.dev/cem/queries"
 )
 

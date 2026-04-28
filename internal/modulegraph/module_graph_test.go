@@ -19,7 +19,7 @@ package modulegraph_test
 import (
 	"testing"
 
-	"bennypowers.dev/cem/modulegraph"
+	"bennypowers.dev/cem/internal/modulegraph"
 )
 
 func TestModuleGraph_BasicOperations(t *testing.T) {

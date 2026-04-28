@@ -24,7 +24,7 @@ import (
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
-	"bennypowers.dev/cem/validations"
+	"bennypowers.dev/cem/internal/validations"
 	"github.com/agext/levenshtein"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 )
