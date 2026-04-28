@@ -215,6 +215,7 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 		if err != nil {
 			return nil, err
 		}
+		defer qm.Close()
 		parser := csslang.GetParser()
 		defer csslang.PutParser(parser)
 		if hasBindings && mp.cssCache != nil {

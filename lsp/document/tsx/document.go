@@ -130,10 +130,13 @@ func (d *TSXDocument) Parser() *ts.Parser {
 	return d.parser
 }
 
-// SetParser sets the document's parser
+// SetParser sets the document's parser, returning any previous parser to the pool.
 func (d *TSXDocument) SetParser(parser *ts.Parser) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
+	if d.parser != nil && d.parser != parser {
+		tsxlang.PutParser(d.parser)
+	}
 	d.parser = parser
 }
 

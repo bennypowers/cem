@@ -75,6 +75,9 @@ func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
 	for langName, queryNames := range selector {
 		qm.queries[langName] = make(map[string]*ts.Query)
 		for _, queryName := range queryNames {
+			if _, loaded := qm.queries[langName][queryName]; loaded {
+				continue
+			}
 			if err := qm.loadQuery(langName, queryName); err != nil {
 				qm.Close()
 				return nil, fmt.Errorf("failed to load %s query %s: %w", langName, queryName, err)
