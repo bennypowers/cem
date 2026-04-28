@@ -25,7 +25,7 @@ import (
 	"strings"
 
 	htmllang "bennypowers.dev/cem/internal/languages/html"
-	S "bennypowers.dev/cem/set"
+	S "bennypowers.dev/cem/internal/set"
 	"bennypowers.dev/cem/types"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )

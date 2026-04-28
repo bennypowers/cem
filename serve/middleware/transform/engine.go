@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"bennypowers.dev/cem/modulegraph"
+	"bennypowers.dev/cem/internal/modulegraph"
 	"bennypowers.dev/cem/queries"
 	"github.com/evanw/esbuild/pkg/api"
 )

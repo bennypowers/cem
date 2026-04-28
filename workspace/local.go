@@ -27,7 +27,7 @@ import (
 	"strings"
 
 	C "bennypowers.dev/cem/cmd/config"
-	DT "bennypowers.dev/cem/designtokens"
+	DT "bennypowers.dev/cem/internal/designtokens"
 	IC "bennypowers.dev/cem/internal/config"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"

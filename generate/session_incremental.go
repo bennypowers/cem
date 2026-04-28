@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	DT "bennypowers.dev/cem/designtokens"
+	DT "bennypowers.dev/cem/internal/designtokens"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/pterm/pterm"
