@@ -3,6 +3,7 @@
 package jinja
 
 import (
+	"embed"
 	"sync"
 
 	"bennypowers.dev/cem/internal/languages"
@@ -25,7 +26,7 @@ type language struct {
 
 func (l *language) Name() string            { return "jinja" }
 func (l *language) TSLanguage() *ts.Language { return l.tsLang }
-func (l *language) QueryDir() string        { return "jinja" }
+func (l *language) QueryFS() embed.FS      { return embed.FS{} }
 func (l *language) QueryNames(_ languages.Scope) []string { return nil }
 
 func GetParser() *ts.Parser              { return lang.pool.Get().(*ts.Parser) }

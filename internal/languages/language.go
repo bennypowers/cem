@@ -6,6 +6,7 @@
 package languages
 
 import (
+	"embed"
 	"fmt"
 	"sync"
 
@@ -30,10 +31,8 @@ type Language interface {
 	Name() string
 	// TSLanguage returns the compiled tree-sitter grammar.
 	TSLanguage() *ts.Language
-	// QueryDir returns the embed.FS subdirectory containing .scm query files.
-	// Languages that reuse another language's queries return that language's
-	// directory (e.g. Blade returns "html").
-	QueryDir() string
+	// QueryFS returns the embedded filesystem containing .scm query files.
+	QueryFS() embed.FS
 	// QueryNames returns which queries to load for the given scope.
 	QueryNames(scope Scope) []string
 	// GetParser borrows a parser from the pool. Always defer PutParser.

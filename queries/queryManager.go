@@ -19,7 +19,6 @@ package queries
 import (
 	"errors"
 	"fmt"
-	"path"
 	"sync"
 	"time"
 
@@ -93,11 +92,10 @@ func (qm *QueryManager) loadQuery(langName, queryName string) error {
 		return fmt.Errorf("unknown language %s", langName)
 	}
 
-	// Use path.Join (not filepath.Join) - embed.FS requires POSIX / separators
-	queryPath := path.Join(lang.QueryDir(), queryName+".scm")
-	data, err := queries.ReadFile(queryPath)
+	queryFile := "queries/" + queryName + ".scm"
+	data, err := lang.QueryFS().ReadFile(queryFile)
 	if err != nil {
-		return fmt.Errorf("failed to read query file %s: %w", queryPath, err)
+		return fmt.Errorf("failed to read query file %s from %s: %w", queryFile, langName, err)
 	}
 
 	query, qerr := ts.NewQuery(lang.TSLanguage(), string(data))

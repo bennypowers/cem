@@ -2,12 +2,16 @@
 package jsdoc
 
 import (
+	"embed"
 	"sync"
 
 	"bennypowers.dev/cem/internal/languages"
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsJsdoc "github.com/tree-sitter/tree-sitter-jsdoc/bindings/go"
 )
+
+//go:embed queries/*.scm
+var queryFiles embed.FS
 
 var lang *language
 
@@ -24,7 +28,7 @@ type language struct {
 
 func (l *language) Name() string            { return "jsdoc" }
 func (l *language) TSLanguage() *ts.Language { return l.tsLang }
-func (l *language) QueryDir() string        { return "jsdoc" }
+func (l *language) QueryFS() embed.FS      { return queryFiles }
 
 func (l *language) QueryNames(scope languages.Scope) []string {
 	switch scope {

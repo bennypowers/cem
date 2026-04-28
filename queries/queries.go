@@ -17,16 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package queries
 
 import (
-	"embed"
 	"fmt"
 	"strings"
 
 	htmllang "bennypowers.dev/cem/internal/languages/html"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
-
-//go:embed */*.scm
-var queries embed.FS
 
 type NoCaptureError struct {
 	Capture string
