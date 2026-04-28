@@ -107,8 +107,8 @@ func extractDemoTagsWithPattern(
 		return strings.Fields(*fm.DemoFor), nil
 	}
 
-	parser := htmllang.GetParser()
-	defer htmllang.PutParser(parser)
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
 	tree := parser.Parse(htmlContent, nil)
 	defer tree.Close()
 	root := tree.RootNode()

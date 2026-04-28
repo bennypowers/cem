@@ -180,8 +180,8 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 	for range numWorkers {
 		go func() {
 			defer wg.Done()
-			parser := typescript.GetParser()
-			defer typescript.PutParser(parser)
+			parser := typescript.BorrowParser()
+			defer typescript.ReturnParser(parser)
 
 			for job := range jobsChan {
 				// Check for cancellation

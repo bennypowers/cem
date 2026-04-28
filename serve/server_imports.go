@@ -63,8 +63,8 @@ func extractImportsFromScript(scriptContent string) ([]string, error) {
 	}
 
 	// Get TypeScript parser from pool
-	parser := typescript.GetParser()
-	defer typescript.PutParser(parser)
+	parser := typescript.BorrowParser()
+	defer typescript.ReturnParser(parser)
 
 	// Parse the script content
 	tree := parser.Parse([]byte(scriptContent), nil)

@@ -177,8 +177,8 @@ func extractDemoMetadata(ctx types.WorkspaceContext, path string) (DemoMetadata,
 	}
 
 	// Fall back to microdata for any fields not set by frontmatter
-	parser := htmllang.GetParser()
-	defer htmllang.PutParser(parser)
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
 	tree := parser.Parse(htmlContent, nil)
 	defer tree.Close()
 	root := tree.RootNode()

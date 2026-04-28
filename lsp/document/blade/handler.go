@@ -56,8 +56,8 @@ func (h *Handler) Language() string {
 // HTMLDocument with the resulting tree. The document's queries use "blade"
 // language, so captures match the Blade grammar's node type IDs.
 func (h *Handler) CreateDocument(uri, content string, version int32) types.Document {
-	parser := bladelang.GetParser()
-	defer bladelang.PutParser(parser)
+	parser := bladelang.BorrowParser()
+	defer bladelang.ReturnParser(parser)
 	tree := parser.Parse([]byte(content), nil)
 
 	return h.htmlHandler.CreateDocumentWithTree(uri, content, version, tree)

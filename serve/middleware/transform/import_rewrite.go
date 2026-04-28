@@ -53,8 +53,8 @@ type ImportRewrite struct {
 // This allows the dev server to detect and handle these imports appropriately.
 func RewriteImportAttributes(source []byte) ([]byte, error) {
 	// Get a TypeScript parser
-	parser := typescript.GetParser()
-	defer typescript.PutParser(parser)
+	parser := typescript.BorrowParser()
+	defer typescript.ReturnParser(parser)
 
 	// Parse the source
 	tree := parser.Parse(source, nil)

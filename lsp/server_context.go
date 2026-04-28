@@ -398,8 +398,8 @@ func (s *Server) SynthesizeEphemeralElements(uri string) {
 		return
 	}
 
-	parser := typescript.GetParser()
-	defer typescript.PutParser(parser)
+	parser := typescript.BorrowParser()
+	defer typescript.ReturnParser(parser)
 
 	mp, err := generate.NewEphemeralModuleProcessor(uri, contentBytes, parser, genQM)
 	if err != nil {

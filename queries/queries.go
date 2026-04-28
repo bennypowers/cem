@@ -147,8 +147,8 @@ func camelToKebab(camelCase string) string {
 
 func findSlotInTemplate(htmlContent string, slotName string, queryManager *QueryManager) *Range {
 	// Parse the HTML template content
-	parser := htmllang.GetParser()
-	defer htmllang.PutParser(parser)
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
 
 	tree := parser.Parse([]byte(htmlContent), nil)
 	if tree == nil {

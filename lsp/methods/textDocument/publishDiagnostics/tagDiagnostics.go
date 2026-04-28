@@ -258,8 +258,8 @@ func ParseTypeScriptImportsDebugForTest(content string, ctx types.ServerContext)
 	debugInfo = append(debugInfo, fmt.Sprintf("Input content: %q", content))
 
 	// Get TypeScript parser from pool
-	parser := typescript.GetParser()
-	defer typescript.PutParser(parser)
+	parser := typescript.BorrowParser()
+	defer typescript.ReturnParser(parser)
 
 	// Parse the TypeScript content
 	contentBytes := []byte(content)
@@ -343,8 +343,8 @@ func parseTypeScriptImports(content string, ctx types.ServerContext) []string {
 	helpers.SafeDebugLog("[DIAGNOSTICS] Parsing TypeScript imports from content (length=%d)", len(content))
 
 	// Get TypeScript parser from pool
-	parser := typescript.GetParser()
-	defer typescript.PutParser(parser)
+	parser := typescript.BorrowParser()
+	defer typescript.ReturnParser(parser)
 
 	// Parse the TypeScript content
 	contentBytes := []byte(content)
@@ -464,8 +464,8 @@ func parseNonModuleScriptImports(content string, ctx types.ServerContext) []stri
 	var importedElements []string
 
 	// Get HTML parser from pool
-	parser := htmllang.GetParser()
-	defer htmllang.PutParser(parser)
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
 
 	// Parse the HTML content
 	tree := parser.Parse([]byte(content), nil)

@@ -23,13 +23,13 @@ type language struct {
 	pool   *sync.Pool
 }
 
-func (l *language) Name() string            { return "php" }
-func (l *language) TSLanguage() *ts.Language { return l.tsLang }
-func (l *language) QueryFS() embed.FS      { return embed.FS{} }
+func (l *language) Name() string                          { return "php" }
+func (l *language) TSLanguage() *ts.Language              { return l.tsLang }
+func (l *language) QueryFS() embed.FS                     { return embed.FS{} }
 func (l *language) QueryNames(_ languages.Scope) []string { return nil }
 
-func GetParser() *ts.Parser              { return lang.pool.Get().(*ts.Parser) }
-func PutParser(parser *ts.Parser)        { parser.Reset(); lang.pool.Put(parser) }
-func (l *language) GetParser() *ts.Parser      { return GetParser() }
-func (l *language) PutParser(parser *ts.Parser) { PutParser(parser) }
-func TSLanguage() *ts.Language           { return lang.tsLang }
+func BorrowParser() *ts.Parser                        { return lang.pool.Get().(*ts.Parser) }
+func ReturnParser(parser *ts.Parser)                  { parser.Reset(); lang.pool.Put(parser) }
+func (l *language) BorrowParser() *ts.Parser       { return BorrowParser() }
+func (l *language) ReturnParser(parser *ts.Parser) { ReturnParser(parser) }
+func TSLanguage() *ts.Language                     { return lang.tsLang }

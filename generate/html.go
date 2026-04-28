@@ -63,8 +63,8 @@ func (mp *ModuleProcessor) processRenderTemplate(
 	parts []M.CssPart,
 	errs error,
 ) {
-	parser := htmllang.GetParser()
-	defer htmllang.PutParser(parser)
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
 
 	text := []byte(htmlSource)
 	tree := parser.Parse(text, nil)

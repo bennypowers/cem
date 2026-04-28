@@ -26,9 +26,9 @@ type language struct {
 	pool   *sync.Pool
 }
 
-func (l *language) Name() string            { return "typescript" }
+func (l *language) Name() string             { return "typescript" }
 func (l *language) TSLanguage() *ts.Language { return l.tsLang }
-func (l *language) QueryFS() embed.FS      { return queryFiles }
+func (l *language) QueryFS() embed.FS        { return queryFiles }
 
 func (l *language) QueryNames(scope languages.Scope) []string {
 	switch scope {
@@ -42,14 +42,14 @@ func (l *language) QueryNames(scope languages.Scope) []string {
 	return nil
 }
 
-// GetParser borrows a TypeScript parser from the pool.
-func GetParser() *ts.Parser { return lang.pool.Get().(*ts.Parser) }
+// BorrowParser borrows a TypeScript parser from the pool.
+func BorrowParser() *ts.Parser { return lang.pool.Get().(*ts.Parser) }
 
-// PutParser returns a TypeScript parser to the pool.
-func PutParser(parser *ts.Parser) { parser.Reset(); lang.pool.Put(parser) }
+// ReturnParser returns a TypeScript parser to the pool.
+func ReturnParser(parser *ts.Parser) { parser.Reset(); lang.pool.Put(parser) }
 
-func (l *language) GetParser() *ts.Parser      { return GetParser() }
-func (l *language) PutParser(parser *ts.Parser) { PutParser(parser) }
+func (l *language) BorrowParser() *ts.Parser       { return BorrowParser() }
+func (l *language) ReturnParser(parser *ts.Parser) { ReturnParser(parser) }
 
 // TSLanguage returns the tree-sitter TypeScript language grammar.
 func TSLanguage() *ts.Language { return lang.tsLang }

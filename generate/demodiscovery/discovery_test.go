@@ -465,8 +465,8 @@ func TestMicrodataExtraction(t *testing.T) {
 	expectedBytes := testutil.LoadFixtureFile(t, expectedPath)
 	expected := strings.TrimSpace(string(expectedBytes))
 
-	parser := htmllang.GetParser()
-	defer htmllang.PutParser(parser)
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
 	tree := parser.Parse(code, nil)
 	defer tree.Close()
 	root := tree.RootNode()
@@ -486,8 +486,8 @@ func TestScriptMarkdownExtraction(t *testing.T) {
 	expectedBytes := testutil.LoadFixtureFile(t, expectedPath)
 	expected := string(expectedBytes)
 
-	parser := htmllang.GetParser()
-	defer htmllang.PutParser(parser)
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
 	tree := parser.Parse(code, nil)
 	defer tree.Close()
 	root := tree.RootNode()

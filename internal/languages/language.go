@@ -35,10 +35,10 @@ type Language interface {
 	QueryFS() embed.FS
 	// QueryNames returns which queries to load for the given scope.
 	QueryNames(scope Scope) []string
-	// GetParser borrows a parser from the pool. Always defer PutParser.
-	GetParser() *ts.Parser
-	// PutParser returns a parser to the pool.
-	PutParser(parser *ts.Parser)
+	// BorrowParser borrows a parser from the pool. Always defer PutParser.
+	BorrowParser() *ts.Parser
+	// ReturnParser returns a parser to the pool.
+	ReturnParser(parser *ts.Parser)
 }
 
 // NewParserPool creates a sync.Pool that produces parsers configured for the

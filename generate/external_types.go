@@ -378,8 +378,8 @@ func (r *ExternalTypeResolver) scanTypeAliasesFromFile(filePath string) (map[str
 		return nil, err
 	}
 
-	parser := typescript.GetParser()
-	defer typescript.PutParser(parser)
+	parser := typescript.BorrowParser()
+	defer typescript.ReturnParser(parser)
 
 	tree := parser.Parse(content, nil)
 	if tree == nil {

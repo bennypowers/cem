@@ -104,16 +104,16 @@ func (h *Handler) htmlRanges(source []byte, uri string) []sitter.Range {
 
 	switch family {
 	case "handlebars":
-		parser = hbslang.GetParser()
-		defer hbslang.PutParser(parser)
+		parser = hbslang.BorrowParser()
+		defer hbslang.ReturnParser(parser)
 		query = h.hbsQuery
 	case "embedded-template":
-		parser = etlang.GetParser()
-		defer etlang.PutParser(parser)
+		parser = etlang.BorrowParser()
+		defer etlang.ReturnParser(parser)
 		query = h.etQuery
 	default:
-		parser = jinjalang.GetParser()
-		defer jinjalang.PutParser(parser)
+		parser = jinjalang.BorrowParser()
+		defer jinjalang.ReturnParser(parser)
 		query = h.jinjaQuery
 	}
 

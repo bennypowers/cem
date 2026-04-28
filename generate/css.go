@@ -216,8 +216,8 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 			return nil, err
 		}
 		defer qm.Close()
-		parser := csslang.GetParser()
-		defer csslang.PutParser(parser)
+		parser := csslang.BorrowParser()
+		defer csslang.ReturnParser(parser)
 		if hasBindings && mp.cssCache != nil {
 			for _, binding := range bindings {
 				spec, ok := mp.styleImportsBindingToSpecMap[binding.Text]

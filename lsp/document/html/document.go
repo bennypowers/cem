@@ -132,7 +132,7 @@ func (d *HTMLDocument) SetParser(parser *ts.Parser) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	if d.parser != nil && d.parser != parser {
-		htmllang.PutParser(d.parser)
+		htmllang.ReturnParser(d.parser)
 	}
 	d.parser = parser
 }
@@ -162,7 +162,7 @@ func (d *HTMLDocument) Close() {
 	}
 
 	if d.parser != nil {
-		htmllang.PutParser(d.parser)
+		htmllang.ReturnParser(d.parser)
 		d.parser = nil
 	}
 }
@@ -203,7 +203,7 @@ func (d *HTMLDocument) byteOffsetToPosition(offset uint) protocol.Position {
 func (d *HTMLDocument) Parse(content string) error {
 	d.UpdateContent(content, d.version)
 
-	parser := htmllang.GetParser()
+	parser := htmllang.BorrowParser()
 	if parser == nil {
 		return fmt.Errorf("failed to get HTML parser")
 	}
@@ -229,7 +229,7 @@ func (d *HTMLDocument) ParseWithRanges(content string, ranges []ts.Range) error 
 		return nil
 	}
 
-	parser := htmllang.GetParser()
+	parser := htmllang.BorrowParser()
 	if parser == nil {
 		return fmt.Errorf("failed to get HTML parser")
 	}

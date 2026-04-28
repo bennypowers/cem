@@ -60,8 +60,8 @@ func (h *Handler) Language() string {
 // htmlRanges uses tree-sitter-php to find HTML text nodes and returns their
 // byte ranges for use with tree-sitter language injection.
 func (h *Handler) htmlRanges(source []byte) []sitter.Range {
-	parser := phplang.GetParser()
-	defer phplang.PutParser(parser)
+	parser := phplang.BorrowParser()
+	defer phplang.ReturnParser(parser)
 
 	tree := parser.Parse(source, nil)
 	if tree == nil {

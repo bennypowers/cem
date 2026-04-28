@@ -83,8 +83,8 @@ func parseForClass(source string, queryManager *Q.QueryManager) (*classInfo, err
 	}
 	defer matcher.Close()
 
-	parser := jsdoclang.GetParser()
-	defer jsdoclang.PutParser(parser)
+	parser := jsdoclang.BorrowParser()
+	defer jsdoclang.ReturnParser(parser)
 	tree := parser.Parse([]byte(code), nil)
 	defer tree.Close()
 	root := tree.RootNode()
@@ -148,8 +148,8 @@ func parseForClass(source string, queryManager *Q.QueryManager) (*classInfo, err
 
 func parseForProperty(code string, queryManager *Q.QueryManager) (*propertyInfo, error) {
 	barr := []byte(code)
-	parser := jsdoclang.GetParser()
-	defer jsdoclang.PutParser(parser)
+	parser := jsdoclang.BorrowParser()
+	defer jsdoclang.ReturnParser(parser)
 	tree := parser.Parse(barr, nil)
 	defer tree.Close()
 	root := tree.RootNode()
@@ -213,8 +213,8 @@ func parseForProperty(code string, queryManager *Q.QueryManager) (*propertyInfo,
 
 func parseForCSSProperty(code string, queryManager *Q.QueryManager) (*cssPropertyInfo, error) {
 	barr := []byte(code)
-	parser := jsdoclang.GetParser()
-	defer jsdoclang.PutParser(parser)
+	parser := jsdoclang.BorrowParser()
+	defer jsdoclang.ReturnParser(parser)
 	tree := parser.Parse(barr, nil)
 	defer tree.Close()
 	root := tree.RootNode()
@@ -273,8 +273,8 @@ func parseForCSSProperty(code string, queryManager *Q.QueryManager) (*cssPropert
 func parseForMethod(source string, queryManager *Q.QueryManager) (*methodInfo, error) {
 	info := methodInfo{}
 	code := []byte(source)
-	parser := jsdoclang.GetParser()
-	defer jsdoclang.PutParser(parser)
+	parser := jsdoclang.BorrowParser()
+	defer jsdoclang.ReturnParser(parser)
 	tree := parser.Parse([]byte(code), nil)
 	defer tree.Close()
 	root := tree.RootNode()

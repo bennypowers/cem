@@ -127,8 +127,8 @@ func findElementAtCursor(doc types.Document, position protocol.Position) string 
 	helpers.SafeDebugLog("[REFERENCES] Looking for element at byte offset %d", byteOffset)
 
 	// Use tree-sitter to parse and find the node at this position
-	parser := htmllang.GetParser()
-	defer htmllang.PutParser(parser)
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
 
 	tree := parser.Parse([]byte(content), nil)
 	if tree == nil {
@@ -410,8 +410,8 @@ func findHTMLReferencesInContent(content []byte, fileURI string, elementName str
 	var locations []protocol.Location
 
 	// Get HTML parser
-	parser := htmllang.GetParser()
-	defer htmllang.PutParser(parser)
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
 
 	tree := parser.Parse(content, nil)
 	if tree == nil {
@@ -473,8 +473,8 @@ func findTypeScriptReferencesInContent(content []byte, fileURI string, elementNa
 	var locations []protocol.Location
 
 	// Get TypeScript parser
-	parser := typescript.GetParser()
-	defer typescript.PutParser(parser)
+	parser := typescript.BorrowParser()
+	defer typescript.ReturnParser(parser)
 
 	tree := parser.Parse(content, nil)
 	if tree == nil {
@@ -536,8 +536,8 @@ func findTypeScriptReferencesInContent(content []byte, fileURI string, elementNa
 func findHTMLReferencesInTemplate(templateContent []byte, templateOffset uint, fileURI string, elementName string) []protocol.Location {
 	var locations []protocol.Location
 
-	parser := htmllang.GetParser()
-	defer htmllang.PutParser(parser)
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
 
 	tree := parser.Parse(templateContent, nil)
 	if tree == nil {

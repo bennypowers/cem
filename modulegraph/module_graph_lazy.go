@@ -284,8 +284,8 @@ func (mg *ModuleGraph) extractFileDependencies(filePath string) ([]string, error
 	}
 
 	// Get TypeScript parser from pool
-	parser := typescript.GetParser()
-	defer typescript.PutParser(parser)
+	parser := typescript.BorrowParser()
+	defer typescript.ReturnParser(parser)
 
 	// Parse the content
 	tree := parser.Parse(content, nil)
