@@ -248,17 +248,17 @@ func (d *BaseDocument) TreeAndContent() (*ts.Tree, string) {
 // ByteRangeToProtocolRange converts byte range to protocol range.
 func (d *BaseDocument) ByteRangeToProtocolRange(content string, startByte, endByte uint) protocol.Range {
 	return protocol.Range{
-		Start: d.ByteOffsetToPosition(startByte),
-		End:   d.ByteOffsetToPosition(endByte),
+		Start: d.ByteOffsetToPosition(startByte, content),
+		End:   d.ByteOffsetToPosition(endByte, content),
 	}
 }
 
-// ByteOffsetToPosition converts a byte offset to a protocol position.
-func (d *BaseDocument) ByteOffsetToPosition(offset uint) protocol.Position {
+// ByteOffsetToPosition converts a byte offset to a protocol position within the given content.
+func (d *BaseDocument) ByteOffsetToPosition(offset uint, content string) protocol.Position {
 	line := uint32(0)
 	char := uint32(0)
 
-	for i, r := range d.content {
+	for i, r := range content {
 		if uint(i) >= offset {
 			break
 		}
@@ -298,9 +298,9 @@ func (d *BaseDocument) PositionToByteOffset(pos protocol.Position, content strin
 	return offset
 }
 
-// getLanguageHandler uses reflection to retrieve the language handler from a document manager.
+// languageHandler uses reflection to retrieve the language handler from a document manager.
 // This avoids circular imports between document and handler packages.
-func (d *BaseDocument) getLanguageHandler(dm any) any {
+func (d *BaseDocument) languageHandler(dm any) any {
 	dmValue := reflect.ValueOf(dm)
 	if dmValue.Kind() != reflect.Pointer || dmValue.IsNil() {
 		return nil
@@ -316,9 +316,9 @@ func (d *BaseDocument) getLanguageHandler(dm any) any {
 	return results[0].Interface()
 }
 
-// doc returns the concrete document type for handler delegation.
+// outer returns the concrete document type for handler delegation.
 // When embedded, self points to the outer struct; standalone, it falls back to d.
-func (d *BaseDocument) doc() types.Document {
+func (d *BaseDocument) outer() types.Document {
 	if d.self != nil {
 		return d.self
 	}
@@ -327,70 +327,70 @@ func (d *BaseDocument) doc() types.Document {
 
 // FindElementAtPosition finds a custom element at the given position.
 func (d *BaseDocument) FindElementAtPosition(position protocol.Position, dm any) *types.CustomElementMatch {
-	handler := d.getLanguageHandler(dm)
+	handler := d.languageHandler(dm)
 	if handler == nil {
 		return nil
 	}
 	if h, ok := handler.(interface {
 		FindElementAtPosition(types.Document, protocol.Position) *types.CustomElementMatch
 	}); ok {
-		return h.FindElementAtPosition(d.doc(), position)
+		return h.FindElementAtPosition(d.outer(), position)
 	}
 	return nil
 }
 
 // FindAttributeAtPosition finds an attribute at the given position.
 func (d *BaseDocument) FindAttributeAtPosition(position protocol.Position, dm any) (*types.AttributeMatch, string) {
-	handler := d.getLanguageHandler(dm)
+	handler := d.languageHandler(dm)
 	if handler == nil {
 		return nil, ""
 	}
 	if h, ok := handler.(interface {
 		FindAttributeAtPosition(types.Document, protocol.Position) (*types.AttributeMatch, string)
 	}); ok {
-		return h.FindAttributeAtPosition(d.doc(), position)
+		return h.FindAttributeAtPosition(d.outer(), position)
 	}
 	return nil, ""
 }
 
 // FindCustomElements finds custom elements in the document.
 func (d *BaseDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
-	handler := d.getLanguageHandler(dm)
+	handler := d.languageHandler(dm)
 	if handler == nil {
 		return []types.CustomElementMatch{}, nil
 	}
 	if h, ok := handler.(interface {
 		FindCustomElements(types.Document) ([]types.CustomElementMatch, error)
 	}); ok {
-		return h.FindCustomElements(d.doc())
+		return h.FindCustomElements(d.outer())
 	}
 	return []types.CustomElementMatch{}, nil
 }
 
 // AnalyzeCompletionContextTS analyzes completion context using tree-sitter queries.
 func (d *BaseDocument) AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis {
-	handler := d.getLanguageHandler(dm)
+	handler := d.languageHandler(dm)
 	if handler == nil {
 		return &types.CompletionAnalysis{Type: types.CompletionUnknown}
 	}
 	if h, ok := handler.(interface {
 		AnalyzeCompletionContext(types.Document, protocol.Position) *types.CompletionAnalysis
 	}); ok {
-		return h.AnalyzeCompletionContext(d.doc(), position)
+		return h.AnalyzeCompletionContext(d.outer(), position)
 	}
 	return &types.CompletionAnalysis{Type: types.CompletionUnknown}
 }
 
 // FindHeadInsertionPoint finds insertion point in <head> section.
 func (d *BaseDocument) FindHeadInsertionPoint(dm any) (protocol.Position, bool) {
-	handler := d.getLanguageHandler(dm)
+	handler := d.languageHandler(dm)
 	if handler == nil {
 		return protocol.Position{}, false
 	}
 	if h, ok := handler.(interface {
 		FindHeadInsertionPoint(types.Document) (protocol.Position, bool)
 	}); ok {
-		return h.FindHeadInsertionPoint(d.doc())
+		return h.FindHeadInsertionPoint(d.outer())
 	}
 	return protocol.Position{}, false
 }

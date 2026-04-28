@@ -475,7 +475,7 @@ func (d *HTMLDocument) findHeadInsertionPoint(handler *Handler) (protocol.Positi
 	root := tree.RootNode()
 	for captureMap := range matcher.ParentCaptures(root, []byte(content), "head.element") {
 		if endTags, exists := captureMap["end.tag"]; exists && len(endTags) > 0 {
-			pos := d.ByteOffsetToPosition(endTags[0].StartByte)
+			pos := d.ByteOffsetToPosition(endTags[0].StartByte, content)
 			return pos, true
 		}
 	}

@@ -264,7 +264,7 @@ func (d *TypeScriptDocument) findCustomElements(handler *Handler) ([]types.Custo
 		return nil, fmt.Errorf("no tree available for document")
 	}
 
-	_, err := d.Content()
+	docContent, err := d.Content()
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +277,7 @@ func (d *TypeScriptDocument) findCustomElements(handler *Handler) ([]types.Custo
 	}
 
 	for _, template := range templates {
-		templateElements, err := d.parseHTMLInTemplate(template, handler)
+		templateElements, err := d.parseHTMLInTemplate(template, handler, docContent)
 		if err != nil {
 			helpers.SafeDebugLog("[TypeScript] Failed to parse template: %v", err)
 			continue
@@ -366,7 +366,7 @@ func (d *TypeScriptDocument) findHTMLTemplates(handler *Handler) ([]TemplateCont
 	return templates, nil
 }
 
-func (d *TypeScriptDocument) parseHTMLInTemplate(template TemplateContext, handler *Handler) ([]types.CustomElementMatch, error) {
+func (d *TypeScriptDocument) parseHTMLInTemplate(template TemplateContext, handler *Handler, docContent string) ([]types.CustomElementMatch, error) {
 	templateContent, err := template.Content()
 	if err != nil {
 		return nil, err
@@ -403,8 +403,8 @@ func (d *TypeScriptDocument) parseHTMLInTemplate(template TemplateContext, handl
 					seen[key] = true
 					element := types.CustomElementMatch{
 						TagName:    capture.Text,
-						Range:      d.adjustRangeToTemplate(capture, template),
-						Attributes: d.collectTemplateAttributes(captureMap, contentBytes, template),
+						Range:      d.adjustRangeToTemplate(capture, template, docContent),
+						Attributes: d.collectTemplateAttributes(captureMap, contentBytes, template, docContent),
 					}
 					elements = append(elements, element)
 				}
@@ -418,10 +418,11 @@ func (d *TypeScriptDocument) parseHTMLInTemplate(template TemplateContext, handl
 func (d *TypeScriptDocument) adjustRangeToTemplate(
 	capture Q.CaptureInfo,
 	template TemplateContext,
+	docContent string,
 ) protocol.Range {
 	return protocol.Range{
-		Start: d.ByteOffsetToPosition(template.startByte + capture.StartByte),
-		End:   d.ByteOffsetToPosition(template.startByte + capture.EndByte),
+		Start: d.ByteOffsetToPosition(template.startByte+capture.StartByte, docContent),
+		End:   d.ByteOffsetToPosition(template.startByte+capture.EndByte, docContent),
 	}
 }
 
@@ -429,6 +430,7 @@ func (d *TypeScriptDocument) collectTemplateAttributes(
 	captureMap Q.CaptureMap,
 	contentBytes []byte,
 	template TemplateContext,
+	docContent string,
 ) map[string]types.AttributeMatch {
 	attributes := make(map[string]types.AttributeMatch)
 	attrNames, ok := captureMap["attr.name"]
@@ -455,7 +457,7 @@ func (d *TypeScriptDocument) collectTemplateAttributes(
 	for _, attrName := range attrNames {
 		attrMatch := types.AttributeMatch{
 			Name:  attrName.Text,
-			Range: d.adjustRangeToTemplate(attrName, template),
+			Range: d.adjustRangeToTemplate(attrName, template, docContent),
 		}
 
 		var closestValue string
@@ -604,6 +606,7 @@ func (d *TypeScriptDocument) analyzeTemplateContentAsHTML(
 	if err != nil {
 		return analysis
 	}
+	defer htmlCompletionContext.Close()
 
 	var allTagNames []Q.CaptureInfo
 	for captureMap := range htmlCompletionContext.ParentCaptures(htmlTree.RootNode(), []byte(templateContent), "context") {
