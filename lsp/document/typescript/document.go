@@ -169,6 +169,7 @@ func (d *TypeScriptDocument) Close() {
 	}
 
 	if d.parser != nil {
+		typescript.PutParser(d.parser)
 		d.parser = nil
 	}
 

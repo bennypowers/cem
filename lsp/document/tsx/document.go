@@ -155,6 +155,7 @@ func (d *TSXDocument) Close() {
 	}
 
 	if d.parser != nil {
+		tsxlang.PutParser(d.parser)
 		d.parser = nil
 	}
 }

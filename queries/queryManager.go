@@ -31,12 +31,6 @@ import (
 // ErrNoQueryManager is returned when a nil QueryManager is passed.
 var ErrNoQueryManager = errors.New("QueryManager is nil")
 
-// QueryManagerI defines the minimal query manager interface.
-type QueryManagerI interface {
-	Close()
-	getQuery(name string) (*ts.Query, error)
-}
-
 // QuerySelector maps language names to the query names to load.
 type QuerySelector map[string][]string
 
