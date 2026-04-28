@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/queries"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -91,8 +92,8 @@ type DefaultExportParser struct{}
 // ParseExportsFromContent implements ExportParser using tree-sitter
 func (p *DefaultExportParser) ParseExportsFromContent(modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker, queryManager *queries.QueryManager) error {
 	// Get TypeScript parser from pool
-	parser := queries.RetrieveTypeScriptParser()
-	defer queries.PutTypeScriptParser(parser)
+	parser := typescript.BorrowParser()
+	defer typescript.ReturnParser(parser)
 
 	// Parse the content
 	tree := parser.Parse(content, nil)

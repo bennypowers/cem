@@ -143,8 +143,8 @@ func (d *BaseDocument) SetParser(parser *ts.Parser) {
 	d.parser = parser
 }
 
-// GetParser returns the document's parser (protected method for subclasses)
-func (d *BaseDocument) GetParser() *ts.Parser {
+// Parser returns the document's parser (protected method for subclasses)
+func (d *BaseDocument) Parser() *ts.Parser {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.parser

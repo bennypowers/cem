@@ -33,7 +33,7 @@ func TestDefinition_LSPQueriesIncludeClasses(t *testing.T) {
 	// Verify classes query is included in LSP queries
 	lspQueries := queries.LSPQueries()
 	hasClassesQuery := false
-	for _, query := range lspQueries.TypeScript {
+	for _, query := range lspQueries["typescript"] {
 		if query == "classes" {
 			hasClassesQuery = true
 			break

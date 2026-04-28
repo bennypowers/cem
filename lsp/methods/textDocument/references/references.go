@@ -21,6 +21,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	htmllang "bennypowers.dev/cem/internal/languages/html"
+	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
@@ -125,8 +127,8 @@ func findElementAtCursor(doc types.Document, position protocol.Position) string 
 	helpers.SafeDebugLog("[REFERENCES] Looking for element at byte offset %d", byteOffset)
 
 	// Use tree-sitter to parse and find the node at this position
-	parser := Q.GetHTMLParser()
-	defer Q.PutHTMLParser(parser)
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
 
 	tree := parser.Parse([]byte(content), nil)
 	if tree == nil {
@@ -408,8 +410,8 @@ func findHTMLReferencesInContent(content []byte, fileURI string, elementName str
 	var locations []protocol.Location
 
 	// Get HTML parser
-	parser := Q.GetHTMLParser()
-	defer Q.PutHTMLParser(parser)
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
 
 	tree := parser.Parse(content, nil)
 	if tree == nil {
@@ -471,8 +473,8 @@ func findTypeScriptReferencesInContent(content []byte, fileURI string, elementNa
 	var locations []protocol.Location
 
 	// Get TypeScript parser
-	parser := Q.RetrieveTypeScriptParser()
-	defer Q.PutTypeScriptParser(parser)
+	parser := typescript.BorrowParser()
+	defer typescript.ReturnParser(parser)
 
 	tree := parser.Parse(content, nil)
 	if tree == nil {
@@ -534,8 +536,8 @@ func findTypeScriptReferencesInContent(content []byte, fileURI string, elementNa
 func findHTMLReferencesInTemplate(templateContent []byte, templateOffset uint, fileURI string, elementName string) []protocol.Location {
 	var locations []protocol.Location
 
-	parser := Q.GetHTMLParser()
-	defer Q.PutHTMLParser(parser)
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
 
 	tree := parser.Parse(templateContent, nil)
 	if tree == nil {
@@ -596,8 +598,8 @@ var refQueryManager *Q.QueryManager
 func getQueryManager() *Q.QueryManager {
 	if refQueryManager == nil {
 		selector := Q.QuerySelector{
-			HTML:       []string{"customElements"},
-			TypeScript: []string{"htmlTemplates"},
+			"html":       {"customElements"},
+			"typescript": {"htmlTemplates"},
 		}
 		var err error
 		refQueryManager, err = Q.NewQueryManager(selector)

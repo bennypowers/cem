@@ -199,10 +199,10 @@ func getQueryManagerFromContext(ctx types.ServerContext) *Q.QueryManager {
 
 	// Fallback: create a new query manager (for testing or edge cases)
 	selector := Q.QuerySelector{
-		HTML:       []string{"slotsAndParts"},
-		TypeScript: []string{"classes", "classMemberDeclaration"},
-		CSS:        []string{},
-		JSDoc:      []string{},
+		"html":       {"slotsAndParts"},
+		"typescript":  {"classes", "classMemberDeclaration"},
+		"css":         {},
+		"jsdoc":       {},
 	}
 	qm, err := Q.NewQueryManager(selector)
 	if err != nil {

@@ -23,6 +23,7 @@ import (
 	"sync"
 
 	"bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
@@ -397,8 +398,8 @@ func (s *Server) SynthesizeEphemeralElements(uri string) {
 		return
 	}
 
-	parser := queries.RetrieveTypeScriptParser()
-	defer queries.PutTypeScriptParser(parser)
+	parser := typescript.BorrowParser()
+	defer typescript.ReturnParser(parser)
 
 	mp, err := generate.NewEphemeralModuleProcessor(uri, contentBytes, parser, genQM)
 	if err != nil {

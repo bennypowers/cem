@@ -28,6 +28,7 @@ import (
 	"github.com/pterm/pterm"
 
 	"bennypowers.dev/cem/generate/jsdoc"
+	csslang "bennypowers.dev/cem/internal/languages/css"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -214,8 +215,9 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 		if err != nil {
 			return nil, err
 		}
-		parser := Q.GetCSSParser()
-		defer Q.PutCSSParser(parser)
+		defer qm.Close()
+		parser := csslang.BorrowParser()
+		defer csslang.ReturnParser(parser)
 		if hasBindings && mp.cssCache != nil {
 			for _, binding := range bindings {
 				spec, ok := mp.styleImportsBindingToSpecMap[binding.Text]

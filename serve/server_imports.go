@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"bennypowers.dev/cem/internal/languages/typescript"
 	Q "bennypowers.dev/cem/queries"
 	"bennypowers.dev/cem/serve/middleware"
 	"golang.org/x/net/html"
@@ -62,8 +63,8 @@ func extractImportsFromScript(scriptContent string) ([]string, error) {
 	}
 
 	// Get TypeScript parser from pool
-	parser := Q.RetrieveTypeScriptParser()
-	defer Q.PutTypeScriptParser(parser)
+	parser := typescript.BorrowParser()
+	defer typescript.ReturnParser(parser)
 
 	// Parse the script content
 	tree := parser.Parse([]byte(scriptContent), nil)

@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package blade
 
 import (
+	bladelang "bennypowers.dev/cem/internal/languages/blade"
 	"bennypowers.dev/cem/lsp/document/html"
 	"bennypowers.dev/cem/lsp/types"
 	Q "bennypowers.dev/cem/queries"
@@ -55,8 +56,8 @@ func (h *Handler) Language() string {
 // HTMLDocument with the resulting tree. The document's queries use "blade"
 // language, so captures match the Blade grammar's node type IDs.
 func (h *Handler) CreateDocument(uri, content string, version int32) types.Document {
-	parser := Q.GetBladeParser()
-	defer Q.PutBladeParser(parser)
+	parser := bladelang.BorrowParser()
+	defer bladelang.ReturnParser(parser)
 	tree := parser.Parse([]byte(content), nil)
 
 	return h.htmlHandler.CreateDocumentWithTree(uri, content, version, tree)

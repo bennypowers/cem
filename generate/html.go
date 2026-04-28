@@ -22,6 +22,7 @@ import (
 	"regexp"
 	"strings"
 
+	htmllang "bennypowers.dev/cem/internal/languages/html"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/queries"
 	"gopkg.in/yaml.v3"
@@ -62,8 +63,8 @@ func (mp *ModuleProcessor) processRenderTemplate(
 	parts []M.CssPart,
 	errs error,
 ) {
-	parser := Q.GetHTMLParser()
-	defer Q.PutHTMLParser(parser)
+	parser := htmllang.BorrowParser()
+	defer htmllang.ReturnParser(parser)
 
 	text := []byte(htmlSource)
 	tree := parser.Parse(text, nil)
