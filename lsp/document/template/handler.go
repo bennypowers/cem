@@ -19,10 +19,10 @@ package template
 import (
 	"fmt"
 	"strings"
-	"sync"
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
+	Q "bennypowers.dev/cem/queries"
 	tree_sitter_handlebars "bennypowers.dev/tree-sitter-handlebars/bindings/go"
 	tree_sitter_jinja "bennypowers.dev/tree-sitter-jinja-dialects/bindings/go"
 	protocol "github.com/tliron/glsp/protocol_3_16"
@@ -37,15 +37,13 @@ import (
 //  2. The HTML parser is restricted to those ranges via SetIncludedRanges
 //
 // Byte positions in the resulting tree map to the original source automatically.
+// Parsers are obtained from pools for concurrency; queries are compiled once
+// at init time and shared immutably.
 type Handler struct {
 	htmlHandler types.LanguageHandler
-	jinjaParser *sitter.Parser
 	jinjaQuery  *sitter.Query
-	hbsParser   *sitter.Parser
 	hbsQuery    *sitter.Query
-	etParser    *sitter.Parser
 	etQuery     *sitter.Query
-	mu          sync.Mutex
 }
 
 var (
@@ -55,59 +53,28 @@ var (
 )
 
 func NewHandler(htmlHandler types.LanguageHandler) (*Handler, error) {
-	jinjaParser := sitter.NewParser()
-	if err := jinjaParser.SetLanguage(jinjaLang); err != nil {
-		return nil, fmt.Errorf("failed to set jinja language: %w", err)
-	}
-
 	jinjaQuery, qerr := sitter.NewQuery(jinjaLang, `(text) @html`)
 	if qerr != nil {
-		jinjaParser.Close()
 		return nil, fmt.Errorf("failed to compile jinja text query: %w", qerr)
-	}
-
-	hbsParser := sitter.NewParser()
-	if err := hbsParser.SetLanguage(hbsLang); err != nil {
-		jinjaParser.Close()
-		jinjaQuery.Close()
-		return nil, fmt.Errorf("failed to set handlebars language: %w", err)
 	}
 
 	hbsQuery, qerr := sitter.NewQuery(hbsLang, `(text) @html`)
 	if qerr != nil {
-		jinjaParser.Close()
 		jinjaQuery.Close()
-		hbsParser.Close()
 		return nil, fmt.Errorf("failed to compile handlebars text query: %w", qerr)
-	}
-
-	etParser := sitter.NewParser()
-	if err := etParser.SetLanguage(etLang); err != nil {
-		jinjaParser.Close()
-		jinjaQuery.Close()
-		hbsParser.Close()
-		hbsQuery.Close()
-		etParser.Close()
-		return nil, fmt.Errorf("failed to set embedded-template language: %w", err)
 	}
 
 	etQuery, qerr := sitter.NewQuery(etLang, `(content) @html`)
 	if qerr != nil {
-		jinjaParser.Close()
 		jinjaQuery.Close()
-		hbsParser.Close()
 		hbsQuery.Close()
-		etParser.Close()
 		return nil, fmt.Errorf("failed to compile embedded-template content query: %w", qerr)
 	}
 
 	return &Handler{
 		htmlHandler: htmlHandler,
-		jinjaParser: jinjaParser,
 		jinjaQuery:  jinjaQuery,
-		hbsParser:   hbsParser,
 		hbsQuery:    hbsQuery,
-		etParser:    etParser,
 		etQuery:     etQuery,
 	}, nil
 }
@@ -139,30 +106,25 @@ func templateFamily(uri string) string {
 func (h *Handler) htmlRanges(source []byte, uri string) []sitter.Range {
 	family := templateFamily(uri)
 
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
 	var parser *sitter.Parser
 	var query *sitter.Query
 
 	switch family {
 	case "handlebars":
-		parser = h.hbsParser
+		parser = Q.GetHandlebarsParser()
+		defer Q.PutHandlebarsParser(parser)
 		query = h.hbsQuery
 	case "embedded-template":
-		parser = h.etParser
+		parser = Q.GetEmbeddedTemplateParser()
+		defer Q.PutEmbeddedTemplateParser(parser)
 		query = h.etQuery
 	default:
-		parser = h.jinjaParser
+		parser = Q.GetJinjaParser()
+		defer Q.PutJinjaParser(parser)
 		query = h.jinjaQuery
 	}
 
-	if parser == nil || query == nil {
-		return nil
-	}
-	parser.Reset()
 	tree := parser.Parse(source, nil)
-
 	if tree == nil {
 		return nil
 	}
@@ -209,27 +171,13 @@ func (h *Handler) FindAttributeAtPosition(doc types.Document, position protocol.
 }
 
 func (h *Handler) Close() {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	if h.jinjaParser != nil {
-		h.jinjaParser.Close()
-		h.jinjaParser = nil
-	}
 	if h.jinjaQuery != nil {
 		h.jinjaQuery.Close()
 		h.jinjaQuery = nil
 	}
-	if h.hbsParser != nil {
-		h.hbsParser.Close()
-		h.hbsParser = nil
-	}
 	if h.hbsQuery != nil {
 		h.hbsQuery.Close()
 		h.hbsQuery = nil
-	}
-	if h.etParser != nil {
-		h.etParser.Close()
-		h.etParser = nil
 	}
 	if h.etQuery != nil {
 		h.etQuery.Close()

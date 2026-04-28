@@ -18,10 +18,10 @@ package php
 
 import (
 	"fmt"
-	"sync"
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
+	Q "bennypowers.dev/cem/queries"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 	tree_sitter_php "github.com/tree-sitter/tree-sitter-php/bindings/go"
@@ -33,31 +33,24 @@ import (
 //  2. The HTML parser is restricted to those ranges via SetIncludedRanges
 //
 // Byte positions in the resulting tree map to the original source automatically.
+// Parsers are obtained from pools for concurrency; the query is compiled once
+// at init time and shared immutably.
 type Handler struct {
 	htmlHandler types.LanguageHandler
-	phpParser   *sitter.Parser
 	textQuery   *sitter.Query
-	mu          sync.Mutex
 }
 
 var phpLang = sitter.NewLanguage(tree_sitter_php.LanguagePHP())
 
 // NewHandler creates a new PHP language handler
 func NewHandler(htmlHandler types.LanguageHandler) (*Handler, error) {
-	parser := sitter.NewParser()
-	if err := parser.SetLanguage(phpLang); err != nil {
-		return nil, fmt.Errorf("failed to set PHP language: %w", err)
-	}
-
 	textQuery, qerr := sitter.NewQuery(phpLang, `(text) @html`)
 	if qerr != nil {
-		parser.Close()
 		return nil, fmt.Errorf("failed to compile text query: %w", qerr)
 	}
 
 	return &Handler{
 		htmlHandler: htmlHandler,
-		phpParser:   parser,
 		textQuery:   textQuery,
 	}, nil
 }
@@ -70,17 +63,10 @@ func (h *Handler) Language() string {
 // htmlRanges uses tree-sitter-php to find HTML text nodes and returns their
 // byte ranges for use with tree-sitter language injection.
 func (h *Handler) htmlRanges(source []byte) []sitter.Range {
-	h.mu.Lock()
-	defer h.mu.Unlock()
+	parser := Q.GetPHPParser()
+	defer Q.PutPHPParser(parser)
 
-	parser := h.phpParser
-	query := h.textQuery
-	if parser == nil || query == nil {
-		return nil
-	}
-	parser.Reset()
 	tree := parser.Parse(source, nil)
-
 	if tree == nil {
 		return nil
 	}
@@ -90,7 +76,7 @@ func (h *Handler) htmlRanges(source []byte) []sitter.Range {
 	defer cursor.Close()
 
 	var ranges []sitter.Range
-	matches := cursor.Matches(query, tree.RootNode(), source)
+	matches := cursor.Matches(h.textQuery, tree.RootNode(), source)
 	for m := matches.Next(); m != nil; m = matches.Next() {
 		for _, c := range m.Captures {
 			n := c.Node
@@ -132,14 +118,8 @@ func (h *Handler) FindAttributeAtPosition(doc types.Document, position protocol.
 	return h.htmlHandler.FindAttributeAtPosition(doc, position)
 }
 
-// Close cleans up resources
+// Close cleans up query resources
 func (h *Handler) Close() {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	if h.phpParser != nil {
-		h.phpParser.Close()
-		h.phpParser = nil
-	}
 	if h.textQuery != nil {
 		h.textQuery.Close()
 		h.textQuery = nil
