@@ -307,7 +307,9 @@ var serveCmd = &cobra.Command{
 		if reload {
 			reloadStatus = " (live reload enabled)"
 		}
-		log.Info("Server started on http://localhost:%d%s", port, reloadStatus)
+		// Use actual port (may differ from requested when --port 0)
+		actualPort := server.Port()
+		log.Info("Server started on http://localhost:%d%s", actualPort, reloadStatus)
 
 		// Update status with running info (with colors)
 		reloadColor := pterm.FgRed.Sprint("false")
@@ -315,7 +317,7 @@ var serveCmd = &cobra.Command{
 			reloadColor = pterm.FgGreen.Sprint("true")
 		}
 		statusMsg := fmt.Sprintf("Running on %s%s Live reload: %s %s Press %s for help, %s to quit",
-			pterm.FgCyan.Sprintf("http://localhost:%d", port),
+			pterm.FgCyan.Sprintf("http://localhost:%d", actualPort),
 			pterm.FgGray.Sprint(" |"),
 			reloadColor,
 			pterm.FgGray.Sprint("|"),
@@ -331,7 +333,7 @@ var serveCmd = &cobra.Command{
 		quitChan := make(chan struct{})
 		go func() {
 			time.Sleep(100 * time.Millisecond)
-			handleKeyboardInput(server, log, port, quitChan)
+			handleKeyboardInput(server, log, actualPort, quitChan)
 		}()
 
 		// Wait for quit signal (keyboard or interrupt)

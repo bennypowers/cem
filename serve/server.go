@@ -154,6 +154,8 @@ func NewServerWithConfig(config Config) (*Server, error) {
 
 // Port returns the server's port
 func (s *Server) Port() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.port
 }
 
@@ -253,6 +255,11 @@ func (s *Server) Start() error {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", s.port))
 	if err != nil {
 		return fmt.Errorf("failed to bind port %d: %w", s.port, err)
+	}
+
+	// When port 0 is requested, update to the actual port assigned by the OS
+	if s.port == 0 {
+		s.port = listener.Addr().(*net.TCPAddr).Port
 	}
 
 	// Limit total concurrent connections to prevent resource exhaustion
