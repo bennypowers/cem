@@ -16,6 +16,8 @@ bennypowers.dev/tree-sitter-handlebars v0.1.1 h1:JqzXwslMjbtH1Z73iJbtqTCW/ET0MFk
 bennypowers.dev/tree-sitter-handlebars v0.1.1/go.mod h1:U2HyV0nhqQZAWU5SjpvTKT/ahOcLHYAQgM1z6nJ3YJI=
 bennypowers.dev/tree-sitter-jinja-dialects v0.1.1 h1:04RG/fGUgOQnmI0NzkBFTY249y/s+xAG1lP35T5QJaM=
 bennypowers.dev/tree-sitter-jinja-dialects v0.1.1/go.mod h1:CwooWUonL1YUBFVF/tDf7muTjIUtc/4PczSO3zokpro=
+github.com/EmranMR/tree-sitter-blade v0.12.3 h1:fHlO2FYPa3za3VofNqVR9w5L8khuwm2V2rbtXO2DIVw=
+github.com/EmranMR/tree-sitter-blade v0.12.3/go.mod h1:nZ3dJUgOfc2zaLba4caFAUWFevlo88VuLCU/EUD/29U=
 github.com/IBM/fp-go v1.0.153 h1:KkzjWvInCfW1queBSpb1DV2/ZkaTIKVqV3dO8WfOvas=
 github.com/IBM/fp-go v1.0.153/go.mod h1:nP/DzXfi+FphWiZw4Iivp+ZT2lCWuP/H1hkRPNmC+OM=
 github.com/MarvinJWendt/testza v0.1.0/go.mod h1:7AxNvlfeHP7Z/hDQ5JtE3OKYT3XFUeLCDE2DQninSqs=

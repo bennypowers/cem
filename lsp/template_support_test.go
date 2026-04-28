@@ -516,6 +516,9 @@ func TestTemplate_CompletionContext_ComparisonOperator(t *testing.T) {
 		{"ejs", "comparison-operator.ejs", "test://cmp.ejs", protocol.Position{Line: 1, Character: 1}, types.CompletionTagName, ""},
 		{"nunjucks-in-template", "comparison-operator.njk", "test://cmp.njk", protocol.Position{Line: 1, Character: 10}, types.CompletionUnknown, ""},
 		{"multibyte", "multibyte.njk", "test://utf8.njk", protocol.Position{Line: 1, Character: 1}, types.CompletionTagName, "my-element"},
+		{"blade", "comparison-operator.blade.php", "test://cmp.blade.php", protocol.Position{Line: 1, Character: 1}, types.CompletionTagName, "my-element"},
+		{"blade-in-directive", "comparison-operator.blade.php", "test://dir.blade.php", protocol.Position{Line: 0, Character: 5}, types.CompletionUnknown, ""},
+		{"blade-multibyte", "blade-multibyte.blade.php", "test://utf8.blade.php", protocol.Position{Line: 1, Character: 1}, types.CompletionTagName, "my-element"},
 	}
 
 	for _, tt := range tests {
@@ -568,6 +571,8 @@ func TestTemplate_HeadInsertionPoint(t *testing.T) {
 	}{
 		{"with-head", "head-section.njk", "test://head.njk", true, 4},
 		{"headless", "headless.njk", "test://nohead.njk", false, 0},
+		{"blade-with-head", "blade-head-section.blade.php", "test://head.blade.php", true, 4},
+		{"blade-headless", "blade-headless.blade.php", "test://nohead.blade.php", false, 0},
 	}
 
 	for _, tt := range tests {
@@ -596,7 +601,9 @@ func TestTemplate_EdgeCases(t *testing.T) {
 		wantElements []string
 	}{
 		{"pure-template", "pure-template.njk", "test://pure.njk", nil},
-		{"pure-html", "pure-html.njk", "test://pure.njk", []string{"my-element"}},
+		{"pure-html", "pure-html.njk", "test://purehtml.njk", []string{"my-element"}},
+		{"pure-blade", "pure-blade.blade.php", "test://pure.blade.php", nil},
+		{"pure-html-blade", "pure-html.blade.php", "test://purehtml.blade.php", []string{"my-element"}},
 	}
 
 	for _, tt := range tests {
@@ -611,5 +618,230 @@ func TestTemplate_EdgeCases(t *testing.T) {
 				assertElementsFound(t, elements, tt.wantElements)
 			}
 		})
+	}
+}
+
+// Blade Custom Element Extraction
+// ============================================================================
+
+func TestBlade_FindCustomElements(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "blade-wordpress-theme.blade.php")
+	elements := openAndFindElements(t, dm, "test://theme.blade.php", content)
+
+	assertElementsFound(t, elements, []string{
+		"page-header", "content-grid", "post-card",
+		"page-navigation", "site-footer", "nav-menu", "nav-item",
+	})
+}
+
+func TestBlade_AttributeExtraction(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "blade-conditional-attr.blade.php")
+	elements := openAndFindElements(t, dm, "test://attr.blade.php", content)
+
+	el := findElement(elements, "nav-menu")
+	if el == nil {
+		t.Fatal("nav-menu not found")
+	}
+	if v, ok := el.Attributes["orientation"]; !ok || v.Value != "horizontal" {
+		t.Errorf("Expected orientation='horizontal', got %+v", el.Attributes["orientation"])
+	}
+}
+
+func TestBlade_NoCustomElements(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "no-elements.blade.php")
+	elements := openAndFindElements(t, dm, "test://noce.blade.php", content)
+
+	if len(elements) != 0 {
+		t.Errorf("Expected no custom elements, got %d: %v", len(elements), tagNames(elements))
+	}
+}
+
+func TestBlade_PositionPreservation(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "blade-conditional-attr.blade.php")
+	elements := openAndFindElements(t, dm, "test://pos.blade.php", content)
+
+	el := findElement(elements, "site-header")
+	if el == nil {
+		t.Fatal("site-header not found")
+	}
+	if el.Range.Start.Line != 3 {
+		t.Errorf("Expected site-header on line 3, got %d", el.Range.Start.Line)
+	}
+}
+
+func TestBlade_DocumentUpdate(t *testing.T) {
+	dm := newTemplateDM(t)
+	content1 := readTemplateFixture(t, "blade-conditional-attr.blade.php")
+	elements1 := openAndFindElements(t, dm, "test://update.blade.php", content1)
+	count1 := len(elements1)
+
+	content2 := readTemplateFixture(t, "blade-wordpress-theme.blade.php")
+	doc2 := dm.UpdateDocument("test://update.blade.php", content2, 2)
+	elements2, err := doc2.FindCustomElements(dm)
+	if err != nil {
+		t.Fatalf("FindCustomElements failed: %v", err)
+	}
+
+	if len(elements2) == count1 {
+		t.Error("Expected different element count after document update")
+	}
+
+	// Verify specific elements from updated content are present
+	for _, expected := range []string{"page-header", "content-grid", "post-card", "site-footer"} {
+		if findElement(elements2, expected) == nil {
+			t.Errorf("Expected %q in updated document", expected)
+		}
+	}
+	// Verify elements from old content are gone
+	if findElement(elements2, "rh-tile") != nil {
+		t.Error("Expected rh-tile from old content to be gone after update")
+	}
+}
+
+func TestBlade_DeepNesting(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "blade-deep-nesting.blade.php")
+	elements := openAndFindElements(t, dm, "test://deep.blade.php", content)
+
+	// Blade grammar wraps @section content in ERROR nodes, so the outermost
+	// page-layout element may not be found. Elements deeper in the nesting
+	// that are direct children of other elements ARE found.
+	deepElements := []string{"content-section", "section-header", "card-element"}
+	for _, tag := range deepElements {
+		el := findElement(elements, tag)
+		if el == nil {
+			t.Errorf("Expected %q at deep nesting level", tag)
+		}
+	}
+
+	section := findElement(elements, "content-section")
+	if section != nil {
+		if _, ok := section.Attributes["id"]; !ok {
+			t.Error("Expected id attribute (with interpolation) on content-section")
+		}
+	}
+}
+
+func TestBlade_InterpolationEdgeCases(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "blade-interpolation-edge-cases.blade.php")
+	elements := openAndFindElements(t, dm, "test://interp.blade.php", content)
+
+	assertElementsFound(t, elements, []string{"my-element", "status-badge"})
+
+	el := findElement(elements, "my-element")
+	if el == nil {
+		t.Fatal("my-element not found")
+	}
+
+	tests := []struct {
+		attr     string
+		contains string
+	}{
+		{"id", "el-{{ $id }}"},
+		{"variant", "{{ $variant }}"},
+		{"title", "{!! $rawTitle !!}"},
+		{"data-count", "{{ $items->count() }}"},
+	}
+	for _, tt := range tests {
+		v, ok := el.Attributes[tt.attr]
+		if !ok {
+			t.Errorf("Expected %q attribute", tt.attr)
+			continue
+		}
+		if v.Value != tt.contains {
+			t.Errorf("Expected %q value %q, got %q", tt.attr, tt.contains, v.Value)
+		}
+	}
+
+	for name := range el.Attributes {
+		if name == "{{" || name == "}}" || name == "{!!" || name == "!!}" {
+			t.Errorf("Interpolation token %q leaked as attribute name", name)
+		}
+	}
+}
+
+func TestBlade_EchoInAttribute(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "blade-echo-in-attr.blade.php")
+	elements := openAndFindElements(t, dm, "test://echo.blade.php", content)
+
+	assertElementsFound(t, elements, []string{"my-element"})
+
+	el := findElement(elements, "my-element")
+	if el == nil {
+		t.Fatal("my-element not found")
+	}
+
+	if _, ok := el.Attributes["id"]; !ok {
+		t.Error("Expected id attribute")
+	}
+	if _, ok := el.Attributes["variant"]; !ok {
+		t.Error("Expected variant attribute")
+	}
+}
+
+func TestBlade_DisabledDirective(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "blade-disabled-directive.blade.php")
+	elements := openAndFindElements(t, dm, "test://disabled.blade.php", content)
+
+	assertElementsFound(t, elements, []string{"my-element", "my-input"})
+
+	el := findElement(elements, "my-element")
+	if el == nil {
+		t.Fatal("my-element not found")
+	}
+	if _, ok := el.Attributes["compact"]; !ok {
+		t.Error("Expected compact attribute before directive")
+	}
+	// NOTE: attributes after @disabled directive may not be captured because
+	// the directive attribute (attribute (directive) (parameter)) doesn't match
+	// the query pattern (attribute (attribute_name) ...), breaking the * repetition
+}
+
+func TestBlade_InTagConditional(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "blade-intag-conditional.blade.php")
+	elements := openAndFindElements(t, dm, "test://intag.blade.php", content)
+
+	assertElementsFound(t, elements, []string{"site-header", "nav-menu", "rh-tile"})
+
+	el := findElement(elements, "rh-tile")
+	if el == nil {
+		t.Fatal("rh-tile not found")
+	}
+	if _, ok := el.Attributes["compact"]; !ok {
+		t.Error("Expected compact attribute on rh-tile")
+	}
+	if _, ok := el.Attributes["bleed"]; !ok {
+		t.Error("Expected bleed attribute on rh-tile")
+	}
+}
+
+func TestBlade_ExtensionRouting(t *testing.T) {
+	dm := newTemplateDM(t)
+	content := readTemplateFixture(t, "blade-conditional-attr.blade.php")
+	elements := openAndFindElements(t, dm, "test://page.blade.php", content)
+
+	if len(elements) == 0 {
+		t.Error("Expected custom elements from .blade.php file")
+	}
+
+	el := findElement(elements, "site-header")
+	if el == nil {
+		t.Error("Expected site-header from blade template")
+	}
+
+	// Verify .php files don't route to blade handler
+	phpContent := "<?php echo 'hello'; ?>\n<my-element></my-element>"
+	phpElements := openAndFindElements(t, dm, "test://page.php", phpContent)
+	phpEl := findElement(phpElements, "my-element")
+	if phpEl == nil {
+		t.Error("Expected my-element from .php file (should use PHP handler, not blade)")
 	}
 }

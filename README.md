@@ -77,7 +77,7 @@ The `cem lsp` command starts a Language Server Protocol (LSP) server that provid
   - Attribute value validation against manifest type definitions (union types, literals, numbers, booleans)
 - Go-to-definition support for jumping to element source code
 - Go-to-references to find all usages of custom elements across your workspace
-- Support for HTML files and TypeScript template literals
+- Support for HTML, Blade, PHP, Nunjucks, Jinja2, Handlebars, Twig, Liquid, ERB, EJS, and TypeScript template literals
 - Automatic manifest discovery and live reloading
 
 **IDE Extensions:**

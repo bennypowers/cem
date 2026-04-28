@@ -270,7 +270,7 @@ func (d *HTMLDocument) findCustomElements(handler *Handler) ([]types.CustomEleme
 	content := d.content // Access content directly while holding lock
 
 	// Create a fresh query matcher for thread safety
-	matcher, err := Q.GetCachedQueryMatcher(handler.queryManager, "html", "customElements")
+	matcher, err := Q.GetCachedQueryMatcher(handler.queryManager, handler.language, "customElements")
 	if err != nil {
 		helpers.SafeDebugLog("[HTML] Failed to create custom elements matcher: %v", err)
 		return elements, nil
@@ -385,7 +385,7 @@ func (d *HTMLDocument) analyzeCompletionContext(position protocol.Position, hand
 	helpers.SafeDebugLog("[HTML] analyzeCompletionContext: content=%q, position=%+v, byteOffset=%d", content, position, byteOffset)
 
 	// Create a fresh completion context query matcher for thread safety
-	completionMatcher, err := Q.GetCachedQueryMatcher(handler.queryManager, "html", "completionContext")
+	completionMatcher, err := Q.GetCachedQueryMatcher(handler.queryManager, handler.language, "completionContext")
 	if err != nil {
 		helpers.SafeDebugLog("[HTML] Failed to create completion context matcher: %v", err)
 		return analysis
@@ -676,7 +676,7 @@ func (d *HTMLDocument) AnalyzeCompletionContextTS(position protocol.Position, dm
 	if dmValue.Kind() == reflect.Pointer && !dmValue.IsNil() {
 		method := dmValue.MethodByName("GetLanguageHandler")
 		if method.IsValid() {
-			results := method.Call([]reflect.Value{reflect.ValueOf("html")})
+			results := method.Call([]reflect.Value{reflect.ValueOf(d.language)})
 			if len(results) > 0 && !results[0].IsNil() {
 				handler := results[0].Interface()
 				if h, ok := handler.(interface {
@@ -712,7 +712,7 @@ func (d *HTMLDocument) FindElementAtPosition(position protocol.Position, dm any)
 	if dmValue.Kind() == reflect.Pointer && !dmValue.IsNil() {
 		method := dmValue.MethodByName("GetLanguageHandler")
 		if method.IsValid() {
-			results := method.Call([]reflect.Value{reflect.ValueOf("html")})
+			results := method.Call([]reflect.Value{reflect.ValueOf(d.language)})
 			if len(results) > 0 && !results[0].IsNil() {
 				handler := results[0].Interface()
 				if h, ok := handler.(interface {
@@ -734,7 +734,7 @@ func (d *HTMLDocument) FindAttributeAtPosition(position protocol.Position, dm an
 	if dmValue.Kind() == reflect.Pointer && !dmValue.IsNil() {
 		method := dmValue.MethodByName("GetLanguageHandler")
 		if method.IsValid() {
-			results := method.Call([]reflect.Value{reflect.ValueOf("html")})
+			results := method.Call([]reflect.Value{reflect.ValueOf(d.language)})
 			if len(results) > 0 && !results[0].IsNil() {
 				handler := results[0].Interface()
 				if h, ok := handler.(interface {
@@ -756,7 +756,7 @@ func (d *HTMLDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, e
 	if dmValue.Kind() == reflect.Pointer && !dmValue.IsNil() {
 		method := dmValue.MethodByName("GetLanguageHandler")
 		if method.IsValid() {
-			results := method.Call([]reflect.Value{reflect.ValueOf("html")})
+			results := method.Call([]reflect.Value{reflect.ValueOf(d.language)})
 			if len(results) > 0 && !results[0].IsNil() {
 				handler := results[0].Interface()
 				if h, ok := handler.(interface {
@@ -801,7 +801,7 @@ func (d *HTMLDocument) findHeadInsertionPoint(handler *Handler) (protocol.Positi
 
 	content := d.content
 
-	matcher, err := Q.GetCachedQueryMatcher(handler.queryManager, "html", "headElements")
+	matcher, err := Q.GetCachedQueryMatcher(handler.queryManager, handler.language, "headElements")
 	if err != nil {
 		helpers.SafeDebugLog("[HTML] findHeadInsertionPoint: failed to create matcher: %v", err)
 		return protocol.Position{}, false
@@ -825,7 +825,7 @@ func (d *HTMLDocument) FindHeadInsertionPoint(dm any) (protocol.Position, bool) 
 	if dmValue.Kind() == reflect.Pointer && !dmValue.IsNil() {
 		method := dmValue.MethodByName("GetLanguageHandler")
 		if method.IsValid() {
-			results := method.Call([]reflect.Value{reflect.ValueOf("html")})
+			results := method.Call([]reflect.Value{reflect.ValueOf(d.language)})
 			if len(results) > 0 && !results[0].IsNil() {
 				handler := results[0].Interface()
 				if h, ok := handler.(interface {

@@ -29,24 +29,34 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-// Handler implements language-specific operations for HTML documents
+// Handler implements language-specific operations for HTML documents.
+// The language field controls which compiled queries are used (e.g. "html"
+// or "blade"), allowing grammars with compatible node structures to reuse
+// the same query patterns and document logic.
 type Handler struct {
 	queryManager *Q.QueryManager
+	language     string
 	mu           sync.RWMutex
 }
 
 // NewHandler creates a new HTML language handler
 func NewHandler(queryManager *Q.QueryManager) (*Handler, error) {
+	return NewHandlerWithLanguage(queryManager, "html")
+}
+
+// NewHandlerWithLanguage creates a handler that uses queries compiled for the
+// given language. Blade uses this to run html/*.scm queries compiled against
+// the Blade grammar.
+func NewHandlerWithLanguage(queryManager *Q.QueryManager, language string) (*Handler, error) {
 	h := &Handler{
 		queryManager: queryManager,
+		language:     language,
 	}
-
 	return h, nil
 }
 
-// Language returns the language identifier
 func (h *Handler) Language() string {
-	return "html"
+	return h.language
 }
 
 // CreateDocument creates a new HTML document
@@ -55,7 +65,7 @@ func (h *Handler) CreateDocument(uri, content string, version int32) types.Docum
 		uri:      uri,
 		content:  content,
 		version:  version,
-		language: "html",
+		language: h.language,
 	}
 
 	if err := doc.Parse(content); err != nil {
@@ -75,12 +85,30 @@ func (h *Handler) CreateDocumentWithRanges(uri, content string, version int32, r
 		uri:      uri,
 		content:  content,
 		version:  version,
-		language: "html",
+		language: h.language,
 	}
 
 	if err := doc.ParseWithRanges(content, ranges); err != nil {
 		helpers.SafeDebugLog("[HTML] Failed to parse document with ranges %s: %v", uri, err)
 	}
+
+	h.finalizeDocument(doc)
+	return doc
+}
+
+// CreateDocumentWithTree creates an HTML document from a pre-parsed tree.
+// Used by Blade handler where the grammar produces HTML-compatible nodes
+// directly, so the same queries work without re-parsing.
+func (h *Handler) CreateDocumentWithTree(uri, content string, version int32, tree *ts.Tree) types.Document {
+	doc := &HTMLDocument{
+		uri:      uri,
+		content:  content,
+		version:  version,
+		language: h.language,
+	}
+
+	doc.UpdateContent(content, version)
+	doc.SetTree(tree)
 
 	h.finalizeDocument(doc)
 	return doc
@@ -193,7 +221,7 @@ func (h *Handler) ParseScriptTags(doc types.Document) ([]types.ScriptTag, error)
 	var scriptTags []types.ScriptTag
 
 	// Create a fresh script tags query matcher for thread safety
-	scriptTagsMatcher, err := Q.GetCachedQueryMatcher(h.queryManager, "html", "scriptTags")
+	scriptTagsMatcher, err := Q.GetCachedQueryMatcher(h.queryManager, h.language, "scriptTags")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create script tags matcher: %w", err)
 	}
