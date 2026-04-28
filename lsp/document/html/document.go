@@ -31,7 +31,8 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-// HTMLDocument represents an HTML document with tree-sitter parsing
+// HTMLDocument represents an HTML document with tree-sitter parsing.
+// Always use NewHTMLDocument to construct; a zero-value HTMLDocument will panic.
 type HTMLDocument struct {
 	*base.BaseDocument
 	importMap map[string]string

@@ -30,7 +30,7 @@ func AnalyzeCompletionContext(doc types.Document, position protocol.Position, tr
 }
 
 // AnalyzeCompletionContextWithDM determines what completion should be provided using tree-sitter with DocumentManager
-func AnalyzeCompletionContextWithDM(doc types.Document, position protocol.Position, triggerChar string, dm any) (*types.CompletionAnalysis, error) {
+func AnalyzeCompletionContextWithDM(doc types.Document, position protocol.Position, triggerChar string, dm types.HandlerProvider) (*types.CompletionAnalysis, error) {
 	if doc == nil {
 		return nil, fmt.Errorf("document is nil")
 	}
@@ -51,16 +51,7 @@ func AnalyzeCompletionContextWithDM(doc types.Document, position protocol.Positi
 		return nil, fmt.Errorf("position character %d is out of bounds for line %d (line has %d characters)", position.Character, position.Line, len(lineContent))
 	}
 
-	// Check if document supports tree-sitter analysis
-	docWithTreeSitter, ok := doc.(interface {
-		AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis
-	})
-	if !ok {
-		return nil, fmt.Errorf("document does not support tree-sitter completion context analysis")
-	}
-
-	// Use tree-sitter analysis - this is the only supported method
-	tsAnalysis := docWithTreeSitter.AnalyzeCompletionContextTS(position, dm)
+	tsAnalysis := doc.AnalyzeCompletionContextTS(position, dm)
 	if tsAnalysis == nil {
 		return nil, fmt.Errorf("tree-sitter completion context analysis returned nil")
 	}

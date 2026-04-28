@@ -38,7 +38,8 @@ const (
 	MAX_REASONABLE_TAG_LENGTH = 10
 )
 
-// TSXDocument represents a TSX document with tree-sitter parsing
+// TSXDocument represents a TSX document with tree-sitter parsing.
+// Always use NewTSXDocument to construct; a zero-value TSXDocument will panic.
 type TSXDocument struct {
 	*base.BaseDocument
 }

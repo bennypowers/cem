@@ -38,6 +38,7 @@ type cachedTree struct {
 }
 
 // TypeScriptDocument represents a TypeScript document with tree-sitter parsing.
+// Always use NewTypeScriptDocument to construct; a zero-value TypeScriptDocument will panic.
 //
 // Lock ordering: BaseDocument.mu is never held when cacheMu is acquired.
 // Both SetTree and UpdateContent acquire mu (via BaseDocument) then release it

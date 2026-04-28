@@ -17,18 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package base
 
 import (
-	"fmt"
-	"reflect"
 	"strings"
 	"sync"
 
-	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-// BaseDocument provides common document functionality that language-specific documents can embed
+// BaseDocument provides common document functionality that language-specific documents can embed.
+// Always use NewBaseDocument to construct; a zero-value BaseDocument will panic.
 type BaseDocument struct {
 	uri          string
 	content      string
@@ -58,16 +56,6 @@ func NewBaseDocument(uri, content string, version int32, language string, return
 
 // URI returns the document URI
 func (d *BaseDocument) URI() string {
-	if d == nil {
-		return ""
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			helpers.SafeDebugLog("[DOCUMENT] PANIC in URI(): %v", r)
-		}
-	}()
-
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.uri
@@ -75,16 +63,6 @@ func (d *BaseDocument) URI() string {
 
 // Content returns the document content
 func (d *BaseDocument) Content() (string, error) {
-	if d == nil {
-		return "", fmt.Errorf("document is nil")
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			helpers.SafeDebugLog("[DOCUMENT] PANIC in Content(): %v", r)
-		}
-	}()
-
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.content, nil
@@ -92,16 +70,6 @@ func (d *BaseDocument) Content() (string, error) {
 
 // Version returns the document version
 func (d *BaseDocument) Version() int32 {
-	if d == nil {
-		return 0
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			helpers.SafeDebugLog("[DOCUMENT] PANIC in Version(): %v", r)
-		}
-	}()
-
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.version
@@ -109,10 +77,6 @@ func (d *BaseDocument) Version() int32 {
 
 // Language returns the document language
 func (d *BaseDocument) Language() string {
-	if d == nil {
-		return ""
-	}
-
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.language
@@ -120,10 +84,6 @@ func (d *BaseDocument) Language() string {
 
 // Tree returns the document's syntax tree
 func (d *BaseDocument) Tree() *ts.Tree {
-	if d == nil {
-		return nil
-	}
-
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.tree
@@ -297,24 +257,6 @@ func (d *BaseDocument) PositionToByteOffset(pos protocol.Position, content strin
 	return offset
 }
 
-// languageHandler uses reflection to retrieve the language handler from a document manager.
-// This avoids circular imports between document and handler packages.
-func (d *BaseDocument) languageHandler(dm any) any {
-	dmValue := reflect.ValueOf(dm)
-	if dmValue.Kind() != reflect.Pointer || dmValue.IsNil() {
-		return nil
-	}
-	method := dmValue.MethodByName("GetLanguageHandler")
-	if !method.IsValid() {
-		return nil
-	}
-	results := method.Call([]reflect.Value{reflect.ValueOf(d.language)})
-	if len(results) == 0 || results[0].IsNil() {
-		return nil
-	}
-	return results[0].Interface()
-}
-
 // outer returns the concrete document type for handler delegation.
 // When embedded, self points to the outer struct; standalone, it falls back to d.
 func (d *BaseDocument) outer() types.Document {
@@ -325,64 +267,59 @@ func (d *BaseDocument) outer() types.Document {
 }
 
 // FindElementAtPosition finds a custom element at the given position.
-func (d *BaseDocument) FindElementAtPosition(position protocol.Position, dm any) *types.CustomElementMatch {
-	handler := d.languageHandler(dm)
+func (d *BaseDocument) FindElementAtPosition(position protocol.Position, hp types.HandlerProvider) *types.CustomElementMatch {
+	if hp == nil {
+		return nil
+	}
+	handler := hp.GetLanguageHandler(d.language)
 	if handler == nil {
 		return nil
 	}
-	if h, ok := handler.(interface {
-		FindElementAtPosition(types.Document, protocol.Position) *types.CustomElementMatch
-	}); ok {
-		return h.FindElementAtPosition(d.outer(), position)
-	}
-	return nil
+	return handler.FindElementAtPosition(d.outer(), position)
 }
 
 // FindAttributeAtPosition finds an attribute at the given position.
-func (d *BaseDocument) FindAttributeAtPosition(position protocol.Position, dm any) (*types.AttributeMatch, string) {
-	handler := d.languageHandler(dm)
+func (d *BaseDocument) FindAttributeAtPosition(position protocol.Position, hp types.HandlerProvider) (*types.AttributeMatch, string) {
+	if hp == nil {
+		return nil, ""
+	}
+	handler := hp.GetLanguageHandler(d.language)
 	if handler == nil {
 		return nil, ""
 	}
-	if h, ok := handler.(interface {
-		FindAttributeAtPosition(types.Document, protocol.Position) (*types.AttributeMatch, string)
-	}); ok {
-		return h.FindAttributeAtPosition(d.outer(), position)
-	}
-	return nil, ""
+	return handler.FindAttributeAtPosition(d.outer(), position)
 }
 
 // FindCustomElements finds custom elements in the document.
-func (d *BaseDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
-	handler := d.languageHandler(dm)
+func (d *BaseDocument) FindCustomElements(hp types.HandlerProvider) ([]types.CustomElementMatch, error) {
+	if hp == nil {
+		return []types.CustomElementMatch{}, nil
+	}
+	handler := hp.GetLanguageHandler(d.language)
 	if handler == nil {
 		return []types.CustomElementMatch{}, nil
 	}
-	if h, ok := handler.(interface {
-		FindCustomElements(types.Document) ([]types.CustomElementMatch, error)
-	}); ok {
-		return h.FindCustomElements(d.outer())
-	}
-	return []types.CustomElementMatch{}, nil
+	return handler.FindCustomElements(d.outer())
 }
 
 // AnalyzeCompletionContextTS analyzes completion context using tree-sitter queries.
-func (d *BaseDocument) AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis {
-	handler := d.languageHandler(dm)
+func (d *BaseDocument) AnalyzeCompletionContextTS(position protocol.Position, hp types.HandlerProvider) *types.CompletionAnalysis {
+	if hp == nil {
+		return &types.CompletionAnalysis{Type: types.CompletionUnknown}
+	}
+	handler := hp.GetLanguageHandler(d.language)
 	if handler == nil {
 		return &types.CompletionAnalysis{Type: types.CompletionUnknown}
 	}
-	if h, ok := handler.(interface {
-		AnalyzeCompletionContext(types.Document, protocol.Position) *types.CompletionAnalysis
-	}); ok {
-		return h.AnalyzeCompletionContext(d.outer(), position)
-	}
-	return &types.CompletionAnalysis{Type: types.CompletionUnknown}
+	return handler.AnalyzeCompletionContext(d.outer(), position)
 }
 
 // FindHeadInsertionPoint finds insertion point in <head> section.
-func (d *BaseDocument) FindHeadInsertionPoint(dm any) (protocol.Position, bool) {
-	handler := d.languageHandler(dm)
+func (d *BaseDocument) FindHeadInsertionPoint(hp types.HandlerProvider) (protocol.Position, bool) {
+	if hp == nil {
+		return protocol.Position{}, false
+	}
+	handler := hp.GetLanguageHandler(d.language)
 	if handler == nil {
 		return protocol.Position{}, false
 	}

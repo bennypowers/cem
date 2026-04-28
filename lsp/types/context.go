@@ -26,6 +26,8 @@ import (
 
 // DocumentManager interface for document operations
 type DocumentManager interface {
+	HandlerProvider
+
 	OpenDocument(uri, content string, version int32) Document
 	UpdateDocument(uri, content string, version int32) Document
 	UpdateDocumentWithChanges(uri, content string, version int32, changes []protocol.TextDocumentContentChangeEvent) Document
