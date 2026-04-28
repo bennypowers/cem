@@ -18,6 +18,7 @@ package document
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -37,17 +38,21 @@ type BaseDocument struct {
 	parser       *ts.Parser
 	scriptTags   []types.ScriptTag
 	returnParser func(*ts.Parser)
+	self         types.Document
 	mu           sync.RWMutex
 }
 
 // NewBaseDocument creates a new base document with a callback for returning parsers to the correct pool.
-func NewBaseDocument(uri, content string, version int32, language string, returnParser func(*ts.Parser)) *BaseDocument {
+// The self parameter should be set to the embedding struct (the concrete document type) so that
+// reflection-based handler delegation passes the correct type for handler type assertions.
+func NewBaseDocument(uri, content string, version int32, language string, returnParser func(*ts.Parser), self types.Document) *BaseDocument {
 	return &BaseDocument{
 		uri:          uri,
 		content:      content,
 		version:      version,
 		language:     language,
 		returnParser: returnParser,
+		self:         self,
 	}
 }
 
@@ -236,22 +241,9 @@ func (d *BaseDocument) FindModuleScript() (protocol.Position, bool) {
 	return protocol.Position{}, false
 }
 
-// FindInlineModuleScript finds the first inline module script (no src) and returns insertion position (default implementation)
+// FindInlineModuleScript delegates to FindModuleScript by default.
 func (d *BaseDocument) FindInlineModuleScript() (protocol.Position, bool) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-
-	for _, script := range d.scriptTags {
-		if script.IsModule && script.Src == "" {
-			// Return position at the end of the script content for insertion
-			return protocol.Position{
-				Line:      script.ContentRange.End.Line,
-				Character: 0, // Start of line for clean insertion
-			}, true
-		}
-	}
-
-	return protocol.Position{}, false
+	return d.FindModuleScript()
 }
 
 // TreeAndContent returns the tree and content atomically under one lock.
@@ -313,4 +305,101 @@ func (d *BaseDocument) PositionToByteOffset(pos protocol.Position, content strin
 	}
 
 	return offset
+}
+
+// getLanguageHandler uses reflection to retrieve the language handler from a document manager.
+// This avoids circular imports between document and handler packages.
+func (d *BaseDocument) getLanguageHandler(dm any) any {
+	dmValue := reflect.ValueOf(dm)
+	if dmValue.Kind() != reflect.Pointer || dmValue.IsNil() {
+		return nil
+	}
+	method := dmValue.MethodByName("GetLanguageHandler")
+	if !method.IsValid() {
+		return nil
+	}
+	results := method.Call([]reflect.Value{reflect.ValueOf(d.language)})
+	if len(results) == 0 || results[0].IsNil() {
+		return nil
+	}
+	return results[0].Interface()
+}
+
+// doc returns the concrete document type for handler delegation.
+// When embedded, self points to the outer struct; standalone, it falls back to d.
+func (d *BaseDocument) doc() types.Document {
+	if d.self != nil {
+		return d.self
+	}
+	return d
+}
+
+// FindElementAtPosition finds a custom element at the given position.
+func (d *BaseDocument) FindElementAtPosition(position protocol.Position, dm any) *types.CustomElementMatch {
+	handler := d.getLanguageHandler(dm)
+	if handler == nil {
+		return nil
+	}
+	if h, ok := handler.(interface {
+		FindElementAtPosition(types.Document, protocol.Position) *types.CustomElementMatch
+	}); ok {
+		return h.FindElementAtPosition(d.doc(), position)
+	}
+	return nil
+}
+
+// FindAttributeAtPosition finds an attribute at the given position.
+func (d *BaseDocument) FindAttributeAtPosition(position protocol.Position, dm any) (*types.AttributeMatch, string) {
+	handler := d.getLanguageHandler(dm)
+	if handler == nil {
+		return nil, ""
+	}
+	if h, ok := handler.(interface {
+		FindAttributeAtPosition(types.Document, protocol.Position) (*types.AttributeMatch, string)
+	}); ok {
+		return h.FindAttributeAtPosition(d.doc(), position)
+	}
+	return nil, ""
+}
+
+// FindCustomElements finds custom elements in the document.
+func (d *BaseDocument) FindCustomElements(dm any) ([]types.CustomElementMatch, error) {
+	handler := d.getLanguageHandler(dm)
+	if handler == nil {
+		return []types.CustomElementMatch{}, nil
+	}
+	if h, ok := handler.(interface {
+		FindCustomElements(types.Document) ([]types.CustomElementMatch, error)
+	}); ok {
+		return h.FindCustomElements(d.doc())
+	}
+	return []types.CustomElementMatch{}, nil
+}
+
+// AnalyzeCompletionContextTS analyzes completion context using tree-sitter queries.
+func (d *BaseDocument) AnalyzeCompletionContextTS(position protocol.Position, dm any) *types.CompletionAnalysis {
+	handler := d.getLanguageHandler(dm)
+	if handler == nil {
+		return &types.CompletionAnalysis{Type: types.CompletionUnknown}
+	}
+	if h, ok := handler.(interface {
+		AnalyzeCompletionContext(types.Document, protocol.Position) *types.CompletionAnalysis
+	}); ok {
+		return h.AnalyzeCompletionContext(d.doc(), position)
+	}
+	return &types.CompletionAnalysis{Type: types.CompletionUnknown}
+}
+
+// FindHeadInsertionPoint finds insertion point in <head> section.
+func (d *BaseDocument) FindHeadInsertionPoint(dm any) (protocol.Position, bool) {
+	handler := d.getLanguageHandler(dm)
+	if handler == nil {
+		return protocol.Position{}, false
+	}
+	if h, ok := handler.(interface {
+		FindHeadInsertionPoint(types.Document) (protocol.Position, bool)
+	}); ok {
+		return h.FindHeadInsertionPoint(d.doc())
+	}
+	return protocol.Position{}, false
 }

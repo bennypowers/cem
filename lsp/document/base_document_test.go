@@ -11,7 +11,7 @@ func TestSetParser_CallbackFiresWithOldParser(t *testing.T) {
 	var returned *ts.Parser
 	callback := func(p *ts.Parser) { returned = p }
 
-	doc := NewBaseDocument("test.html", "", 1, "html", callback)
+	doc := NewBaseDocument("test.html", "", 1, "html", callback, nil)
 	oldParser := ts.NewParser()
 	defer oldParser.Close()
 	newParser := ts.NewParser()
@@ -27,7 +27,7 @@ func TestSetParser_SameParserDoesNotFireCallback(t *testing.T) {
 	called := false
 	callback := func(p *ts.Parser) { called = true }
 
-	doc := NewBaseDocument("test.html", "", 1, "html", callback)
+	doc := NewBaseDocument("test.html", "", 1, "html", callback, nil)
 	parser := ts.NewParser()
 	defer parser.Close()
 
@@ -41,7 +41,7 @@ func TestSetParser_NoPreviousParserDoesNotFireCallback(t *testing.T) {
 	called := false
 	callback := func(p *ts.Parser) { called = true }
 
-	doc := NewBaseDocument("test.html", "", 1, "html", callback)
+	doc := NewBaseDocument("test.html", "", 1, "html", callback, nil)
 	parser := ts.NewParser()
 	defer parser.Close()
 
@@ -54,7 +54,7 @@ func TestClose_FiresCallbackWithParser(t *testing.T) {
 	var returned *ts.Parser
 	callback := func(p *ts.Parser) { returned = p }
 
-	doc := NewBaseDocument("test.html", "", 1, "html", callback)
+	doc := NewBaseDocument("test.html", "", 1, "html", callback, nil)
 	parser := ts.NewParser()
 
 	doc.SetParser(parser)
@@ -68,14 +68,14 @@ func TestClose_NoParserDoesNotFireCallback(t *testing.T) {
 	called := false
 	callback := func(p *ts.Parser) { called = true }
 
-	doc := NewBaseDocument("test.html", "", 1, "html", callback)
+	doc := NewBaseDocument("test.html", "", 1, "html", callback, nil)
 	doc.Close()
 
 	assert.False(t, called, "callback should not fire when no parser exists")
 }
 
 func TestClose_NilCallbackDoesNotPanic(t *testing.T) {
-	doc := NewBaseDocument("test.html", "", 1, "html", nil)
+	doc := NewBaseDocument("test.html", "", 1, "html", nil, nil)
 	parser := ts.NewParser()
 
 	doc.SetParser(parser)
@@ -86,7 +86,7 @@ func TestClose_NilCallbackDoesNotPanic(t *testing.T) {
 }
 
 func TestTreeAndContent_ReturnsAtomicSnapshot(t *testing.T) {
-	doc := NewBaseDocument("test.html", "<div>hello</div>", 1, "html", nil)
+	doc := NewBaseDocument("test.html", "<div>hello</div>", 1, "html", nil, nil)
 
 	tree, content := doc.TreeAndContent()
 
