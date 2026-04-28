@@ -161,9 +161,10 @@ func (d *TypeScriptDocument) getCachedHTMLTree(templateContent string) *ts.Tree 
 			d.cacheMu.Lock()
 			if cached, exists := d.cachedHTMLTrees[contentHash]; exists && cached != nil && cached.tree != nil {
 				cached.refs++
+				refs := cached.refs
 				tree := cached.tree
 				d.cacheMu.Unlock()
-				helpers.SafeDebugLog("[CACHE] HTML tree cache HIT (hash=%x, refs=%d)", contentHash[:8], cached.refs)
+				helpers.SafeDebugLog("[CACHE] HTML tree cache HIT (hash=%x, refs=%d)", contentHash[:8], refs)
 				return tree
 			}
 			d.cacheMu.Unlock()
@@ -274,10 +275,11 @@ func (d *TypeScriptDocument) findCustomElements(handler *Handler) ([]types.Custo
 		currentVersion, d.cacheVersion, d.cachedCustomElements == nil)
 	d.cacheMu.RUnlock()
 
-	tree, docContent := d.TreeAndContent()
+	tree, docContent, releaseTree := d.TreeAndContent()
 	if tree == nil {
 		return nil, fmt.Errorf("no tree available for document")
 	}
+	defer releaseTree()
 
 	var elements []types.CustomElementMatch
 
@@ -322,10 +324,11 @@ func (d *TypeScriptDocument) findHTMLTemplates(handler *Handler) ([]TemplateCont
 		currentVersion, d.cacheVersion, d.cachedTemplates == nil)
 	d.cacheMu.RUnlock()
 
-	tree, content := d.TreeAndContent()
+	tree, content, releaseTree := d.TreeAndContent()
 	if tree == nil {
 		return nil, fmt.Errorf("no tree available")
 	}
+	defer releaseTree()
 
 	var templates []TemplateContext
 
@@ -498,10 +501,11 @@ func (d *TypeScriptDocument) analyzeCompletionContext(
 		Type: types.CompletionUnknown,
 	}
 
-	tree, content := d.TreeAndContent()
+	tree, content, releaseTree := d.TreeAndContent()
 	if tree == nil {
 		return analysis
 	}
+	defer releaseTree()
 
 	byteOffset := d.PositionToByteOffset(position, content)
 

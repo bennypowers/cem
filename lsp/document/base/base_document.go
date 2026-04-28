@@ -19,12 +19,40 @@ package base
 import (
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"bennypowers.dev/cem/internal/textutil"
 	"bennypowers.dev/cem/lsp/types"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
+
+// refCountedTree wraps a tree-sitter tree with atomic reference counting.
+// The tree is only closed when the last reference is released.
+type refCountedTree struct {
+	tree *ts.Tree
+	refs atomic.Int32
+}
+
+func newRefCountedTree(tree *ts.Tree) *refCountedTree {
+	rc := &refCountedTree{tree: tree}
+	rc.refs.Store(1)
+	return rc
+}
+
+func (rc *refCountedTree) acquire() {
+	rc.refs.Add(1)
+}
+
+func (rc *refCountedTree) release() {
+	if n := rc.refs.Add(-1); n == 0 {
+		if rc.tree != nil {
+			rc.tree.Close()
+		}
+	} else if n < 0 {
+		panic("refCountedTree: negative ref count")
+	}
+}
 
 // BaseDocument provides common document functionality that language-specific documents can embed.
 // Always use NewBaseDocument to construct; a zero-value BaseDocument will panic.
@@ -33,7 +61,7 @@ type BaseDocument struct {
 	content      string
 	version      int32
 	language     string
-	tree         *ts.Tree
+	rcTree       *refCountedTree
 	parser       *ts.Parser
 	scriptTags   []types.ScriptTag
 	returnParser func(*ts.Parser)
@@ -83,21 +111,45 @@ func (d *BaseDocument) Language() string {
 	return d.language
 }
 
-// Tree returns the document's syntax tree
+// Tree returns the document's syntax tree for nil checks and use under URI lock.
+// Callers that dereference the tree (call RootNode, iterate matches, etc.)
+// outside of a URI lock MUST use AcquireTree or TreeAndContent instead.
 func (d *BaseDocument) Tree() *ts.Tree {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	return d.tree
+	if d.rcTree == nil {
+		return nil
+	}
+	return d.rcTree.tree
 }
 
-// SetTree sets the document's syntax tree (protected method for subclasses)
+// AcquireTree returns the tree and a release function that must be called
+// when the caller is done using the tree. The tree will not be freed until
+// all acquired references are released.
+func (d *BaseDocument) AcquireTree() (*ts.Tree, func()) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	if d.rcTree == nil {
+		return nil, func() {}
+	}
+	d.rcTree.acquire()
+	rc := d.rcTree
+	return rc.tree, rc.release
+}
+
+// SetTree sets the document's syntax tree (protected method for subclasses).
+// The old tree is released; it will be freed when all acquired references are gone.
 func (d *BaseDocument) SetTree(tree *ts.Tree) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	if d.tree != nil {
-		d.tree.Close()
+	if d.rcTree != nil {
+		d.rcTree.release()
 	}
-	d.tree = tree
+	if tree != nil {
+		d.rcTree = newRefCountedTree(tree)
+	} else {
+		d.rcTree = nil
+	}
 }
 
 // SetParser sets the document's parser, returning any previous parser to the pool.
@@ -147,13 +199,14 @@ func (d *BaseDocument) SetScriptTags(scriptTags []types.ScriptTag) {
 }
 
 // Close cleans up document resources, returning the parser to its pool.
+// The tree is released; it will be freed when all acquired references are gone.
 func (d *BaseDocument) Close() {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	if d.tree != nil {
-		d.tree.Close()
-		d.tree = nil
+	if d.rcTree != nil {
+		d.rcTree.release()
+		d.rcTree = nil
 	}
 
 	if d.parser != nil {
@@ -205,16 +258,18 @@ func (d *BaseDocument) FindInlineModuleScript() (protocol.Position, bool) {
 	return protocol.Position{}, false
 }
 
-// TreeAndContent returns the tree and content atomically under one lock.
-// Use this from sub-package methods that need both values consistently.
-//
-// The returned tree is safe to use after the lock releases because
-// DocumentManager serializes all operations on the same URI via per-URI
-// locks, preventing concurrent Close() from freeing the tree mid-use.
-func (d *BaseDocument) TreeAndContent() (*ts.Tree, string) {
+// TreeAndContent returns the tree, content, and a release function atomically.
+// The release function must be called when the caller is done using the tree.
+// The tree will not be freed until all acquired references are released.
+func (d *BaseDocument) TreeAndContent() (*ts.Tree, string, func()) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
-	return d.tree, d.content
+	if d.rcTree == nil {
+		return nil, d.content, func() {}
+	}
+	d.rcTree.acquire()
+	rc := d.rcTree
+	return rc.tree, d.content, rc.release
 }
 
 // ByteRangeToProtocolRange converts byte range to protocol range.

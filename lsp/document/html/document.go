@@ -126,10 +126,11 @@ func (d *HTMLDocument) findCustomElements(handler *Handler) ([]types.CustomEleme
 		return elements, nil
 	}
 
-	tree, content := d.TreeAndContent()
+	tree, content, releaseTree := d.TreeAndContent()
 	if tree == nil {
 		return elements, nil
 	}
+	defer releaseTree()
 
 	matcher, err := Q.GetCachedQueryMatcher(handler.queryManager, handler.language, "customElements")
 	if err != nil {
@@ -216,10 +217,11 @@ func (d *HTMLDocument) analyzeCompletionContext(position protocol.Position, hand
 		Type: types.CompletionUnknown,
 	}
 
-	tree, content := d.TreeAndContent()
+	tree, content, releaseTree := d.TreeAndContent()
 	if tree == nil {
 		return analysis
 	}
+	defer releaseTree()
 
 	byteOffset := d.PositionToByteOffset(position, content)
 
@@ -462,10 +464,11 @@ func (d *HTMLDocument) FindModuleScript() (protocol.Position, bool) {
 
 // findHeadInsertionPoint finds insertion point just before </head> using tree-sitter.
 func (d *HTMLDocument) findHeadInsertionPoint(handler *Handler) (protocol.Position, bool) {
-	tree, content := d.TreeAndContent()
+	tree, content, releaseTree := d.TreeAndContent()
 	if tree == nil {
 		return protocol.Position{}, false
 	}
+	defer releaseTree()
 
 	matcher, err := Q.GetCachedQueryMatcher(handler.queryManager, handler.language, "headElements")
 	if err != nil {

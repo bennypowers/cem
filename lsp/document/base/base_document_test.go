@@ -1,13 +1,94 @@
 package base
 
 import (
+	"sync"
 	"testing"
 	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	ts "github.com/tree-sitter/go-tree-sitter"
+	tsHtml "github.com/tree-sitter/tree-sitter-html/bindings/go"
 )
+
+func parseHTML(content string) *ts.Tree {
+	parser := ts.NewParser()
+	defer parser.Close()
+	parser.SetLanguage(ts.NewLanguage(tsHtml.Language()))
+	return parser.Parse([]byte(content), nil)
+}
+
+func TestRefCountedTree_ReleaseFreesTree(t *testing.T) {
+	tree := parseHTML("<div>hello</div>")
+	rc := newRefCountedTree(tree)
+	rc.release()
+	// tree.Close() was called internally; no double-free means success
+}
+
+func TestRefCountedTree_AcquireKeepsTreeAlive(t *testing.T) {
+	tree := parseHTML("<div>hello</div>")
+	rc := newRefCountedTree(tree)
+
+	rc.acquire()
+	rc.release() // owner releases, but reader still holds
+	// tree should still be usable
+	assert.NotNil(t, tree.RootNode())
+
+	rc.release() // reader releases, tree is now freed
+}
+
+func TestRefCountedTree_UnderflowPanics(t *testing.T) {
+	tree := parseHTML("<div>hello</div>")
+	rc := newRefCountedTree(tree)
+	rc.release() // legitimate release, refs=0, tree closed
+
+	assert.Panics(t, func() {
+		rc.release() // underflow
+	}, "double release should panic")
+}
+
+func TestRefCountedTree_ConcurrentAcquireRelease(t *testing.T) {
+	tree := parseHTML("<p>concurrent</p>")
+	rc := newRefCountedTree(tree)
+
+	var wg sync.WaitGroup
+	for range 50 {
+		rc.acquire()
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_ = tree.RootNode().Kind()
+			rc.release()
+		}()
+	}
+	wg.Wait()
+	rc.release() // owner release, all readers done, tree freed
+}
+
+func TestAcquireTree_NilTreeReturnsNoopRelease(t *testing.T) {
+	doc := NewBaseDocument("test.html", "", 1, "html", nil, nil)
+	tree, release := doc.AcquireTree()
+	assert.Nil(t, tree)
+	assert.NotPanics(t, release)
+}
+
+func TestAcquireTree_PreventsUseAfterSetTree(t *testing.T) {
+	doc := NewBaseDocument("test.html", "<div>v1</div>", 1, "html", nil, nil)
+	tree1 := parseHTML("<div>v1</div>")
+	doc.SetTree(tree1)
+
+	acquired, release := doc.AcquireTree()
+	assert.NotNil(t, acquired)
+
+	tree2 := parseHTML("<div>v2</div>")
+	doc.SetTree(tree2) // replaces tree1, but reader still holds ref
+
+	// tree1 should still be usable via the acquired reference
+	assert.Equal(t, "document", acquired.RootNode().Kind())
+
+	release() // now tree1 can be freed
+	doc.Close()
+}
 
 func TestSetParser_CallbackFiresWithOldParser(t *testing.T) {
 	var returned *ts.Parser
@@ -98,7 +179,8 @@ func TestClose_NilCallbackDoesNotPanic(t *testing.T) {
 func TestTreeAndContent_ReturnsAtomicSnapshot(t *testing.T) {
 	doc := NewBaseDocument("test.html", "<div>hello</div>", 1, "html", nil, nil)
 
-	tree, content := doc.TreeAndContent()
+	tree, content, release := doc.TreeAndContent()
+	defer release()
 
 	assert.Nil(t, tree, "tree should be nil when not set")
 	assert.Equal(t, "<div>hello</div>", content)

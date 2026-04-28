@@ -128,11 +128,11 @@ func AnalyzeAttributeDiagnosticsForTest(ctx types.ServerContext, doc types.Docum
 func findAttributes(ctx types.ServerContext, doc types.Document, content string) ([]AttributeMatch, error) {
 	var matches []AttributeMatch
 
-	// Get the tree-sitter tree
-	tree := doc.Tree()
+	tree, releaseTree := doc.AcquireTree()
 	if tree == nil {
 		return nil, fmt.Errorf("no tree-sitter tree available")
 	}
+	defer releaseTree()
 
 	// Get query manager from context
 	qm, err := ctx.QueryManager()
