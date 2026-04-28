@@ -49,8 +49,8 @@ func (h *Handler) Language() string {
 
 func (h *Handler) CreateDocument(uri, content string, version int32) types.Document {
 	parser := Q.GetBladeParser()
+	defer Q.PutBladeParser(parser)
 	tree := parser.Parse([]byte(content), nil)
-	Q.PutBladeParser(parser)
 
 	return h.htmlHandler.CreateDocumentWithTree(uri, content, version, tree)
 }
