@@ -209,13 +209,8 @@ func (d *HTMLDocument) analyzeCompletionContext(position protocol.Position, hand
 		Type: types.CompletionUnknown,
 	}
 
-	tree := d.Tree()
+	tree, content := d.TreeAndContent()
 	if tree == nil {
-		return analysis
-	}
-
-	content, err := d.Content()
-	if err != nil {
 		return analysis
 	}
 

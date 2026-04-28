@@ -259,14 +259,9 @@ func (d *TypeScriptDocument) findCustomElements(handler *Handler) ([]types.Custo
 		currentVersion, d.cacheVersion, d.cachedCustomElements == nil)
 	d.cacheMu.RUnlock()
 
-	tree := d.Tree()
+	tree, docContent := d.TreeAndContent()
 	if tree == nil {
 		return nil, fmt.Errorf("no tree available for document")
-	}
-
-	docContent, err := d.Content()
-	if err != nil {
-		return nil, err
 	}
 
 	var elements []types.CustomElementMatch
@@ -312,14 +307,9 @@ func (d *TypeScriptDocument) findHTMLTemplates(handler *Handler) ([]TemplateCont
 		currentVersion, d.cacheVersion, d.cachedTemplates == nil)
 	d.cacheMu.RUnlock()
 
-	tree := d.Tree()
+	tree, content := d.TreeAndContent()
 	if tree == nil {
 		return nil, fmt.Errorf("no tree available")
-	}
-
-	content, err := d.Content()
-	if err != nil {
-		return nil, err
 	}
 
 	var templates []TemplateContext
@@ -493,13 +483,8 @@ func (d *TypeScriptDocument) analyzeCompletionContext(
 		Type: types.CompletionUnknown,
 	}
 
-	tree := d.Tree()
+	tree, content := d.TreeAndContent()
 	if tree == nil {
-		return analysis
-	}
-
-	content, err := d.Content()
-	if err != nil {
 		return analysis
 	}
 
