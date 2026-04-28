@@ -140,7 +140,6 @@ install-frontend:
 
 test-frontend: install-frontend build
 	@set -e; \
-	WORKDIR=$$(pwd); \
 	PIDFILE=$$(mktemp); \
 	LOGFILE=$$(mktemp); \
 	cleanup() { \
@@ -158,16 +157,20 @@ test-frontend: install-frontend build
 		rm -f "$$PIDFILE" "$$LOGFILE"; \
 	}; \
 	trap cleanup EXIT INT TERM; \
-	echo "Starting cem serve on port 9876 for tests..."; \
-	(cd serve/testdata/demo-routing && exec ../../../dist/cem serve --port 9876) > "$$LOGFILE" 2>&1 & \
+	echo "Starting cem serve on dynamic port for tests..."; \
+	(cd serve/testdata/demo-routing && exec ../../../dist/cem serve --port 0) > "$$LOGFILE" 2>&1 & \
 	echo $$! > "$$PIDFILE"; \
 	echo "Waiting for server to be ready..."; \
 	TIMEOUT=30; \
 	ELAPSED=0; \
+	PORT=""; \
 	while [ $$ELAPSED -lt $$TIMEOUT ]; do \
-		if nc -z localhost 9876 2>/dev/null || \
-		   (command -v curl >/dev/null 2>&1 && curl -s http://localhost:9876 >/dev/null 2>&1); then \
-			echo "Server is ready."; \
+		if [ -z "$$PORT" ]; then \
+			PORT=$$(grep -oP 'localhost:\K[0-9]+' "$$LOGFILE" 2>/dev/null | head -1); \
+		fi; \
+		if [ -n "$$PORT" ] && \
+		   curl -sf "http://localhost:$$PORT/__cem/api/health" >/dev/null 2>&1; then \
+			echo "Server is ready on port $$PORT."; \
 			break; \
 		fi; \
 		sleep 0.5; \
@@ -180,7 +183,7 @@ test-frontend: install-frontend build
 		exit 1; \
 	fi; \
 	echo "Running frontend tests..."; \
-	cd serve && npm test; \
+	cd serve && CEM_TEST_PORT=$$PORT npm test; \
 	TEST_EXIT=$$?; \
 	exit $$TEST_EXIT
 

@@ -3,6 +3,8 @@ import { visualRegressionPlugin } from '@web/test-runner-visual-regression/plugi
 
 const updateGoldens = process.argv.includes('--update-goldens');
 
+const cemPort = process.env.CEM_TEST_PORT || '9876';
+
 export default {
   files: [
     'middleware/routes/templates/**/*.test.js',
@@ -49,12 +51,15 @@ export default {
       baseDir: 'middleware/routes/testdata/frontend/visual-goldens',
     }),
   ],
+  browserStartTimeout: 30000,
+  testsStartTimeout: 20000,
+  testsFinishTimeout: 60000,
   // Proxy /__cem/ routes to real cem serve instance
   middleware: [
     async (ctx, next) => {
       if (ctx.url.startsWith('/__cem/')) {
-        // Proxy to real cem serve running on port 9876
-        const proxyUrl = `http://localhost:9876${ctx.url}`;
+        // Proxy to real cem serve instance
+        const proxyUrl = `http://localhost:${cemPort}${ctx.url}`;
         try {
           const response = await fetch(proxyUrl);
           ctx.status = response.status;

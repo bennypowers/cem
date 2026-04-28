@@ -150,6 +150,29 @@ func TestServerConfig(t *testing.T) {
 	}
 }
 
+// TestServerDynamicPort verifies port 0 assigns an ephemeral port
+func TestServerDynamicPort(t *testing.T) {
+	server, err := serve.NewServer(0)
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() { _ = server.Close() }()
+
+	if server.Port() != 0 {
+		t.Errorf("Expected port 0 before Start(), got %d", server.Port())
+	}
+
+	err = server.Start()
+	if err != nil {
+		t.Fatalf("Failed to start server: %v", err)
+	}
+
+	if server.Port() == 0 {
+		t.Error("Expected non-zero port after Start()")
+	}
+	t.Logf("Dynamic port assigned: %d", server.Port())
+}
+
 // TestServerLifecycle verifies start/stop behavior
 func TestServerLifecycle(t *testing.T) {
 	server, err := serve.NewServer(8003)

@@ -34,6 +34,25 @@ jobs:
         run: make test-unit
       - name: Run E2E tests
         run: make test-e2e
+
+  test-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+        env:
+          GOTOOLCHAIN: auto
+          GOEXPERIMENT: jsonv2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+      - name: Install Go dependencies
+        run: go get .
+      - name: Build cem binary
+        run: make build
       - name: Install frontend dependencies
         run: cd serve && npm ci
       - name: Cache Playwright browsers
@@ -47,5 +66,7 @@ jobs:
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: cd serve && npx playwright install --with-deps
+      - name: Install Playwright system dependencies
+        run: cd serve && npx playwright install-deps
       - name: Run frontend tests
         run: make test-frontend
