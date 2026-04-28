@@ -153,24 +153,18 @@ func (d *TypeScriptDocument) ReleaseCachedHTMLTree(tree *ts.Tree) {
 func (d *TypeScriptDocument) getCachedHTMLTree(templateContent string) *ts.Tree {
 	contentHash := sha256.Sum256([]byte(templateContent))
 
-	d.cacheMu.RLock()
+	d.cacheMu.Lock()
 	if d.cachedHTMLTrees != nil {
 		if cached, exists := d.cachedHTMLTrees[contentHash]; exists && cached != nil && cached.tree != nil {
-			d.cacheMu.RUnlock()
-
-			d.cacheMu.Lock()
-			if cached, exists := d.cachedHTMLTrees[contentHash]; exists && cached != nil && cached.tree != nil {
-				cached.refs++
-				refs := cached.refs
-				tree := cached.tree
-				d.cacheMu.Unlock()
-				helpers.SafeDebugLog("[CACHE] HTML tree cache HIT (hash=%x, refs=%d)", contentHash[:8], refs)
-				return tree
-			}
+			cached.refs++
+			refs := cached.refs
+			tree := cached.tree
 			d.cacheMu.Unlock()
+			helpers.SafeDebugLog("[CACHE] HTML tree cache HIT (hash=%x, refs=%d)", contentHash[:8], refs)
+			return tree
 		}
 	}
-	d.cacheMu.RUnlock()
+	d.cacheMu.Unlock()
 
 	helpers.SafeDebugLog("[CACHE] HTML tree cache MISS (hash=%x, content length=%d)", contentHash[:8], len(templateContent))
 
