@@ -18,6 +18,7 @@ package document
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"bennypowers.dev/cem/lsp/helpers"
@@ -28,23 +29,25 @@ import (
 
 // BaseDocument provides common document functionality that language-specific documents can embed
 type BaseDocument struct {
-	uri        string
-	content    string
-	version    int32
-	language   string
-	tree       *ts.Tree
-	parser     *ts.Parser
-	scriptTags []types.ScriptTag
-	mu         sync.RWMutex
+	uri          string
+	content      string
+	version      int32
+	language     string
+	tree         *ts.Tree
+	parser       *ts.Parser
+	scriptTags   []types.ScriptTag
+	returnParser func(*ts.Parser)
+	mu           sync.RWMutex
 }
 
-// NewBaseDocument creates a new base document
-func NewBaseDocument(uri, content string, version int32, language string) *BaseDocument {
+// NewBaseDocument creates a new base document with a callback for returning parsers to the correct pool.
+func NewBaseDocument(uri, content string, version int32, language string, returnParser func(*ts.Parser)) *BaseDocument {
 	return &BaseDocument{
-		uri:      uri,
-		content:  content,
-		version:  version,
-		language: language,
+		uri:          uri,
+		content:      content,
+		version:      version,
+		language:     language,
+		returnParser: returnParser,
 	}
 }
 
@@ -136,10 +139,15 @@ func (d *BaseDocument) SetTree(tree *ts.Tree) {
 	d.tree = tree
 }
 
-// SetParser sets the document's parser (protected method for subclasses)
+// SetParser sets the document's parser, returning any previous parser to the pool.
 func (d *BaseDocument) SetParser(parser *ts.Parser) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
+	if d.parser != nil && d.parser != parser {
+		if d.returnParser != nil {
+			d.returnParser(d.parser)
+		}
+	}
 	d.parser = parser
 }
 
@@ -177,7 +185,7 @@ func (d *BaseDocument) SetScriptTags(scriptTags []types.ScriptTag) {
 	d.scriptTags = scriptTags
 }
 
-// Close cleans up document resources
+// Close cleans up document resources, returning the parser to its pool.
 func (d *BaseDocument) Close() {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -188,7 +196,9 @@ func (d *BaseDocument) Close() {
 	}
 
 	if d.parser != nil {
-		// Return parser to pool based on language - this will be handled by language handlers
+		if d.returnParser != nil {
+			d.returnParser(d.parser)
+		}
 		d.parser = nil
 	}
 }
@@ -244,17 +254,24 @@ func (d *BaseDocument) FindInlineModuleScript() (protocol.Position, bool) {
 	return protocol.Position{}, false
 }
 
-// ByteRangeToProtocolRange converts byte range to protocol range (default implementation)
+// TreeAndContent returns the tree and content atomically under one lock.
+// Use this from sub-package methods that need both values consistently.
+func (d *BaseDocument) TreeAndContent() (*ts.Tree, string) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.tree, d.content
+}
+
+// ByteRangeToProtocolRange converts byte range to protocol range.
 func (d *BaseDocument) ByteRangeToProtocolRange(content string, startByte, endByte uint) protocol.Range {
-	// Basic implementation - can be enhanced by language-specific documents
 	return protocol.Range{
-		Start: d.byteOffsetToPosition(startByte),
-		End:   d.byteOffsetToPosition(endByte),
+		Start: d.ByteOffsetToPosition(startByte),
+		End:   d.ByteOffsetToPosition(endByte),
 	}
 }
 
-// Helper method for byte offset to position conversion
-func (d *BaseDocument) byteOffsetToPosition(offset uint) protocol.Position {
+// ByteOffsetToPosition converts a byte offset to a protocol position.
+func (d *BaseDocument) ByteOffsetToPosition(offset uint) protocol.Position {
 	line := uint32(0)
 	char := uint32(0)
 
@@ -275,4 +292,25 @@ func (d *BaseDocument) byteOffsetToPosition(offset uint) protocol.Position {
 		Line:      line,
 		Character: char,
 	}
+}
+
+// PositionToByteOffset converts a protocol position to a byte offset within the given content.
+func (d *BaseDocument) PositionToByteOffset(pos protocol.Position, content string) uint {
+	var offset uint
+	lines := strings.Split(content, "\n")
+
+	for i := uint32(0); i < pos.Line && i < uint32(len(lines)); i++ {
+		offset += uint(len(lines[i])) + 1
+	}
+
+	if pos.Line < uint32(len(lines)) {
+		line := lines[pos.Line]
+		if pos.Character < uint32(len(line)) {
+			offset += uint(pos.Character)
+		} else {
+			offset += uint(len(line))
+		}
+	}
+
+	return offset
 }
