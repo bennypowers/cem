@@ -24,7 +24,6 @@ import (
 	Q "bennypowers.dev/cem/queries"
 	protocol "github.com/tliron/glsp/protocol_3_16"
 	sitter "github.com/tree-sitter/go-tree-sitter"
-	tree_sitter_php "github.com/tree-sitter/tree-sitter-php/bindings/go"
 )
 
 // Handler implements language-specific operations for PHP documents.
@@ -40,11 +39,9 @@ type Handler struct {
 	textQuery   *sitter.Query
 }
 
-var phpLang = sitter.NewLanguage(tree_sitter_php.LanguagePHP())
-
 // NewHandler creates a new PHP language handler
 func NewHandler(htmlHandler types.LanguageHandler) (*Handler, error) {
-	textQuery, qerr := sitter.NewQuery(phpLang, `(text) @html`)
+	textQuery, qerr := sitter.NewQuery(Q.PHPLanguage(), `(text) @html`)
 	if qerr != nil {
 		return nil, fmt.Errorf("failed to compile text query: %w", qerr)
 	}

@@ -23,10 +23,7 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	Q "bennypowers.dev/cem/queries"
-	tree_sitter_handlebars "bennypowers.dev/tree-sitter-handlebars/bindings/go"
-	tree_sitter_jinja "bennypowers.dev/tree-sitter-jinja-dialects/bindings/go"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-	tree_sitter_embedded_template "github.com/tree-sitter/tree-sitter-embedded-template/bindings/go"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -46,25 +43,19 @@ type Handler struct {
 	etQuery     *sitter.Query
 }
 
-var (
-	jinjaLang = sitter.NewLanguage(tree_sitter_jinja.Language())
-	hbsLang   = sitter.NewLanguage(tree_sitter_handlebars.Language())
-	etLang    = sitter.NewLanguage(tree_sitter_embedded_template.Language())
-)
-
 func NewHandler(htmlHandler types.LanguageHandler) (*Handler, error) {
-	jinjaQuery, qerr := sitter.NewQuery(jinjaLang, `(text) @html`)
+	jinjaQuery, qerr := sitter.NewQuery(Q.JinjaLanguage(), `(text) @html`)
 	if qerr != nil {
 		return nil, fmt.Errorf("failed to compile jinja text query: %w", qerr)
 	}
 
-	hbsQuery, qerr := sitter.NewQuery(hbsLang, `(text) @html`)
+	hbsQuery, qerr := sitter.NewQuery(Q.HandlebarsLanguage(), `(text) @html`)
 	if qerr != nil {
 		jinjaQuery.Close()
 		return nil, fmt.Errorf("failed to compile handlebars text query: %w", qerr)
 	}
 
-	etQuery, qerr := sitter.NewQuery(etLang, `(content) @html`)
+	etQuery, qerr := sitter.NewQuery(Q.EmbeddedTemplateLanguage(), `(content) @html`)
 	if qerr != nil {
 		jinjaQuery.Close()
 		hbsQuery.Close()
