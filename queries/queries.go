@@ -189,6 +189,26 @@ func PutTSXParser(parser *ts.Parser) {
 	tsxParserPool.Put(parser)
 }
 
+// Blade parser pool
+var bladeParserPool = sync.Pool{
+	New: func() any {
+		parser := ts.NewParser()
+		if err := parser.SetLanguage(languages.blade); err != nil {
+			panic(fmt.Sprintf("failed to set Blade language: %v", err))
+		}
+		return parser
+	},
+}
+
+func GetBladeParser() *ts.Parser {
+	return bladeParserPool.Get().(*ts.Parser)
+}
+
+func PutBladeParser(parser *ts.Parser) {
+	parser.Reset()
+	bladeParserPool.Put(parser)
+}
+
 // ---- End Parser Pooling Section ----
 
 // QuerySelector defines which queries to load for performance

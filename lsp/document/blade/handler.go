@@ -17,15 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package blade
 
 import (
-	"fmt"
-	"sync"
-
 	"bennypowers.dev/cem/lsp/document/html"
 	"bennypowers.dev/cem/lsp/types"
 	Q "bennypowers.dev/cem/queries"
-	tree_sitter_blade "github.com/EmranMR/tree-sitter-blade/bindings/go"
 	protocol "github.com/tliron/glsp/protocol_3_16"
-	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 
 // Handler implements language-specific operations for Blade template documents
@@ -35,27 +30,16 @@ import (
 // the Blade language via a shared html.Handler configured for "blade" queries.
 type Handler struct {
 	htmlHandler *html.Handler
-	parser      *sitter.Parser
-	mu          sync.Mutex
 }
 
-var bladeLang = sitter.NewLanguage(tree_sitter_blade.Language())
-
 func NewHandler(queryManager *Q.QueryManager) (*Handler, error) {
-	parser := sitter.NewParser()
-	if err := parser.SetLanguage(bladeLang); err != nil {
-		return nil, fmt.Errorf("failed to set blade language: %w", err)
-	}
-
 	htmlHandler, err := html.NewHandlerWithLanguage(queryManager, "blade")
 	if err != nil {
-		parser.Close()
-		return nil, fmt.Errorf("failed to create blade html handler: %w", err)
+		return nil, err
 	}
 
 	return &Handler{
 		htmlHandler: htmlHandler,
-		parser:      parser,
 	}, nil
 }
 
@@ -64,15 +48,9 @@ func (h *Handler) Language() string {
 }
 
 func (h *Handler) CreateDocument(uri, content string, version int32) types.Document {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	if h.parser == nil {
-		return h.htmlHandler.CreateDocument(uri, content, version)
-	}
-
-	h.parser.Reset()
-	tree := h.parser.Parse([]byte(content), nil)
+	parser := Q.GetBladeParser()
+	tree := parser.Parse([]byte(content), nil)
+	Q.PutBladeParser(parser)
 
 	return h.htmlHandler.CreateDocumentWithTree(uri, content, version, tree)
 }
@@ -98,12 +76,6 @@ func (h *Handler) FindHeadInsertionPoint(doc types.Document) (protocol.Position,
 }
 
 func (h *Handler) Close() {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	if h.parser != nil {
-		h.parser.Close()
-		h.parser = nil
-	}
 	if h.htmlHandler != nil {
 		h.htmlHandler.Close()
 	}
