@@ -75,18 +75,13 @@ func (d *BaseDocument) URI() string {
 
 // Content returns the document content
 func (d *BaseDocument) Content() (string, error) {
-	// Defensive programming: check for nil pointer
 	if d == nil {
 		return "", fmt.Errorf("document is nil")
 	}
 
-	// Additional safety check - ensure the mutex is properly initialized
-	// This is a workaround for potential concurrent access issues
 	defer func() {
 		if r := recover(); r != nil {
 			helpers.SafeDebugLog("[DOCUMENT] PANIC in Content(): %v", r)
-			// Log document state for debugging
-			helpers.SafeDebugLog("[DOCUMENT] Document state: uri=%s, content_len=%d", d.uri, len(d.content))
 		}
 	}()
 
@@ -239,6 +234,10 @@ func (d *BaseDocument) FindInlineModuleScript() (protocol.Position, bool) {
 
 // TreeAndContent returns the tree and content atomically under one lock.
 // Use this from sub-package methods that need both values consistently.
+//
+// The returned tree is safe to use after the lock releases because
+// DocumentManager serializes all operations on the same URI via per-URI
+// locks, preventing concurrent Close() from freeing the tree mid-use.
 func (d *BaseDocument) TreeAndContent() (*ts.Tree, string) {
 	d.mu.RLock()
 	defer d.mu.RUnlock()

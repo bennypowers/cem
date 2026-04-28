@@ -37,7 +37,13 @@ type cachedTree struct {
 	refs int
 }
 
-// TypeScriptDocument represents a TypeScript document with tree-sitter parsing
+// TypeScriptDocument represents a TypeScript document with tree-sitter parsing.
+//
+// Lock ordering: BaseDocument.mu is never held when cacheMu is acquired.
+// Both SetTree and UpdateContent acquire mu (via BaseDocument) then release it
+// before acquiring cacheMu (via invalidateCache). Methods that read cache state
+// under cacheMu may call Version() (acquires mu.RLock) safely because the
+// inverse nesting (mu.Lock -> cacheMu) never occurs.
 type TypeScriptDocument struct {
 	*base.BaseDocument
 
