@@ -135,11 +135,6 @@ func TestExtractDynamicImportPath(t *testing.T) {
 }
 
 func TestParseImportStatements(t *testing.T) {
-	// parseImportStatements is a method on *Handler, but it only uses
-	// string parsing (no tree-sitter or query manager), so a zero-value
-	// handler is sufficient.
-	h := &Handler{}
-
 	tests := []struct {
 		name     string
 		content  string
@@ -216,7 +211,7 @@ func TestParseImportStatements(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := h.parseImportStatements(tt.content)
+			result := parseImportStatements(tt.content)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
