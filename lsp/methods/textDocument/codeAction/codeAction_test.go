@@ -182,4 +182,104 @@ func TestCodeActionNoDiagnostics(t *testing.T) {
 	}
 }
 
+func TestCodeActionIsPreferred(t *testing.T) {
+	ctx := testhelpers.NewMockServerContext()
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+
+	doc := dm.OpenDocument("test://test.html", `<my-element><div slot="heade">Content</div></my-element>`, 1)
+	ctx.AddDocument("test://test.html", doc)
+
+	source := "cem-lsp"
+	tests := []struct {
+		name string
+		data map[string]any
+	}{
+		{
+			name: "slot suggestion",
+			data: map[string]any{
+				"type": "slot-suggestion", "original": "heade", "suggestion": "header",
+				"range": map[string]any{
+					"start": map[string]any{"line": float64(0), "character": float64(25)},
+					"end":   map[string]any{"line": float64(0), "character": float64(30)},
+				},
+			},
+		},
+		{
+			name: "tag suggestion",
+			data: map[string]any{
+				"type": "tag-suggestion", "original": "my-elem", "suggestion": "my-element",
+				"range": map[string]any{
+					"start": map[string]any{"line": float64(0), "character": float64(1)},
+					"end":   map[string]any{"line": float64(0), "character": float64(8)},
+				},
+			},
+		},
+		{
+			name: "attribute suggestion",
+			data: map[string]any{
+				"type": "attribute-suggestion", "original": "colr", "suggestion": "color",
+				"range": map[string]any{
+					"start": map[string]any{"line": float64(0), "character": float64(12)},
+					"end":   map[string]any{"line": float64(0), "character": float64(16)},
+				},
+			},
+		},
+		{
+			name: "attribute value suggestion",
+			data: map[string]any{
+				"type": "attribute-value-suggestion", "original": "rde", "suggestion": "red",
+				"range": map[string]any{
+					"start": map[string]any{"line": float64(0), "character": float64(18)},
+					"end":   map[string]any{"line": float64(0), "character": float64(21)},
+				},
+			},
+		},
+		{
+			name: "missing import",
+			data: map[string]any{
+				"type": "missing-import", "original": "", "suggestion": "",
+				"tagName": "my-element", "importPath": "@scope/my-element",
+				"range": map[string]any{
+					"start": map[string]any{"line": float64(0), "character": float64(0)},
+					"end":   map[string]any{"line": float64(0), "character": float64(10)},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			params := &protocol.CodeActionParams{
+				TextDocument: protocol.TextDocumentIdentifier{URI: "test://test.html"},
+				Context: protocol.CodeActionContext{
+					Diagnostics: []protocol.Diagnostic{{
+						Range:  protocol.Range{Start: protocol.Position{Line: 0, Character: 0}, End: protocol.Position{Line: 0, Character: 5}},
+						Source: &source,
+						Data:   tt.data,
+					}},
+				},
+			}
+
+			result, err := codeAction.CodeAction(ctx, nil, params)
+			if err != nil {
+				t.Fatalf("CodeAction failed: %v", err)
+			}
+
+			actions := result.([]protocol.CodeAction)
+			if len(actions) != 1 {
+				t.Fatalf("Expected 1 action, got %d", len(actions))
+			}
+
+			if actions[0].IsPreferred == nil || !*actions[0].IsPreferred {
+				t.Error("Expected IsPreferred to be true")
+			}
+		})
+	}
+}
+
 // Mock implementations for testing

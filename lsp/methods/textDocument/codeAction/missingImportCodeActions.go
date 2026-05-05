@@ -110,10 +110,12 @@ import "%s";`, autofixData.ImportPath)
 
 	title := fmt.Sprintf("Add import for '%s'", autofixData.TagName)
 	kind := protocol.CodeActionKindQuickFix
+	preferred := true
 
 	action := protocol.CodeAction{
-		Title: title,
-		Kind:  &kind,
+		Title:       title,
+		Kind:        &kind,
+		IsPreferred: &preferred,
 		Edit: &protocol.WorkspaceEdit{
 			Changes: map[string][]protocol.TextEdit{
 				documentURI: {

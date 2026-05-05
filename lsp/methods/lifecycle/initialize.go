@@ -112,7 +112,9 @@ func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol
 	capabilities.InlayHintProvider = &protocol.InlayHintOptions{}
 
 	if ctx.UsePullDiagnostics() {
+		identifier := "cem"
 		capabilities.DiagnosticProvider = &protocol.DiagnosticOptions{
+			Identifier:            &identifier,
 			InterFileDependencies: false,
 			WorkspaceDiagnostics:  true,
 		}

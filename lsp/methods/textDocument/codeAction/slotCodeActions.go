@@ -33,10 +33,12 @@ func createSlotAutofixAction(diagnostic *protocol.Diagnostic, data map[string]an
 
 	title := fmt.Sprintf("Change '%s' to '%s'", autofixData.Original, autofixData.Suggestion)
 	kind := protocol.CodeActionKindQuickFix
+	preferred := true
 
 	action := protocol.CodeAction{
-		Title: title,
-		Kind:  &kind,
+		Title:       title,
+		Kind:        &kind,
+		IsPreferred: &preferred,
 		Edit: &protocol.WorkspaceEdit{
 			Changes: map[string][]protocol.TextEdit{
 				documentURI: {

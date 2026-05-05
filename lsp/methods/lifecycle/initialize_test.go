@@ -3,8 +3,47 @@ package lifecycle
 import (
 	"testing"
 
+	"bennypowers.dev/cem/lsp/testhelpers"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestInitializeDiagnosticIdentifier(t *testing.T) {
+	t.Run("pull diagnostics identifier is set", func(t *testing.T) {
+		ctx := testhelpers.NewMockServerContext()
+		params := &protocol.InitializeParams{
+			Capabilities: protocol.ClientCapabilities{
+				TextDocument: &protocol.TextDocumentClientCapabilities{
+					Diagnostic: &protocol.DiagnosticClientCapabilities{},
+				},
+			},
+		}
+
+		result, err := Initialize(ctx, nil, params)
+		require.NoError(t, err)
+
+		initResult := result.(protocol.InitializeResult)
+		require.NotNil(t, initResult.Capabilities.DiagnosticProvider)
+		diagOpts, ok := initResult.Capabilities.DiagnosticProvider.(*protocol.DiagnosticOptions)
+		require.True(t, ok)
+		require.NotNil(t, diagOpts.Identifier)
+		assert.Equal(t, "cem", *diagOpts.Identifier)
+	})
+
+	t.Run("no diagnostic provider without client support", func(t *testing.T) {
+		ctx := testhelpers.NewMockServerContext()
+		params := &protocol.InitializeParams{
+			Capabilities: protocol.ClientCapabilities{},
+		}
+
+		result, err := Initialize(ctx, nil, params)
+		require.NoError(t, err)
+
+		initResult := result.(protocol.InitializeResult)
+		assert.Nil(t, initResult.Capabilities.DiagnosticProvider)
+	})
+}
 
 func TestParseStringSlice(t *testing.T) {
 	tests := []struct {

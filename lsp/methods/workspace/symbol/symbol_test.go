@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package symbol_test
 
 import (
+	"slices"
 	"testing"
 
 	"bennypowers.dev/cem/lsp/methods/workspace/symbol"
@@ -131,14 +132,7 @@ func TestWorkspaceSymbol(t *testing.T) {
 			}
 
 			for _, expectedName := range tt.expectedNames {
-				found := false
-				for _, actualName := range actualNames {
-					if actualName == expectedName {
-						found = true
-						break
-					}
-				}
-				if !found {
+				if !slices.Contains(actualNames, expectedName) {
 					t.Errorf("Expected symbol '%s' not found in results: %v", expectedName, actualNames)
 				}
 			}
@@ -230,11 +224,11 @@ func TestWorkspaceSymbolAbsolutePaths(t *testing.T) {
 }
 
 func TestWorkspaceSymbolNoSource(t *testing.T) {
-	// Test elements without source information
+	// Elements without source should be omitted per LSP spec:
+	// SymbolInformation.location.uri must be a valid DocumentUri
 	ctx := testhelpers.NewMockServerContext()
 	ctx.TagNames = []string{"no-source-element"}
 	ctx.SetWorkspaceRoot("/workspace")
-	// Intentionally not adding element definition - no source for this element
 
 	mockGlspContext := &glsp.Context{}
 	params := &protocol.WorkspaceSymbolParams{Query: "no-source"}
@@ -244,19 +238,31 @@ func TestWorkspaceSymbolNoSource(t *testing.T) {
 		t.Fatalf("Symbol() error = %v", err)
 	}
 
-	if len(symbols) != 1 {
-		t.Fatalf("Expected 1 symbol, got %d", len(symbols))
+	if len(symbols) != 0 {
+		t.Fatalf("Expected 0 symbols for element without source, got %d", len(symbols))
+	}
+}
+
+func TestWorkspaceSymbolURIValidity(t *testing.T) {
+	ctx := testhelpers.NewMockServerContext()
+	ctx.TagNames = []string{"valid-element"}
+	ctx.SetWorkspaceRoot("/workspace")
+	ctx.AddElementDefinition("valid-element", &testhelpers.MockElementDefinition{
+		ModulePathStr: "src/valid-element.ts",
+		SourceHrefStr: "src/valid-element.ts",
+	})
+
+	mockGlspContext := &glsp.Context{}
+	params := &protocol.WorkspaceSymbolParams{Query: ""}
+
+	symbols, err := symbol.Symbol(ctx, mockGlspContext, params)
+	if err != nil {
+		t.Fatalf("Symbol() error = %v", err)
 	}
 
-	symbol := symbols[0]
-
-	// Check element is still included but with empty URI
-	if symbol.Location.URI != "" {
-		t.Errorf("Expected empty URI for element without source, got '%s'", symbol.Location.URI)
-	}
-
-	// Name should just be tag name without description
-	if symbol.Name != "no-source-element" {
-		t.Errorf("Expected name 'no-source-element', got '%s'", symbol.Name)
+	for _, s := range symbols {
+		if s.Location.URI == "" {
+			t.Errorf("Symbol '%s' has empty URI, violates LSP spec", s.Name)
+		}
 	}
 }

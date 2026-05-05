@@ -31,9 +31,11 @@ func createAutofixAction(diagnostic *protocol.Diagnostic, dataMap map[string]any
 	}
 
 	kind := protocol.CodeActionKindQuickFix
+	preferred := true
 	return &protocol.CodeAction{
-		Title: fmt.Sprintf("Change '%s' to '%s'", original, suggestion),
-		Kind:  &kind,
+		Title:       fmt.Sprintf("Change '%s' to '%s'", original, suggestion),
+		Kind:        &kind,
+		IsPreferred: &preferred,
 		Edit: &protocol.WorkspaceEdit{
 			Changes: map[string][]protocol.TextEdit{
 				uri: {{Range: diagnostic.Range, NewText: suggestion}},

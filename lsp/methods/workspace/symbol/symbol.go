@@ -60,18 +60,7 @@ func createSymbolInformation(ctx types.ServerContext, tagName string) *protocol.
 	// Get source location
 	source, hasSource := ctx.ElementSource(tagName)
 	if !hasSource {
-		// If no source, still create symbol but without location
-		return &protocol.SymbolInformation{
-			Name: tagName,
-			Kind: protocol.SymbolKindClass, // Custom elements are class-based
-			Location: protocol.Location{
-				URI: "", // No specific location
-				Range: protocol.Range{
-					Start: protocol.Position{Line: 0, Character: 0},
-					End:   protocol.Position{Line: 0, Character: 0},
-				},
-			},
-		}
+		return nil
 	}
 
 	// Get description if available
