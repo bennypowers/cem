@@ -110,7 +110,7 @@ func TestModuleGraph_RealWorldScenario(t *testing.T) {
 	mg := modulegraph.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Simulate manifest data for rh-tabs scenario
-	elementMap := map[string]interface{}{
+	elementMap := map[string]any{
 		"rh-tab": &modulegraph.MockElementDefinition{
 			TagName:    "rh-tab",
 			ClassName:  "RhTab",

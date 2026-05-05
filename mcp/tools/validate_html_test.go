@@ -79,13 +79,13 @@ func TestValidateHTML_Args(t *testing.T) {
 func TestValidateHtmlArgs_Parsing(t *testing.T) {
 	tests := []struct {
 		name        string
-		input       map[string]interface{}
+		input       map[string]any
 		expectError bool
 		checkFunc   func(t *testing.T, args tools.ValidateHtmlArgs)
 	}{
 		{
 			name: "complete args",
-			input: map[string]interface{}{
+			input: map[string]any{
 				"html":    "<button-element>Test</button-element>",
 				"context": "validation-test",
 				"tagName": "button-element",
@@ -99,7 +99,7 @@ func TestValidateHtmlArgs_Parsing(t *testing.T) {
 		},
 		{
 			name: "minimal args",
-			input: map[string]interface{}{
+			input: map[string]any{
 				"html": "<div>content</div>",
 			},
 			expectError: false,
@@ -111,7 +111,7 @@ func TestValidateHtmlArgs_Parsing(t *testing.T) {
 		},
 		{
 			name: "empty HTML",
-			input: map[string]interface{}{
+			input: map[string]any{
 				"html":    "",
 				"context": "empty-test",
 			},
@@ -205,7 +205,7 @@ func TestValidateHtml_UnknownAttributeDetection(t *testing.T) {
 	// Test the specific case that failed: priority instead of variant
 	html := `<button-element priority="primary">Call to action</button-element>`
 
-	argsJSON, err := json.Marshal(map[string]interface{}{
+	argsJSON, err := json.Marshal(map[string]any{
 		"html":    html,
 		"context": "test validation",
 	})
@@ -254,7 +254,7 @@ func TestValidateHtml_ValidAttributes(t *testing.T) {
 	// Test with correct variant attribute
 	html := `<button-element variant="primary">Call to action</button-element>`
 
-	argsJSON, err := json.Marshal(map[string]interface{}{
+	argsJSON, err := json.Marshal(map[string]any{
 		"html":    html,
 		"context": "test validation",
 	})
@@ -296,7 +296,7 @@ func TestValidateHtml_InvalidAttributeValue(t *testing.T) {
 	// Test with invalid attribute value (assuming variant has restricted values)
 	html := `<button-element variant="invalid-value">Call to action</button-element>`
 
-	argsJSON, err := json.Marshal(map[string]interface{}{
+	argsJSON, err := json.Marshal(map[string]any{
 		"html":    html,
 		"context": "test validation",
 	})
@@ -343,7 +343,7 @@ func TestValidateHtml_AttributeValueParsing_Regression(t *testing.T) {
 	// The "disabled" boolean attribute should not interfere with "variant" value parsing
 	html := `<button-element variant="primary" disabled>Call to action</button-element>`
 
-	argsJSON, err := json.Marshal(map[string]interface{}{
+	argsJSON, err := json.Marshal(map[string]any{
 		"html":    html,
 		"context": "test attribute value parsing",
 	})
@@ -402,7 +402,7 @@ func TestValidateHtml_UnknownElement(t *testing.T) {
 	// Test with unknown custom element
 	html := `<unknown-custom-element attribute="value">Content</unknown-custom-element>`
 
-	argsJSON, err := json.Marshal(map[string]interface{}{
+	argsJSON, err := json.Marshal(map[string]any{
 		"html":    html,
 		"context": "test validation",
 	})
@@ -447,7 +447,7 @@ func TestValidateHtml_MultipleIssues(t *testing.T) {
 		<unknown-custom-element>Unknown</unknown-custom-element>
 	`
 
-	argsJSON, err := json.Marshal(map[string]interface{}{
+	argsJSON, err := json.Marshal(map[string]any{
 		"html":    html,
 		"context": "test validation",
 	})
@@ -508,7 +508,7 @@ func TestValidateHtml_GlobalAttributesAllowed(t *testing.T) {
 			Click me
 		</button-element>`
 
-	argsJSON, err := json.Marshal(map[string]interface{}{
+	argsJSON, err := json.Marshal(map[string]any{
 		"html":    html,
 		"context": "global attributes test",
 	})
@@ -573,7 +573,7 @@ func TestValidateHtml_GlobalAttributesWithUnknownCustomAttribute(t *testing.T) {
 		Click me
 	</button-element>`
 
-	argsJSON, err := json.Marshal(map[string]interface{}{
+	argsJSON, err := json.Marshal(map[string]any{
 		"html":    html,
 		"context": "mixed attributes test",
 	})
@@ -622,7 +622,7 @@ func testValidateHtmlWithGolden(t *testing.T, fixtureFile, contextStr, goldenFil
 	htmlData, err := os.ReadFile(fixturePath)
 	require.NoError(t, err, "Should be able to read fixture file: %s", fixturePath)
 
-	argsJSON, err := json.Marshal(map[string]interface{}{
+	argsJSON, err := json.Marshal(map[string]any{
 		"html":    string(htmlData),
 		"context": contextStr,
 	})

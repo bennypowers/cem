@@ -534,11 +534,11 @@ func (mfs *MapFileSystem) TestFS(expectedFiles ...string) error {
 // Debug utilities
 
 // ListFiles returns all files in the MapFS for debugging.
-func (mfs *MapFileSystem) ListFiles() map[string]interface{} {
+func (mfs *MapFileSystem) ListFiles() map[string]any {
 	mfs.mu.RLock()
 	defer mfs.mu.RUnlock()
 
-	result := make(map[string]interface{})
+	result := make(map[string]any)
 
 	for path, file := range mfs.mapFS {
 		if file.Mode.IsDir() {

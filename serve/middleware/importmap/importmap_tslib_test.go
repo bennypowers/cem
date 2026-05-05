@@ -30,7 +30,7 @@ func TestImportMap_TslibExports(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Create root package.json with tslib dependency
-	rootPkg := map[string]interface{}{
+	rootPkg := map[string]any{
 		"name": "my-app",
 		"dependencies": map[string]string{
 			"tslib": "^2.8.0",
@@ -48,18 +48,18 @@ func TestImportMap_TslibExports(t *testing.T) {
 	}
 
 	// tslib has complex conditional exports
-	tslibPkg := map[string]interface{}{
+	tslibPkg := map[string]any{
 		"name": "tslib",
 		"main": "tslib.js",
-		"exports": map[string]interface{}{
-			".": map[string]interface{}{
-				"module": map[string]interface{}{
+		"exports": map[string]any{
+			".": map[string]any{
+				"module": map[string]any{
 					"types":   "./modules/index.d.ts",
 					"default": "./tslib.es6.mjs",
 				},
-				"import": map[string]interface{}{
+				"import": map[string]any{
 					"node": "./modules/index.js",
-					"default": map[string]interface{}{
+					"default": map[string]any{
 						"types":   "./modules/index.d.ts",
 						"default": "./tslib.es6.mjs",
 					},

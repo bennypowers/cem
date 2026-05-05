@@ -118,7 +118,7 @@ func CreateElementHoverContent(element *M.CustomElement) string {
 	var content strings.Builder
 
 	// 1. Tag name first (as title)
-	content.WriteString(fmt.Sprintf("## `<%s>`\n\n", element.TagName))
+	fmt.Fprintf(&content, "## `<%s>`\n\n", element.TagName)
 
 	// Note: For now we'll show basic info since the manifest structure doesn't
 	// include summary/description at the CustomElement level. These would be
@@ -145,16 +145,16 @@ func CreateElementHoverContentFromDeclaration(decl *M.CustomElementDeclaration) 
 	var content strings.Builder
 
 	// 1. Tag name first (as title)
-	content.WriteString(fmt.Sprintf("## `<%s>`\n\n", decl.TagName))
+	fmt.Fprintf(&content, "## `<%s>`\n\n", decl.TagName)
 
 	// 2. Summary (if available)
 	if decl.Summary != "" {
-		content.WriteString(fmt.Sprintf("**%s**\n\n", decl.Summary))
+		fmt.Fprintf(&content, "**%s**\n\n", decl.Summary)
 	}
 
 	// 3. Description (if available and different from summary)
 	if decl.Description != "" && decl.Description != decl.Summary {
-		content.WriteString(fmt.Sprintf("%s\n\n", decl.Description))
+		fmt.Fprintf(&content, "%s\n\n", decl.Description)
 	}
 
 	// 4. Attributes, Events, Slots using shared formatters
@@ -174,15 +174,15 @@ func formatAttributes(attrs []M.Attribute) string {
 	var content strings.Builder
 	content.WriteString("### Attributes\n\n")
 	for _, attr := range attrs {
-		content.WriteString(fmt.Sprintf("- **`%s`**", attr.Name))
+		fmt.Fprintf(&content, "- **`%s`**", attr.Name)
 		if attr.Type != nil && attr.Type.Text != "" {
-			content.WriteString(fmt.Sprintf(" _%s_", attr.Type.Text))
+			fmt.Fprintf(&content, " _%s_", attr.Type.Text)
 		}
 		if attr.InheritedFrom != nil {
-			content.WriteString(fmt.Sprintf(" _(inherited from %s)_", attr.InheritedFrom.Name))
+			fmt.Fprintf(&content, " _(inherited from %s)_", attr.InheritedFrom.Name)
 		}
 		if attr.Description != "" {
-			content.WriteString(fmt.Sprintf(" - %s", attr.Description))
+			fmt.Fprintf(&content, " - %s", attr.Description)
 		}
 		content.WriteString("\n")
 	}
@@ -199,15 +199,15 @@ func formatEvents(events []M.Event) string {
 	var content strings.Builder
 	content.WriteString("### Events\n\n")
 	for _, event := range events {
-		content.WriteString(fmt.Sprintf("- **`%s`**", event.Name))
+		fmt.Fprintf(&content, "- **`%s`**", event.Name)
 		if event.Type != nil && event.Type.Text != "" {
-			content.WriteString(fmt.Sprintf(" _%s_", event.Type.Text))
+			fmt.Fprintf(&content, " _%s_", event.Type.Text)
 		}
 		if event.InheritedFrom != nil {
-			content.WriteString(fmt.Sprintf(" _(inherited from %s)_", event.InheritedFrom.Name))
+			fmt.Fprintf(&content, " _(inherited from %s)_", event.InheritedFrom.Name)
 		}
 		if event.Description != "" {
-			content.WriteString(fmt.Sprintf(" - %s", event.Description))
+			fmt.Fprintf(&content, " - %s", event.Description)
 		}
 		content.WriteString("\n")
 	}
@@ -224,12 +224,12 @@ func formatSlots(slots []M.Slot) string {
 	var content strings.Builder
 	content.WriteString("### Slots\n\n")
 	for _, slot := range slots {
-		content.WriteString(fmt.Sprintf("- **`%s`**", slot.Name))
+		fmt.Fprintf(&content, "- **`%s`**", slot.Name)
 		if slot.InheritedFrom != nil {
-			content.WriteString(fmt.Sprintf(" _(inherited from %s)_", slot.InheritedFrom.Name))
+			fmt.Fprintf(&content, " _(inherited from %s)_", slot.InheritedFrom.Name)
 		}
 		if slot.Description != "" {
-			content.WriteString(fmt.Sprintf(" - %s", slot.Description))
+			fmt.Fprintf(&content, " - %s", slot.Description)
 		}
 		content.WriteString("\n")
 	}
@@ -242,27 +242,27 @@ func CreateAttributeHoverContent(attr *M.Attribute, tagName string) string {
 	var content strings.Builder
 
 	// Title
-	content.WriteString(fmt.Sprintf("## `%s` attribute\n\n", attr.Name))
-	content.WriteString(fmt.Sprintf("**On `<%s>` element**\n\n", tagName))
+	fmt.Fprintf(&content, "## `%s` attribute\n\n", attr.Name)
+	fmt.Fprintf(&content, "**On `<%s>` element**\n\n", tagName)
 
 	// Inheritance info
 	if attr.InheritedFrom != nil {
-		content.WriteString(fmt.Sprintf("_Inherited from %s_\n\n", attr.InheritedFrom.Name))
+		fmt.Fprintf(&content, "_Inherited from %s_\n\n", attr.InheritedFrom.Name)
 	}
 
 	// Type
 	if attr.Type != nil && attr.Type.Text != "" {
-		content.WriteString(fmt.Sprintf("**Type:** `%s`\n\n", attr.Type.Text))
+		fmt.Fprintf(&content, "**Type:** `%s`\n\n", attr.Type.Text)
 	}
 
 	// Description
 	if attr.Description != "" {
-		content.WriteString(fmt.Sprintf("%s\n\n", attr.Description))
+		fmt.Fprintf(&content, "%s\n\n", attr.Description)
 	}
 
 	// Default value
 	if attr.Default != "" {
-		content.WriteString(fmt.Sprintf("**Default:** `%s`\n\n", attr.Default))
+		fmt.Fprintf(&content, "**Default:** `%s`\n\n", attr.Default)
 	}
 
 	// Deprecated warning
@@ -271,7 +271,7 @@ func CreateAttributeHoverContent(attr *M.Attribute, tagName string) string {
 		case M.DeprecatedFlag:
 			content.WriteString("⚠️ **Deprecated**\n\n")
 		case M.DeprecatedReason:
-			content.WriteString(fmt.Sprintf("⚠️ **Deprecated**: %s\n\n", attr.Deprecated))
+			fmt.Fprintf(&content, "⚠️ **Deprecated**: %s\n\n", attr.Deprecated)
 		}
 	}
 
@@ -283,22 +283,22 @@ func CreateEventHoverContent(event *M.Event, tagName string) string {
 	var content strings.Builder
 
 	// Title
-	content.WriteString(fmt.Sprintf("## `%s` event\n\n", event.Name))
-	content.WriteString(fmt.Sprintf("**On `<%s>` element**\n\n", tagName))
+	fmt.Fprintf(&content, "## `%s` event\n\n", event.Name)
+	fmt.Fprintf(&content, "**On `<%s>` element**\n\n", tagName)
 
 	// Inheritance info
 	if event.InheritedFrom != nil {
-		content.WriteString(fmt.Sprintf("_Inherited from %s_\n\n", event.InheritedFrom.Name))
+		fmt.Fprintf(&content, "_Inherited from %s_\n\n", event.InheritedFrom.Name)
 	}
 
 	// Type (event detail type)
 	if event.Type != nil && event.Type.Text != "" {
-		content.WriteString(fmt.Sprintf("**Type:** `%s`\n\n", event.Type.Text))
+		fmt.Fprintf(&content, "**Type:** `%s`\n\n", event.Type.Text)
 	}
 
 	// Description
 	if event.Description != "" {
-		content.WriteString(fmt.Sprintf("%s\n\n", event.Description))
+		fmt.Fprintf(&content, "%s\n\n", event.Description)
 	}
 
 	// Deprecated warning
@@ -307,7 +307,7 @@ func CreateEventHoverContent(event *M.Event, tagName string) string {
 		case M.DeprecatedFlag:
 			content.WriteString("⚠️ **Deprecated**\n\n")
 		case M.DeprecatedReason:
-			content.WriteString(fmt.Sprintf("⚠️ **Deprecated**: %s\n\n", event.Deprecated))
+			fmt.Fprintf(&content, "⚠️ **Deprecated**: %s\n\n", event.Deprecated)
 		}
 	}
 

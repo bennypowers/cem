@@ -59,15 +59,15 @@ func TestTemplateRenderer(t *testing.T) {
 	tests := []struct {
 		name         string
 		templateName string
-		setupData    func() interface{}
+		setupData    func() any
 		expectError  bool
 		checkContent []string // strings that should be present in output
 	}{
 		{
 			name:         "accessibility context template",
 			templateName: "contextual_suggestions",
-			setupData: func() interface{} {
-				return map[string]interface{}{
+			setupData: func() any {
+				return map[string]any{
 					"TagName": "button-element",
 					"Context": "accessibility", // This should match a condition in the template
 				}
@@ -78,7 +78,7 @@ func TestTemplateRenderer(t *testing.T) {
 		{
 			name:         "non-existent template",
 			templateName: "non-existent",
-			setupData: func() interface{} {
+			setupData: func() any {
 				return map[string]string{}
 			},
 			expectError: true,
@@ -140,7 +140,7 @@ func TestToolArgs_Parsing(t *testing.T) {
 	}
 
 	// Create a mock request similar to what MCP would send
-	argsMap := map[string]interface{}{
+	argsMap := map[string]any{
 		"tagName": args.TagName,
 		"context": args.Context,
 		"content": args.Content,
@@ -202,7 +202,7 @@ func TestTemplateRenderer_Basic(t *testing.T) {
 	// Test that the template renderer works with basic data
 
 	// Test with data that matches template conditions
-	testDataWithContext := map[string]interface{}{
+	testDataWithContext := map[string]any{
 		"TagName": "test-element",
 		"Context": "form", // This should match the form condition
 	}
@@ -231,7 +231,7 @@ func testTemplateWithGolden(t *testing.T, templateName, contextName, fixtureFile
 	fixtureData, err := os.ReadFile(fixturePath)
 	require.NoError(t, err, "Should be able to read fixture file: %s", fixturePath)
 
-	var templateData interface{}
+	var templateData any
 	err = json.Unmarshal(fixtureData, &templateData)
 	require.NoError(t, err, "Should be able to parse fixture JSON")
 

@@ -29,7 +29,7 @@ type BaseTemplateData struct {
 	Element           ElementInfo
 	Context           string
 	Options           map[string]string
-	SchemaDefinitions interface{} // Schema data for template functions
+	SchemaDefinitions any // Schema data for template functions
 }
 
 // GetElement implements TemplateDataProvider
@@ -51,7 +51,7 @@ func NewBaseTemplateData(element ElementInfo, context string, options map[string
 }
 
 // NewBaseTemplateDataWithSchema creates base template data with schema context
-func NewBaseTemplateDataWithSchema(element ElementInfo, context string, options map[string]string, schemaDefinitions interface{}) BaseTemplateData {
+func NewBaseTemplateDataWithSchema(element ElementInfo, context string, options map[string]string, schemaDefinitions any) BaseTemplateData {
 	return BaseTemplateData{
 		Element:           element,
 		Context:           context,

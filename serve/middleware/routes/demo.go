@@ -115,8 +115,10 @@ func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string) (m
 func resolveSourceHrefToFilePath(sourceHref, moduleDir, sourceControlRootURL string) string {
 	// If we have a sourceControlRootURL and the source href starts with it,
 	// everything after the root URL is the file path
-	if sourceControlRootURL != "" && strings.HasPrefix(sourceHref, sourceControlRootURL) {
-		return strings.TrimPrefix(sourceHref, sourceControlRootURL)
+	if sourceControlRootURL != "" {
+		if after, ok := strings.CutPrefix(sourceHref, sourceControlRootURL); ok {
+			return after
+		}
 	}
 
 	// Try to parse as URL
@@ -261,8 +263,8 @@ func formatPackageRoutingErrors(errors []packageRoutingError) error {
 	msg.WriteString("Package routing errors detected (packages skipped):\n\n")
 
 	for _, pkgErr := range errors {
-		msg.WriteString(fmt.Sprintf("Package '%s' (%s):\n", pkgErr.PackageName, pkgErr.PackagePath))
-		msg.WriteString(fmt.Sprintf("  Error: %v\n\n", pkgErr.Error))
+		fmt.Fprintf(&msg, "Package '%s' (%s):\n", pkgErr.PackageName, pkgErr.PackagePath)
+		fmt.Fprintf(&msg, "  Error: %v\n\n", pkgErr.Error)
 	}
 
 	return fmt.Errorf("%s", msg.String())
@@ -274,10 +276,10 @@ func formatRouteConflictsError(conflicts map[string][]routeConflict) error {
 	msg.WriteString("Route conflicts detected:\n\n")
 
 	for route, conflictList := range conflicts {
-		msg.WriteString(fmt.Sprintf("Conflict for route '%s':\n", route))
+		fmt.Fprintf(&msg, "Conflict for route '%s':\n", route)
 		for _, c := range conflictList {
-			msg.WriteString(fmt.Sprintf("  - Package '%s' (%s)\n", c.PackageName, c.PackagePath))
-			msg.WriteString(fmt.Sprintf("    Source: %s\n", c.FilePath))
+			fmt.Fprintf(&msg, "  - Package '%s' (%s)\n", c.PackageName, c.PackagePath)
+			fmt.Fprintf(&msg, "    Source: %s\n", c.FilePath)
 		}
 		msg.WriteString("\n")
 	}
@@ -350,8 +352,8 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 		pathParts := strings.Split(filepath.ToSlash(pkg.Path), "/")
 		for i := len(pathParts) - 1; i >= 0; i-- {
 			possiblePrefix := strings.Join(pathParts[i:], "/")
-			if strings.HasPrefix(normalizedFilePath, possiblePrefix+"/") {
-				relFilePath = strings.TrimPrefix(normalizedFilePath, possiblePrefix+"/")
+			if after, ok := strings.CutPrefix(normalizedFilePath, possiblePrefix+"/"); ok {
+				relFilePath = after
 				break
 			}
 		}

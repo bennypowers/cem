@@ -274,7 +274,7 @@ func TestModuleGraph_RealWorldWorkspaceScenario(t *testing.T) {
 	mg := modulegraph.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Simulate manifest data for transitive scenario
-	elementMap := map[string]interface{}{
+	elementMap := map[string]any{
 		"my-icon": &modulegraph.MockElementDefinition{
 			TagName:    "my-icon",
 			ClassName:  "MyIcon",

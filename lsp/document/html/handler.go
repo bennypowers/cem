@@ -142,7 +142,7 @@ func (h *Handler) FindElementAtPosition(doc types.Document, position protocol.Po
 	}
 
 	for _, element := range elements {
-		if isPositionInRange(position, element.Range) {
+		if helpers.IsPositionInRange(position, element.Range) {
 			return &types.CustomElementMatch{
 				TagName:    element.TagName,
 				Range:      element.Range,
@@ -164,7 +164,7 @@ func (h *Handler) FindAttributeAtPosition(doc types.Document, position protocol.
 
 	for _, element := range elements {
 		for _, attr := range element.Attributes {
-			if isPositionInRange(position, attr.Range) {
+			if helpers.IsPositionInRange(position, attr.Range) {
 				return &types.AttributeMatch{
 					Name:  attr.Name,
 					Value: attr.Value,
@@ -227,7 +227,7 @@ func (h *Handler) ParseScriptTags(doc types.Document) ([]types.ScriptTag, error)
 			scriptTag.ContentRange = htmlDoc.ByteRangeToProtocolRange(content, capture.StartByte, capture.EndByte)
 
 			// Parse imports from the script content
-			scriptTag.Imports = h.parseImportStatements(capture.Text)
+			scriptTag.Imports = parseImportStatements(capture.Text)
 		}
 
 		// Extract attributes (type, src, etc.)
@@ -359,7 +359,7 @@ func (h *Handler) ParseImportMap(doc types.Document) (map[string]string, error) 
 }
 
 // parseImportStatements parses import statements from script content
-func (h *Handler) parseImportStatements(content string) []types.ImportStatement {
+func parseImportStatements(content string) []types.ImportStatement {
 	var imports []types.ImportStatement
 
 	// Simple regex-based parsing for now - this should be enhanced with proper TypeScript parsing
@@ -438,19 +438,3 @@ func (h *Handler) Close() {
 	// QueryMatchers are now created fresh per operation and closed immediately
 }
 
-// Helper function to check if position is within range
-func isPositionInRange(pos protocol.Position, r protocol.Range) bool {
-	if pos.Line < r.Start.Line || pos.Line > r.End.Line {
-		return false
-	}
-
-	if pos.Line == r.Start.Line && pos.Character < r.Start.Character {
-		return false
-	}
-
-	if pos.Line == r.End.Line && pos.Character > r.End.Character {
-		return false
-	}
-
-	return true
-}

@@ -93,14 +93,14 @@ func NewResponseBuilder() *ResponseBuilder {
 // AddHeader adds a markdown header at the specified level
 func (rb *ResponseBuilder) AddHeader(level int, text string) *ResponseBuilder {
 	headerMarker := strings.Repeat("#", level)
-	rb.builder.WriteString(fmt.Sprintf("%s %s\n\n", headerMarker, text))
+	fmt.Fprintf(&rb.builder, "%s %s\n\n", headerMarker, text)
 	return rb
 }
 
 // AddDescription adds element description if available
 func (rb *ResponseBuilder) AddDescription(element types.ElementInfo) *ResponseBuilder {
 	if element.Description() != "" {
-		rb.builder.WriteString(fmt.Sprintf("**Element Description:** %s\n\n", element.Description()))
+		fmt.Fprintf(&rb.builder, "**Element Description:** %s\n\n", element.Description())
 	}
 	return rb
 }
@@ -115,10 +115,10 @@ func (rb *ResponseBuilder) AddSection(content string) *ResponseBuilder {
 }
 
 // AddTemplateSection renders a template and adds it as a section
-func (rb *ResponseBuilder) AddTemplateSection(templateName string, data interface{}) *ResponseBuilder {
+func (rb *ResponseBuilder) AddTemplateSection(templateName string, data any) *ResponseBuilder {
 	content, err := RenderTemplate(templateName, data)
 	if err != nil {
-		rb.builder.WriteString(fmt.Sprintf("Error rendering template %s: %v\n", templateName, err))
+		fmt.Fprintf(&rb.builder, "Error rendering template %s: %v\n", templateName, err)
 	} else {
 		rb.AddSection(content)
 	}

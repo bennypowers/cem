@@ -85,18 +85,18 @@ func TestGenerateOutsideProjectRoot(t *testing.T) {
 		t.Fatalf("Failed to read output file: %v", err)
 	}
 
-	var manifest map[string]interface{}
+	var manifest map[string]any
 	if err := json.Unmarshal(content, &manifest); err != nil {
 		t.Fatalf("Failed to parse output JSON: %v", err)
 	}
 
 	// Check that module paths are relative, not absolute
-	modules, ok := manifest["modules"].([]interface{})
+	modules, ok := manifest["modules"].([]any)
 	if !ok || len(modules) == 0 {
 		t.Fatalf("No modules found in manifest")
 	}
 
-	module, ok := modules[0].(map[string]interface{})
+	module, ok := modules[0].(map[string]any)
 	if !ok {
 		t.Fatalf("Invalid module structure")
 	}
@@ -175,18 +175,18 @@ func TestGenerateOutsideProjectRootRelativePaths(t *testing.T) {
 		t.Fatalf("Failed to read output file: %v", err)
 	}
 
-	var manifest map[string]interface{}
+	var manifest map[string]any
 	if err := json.Unmarshal(content, &manifest); err != nil {
 		t.Fatalf("Failed to parse output JSON: %v", err)
 	}
 
 	// Check that module paths are relative, not absolute
-	modules, ok := manifest["modules"].([]interface{})
+	modules, ok := manifest["modules"].([]any)
 	if !ok || len(modules) == 0 {
 		t.Fatalf("No modules found in manifest")
 	}
 
-	module, ok := modules[0].(map[string]interface{})
+	module, ok := modules[0].(map[string]any)
 	if !ok {
 		t.Fatalf("Invalid module structure")
 	}

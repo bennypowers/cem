@@ -47,7 +47,7 @@ func TestMarshalUnmarshalRoundTrip(t *testing.T) {
 	}
 
 	// Parse both JSONs for comparison (to handle formatting differences)
-	var originalData, roundTripData interface{}
+	var originalData, roundTripData any
 
 	if err := json.Unmarshal(originalJSON, &originalData); err != nil {
 		t.Fatalf("Failed to parse original JSON: %v", err)
@@ -137,7 +137,7 @@ func TestMarshalUnmarshalSpecificCases(t *testing.T) {
 			}
 
 			// Parse for comparison
-			var originalData, roundTripData interface{}
+			var originalData, roundTripData any
 			if err := json.Unmarshal([]byte(tc.jsonData), &originalData); err != nil {
 				t.Fatalf("Failed to parse original: %v", err)
 			}
@@ -166,7 +166,7 @@ func TestMarshalUnmarshalSpecificCases(t *testing.T) {
 
 // deepEqualIgnoreOmitEmpty compares JSON structures while ignoring empty arrays/slices
 // that would be omitted due to omitempty tags
-func deepEqualIgnoreOmitEmpty(a, b interface{}) bool {
+func deepEqualIgnoreOmitEmpty(a, b any) bool {
 	// Normalize both structures to handle omitempty differences
 	aNorm := normalizeOmitEmpty(a)
 	bNorm := normalizeOmitEmpty(b)
@@ -185,10 +185,10 @@ func deepEqualIgnoreOmitEmpty(a, b interface{}) bool {
 }
 
 // normalizeOmitEmpty recursively removes empty slices and arrays to simulate omitempty behavior
-func normalizeOmitEmpty(v interface{}) interface{} {
+func normalizeOmitEmpty(v any) any {
 	switch val := v.(type) {
-	case map[string]interface{}:
-		result := make(map[string]interface{})
+	case map[string]any:
+		result := make(map[string]any)
 		for k, v := range val {
 			normalized := normalizeOmitEmpty(v)
 			// Only include non-empty values
@@ -197,11 +197,11 @@ func normalizeOmitEmpty(v interface{}) interface{} {
 			}
 		}
 		return result
-	case []interface{}:
+	case []any:
 		if len(val) == 0 {
 			return nil // Empty slices become nil to match omitempty
 		}
-		result := make([]interface{}, len(val))
+		result := make([]any, len(val))
 		for i, v := range val {
 			result[i] = normalizeOmitEmpty(v)
 		}
@@ -212,14 +212,14 @@ func normalizeOmitEmpty(v interface{}) interface{} {
 }
 
 // isEmpty checks if a value should be considered empty for omitempty purposes
-func isEmpty(v interface{}) bool {
+func isEmpty(v any) bool {
 	if v == nil {
 		return true
 	}
 	switch val := v.(type) {
-	case []interface{}:
+	case []any:
 		return len(val) == 0
-	case map[string]interface{}:
+	case map[string]any:
 		return len(val) == 0
 	case string:
 		return val == ""

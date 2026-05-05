@@ -31,7 +31,7 @@ func TestImportMap_TransitiveDependenciesWithScopes(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Create root package.json with lit dependency
-	rootPkg := map[string]interface{}{
+	rootPkg := map[string]any{
 		"name": "my-app",
 		"dependencies": map[string]string{
 			"lit": "^3.0.0",
@@ -49,12 +49,12 @@ func TestImportMap_TransitiveDependenciesWithScopes(t *testing.T) {
 	}
 
 	// lit depends on @lit/reactive-element
-	litPkg := map[string]interface{}{
+	litPkg := map[string]any{
 		"name": "lit",
 		"dependencies": map[string]string{
 			"@lit/reactive-element": "^2.0.0",
 		},
-		"exports": map[string]interface{}{
+		"exports": map[string]any{
 			".":               "./index.js",
 			"./decorators.js": "./decorators.js",
 		},
@@ -70,9 +70,9 @@ func TestImportMap_TransitiveDependenciesWithScopes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	reactiveElementPkg := map[string]interface{}{
+	reactiveElementPkg := map[string]any{
 		"name": "@lit/reactive-element",
-		"exports": map[string]interface{}{
+		"exports": map[string]any{
 			".":              "./reactive-element.js",
 			"./decorators/*": "./decorators/*.js",
 		},
@@ -120,7 +120,7 @@ func TestImportMap_OnlyDependencyTreeGetsScopes(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Root only depends on pkg-a
-	rootPkg := map[string]interface{}{
+	rootPkg := map[string]any{
 		"name": "my-app",
 		"dependencies": map[string]string{
 			"pkg-a": "^1.0.0",
@@ -136,7 +136,7 @@ func TestImportMap_OnlyDependencyTreeGetsScopes(t *testing.T) {
 	if err := os.MkdirAll(pkgADir, 0755); err != nil {
 		t.Fatal(err)
 	}
-	pkgA := map[string]interface{}{
+	pkgA := map[string]any{
 		"name": "pkg-a",
 		"dependencies": map[string]string{
 			"pkg-b": "^1.0.0",
@@ -153,7 +153,7 @@ func TestImportMap_OnlyDependencyTreeGetsScopes(t *testing.T) {
 	if err := os.MkdirAll(pkgBDir, 0755); err != nil {
 		t.Fatal(err)
 	}
-	pkgB := map[string]interface{}{
+	pkgB := map[string]any{
 		"name":    "pkg-b",
 		"exports": "./index.js",
 	}
@@ -167,7 +167,7 @@ func TestImportMap_OnlyDependencyTreeGetsScopes(t *testing.T) {
 	if err := os.MkdirAll(pkgUnusedDir, 0755); err != nil {
 		t.Fatal(err)
 	}
-	pkgUnused := map[string]interface{}{
+	pkgUnused := map[string]any{
 		"name": "pkg-unused",
 		"dependencies": map[string]string{
 			"pkg-unused-dep": "^1.0.0",
@@ -184,7 +184,7 @@ func TestImportMap_OnlyDependencyTreeGetsScopes(t *testing.T) {
 	if err := os.MkdirAll(pkgUnusedDepDir, 0755); err != nil {
 		t.Fatal(err)
 	}
-	pkgUnusedDep := map[string]interface{}{
+	pkgUnusedDep := map[string]any{
 		"name":    "pkg-unused-dep",
 		"exports": "./index.js",
 	}

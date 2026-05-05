@@ -47,7 +47,7 @@ var NewBaseTemplateDataWithSchema = types.NewBaseTemplateDataWithSchema
 
 // handleDeclarativeResource is the generic handler for declarative resources
 func handleDeclarativeResource(
-	ctx context.Context,
+	_ context.Context,
 	req *mcp.ReadResourceRequest,
 	registry types.MCPContext,
 	config DeclarativeResourceConfig,
@@ -196,7 +196,7 @@ func executeDataFetchers(fetchers []types.DataFetcher, registry types.MCPContext
 }
 
 // prepareTemplateData combines arguments and fetched data for template rendering (ported from tools)
-func prepareTemplateData(args map[string]any, fetchedData FetchedData, registry types.MCPContext) (any, error) {
+func prepareTemplateData(args map[string]any, fetchedData FetchedData, _ types.MCPContext) (any, error) {
 	// Create the base template data structure
 	templateData := BaseTemplateData{
 		Context: getStringArg(args, "context", ""),
@@ -333,7 +333,7 @@ func applySubResourceFiltering(
 }
 
 // renderFilteredResponse renders a filtered single item as JSON
-func renderFilteredResponse(filteredItem any, dataKey string) (string, error) {
+func renderFilteredResponse(filteredItem any, _ string) (string, error) {
 	// For now, just return the filtered item as JSON
 	// In the future, this could use templates for formatted output
 	jsonBytes, err := json.MarshalIndent(filteredItem, "", "  ")

@@ -34,25 +34,25 @@ type testLogger struct {
 	debugs   *[]string
 }
 
-func (l *testLogger) Warning(msg string, args ...interface{}) {
+func (l *testLogger) Warning(msg string, args ...any) {
 	if l.warnings != nil {
 		*l.warnings = append(*l.warnings, fmt.Sprintf(msg, args...))
 	}
 }
 
-func (l *testLogger) Info(msg string, args ...interface{}) {
+func (l *testLogger) Info(msg string, args ...any) {
 	if l.infos != nil {
 		*l.infos = append(*l.infos, fmt.Sprintf(msg, args...))
 	}
 }
 
-func (l *testLogger) Error(msg string, args ...interface{}) {
+func (l *testLogger) Error(msg string, args ...any) {
 	if l.errors != nil {
 		*l.errors = append(*l.errors, fmt.Sprintf(msg, args...))
 	}
 }
 
-func (l *testLogger) Debug(msg string, args ...interface{}) {
+func (l *testLogger) Debug(msg string, args ...any) {
 	if l.debugs != nil {
 		*l.debugs = append(*l.debugs, fmt.Sprintf(msg, args...))
 	}

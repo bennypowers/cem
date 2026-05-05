@@ -52,7 +52,7 @@ func AnalyzeAttributeValueDiagnosticsForTest(ctx types.ServerContext, doc types.
 
 	for _, match := range attributeMatches {
 		// Only validate custom elements
-		if !isCustomElement(match.TagName) {
+		if !helpers.IsCustomElementTag(match.TagName) {
 			continue
 		}
 

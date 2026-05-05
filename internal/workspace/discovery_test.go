@@ -28,7 +28,7 @@ func TestDiscoverWorkspacePackages_NegatedPattern(t *testing.T) {
 	// Test with array format: ["packages/*", "!packages/private"]
 	rootDir := filepath.Join("testdata", "negation-test")
 
-	workspacesField := []interface{}{
+	workspacesField := []any{
 		"packages/*",
 		"!packages/private",
 	}
@@ -68,8 +68,8 @@ func TestDiscoverWorkspacePackages_NegatedPatternObject(t *testing.T) {
 	// Test with object format: { "packages": ["apps/*", "!apps/internal-*"] }
 	rootDir := filepath.Join("testdata", "negation-object-test")
 
-	workspacesField := map[string]interface{}{
-		"packages": []interface{}{
+	workspacesField := map[string]any{
+		"packages": []any{
 			"apps/*",
 			"!apps/internal-*",
 		},
@@ -98,7 +98,7 @@ func TestDiscoverWorkspacePackages_NegatedPatternObject(t *testing.T) {
 func TestDiscoverWorkspacePackages_MultipleNegations(t *testing.T) {
 	rootDir := filepath.Join("testdata", "negation-test")
 
-	workspacesField := []interface{}{
+	workspacesField := []any{
 		"packages/*",
 		"!packages/private",
 		"!packages/internal",
@@ -131,7 +131,7 @@ func TestDiscoverWorkspacePackages_MultipleNegations(t *testing.T) {
 func TestDiscoverWorkspacePackages_NoNegation(t *testing.T) {
 	rootDir := filepath.Join("testdata", "negation-test")
 
-	workspacesField := []interface{}{
+	workspacesField := []any{
 		"packages/*",
 	}
 

@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/internal/platform"
 )
 
 var update = flag.Bool("update", false, "update golden files")
@@ -132,6 +133,114 @@ func TestVueExporter(t *testing.T) {
 
 func TestAngularExporter(t *testing.T) {
 	testExporter(t, &AngularExporter{}, "angular")
+}
+
+func TestExport_NilManifest(t *testing.T) {
+	err := Export(Options{})
+	if err == nil || err.Error() != "manifest is required" {
+		t.Errorf("expected 'manifest is required' error, got %v", err)
+	}
+}
+
+func TestExport_UnknownFramework(t *testing.T) {
+	pkg := loadTestManifest(t)
+	err := Export(Options{
+		Manifest:    pkg,
+		PackageName: "my-package",
+		Frameworks: map[string]FrameworkExportConfig{
+			"svelte": {Output: t.TempDir()},
+		},
+	})
+	if err == nil {
+		t.Error("expected error for unknown framework")
+	}
+}
+
+func TestExport_MissingOutput(t *testing.T) {
+	pkg := loadTestManifest(t)
+	err := Export(Options{
+		Manifest:    pkg,
+		PackageName: "my-package",
+		Frameworks: map[string]FrameworkExportConfig{
+			"react": {Output: ""},
+		},
+	})
+	if err == nil {
+		t.Error("expected error for missing output")
+	}
+}
+
+func TestExport_React_MapFS(t *testing.T) {
+	pkg := loadTestManifest(t)
+	memFS := platform.NewMapFS(nil)
+	err := Export(Options{
+		Manifest:    pkg,
+		PackageName: "my-package",
+		FS:          memFS,
+		Frameworks: map[string]FrameworkExportConfig{
+			"react": {Output: "react", StripPrefix: "my-"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Export: %v", err)
+	}
+	entries, err := memFS.ReadDir("react")
+	if err != nil {
+		t.Fatalf("ReadDir: %v", err)
+	}
+	if len(entries) == 0 {
+		t.Error("expected output files")
+	}
+}
+
+func TestExport_AllFrameworks_MapFS(t *testing.T) {
+	pkg := loadTestManifest(t)
+	memFS := platform.NewMapFS(nil)
+	err := Export(Options{
+		Manifest:    pkg,
+		PackageName: "my-package",
+		FS:          memFS,
+		Frameworks: map[string]FrameworkExportConfig{
+			"react":   {Output: "react"},
+			"vue":     {Output: "vue"},
+			"angular": {Output: "angular"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Export: %v", err)
+	}
+	for _, fw := range []string{"react", "vue", "angular"} {
+		entries, err := memFS.ReadDir(fw)
+		if err != nil {
+			t.Fatalf("ReadDir(%s): %v", fw, err)
+		}
+		if len(entries) == 0 {
+			t.Errorf("%s: expected output files", fw)
+		}
+	}
+}
+
+func TestExport_VerifyContent_MapFS(t *testing.T) {
+	pkg := loadTestManifest(t)
+	memFS := platform.NewMapFS(nil)
+	err := Export(Options{
+		Manifest:    pkg,
+		PackageName: "my-package",
+		FS:          memFS,
+		Frameworks: map[string]FrameworkExportConfig{
+			"react": {Output: "react", StripPrefix: "my-"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Export: %v", err)
+	}
+	content, err := memFS.ReadFile("react/Button.ts")
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if len(content) == 0 {
+		t.Error("expected non-empty wrapper content")
+	}
 }
 
 func testExporter(t *testing.T, exporter FrameworkExporter, framework string) {

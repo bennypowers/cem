@@ -19,6 +19,7 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -286,14 +287,7 @@ func (p *DataSourceProvider) buildPackageStructure(elementMap map[string]types.E
 		pkg.Elements = append(pkg.Elements, element.TagName())
 
 		if module := element.Module(); module != "" {
-			moduleExists := false
-			for _, existingModule := range pkg.Modules {
-				if existingModule == module {
-					moduleExists = true
-					break
-				}
-			}
-			if !moduleExists {
+			if !slices.Contains(pkg.Modules, module) {
 				pkg.Modules = append(pkg.Modules, module)
 			}
 		}

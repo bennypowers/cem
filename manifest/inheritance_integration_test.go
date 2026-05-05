@@ -409,3 +409,91 @@ func TestInheritance_MultiLevelSuperclass(t *testing.T) {
 		t.Error("ChildElement: child-attr should not have InheritedFrom set (own attribute)")
 	}
 }
+
+func TestInheritance_CSSProperties(t *testing.T) {
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "inheritance_css.json", &pkg)
+
+	ced := pkg.FindCustomElementDeclaration("child-element")
+	if ced == nil {
+		t.Fatal("child-element not found")
+	}
+
+	t.Run("CSS properties inherited and merged", func(t *testing.T) {
+		props := ced.CssProperties()
+		propMap := make(map[string]manifest.CssCustomProperty)
+		for _, p := range props {
+			propMap[p.Name] = p
+		}
+
+		if _, ok := propMap["--base-color"]; !ok {
+			t.Error("--base-color should be inherited")
+		} else if propMap["--base-color"].InheritedFrom == nil {
+			t.Error("--base-color should have InheritedFrom set")
+		}
+
+		if p, ok := propMap["--shared-prop"]; !ok {
+			t.Error("--shared-prop should exist (overridden)")
+		} else if p.InheritedFrom != nil {
+			t.Error("--shared-prop should NOT have InheritedFrom (overridden by child)")
+		}
+
+		if p, ok := propMap["--child-color"]; !ok {
+			t.Error("--child-color should exist (own property)")
+		} else if p.InheritedFrom != nil {
+			t.Error("--child-color should NOT have InheritedFrom (own property)")
+		}
+	})
+
+	t.Run("CSS parts inherited and merged", func(t *testing.T) {
+		parts := ced.CssParts()
+		partMap := make(map[string]manifest.CssPart)
+		for _, p := range parts {
+			partMap[p.Name] = p
+		}
+
+		if _, ok := partMap["container"]; !ok {
+			t.Error("container should be inherited")
+		} else if partMap["container"].InheritedFrom == nil {
+			t.Error("container should have InheritedFrom set")
+		}
+
+		if p, ok := partMap["shared-part"]; !ok {
+			t.Error("shared-part should exist (overridden)")
+		} else if p.InheritedFrom != nil {
+			t.Error("shared-part should NOT have InheritedFrom (overridden by child)")
+		}
+
+		if p, ok := partMap["inner"]; !ok {
+			t.Error("inner should exist (own part)")
+		} else if p.InheritedFrom != nil {
+			t.Error("inner should NOT have InheritedFrom (own part)")
+		}
+	})
+
+	t.Run("CSS states inherited and merged", func(t *testing.T) {
+		states := ced.CssStates()
+		stateMap := make(map[string]manifest.CssCustomState)
+		for _, s := range states {
+			stateMap[s.Name] = s
+		}
+
+		if _, ok := stateMap["--active"]; !ok {
+			t.Error("--active should be inherited")
+		} else if stateMap["--active"].InheritedFrom == nil {
+			t.Error("--active should have InheritedFrom set")
+		}
+
+		if s, ok := stateMap["--shared-state"]; !ok {
+			t.Error("--shared-state should exist (overridden)")
+		} else if s.InheritedFrom != nil {
+			t.Error("--shared-state should NOT have InheritedFrom (overridden by child)")
+		}
+
+		if s, ok := stateMap["--loading"]; !ok {
+			t.Error("--loading should exist (own state)")
+		} else if s.InheritedFrom != nil {
+			t.Error("--loading should NOT have InheritedFrom (own state)")
+		}
+	})
+}

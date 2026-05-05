@@ -18,6 +18,7 @@ package platform
 
 import (
 	"io/fs"
+	"path/filepath"
 	"testing/fstest"
 )
 
@@ -40,6 +41,7 @@ func NewMapFS(files map[string]string) *MapFS {
 }
 
 func (m *MapFS) WriteFile(name string, data []byte, perm fs.FileMode) error {
+	name = filepath.ToSlash(name)
 	m.MapFS[name] = &fstest.MapFile{
 		Data: data,
 		Mode: perm,

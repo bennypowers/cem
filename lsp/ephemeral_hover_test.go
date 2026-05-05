@@ -114,7 +114,7 @@ func TestEphemeralHover(t *testing.T) {
 		}
 
 		// Unmarshal expected golden into a typed struct so Contents
-		// deserializes as MarkupContent rather than map[string]interface{}.
+		// deserializes as MarkupContent rather than map[string]any.
 		type expectedHover struct {
 			Contents protocol.MarkupContent `json:"contents"`
 			Range    *protocol.Range        `json:"range"`

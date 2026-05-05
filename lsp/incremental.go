@@ -190,7 +190,7 @@ func (ip *IncrementalParser) ParseWithStrategy(doc types.Document, newContent st
 type ParseResult = types.ParseResult
 
 // determineStrategy determines which parsing strategy to use
-func (ip *IncrementalParser) determineStrategy(doc types.Document, newContent string, changes []protocol.TextDocumentContentChangeEvent) ParseStrategy {
+func (ip *IncrementalParser) determineStrategy(_ types.Document, _ string, changes []protocol.TextDocumentContentChangeEvent) ParseStrategy {
 	if ip.strategy != ParseStrategyAuto {
 		return ip.strategy
 	}

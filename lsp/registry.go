@@ -1422,9 +1422,8 @@ func (r *RegistryManifestResolver) GetManifestModulePath(filePath string) string
 
 		// For Red Hat Design System pattern: convert TypeScript source paths to manifest paths
 		// e.g., "elements/rh-tabs/rh-tab-panel.ts" -> "rh-tabs/rh-tab-panel.js"
-		if strings.HasSuffix(filePath, ".ts") {
-			// Convert .ts to .js for comparison
-			jsFilePath := strings.TrimSuffix(filePath, ".ts") + ".js"
+		if base, ok := strings.CutSuffix(filePath, ".ts"); ok {
+			jsFilePath := base + ".js"
 			if r.pathsMatch(jsFilePath, modulePath) {
 				return modulePath
 			}

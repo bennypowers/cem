@@ -158,7 +158,7 @@ func TestGetSchemaUpgrade210(t *testing.T) {
 
 			if !tc.checkTitle {
 				// For older schemas, just verify we got valid JSON
-				var schema map[string]interface{}
+				var schema map[string]any
 				if err := json.Unmarshal(schemaData, &schema); err != nil {
 					t.Fatalf("Failed to parse schema JSON: %v", err)
 				}
@@ -166,7 +166,7 @@ func TestGetSchemaUpgrade210(t *testing.T) {
 			}
 
 			// Parse the schema to verify which version was actually loaded
-			var schema map[string]interface{}
+			var schema map[string]any
 			if err := json.Unmarshal(schemaData, &schema); err != nil {
 				t.Fatalf("Failed to parse schema JSON: %v", err)
 			}
