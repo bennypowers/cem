@@ -10,6 +10,8 @@ the Free Software Foundation, either version 3 of the License, or
 package routes
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -258,5 +260,75 @@ func TestSlugify(t *testing.T) {
 				t.Errorf("slugify(%q) = %q, want %q", tt.input, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestDemoTitleFromRoute(t *testing.T) {
+	tests := []struct {
+		name     string
+		entry    DemoRouteEntry
+		expected string
+	}{
+		{
+			name:     "named route",
+			entry:    DemoRouteEntry{LocalRoute: "/elements/accordion/demo/accents/", FilePath: "demo/accents.html"},
+			expected: "Accents",
+		},
+		{
+			name:     "generic demo route falls back to filename",
+			entry:    DemoRouteEntry{LocalRoute: "/demo/", FilePath: "demo/basic.html"},
+			expected: "basic.html",
+		},
+		{
+			name:     "nested demo route",
+			entry:    DemoRouteEntry{LocalRoute: "/elements/tabs/demo/vertical/", FilePath: "demo/vertical.html"},
+			expected: "Vertical",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := demoTitleFromRoute(&tt.entry)
+			if result != tt.expected {
+				t.Errorf("demoTitleFromRoute() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestFormatPackageRoutingErrors(t *testing.T) {
+	errs := []packageRoutingError{
+		{PackageName: "@scope/element", PackagePath: "/path/to/element", Error: fmt.Errorf("missing manifest")},
+	}
+	result := formatPackageRoutingErrors(errs)
+	if result == nil {
+		t.Fatal("expected non-nil error")
+	}
+	msg := result.Error()
+	if !strings.Contains(msg, "@scope/element") {
+		t.Errorf("error should contain package name, got: %s", msg)
+	}
+	if !strings.Contains(msg, "missing manifest") {
+		t.Errorf("error should contain original error, got: %s", msg)
+	}
+}
+
+func TestFormatRouteConflictsError(t *testing.T) {
+	conflicts := map[string][]routeConflict{
+		"/demo/basic": {
+			{PackageName: "pkg-a", PackagePath: "/a", FilePath: "demo/basic.html"},
+			{PackageName: "pkg-b", PackagePath: "/b", FilePath: "demo/basic.html"},
+		},
+	}
+	result := formatRouteConflictsError(conflicts)
+	if result == nil {
+		t.Fatal("expected non-nil error")
+	}
+	msg := result.Error()
+	if !strings.Contains(msg, "/demo/basic") {
+		t.Errorf("error should contain route, got: %s", msg)
+	}
+	if !strings.Contains(msg, "pkg-a") || !strings.Contains(msg, "pkg-b") {
+		t.Errorf("error should contain both package names, got: %s", msg)
 	}
 }

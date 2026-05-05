@@ -1,10 +1,14 @@
 package tsx
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	Q "bennypowers.dev/cem/internal/treesitter"
+	"bennypowers.dev/cem/lsp/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestExtractCustomElementFromText(t *testing.T) {
@@ -246,6 +250,62 @@ func TestScoreMatch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := scoreMatch(tt.captureType, tt.captureMap, tt.capture, tt.byteOffset)
 			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func newTSXHandler(t *testing.T) *Handler {
+	t.Helper()
+	qm, err := Q.NewQueryManager(Q.LSPQueries())
+	require.NoError(t, err)
+	t.Cleanup(func() { qm.Close() })
+
+	handler, err := NewHandler(qm)
+	require.NoError(t, err)
+	t.Cleanup(func() { handler.Close() })
+
+	return handler
+}
+
+func TestFindCustomElements_TSX(t *testing.T) {
+	handler := newTSXHandler(t)
+
+	tests := []struct {
+		name     string
+		fixture  string
+		validate func(t *testing.T, elements []types.CustomElementMatch)
+	}{
+		{
+			name:    "tsx with custom elements",
+			fixture: filepath.Join("testdata", "with-custom-elements.tsx"),
+			validate: func(t *testing.T, elements []types.CustomElementMatch) {
+				require.GreaterOrEqual(t, len(elements), 2)
+				tagNames := make([]string, len(elements))
+				for i, e := range elements {
+					tagNames[i] = e.TagName
+				}
+				assert.Contains(t, tagNames, "my-element")
+				assert.Contains(t, tagNames, "other-element")
+			},
+		},
+		{
+			name:    "tsx no custom elements",
+			fixture: filepath.Join("testdata", "no-custom-elements.tsx"),
+			validate: func(t *testing.T, elements []types.CustomElementMatch) {
+				assert.Empty(t, elements)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content, err := os.ReadFile(tt.fixture)
+			require.NoError(t, err)
+			doc := handler.CreateDocument("file:///test.tsx", string(content), 1)
+			defer doc.Close()
+			elements, err := handler.FindCustomElements(doc)
+			require.NoError(t, err)
+			tt.validate(t, elements)
 		})
 	}
 }
