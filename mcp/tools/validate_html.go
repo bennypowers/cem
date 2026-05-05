@@ -59,7 +59,7 @@ type ValidateHtmlArgs struct {
 
 // handleValidateHtml validates HTML for accessibility and custom element compliance using tree-sitter
 func handleValidateHtml(
-	ctx context.Context,
+	_ context.Context,
 	req *mcp.CallToolRequest,
 	registry mcpTypes.MCPContext,
 ) (*mcp.CallToolResult, error) {
@@ -269,7 +269,7 @@ func validateSlotContentGuidelines(element types.CustomElementMatch, registryEle
 // validateAttributeCombinations detects conflicting attribute combinations
 func validateAttributeCombinations(
 	element types.CustomElementMatch,
-	registryElement mcpTypes.ElementInfo,
+	_ mcpTypes.ElementInfo,
 ) []AttributeConflict {
 	var conflicts []AttributeConflict
 

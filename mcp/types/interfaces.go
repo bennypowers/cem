@@ -34,7 +34,7 @@ type DataFetcher struct {
 type ToolDefinition struct {
 	Name         string                 `yaml:"name"`
 	Description  string                 `yaml:"-"` // From markdown content
-	InputSchema  map[string]interface{} `yaml:"inputSchema"`
+	InputSchema  map[string]any `yaml:"inputSchema"`
 	DataFetchers []DataFetcher          `yaml:"dataFetchers,omitempty"`
 	Template     string                 `yaml:"template,omitempty"`
 	ResponseType string                 `yaml:"responseType,omitempty"`
@@ -44,7 +44,7 @@ type ToolDefinition struct {
 // Frontmatter represents the YAML frontmatter from tool markdown files
 type Frontmatter struct {
 	Name         string                 `yaml:"name"`
-	InputSchema  map[string]interface{} `yaml:"inputSchema"`
+	InputSchema  map[string]any `yaml:"inputSchema"`
 	DataFetchers []DataFetcher          `yaml:"dataFetchers,omitempty"`
 	Template     string                 `yaml:"template,omitempty"`
 	ResponseType string                 `yaml:"responseType,omitempty"`

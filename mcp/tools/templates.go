@@ -144,6 +144,6 @@ var NewBaseTemplateData = types.NewBaseTemplateData
 var NewBaseTemplateDataWithSchema = types.NewBaseTemplateDataWithSchema
 
 // RenderTemplate renders a template using the global thread-safe pool
-func RenderTemplate(templateName string, data interface{}) (string, error) {
+func RenderTemplate(templateName string, data any) (string, error) {
 	return templates.RenderTemplate(templateName, data)
 }

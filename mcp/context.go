@@ -19,7 +19,6 @@ package mcp
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"strings"
 	"sync"
 
@@ -706,7 +705,7 @@ func (e *MCPElementInfoAdapter) Examples() []MCPTypes.Example {
 		// Example with attributes if available
 		if attrs := e.Attributes(); len(attrs) > 0 {
 			var attrParts []string
-			attrLimit := int(math.Min(3, float64(len(attrs)))) // Limit to first 3 attributes
+			attrLimit := min(3, len(attrs)) // Limit to first 3 attributes
 			for _, attr := range attrs[:attrLimit] {
 				if attr.Default != "" {
 					attrParts = append(attrParts, fmt.Sprintf(`%s="%s"`, attr.Name, attr.Default))
@@ -738,7 +737,7 @@ func (e *MCPElementInfoAdapter) Examples() []MCPTypes.Example {
 		// Example with slots if available
 		if slots := e.Slots(); len(slots) > 0 {
 			var slotContent []string
-			slotLimit := int(math.Min(2, float64(len(slots)))) // Limit to first 2 slots
+			slotLimit := min(2, len(slots)) // Limit to first 2 slots
 			for _, slot := range slots[:slotLimit] {
 				if slot.Name == "" {
 					slotContent = append(slotContent, "Default content")

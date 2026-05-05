@@ -265,7 +265,7 @@ func TestMCPContext_GetManifestSchema(t *testing.T) {
 
 	// Check that we got a valid custom elements manifest schema
 	// The schema should have definitions for the manifest structure
-	if definitions, ok := schema["definitions"].(map[string]interface{}); ok {
+	if definitions, ok := schema["definitions"].(map[string]any); ok {
 		assert.NotEmpty(t, definitions, "Schema should have definitions")
 
 		// Look for manifest or package definition

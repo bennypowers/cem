@@ -149,14 +149,14 @@ func TestTemplateRenderingWithMaliciousData(t *testing.T) {
 	testCases := []struct {
 		name         string
 		templateName string
-		setupData    func() interface{}
+		setupData    func() any
 		expectError  bool
 		description  string
 	}{
 		{
 			name:         "html_validation_results_with_sanitized_data",
 			templateName: "html_validation_results",
-			setupData: func() interface{} {
+			setupData: func() any {
 				return tools.HTMLValidationData{
 					FoundElements: []tools.ElementWithIssues{
 						{
@@ -172,8 +172,8 @@ func TestTemplateRenderingWithMaliciousData(t *testing.T) {
 		{
 			name:         "invalid_template_name",
 			templateName: "../../../etc/passwd",
-			setupData: func() interface{} {
-				return map[string]interface{}{}
+			setupData: func() any {
+				return map[string]any{}
 			},
 			expectError: true,
 			description: "Path traversal in template name should be rejected",
@@ -181,8 +181,8 @@ func TestTemplateRenderingWithMaliciousData(t *testing.T) {
 		{
 			name:         "directory_traversal_template",
 			templateName: "../../../../sensitive_file",
-			setupData: func() interface{} {
-				return map[string]interface{}{}
+			setupData: func() any {
+				return map[string]any{}
 			},
 			expectError: true,
 			description: "Directory traversal attempts should be blocked",

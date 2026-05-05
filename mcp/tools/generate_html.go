@@ -70,7 +70,7 @@ func NewHTMLGenerationTemplateDataWithSchema(element types.ElementInfo, context 
 
 // handleGenerateHtml generates HTML structure for custom elements
 func handleGenerateHtml(
-	ctx context.Context,
+	_ context.Context,
 	req *mcp.CallToolRequest,
 	registry types.MCPContext,
 ) (*mcp.CallToolResult, error) {
