@@ -142,7 +142,7 @@ func (h *Handler) FindElementAtPosition(doc types.Document, position protocol.Po
 	}
 
 	for _, element := range elements {
-		if isPositionInRange(position, element.Range) {
+		if helpers.IsPositionInRange(position, element.Range) {
 			return &types.CustomElementMatch{
 				TagName:    element.TagName,
 				Range:      element.Range,
@@ -164,7 +164,7 @@ func (h *Handler) FindAttributeAtPosition(doc types.Document, position protocol.
 
 	for _, element := range elements {
 		for _, attr := range element.Attributes {
-			if isPositionInRange(position, attr.Range) {
+			if helpers.IsPositionInRange(position, attr.Range) {
 				return &types.AttributeMatch{
 					Name:  attr.Name,
 					Value: attr.Value,
@@ -438,19 +438,3 @@ func (h *Handler) Close() {
 	// QueryMatchers are now created fresh per operation and closed immediately
 }
 
-// Helper function to check if position is within range
-func isPositionInRange(pos protocol.Position, r protocol.Range) bool {
-	if pos.Line < r.Start.Line || pos.Line > r.End.Line {
-		return false
-	}
-
-	if pos.Line == r.Start.Line && pos.Character < r.Start.Character {
-		return false
-	}
-
-	if pos.Line == r.End.Line && pos.Character > r.End.Character {
-		return false
-	}
-
-	return true
-}

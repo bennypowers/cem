@@ -245,7 +245,7 @@ func (dm *documentManager) scriptContentChanged(doc types.Document, changes []pr
 
 		for _, scriptTag := range scriptTags {
 			// Check if change overlaps with script tag range
-			if rangesOverlap(changeStart, changeEnd, scriptTag.Range.Start, scriptTag.Range.End) {
+			if helpers.RangesOverlap(changeStart, changeEnd, scriptTag.Range.Start, scriptTag.Range.End) {
 				return true
 			}
 		}
@@ -259,33 +259,6 @@ func (dm *documentManager) scriptContentChanged(doc types.Document, changes []pr
 	return false
 }
 
-// rangesOverlap checks if two ranges overlap
-func rangesOverlap(start1, end1, start2, end2 protocol.Position) bool {
-	// Range 1 starts before range 2 ends, AND range 1 ends after range 2 starts
-	return !positionAfter(start1, end2) && !positionBefore(end1, start2)
-}
-
-// positionBefore checks if pos1 is strictly before pos2
-func positionBefore(pos1, pos2 protocol.Position) bool {
-	if pos1.Line < pos2.Line {
-		return true
-	}
-	if pos1.Line == pos2.Line && pos1.Character < pos2.Character {
-		return true
-	}
-	return false
-}
-
-// positionAfter checks if pos1 is strictly after pos2
-func positionAfter(pos1, pos2 protocol.Position) bool {
-	if pos1.Line > pos2.Line {
-		return true
-	}
-	if pos1.Line == pos2.Line && pos1.Character > pos2.Character {
-		return true
-	}
-	return false
-}
 
 // reparseDocumentMetadata re-parses script tags and importmap for HTML documents
 // This is called after incremental updates to ensure metadata is up-to-date

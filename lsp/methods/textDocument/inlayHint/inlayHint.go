@@ -51,7 +51,7 @@ func InlayHint(ctx types.ServerContext, context *glsp.Context, params *protocol.
 	var hints []protocol.InlayHint
 
 	for _, elem := range elements {
-		if !inRange(elem.Range, params.Range) {
+		if !helpers.InRange(elem.Range, params.Range) {
 			continue
 		}
 
@@ -107,7 +107,7 @@ func walkSlotBiscuits(node *ts.Node, content []byte, visibleRange protocol.Range
 			if endTag := findEndTag(node); endTag != nil {
 				end := endTag.EndPosition()
 				pos := protocol.Position{Line: uint32(end.Row), Character: uint32(end.Column)}
-				if posInRange(pos, visibleRange) {
+				if helpers.IsPositionInRange(pos, visibleRange) {
 					kind := protocol.InlayHintKindType
 					*hints = append(*hints, protocol.InlayHint{
 						Position:    pos,
@@ -177,34 +177,6 @@ func findEndTag(element *ts.Node) *ts.Node {
 	return nil
 }
 
-func posInRange(pos protocol.Position, r protocol.Range) bool {
-	if pos.Line < r.Start.Line || pos.Line > r.End.Line {
-		return false
-	}
-	if pos.Line == r.Start.Line && pos.Character < r.Start.Character {
-		return false
-	}
-	if pos.Line == r.End.Line && pos.Character > r.End.Character {
-		return false
-	}
-	return true
-}
-
-func inRange(inner, outer protocol.Range) bool {
-	if inner.End.Line < outer.Start.Line {
-		return false
-	}
-	if inner.Start.Line > outer.End.Line {
-		return false
-	}
-	if inner.End.Line == outer.Start.Line && inner.End.Character < outer.Start.Character {
-		return false
-	}
-	if inner.Start.Line == outer.End.Line && inner.Start.Character >= outer.End.Character {
-		return false
-	}
-	return true
-}
 
 func boolPtr(b bool) *bool {
 	return &b
