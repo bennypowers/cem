@@ -1,0 +1,7 @@
+{
+  "attributes": {
+    "my-button": {
+      "disabled": {"name": "disabled", "type": {"text": "Boolean"}}
+    }
+  }
+}

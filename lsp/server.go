@@ -31,6 +31,7 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/definition"
 	"bennypowers.dev/cem/lsp/methods/textDocument/diagnostic"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
+	"bennypowers.dev/cem/lsp/methods/textDocument/inlayHint"
 	"bennypowers.dev/cem/lsp/methods/textDocument/references"
 	"bennypowers.dev/cem/lsp/methods/workspace/configuration"
 	workspaceDiag "bennypowers.dev/cem/lsp/methods/workspace/diagnostic"
@@ -115,6 +116,7 @@ func NewServer(workspace types.WorkspaceContext, transport TransportKind) (*Serv
 		},
 		Initialize:             method(s, "initialize", lifecycle.Initialize),
 		TextDocumentDiagnostic: method(s, "textDocument/diagnostic", diagnostic.DocumentDiagnostic),
+		TextDocumentInlayHint:  method(s, "textDocument/inlayHint", inlayHint.InlayHint),
 		WorkspaceDiagnostic:    method(s, "workspace/diagnostic", workspaceDiag.WorkspaceDiagnostic),
 	}
 

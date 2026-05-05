@@ -59,8 +59,8 @@ Organized by LSP method type with colocated packages:
 
 ### Inlay Hints
 - **Attribute Types**: Shows type annotations (`: Boolean`, `: String`) after attribute values
+- **Slot Biscuits**: Shows `slot: name` after closing tags of slotted elements via tree-sitter AST walking
 - **Toggleable**: Controlled via `cem.inlayHints` setting, defaults to enabled
-- **Thread-safe Config**: Settings stored with `sync.RWMutex` protection
 
 ### Navigation
 - **Go-to-Definition**: Jump to custom element source definitions

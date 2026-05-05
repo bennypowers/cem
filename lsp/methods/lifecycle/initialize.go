@@ -109,6 +109,7 @@ func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol
 		},
 	}
 	capabilities.WorkspaceSymbolProvider = &protocol.WorkspaceSymbolOptions{}
+	capabilities.InlayHintProvider = &protocol.InlayHintOptions{}
 
 	if ctx.UsePullDiagnostics() {
 		capabilities.DiagnosticProvider = &protocol.DiagnosticOptions{

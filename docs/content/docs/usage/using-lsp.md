@@ -35,7 +35,7 @@ Press <kbd>Ctrl</kbd>+<kbd>T</kbd> (VS Code) or use `:Telescope lsp_workspace_sy
 
 ## Inlay Hints
 
-Inlay hints display inline type annotations next to attribute values. For example, `disabled="true"` shows `: Boolean` after the value, and `variant="primary"` shows `: String`. These help verify attribute types at a glance without hovering.
+Inlay hints display inline annotations. Attribute type hints show `: Boolean` or `: String` after attribute values, helping verify types at a glance. Slot biscuits show `slot: header` after the closing tag of slotted elements, so you can see which slot an element occupies without scrolling back to the opening tag.
 
 Inlay hints are enabled by default. Disable them via editor settings:
 
