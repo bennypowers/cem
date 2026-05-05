@@ -68,6 +68,8 @@ func TestExportKeySet(t *testing.T) {
 		}
 		result := exportKeySet(exports)
 		assert.Len(t, result, 2)
+		assert.True(t, result[exportKey{"js", "MyElement"}])
+		assert.True(t, result[exportKey{"custom-element-definition", "MyElement"}])
 	})
 }
 

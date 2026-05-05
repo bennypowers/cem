@@ -163,6 +163,6 @@ func TestFindCustomElements_Handlebars(t *testing.T) {
 func TestCreateDocument_SetsLanguage(t *testing.T) {
 	handler := newTemplateHandler(t)
 	doc := handler.CreateDocument("file:///test.njk", "<div>hello</div>", 1)
-	defer doc.Close()
 	assert.NotNil(t, doc)
+	defer doc.Close()
 }

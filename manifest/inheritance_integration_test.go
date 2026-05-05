@@ -438,8 +438,10 @@ func TestInheritance_CSSProperties(t *testing.T) {
 			t.Error("--shared-prop should NOT have InheritedFrom (overridden by child)")
 		}
 
-		if _, ok := propMap["--child-color"]; !ok {
+		if p, ok := propMap["--child-color"]; !ok {
 			t.Error("--child-color should exist (own property)")
+		} else if p.InheritedFrom != nil {
+			t.Error("--child-color should NOT have InheritedFrom (own property)")
 		}
 	})
 
@@ -462,8 +464,10 @@ func TestInheritance_CSSProperties(t *testing.T) {
 			t.Error("shared-part should NOT have InheritedFrom (overridden by child)")
 		}
 
-		if _, ok := partMap["inner"]; !ok {
+		if p, ok := partMap["inner"]; !ok {
 			t.Error("inner should exist (own part)")
+		} else if p.InheritedFrom != nil {
+			t.Error("inner should NOT have InheritedFrom (own part)")
 		}
 	})
 
@@ -486,8 +490,10 @@ func TestInheritance_CSSProperties(t *testing.T) {
 			t.Error("--shared-state should NOT have InheritedFrom (overridden by child)")
 		}
 
-		if _, ok := stateMap["--loading"]; !ok {
+		if s, ok := stateMap["--loading"]; !ok {
 			t.Error("--loading should exist (own state)")
+		} else if s.InheritedFrom != nil {
+			t.Error("--loading should NOT have InheritedFrom (own state)")
 		}
 	})
 }

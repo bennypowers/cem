@@ -172,8 +172,10 @@ func TestEventClone(t *testing.T) {
 	cloned := orig.Clone()
 	orig.Name = "changed"
 	orig.Type.Text = "changed"
+	orig.InheritedFrom.Name = "changed"
 	assert.Equal(t, "click", cloned.Name)
 	assert.Equal(t, "CustomEvent", cloned.Type.Text)
+	assert.Equal(t, "Base", cloned.InheritedFrom.Name)
 }
 
 func TestDemoClone(t *testing.T) {

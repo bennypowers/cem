@@ -86,6 +86,8 @@ func TestInternalMethodsRule(t *testing.T) {
 		})
 		warnings := rule.Check(ctx)
 		assert.Len(t, warnings, 2)
+		assert.Equal(t, "internal-utility-methods", warnings[0].ID)
+		assert.Equal(t, "internal-utility-methods", warnings[1].ID)
 	})
 
 	t.Run("non-method member skipped", func(t *testing.T) {

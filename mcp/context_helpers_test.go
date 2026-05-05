@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package mcp
 
 import (
+	"strings"
 	"testing"
 
 	M "bennypowers.dev/cem/manifest"
@@ -47,9 +48,9 @@ func TestExtractGuidelinesFromElement(t *testing.T) {
 		}
 		result := extractGuidelinesFromElement(el)
 		assert.Len(t, result, 2)
-		assert.Contains(t, result[0], "variant")
-		assert.Contains(t, result[0], "Visual variant")
-		assert.Contains(t, result[1], "disabled")
+		joined := strings.Join(result, "\n")
+		assert.Contains(t, joined, "variant: Visual variant")
+		assert.Contains(t, joined, "disabled: Disables the element")
 	})
 }
 

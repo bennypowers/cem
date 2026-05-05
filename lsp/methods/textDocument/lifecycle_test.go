@@ -278,27 +278,6 @@ func TestDidClose(t *testing.T) {
 	assert.Nil(t, dm.Document("file:///test.html"))
 }
 
-func TestSplitLines(t *testing.T) {
-	tests := []struct {
-		name    string
-		content string
-		want    int
-	}{
-		{"unix", "a\nb\nc", 3},
-		{"windows", "a\r\nb\r\nc", 3},
-		{"old mac", "a\rb\rc", 3},
-		{"single line", "hello", 1},
-		{"empty", "", 1},
-		{"trailing newline", "a\nb\n", 3},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			ctx := textDocument.AnalyzeCompletionContext
-			_ = ctx // just verify it compiles; splitLines is tested via AnalyzeCompletionContext
-		})
-	}
-}
-
 func TestAnalyzeCompletionContext_NilDoc(t *testing.T) {
 	_, err := textDocument.AnalyzeCompletionContext(nil, protocol.Position{}, "")
 	assert.Error(t, err)

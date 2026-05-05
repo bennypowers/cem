@@ -185,6 +185,7 @@ func TestDocumentManager_UpdateWithChanges_IncrementalEdit(t *testing.T) {
 	doc := dm.UpdateDocumentWithChanges("file:///test.html", "<div>world</div>", 2, changes)
 	require.NotNil(t, doc)
 	assert.Equal(t, int32(2), doc.Version())
+	assert.Equal(t, "<div>world</div>", getContent(t, doc))
 }
 
 func TestDocumentManager_QueryManager(t *testing.T) {

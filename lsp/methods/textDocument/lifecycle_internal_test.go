@@ -295,6 +295,7 @@ func TestAdjustEndLineIfNeeded(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			result := adjustEndLineIfNeeded(tc.params, tc.lines)
 			assert.Equal(t, tc.want.endLine, result.endLine)
+			assert.Equal(t, tc.want.endChar, result.endChar)
 		})
 	}
 }

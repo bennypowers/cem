@@ -52,7 +52,8 @@ func TestFileSystemWorkspaceContext_ModulePathToFS(t *testing.T) {
 	ctx := workspace.NewFileSystemWorkspaceContext(root)
 
 	assert.Equal(t, filepath.Join(root, "src/button.js"), ctx.ModulePathToFS("src/button.js"))
-	assert.Equal(t, "/abs/path.js", ctx.ModulePathToFS("/abs/path.js"))
+	absPath := filepath.FromSlash("/abs/path.js")
+	assert.Equal(t, absPath, ctx.ModulePathToFS(absPath))
 }
 
 func TestFileSystemWorkspaceContext_Cleanup(t *testing.T) {

@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package platform_test
 
 import (
+	"io"
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform"
@@ -44,7 +45,7 @@ func TestNewMapFS(t *testing.T) {
 
 func TestMapFS_WriteAndRead(t *testing.T) {
 	fs := platform.NewMapFS(nil)
-	err := fs.WriteFile("new.js", []byte("hello"), 0644)
+	err := fs.WriteFile("new.js", []byte("hello"), 0o644)
 	require.NoError(t, err)
 
 	data, err := fs.ReadFile("new.js")
@@ -98,11 +99,15 @@ func TestMapFS_Open(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 5, n)
 	assert.Equal(t, "hello", string(buf))
+
+	n, err = f.Read(buf)
+	assert.Equal(t, 0, n)
+	assert.ErrorIs(t, err, io.EOF)
 }
 
 func TestMapFS_MkdirAll(t *testing.T) {
 	fs := platform.NewMapFS(nil)
-	err := fs.MkdirAll("a/b/c", 0755)
+	err := fs.MkdirAll("a/b/c", 0o755)
 	assert.NoError(t, err)
 }
 
