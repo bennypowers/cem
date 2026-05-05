@@ -19,7 +19,7 @@ package codeAction
 import (
 	"fmt"
 
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // createAttributeAutofixAction creates a code action to fix an attribute name typo

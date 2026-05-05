@@ -19,7 +19,7 @@ package testhelpers
 import (
 	"os"
 
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // GetCompletionLabels extracts labels from completion items for easy testing

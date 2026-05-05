@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // CreateMissingImportAction creates a code action to add missing imports

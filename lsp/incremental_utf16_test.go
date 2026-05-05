@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // TestUTF16ToByteOffset tests conversion from LSP UTF-16 positions to UTF-8 byte offsets

@@ -35,7 +35,7 @@ import (
 	"testing"
 	"time"
 
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // jsonrpcRequest represents a JSON-RPC 2.0 request
@@ -304,12 +304,8 @@ func setupLSPTest(t *testing.T, fixtureName string) (workDir string, client *lsp
 	// Initialize the server
 	var initResult protocol.InitializeResult
 	rootURI := protocol.DocumentUri("file://" + workDir)
-	initParams := protocol.InitializeParams{
-		RootURI: &rootURI,
-		Capabilities: protocol.ClientCapabilities{
-			TextDocument: &protocol.TextDocumentClientCapabilities{},
-		},
-	}
+	var initParams protocol.InitializeParams
+	initParams.RootURI = &rootURI
 
 	if err := client.call("initialize", initParams, &initResult); err != nil {
 		client.close()

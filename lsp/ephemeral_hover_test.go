@@ -26,7 +26,7 @@ import (
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	W "bennypowers.dev/cem/internal/workspace"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // Cursor positions for each ephemeral hover test fixture

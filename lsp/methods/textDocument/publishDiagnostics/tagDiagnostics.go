@@ -27,7 +27,7 @@ import (
 	"bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/internal/modulegraph"
 	"bennypowers.dev/cem/internal/treesitter"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // analyzeTagNameDiagnostics finds invalid custom element tag names and suggests corrections

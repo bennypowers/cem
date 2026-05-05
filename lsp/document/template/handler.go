@@ -25,7 +25,7 @@ import (
 	jinjalang "bennypowers.dev/cem/internal/languages/jinja"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 

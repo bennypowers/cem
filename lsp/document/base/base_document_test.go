@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsHtml "github.com/tree-sitter/tree-sitter-html/bindings/go"
 )

@@ -18,7 +18,7 @@ package helpers
 
 import (
 	"bennypowers.dev/cem/internal/logging"
-	"github.com/tliron/glsp"
+	"github.com/bennypowers/glsp"
 )
 
 // Debug logging state - shared across all textDocument methods

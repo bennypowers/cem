@@ -28,7 +28,7 @@ import (
 	"bennypowers.dev/cem/lsp/document/base"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 

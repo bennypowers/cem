@@ -23,8 +23,8 @@ import (
 	"bennypowers.dev/cem/internal/version"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	"github.com/bennypowers/glsp"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // cemInitializationOptions represents the custom initialization options for CEM LSP
@@ -71,36 +71,28 @@ func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol
 		}
 	}
 
-	// Define server capabilities
 	openClose := true
 	changeKind := protocol.TextDocumentSyncKindIncremental
+	resolveProvider := true
 
-	capabilities := protocol.ServerCapabilities{
-		HoverProvider: &protocol.HoverOptions{},
-		CompletionProvider: &protocol.CompletionOptions{
-			TriggerCharacters: []string{
-				"<",
-				"=",
-				"\"",
-				"@",
-				".",
-				"?",
-			},
-			ResolveProvider: &[]bool{true}[0],
-		},
-		DefinitionProvider: &protocol.DefinitionOptions{},
-		ReferencesProvider: &protocol.ReferenceOptions{},
-		CodeActionProvider: &protocol.CodeActionOptions{
-			CodeActionKinds: []protocol.CodeActionKind{
-				protocol.CodeActionKindQuickFix,
-			},
-		},
-		WorkspaceSymbolProvider: &protocol.WorkspaceSymbolOptions{},
-		TextDocumentSync: &protocol.TextDocumentSyncOptions{
-			OpenClose: &openClose,
-			Change:    &changeKind,
+	var capabilities protocol.ServerCapabilities
+	capabilities.TextDocumentSync = &protocol.TextDocumentSyncOptions{
+		OpenClose: &openClose,
+		Change:    &changeKind,
+	}
+	capabilities.HoverProvider = &protocol.HoverOptions{}
+	capabilities.CompletionProvider = &protocol.CompletionOptions{
+		TriggerCharacters: []string{"<", "=", "\"", "@", ".", "?"},
+		ResolveProvider:   &resolveProvider,
+	}
+	capabilities.DefinitionProvider = &protocol.DefinitionOptions{}
+	capabilities.ReferencesProvider = &protocol.ReferenceOptions{}
+	capabilities.CodeActionProvider = &protocol.CodeActionOptions{
+		CodeActionKinds: []protocol.CodeActionKind{
+			protocol.CodeActionKindQuickFix,
 		},
 	}
+	capabilities.WorkspaceSymbolProvider = &protocol.WorkspaceSymbolOptions{}
 
 	return protocol.InitializeResult{
 		Capabilities: capabilities,

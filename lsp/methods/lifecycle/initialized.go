@@ -19,8 +19,8 @@ package lifecycle
 import (
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	"github.com/bennypowers/glsp"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // Initialized handles the LSP initialized notification

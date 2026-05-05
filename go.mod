@@ -13,6 +13,7 @@ require (
 	github.com/adrg/xdg v0.5.3
 	github.com/agext/levenshtein v1.2.3
 	github.com/alecthomas/chroma/v2 v2.20.0
+	github.com/bennypowers/glsp v0.0.0-20260501152441-74e714d631a0
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/bmatcuk/doublestar/v4 v4.9.2
 	github.com/dunglas/go-urlpattern v0.0.0-20241020164140-716dfa1c80b1
@@ -33,7 +34,6 @@ require (
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.18.0
-	github.com/tliron/glsp v0.2.2
 	github.com/tree-sitter/go-tree-sitter v0.25.0
 	github.com/tree-sitter/tree-sitter-css v0.23.2
 	github.com/tree-sitter/tree-sitter-embedded-template v0.25.0

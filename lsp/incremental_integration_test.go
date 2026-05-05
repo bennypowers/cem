@@ -24,7 +24,7 @@ import (
 	"bennypowers.dev/cem/lsp/document"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 func TestIncrementalParsingIntegration(t *testing.T) {

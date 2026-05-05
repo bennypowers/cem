@@ -31,7 +31,7 @@ import (
 	"bennypowers.dev/cem/internal/modulegraph"
 	"bennypowers.dev/cem/internal/treesitter"
 	W "bennypowers.dev/cem/internal/workspace"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // Verify Server implements all context interfaces

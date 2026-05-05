@@ -34,8 +34,9 @@ import (
 	lspTypes "bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/types"
 	"github.com/pterm/pterm"
-	protocol "github.com/tliron/glsp/protocol_3_16"
-	"github.com/tliron/glsp/server"
+	protocol316 "github.com/bennypowers/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"github.com/bennypowers/glsp/server"
 )
 
 // TransportKind represents different LSP transport methods
@@ -88,20 +89,22 @@ func NewServer(workspace types.WorkspaceContext, transport TransportKind) (*Serv
 	// Create the GLSP server with our handler
 	// Handlers are wrapped with middleware for logging, error handling, and panic recovery
 	handler := protocol.Handler{
-		Initialize:             method(s, "initialize", lifecycle.Initialize),
-		Initialized:            notify(s, "initialized", lifecycle.Initialized),
-		Shutdown:               noParam(s, "shutdown", lifecycle.Shutdown),
-		SetTrace:               notify(s, "$/setTrace", lifecycle.SetTrace),
-		TextDocumentHover:      method(s, "textDocument/hover", hover.Hover),
-		TextDocumentCompletion: method(s, "textDocument/completion", completion.Completion),
-		CompletionItemResolve:  method(s, "completionItem/resolve", completion.Resolve),
-		TextDocumentDefinition: method(s, "textDocument/definition", definition.Definition),
-		TextDocumentReferences: method(s, "textDocument/references", references.References),
-		TextDocumentCodeAction: method(s, "textDocument/codeAction", codeAction.CodeAction),
-		TextDocumentDidOpen:    notify(s, "textDocument/didOpen", textDocument.DidOpen),
-		TextDocumentDidChange:  notify(s, "textDocument/didChange", textDocument.DidChange),
-		TextDocumentDidClose:   notify(s, "textDocument/didClose", textDocument.DidClose),
-		WorkspaceSymbol:        method(s, "workspace/symbol", symbol.Symbol),
+		Handler: protocol316.Handler{
+			Initialized:            notify(s, "initialized", lifecycle.Initialized),
+			Shutdown:               noParam(s, "shutdown", lifecycle.Shutdown),
+			SetTrace:               notify(s, "$/setTrace", lifecycle.SetTrace),
+			TextDocumentHover:      method(s, "textDocument/hover", hover.Hover),
+			TextDocumentCompletion: method(s, "textDocument/completion", completion.Completion),
+			CompletionItemResolve:  method(s, "completionItem/resolve", completion.Resolve),
+			TextDocumentDefinition: method(s, "textDocument/definition", definition.Definition),
+			TextDocumentReferences: method(s, "textDocument/references", references.References),
+			TextDocumentCodeAction: method(s, "textDocument/codeAction", codeAction.CodeAction),
+			TextDocumentDidOpen:    notify(s, "textDocument/didOpen", textDocument.DidOpen),
+			TextDocumentDidChange:  notify(s, "textDocument/didChange", textDocument.DidChange),
+			TextDocumentDidClose:   notify(s, "textDocument/didClose", textDocument.DidClose),
+			WorkspaceSymbol:        method(s, "workspace/symbol", symbol.Symbol),
+		},
+		Initialize: method(s, "initialize", lifecycle.Initialize),
 	}
 
 	// Enable debug mode when using stdio to help with VSCode troubleshooting

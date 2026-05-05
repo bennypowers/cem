@@ -26,7 +26,7 @@ import (
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/internal/validations"
 	"github.com/agext/levenshtein"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // AttributeMatch represents a found attribute in the document
