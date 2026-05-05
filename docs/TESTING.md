@@ -53,7 +53,7 @@ defer handler.Close()
 
 ## Decision Tree
 
-```
+```text
 Is the function pure?
   (all effects depend on params, deterministic, no I/O)
     YES -> Tier 1: table-driven tests, in-package, exhaustive

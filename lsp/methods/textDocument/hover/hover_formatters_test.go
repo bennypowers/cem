@@ -65,6 +65,14 @@ func TestFormatAttributes(t *testing.T) {
 			},
 			expected: "### Attributes\n\n- **`label`** _string_ _(inherited from LabelMixin)_ - Accessible label\n\n",
 		},
+		{
+			name: "multiple attributes",
+			attrs: []M.Attribute{
+				{FullyQualified: M.FullyQualified{Name: "disabled"}},
+				{FullyQualified: M.FullyQualified{Name: "variant", Description: "Visual variant"}, Type: &M.Type{Text: "string"}},
+			},
+			expected: "### Attributes\n\n- **`disabled`**\n- **`variant`** _string_ - Visual variant\n\n",
+		},
 	}
 
 	for _, tt := range tests {
@@ -113,6 +121,14 @@ func TestFormatEvents(t *testing.T) {
 				},
 			},
 			expected: "### Events\n\n- **`select`** _Event_ _(inherited from SelectMixin)_ - Fired when selection changes\n\n",
+		},
+		{
+			name: "multiple events",
+			events: []M.Event{
+				{FullyQualified: M.FullyQualified{Name: "click"}},
+				{FullyQualified: M.FullyQualified{Name: "change"}, Type: &M.Type{Text: "CustomEvent"}},
+			},
+			expected: "### Events\n\n- **`click`**\n- **`change`** _CustomEvent_\n\n",
 		},
 	}
 
@@ -167,6 +183,14 @@ func TestFormatSlots(t *testing.T) {
 				{FullyQualified: M.FullyQualified{Name: "", Description: "Default slot"}},
 			},
 			expected: "### Slots\n\n- **``** - Default slot\n\n",
+		},
+		{
+			name: "multiple slots",
+			slots: []M.Slot{
+				{FullyQualified: M.FullyQualified{Name: "header"}},
+				{FullyQualified: M.FullyQualified{Name: "footer", Description: "Footer area"}, InheritedFrom: &M.Reference{Name: "LayoutMixin"}},
+			},
+			expected: "### Slots\n\n- **`header`**\n- **`footer`** _(inherited from LayoutMixin)_ - Footer area\n\n",
 		},
 	}
 

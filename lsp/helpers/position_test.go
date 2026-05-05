@@ -333,10 +333,10 @@ func TestInRange(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "SameStartLine_InnerStartAtOuterEnd",
+			name:     "SameStartLine_InnerStartAtOuterEnd_TouchingInclusive",
 			inner:    rng(8, 20, 10, 0),
 			outer:    rng(5, 0, 8, 20),
-			expected: false,
+			expected: true,
 		},
 		{
 			name:     "SameStartLine_InnerStartBeforeOuterEnd",

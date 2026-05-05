@@ -123,11 +123,11 @@ func TestParseResourceURI(t *testing.T) {
 			wantArgs:    map[string]any{},
 		},
 		{
-			name:        "non-parameter segment is ignored",
-			actualURI:   "cem://element/my-button",
-			templateURI: "cem://element/{tagName}",
+			name:        "static segment not extracted as parameter",
+			actualURI:   "cem://element/element",
+			templateURI: "cem://{tagName}/element",
 			isTemplate:  true,
-			wantArgs:    map[string]any{"tagName": "my-button"},
+			wantArgs:    map[string]any{"tagName": "element"},
 		},
 		{
 			name:        "static segment in template is not extracted",

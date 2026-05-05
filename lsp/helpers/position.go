@@ -18,7 +18,9 @@ package helpers
 
 import protocol "github.com/bennypowers/glsp/protocol_3_17"
 
-// IsPositionInRange checks if a position falls within a range (inclusive).
+// IsPositionInRange checks if a position falls within a range.
+// Both start and end boundaries are inclusive. This diverges from LSP's
+// half-open (end-exclusive) convention but is consistent within this codebase.
 func IsPositionInRange(pos protocol.Position, r protocol.Range) bool {
 	if pos.Line < r.Start.Line || pos.Line > r.End.Line {
 		return false
@@ -64,6 +66,9 @@ func RangesOverlap(start1, end1, start2, end2 protocol.Position) bool {
 }
 
 // InRange checks if the inner range overlaps with the outer range.
+// Both start and end boundaries are inclusive, matching IsPositionInRange
+// and RangesOverlap semantics. This diverges from LSP's half-open convention
+// but is consistent within this codebase.
 func InRange(inner, outer protocol.Range) bool {
 	if inner.End.Line < outer.Start.Line {
 		return false
@@ -74,7 +79,7 @@ func InRange(inner, outer protocol.Range) bool {
 	if inner.End.Line == outer.Start.Line && inner.End.Character < outer.Start.Character {
 		return false
 	}
-	if inner.Start.Line == outer.End.Line && inner.Start.Character >= outer.End.Character {
+	if inner.Start.Line == outer.End.Line && inner.Start.Character > outer.End.Character {
 		return false
 	}
 	return true
