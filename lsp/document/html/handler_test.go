@@ -1,10 +1,14 @@
 package html
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
+	treesitter "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestExtractImportPath(t *testing.T) {
@@ -213,6 +217,169 @@ func TestParseImportStatements(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := parseImportStatements(tt.content)
 			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestParseScriptTags(t *testing.T) {
+	qm, err := treesitter.NewQueryManager(treesitter.LSPQueries())
+	require.NoError(t, err)
+	defer qm.Close()
+
+	handler, err := NewHandler(qm)
+	require.NoError(t, err)
+	defer handler.Close()
+
+	tests := []struct {
+		name     string
+		fixture  string
+		validate func(t *testing.T, tags []types.ScriptTag)
+	}{
+		{
+			name:    "module script with src",
+			fixture: filepath.Join("testdata", "script-tags", "module-script.html"),
+			validate: func(t *testing.T, tags []types.ScriptTag) {
+				require.Len(t, tags, 1)
+				tag := tags[0]
+				assert.Equal(t, "module", tag.Type)
+				assert.Equal(t, "./app.js", tag.Src)
+				assert.True(t, tag.IsModule)
+				assert.Empty(t, tag.Imports, "external script should have no inline imports")
+			},
+		},
+		{
+			name:    "inline script with imports",
+			fixture: filepath.Join("testdata", "script-tags", "inline-script.html"),
+			validate: func(t *testing.T, tags []types.ScriptTag) {
+				require.Len(t, tags, 1)
+				tag := tags[0]
+				assert.Equal(t, "module", tag.Type)
+				assert.Empty(t, tag.Src, "inline script should have no src")
+				assert.True(t, tag.IsModule)
+				require.Len(t, tag.Imports, 2, "should parse both import statements")
+				assert.Equal(t, "lit", tag.Imports[0].ImportPath)
+				assert.Equal(t, "static", tag.Imports[0].Type)
+				assert.Equal(t, "./my-element.js", tag.Imports[1].ImportPath)
+				assert.Equal(t, "static", tag.Imports[1].Type)
+			},
+		},
+		{
+			name:    "no scripts",
+			fixture: filepath.Join("testdata", "script-tags", "no-scripts.html"),
+			validate: func(t *testing.T, tags []types.ScriptTag) {
+				assert.Empty(t, tags)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content, err := os.ReadFile(tt.fixture)
+			require.NoError(t, err)
+			doc := handler.CreateDocument("file:///test.html", string(content), 1)
+			defer doc.Close()
+			tags, err := handler.ParseScriptTags(doc)
+			require.NoError(t, err)
+			tt.validate(t, tags)
+		})
+	}
+}
+
+func TestParseImportMap(t *testing.T) {
+	qm, err := treesitter.NewQueryManager(treesitter.LSPQueries())
+	require.NoError(t, err)
+	defer qm.Close()
+
+	handler, err := NewHandler(qm)
+	require.NoError(t, err)
+	defer handler.Close()
+
+	tests := []struct {
+		name     string
+		fixture  string
+		validate func(t *testing.T, importMap map[string]string, err error)
+	}{
+		{
+			name:    "valid importmap",
+			fixture: filepath.Join("testdata", "import-map", "valid-importmap.html"),
+			validate: func(t *testing.T, importMap map[string]string, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, importMap)
+				assert.Len(t, importMap, 2)
+				assert.Equal(t, "/vendor/lit.js", importMap["lit"])
+				assert.Equal(t, "/vendor/scope-pkg.js", importMap["@scope/pkg"])
+			},
+		},
+		{
+			name:    "no importmap",
+			fixture: filepath.Join("testdata", "import-map", "no-importmap.html"),
+			validate: func(t *testing.T, importMap map[string]string, err error) {
+				require.NoError(t, err)
+				assert.Nil(t, importMap)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content, err := os.ReadFile(tt.fixture)
+			require.NoError(t, err)
+			doc := handler.CreateDocument("file:///test.html", string(content), 1)
+			defer doc.Close()
+			importMap, err := handler.ParseImportMap(doc)
+			tt.validate(t, importMap, err)
+		})
+	}
+}
+
+func TestFindCustomElements(t *testing.T) {
+	qm, err := treesitter.NewQueryManager(treesitter.LSPQueries())
+	require.NoError(t, err)
+	defer qm.Close()
+
+	handler, err := NewHandler(qm)
+	require.NoError(t, err)
+	defer handler.Close()
+
+	tests := []struct {
+		name     string
+		fixture  string
+		validate func(t *testing.T, elements []types.CustomElementMatch)
+	}{
+		{
+			name:    "with attributes",
+			fixture: filepath.Join("testdata", "custom-elements", "with-attributes.html"),
+			validate: func(t *testing.T, elements []types.CustomElementMatch) {
+				require.Len(t, elements, 2)
+				myEl := elements[0]
+				assert.Equal(t, "my-element", myEl.TagName)
+				require.Contains(t, myEl.Attributes, "disabled")
+				require.Contains(t, myEl.Attributes, "variant")
+				assert.Equal(t, "primary", myEl.Attributes["variant"].Value)
+				otherEl := elements[1]
+				assert.Equal(t, "other-element", otherEl.TagName)
+				require.Contains(t, otherEl.Attributes, "name")
+				assert.Equal(t, "test", otherEl.Attributes["name"].Value)
+			},
+		},
+		{
+			name:    "no custom elements",
+			fixture: filepath.Join("testdata", "custom-elements", "no-custom-elements.html"),
+			validate: func(t *testing.T, elements []types.CustomElementMatch) {
+				assert.Empty(t, elements)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content, err := os.ReadFile(tt.fixture)
+			require.NoError(t, err)
+			doc := handler.CreateDocument("file:///test.html", string(content), 1)
+			defer doc.Close()
+			elements, err := handler.FindCustomElements(doc)
+			require.NoError(t, err)
+			tt.validate(t, elements)
 		})
 	}
 }
