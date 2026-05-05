@@ -19,6 +19,9 @@ func TestIsCustomElementTag(t *testing.T) {
 		{"minimum valid", "a-b", true},
 		{"empty string", "", false},
 		{"no hyphen", "nohyphen", false},
+		{"trailing hyphen is valid per HTML spec", "my-element-", true},
+		{"digit start", "1-element", false},
+		{"namespaced element", "my-ns-element", true},
 	}
 
 	for _, tt := range tests {

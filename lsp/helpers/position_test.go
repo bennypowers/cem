@@ -261,6 +261,14 @@ func TestRangesOverlap(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "AdjacentSameLineNotOverlapping",
+			start1:   pos(1, 0),
+			end1:     pos(3, 5),
+			start2:   pos(3, 6),
+			end2:     pos(5, 0),
+			expected: false,
+		},
+		{
 			name:     "TouchingAtBoundary",
 			start1:   pos(1, 0),
 			end1:     pos(3, 5),
