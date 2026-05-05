@@ -1,0 +1,12 @@
+[
+  {
+    "range": {
+      "start": {"line": 0, "character": 12},
+      "end": {"line": 0, "character": 20}
+    },
+    "message": "Attribute 'old-attr' on 'my-element' is deprecated: Use new-attr instead",
+    "severity": 4,
+    "source": "cem-lsp",
+    "tags": [2]
+  }
+]

@@ -450,7 +450,7 @@ func findAttributesWithValues(doc types.Document, ctx types.ServerContext) []Att
 				Name:     attrName,
 				TagName:  element.TagName,
 				Value:    attr.Value,
-				HasValue: attr.Value != "", // Determine if attribute has a value
+				HasValue: true,
 				Line:     attr.Range.Start.Line,
 				StartCol: attr.Range.Start.Character,
 				EndCol:   attr.Range.End.Character,

@@ -1,0 +1,7 @@
+{
+  "attributes": {
+    "my-element": {
+      "old-attr": {"name": "old-attr", "deprecated": "Use new-attr instead"}
+    }
+  }
+}

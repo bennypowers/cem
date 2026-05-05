@@ -33,11 +33,24 @@ Position your cursor on a custom element tag and press <kbd>Shift</kbd>+<kbd>F12
 
 Press <kbd>Ctrl</kbd>+<kbd>T</kbd> (VS Code) or use `:Telescope lsp_workspace_symbols` (Neovim) to search for custom elements across your entire workspace with fuzzy matching. Typing `btn` finds `my-button`, `icon-button`, and `button-group`.
 
+## Inlay Hints
+
+Inlay hints display inline type annotations next to attribute values. For example, `disabled="true"` shows `: Boolean` after the value, and `variant="primary"` shows `: String`. These help verify attribute types at a glance without hovering.
+
+Inlay hints are enabled by default. Disable them via editor settings:
+
+**VS Code**: Set `"cem.inlayHints": false` in `settings.json`
+**Neovim**: Set `inlayHints = false` in your LSP `settings.cem` table
+
+## Deprecation Warnings
+
+Elements, attributes, and slots marked as deprecated in the manifest appear with strikethrough styling in the editor. The deprecation reason from the manifest is shown in the diagnostic message when available.
+
 ## Error Detection & Quick Fixes
 
 The LSP validates HTML and provides one-click fixes for common errors. Position your cursor on red squiggles and press <kbd>Ctrl</kbd>+<kbd>.</kbd> (VS Code) or <kbd>&lt;leader&gt;ca</kbd> (Neovim) to see available fixes.
 
-Detected errors include invalid slot names (`slot="heade"` suggests `"header"`), typos in tag names (`<my-buttom>` suggests `<my-button>`), invalid attribute names (`varient` suggests `variant`), invalid enum values (`variant="primar"` suggests `"primary"`), and missing imports (suggests adding `import` statements for undeclared elements).
+Detected errors include invalid slot names (`slot="heade"` suggests `"header"`), typos in tag names (`<my-buttom>` suggests `<my-button>`), invalid attribute names (`varient` suggests `variant`), invalid enum values (`variant="primar"` suggests `"primary"`), missing imports (suggests adding `import` statements for undeclared elements), and deprecated elements or attributes (shown with strikethrough).
 
 ## Troubleshooting
 

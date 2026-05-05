@@ -95,4 +95,13 @@ type ServerContext interface {
 
 	// Ephemeral registry synthesis for locally-defined elements
 	SynthesizeEphemeralElements(uri string)
+
+	// Configuration
+	Config() ServerConfig
+	SetConfig(ServerConfig)
+	InlayHintsEnabled() bool
+
+	// Pull diagnostics
+	UsePullDiagnostics() bool
+	SetUsePullDiagnostics(bool)
 }

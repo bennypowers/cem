@@ -23,7 +23,17 @@ import (
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
-// PublishDiagnostics analyzes the document and publishes diagnostics
+// ComputeDiagnostics analyzes a document and returns a non-nil slice of diagnostics.
+func ComputeDiagnostics(ctx types.ServerContext, doc types.Document) []protocol.Diagnostic {
+	diagnostics := []protocol.Diagnostic{}
+	diagnostics = append(diagnostics, analyzeSlotDiagnostics(ctx, doc)...)
+	diagnostics = append(diagnostics, analyzeTagNameDiagnostics(ctx, doc)...)
+	diagnostics = append(diagnostics, analyzeAttributeDiagnostics(ctx, doc)...)
+	diagnostics = append(diagnostics, analyzeAttributeValueDiagnostics(ctx, doc)...)
+	return diagnostics
+}
+
+// PublishDiagnostics analyzes the document and publishes diagnostics via push notification
 func PublishDiagnostics(ctx types.ServerContext, glspContext *glsp.Context, uri string) error {
 	helpers.SafeDebugLog("[DIAGNOSTICS] Starting diagnostics for %s", uri)
 
@@ -33,32 +43,12 @@ func PublishDiagnostics(ctx types.ServerContext, glspContext *glsp.Context, uri 
 		return nil
 	}
 
-	diagnostics := []protocol.Diagnostic{}
-
-	// Analyze slot attribute diagnostics
-	slotDiagnostics := analyzeSlotDiagnostics(ctx, doc)
-	diagnostics = append(diagnostics, slotDiagnostics...)
-
-	// Analyze custom element tag name diagnostics
-	tagDiagnostics := analyzeTagNameDiagnostics(ctx, doc)
-	diagnostics = append(diagnostics, tagDiagnostics...)
-
-	// Analyze attribute diagnostics
-	attributeDiagnostics := analyzeAttributeDiagnostics(ctx, doc)
-	diagnostics = append(diagnostics, attributeDiagnostics...)
-
-	// Analyze attribute value diagnostics
-	attributeValueDiagnostics := analyzeAttributeValueDiagnostics(ctx, doc)
-	diagnostics = append(diagnostics, attributeValueDiagnostics...)
-
+	diagnostics := ComputeDiagnostics(ctx, doc)
 	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d diagnostics for %s", len(diagnostics), uri)
 
-	// Publish diagnostics to the client
-	params := &protocol.PublishDiagnosticsParams{
+	glspContext.Notify(protocol.ServerTextDocumentPublishDiagnostics, &protocol.PublishDiagnosticsParams{
 		URI:         uri,
 		Diagnostics: diagnostics,
-	}
-
-	glspContext.Notify(protocol.ServerTextDocumentPublishDiagnostics, params)
+	})
 	return nil
 }

@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"strings"
 
+	Q "bennypowers.dev/cem/internal/treesitter"
+	"bennypowers.dev/cem/internal/validations"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
-	Q "bennypowers.dev/cem/internal/treesitter"
-	"bennypowers.dev/cem/internal/validations"
 	"github.com/agext/levenshtein"
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
@@ -80,15 +80,18 @@ func AnalyzeAttributeDiagnosticsForTest(ctx types.ServerContext, doc types.Docum
 			// Get attributes for this custom element
 			if attrs := getCustomElementAttributes(ctx, match.TagName); attrs != nil {
 				// Check if this attribute is defined for this custom element
-				found := false
-				for _, attr := range attrs {
+				var foundAttr *M.Attribute
+				for i, attr := range attrs {
 					if attr.Name == match.Name {
-						found = true
+						foundAttr = &attrs[i]
 						break
 					}
 				}
-				if found {
-					continue // Valid custom element attribute
+				if foundAttr != nil {
+					if foundAttr.IsDeprecated() {
+						diagnostics = append(diagnostics, createDeprecatedAttributeDiagnostic(match, foundAttr))
+					}
+					continue
 				}
 
 				// Suggest corrections for custom element attributes
@@ -325,6 +328,27 @@ func createAttributeDiagnostic(match AttributeMatch, suggestion string) protocol
 	}
 
 	return diagnostic
+}
+
+// createDeprecatedAttributeDiagnostic creates a diagnostic with the deprecated tag
+func createDeprecatedAttributeDiagnostic(match AttributeMatch, attr *M.Attribute) protocol.Diagnostic {
+	message := fmt.Sprintf("Attribute '%s' on '%s' is deprecated", match.Name, match.TagName)
+	if reason, ok := attr.Deprecated.Value().(string); ok && reason != "" {
+		message = fmt.Sprintf("Attribute '%s' on '%s' is deprecated: %s", match.Name, match.TagName, reason)
+	}
+
+	severity := protocol.DiagnosticSeverityHint
+	source := "cem-lsp"
+	return protocol.Diagnostic{
+		Range: protocol.Range{
+			Start: protocol.Position{Line: match.Line, Character: match.StartCol},
+			End:   protocol.Position{Line: match.Line, Character: match.EndCol},
+		},
+		Message:  message,
+		Severity: &severity,
+		Source:   &source,
+		Tags:     []protocol.DiagnosticTag{protocol.DiagnosticTagDeprecated},
+	}
 }
 
 // createUnknownAttributeDiagnostic creates a diagnostic for a completely unknown attribute

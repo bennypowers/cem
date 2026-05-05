@@ -71,6 +71,25 @@ func AnalyzeSlotDiagnosticsForTest(ctx types.ServerContext, doc types.Document) 
 
 		slotValue := match.Value
 		if slices.Contains(slotNames, slotValue) {
+			for _, slot := range availableSlots {
+				if slot.Name == slotValue && slot.IsDeprecated() {
+					severity := protocol.DiagnosticSeverityHint
+					source := "cem-lsp"
+					d := protocol.Diagnostic{
+						Range:    match.Range,
+						Severity: &severity,
+						Source:   &source,
+						Tags:     []protocol.DiagnosticTag{protocol.DiagnosticTagDeprecated},
+					}
+					if reason, ok := slot.Deprecated.Value().(string); ok && reason != "" {
+						d.Message = fmt.Sprintf("Slot '%s' on '%s' is deprecated: %s", slotValue, parentElement, reason)
+					} else {
+						d.Message = fmt.Sprintf("Slot '%s' on '%s' is deprecated", slotValue, parentElement)
+					}
+					diagnostics = append(diagnostics, d)
+					break
+				}
+			}
 			continue
 		}
 

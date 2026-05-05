@@ -19,6 +19,7 @@ package lsp
 import (
 	"fmt"
 	"os"
+	"sync"
 
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/ephemeral"
@@ -28,8 +29,11 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/methods/textDocument/definition"
+	"bennypowers.dev/cem/lsp/methods/textDocument/diagnostic"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	"bennypowers.dev/cem/lsp/methods/textDocument/references"
+	"bennypowers.dev/cem/lsp/methods/workspace/configuration"
+	workspaceDiag "bennypowers.dev/cem/lsp/methods/workspace/diagnostic"
 	"bennypowers.dev/cem/lsp/methods/workspace/symbol"
 	lspTypes "bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/types"
@@ -58,6 +62,9 @@ type Server struct {
 	server             *server.Server
 	transport          TransportKind
 	additionalPackages []string
+	config             lspTypes.ServerConfig
+	configMu           sync.RWMutex
+	usePullDiagnostics bool
 }
 
 // NewServer creates a new CEM LSP server
@@ -82,6 +89,7 @@ func NewServer(workspace types.WorkspaceContext, transport TransportKind) (*Serv
 		ephemeralRegistry: ephemeral.NewRegistry(),
 		documents:         documents,
 		transport:         transport,
+		config: lspTypes.DefaultConfig(),
 	}
 
 	// Server now directly implements all context interfaces
@@ -90,21 +98,24 @@ func NewServer(workspace types.WorkspaceContext, transport TransportKind) (*Serv
 	// Handlers are wrapped with middleware for logging, error handling, and panic recovery
 	handler := protocol.Handler{
 		Handler: protocol316.Handler{
-			Initialized:            notify(s, "initialized", lifecycle.Initialized),
-			Shutdown:               noParam(s, "shutdown", lifecycle.Shutdown),
-			SetTrace:               notify(s, "$/setTrace", lifecycle.SetTrace),
-			TextDocumentHover:      method(s, "textDocument/hover", hover.Hover),
-			TextDocumentCompletion: method(s, "textDocument/completion", completion.Completion),
-			CompletionItemResolve:  method(s, "completionItem/resolve", completion.Resolve),
-			TextDocumentDefinition: method(s, "textDocument/definition", definition.Definition),
-			TextDocumentReferences: method(s, "textDocument/references", references.References),
-			TextDocumentCodeAction: method(s, "textDocument/codeAction", codeAction.CodeAction),
-			TextDocumentDidOpen:    notify(s, "textDocument/didOpen", textDocument.DidOpen),
-			TextDocumentDidChange:  notify(s, "textDocument/didChange", textDocument.DidChange),
-			TextDocumentDidClose:   notify(s, "textDocument/didClose", textDocument.DidClose),
-			WorkspaceSymbol:        method(s, "workspace/symbol", symbol.Symbol),
+			Initialized:                     notify(s, "initialized", lifecycle.Initialized),
+			Shutdown:                         noParam(s, "shutdown", lifecycle.Shutdown),
+			SetTrace:                         notify(s, "$/setTrace", lifecycle.SetTrace),
+			TextDocumentHover:                method(s, "textDocument/hover", hover.Hover),
+			TextDocumentCompletion:           method(s, "textDocument/completion", completion.Completion),
+			CompletionItemResolve:            method(s, "completionItem/resolve", completion.Resolve),
+			TextDocumentDefinition:           method(s, "textDocument/definition", definition.Definition),
+			TextDocumentReferences:           method(s, "textDocument/references", references.References),
+			TextDocumentCodeAction:           method(s, "textDocument/codeAction", codeAction.CodeAction),
+			TextDocumentDidOpen:              notify(s, "textDocument/didOpen", textDocument.DidOpen),
+			TextDocumentDidChange:            notify(s, "textDocument/didChange", textDocument.DidChange),
+			TextDocumentDidClose:             notify(s, "textDocument/didClose", textDocument.DidClose),
+			WorkspaceSymbol:                  method(s, "workspace/symbol", symbol.Symbol),
+			WorkspaceDidChangeConfiguration: notify(s, "workspace/didChangeConfiguration", configuration.DidChangeConfiguration),
 		},
-		Initialize: method(s, "initialize", lifecycle.Initialize),
+		Initialize:             method(s, "initialize", lifecycle.Initialize),
+		TextDocumentDiagnostic: method(s, "textDocument/diagnostic", diagnostic.DocumentDiagnostic),
+		WorkspaceDiagnostic:    method(s, "workspace/diagnostic", workspaceDiag.WorkspaceDiagnostic),
 	}
 
 	// Enable debug mode when using stdio to help with VSCode troubleshooting
