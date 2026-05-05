@@ -59,6 +59,15 @@ Practice TDD. When writing tests, always use the fixture/golden patterns we've e
 
 - **Regression Test Isolation**: Keep regression test fixtures in separate directories (e.g., `testdata-regression/`) to avoid interference with standard test discovery
 
+### Testing Tiers
+
+See `docs/TESTING.md` for the full testing convention. In brief:
+- **Tier 1 (pure functions):** exhaustive table-driven tests, in-package. A pure function is one where all effects depend on its formal parameters.
+- **Tier 2 (logic with effects):** fixture-based tests with real dependencies (e.g., QueryManager). No percentage target.
+- **Tier 3 (thin wiring):** covered by integration/e2e tests. No separate unit tests required.
+
+New LSP methods or MCP tools must include at least Tier 2 tests before merging.
+
 ## Per-package guidelines
 
 - Docs: When working on the docs site, refer to `docs/CLAUDE.md` for docs-specific guidelines.
@@ -80,7 +89,9 @@ Practice TDD. When writing tests, always use the fixture/golden patterns we've e
 
 ## Git
 
-When commit messages mention AI agents, always use `Assisted-By`, never use `Co-Authored-By`.
+- Always run `make lint` and address issues before committing
+- Always check go LSP diagnostics and address them before committing
+- When commit messages mention AI agents, always use `Assisted-By`, never use `Co-Authored-By`.
 
 ## Frontend
 
