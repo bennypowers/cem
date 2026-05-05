@@ -19,13 +19,10 @@ package codeAction
 import (
 	"fmt"
 
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
-// createAttributeAutofixAction creates a code action to fix an attribute name typo
-// This follows the same pattern as other autofix actions in this package
-func createAttributeAutofixAction(diagnostic *protocol.Diagnostic, dataMap map[string]any, uri string) *protocol.CodeAction {
-	// Extract the suggestion data
+func createAutofixAction(diagnostic *protocol.Diagnostic, dataMap map[string]any, uri string) *protocol.CodeAction {
 	original, originalOk := dataMap["original"].(string)
 	suggestion, suggestionOk := dataMap["suggestion"].(string)
 
@@ -33,51 +30,23 @@ func createAttributeAutofixAction(diagnostic *protocol.Diagnostic, dataMap map[s
 		return nil
 	}
 
-	title := fmt.Sprintf("Change '%s' to '%s'", original, suggestion)
-
+	kind := protocol.CodeActionKindQuickFix
 	return &protocol.CodeAction{
-		Title: title,
-		Kind:  &[]protocol.CodeActionKind{protocol.CodeActionKindQuickFix}[0],
+		Title: fmt.Sprintf("Change '%s' to '%s'", original, suggestion),
+		Kind:  &kind,
 		Edit: &protocol.WorkspaceEdit{
 			Changes: map[string][]protocol.TextEdit{
-				uri: {
-					{
-						Range:   diagnostic.Range,
-						NewText: suggestion,
-					},
-				},
+				uri: {{Range: diagnostic.Range, NewText: suggestion}},
 			},
 		},
 		Diagnostics: []protocol.Diagnostic{*diagnostic},
 	}
 }
 
-// createAttributeValueAutofixAction creates a code action to fix an attribute value typo or case mismatch
-// This follows the same pattern as other autofix actions in this package
+func createAttributeAutofixAction(diagnostic *protocol.Diagnostic, dataMap map[string]any, uri string) *protocol.CodeAction {
+	return createAutofixAction(diagnostic, dataMap, uri)
+}
+
 func createAttributeValueAutofixAction(diagnostic *protocol.Diagnostic, dataMap map[string]any, uri string) *protocol.CodeAction {
-	// Extract the suggestion data
-	original, originalOk := dataMap["original"].(string)
-	suggestion, suggestionOk := dataMap["suggestion"].(string)
-
-	if !originalOk || !suggestionOk {
-		return nil
-	}
-
-	title := fmt.Sprintf("Change '%s' to '%s'", original, suggestion)
-
-	return &protocol.CodeAction{
-		Title: title,
-		Kind:  &[]protocol.CodeActionKind{protocol.CodeActionKindQuickFix}[0],
-		Edit: &protocol.WorkspaceEdit{
-			Changes: map[string][]protocol.TextEdit{
-				uri: {
-					{
-						Range:   diagnostic.Range,
-						NewText: suggestion,
-					},
-				},
-			},
-		},
-		Diagnostics: []protocol.Diagnostic{*diagnostic},
-	}
+	return createAutofixAction(diagnostic, dataMap, uri)
 }

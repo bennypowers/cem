@@ -20,10 +20,14 @@ Organized by LSP method type with colocated packages:
 - `textDocument/completion/` - Autocompletion with type-based suggestions
 - `textDocument/hover/` - Element and attribute information
 - `textDocument/definition/` - Go-to-definition for custom elements
-- `textDocument/publishDiagnostics/` - Real-time validation (slots, tags, attributes, values)
+- `textDocument/diagnostic/` - Pull diagnostics (LSP 3.17)
+- `textDocument/publishDiagnostics/` - Push validation and diagnostic computation
 - `textDocument/codeAction/` - One-click autofixes for diagnostics
+- `textDocument/inlayHint/` - Inline type annotations for attributes
 - `textDocument/references/` - Find all element usages
 - `workspace/symbol/` - Search custom elements across workspace
+- `workspace/diagnostic/` - Workspace-wide pull diagnostics
+- `workspace/configuration/` - Runtime settings updates
 
 ## Data Flow
 
@@ -46,11 +50,29 @@ Organized by LSP method type with colocated packages:
 - **Tag Validation**: Detects typos and missing imports
 - **Attribute Validation**: Uses embedded MDN browser-compat-data
 - **Value Validation**: Type-based validation (union, literal, number, boolean)
+- **Deprecation Tags**: Elements, attributes, and slots with `deprecated` in manifest get `DiagnosticTag.Deprecated` (strikethrough in editors)
+
+### Diagnostics Model
+- **Pull Model (LSP 3.17)**: `textDocument/diagnostic` and `workspace/diagnostic` for clients that support it
+- **Push Model (fallback)**: `textDocument/publishDiagnostics` for older clients
+- **Shared Computation**: `ComputeDiagnostics()` is used by both models
+
+### Inlay Hints
+- **Attribute Types**: Shows type annotations (`: Boolean`, `: String`) after attribute values
+- **Slot Biscuits**: Shows `slot: name` after closing tags of slotted elements via tree-sitter AST walking
+- **Toggleable**: Controlled via `cem.inlayHints` setting, defaults to enabled
 
 ### Navigation
 - **Go-to-Definition**: Jump to custom element source definitions
 - **Find References**: Workspace-wide element usage search with gitignore filtering
 - **Workspace Symbols**: Fuzzy search across all custom elements
+
+## Configuration
+
+Runtime configuration via `types.ServerConfig` with thread-safe access:
+- Parsed from `initializationOptions.cem` during `initialize`
+- Updated via `workspace/didChangeConfiguration` under the `"cem"` namespace
+- `sync.RWMutex`-protected `Config()`/`SetConfig()` on `ServerContext`
 
 ## Interface Design
 

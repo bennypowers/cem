@@ -21,8 +21,8 @@ import (
 
 	"bennypowers.dev/cem/lsp/methods/workspace/symbol"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	"github.com/bennypowers/glsp"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 func TestWorkspaceSymbol(t *testing.T) {

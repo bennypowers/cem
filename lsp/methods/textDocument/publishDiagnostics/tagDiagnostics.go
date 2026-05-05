@@ -27,7 +27,7 @@ import (
 	"bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/internal/modulegraph"
 	"bennypowers.dev/cem/internal/treesitter"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // analyzeTagNameDiagnostics finds invalid custom element tag names and suggests corrections
@@ -98,6 +98,26 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 
 		// Check if the tag exists in manifests (but may not be imported)
 		existsInManifest := slices.Contains(allAvailableTagNames, tagName)
+
+		if existsInManifest && isImported {
+			if decl := ctx.FindCustomElementDeclaration(tagName); decl != nil && decl.IsDeprecated() {
+				severity := protocol.DiagnosticSeverityHint
+				source := "cem-lsp"
+				d := protocol.Diagnostic{
+					Range:    match.Range,
+					Severity: &severity,
+					Source:   &source,
+					Tags:     []protocol.DiagnosticTag{protocol.DiagnosticTagDeprecated},
+				}
+				if reason, ok := decl.Deprecated.Value().(string); ok && reason != "" {
+					d.Message = fmt.Sprintf("Custom element '%s' is deprecated: %s", tagName, reason)
+				} else {
+					d.Message = fmt.Sprintf("Custom element '%s' is deprecated", tagName)
+				}
+				diagnostics = append(diagnostics, d)
+			}
+			continue
+		}
 
 		if !existsInManifest {
 			// Element doesn't exist in any manifest - show unknown element with typo suggestions

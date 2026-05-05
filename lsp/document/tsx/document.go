@@ -24,7 +24,7 @@ import (
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/lsp/document/base"
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 const (

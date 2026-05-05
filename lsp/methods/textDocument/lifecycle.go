@@ -22,8 +22,8 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	"github.com/bennypowers/glsp"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // DocumentManager interface for document lifecycle operations
@@ -58,9 +58,10 @@ func DidOpen(ctx types.ServerContext, context *glsp.Context, params *protocol.Di
 		// so locally-defined elements are available for diagnostic checks
 		ctx.SynthesizeEphemeralElements(params.TextDocument.URI)
 
-		// Trigger diagnostics for the newly opened document
-		if err := publishDiagnostics.PublishDiagnostics(ctx, context, params.TextDocument.URI); err != nil {
-			helpers.SafeDebugLog("[LIFECYCLE] Failed to publish diagnostics for %s: %v", params.TextDocument.URI, err)
+		if !ctx.UsePullDiagnostics() {
+			if err := publishDiagnostics.PublishDiagnostics(ctx, context, params.TextDocument.URI); err != nil {
+				helpers.SafeDebugLog("[LIFECYCLE] Failed to publish diagnostics for %s: %v", params.TextDocument.URI, err)
+			}
 		}
 	} else {
 		helpers.SafeDebugLog("[LIFECYCLE] Failed to open document: %s", params.TextDocument.URI)
@@ -139,9 +140,10 @@ func DidChange(ctx types.ServerContext, context *glsp.Context, params *protocol.
 		// Synthesize ephemeral element declarations before diagnostics
 		ctx.SynthesizeEphemeralElements(params.TextDocument.URI)
 
-		// Trigger diagnostics for the updated document
-		if err := publishDiagnostics.PublishDiagnostics(ctx, context, params.TextDocument.URI); err != nil {
-			helpers.SafeDebugLog("[LIFECYCLE] Failed to publish diagnostics for %s: %v", params.TextDocument.URI, err)
+		if !ctx.UsePullDiagnostics() {
+			if err := publishDiagnostics.PublishDiagnostics(ctx, context, params.TextDocument.URI); err != nil {
+				helpers.SafeDebugLog("[LIFECYCLE] Failed to publish diagnostics for %s: %v", params.TextDocument.URI, err)
+			}
 		}
 	} else {
 		helpers.SafeDebugLog("[LIFECYCLE] Failed to update document: %s", params.TextDocument.URI)

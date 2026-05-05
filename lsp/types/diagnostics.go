@@ -16,7 +16,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package types
 
-import protocol "github.com/tliron/glsp/protocol_3_16"
+import protocol "github.com/bennypowers/glsp/protocol_3_17"
 
 // DiagnosticType represents the type of diagnostic suggestion
 type DiagnosticType string

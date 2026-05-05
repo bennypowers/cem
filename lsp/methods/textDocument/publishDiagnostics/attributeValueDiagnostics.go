@@ -26,7 +26,7 @@ import (
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/agext/levenshtein"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // analyzeAttributeValueDiagnostics validates attribute values against their type definitions
@@ -450,7 +450,7 @@ func findAttributesWithValues(doc types.Document, ctx types.ServerContext) []Att
 				Name:     attrName,
 				TagName:  element.TagName,
 				Value:    attr.Value,
-				HasValue: attr.Value != "", // Determine if attribute has a value
+				HasValue: true,
 				Line:     attr.Range.Start.Line,
 				StartCol: attr.Range.Start.Character,
 				EndCol:   attr.Range.End.Character,

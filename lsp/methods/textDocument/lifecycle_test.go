@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp/document"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 func TestDocumentChangeHandling(t *testing.T) {

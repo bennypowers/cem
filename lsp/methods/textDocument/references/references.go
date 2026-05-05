@@ -29,8 +29,8 @@ import (
 	"bennypowers.dev/cem/lsp/types"
 	Q "bennypowers.dev/cem/internal/treesitter"
 	ignore "github.com/sabhiram/go-gitignore"
-	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	"github.com/bennypowers/glsp"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // References handles textDocument/references requests

@@ -22,7 +22,7 @@ import (
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/tliron/glsp"
+	"github.com/bennypowers/glsp"
 )
 
 // method wraps an LSP handler that returns (result, error) with middleware

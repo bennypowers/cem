@@ -23,13 +23,14 @@ import (
 	"bennypowers.dev/cem/internal/version"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	"github.com/bennypowers/glsp"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // cemInitializationOptions represents the custom initialization options for CEM LSP
 type cemInitializationOptions struct {
 	AdditionalPackages []string `json:"additionalPackages,omitempty"`
+	InlayHints         *bool    `json:"inlayHints,omitempty"`
 }
 
 // Initialize handles the LSP initialize request
@@ -62,44 +63,59 @@ func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol
 		// Don't fail initialization, just log the warning
 	}
 
-	// Parse initializationOptions for additional packages
+	// Parse initializationOptions for additional packages and settings
 	if params.InitializationOptions != nil {
 		options := parseInitializationOptions(params.InitializationOptions)
 		if len(options.AdditionalPackages) > 0 {
 			helpers.SafeDebugLog("[INITIALIZE] Found %d additional packages in initializationOptions", len(options.AdditionalPackages))
 			ctx.SetAdditionalPackages(options.AdditionalPackages)
 		}
+		if options.InlayHints != nil {
+			config := ctx.Config()
+			config.InlayHints = options.InlayHints
+			ctx.SetConfig(config)
+		}
 	}
 
-	// Define server capabilities
+	// Detect pull diagnostics support
+	if params.Capabilities.TextDocument != nil &&
+		params.Capabilities.TextDocument.Diagnostic != nil {
+		ctx.SetUsePullDiagnostics(true)
+		helpers.SafeDebugLog("[INITIALIZE] Client supports pull diagnostics (LSP 3.17)")
+	} else {
+		ctx.SetUsePullDiagnostics(false)
+		helpers.SafeDebugLog("[INITIALIZE] Client uses push diagnostics (LSP 3.16)")
+	}
+
 	openClose := true
 	changeKind := protocol.TextDocumentSyncKindIncremental
+	resolveProvider := true
 
-	capabilities := protocol.ServerCapabilities{
-		HoverProvider: &protocol.HoverOptions{},
-		CompletionProvider: &protocol.CompletionOptions{
-			TriggerCharacters: []string{
-				"<",
-				"=",
-				"\"",
-				"@",
-				".",
-				"?",
-			},
-			ResolveProvider: &[]bool{true}[0],
+	var capabilities protocol.ServerCapabilities
+	capabilities.TextDocumentSync = &protocol.TextDocumentSyncOptions{
+		OpenClose: &openClose,
+		Change:    &changeKind,
+	}
+	capabilities.HoverProvider = &protocol.HoverOptions{}
+	capabilities.CompletionProvider = &protocol.CompletionOptions{
+		TriggerCharacters: []string{"<", "=", "\"", "@", ".", "?"},
+		ResolveProvider:   &resolveProvider,
+	}
+	capabilities.DefinitionProvider = &protocol.DefinitionOptions{}
+	capabilities.ReferencesProvider = &protocol.ReferenceOptions{}
+	capabilities.CodeActionProvider = &protocol.CodeActionOptions{
+		CodeActionKinds: []protocol.CodeActionKind{
+			protocol.CodeActionKindQuickFix,
 		},
-		DefinitionProvider: &protocol.DefinitionOptions{},
-		ReferencesProvider: &protocol.ReferenceOptions{},
-		CodeActionProvider: &protocol.CodeActionOptions{
-			CodeActionKinds: []protocol.CodeActionKind{
-				protocol.CodeActionKindQuickFix,
-			},
-		},
-		WorkspaceSymbolProvider: &protocol.WorkspaceSymbolOptions{},
-		TextDocumentSync: &protocol.TextDocumentSyncOptions{
-			OpenClose: &openClose,
-			Change:    &changeKind,
-		},
+	}
+	capabilities.WorkspaceSymbolProvider = &protocol.WorkspaceSymbolOptions{}
+	capabilities.InlayHintProvider = &protocol.InlayHintOptions{}
+
+	if ctx.UsePullDiagnostics() {
+		capabilities.DiagnosticProvider = &protocol.DiagnosticOptions{
+			InterFileDependencies: false,
+			WorkspaceDiagnostics:  true,
+		}
 	}
 
 	return protocol.InitializeResult{
@@ -119,9 +135,25 @@ func parseInitializationOptions(options any) cemInitializationOptions {
 	// The options could come in various forms depending on the editor
 	switch opts := options.(type) {
 	case map[string]any:
-		// Most common: a JSON object decoded as map[string]any
+		// Top-level additionalPackages (backward compatible)
 		if additionalPackages, ok := opts["additionalPackages"]; ok {
 			result.AdditionalPackages = parseStringSlice(additionalPackages)
+		}
+
+		// Settings under "cem" namespace
+		if cemSettings, ok := opts["cem"]; ok {
+			if cemMap, ok := cemSettings.(map[string]any); ok {
+				if inlayHints, ok := cemMap["inlayHints"]; ok {
+					if b, ok := inlayHints.(bool); ok {
+						result.InlayHints = &b
+					}
+				}
+				if additionalPackages, ok := cemMap["additionalPackages"]; ok {
+					if parsed := parseStringSlice(additionalPackages); len(parsed) > 0 {
+						result.AdditionalPackages = parsed
+					}
+				}
+			}
 		}
 	}
 

@@ -21,7 +21,7 @@ import (
 	"bennypowers.dev/cem/lsp/document/html"
 	"bennypowers.dev/cem/lsp/types"
 	Q "bennypowers.dev/cem/internal/treesitter"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // Handler implements language-specific operations for Blade template documents

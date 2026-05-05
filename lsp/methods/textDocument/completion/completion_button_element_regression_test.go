@@ -27,7 +27,7 @@ import (
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // TestButtonElementAttributeValueRegression is a regression test for button-element
@@ -207,6 +207,9 @@ func TestButtonElementIntegrationContext(t *testing.T) {
 
 	// Analyze completion context using real tree-sitter parsing
 	analysis := doc.AnalyzeCompletionContextTS(position, dm)
+	if analysis == nil {
+		t.Fatalf("AnalyzeCompletionContextTS returned nil for position %+v", position)
+	}
 
 	// Should detect attribute value completion
 	if analysis.Type != types.CompletionAttributeValue {

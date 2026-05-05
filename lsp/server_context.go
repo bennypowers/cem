@@ -31,7 +31,7 @@ import (
 	"bennypowers.dev/cem/internal/modulegraph"
 	"bennypowers.dev/cem/internal/treesitter"
 	W "bennypowers.dev/cem/internal/workspace"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // Verify Server implements all context interfaces
@@ -317,6 +317,44 @@ func (s *Server) ElementDescription(tagName string) (string, bool) {
 	}
 
 	return "", false
+}
+
+// Config returns the current server configuration (thread-safe)
+func (s *Server) Config() types.ServerConfig {
+	s.configMu.RLock()
+	defer s.configMu.RUnlock()
+	return s.config
+}
+
+// SetConfig updates the server configuration (thread-safe)
+func (s *Server) SetConfig(config types.ServerConfig) {
+	s.configMu.Lock()
+	defer s.configMu.Unlock()
+	s.config = config
+}
+
+// InlayHintsEnabled returns whether inlay hints are enabled
+func (s *Server) InlayHintsEnabled() bool {
+	s.configMu.RLock()
+	defer s.configMu.RUnlock()
+	if s.config.InlayHints == nil {
+		return true
+	}
+	return *s.config.InlayHints
+}
+
+// UsePullDiagnostics returns whether pull diagnostics model is active
+func (s *Server) UsePullDiagnostics() bool {
+	s.configMu.RLock()
+	defer s.configMu.RUnlock()
+	return s.usePullDiagnostics
+}
+
+// SetUsePullDiagnostics sets whether pull diagnostics model is active
+func (s *Server) SetUsePullDiagnostics(enabled bool) {
+	s.configMu.Lock()
+	defer s.configMu.Unlock()
+	s.usePullDiagnostics = enabled
 }
 
 // ephemeralQueryManager lazily creates a QueryManager with GenerateQueries()

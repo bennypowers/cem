@@ -19,7 +19,7 @@ package lsp
 import (
 	"testing"
 
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 func TestIncrementalParser_AnalyzeChanges(t *testing.T) {

@@ -26,7 +26,7 @@ import (
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/internal/modulegraph"
 	"bennypowers.dev/cem/internal/treesitter"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // MockServerContext provides a unified mock implementation of ServerContext for all tests
@@ -46,6 +46,8 @@ type MockServerContext struct {
 	ModuleGraphInst    *modulegraph.ModuleGraph
 	FS                 platform.FileSystem
 	AdditionalPackages []string
+	config          types.ServerConfig
+	pullDiagnostics bool
 	types.Registry
 }
 
@@ -155,6 +157,7 @@ func NewMockServerContext() *MockServerContext {
 		DescriptionsMap:  make(map[string]string),
 		Manifests:        []*M.Package{},
 		WorkspaceRootStr: "/test/workspace",
+		config: types.DefaultConfig(),
 	}
 }
 
@@ -372,6 +375,41 @@ func (m *MockServerContext) QueryManager() (*treesitter.QueryManager, error) {
 
 // SynthesizeEphemeralElements is a no-op for test contexts
 func (m *MockServerContext) SynthesizeEphemeralElements(uri string) {}
+
+// Configuration
+func (m *MockServerContext) Config() types.ServerConfig {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.config
+}
+
+func (m *MockServerContext) SetConfig(config types.ServerConfig) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.config = config
+}
+
+func (m *MockServerContext) InlayHintsEnabled() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.config.InlayHints == nil {
+		return true
+	}
+	return *m.config.InlayHints
+}
+
+func (m *MockServerContext) UsePullDiagnostics() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.pullDiagnostics
+}
+
+func (m *MockServerContext) SetUsePullDiagnostics(enabled bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.pullDiagnostics = enabled
+}
+
 
 func (m *MockServerContext) ModuleGraph() *modulegraph.ModuleGraph {
 	m.mu.RLock()

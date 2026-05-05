@@ -19,7 +19,7 @@ package lifecycle
 import (
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/tliron/glsp"
+	"github.com/bennypowers/glsp"
 )
 
 // Shutdown handles the LSP shutdown request
