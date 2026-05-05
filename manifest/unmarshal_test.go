@@ -983,3 +983,124 @@ func TestUnmarshalPackage(t *testing.T) {
 		}
 	})
 }
+
+func TestCustomElementDeclaration_UnmarshalJSON_EdgeCases(t *testing.T) {
+	t.Run("deprecated bool", func(t *testing.T) {
+		data := `{
+			"kind": "class", "customElement": true, "name": "X",
+			"tagName": "x-el", "deprecated": true
+		}`
+		var ced CustomElementDeclaration
+		err := json.Unmarshal([]byte(data), &ced)
+		if err != nil {
+			t.Fatalf("unmarshal: %v", err)
+		}
+		if !ced.IsDeprecated() {
+			t.Error("expected deprecated")
+		}
+	})
+
+	t.Run("deprecated string", func(t *testing.T) {
+		data := `{
+			"kind": "class", "customElement": true, "name": "X",
+			"tagName": "x-el", "deprecated": "use y-el"
+		}`
+		var ced CustomElementDeclaration
+		err := json.Unmarshal([]byte(data), &ced)
+		if err != nil {
+			t.Fatalf("unmarshal: %v", err)
+		}
+		if !ced.IsDeprecated() {
+			t.Error("expected deprecated")
+		}
+	})
+
+	t.Run("deprecated invalid type", func(t *testing.T) {
+		data := `{
+			"kind": "class", "customElement": true, "name": "X",
+			"tagName": "x-el", "deprecated": [1, 2, 3]
+		}`
+		var ced CustomElementDeclaration
+		err := json.Unmarshal([]byte(data), &ced)
+		if err == nil {
+			t.Error("expected error for invalid deprecated type")
+		}
+	})
+
+	t.Run("with members of mixed kinds", func(t *testing.T) {
+		data := `{
+			"kind": "class", "customElement": true, "name": "X", "tagName": "x-el",
+			"members": [
+				{"kind": "field", "name": "prop1", "type": {"text": "string"}},
+				{"kind": "method", "name": "doThing"},
+				{"kind": "field", "name": "attr1", "attribute": "attr-one", "type": {"text": "boolean"}}
+			]
+		}`
+		var ced CustomElementDeclaration
+		err := json.Unmarshal([]byte(data), &ced)
+		if err != nil {
+			t.Fatalf("unmarshal: %v", err)
+		}
+		if len(ced.Members) != 3 {
+			t.Fatalf("expected 3 members, got %d", len(ced.Members))
+		}
+		if _, ok := ced.Members[0].(*CustomElementField); !ok {
+			if _, ok := ced.Members[0].(*ClassField); !ok {
+				t.Error("member 0 should be ClassField or CustomElementField")
+			}
+		}
+		if _, ok := ced.Members[1].(*ClassMethod); !ok {
+			t.Error("member 1 should be ClassMethod")
+		}
+	})
+
+	t.Run("with css properties and states", func(t *testing.T) {
+		data := `{
+			"kind": "class", "customElement": true, "name": "X", "tagName": "x-el",
+			"cssProperties": [{"name": "--color", "default": "blue"}],
+			"cssParts": [{"name": "base"}],
+			"cssStates": [{"name": "--open"}]
+		}`
+		var ced CustomElementDeclaration
+		err := json.Unmarshal([]byte(data), &ced)
+		if err != nil {
+			t.Fatalf("unmarshal: %v", err)
+		}
+		if len(ced.CustomElement.CssProperties) != 1 {
+			t.Errorf("expected 1 CSS property, got %d", len(ced.CustomElement.CssProperties))
+		}
+		if len(ced.CustomElement.CssParts) != 1 {
+			t.Errorf("expected 1 CSS part, got %d", len(ced.CustomElement.CssParts))
+		}
+		if len(ced.CustomElement.CssStates) != 1 {
+			t.Errorf("expected 1 CSS state, got %d", len(ced.CustomElement.CssStates))
+		}
+	})
+
+	t.Run("with demos and slots", func(t *testing.T) {
+		data := `{
+			"kind": "class", "customElement": true, "name": "X", "tagName": "x-el",
+			"demos": [{"url": "/demo/", "description": "demo"}],
+			"slots": [{"name": "", "description": "default"}, {"name": "header"}],
+			"events": [{"name": "change", "type": {"text": "Event"}}],
+			"attributes": [{"name": "disabled", "type": {"text": "boolean"}}]
+		}`
+		var ced CustomElementDeclaration
+		err := json.Unmarshal([]byte(data), &ced)
+		if err != nil {
+			t.Fatalf("unmarshal: %v", err)
+		}
+		if len(ced.Demos) != 1 {
+			t.Errorf("expected 1 demo, got %d", len(ced.Demos))
+		}
+		if len(ced.CustomElement.Slots) != 2 {
+			t.Errorf("expected 2 slots, got %d", len(ced.CustomElement.Slots))
+		}
+		if len(ced.CustomElement.Events) != 1 {
+			t.Errorf("expected 1 event, got %d", len(ced.CustomElement.Events))
+		}
+		if len(ced.CustomElement.Attributes) != 1 {
+			t.Errorf("expected 1 attribute, got %d", len(ced.CustomElement.Attributes))
+		}
+	})
+}

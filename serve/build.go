@@ -21,6 +21,7 @@ import (
 	"sort"
 	"strings"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/importmap"
 	"bennypowers.dev/cem/serve/middleware/routes"
@@ -83,7 +84,7 @@ func (s *Server) Build(config BuildConfig) error {
 	if err != nil {
 		return fmt.Errorf("build index: %w", err)
 	}
-	if err := writePage("/", indexBody, config); err != nil {
+	if err := writePage("/", indexBody, config, s.fs); err != nil {
 		return fmt.Errorf("write index: %w", err)
 	}
 
@@ -102,7 +103,7 @@ func (s *Server) Build(config BuildConfig) error {
 			pageErrors = errors.Join(pageErrors, fmt.Errorf("%s: %w", res.Route, res.Err))
 			continue
 		}
-		if err := writePage(res.Route, res.Body, config); err != nil {
+		if err := writePage(res.Route, res.Body, config, s.fs); err != nil {
 			return fmt.Errorf("write %s: %w", res.Route, err)
 		}
 	}
@@ -147,7 +148,7 @@ func (s *Server) Build(config BuildConfig) error {
 	// Write manifest as static JSON
 	if manifest, err := s.Manifest(); err == nil && len(manifest) > 0 {
 		outPath := filepath.Join(config.siteRoot(), "custom-elements.json")
-		if err := os.WriteFile(outPath, manifest, 0o644); err != nil {
+		if err := s.fs.WriteFile(outPath, manifest, 0o644); err != nil {
 			return fmt.Errorf("write manifest: %w", err)
 		}
 	}
@@ -171,8 +172,8 @@ func (s *Server) Build(config BuildConfig) error {
 	return nil
 }
 
-// writePage writes rendered page bytes to disk, applying base path rewrites.
-func writePage(route string, body []byte, config BuildConfig) error {
+// writePage writes rendered page bytes to the filesystem, applying base path rewrites.
+func writePage(route string, body []byte, config BuildConfig, fsys platform.FileSystem) error {
 	// Rewrite absolute URLs with base path prefix
 	if config.BasePath != "" {
 		body = rewriteBasePath(body, config.BasePath)
@@ -184,11 +185,11 @@ func writePage(route string, body []byte, config BuildConfig) error {
 		outPath = filepath.Join(outPath, "index.html")
 	}
 
-	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+	if err := fsys.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return err
 	}
 
-	return os.WriteFile(outPath, body, 0o644)
+	return fsys.WriteFile(outPath, body, 0o644)
 }
 
 // copyChrome copies the chrome bundle and sourcemap to the output directory.
@@ -206,10 +207,10 @@ func (s *Server) copyChrome(config BuildConfig) error {
 			data = rewriteAssetPaths(data, config.BasePath)
 		}
 		outPath := filepath.Join(cemDir, name)
-		if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+		if err := s.fs.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 			return err
 		}
-		if err := os.WriteFile(outPath, data, 0o644); err != nil {
+		if err := s.fs.WriteFile(outPath, data, 0o644); err != nil {
 			return err
 		}
 	}
@@ -277,10 +278,10 @@ func (s *Server) copyStaticAssets(config BuildConfig) error {
 		}
 
 		outPath := filepath.Join(cemDir, outRel)
-		if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+		if err := s.fs.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 			return err
 		}
-		return os.WriteFile(outPath, data, 0o644)
+		return s.fs.WriteFile(outPath, data, 0o644)
 	})
 }
 
@@ -308,10 +309,10 @@ func (s *Server) buildLightdomCSS(config BuildConfig) error {
 
 	// Always write the file so the <link> in demo-chrome.html resolves
 	outPath := filepath.Join(config.siteRoot(), "__cem", "lightdom.css")
-	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+	if err := s.fs.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(outPath, []byte(combined.String()), 0o644)
+	return s.fs.WriteFile(outPath, []byte(combined.String()), 0o644)
 }
 
 // buildHealthJSON renders the health API endpoint and writes it as static JSON.
@@ -322,10 +323,10 @@ func (s *Server) buildHealthJSON(handler http.Handler, config BuildConfig) error
 	}
 
 	outPath := filepath.Join(config.siteRoot(), "__cem", "api", "health")
-	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+	if err := s.fs.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(outPath, body, 0o644)
+	return s.fs.WriteFile(outPath, body, 0o644)
 }
 
 // writeWebSocketStub writes a no-op websocket client module for static builds.
@@ -340,10 +341,10 @@ export class CEMReloadClient {
 }
 `
 	outPath := filepath.Join(config.siteRoot(), "__cem", "websocket-client.js")
-	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+	if err := s.fs.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(outPath, []byte(stub), 0o644)
+	return s.fs.WriteFile(outPath, []byte(stub), 0o644)
 }
 
 // buildUserSources walks the user's source directory and renders each file
@@ -433,10 +434,10 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 			if ext == ".ts" {
 				outPath = strings.TrimSuffix(outPath, ".ts") + ".js"
 			}
-			if mkErr := os.MkdirAll(filepath.Dir(outPath), 0o755); mkErr != nil {
+			if mkErr := s.fs.MkdirAll(filepath.Dir(outPath), 0o755); mkErr != nil {
 				return mkErr
 			}
-			if writeErr := os.WriteFile(outPath, body, 0o644); writeErr != nil {
+			if writeErr := s.fs.WriteFile(outPath, body, 0o644); writeErr != nil {
 				return writeErr
 			}
 			count++
@@ -449,7 +450,7 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 					return fmt.Errorf("transform CSS module %s: %w", cssModuleURL, jsErr)
 				}
 				jsPath := outPath + ".js"
-				if writeErr := os.WriteFile(jsPath, jsBody, 0o644); writeErr != nil {
+				if writeErr := s.fs.WriteFile(jsPath, jsBody, 0o644); writeErr != nil {
 					return writeErr
 				}
 				count++
@@ -516,10 +517,10 @@ func (s *Server) buildDependencies(handler http.Handler, config BuildConfig) err
 		}
 
 		outPath := filepath.Join(config.siteRoot(), urlPath)
-		if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+		if err := s.fs.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 			return err
 		}
-		if err := os.WriteFile(outPath, body, 0o644); err != nil {
+		if err := s.fs.WriteFile(outPath, body, 0o644); err != nil {
 			return err
 		}
 		count++
@@ -530,7 +531,7 @@ func (s *Server) buildDependencies(handler http.Handler, config BuildConfig) err
 			mapBody, mapErr := renderPkg.Page(handler, mapURL)
 			if mapErr == nil {
 				mapPath := outPath + ".map"
-				_ = os.WriteFile(mapPath, mapBody, 0o644)
+				_ = s.fs.WriteFile(mapPath, mapBody, 0o644)
 			}
 		}
 	}
@@ -559,10 +560,10 @@ func (s *Server) buildSitemap(demoRoutes map[string]*middleware.DemoRouteEntry, 
 	sb.WriteString("</urlset>\n")
 
 	outPath := filepath.Join(config.siteRoot(), "sitemap.xml")
-	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+	if err := s.fs.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(outPath, []byte(sb.String()), 0o644)
+	return s.fs.WriteFile(outPath, []byte(sb.String()), 0o644)
 }
 
 // rewriteImportMapToCDN rewrites import map entries in all HTML files
@@ -576,7 +577,7 @@ func (s *Server) rewriteImportMapToCDN(config BuildConfig) error {
 			return err
 		}
 
-		data, readErr := os.ReadFile(path)
+		data, readErr := s.fs.ReadFile(path)
 		if readErr != nil {
 			return readErr
 		}
@@ -588,7 +589,7 @@ func (s *Server) rewriteImportMapToCDN(config BuildConfig) error {
 		}
 
 		count++
-		return os.WriteFile(path, []byte(rewritten), 0o644)
+		return s.fs.WriteFile(path, []byte(rewritten), 0o644)
 	})
 
 	if err != nil {

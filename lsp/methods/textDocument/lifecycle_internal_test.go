@@ -264,3 +264,66 @@ func TestApplyMultiLineChange(t *testing.T) {
 		})
 	}
 }
+
+func TestAdjustEndLineIfNeeded(t *testing.T) {
+	tests := []struct {
+		name   string
+		params changeParameters
+		lines  []string
+		want   changeParameters
+	}{
+		{
+			"within bounds",
+			changeParameters{startLine: 0, endLine: 1, endChar: 3},
+			[]string{"hello", "world"},
+			changeParameters{startLine: 0, endLine: 1, endChar: 3},
+		},
+		{
+			"beyond end",
+			changeParameters{startLine: 0, endLine: 10, endChar: 5},
+			[]string{"hello", "world"},
+			changeParameters{startLine: 0, endLine: 1, endChar: 5},
+		},
+		{
+			"exactly at boundary",
+			changeParameters{startLine: 0, endLine: 2, endChar: 0},
+			[]string{"hello", "world"},
+			changeParameters{startLine: 0, endLine: 1, endChar: 5},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result := adjustEndLineIfNeeded(tc.params, tc.lines)
+			assert.Equal(t, tc.want.endLine, result.endLine)
+		})
+	}
+}
+
+func TestHandleOutOfBoundsChange(t *testing.T) {
+	t.Run("appends to end", func(t *testing.T) {
+		lines := []string{"hello", "world"}
+		result := handleOutOfBoundsChange(lines, 5, "new text")
+		assert.Contains(t, result, "new text")
+	})
+
+	t.Run("pads with empty lines", func(t *testing.T) {
+		lines := []string{"hello"}
+		result := handleOutOfBoundsChange(lines, 3, "far away")
+		assert.Contains(t, result, "far away")
+	})
+}
+
+func TestSplitLinesInternal(t *testing.T) {
+	assert.Len(t, splitLines("a\nb\nc"), 3)
+	assert.Len(t, splitLines("a\r\nb\r\nc"), 3)
+	assert.Len(t, splitLines("a\rb\rc"), 3)
+	assert.Len(t, splitLines("hello"), 1)
+	assert.Len(t, splitLines(""), 1)
+}
+
+func TestApplySingleLineChange_ClampBounds(t *testing.T) {
+	lines := []string{"hi"}
+	params := changeParameters{startLine: 0, startChar: 100, endLine: 0, endChar: 200}
+	result := applySingleLineChange(lines, params, "!")
+	assert.Equal(t, "hi!", result)
+}

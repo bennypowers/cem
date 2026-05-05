@@ -142,3 +142,167 @@ func TestClassMethodToTableRowGolden(t *testing.T) {
 		StripANSI: true,
 	})
 }
+
+func TestClassFieldToTableRowGolden(t *testing.T) {
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "class.json", &pkg)
+
+	cd := pkg.Modules[0].Declarations[0].(*manifest.ClassDeclaration)
+	field := cd.Members[0].(*manifest.ClassField)
+	renderable := manifest.NewRenderableClassField(field, cd, nil, &pkg.Modules[0], &pkg)
+
+	headers := renderable.ColumnHeadings()
+	row := renderable.ToTableRow()
+
+	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
+	testutil.CheckGolden(t, "class_field_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "testdata",
+		Extension: ".md",
+		StripANSI: true,
+	})
+}
+
+func TestCustomElementFieldToTableRowGolden(t *testing.T) {
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "custom_element_member_with_attribute.json", &pkg)
+
+	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
+	field := ced.Members[0].(*manifest.CustomElementField)
+	renderable := manifest.NewRenderableCustomElementField(field, ced, nil, nil, &pkg.Modules[0], &pkg)
+
+	headers := renderable.ColumnHeadings()
+	row := renderable.ToTableRow()
+
+	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
+	testutil.CheckGolden(t, "custom_element_field_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "testdata",
+		Extension: ".md",
+		StripANSI: true,
+	})
+}
+
+func TestCssCustomStateToTableRowGolden(t *testing.T) {
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "custom_element_css_parts_properties_states.json", &pkg)
+
+	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
+	states := ced.CssStates()
+	renderable := manifest.NewRenderableCssCustomState(&states[0], ced, nil, &pkg.Modules[0])
+
+	headers := renderable.ColumnHeadings()
+	row := renderable.ToTableRow()
+
+	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
+	testutil.CheckGolden(t, "css_state_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "testdata",
+		Extension: ".md",
+		StripANSI: true,
+	})
+}
+
+func TestDemoToTableRowGolden(t *testing.T) {
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "custom_element_demos.json", &pkg)
+
+	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
+	renderable := manifest.NewRenderableDemo(&ced.Demos[0], ced, &pkg.Modules[0], &pkg)
+
+	headers := renderable.ColumnHeadings()
+	row := renderable.ToTableRow()
+
+	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
+	testutil.CheckGolden(t, "demo_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "testdata",
+		Extension: ".md",
+		StripANSI: true,
+	})
+}
+
+func TestFunctionDeclarationToTableRowGolden(t *testing.T) {
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "function.json", &pkg)
+
+	fd := pkg.Modules[0].Declarations[0].(*manifest.FunctionDeclaration)
+	renderable := manifest.NewRenderableFunctionDeclaration(fd, &pkg.Modules[0], &pkg)
+
+	headers := renderable.ColumnHeadings()
+	row := renderable.ToTableRow()
+
+	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
+	testutil.CheckGolden(t, "function_declaration_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "testdata",
+		Extension: ".md",
+		StripANSI: true,
+	})
+}
+
+func TestMixinDeclarationToTableRowGolden(t *testing.T) {
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "mixin.json", &pkg)
+
+	md := pkg.Modules[0].Declarations[0].(*manifest.MixinDeclaration)
+	renderable := manifest.NewRenderableMixinDeclaration(md, &pkg.Modules[0], &pkg)
+
+	headers := renderable.ColumnHeadings()
+	row := renderable.ToTableRow()
+
+	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
+	testutil.CheckGolden(t, "mixin_declaration_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "testdata",
+		Extension: ".md",
+		StripANSI: true,
+	})
+}
+
+func TestCustomElementMixinDeclarationToTableRowGolden(t *testing.T) {
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "custom_element_mixin.json", &pkg)
+
+	cemd := pkg.Modules[0].Declarations[0].(*manifest.CustomElementMixinDeclaration)
+	renderable := manifest.NewRenderableCustomElementMixinDeclaration(cemd, &pkg.Modules[0], &pkg)
+
+	headers := renderable.ColumnHeadings()
+	row := renderable.ToTableRow()
+
+	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
+	testutil.CheckGolden(t, "custom_element_mixin_declaration_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "testdata",
+		Extension: ".md",
+		StripANSI: true,
+	})
+}
+
+func TestVariableDeclarationToTableRowGolden(t *testing.T) {
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "variable.json", &pkg)
+
+	vd := pkg.Modules[0].Declarations[0].(*manifest.VariableDeclaration)
+	renderable := manifest.NewRenderableVariableDeclaration(vd, &pkg.Modules[0], &pkg)
+
+	headers := renderable.ColumnHeadings()
+	row := renderable.ToTableRow()
+
+	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
+	testutil.CheckGolden(t, "variable_declaration_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "testdata",
+		Extension: ".md",
+		StripANSI: true,
+	})
+}
+
+func TestModuleToTableRowGolden(t *testing.T) {
+	var pkg manifest.Package
+	testutil.LoadJSONFixture(t, "custom_element_members.json", &pkg)
+
+	renderable := manifest.NewRenderableModule(&pkg.Modules[0], &pkg)
+
+	headers := renderable.ColumnHeadings()
+	row := renderable.ToTableRow()
+
+	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
+	testutil.CheckGolden(t, "module_row", []byte(table), testutil.GoldenOptions{
+		Dir:       "testdata",
+		Extension: ".md",
+		StripANSI: true,
+	})
+}

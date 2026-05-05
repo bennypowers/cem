@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/serve/middleware"
 )
 
 func TestSiteRoot(t *testing.T) {
@@ -233,49 +234,6 @@ func TestRewriteNodeModulesToCDN(t *testing.T) {
 				t.Errorf("output still contains /node_modules/:\n%s", got)
 			}
 		})
-	}
-}
-
-func TestWriteWebSocketStub(t *testing.T) {
-	dir := t.TempDir()
-	s := &Server{}
-	config := BuildConfig{OutputDir: dir}
-
-	if err := s.writeWebSocketStub(config); err != nil {
-		t.Fatalf("writeWebSocketStub() error: %v", err)
-	}
-
-	data, err := os.ReadFile(filepath.Join(dir, "__cem", "websocket-client.js"))
-	if err != nil {
-		t.Fatalf("ReadFile() error: %v", err)
-	}
-
-	content := string(data)
-	if !strings.Contains(content, "export class CEMReloadClient") {
-		t.Error("stub should export CEMReloadClient")
-	}
-	if !strings.Contains(content, "init() {}") {
-		t.Error("stub should have no-op init()")
-	}
-}
-
-func TestBuildLightdomCSS(t *testing.T) {
-	dir := t.TempDir()
-	s := &Server{}
-	config := BuildConfig{OutputDir: dir}
-
-	if err := s.buildLightdomCSS(config); err != nil {
-		t.Fatalf("buildLightdomCSS() error: %v", err)
-	}
-
-	// The output may or may not exist depending on whether there are
-	// lightdom CSS files in the embedded FS. Just verify no error.
-	outPath := filepath.Join(dir, "__cem", "lightdom.css")
-	if _, err := os.Stat(outPath); err == nil {
-		data, _ := os.ReadFile(outPath)
-		if len(data) == 0 {
-			t.Error("lightdom.css should not be empty if it exists")
-		}
 	}
 }
 
@@ -547,5 +505,119 @@ func TestBuildConfig_SiteRoot_WithBasePath(t *testing.T) {
 	want := filepath.Join("dist", "/docs/api")
 	if got != want {
 		t.Errorf("siteRoot() = %q, want %q", got, want)
+	}
+}
+
+func TestWritePage_MapFS(t *testing.T) {
+	memFS := platform.NewMapFS(nil)
+	config := BuildConfig{OutputDir: "dist"}
+
+	err := writePage("/demo/button/", []byte("<html>hello</html>"), config, memFS)
+	if err != nil {
+		t.Fatalf("writePage: %v", err)
+	}
+
+	data, err := memFS.ReadFile("dist/demo/button/index.html")
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if string(data) != "<html>hello</html>" {
+		t.Errorf("content = %q, want %q", string(data), "<html>hello</html>")
+	}
+}
+
+func TestWritePage_MapFS_WithBasePath(t *testing.T) {
+	memFS := platform.NewMapFS(nil)
+	config := BuildConfig{OutputDir: "dist", BasePath: "/docs"}
+
+	err := writePage("/", []byte(`<a href="/foo">link</a>`), config, memFS)
+	if err != nil {
+		t.Fatalf("writePage: %v", err)
+	}
+
+	data, err := memFS.ReadFile(filepath.Join("dist", "docs", "index.html"))
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	content := string(data)
+	if !strings.Contains(content, `href="/docs/foo"`) {
+		t.Errorf("base path not rewritten in %q", content)
+	}
+}
+
+func TestCopyChrome_MapFS(t *testing.T) {
+	memFS := platform.NewMapFS(nil)
+	s := &Server{fs: memFS}
+	config := BuildConfig{OutputDir: "dist"}
+
+	err := s.copyChrome(config)
+	if err != nil {
+		t.Fatalf("copyChrome: %v", err)
+	}
+
+	if !memFS.Exists("dist/__cem/chrome-bundle.js") {
+		t.Error("chrome-bundle.js not written")
+	}
+}
+
+func TestWriteWebSocketStub_MapFS(t *testing.T) {
+	memFS := platform.NewMapFS(nil)
+	s := &Server{fs: memFS}
+	config := BuildConfig{OutputDir: "dist"}
+
+	err := s.writeWebSocketStub(config)
+	if err != nil {
+		t.Fatalf("writeWebSocketStub: %v", err)
+	}
+
+	data, err := memFS.ReadFile("dist/__cem/websocket-client.js")
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if !strings.Contains(string(data), "CEMReloadClient") {
+		t.Error("stub missing CEMReloadClient class")
+	}
+}
+
+func TestBuildSitemap_MapFS(t *testing.T) {
+	memFS := platform.NewMapFS(nil)
+	s := &Server{fs: memFS}
+	config := BuildConfig{OutputDir: "dist"}
+
+	demoRoutes := map[string]*middleware.DemoRouteEntry{
+		"/demo/button/": {FilePath: "demo/button.html"},
+		"/demo/card/":   {FilePath: "demo/card.html"},
+	}
+
+	err := s.buildSitemap(demoRoutes, config)
+	if err != nil {
+		t.Fatalf("buildSitemap: %v", err)
+	}
+
+	data, err := memFS.ReadFile("dist/sitemap.xml")
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "<loc>/</loc>") {
+		t.Error("sitemap missing root URL")
+	}
+	if !strings.Contains(content, "<loc>/demo/button/</loc>") {
+		t.Error("sitemap missing /demo/button/")
+	}
+}
+
+func TestBuildLightdomCSS_MapFS(t *testing.T) {
+	memFS := platform.NewMapFS(nil)
+	s := &Server{fs: memFS}
+	config := BuildConfig{OutputDir: "dist"}
+
+	err := s.buildLightdomCSS(config)
+	if err != nil {
+		t.Fatalf("buildLightdomCSS: %v", err)
+	}
+
+	if !memFS.Exists("dist/__cem/lightdom.css") {
+		t.Error("lightdom.css not written")
 	}
 }

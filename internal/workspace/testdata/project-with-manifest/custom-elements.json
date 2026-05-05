@@ -1,0 +1,1 @@
+{"schemaVersion":"2.0.0","modules":[{"kind":"javascript-module","path":"src/button.js","declarations":[{"kind":"class","name":"MyButton","customElement":true,"tagName":"my-button"}]}]}

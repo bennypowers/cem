@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/base-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "BaseElement",
+          "tagName": "base-element",
+          "cssProperties": [
+            {"name": "--base-color", "description": "Base color", "default": "red"},
+            {"name": "--shared-prop", "description": "Shared property", "syntax": "<color>"}
+          ],
+          "cssParts": [
+            {"name": "container", "description": "The container part"},
+            {"name": "shared-part", "description": "Shared part"}
+          ],
+          "cssStates": [
+            {"name": "--active", "description": "Active state"},
+            {"name": "--shared-state", "description": "Shared state"}
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/child-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "ChildElement",
+          "tagName": "child-element",
+          "superclass": {
+            "name": "BaseElement",
+            "module": "src/base-element.js"
+          },
+          "cssProperties": [
+            {"name": "--child-color", "description": "Child color"},
+            {"name": "--shared-prop", "description": "Overridden shared"}
+          ],
+          "cssParts": [
+            {"name": "inner", "description": "Inner part"},
+            {"name": "shared-part", "description": "Overridden shared part"}
+          ],
+          "cssStates": [
+            {"name": "--loading", "description": "Loading state"},
+            {"name": "--shared-state", "description": "Overridden shared state"}
+          ]
+        }
+      ]
+    }
+  ]
+}

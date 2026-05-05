@@ -81,7 +81,12 @@ func (c *ClassMethod) Clone() ClassMember {
 
 func (x *ClassMethod) GetStartByte() uint { return x.StartByte }
 
-func (x *ClassMethod) IsDeprecated() bool { return x.Deprecated != nil }
+func (x *ClassMethod) IsDeprecated() bool {
+	if x == nil {
+		return false
+	}
+	return x.Deprecated != nil
+}
 
 func (m *ClassMethod) UnmarshalJSON(data []byte) error {
 	type Rest ClassMethod

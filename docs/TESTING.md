@@ -24,7 +24,7 @@ Pure functions are the easiest to test: given params, expect return.
 
 **Coverage:** each distinct behavior exercised via fixture-based tests. No percentage target; coverage is a side effect of thorough fixtures, not a goal.
 
-**Test style:** fixture HTML/TS files in `testdata/` directories, real `QueryManager` via `treesitter.NewQueryManager(treesitter.LSPQueries())`, validation functions or golden JSON for assertions.
+**Test style:** fixture HTML/TS files in `testdata/` directories, real `QueryManager` via `treesitter.NewQueryManager(treesitter.LSPQueries())`, validation functions or golden JSON for assertions. For code that writes to the filesystem, use `platform.MapFS` (in-memory) instead of `t.TempDir()` when possible -- faster, no cleanup, inspectable.
 
 **Example:** `lsp/document/html/handler_test.go` tests `ParseScriptTags` by loading fixture HTML, creating a real handler with a QueryManager, and validating the parsed output.
 
@@ -40,6 +40,22 @@ handler, err := html.NewHandler(qm)
 require.NoError(t, err)
 defer handler.Close()
 ```
+
+**MapFS pattern** for testing code that writes to the filesystem:
+```go
+memFS := platform.NewMapFS(nil)
+err := Export(Options{
+    FS: memFS,
+    // ...
+})
+require.NoError(t, err)
+
+content, err := memFS.ReadFile("output/Component.ts")
+require.NoError(t, err)
+assert.Contains(t, string(content), "expected content")
+```
+
+Functions that accept `platform.FileSystem` can be tested with `platform.NewMapFS` instead of writing to disk. When adding new code that writes files, accept a `platform.FileSystem` parameter (nil defaults to `platform.NewOSFileSystem()`).
 
 ### Tier 3: Thin Wiring/Adapters
 
@@ -72,6 +88,7 @@ New LSP methods or MCP tools must include at least Tier 2 fixture-based tests be
 |---------|----------|---------|
 | Table-driven pure function tests | `lsp/document/base/base_document_test.go` | Tier 1 |
 | Fixture-driven LSP tests | `internal/platform/testutil/lsp.go` | Tier 2 (LSP features) |
+| MapFS in-memory filesystem | `export/export_test.go` | Tier 2 (code that writes files) |
 | Mock server context | `lsp/testhelpers/mock_server_context.go` | Integration tests |
 | E2e binary tests | `cmd/lsp_test.go` | Tier 3 / smoke tests |
 

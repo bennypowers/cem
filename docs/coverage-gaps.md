@@ -1,86 +1,66 @@
 # Coverage Gaps Tracker
+Describes work to do, not work done. Edit this file as you go, updating scores and _removing_ covered sections.
 
-Target: 80% overall. Current: 57.1% unit / 65.6% combined.
+Target: 80% overall. Current: 61.4% unit / 68.2% combined.
 
-## Strategy
+## In-package tests
 
-Most uncovered functions fall into categories:
-- **Interface implementations** (Name, Label, IsDeprecated, Children, ToTreeNode, etc.) -- repeated across every manifest type. Compact tests that construct a type and call all interface methods cover these in bulk.
-- **Clone methods** -- test by constructing, cloning, and asserting independence.
-- **Pure helpers** -- table-driven tests.
-- **Tier 2 logic** -- needs fixtures/context (skip for 80% target unless high-value).
+Unexported functions requiring in-package tests:
+
+| Package    | File                            | Reason                                                                                                                         |
+| ---------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| generate/  | html_helpers_test.go            | unexported: dedentYaml, getInnerComment, etc.                                                                                  |
+| generate/  | classMemberDeclarations_test.go | unexported: isIgnoredMember, isPropertyField, etc.                                                                             |
+| generate/  | external_types_helpers_test.go  | unexported: isQuoted, isNumericLiteral, etc.                                                                                   |
+| generate/  | reexports_helpers_test.go       | unexported: exportKeySet, statementTextBefore                                                                                  |
+| generate/  | typeResolver_test.go            | unexported: findModuleBySpec                                                                                                   |
+| manifest/  | clone_test.go                   | Clone on value types (in-package for field access)                                                                             |
+| manifest/  | deprecatable_test.go            | IsDeprecated nil safety                                                                                                        |
+| validate/  | validate_helpers_test.go        | unexported: isSemverLessThan, filterWarningsByConfig                                                                           |
+| workspace/ | helpers_test.go                 | unexported: parseNpmSpecifier, isGlobPattern                                                                                   |
+| mcp/       | context_helpers_test.go         | unexported methods: computeCommonPrefixes, selectBestSchemaVersion; standalone: extractGuidelinesFromElement, generateCacheKey |
 
 ## Remaining work by package
 
 ### High priority (biggest impact on overall %)
 
-| Package | Uncovered | Current % | Nature |
-|---------|-----------|-----------|--------|
-| manifest/ | 280 | 67.5% | Mostly Renderable/Deprecatable interface impls + Clone. Add tests to existing test files. |
-| generate/ | 107 | 68.1% | Pure helpers: html.go (getInnerComment, parseYamlComment), typeResolver.go (findModuleBySpec), classMemberDeclarations.go (isIgnoredMember, isPropertyField), external_types.go (isQuoted, reconstructTemplate), css.go (sortCustomProperty), reexports.go (exportKeySet) |
-| validate/ | 76 | 63.2% | types.go getter methods (30), warnings.go rule check functions (18), navigator.go path traversal |
-| lsp/ | 76 | 56.8% | registry.go helpers (already exercised cross-package), incremental.go text manipulation, server_context.go URI helpers |
-| lsp/methods/textDocument/ | 77 | 31.1% | lifecycle.go dispatch (Tier 2), completion/definition/diagnostics helpers (some already tested) |
-| internal/workspace/ | 79 | 42.5% | discovery helpers, config merging, URL manipulation |
-| internal/modulegraph/ | 69 | 44.1% | tracking operations, path normalization, metrics |
-| serve/ | 78 | 43.0% | build.go helpers (partially tested), filewatcher.go pattern matching, server lifecycle (Tier 2/3) |
+| Package                   | Current % | Nature                                                                                                                                                          |
+| ------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| internal/workspace/       | 50.1%     | context.go (GetWorkspaceContext needs cobra.Command), findProjectRoot (needs os.Getwd), OutputWriter (writes to disk)                                           |
+| serve/                    | 44.3%     | Build() orchestrator (needs full server), filewatcher.go (shouldIgnore, WatchPaths, processEvents). build.go refactored to use s.fs; helpers tested with MapFS. |
+| internal/modulegraph/     | 64.8%     | BuildFromWorkspace (needs real FS), resolveImportPathToFilesRelativeTo, processFileWithDependencies                                                             |
+| internal/platform/        | 56.4%     | OSFileSystem methods (needs real FS), FSNotifyFileWatcher (needs real watchers)                                                                                 |
+| lsp/                      | 58.1%     | registry pathsMatch/normalizePath (unexported on receiver), server_context.go URI helpers                                                                       |
+| lsp/methods/textDocument/ | 82.6%     | Remaining: completion/definition/diagnostics subpackage handlers                                                                                               |
 
 ### Medium priority
 
-| Package | Uncovered | Current % | Nature |
-|---------|-----------|-----------|--------|
-| health/ | 35 | 85.9% | Warning rules, display helpers |
-| serve/middleware/routes/ | 45 | 38.8% | Route building (Tier 2), remaining pure helpers |
-| lsp/document/ | 36 | 3.4% | manager.go lifecycle (Tier 2), position helpers (moved to helpers/) |
-| lsp/document/base/ | 29 | 42.6% | BaseDocument methods (partially cross-package tested) |
-| export/ | 20 | 69.6% | Template helpers, Export orchestrator |
-| mcp/ | 26 | 68.5% | context.go element helpers, cache key generation |
-| internal/platform/ | 31 | 51.4% | Filesystem helpers, MapFS operations |
+| Package                  | Current % | Nature                                                                                                      |
+| ------------------------ | --------- | ----------------------------------------------------------------------------------------------------------- |
+| generate/                | 68.9%     | Tier 2 functions remaining                                                                                  |
+| mcp/                     | 74.1%     | Remaining: LoadManifests, convertElement, LSP registry integration                                          |
+| export/                  | 84.5%     | Export() refactored to accept FS interface; tested with MapFS. Remaining: template_helpers funcMap coverage |
+| validate/                | 73.1%     | display.go (Tier 3 terminal output), remaining rule branches                                                |
+| manifest/                | 74.8%     | inheritance merge description dedup branches, Renderable Children() population                              |
+| health/                  | 88.5%     | display.go PrintHealthResult (Tier 3, terminal output)                                                      |
+| serve/middleware/routes/ | 46.0%     | Route serving handlers (need full middleware chain), listing renderers (need TemplateRegistry)               |
+| lsp/document/            | 57.2%     | incremental.go wrappers (0%, thin delegation to lsp/ level), remaining UpdateDocumentWithChanges branches   |
+| lsp/document/base/       | 75.9%     | Remaining: handler delegation methods (FindElementAtPosition, FindCustomElements with real handlers)        |
 
 ### Lower priority (small packages or Tier 2/3)
 
-| Package | Uncovered | Nature |
-|---------|-----------|--------|
-| serve/middleware/transform/ | 24 | Cache, engine helpers |
-| serve/middleware/importmap/ | 23 | Import map generation (Tier 2) |
-| mcp/tools/ | 22 | Tool handlers (Tier 2) |
-| internal/treesitter/ | 22 | QueryManager (cross-package tested) |
-| mcp/resources/ | 21 | Data source converters |
-| lsp/document/html/ | 21 | Document.go internals (Tier 2) |
-| lsp/document/typescript/ | 20 | Template extraction (Tier 2) |
-| lsp/ephemeral/ | 16 | Ephemeral registry |
-| lsp/document/tsx/ | 16 | Completion analysis (Tier 2) |
-| generate/demodiscovery/ | 11 | Discovery helpers |
-| generate/jsdoc/ | 35 | JSDoc parsing (already 92.4% after recent work) |
-
-## Agents identified these specific functions (from failed worktree runs)
-
-### generate/ (from agent research)
-- `html.go`: getInnerComment, isYamlComment, unescapeBackticks, parseYamlComment, dedentYaml
-- `typeResolver.go`: findModuleBySpec
-- `classMemberDeclarations.go`: isIgnoredMember, isPropertyField, getMemberKindFromCaptures, isStaticToTypeFlag
-- `external_types.go`: isQuoted, isNumericLiteral, reconstructTemplate, validateExpressionValues, resolveTextParts
-- `generate_helpers.go`: matchesAnyPattern, ColorizeDuration
-- `css.go`: sortCustomProperty
-- `reexports.go`: exportKeySet, statementTextBefore
-
-### serve/ + mcp/ + export/ + health/ (from agent research)
-- `serve/build.go`: rewriteJSONPaths, rewriteBasePath
-- `serve/filewatcher.go`: getDefaultIgnorePatterns, shouldIgnore
-- `mcp/context.go`: extractGuidelinesFromElement, generateCacheKey, selectBestSchemaVersion, computeCommonPrefixes
-- `export/template_helpers.go`: jsKey
-- `health/rules.go`: status, proportionalScore, percentage, buildBar, containsWord, generateRecommendations
-
-### internal/workspace/ + internal/modulegraph/ (from agent research)
-- Pure functions in workspace: URL manipulation, config merging helpers
-- Pure functions in modulegraph: tracking operations, path normalization
-
-### lsp/ (from agent research)
-- `incremental.go`: calculateOldLength, lspPositionToTreeSitterPoint, calculateNewEndPoint
-- `registry.go`: pathsMatch, normalizePath (already have some tests)
-- `document/html/document.go`: CompletionPrefix
-- `document/tsx/document.go`: CompletionPrefix
-- `document/typescript/document.go`: CompletionPrefix
+| Package                     | Nature                              |
+| --------------------------- | ----------------------------------- |
+| serve/middleware/transform/ | Cache, engine helpers               |
+| serve/middleware/importmap/ | Import map generation (Tier 2)      |
+| mcp/tools/                  | Tool handlers (Tier 2)              |
+| internal/treesitter/        | QueryManager (cross-package tested) |
+| mcp/resources/              | Data source converters              |
+| lsp/document/html/          | Document.go internals (Tier 2)      |
+| lsp/document/typescript/    | Template extraction (Tier 2)        |
+| lsp/ephemeral/              | Ephemeral registry                  |
+| lsp/document/tsx/           | Completion analysis (Tier 2)        |
+| generate/demodiscovery/     | Discovery helpers                   |
 
 ## Skipped packages (not counting toward target)
 

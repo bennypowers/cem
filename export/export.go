@@ -18,11 +18,11 @@ package export
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/pterm/pterm"
 )
@@ -128,12 +128,19 @@ type Options struct {
 	PackageName string
 	// Frameworks maps framework name to its config.
 	Frameworks map[string]FrameworkExportConfig
+	// FS is the filesystem to write to. If nil, uses the real OS filesystem.
+	FS platform.FileSystem
 }
 
 // Export generates framework wrappers for all custom elements in the manifest.
 func Export(opts Options) error {
 	if opts.Manifest == nil {
 		return fmt.Errorf("manifest is required")
+	}
+
+	fs := opts.FS
+	if fs == nil {
+		fs = platform.NewOSFileSystem()
 	}
 
 	elements := buildExportElements(opts.Manifest, opts.PackageName)
@@ -169,7 +176,7 @@ func Export(opts Options) error {
 
 		pterm.Info.Printfln("Exporting %s wrappers to %s", name, cfg.Output)
 
-		if err := os.MkdirAll(cfg.Output, 0o755); err != nil {
+		if err := fs.MkdirAll(cfg.Output, 0o755); err != nil {
 			return fmt.Errorf("creating output directory for %s: %w", name, err)
 		}
 
@@ -180,7 +187,7 @@ func Export(opts Options) error {
 			}
 			for filename, content := range files {
 				path := filepath.Join(cfg.Output, filename)
-				if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+				if err := fs.WriteFile(path, []byte(content), 0o644); err != nil {
 					return fmt.Errorf("writing %s: %w", path, err)
 				}
 			}
@@ -192,7 +199,7 @@ func Export(opts Options) error {
 		}
 		for filename, content := range indexFiles {
 			path := filepath.Join(cfg.Output, filename)
-			if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			if err := fs.WriteFile(path, []byte(content), 0o644); err != nil {
 				return fmt.Errorf("writing %s: %w", path, err)
 			}
 		}
