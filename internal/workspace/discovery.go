@@ -38,28 +38,28 @@ type PackageInfo struct {
 // packageJSON represents the structure we need from package.json
 type packageJSON struct {
 	Name           string      `json:"name"`
-	Workspaces     interface{} `json:"workspaces"` // Can be []string or object with "packages" field
+	Workspaces     any `json:"workspaces"` // Can be []string or object with "packages" field
 	CustomElements string      `json:"customElements"`
 }
 
 // DiscoverWorkspacePackages discovers all workspace packages from workspace patterns
 // Returns map of package name -> absolute path to package directory
 // Supports negated patterns (prefixed with !) to exclude packages
-func DiscoverWorkspacePackages(rootDir string, workspacesField interface{}) (map[string]string, error) {
+func DiscoverWorkspacePackages(rootDir string, workspacesField any) (map[string]string, error) {
 	result := make(map[string]string)
 
 	var patterns []string
 
 	// Handle different workspace field formats
 	switch v := workspacesField.(type) {
-	case []interface{}:
+	case []any:
 		for _, item := range v {
 			if str, ok := item.(string); ok {
 				patterns = append(patterns, str)
 			}
 		}
-	case map[string]interface{}:
-		if packages, ok := v["packages"].([]interface{}); ok {
+	case map[string]any:
+		if packages, ok := v["packages"].([]any); ok {
 			for _, item := range packages {
 				if str, ok := item.(string); ok {
 					patterns = append(patterns, str)
