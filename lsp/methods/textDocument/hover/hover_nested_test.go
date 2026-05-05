@@ -95,7 +95,7 @@ func TestHover_NestedElements(t *testing.T) {
 				}
 
 				// Unmarshal expected golden into a typed struct so Contents
-				// deserializes as MarkupContent rather than map[string]interface{}.
+				// deserializes as MarkupContent rather than map[string]any.
 				var expected struct {
 					Contents protocol.MarkupContent `json:"contents"`
 					Range    *protocol.Range        `json:"range"`

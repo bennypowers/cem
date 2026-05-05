@@ -166,7 +166,7 @@ func parseStringSlice(v any) []string {
 	case []string:
 		return arr
 	case []any:
-		// JSON arrays are typically decoded as []interface{}
+		// JSON arrays are typically decoded as []any
 		result := make([]string, 0, len(arr))
 		for _, item := range arr {
 			if s, ok := item.(string); ok {

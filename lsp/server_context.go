@@ -266,8 +266,8 @@ func (s *Server) UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []prot
 	}
 
 	// Convert file:// URI to file system path
-	if strings.HasPrefix(newRoot, "file://") {
-		newRoot = strings.TrimPrefix(newRoot, "file://")
+	if after, ok := strings.CutPrefix(newRoot, "file://"); ok {
+		newRoot = after
 		helpers.SafeDebugLog("[SERVER_ADAPTER] Converted URI to path: %s", newRoot)
 	}
 

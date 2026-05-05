@@ -334,7 +334,7 @@ func TestPackageJSONWatching(t *testing.T) {
 		defer func() { _ = testRegistry.StopFileWatching() }()
 
 		// Update package.json by reading, modifying, and writing back
-		var packageJSON map[string]interface{}
+		var packageJSON map[string]any
 		packageData, err := os.ReadFile(packagePath)
 		if err != nil {
 			t.Fatalf("Failed to read package.json: %v", err)

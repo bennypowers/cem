@@ -27,7 +27,7 @@ func TestModuleGraph_ImportParsing_Simple(t *testing.T) {
 	mg := modulegraph.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
 
 	// Simulate manifest data for elements
-	elementMap := map[string]interface{}{
+	elementMap := map[string]any{
 		"my-icon": &modulegraph.MockElementDefinition{
 			TagName:    "my-icon",
 			ClassName:  "MyIcon",

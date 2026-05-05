@@ -100,7 +100,7 @@ func Resolve(ctx types.ServerContext, _ *glsp.Context, params *protocol.Completi
 			// Generate slot attribute documentation
 			var docContent strings.Builder
 			docContent.WriteString("## `slot` attribute\n\n")
-			docContent.WriteString(fmt.Sprintf("**Slot content into `<%s>` element**\n\n", data.TagName))
+			fmt.Fprintf(&docContent, "**Slot content into `<%s>` element**\n\n", data.TagName)
 			docContent.WriteString("The `slot` attribute assigns this element to a named slot in the parent custom element's shadow DOM.\n\n")
 
 			// List available slots from the parent element
@@ -108,9 +108,9 @@ func Resolve(ctx types.ServerContext, _ *glsp.Context, params *protocol.Completi
 				docContent.WriteString("**Available slots:**\n\n")
 				for _, slot := range slots {
 					if slot.Name != "" { // Skip default slot
-						docContent.WriteString(fmt.Sprintf("- `%s`", slot.Name))
+						fmt.Fprintf(&docContent, "- `%s`", slot.Name)
 						if slot.Description != "" {
-							docContent.WriteString(fmt.Sprintf(" - %s", slot.Description))
+							fmt.Fprintf(&docContent, " - %s", slot.Description)
 						}
 						docContent.WriteString("\n")
 					}
