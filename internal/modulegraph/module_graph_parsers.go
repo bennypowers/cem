@@ -84,7 +84,7 @@ func (m *mockFileInfo) Size() int64        { return 0 }
 func (m *mockFileInfo) Mode() os.FileMode  { return 0644 }
 func (m *mockFileInfo) ModTime() time.Time { return time.Time{} }
 func (m *mockFileInfo) IsDir() bool        { return m.isDir }
-func (m *mockFileInfo) Sys() interface{}   { return nil }
+func (m *mockFileInfo) Sys() any            { return nil }
 
 // DefaultExportParser implements ExportParser using tree-sitter queries
 type DefaultExportParser struct{}
@@ -109,17 +109,11 @@ func (p *DefaultExportParser) ParseExportsFromContent(modulePath string, content
 			errorDetails = fmt.Sprintf("file too large (%d bytes)", contentSize)
 		} else {
 			// Check for common syntax issues by examining first few lines
-			previewSize := contentSize
-			if previewSize > 500 {
-				previewSize = 500
-			}
+			previewSize := min(contentSize, 500)
 			lines := strings.Split(string(content[:previewSize]), "\n")
 
 			// Check for common non-JS/TS file types
-			checkSize := contentSize
-			if checkSize > 100 {
-				checkSize = 100
-			}
+			checkSize := min(contentSize, 100)
 
 			if len(lines) > 0 && strings.Contains(lines[0], "<?xml") {
 				errorDetails = "XML file detected (not TypeScript/JavaScript)"
@@ -136,11 +130,11 @@ func (p *DefaultExportParser) ParseExportsFromContent(modulePath string, content
 	defer tree.Close()
 
 	// Try to use tree-sitter queries for accurate parsing
-	return p.parseExportsWithQueries(tree, modulePath, content, exportTracker, dependencyTracker, queryManager)
+	return p.parseExportsWithQueries(tree, modulePath, content, dependencyTracker, queryManager)
 }
 
 // parseExportsWithQueries uses tree-sitter queries to parse export statements
-func (p *DefaultExportParser) parseExportsWithQueries(tree *ts.Tree, modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker, queryManager *treesitter.QueryManager) error {
+func (p *DefaultExportParser) parseExportsWithQueries(tree *ts.Tree, modulePath string, content []byte, dependencyTracker *DependencyTracker, queryManager *treesitter.QueryManager) error {
 	// PERFORMANCE OPTIMIZATION: Use injected QueryManager for dependency injection
 	if queryManager == nil {
 		return fmt.Errorf("query manager not available for parsing exports in module %s", modulePath)
@@ -155,14 +149,14 @@ func (p *DefaultExportParser) parseExportsWithQueries(tree *ts.Tree, modulePath 
 
 	// Process export matches
 	for match := range exportMatcher.AllQueryMatches(tree.RootNode(), content) {
-		p.processExportMatch(match, exportMatcher, modulePath, content, exportTracker, dependencyTracker)
+		p.processExportMatch(match, exportMatcher, modulePath, content, dependencyTracker)
 	}
 
 	return nil
 }
 
 // processExportMatch processes a single export/import match from tree-sitter
-func (p *DefaultExportParser) processExportMatch(match *ts.QueryMatch, matcher *treesitter.QueryMatcher, modulePath string, content []byte, exportTracker *ExportTracker, dependencyTracker *DependencyTracker) {
+func (p *DefaultExportParser) processExportMatch(match *ts.QueryMatch, matcher *treesitter.QueryMatcher, modulePath string, content []byte, dependencyTracker *DependencyTracker) {
 	var exportName, sourceModule string
 	var importSource string
 	var isImport bool
