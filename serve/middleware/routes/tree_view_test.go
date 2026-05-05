@@ -116,30 +116,30 @@ func TestTreeViewComponentFiles(t *testing.T) {
 // TestManifestTreeBuilder_Structure verifies tree builder produces correct structure
 func TestManifestTreeBuilder_Structure(t *testing.T) {
 	// Create a simple test manifest
-	manifest := map[string]interface{}{
+	manifest := map[string]any{
 		"schemaVersion": "1.0.0",
-		"modules": []map[string]interface{}{
+		"modules": []map[string]any{
 			{
 				"path": "./my-element.js",
-				"declarations": []map[string]interface{}{
+				"declarations": []map[string]any{
 					{
 						"kind":          "class",
 						"name":          "MyElement",
 						"customElement": true,
 						"tagName":       "my-element",
 						"summary":       "A test element",
-						"attributes": []map[string]interface{}{
+						"attributes": []map[string]any{
 							{
 								"name":    "label",
-								"type":    map[string]interface{}{"text": "string"},
+								"type":    map[string]any{"text": "string"},
 								"summary": "Element label",
 							},
 						},
-						"members": []map[string]interface{}{
+						"members": []map[string]any{
 							{
 								"kind":    "field",
 								"name":    "value",
-								"type":    map[string]interface{}{"text": "string"},
+								"type":    map[string]any{"text": "string"},
 								"summary": "Element value",
 							},
 							{
@@ -148,10 +148,10 @@ func TestManifestTreeBuilder_Structure(t *testing.T) {
 								"summary": "Resets the element",
 							},
 						},
-						"events": []map[string]interface{}{
+						"events": []map[string]any{
 							{
 								"name":    "change",
-								"type":    map[string]interface{}{"text": "Event"},
+								"type":    map[string]any{"text": "Event"},
 								"summary": "Fires when value changes",
 							},
 						},
@@ -168,13 +168,13 @@ func TestManifestTreeBuilder_Structure(t *testing.T) {
 
 	// For now, just verify the manifest is valid JSON
 	// Full integration testing would require running the JS in a browser environment
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	err = json.Unmarshal(manifestBytes, &parsed)
 	if err != nil {
 		t.Fatalf("Test manifest is not valid JSON: %v", err)
 	}
 
-	modules, ok := parsed["modules"].([]interface{})
+	modules, ok := parsed["modules"].([]any)
 	if !ok || len(modules) == 0 {
 		t.Errorf("Test manifest should have modules array")
 	}

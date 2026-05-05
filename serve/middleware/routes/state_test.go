@@ -28,10 +28,10 @@ import (
 // mockLogger implements the Logger interface for testing
 type mockLogger struct{}
 
-func (m *mockLogger) Info(format string, args ...interface{})    {}
-func (m *mockLogger) Warning(format string, args ...interface{}) {}
-func (m *mockLogger) Error(format string, args ...interface{})   {}
-func (m *mockLogger) Debug(format string, args ...interface{})   {}
+func (m *mockLogger) Info(format string, args ...any)    {}
+func (m *mockLogger) Warning(format string, args ...any) {}
+func (m *mockLogger) Error(format string, args ...any)   {}
+func (m *mockLogger) Debug(format string, args ...any)   {}
 
 func TestDefaultState(t *testing.T) {
 	state := DefaultState()

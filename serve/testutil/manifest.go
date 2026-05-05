@@ -25,45 +25,45 @@ import (
 
 // MockManifest generates a valid Custom Elements Manifest for testing
 func MockManifest() ([]byte, error) {
-	manifest := map[string]interface{}{
+	manifest := map[string]any{
 		"schemaVersion": "1.0.0",
 		"readme":        "",
-		"modules": []map[string]interface{}{
+		"modules": []map[string]any{
 			{
 				"kind": "javascript-module",
 				"path": "my-element.js",
-				"declarations": []map[string]interface{}{
+				"declarations": []map[string]any{
 					{
 						"kind":          "class",
 						"name":          "MyElement",
 						"tagName":       "my-element",
 						"customElement": true,
-						"attributes": []map[string]interface{}{
+						"attributes": []map[string]any{
 							{
 								"name": "disabled",
-								"type": map[string]interface{}{
+								"type": map[string]any{
 									"text": "boolean",
 								},
 								"description": "Disables the element",
 							},
 							{
 								"name": "variant",
-								"type": map[string]interface{}{
+								"type": map[string]any{
 									"text": "'primary' | 'secondary'",
 								},
 								"description": "Visual variant",
 								"default":     "\"primary\"",
 							},
 						},
-						"members": []map[string]interface{}{
+						"members": []map[string]any{
 							{
 								"kind":    "field",
 								"name":    "items",
-								"type":    map[string]interface{}{"text": "string[]"},
+								"type":    map[string]any{"text": "string[]"},
 								"privacy": "public",
 							},
 						},
-						"cssProperties": []map[string]interface{}{
+						"cssProperties": []map[string]any{
 							{
 								"name":        "--my-element-color",
 								"description": "Background color",
@@ -72,11 +72,11 @@ func MockManifest() ([]byte, error) {
 						},
 					},
 				},
-				"exports": []map[string]interface{}{
+				"exports": []map[string]any{
 					{
 						"kind":        "custom-element-definition",
 						"name":        "my-element",
-						"declaration": map[string]interface{}{"name": "MyElement"},
+						"declaration": map[string]any{"name": "MyElement"},
 					},
 				},
 			},
@@ -88,20 +88,20 @@ func MockManifest() ([]byte, error) {
 
 // MockManifestWithDemos generates a manifest with demo metadata
 func MockManifestWithDemos() ([]byte, error) {
-	manifest := map[string]interface{}{
+	manifest := map[string]any{
 		"schemaVersion": "1.0.0",
 		"readme":        "",
-		"modules": []map[string]interface{}{
+		"modules": []map[string]any{
 			{
 				"kind": "javascript-module",
 				"path": "my-element.js",
-				"declarations": []map[string]interface{}{
+				"declarations": []map[string]any{
 					{
 						"kind":          "class",
 						"name":          "MyElement",
 						"tagName":       "my-element",
 						"customElement": true,
-						"demos": []map[string]interface{}{
+						"demos": []map[string]any{
 							{
 								"name":        "Basic Usage",
 								"url":         "./demo/basic.html",
