@@ -227,7 +227,7 @@ func (h *Handler) ParseScriptTags(doc types.Document) ([]types.ScriptTag, error)
 			scriptTag.ContentRange = htmlDoc.ByteRangeToProtocolRange(content, capture.StartByte, capture.EndByte)
 
 			// Parse imports from the script content
-			scriptTag.Imports = h.parseImportStatements(capture.Text)
+			scriptTag.Imports = parseImportStatements(capture.Text)
 		}
 
 		// Extract attributes (type, src, etc.)
@@ -359,7 +359,7 @@ func (h *Handler) ParseImportMap(doc types.Document) (map[string]string, error) 
 }
 
 // parseImportStatements parses import statements from script content
-func (h *Handler) parseImportStatements(content string) []types.ImportStatement {
+func parseImportStatements(content string) []types.ImportStatement {
 	var imports []types.ImportStatement
 
 	// Simple regex-based parsing for now - this should be enhanced with proper TypeScript parsing

@@ -158,7 +158,7 @@ func findElementAtCursor(doc types.Document, position protocol.Position) string 
 			helpers.SafeDebugLog("[REFERENCES] Found tag name: %s", tagName)
 
 			// Check if it's a custom element (contains hyphen)
-			if isCustomElement(tagName) {
+			if helpers.IsCustomElementTag(tagName) {
 				return tagName
 			}
 		}
@@ -171,7 +171,7 @@ func findElementAtCursor(doc types.Document, position protocol.Position) string 
 					tagName := child.Utf8Text([]byte(content))
 					helpers.SafeDebugLog("[REFERENCES] Found tag name in child: %s", tagName)
 
-					if isCustomElement(tagName) {
+					if helpers.IsCustomElementTag(tagName) {
 						return tagName
 					}
 				}
@@ -208,23 +208,6 @@ func positionToByteOffset(content []byte, position protocol.Position) uint {
 	}
 
 	return offset
-}
-
-// isCustomElement checks if a tag name is a custom element (contains hyphen)
-func isCustomElement(tagName string) bool {
-	return len(tagName) > 0 && tagName != "" && tagName != "-" && len(tagName) > 1 &&
-		tagName[0] != '-' && tagName[len(tagName)-1] != '-' &&
-		containsHyphen(tagName)
-}
-
-// containsHyphen checks if string contains a hyphen
-func containsHyphen(s string) bool {
-	for _, ch := range s {
-		if ch == '-' {
-			return true
-		}
-	}
-	return false
 }
 
 // findAllReferences searches for all occurrences of the element across workspace

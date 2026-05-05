@@ -71,7 +71,7 @@ func AnalyzeAttributeDiagnosticsForTest(ctx types.ServerContext, doc types.Docum
 
 	for _, match := range attributeMatches {
 		// For custom elements, validate all their attributes
-		if isCustomElement(match.TagName) {
+		if helpers.IsCustomElementTag(match.TagName) {
 			// Skip if it's a global HTML attribute (valid on all elements)
 			if validations.IsGlobalAttribute(match.Name) {
 				continue
@@ -239,11 +239,6 @@ func processTagCaptures(captureMap Q.CaptureMap, content string, matches *[]Attr
 	}
 }
 
-// isCustomElement checks if a tag name looks like a custom element (contains hyphen)
-func isCustomElement(tagName string) bool {
-	return strings.Contains(tagName, "-") && !strings.HasPrefix(tagName, "-") && !strings.HasSuffix(tagName, "-")
-}
-
 // getCustomElementAttributes gets the attributes for a custom element from the manifest
 func getCustomElementAttributes(ctx types.ServerContext, tagName string) []M.Attribute {
 	// Use the Attributes method from DiagnosticsContext
@@ -354,7 +349,7 @@ func createDeprecatedAttributeDiagnostic(match AttributeMatch, attr *M.Attribute
 // createUnknownAttributeDiagnostic creates a diagnostic for a completely unknown attribute
 func createUnknownAttributeDiagnostic(match AttributeMatch) protocol.Diagnostic {
 	var message string
-	if isCustomElement(match.TagName) {
+	if helpers.IsCustomElementTag(match.TagName) {
 		message = fmt.Sprintf("Unknown attribute '%s' for custom element '%s'", match.Name, match.TagName)
 	} else {
 		message = fmt.Sprintf("Unknown attribute '%s' for element '%s'", match.Name, match.TagName)
