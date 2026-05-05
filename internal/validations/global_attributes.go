@@ -22,6 +22,7 @@ package validations
 import (
 	_ "embed"
 	"encoding/json"
+	"maps"
 	"strings"
 )
 
@@ -31,7 +32,7 @@ var globalAttributesJSON []byte
 // MDNCompatData represents the structure of MDN browser compatibility data
 type MDNCompatData struct {
 	HTML struct {
-		GlobalAttributes map[string]interface{} `json:"global_attributes"`
+		GlobalAttributes map[string]any `json:"global_attributes"`
 	} `json:"html"`
 }
 
@@ -89,10 +90,8 @@ func IsGlobalAttribute(name string) bool {
 // GetGlobalAttributes returns a copy of all loaded global attributes.
 // This is useful for debugging or when you need the full list.
 func GetGlobalAttributes() map[string]bool {
-	result := make(map[string]bool)
-	for k, v := range globalAttributesCache {
-		result[k] = v
-	}
+	result := make(map[string]bool, len(globalAttributesCache))
+	maps.Copy(result, globalAttributesCache)
 	return result
 }
 
