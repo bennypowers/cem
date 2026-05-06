@@ -27,12 +27,23 @@ export class CemServeDemo extends LitElement {
     return this.renderRoot.querySelector('iframe');
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+    window.addEventListener('message', this.#onChildReady);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('message', this.#onChildReady);
+  }
+
   render() {
-    return (this.rendering === 'iframe') ?  html`
-      <iframe part="iframe"
-              src="${this.#iframeSrc()}"
-              @load="${this.#onIframeLoad}"></iframe>`: html`
-      <slot></slot>`;
+    if (this.rendering === 'iframe') {
+      this.#iframeReady = false;
+      return html`<iframe part="iframe"
+                          src="${this.#iframeSrc()}"></iframe>`;
+    }
+    return html`<slot></slot>`;
   }
 
   /**
@@ -127,13 +138,18 @@ export class CemServeDemo extends LitElement {
     return url.toString();
   }
 
-  #onIframeLoad() {
+  #onChildReady = (event: MessageEvent) => {
+    if (event.origin !== window.location.origin) return;
+    if (event.data?.type !== 'cem-iframe-ready') return;
     this.#iframeReady = true;
-    for (const msg of this.#pendingMessages)
-      this.#iframe?.contentWindow?.postMessage(msg, window.location.origin);
+    const cw = this.#iframe?.contentWindow;
+    if (cw) {
+      for (const msg of this.#pendingMessages)
+        cw.postMessage(msg, window.location.origin);
+    }
     this.#pendingMessages = [];
     this.dispatchEvent(new Event('iframe-ready'));
-  }
+  };
 
   /**
    * Find the Nth instance of an element by tag name

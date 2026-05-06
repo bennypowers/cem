@@ -35,6 +35,8 @@ Practice TDD. When writing tests, always use the fixture/golden patterns we've e
 - **Goldens**: Expected output files to compare against (e.g., `serve/middleware/routes/testdata/chrome-rendering/expected-basic.html`). Tests should support `--update` flag to regenerate golden files when intentional changes occur.
 - Always use Makefile targets for running tests or builds, since they export the necessary env vars.
 - For LSP tests, ALWAYS use `testutil.RunLSPFixtures()` - NEVER use direct `os.ReadFile()` calls.
+- If frontend visual regression tests fail consistently, check if it's merely 
+  an issue of font rendering.
 
 ### LSP Testing Patterns
 

@@ -598,19 +598,25 @@ describe('cem-serve-demo', () => {
       expect(iframe).to.not.exist;
     });
 
-    it('queues knob changes before iframe load, flushes on load', () => {
-      const result = iframeEl.applyKnobChange('attribute', 'label', 'Queued', 'my-element', 0);
-      expect(result).to.be.true;
-
+    function simulateHandshake(iframeEl) {
       const iframe = iframeEl.shadowRoot.querySelector('iframe');
       const messages = [];
       Object.defineProperty(iframe, 'contentWindow', {
         value: {
           postMessage: (data, origin) => messages.push({ data, origin }),
         },
+        configurable: true,
       });
+      window.postMessage({ type: 'cem-iframe-ready' }, window.location.origin);
+      return { iframe, messages };
+    }
 
-      iframe.dispatchEvent(new Event('load'));
+    it('queues knob changes before handshake, flushes on cem-iframe-ready', async () => {
+      const result = iframeEl.applyKnobChange('attribute', 'label', 'Queued', 'my-element', 0);
+      expect(result).to.be.true;
+
+      const { messages } = simulateHandshake(iframeEl);
+      await new Promise(r => setTimeout(r, 0));
 
       expect(messages).to.have.lengthOf(1);
       expect(messages[0].data).to.deep.equal({
@@ -623,16 +629,9 @@ describe('cem-serve-demo', () => {
       });
     });
 
-    it('posts message directly after iframe is loaded', () => {
-      const iframe = iframeEl.shadowRoot.querySelector('iframe');
-      const messages = [];
-      Object.defineProperty(iframe, 'contentWindow', {
-        value: {
-          postMessage: (data, origin) => messages.push({ data, origin }),
-        },
-      });
-
-      iframe.dispatchEvent(new Event('load'));
+    it('posts message directly after handshake completes', async () => {
+      const { messages } = simulateHandshake(iframeEl);
+      await new Promise(r => setTimeout(r, 0));
 
       const result = iframeEl.applyKnobChange('attribute', 'label', 'Direct', 'my-element', 0);
 
@@ -642,15 +641,9 @@ describe('cem-serve-demo', () => {
       expect(messages[0].origin).to.equal(window.location.origin);
     });
 
-    it('posts css-property knob changes via postMessage', () => {
-      const iframe = iframeEl.shadowRoot.querySelector('iframe');
-      const messages = [];
-      Object.defineProperty(iframe, 'contentWindow', {
-        value: {
-          postMessage: (data, origin) => messages.push({ data, origin }),
-        },
-      });
-      iframe.dispatchEvent(new Event('load'));
+    it('posts css-property knob changes via postMessage', async () => {
+      const { messages } = simulateHandshake(iframeEl);
+      await new Promise(r => setTimeout(r, 0));
 
       const result = iframeEl.applyKnobChange('css-property', '--color', 'red', 'my-element', 2);
 
@@ -665,15 +658,9 @@ describe('cem-serve-demo', () => {
       });
     });
 
-    it('posts property knob changes via postMessage', () => {
-      const iframe = iframeEl.shadowRoot.querySelector('iframe');
-      const messages = [];
-      Object.defineProperty(iframe, 'contentWindow', {
-        value: {
-          postMessage: (data, origin) => messages.push({ data, origin }),
-        },
-      });
-      iframe.dispatchEvent(new Event('load'));
+    it('posts property knob changes via postMessage', async () => {
+      const { messages } = simulateHandshake(iframeEl);
+      await new Promise(r => setTimeout(r, 0));
 
       const result = iframeEl.applyKnobChange('property', 'variant', 'primary', 'my-element', 0);
 

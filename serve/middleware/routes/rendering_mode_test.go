@@ -116,9 +116,9 @@ func TestRenderingMode_Iframe(t *testing.T) {
 		t.Fatalf("Failed to render chrome: %v", err)
 	}
 
-	// Iframe mode: cem-serve-demo should have rendering="iframe" attribute
-	if !strings.Contains(rendered, `rendering="iframe"`) {
-		t.Error("Iframe rendering mode should set rendering=\"iframe\" on cem-serve-demo")
+	// Iframe mode: cem-serve-demo element should have rendering="iframe" attribute
+	if !strings.Contains(rendered, `<cem-serve-demo id="demo"`) || !strings.Contains(rendered, `rendering="iframe"`) {
+		t.Error("Iframe rendering mode should set rendering=\"iframe\" on cem-serve-demo element")
 	}
 
 	// Should contain demo HTML as fallback content inside cem-serve-demo

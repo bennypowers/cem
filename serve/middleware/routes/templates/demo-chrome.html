@@ -55,7 +55,8 @@
       <template shadowrootmode="open">{{.DemoHTML}}</template>
     </cem-serve-demo>
     {{else if eq .RenderingMode "iframe"}}
-    <cem-serve-demo id="demo" rendering="iframe">
+    <cem-serve-demo id="demo"
+                    rendering="iframe">
       {{.DemoHTML}}
     </cem-serve-demo>
     {{else}}

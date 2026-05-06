@@ -6577,7 +6577,7 @@ s53.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n\\niframe {\\n  b
 var cem_serve_demo_default = s53;
 
 // elements/cem-serve-demo/cem-serve-demo.ts
-var _rendering_dec, _a49, _CemServeDemo_decorators, _init49, _rendering, _iframeReady, _pendingMessages, _CemServeDemo_instances, iframe_get, iframeSrc_fn, onIframeLoad_fn, getElementInstance_fn, postKnobChange_fn, applyAttributeChange_fn, applyPropertyChange_fn, applyCSSPropertyChange_fn;
+var _rendering_dec, _a49, _CemServeDemo_decorators, _init49, _rendering, _iframeReady, _pendingMessages, _CemServeDemo_instances, iframe_get, iframeSrc_fn, _onChildReady, getElementInstance_fn, postKnobChange_fn, applyAttributeChange_fn, applyPropertyChange_fn, applyCSSPropertyChange_fn;
 _CemServeDemo_decorators = [t3("cem-serve-demo")];
 var CemServeDemo = class extends (_a49 = i3, _rendering_dec = [n4({ reflect: true })], _a49) {
   constructor() {
@@ -6586,13 +6586,34 @@ var CemServeDemo = class extends (_a49 = i3, _rendering_dec = [n4({ reflect: tru
     __privateAdd(this, _rendering, __runInitializers(_init49, 8, this)), __runInitializers(_init49, 11, this);
     __privateAdd(this, _iframeReady, false);
     __privateAdd(this, _pendingMessages, []);
+    __privateAdd(this, _onChildReady, (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== "cem-iframe-ready") return;
+      __privateSet(this, _iframeReady, true);
+      const cw = __privateGet(this, _CemServeDemo_instances, iframe_get)?.contentWindow;
+      if (cw) {
+        for (const msg of __privateGet(this, _pendingMessages))
+          cw.postMessage(msg, window.location.origin);
+      }
+      __privateSet(this, _pendingMessages, []);
+      this.dispatchEvent(new Event("iframe-ready"));
+    });
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    window.addEventListener("message", __privateGet(this, _onChildReady));
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener("message", __privateGet(this, _onChildReady));
   }
   render() {
-    return this.rendering === "iframe" ? T`
-      <iframe part="iframe"
-              src="${__privateMethod(this, _CemServeDemo_instances, iframeSrc_fn).call(this)}"
-              @load="${__privateMethod(this, _CemServeDemo_instances, onIframeLoad_fn)}"></iframe>` : T`
-      <slot></slot>`;
+    if (this.rendering === "iframe") {
+      __privateSet(this, _iframeReady, false);
+      return T`<iframe part="iframe"
+                          src="${__privateMethod(this, _CemServeDemo_instances, iframeSrc_fn).call(this)}"></iframe>`;
+    }
+    return T`<slot></slot>`;
   }
   /**
    * Apply a knob change to an element in the demo.
@@ -6672,13 +6693,7 @@ iframeSrc_fn = function() {
   url.searchParams.set("rendering", "chromeless");
   return url.toString();
 };
-onIframeLoad_fn = function() {
-  __privateSet(this, _iframeReady, true);
-  for (const msg of __privateGet(this, _pendingMessages))
-    __privateGet(this, _CemServeDemo_instances, iframe_get)?.contentWindow?.postMessage(msg, window.location.origin);
-  __privateSet(this, _pendingMessages, []);
-  this.dispatchEvent(new Event("iframe-ready"));
-};
+_onChildReady = new WeakMap();
 /**
  * Find the Nth instance of an element by tag name
  */
