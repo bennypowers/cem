@@ -786,17 +786,8 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 	if renderingParam, ok := queryParams["rendering"]; ok {
 		// Validate query parameter
 		switch renderingParam {
-		case "light", "shadow", "chromeless":
+		case "light", "shadow", "chromeless", "iframe":
 			renderingMode = renderingParam
-		case "iframe":
-			// Iframe not yet implemented - broadcast error and fallback to shadow
-			config.Context.Logger().Warning("iframe rendering mode requested but not implemented, falling back to shadow")
-			_ = config.Context.BroadcastError(
-				"Rendering Mode Error",
-				"iframe rendering mode is not yet implemented. Falling back to shadow mode.",
-				entry.TagName,
-			)
-			renderingMode = "shadow"
 		default:
 			config.Context.Logger().Warning("invalid rendering mode '%s', using config default '%s'", renderingParam, renderingMode)
 			_ = config.Context.BroadcastError(

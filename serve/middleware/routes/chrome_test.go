@@ -138,6 +138,40 @@ func TestChromeRendering_ShadowMode(t *testing.T) {
 	}
 }
 
+// TestChromeRendering_IframeMode verifies iframe mode wraps demo with rendering="iframe"
+func TestChromeRendering_IframeMode(t *testing.T) {
+	demoHTML := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "basic-demo.html"))
+
+	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
+		TagName:       "my-element",
+		DemoTitle:     "Basic Example",
+		DemoHTML:      template.HTML(demoHTML),
+		ImportMap:     "{}",
+		RenderingMode: "iframe",
+	})
+	if err != nil {
+		t.Fatalf("Failed to render chrome: %v", err)
+	}
+
+	goldenPath := filepath.Join("testdata", "chrome-rendering", "expected-iframe-mode.html")
+
+	if *testutil.Update {
+		err := os.WriteFile(goldenPath, []byte(rendered), 0644)
+		if err != nil {
+			t.Fatalf("Failed to update golden file: %v", err)
+		}
+		t.Log("Updated golden file:", goldenPath)
+		return
+	}
+
+	expected := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "expected-iframe-mode.html"))
+
+	if rendered != string(expected) {
+		t.Errorf("Rendered chrome does not match golden file.\nGot:\n%s\n\nExpected:\n%s", rendered, string(expected))
+		t.Log("Run 'make update' to update golden files")
+	}
+}
+
 // TestChromeRendering_MarkdownDescription verifies GFM rendering
 func TestChromeRendering_MarkdownDescription(t *testing.T) {
 	demoHTML := `<my-element></my-element>`

@@ -101,8 +101,8 @@ func TestRenderingMode_Shadow(t *testing.T) {
 	}
 }
 
-// TestRenderingMode_IframeFallback verifies iframe mode falls back with error message
-func TestRenderingMode_IframeFallback(t *testing.T) {
+// TestRenderingMode_Iframe verifies iframe mode renders demo with rendering="iframe" attribute
+func TestRenderingMode_Iframe(t *testing.T) {
 	demoHTML := `<my-element></my-element>`
 
 	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
@@ -116,14 +116,19 @@ func TestRenderingMode_IframeFallback(t *testing.T) {
 		t.Fatalf("Failed to render chrome: %v", err)
 	}
 
-	// Iframe mode not implemented - should show error message
-	if !strings.Contains(rendered, "Error: iframe rendering mode is not yet implemented") {
-		t.Error("Iframe rendering mode should show error message")
+	// Iframe mode: cem-serve-demo element should have rendering="iframe" attribute
+	if !strings.Contains(rendered, `<cem-serve-demo id="demo"`) || !strings.Contains(rendered, `rendering="iframe"`) {
+		t.Error("Iframe rendering mode should set rendering=\"iframe\" on cem-serve-demo element")
 	}
 
-	// Should NOT contain the actual demo HTML
-	if strings.Contains(rendered, `<my-element></my-element>`) {
-		t.Error("Iframe rendering mode should not render the demo (not implemented)")
+	// Should contain demo HTML as fallback content inside cem-serve-demo
+	if !strings.Contains(rendered, `<my-element></my-element>`) {
+		t.Error("Iframe rendering mode should include demo HTML as fallback content")
+	}
+
+	// Should NOT use shadow DOM template
+	if strings.Contains(rendered, `<template shadowrootmode="open">`) {
+		t.Error("Iframe rendering mode should not use shadow DOM")
 	}
 }
 

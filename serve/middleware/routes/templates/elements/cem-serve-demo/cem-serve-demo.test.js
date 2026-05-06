@@ -560,4 +560,114 @@ describe('cem-serve-demo', () => {
       expect(component.style.getPropertyValue('--spacing')).to.equal('16px');
     });
   });
+
+  describe('iframe rendering mode', () => {
+    let iframeEl;
+
+    beforeEach(async () => {
+      iframeEl = document.createElement('cem-serve-demo');
+      iframeEl.setAttribute('rendering', 'iframe');
+      document.body.appendChild(iframeEl);
+      await iframeEl.updateComplete;
+    });
+
+    afterEach(() => {
+      if (iframeEl && iframeEl.parentNode) {
+        iframeEl.parentNode.removeChild(iframeEl);
+      }
+    });
+
+    it('renders iframe instead of slot when rendering="iframe"', () => {
+      const iframe = iframeEl.shadowRoot.querySelector('iframe');
+      const slot = iframeEl.shadowRoot.querySelector('slot');
+      expect(iframe).to.exist;
+      expect(slot).to.not.exist;
+    });
+
+    it('iframe src points to chromeless rendering of current page', () => {
+      const iframe = iframeEl.shadowRoot.querySelector('iframe');
+      const src = new URL(iframe.src);
+      expect(src.pathname).to.equal(window.location.pathname);
+      expect(src.searchParams.get('rendering')).to.equal('chromeless');
+    });
+
+    it('renders slot when rendering attribute is not set', () => {
+      const slot = el.shadowRoot.querySelector('slot');
+      const iframe = el.shadowRoot.querySelector('iframe');
+      expect(slot).to.exist;
+      expect(iframe).to.not.exist;
+    });
+
+    function simulateHandshake(iframeEl) {
+      const iframe = iframeEl.shadowRoot.querySelector('iframe');
+      const messages = [];
+      Object.defineProperty(iframe, 'contentWindow', {
+        value: {
+          postMessage: (data, origin) => messages.push({ data, origin }),
+        },
+        configurable: true,
+      });
+      window.postMessage({ type: 'cem-iframe-ready' }, window.location.origin);
+      return { iframe, messages };
+    }
+
+    it('queues knob changes before handshake, flushes on cem-iframe-ready', async () => {
+      const result = iframeEl.applyKnobChange('attribute', 'label', 'Queued', 'my-element', 0);
+      expect(result).to.be.true;
+
+      const { messages } = simulateHandshake(iframeEl);
+      await new Promise(r => setTimeout(r, 0));
+
+      expect(messages).to.have.lengthOf(1);
+      expect(messages[0].data).to.deep.equal({
+        type: 'cem-knob-change',
+        knobType: 'attribute',
+        name: 'label',
+        value: 'Queued',
+        tagName: 'my-element',
+        instanceIndex: 0,
+      });
+    });
+
+    it('posts message directly after handshake completes', async () => {
+      const { messages } = simulateHandshake(iframeEl);
+      await new Promise(r => setTimeout(r, 0));
+
+      const result = iframeEl.applyKnobChange('attribute', 'label', 'Direct', 'my-element', 0);
+
+      expect(result).to.be.true;
+      expect(messages).to.have.lengthOf(1);
+      expect(messages[0].data.value).to.equal('Direct');
+      expect(messages[0].origin).to.equal(window.location.origin);
+    });
+
+    it('posts css-property knob changes via postMessage', async () => {
+      const { messages } = simulateHandshake(iframeEl);
+      await new Promise(r => setTimeout(r, 0));
+
+      const result = iframeEl.applyKnobChange('css-property', '--color', 'red', 'my-element', 2);
+
+      expect(result).to.be.true;
+      expect(messages[0].data).to.deep.equal({
+        type: 'cem-knob-change',
+        knobType: 'css-property',
+        name: '--color',
+        value: 'red',
+        tagName: 'my-element',
+        instanceIndex: 2,
+      });
+    });
+
+    it('posts property knob changes via postMessage', async () => {
+      const { messages } = simulateHandshake(iframeEl);
+      await new Promise(r => setTimeout(r, 0));
+
+      const result = iframeEl.applyKnobChange('property', 'variant', 'primary', 'my-element', 0);
+
+      expect(result).to.be.true;
+      expect(messages[0].data.knobType).to.equal('property');
+      expect(messages[0].data.name).to.equal('variant');
+      expect(messages[0].data.value).to.equal('primary');
+    });
+  });
 });

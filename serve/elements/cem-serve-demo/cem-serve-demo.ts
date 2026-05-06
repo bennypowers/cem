@@ -1,39 +1,55 @@
 import { LitElement, html } from 'lit';
 import { customElement } from 'lit/decorators/custom-element.js';
+import { property } from 'lit/decorators/property.js';
 
 import styles from './cem-serve-demo.css' with { type: 'css' };
 
 /**
  * Demo wrapper component for knobs integration.
  *
- * @slot - Default slot for demo content
+ * In light/shadow mode, renders demo content via a default slot.
+ * In iframe mode, loads the demo in an isolated iframe and bridges
+ * knob changes via postMessage.
+ *
+ * @slot - Default slot for demo content (light/shadow mode only)
  * @customElement cem-serve-demo
  */
 @customElement('cem-serve-demo')
 export class CemServeDemo extends LitElement {
   static styles = styles;
 
-  render() {
-    return html`<slot></slot>`;
+  @property({ reflect: true }) accessor rendering: string | undefined;
+
+  #iframeReady = false;
+  #pendingMessages: Array<Record<string, unknown>> = [];
+
+  get #iframe(): HTMLIFrameElement | null {
+    return this.renderRoot.querySelector('iframe');
   }
 
-  /**
-   * Find the Nth instance of an element by tag name
-   */
-  #getElementInstance(tagName: string, instanceIndex = 0): Element | null {
-    const elements = this.querySelectorAll(tagName);
-    return elements[instanceIndex] || null;
+  connectedCallback() {
+    super.connectedCallback();
+    window.addEventListener('message', this.#onChildReady);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('message', this.#onChildReady);
+  }
+
+  render() {
+    if (this.rendering === 'iframe') {
+      this.#iframeReady = false;
+      return html`<iframe part="iframe"
+                          src="${this.#iframeSrc()}"></iframe>`;
+    }
+    return html`<slot></slot>`;
   }
 
   /**
    * Apply a knob change to an element in the demo.
    * Called by parent chrome element when knob events occur.
-   * @param type - 'attribute', 'property', or 'css-property'
-   * @param name - Attribute/property/CSS name
-   * @param value - Value to apply
-   * @param tagName - Target element tag name
-   * @param instanceIndex - Which instance of the element (0-based)
-   * @returns Whether the operation succeeded
+   * In iframe mode, bridges via postMessage instead of direct DOM access.
    */
   applyKnobChange(
     type: string,
@@ -42,6 +58,10 @@ export class CemServeDemo extends LitElement {
     tagName: string,
     instanceIndex = 0,
   ): boolean {
+    if (this.rendering === 'iframe') {
+      return this.#postKnobChange(type, name, value, tagName, instanceIndex);
+    }
+
     const element = this.#getElementInstance(tagName, instanceIndex);
     if (!element) {
       console.warn('[cem-serve-demo] Element not found:', tagName, 'at index', instanceIndex);
@@ -52,7 +72,11 @@ export class CemServeDemo extends LitElement {
       case 'attribute':
         return this.#applyAttributeChange(element, name, value);
       case 'property':
-        return this.#applyPropertyChange(element, name, value);
+        return this.#applyPropertyChange(
+          element,
+          name as keyof Element,
+          value as Element[keyof Element],
+        );
       case 'css-property':
         return this.#applyCSSPropertyChange(element as HTMLElement, name, value);
       default:
@@ -61,46 +85,8 @@ export class CemServeDemo extends LitElement {
     }
   }
 
-  #applyAttributeChange(element: Element, name: string, value: unknown): boolean {
-    if (typeof value === 'boolean') {
-      element.toggleAttribute(name, value);
-    } else if (value === '' || value === null || value === undefined) {
-      element.removeAttribute(name);
-    } else {
-      element.setAttribute(name, String(value));
-    }
-    return true;
-  }
-
-  #applyPropertyChange(element: Element, name: string, value: unknown): boolean {
-    if (value === undefined) {
-      try {
-        delete (element as Record<string, unknown>)[name];
-      } catch {
-        (element as Record<string, unknown>)[name] = undefined;
-      }
-    } else {
-      (element as Record<string, unknown>)[name] = value;
-    }
-    return true;
-  }
-
-  #applyCSSPropertyChange(element: HTMLElement, name: string, value: unknown): boolean {
-    const propertyName = name.startsWith('--') ? name : `--${name}`;
-    if (value === '' || value === null || value === undefined) {
-      element.style.removeProperty(propertyName);
-    } else {
-      element.style.setProperty(propertyName, String(value));
-    }
-    return true;
-  }
-
   /**
    * Set an attribute on an element in the demo
-   * @param selector - CSS selector for target element
-   * @param attribute - Attribute name
-   * @param value - Attribute value (boolean for presence/absence)
-   * @returns Whether the operation succeeded
    */
   setDemoAttribute(selector: string, attribute: string, value: string | boolean | null): boolean {
     const target = this.querySelector(selector);
@@ -119,15 +105,15 @@ export class CemServeDemo extends LitElement {
 
   /**
    * Set a property on an element in the demo
-   * @param selector - CSS selector for target element
-   * @param property - Property name
-   * @param value - Property value
-   * @returns Whether the operation succeeded
    */
-  setDemoProperty(selector: string, property: string, value: unknown): boolean {
-    const target = this.querySelector(selector);
+  setDemoProperty<T extends Element>(
+    selector: string,
+    property: keyof T,
+    value: T[keyof T],
+  ): boolean {
+    const target = this.querySelector<T>(selector);
     if (target) {
-      (target as Record<string, unknown>)[property] = value;
+      (target)[property] = value;
       return true;
     }
     return false;
@@ -135,10 +121,6 @@ export class CemServeDemo extends LitElement {
 
   /**
    * Set a CSS custom property on an element in the demo
-   * @param selector - CSS selector for target element
-   * @param cssProperty - CSS custom property name (with or without --)
-   * @param value - CSS property value
-   * @returns Whether the operation succeeded
    */
   setDemoCssCustomProperty(selector: string, cssProperty: string, value: string): boolean {
     const target = this.querySelector(selector) as HTMLElement | null;
@@ -148,6 +130,92 @@ export class CemServeDemo extends LitElement {
       return true;
     }
     return false;
+  }
+
+  #iframeSrc(): string {
+    const url = new URL(window.location.href);
+    url.searchParams.set('rendering', 'chromeless');
+    return url.toString();
+  }
+
+  #onChildReady = (event: MessageEvent) => {
+    if (event.origin !== window.location.origin) return;
+    if (event.data?.type !== 'cem-iframe-ready') return;
+    this.#iframeReady = true;
+    const cw = this.#iframe?.contentWindow;
+    if (cw) {
+      for (const msg of this.#pendingMessages)
+        cw.postMessage(msg, window.location.origin);
+    }
+    this.#pendingMessages = [];
+    this.dispatchEvent(new Event('iframe-ready'));
+  };
+
+  /**
+   * Find the Nth instance of an element by tag name
+   */
+  #getElementInstance(tagName: string, instanceIndex = 0): Element | null {
+    const elements = this.querySelectorAll(tagName);
+    return elements[instanceIndex] || null;
+  }
+
+  #postKnobChange(
+    knobType: string,
+    name: string,
+    value: unknown,
+    tagName: string,
+    instanceIndex: number,
+  ): boolean {
+    const msg = { type: 'cem-knob-change', knobType, name, value, tagName, instanceIndex };
+    if (!this.#iframeReady) {
+      this.#pendingMessages.push(msg);
+      return true;
+    }
+    const iframe = this.#iframe;
+    if (!iframe?.contentWindow) {
+      console.warn('[cem-serve-demo] Iframe not ready for postMessage');
+      return false;
+    }
+    iframe.contentWindow.postMessage(msg, window.location.origin);
+    return true;
+  }
+
+  #applyAttributeChange(element: Element, name: string, value: unknown): boolean {
+    if (typeof value === 'boolean') {
+      element.toggleAttribute(name, value);
+    } else if (value === '' || value === null || value === undefined) {
+      element.removeAttribute(name);
+    } else {
+      element.setAttribute(name, String(value));
+    }
+    return true;
+  }
+
+  #applyPropertyChange<T extends Element>(
+    element: T,
+    name: keyof T,
+    value: T[keyof T],
+  ): boolean {
+    if (value === undefined) {
+      try {
+        delete (element)[name];
+      } catch {
+        (element)[name] = value;
+      }
+    } else {
+      (element)[name] = value;
+    }
+    return true;
+  }
+
+  #applyCSSPropertyChange(element: HTMLElement, name: string, value: unknown): boolean {
+    const propertyName = name.startsWith('--') ? name : `--${name}`;
+    if (value === '' || value === null || value === undefined) {
+      element.style.removeProperty(propertyName);
+    } else {
+      element.style.setProperty(propertyName, String(value));
+    }
+    return true;
   }
 }
 

@@ -91,6 +91,29 @@ func TestDemoRenderingMode_Shadow(t *testing.T) {
 	}
 }
 
+// TestDemoRenderingMode_Iframe verifies iframe mode config
+func TestDemoRenderingMode_Iframe(t *testing.T) {
+	server, err := NewServerWithConfig(Config{
+		Port: 8127,
+		Demos: DemosConfig{
+			Rendering: "iframe",
+		},
+	})
+	if err != nil {
+		t.Fatalf("Failed to create server: %v", err)
+	}
+	defer func() {
+		if server.IsRunning() {
+			_ = server.Close()
+		}
+	}()
+
+	mode := server.DemoRenderingMode()
+	if mode != "iframe" {
+		t.Errorf("Expected rendering mode 'iframe', got '%s'", mode)
+	}
+}
+
 // TestDemoRenderingMode_ThreadSafety verifies method is thread-safe
 func TestDemoRenderingMode_ThreadSafety(t *testing.T) {
 	server, err := NewServerWithConfig(Config{
