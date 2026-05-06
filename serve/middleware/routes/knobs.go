@@ -726,7 +726,7 @@ func convertMarkdownFields(knobs []KnobData, context string) error {
 
 // RenderKnobsHTML renders the knobs HTML template.
 // Takes a slice of ElementKnobGroup (can be single or multiple instances).
-// Each group is rendered in a pf-v6-card with tag name and instance label.
+// Each group is rendered in a cem-pf-v6-card with tag name and instance label.
 // Knobs are organized by category (attributes, properties, CSS properties) within each group.
 //
 // Note: This function modifies the Summary and Description fields of knobGroups in-place,

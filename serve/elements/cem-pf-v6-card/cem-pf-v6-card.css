@@ -1,0 +1,117 @@
+:host {
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  --cem-pf-v6-c-card--BackgroundColor: var(--pf-t--global--background--color--primary--default);
+  --cem-pf-v6-c-card--BorderColor: var(--pf-t--global--border--color--default);
+  --cem-pf-v6-c-card--BorderStyle: solid;
+  --cem-pf-v6-c-card--BorderWidth: var(--pf-t--global--border--width--box--default);
+  --cem-pf-v6-c-card--BorderRadius: var(--pf-t--global--border--radius--medium);
+  --cem-pf-v6-c-card--first-child--PaddingBlockStart: var(--pf-t--global--spacer--lg);
+  --cem-pf-v6-c-card--child--PaddingInlineEnd: var(--pf-t--global--spacer--lg);
+  --cem-pf-v6-c-card--child--PaddingBlockEnd: var(--pf-t--global--spacer--lg);
+  --cem-pf-v6-c-card--child--PaddingInlineStart: var(--pf-t--global--spacer--lg);
+  --cem-pf-v6-c-card__title--not--last-child--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-card__title-text--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-card__title-text--FontFamily: var(--pf-t--global--font--family--heading);
+  --cem-pf-v6-c-card__title-text--FontSize: var(--pf-t--global--font--size--heading--xs);
+  --cem-pf-v6-c-card__title-text--FontWeight: var(--pf-t--global--font--weight--heading--default);
+  --cem-pf-v6-c-card__title-text--LineHeight: var(--pf-t--global--font--line-height--heading);
+  --cem-pf-v6-c-card__body--FontSize: var(--pf-t--global--font--size--body--default);
+  --cem-pf-v6-c-card__footer--FontSize: var(--pf-t--global--font--size--body--default);
+  --cem-pf-v6-c-card__footer--Color: var(--pf-t--global--text--color--subtle);
+
+  background-color: var(--cem-pf-v6-c-card--BackgroundColor);
+  border: var(--cem-pf-v6-c-card--BorderWidth) var(--cem-pf-v6-c-card--BorderStyle) var(--cem-pf-v6-c-card--BorderColor);
+  border-radius: var(--cem-pf-v6-c-card--BorderRadius);
+}
+
+header,
+#body,
+footer {
+  padding-inline-end: var(--cem-pf-v6-c-card--child--PaddingInlineEnd);
+  padding-inline-start: var(--cem-pf-v6-c-card--child--PaddingInlineStart);
+  padding-block-end: var(--cem-pf-v6-c-card--child--PaddingBlockEnd);
+}
+
+header:first-child,
+#body:first-child {
+  padding-block-start: var(--cem-pf-v6-c-card--first-child--PaddingBlockStart);
+}
+
+#title {
+  display: flex;
+  align-items: center;
+  gap: var(--pf-t--global--spacer--sm);
+  flex-wrap: wrap;
+}
+
+#body {
+  font-size: var(--cem-pf-v6-c-card__body--FontSize);
+  flex: 1 1 auto;
+}
+
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pf-t--global--spacer--gap--action-to-action--default);
+  font-size: var(--cem-pf-v6-c-card__footer--FontSize);
+  color: var(--cem-pf-v6-c-card__footer--Color);
+}
+
+#title ::slotted(h1),
+#title ::slotted(h2),
+#title ::slotted(h3),
+#title ::slotted(h4),
+#title ::slotted(h5),
+#title ::slotted(h6) {
+  margin: 0;
+  color: var(--cem-pf-v6-c-card__title-text--Color);
+  font-family: var(--cem-pf-v6-c-card__title-text--FontFamily);
+  font-size: var(--cem-pf-v6-c-card__title-text--FontSize);
+  font-weight: var(--cem-pf-v6-c-card__title-text--FontWeight);
+  line-height: var(--cem-pf-v6-c-card__title-text--LineHeight);
+  padding-block-start: var(--cem-pf-v6-c-card--first-child--PaddingBlockStart);
+}
+
+#title ::slotted(cem-pf-v6-popover) {
+  margin-inline-start: auto;
+  margin-block-start: var(--cem-pf-v6-c-card--first-child--PaddingBlockStart);
+}
+
+#title ::slotted(.element-summary) {
+  display: inline;
+  font-family: var(--pf-t--global--font--family--body);
+  font-size: var(--pf-t--global--font--size--body--default);
+  font-weight: var(--pf-t--global--font--weight--body--default);
+  line-height: var(--pf-t--global--font--line-height--body);
+  color: var(--pf-t--global--text--color--regular);
+}
+
+header:not([hidden]):not(:last-child) {
+  padding-block-end: var(--cem-pf-v6-c-card__title--not--last-child--PaddingBlockEnd);
+}
+
+:host([compact]) {
+  --cem-pf-v6-c-card--first-child--PaddingBlockStart: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-card--child--PaddingInlineEnd: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-card--child--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-card--child--PaddingInlineStart: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-card__title--not--last-child--PaddingBlockEnd: var(--pf-t--global--spacer--sm);
+}
+
+:host([variant="secondary"]) {
+  background-color: var(--pf-t--global--background--color--secondary--default);
+  border-color: var(--pf-t--global--border--color--high-contrast);
+}
+
+:host([variant="plain"]) {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+:host([full-height]) {
+  height: 100%;
+}

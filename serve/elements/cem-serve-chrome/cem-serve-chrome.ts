@@ -15,39 +15,39 @@ import '../cem-serve-demo/cem-serve-demo.js';
 import '../cem-serve-knob-group/cem-serve-knob-group.js';
 import '../cem-serve-knobs/cem-serve-knobs.js';
 import '../cem-transform-error-overlay/cem-transform-error-overlay.js';
-import '../pf-v6-alert/pf-v6-alert.js';
-import '../pf-v6-alert-group/pf-v6-alert-group.js';
-import '../pf-v6-button/pf-v6-button.js';
-import '../pf-v6-card/pf-v6-card.js';
-import '../pf-v6-badge/pf-v6-badge.js';
-import '../pf-v6-dropdown/pf-v6-dropdown.js';
-import '../pf-v6-expandable-section/pf-v6-expandable-section.js';
-import '../pf-v6-label/pf-v6-label.js';
-import '../pf-v6-masthead/pf-v6-masthead.js';
-import '../pf-v6-modal/pf-v6-modal.js';
-import '../pf-v6-nav-group/pf-v6-nav-group.js';
-import '../pf-v6-nav-item/pf-v6-nav-item.js';
-import '../pf-v6-nav-link/pf-v6-nav-link.js';
-import '../pf-v6-nav-list/pf-v6-nav-list.js';
-import '../pf-v6-navigation/pf-v6-navigation.js';
-import '../pf-v6-page-main/pf-v6-page-main.js';
-import '../pf-v6-page-sidebar/pf-v6-page-sidebar.js';
-import '../pf-v6-page/pf-v6-page.js';
-import '../pf-v6-popover/pf-v6-popover.js';
-import '../pf-v6-select/pf-v6-select.js';
-import '../pf-v6-skip-to-content/pf-v6-skip-to-content.js';
-import '../pf-v6-switch/pf-v6-switch.js';
-import '../pf-v6-tab/pf-v6-tab.js';
-import '../pf-v6-tabs/pf-v6-tabs.js';
-import '../pf-v6-text-input-group/pf-v6-text-input-group.js';
-import '../pf-v6-text-input/pf-v6-text-input.js';
-import '../pf-v6-toggle-group-item/pf-v6-toggle-group-item.js';
-import '../pf-v6-toggle-group/pf-v6-toggle-group.js';
-import '../pf-v6-toolbar-group/pf-v6-toolbar-group.js';
-import '../pf-v6-toolbar-item/pf-v6-toolbar-item.js';
-import '../pf-v6-toolbar/pf-v6-toolbar.js';
-import '../pf-v6-tree-item/pf-v6-tree-item.js';
-import '../pf-v6-tree-view/pf-v6-tree-view.js';
+import '../cem-pf-v6-alert/cem-pf-v6-alert.js';
+import '../cem-pf-v6-alert-group/cem-pf-v6-alert-group.js';
+import '../cem-pf-v6-button/cem-pf-v6-button.js';
+import '../cem-pf-v6-card/cem-pf-v6-card.js';
+import '../cem-pf-v6-badge/cem-pf-v6-badge.js';
+import '../cem-pf-v6-dropdown/cem-pf-v6-dropdown.js';
+import '../cem-pf-v6-expandable-section/cem-pf-v6-expandable-section.js';
+import '../cem-pf-v6-label/cem-pf-v6-label.js';
+import '../cem-pf-v6-masthead/cem-pf-v6-masthead.js';
+import '../cem-pf-v6-modal/cem-pf-v6-modal.js';
+import '../cem-pf-v6-nav-group/cem-pf-v6-nav-group.js';
+import '../cem-pf-v6-nav-item/cem-pf-v6-nav-item.js';
+import '../cem-pf-v6-nav-link/cem-pf-v6-nav-link.js';
+import '../cem-pf-v6-nav-list/cem-pf-v6-nav-list.js';
+import '../cem-pf-v6-navigation/cem-pf-v6-navigation.js';
+import '../cem-pf-v6-page-main/cem-pf-v6-page-main.js';
+import '../cem-pf-v6-page-sidebar/cem-pf-v6-page-sidebar.js';
+import '../cem-pf-v6-page/cem-pf-v6-page.js';
+import '../cem-pf-v6-popover/cem-pf-v6-popover.js';
+import '../cem-pf-v6-select/cem-pf-v6-select.js';
+import '../cem-pf-v6-skip-to-content/cem-pf-v6-skip-to-content.js';
+import '../cem-pf-v6-switch/cem-pf-v6-switch.js';
+import '../cem-pf-v6-tab/cem-pf-v6-tab.js';
+import '../cem-pf-v6-tabs/cem-pf-v6-tabs.js';
+import '../cem-pf-v6-text-input-group/cem-pf-v6-text-input-group.js';
+import '../cem-pf-v6-text-input/cem-pf-v6-text-input.js';
+import '../cem-pf-v6-toggle-group-item/cem-pf-v6-toggle-group-item.js';
+import '../cem-pf-v6-toggle-group/cem-pf-v6-toggle-group.js';
+import '../cem-pf-v6-toolbar-group/cem-pf-v6-toolbar-group.js';
+import '../cem-pf-v6-toolbar-item/cem-pf-v6-toolbar-item.js';
+import '../cem-pf-v6-toolbar/cem-pf-v6-toolbar.js';
+import '../cem-pf-v6-tree-item/cem-pf-v6-tree-item.js';
+import '../cem-pf-v6-tree-view/cem-pf-v6-tree-view.js';
 
 // Client-only modules loaded dynamically to avoid breaking SSR.
 // These are plain JS modules served at runtime by the Go server.
@@ -147,26 +147,26 @@ export class CemServeChrome extends LitElement {
     const t = document.createElement('template');
     t.innerHTML = `
       <h3>Demo Information</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group">
-          <dt class="pf-v6-c-description-list__term">Tag Name</dt>
-          <dd class="pf-v6-c-description-list__description" data-field="tagName"></dd>
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group">
+          <dt class="cem-pf-v6-c-description-list__term">Tag Name</dt>
+          <dd class="cem-pf-v6-c-description-list__description" data-field="tagName"></dd>
         </div>
-        <div class="pf-v6-c-description-list__group" data-field-group="description">
-          <dt class="pf-v6-c-description-list__term">Description</dt>
-          <dd class="pf-v6-c-description-list__description" data-field="description"></dd>
+        <div class="cem-pf-v6-c-description-list__group" data-field-group="description">
+          <dt class="cem-pf-v6-c-description-list__term">Description</dt>
+          <dd class="cem-pf-v6-c-description-list__description" data-field="description"></dd>
         </div>
-        <div class="pf-v6-c-description-list__group" data-field-group="filepath">
-          <dt class="pf-v6-c-description-list__term">File Path</dt>
-          <dd class="pf-v6-c-description-list__description" data-field="filepath"></dd>
+        <div class="cem-pf-v6-c-description-list__group" data-field-group="filepath">
+          <dt class="cem-pf-v6-c-description-list__term">File Path</dt>
+          <dd class="cem-pf-v6-c-description-list__description" data-field="filepath"></dd>
         </div>
-        <div class="pf-v6-c-description-list__group">
-          <dt class="pf-v6-c-description-list__term">Canonical URL</dt>
-          <dd class="pf-v6-c-description-list__description" data-field="canonicalURL"></dd>
+        <div class="cem-pf-v6-c-description-list__group">
+          <dt class="cem-pf-v6-c-description-list__term">Canonical URL</dt>
+          <dd class="cem-pf-v6-c-description-list__description" data-field="canonicalURL"></dd>
         </div>
-        <div class="pf-v6-c-description-list__group">
-          <dt class="pf-v6-c-description-list__term">Local Route</dt>
-          <dd class="pf-v6-c-description-list__description" data-field="localRoute"></dd>
+        <div class="cem-pf-v6-c-description-list__group">
+          <dt class="cem-pf-v6-c-description-list__term">Local Route</dt>
+          <dd class="cem-pf-v6-c-description-list__description" data-field="localRoute"></dd>
         </div>
       </dl>`;
     return t;
@@ -175,9 +175,9 @@ export class CemServeChrome extends LitElement {
   static #demoGroupTemplate = (() => {
     const t = document.createElement('template');
     t.innerHTML = `
-      <div class="pf-v6-c-description-list__group">
-        <dt class="pf-v6-c-description-list__term" data-field="tagName"></dt>
-        <dd class="pf-v6-c-description-list__description">
+      <div class="cem-pf-v6-c-description-list__group">
+        <dt class="cem-pf-v6-c-description-list__term" data-field="tagName"></dt>
+        <dd class="cem-pf-v6-c-description-list__description">
           <span data-field="description"></span><br>
           <small data-field-group="filepath">File: <span data-field="filepath"></span></small>
           <small>Canonical: <span data-field="canonicalURL"></span></small><br>
@@ -190,10 +190,10 @@ export class CemServeChrome extends LitElement {
   static #demoListTemplate = (() => {
     const t = document.createElement('template');
     t.innerHTML = `
-      <pf-v6-expandable-section id="debug-demos-section"
+      <cem-pf-v6-expandable-section id="debug-demos-section"
                                 toggle-text="Show Demos Info">
-        <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact" data-container="groups"></dl>
-      </pf-v6-expandable-section>`;
+        <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact" data-container="groups"></dl>
+      </cem-pf-v6-expandable-section>`;
     return t;
   })();
 
@@ -201,7 +201,7 @@ export class CemServeChrome extends LitElement {
     const t = document.createElement('template');
     t.innerHTML = `
       <div class="log-entry" data-field="container">
-        <pf-v6-label compact data-field="label"></pf-v6-label>
+        <cem-pf-v6-label compact data-field="label"></cem-pf-v6-label>
         <time class="log-time" data-field="time"></time>
         <span class="log-message" data-field="message"></span>
       </div>`;
@@ -212,7 +212,7 @@ export class CemServeChrome extends LitElement {
     const t = document.createElement('template');
     t.innerHTML = `
       <button class="event-list-item" data-field="container">
-        <pf-v6-label compact data-field="label"></pf-v6-label>
+        <cem-pf-v6-label compact data-field="label"></cem-pf-v6-label>
         <time class="event-time" data-field="time"></time>
         <span class="event-element" data-field="element"></span>
       </button>`;
@@ -377,16 +377,16 @@ export class CemServeChrome extends LitElement {
 
   render() {
     return html`
-      <link rel="stylesheet" href="/__cem/pf-v6-c-description-list.css">
+      <link rel="stylesheet" href="/__cem/cem-pf-v6-c-description-list.css">
       <link rel="stylesheet" href="/__cem/pf-lightdom.css">
 
-      <pf-v6-page ?sidebar-collapsed=${this.sidebar === 'collapsed'}>
-        <pf-v6-skip-to-content slot="skip-to-content"
+      <cem-pf-v6-page ?sidebar-collapsed=${this.sidebar === 'collapsed'}>
+        <cem-pf-v6-skip-to-content slot="skip-to-content"
                                href="#main-content">
           Skip to content
-        </pf-v6-skip-to-content>
+        </cem-pf-v6-skip-to-content>
 
-        <pf-v6-masthead slot="masthead">
+        <cem-pf-v6-masthead slot="masthead">
           <a class="masthead-logo"
              href="/"
              slot="logo">
@@ -394,11 +394,11 @@ export class CemServeChrome extends LitElement {
                  src="/__cem/logo.svg">
             ${this.packageName ? html`<h1>${this.packageName}</h1>` : nothing}
           </a>
-          <pf-v6-toolbar slot="toolbar">
-            <pf-v6-toolbar-group variant="action-group">
+          <cem-pf-v6-toolbar slot="toolbar">
+            <cem-pf-v6-toolbar-group variant="action-group">
               ${this.#renderSourceButton()}
-              <pf-v6-toolbar-item>
-                <pf-v6-button id="debug-info"
+              <cem-pf-v6-toolbar-item>
+                <cem-pf-v6-button id="debug-info"
                               variant="plain"
                               aria-label="Debug info">
                   <svg width="16"
@@ -409,40 +409,40 @@ export class CemServeChrome extends LitElement {
                     <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                     <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
                   </svg>
-                </pf-v6-button>
-              </pf-v6-toolbar-item>
-              <pf-v6-toolbar-item>
-                <pf-v6-toggle-group class="color-scheme-toggle"
+                </cem-pf-v6-button>
+              </cem-pf-v6-toolbar-item>
+              <cem-pf-v6-toolbar-item>
+                <cem-pf-v6-toggle-group class="color-scheme-toggle"
                                     aria-label="Color scheme">
-                  <pf-v6-toggle-group-item value="light">
+                  <cem-pf-v6-toggle-group-item value="light">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-label="Light mode">
                       <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
                     </svg>
-                  </pf-v6-toggle-group-item>
-                  <pf-v6-toggle-group-item value="dark">
+                  </cem-pf-v6-toggle-group-item>
+                  <cem-pf-v6-toggle-group-item value="dark">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-label="Dark mode">
                       <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278zM4.858 1.311A7.269 7.269 0 0 0 1.025 7.71c0 4.02 3.279 7.276 7.319 7.276a7.316 7.316 0 0 0 5.205-2.162c-.337.042-.68.063-1.029.063-4.61 0-8.343-3.714-8.343-8.29 0-1.167.242-2.278.681-3.286z"/>
                     </svg>
-                  </pf-v6-toggle-group-item>
-                  <pf-v6-toggle-group-item value="system">
+                  </cem-pf-v6-toggle-group-item>
+                  <cem-pf-v6-toggle-group-item value="system">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-label="System preference">
                       <path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 9.5v-8zM1.5 1a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-13z"/>
                       <path d="M2.5 12h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1 0-1zm0 2h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1 0-1z"/>
                     </svg>
-                  </pf-v6-toggle-group-item>
-                </pf-v6-toggle-group>
-              </pf-v6-toolbar-item>
-            </pf-v6-toolbar-group>
-          </pf-v6-toolbar>
-        </pf-v6-masthead>
+                  </cem-pf-v6-toggle-group-item>
+                </cem-pf-v6-toggle-group>
+              </cem-pf-v6-toolbar-item>
+            </cem-pf-v6-toolbar-group>
+          </cem-pf-v6-toolbar>
+        </cem-pf-v6-masthead>
 
-        <pf-v6-page-sidebar slot="sidebar"
+        <cem-pf-v6-page-sidebar slot="sidebar"
                             ?expanded=${this.sidebar === 'expanded'}
                             ?collapsed=${this.sidebar !== 'expanded'}>
           <slot name="navigation"></slot>
-        </pf-v6-page-sidebar>
+        </cem-pf-v6-page-sidebar>
 
-        <pf-v6-page-main slot="main" id="main-content">
+        <cem-pf-v6-page-main slot="main" id="main-content">
           <slot></slot>
           <footer class="pf-m-sticky-bottom">
             <div class="footer-description${this.hasDescription ? '' : ' empty'}">
@@ -450,27 +450,27 @@ export class CemServeChrome extends LitElement {
             </div>
             <cem-drawer ?open=${this.drawer === 'expanded'}
                         drawer-height="${this.drawerHeight || '400'}">
-              <pf-v6-tabs selected="${this.tabsSelected || '0'}">
-                <pf-v6-tab title="Knobs">
+              <cem-pf-v6-tabs selected="${this.tabsSelected || '0'}">
+                <cem-pf-v6-tab title="Knobs">
                   <div id="knobs-container">
                     <slot name="knobs">
                       <p class="knobs-empty">No knobs available for this element.</p>
                     </slot>
                   </div>
-                </pf-v6-tab>
-                <pf-v6-tab title="Manifest Browser">
+                </cem-pf-v6-tab>
+                <cem-pf-v6-tab title="Manifest Browser">
                   <cem-manifest-browser>
                     <slot name="manifest-tree" slot="manifest-tree"></slot>
                     <slot name="manifest-name" slot="manifest-name"></slot>
                     <slot name="manifest-details" slot="manifest-details"></slot>
                   </cem-manifest-browser>
-                </pf-v6-tab>
-                <pf-v6-tab title="Server Logs">
+                </cem-pf-v6-tab>
+                <cem-pf-v6-tab title="Server Logs">
                   <div class="logs-wrapper">
-                    <pf-v6-toolbar sticky>
-                      <pf-v6-toolbar-group>
-                        <pf-v6-toolbar-item>
-                          <pf-v6-text-input-group id="logs-filter"
+                    <cem-pf-v6-toolbar sticky>
+                      <cem-pf-v6-toolbar-group>
+                        <cem-pf-v6-toolbar-item>
+                          <cem-pf-v6-text-input-group id="logs-filter"
                                                   placeholder="Filter logs..."
                                                   icon>
                             <svg slot="icon"
@@ -481,64 +481,64 @@ export class CemServeChrome extends LitElement {
                                  viewBox="0 0 512 512">
                               <path d="M505 442.7L405.3 343c-4.5-4.5-10.6-7-17-7H372c27.6-35.3 44-79.7 44-128C416 93.1 322.9 0 208 0S0 93.1 0 208s93.1 208 208 208c48.3 0 92.7-16.4 128-44v16.3c0 6.4 2.5 12.5 7 17l99.7 99.7c9.4 9.4 24.6 9.4 33.9 0l28.3-28.3c9.4-9.4 9.4-24.6.1-34zM208 336c-70.7 0-128-57.2-128-128 0-70.7 57.2-128 128-128 70.7 0 128 57.2 128 128 0 70.7-57.2 128-128 128z"></path>
                             </svg>
-                          </pf-v6-text-input-group>
-                        </pf-v6-toolbar-item>
-                        <pf-v6-toolbar-item>
-                          <pf-v6-dropdown id="log-level-filter"
+                          </cem-pf-v6-text-input-group>
+                        </cem-pf-v6-toolbar-item>
+                        <cem-pf-v6-toolbar-item>
+                          <cem-pf-v6-dropdown id="log-level-filter"
                                           label="Filter log levels">
                             <span slot="toggle-text">Log Levels</span>
-                            <pf-v6-menu-item variant="checkbox" value="info" checked>Info</pf-v6-menu-item>
-                            <pf-v6-menu-item variant="checkbox" value="warn" checked>Warnings</pf-v6-menu-item>
-                            <pf-v6-menu-item variant="checkbox" value="error" checked>Errors</pf-v6-menu-item>
-                            <pf-v6-menu-item variant="checkbox" value="debug" checked>Debug</pf-v6-menu-item>
-                          </pf-v6-dropdown>
-                        </pf-v6-toolbar-item>
-                      </pf-v6-toolbar-group>
-                      <pf-v6-toolbar-group variant="action-group">
-                        <pf-v6-toolbar-item>
-                          <pf-v6-button id="copy-logs"
+                            <cem-pf-v6-menu-item variant="checkbox" value="info" checked>Info</cem-pf-v6-menu-item>
+                            <cem-pf-v6-menu-item variant="checkbox" value="warn" checked>Warnings</cem-pf-v6-menu-item>
+                            <cem-pf-v6-menu-item variant="checkbox" value="error" checked>Errors</cem-pf-v6-menu-item>
+                            <cem-pf-v6-menu-item variant="checkbox" value="debug" checked>Debug</cem-pf-v6-menu-item>
+                          </cem-pf-v6-dropdown>
+                        </cem-pf-v6-toolbar-item>
+                      </cem-pf-v6-toolbar-group>
+                      <cem-pf-v6-toolbar-group variant="action-group">
+                        <cem-pf-v6-toolbar-item>
+                          <cem-pf-v6-button id="copy-logs"
                                         variant="tertiary"
                                         size="small">
                             <svg slot="icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                               <path d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 13V4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>
                             </svg>
                             Copy Logs
-                          </pf-v6-button>
-                        </pf-v6-toolbar-item>
-                      </pf-v6-toolbar-group>
-                    </pf-v6-toolbar>
+                          </cem-pf-v6-button>
+                        </cem-pf-v6-toolbar-item>
+                      </cem-pf-v6-toolbar-group>
+                    </cem-pf-v6-toolbar>
                     <div id="log-container"></div>
                   </div>
-                </pf-v6-tab>
-                <pf-v6-tab title="Events">
+                </cem-pf-v6-tab>
+                <cem-pf-v6-tab title="Events">
                   <div class="events-wrapper">
-                    <pf-v6-toolbar sticky>
-                      <pf-v6-toolbar-group>
-                        <pf-v6-toolbar-item>
-                          <pf-v6-text-input-group id="events-filter"
+                    <cem-pf-v6-toolbar sticky>
+                      <cem-pf-v6-toolbar-group>
+                        <cem-pf-v6-toolbar-item>
+                          <cem-pf-v6-text-input-group id="events-filter"
                                                   placeholder="Filter events..."
                                                   icon>
                             <svg slot="icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                               <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
                             </svg>
-                          </pf-v6-text-input-group>
-                        </pf-v6-toolbar-item>
-                        <pf-v6-toolbar-item>
-                          <pf-v6-dropdown id="event-type-filter"
+                          </cem-pf-v6-text-input-group>
+                        </cem-pf-v6-toolbar-item>
+                        <cem-pf-v6-toolbar-item>
+                          <cem-pf-v6-dropdown id="event-type-filter"
                                           label="Filter event types">
                             <span slot="toggle-text">Event Types</span>
-                          </pf-v6-dropdown>
-                        </pf-v6-toolbar-item>
-                        <pf-v6-toolbar-item>
-                          <pf-v6-dropdown id="element-filter"
+                          </cem-pf-v6-dropdown>
+                        </cem-pf-v6-toolbar-item>
+                        <cem-pf-v6-toolbar-item>
+                          <cem-pf-v6-dropdown id="element-filter"
                                           label="Filter elements">
                             <span slot="toggle-text">Elements</span>
-                          </pf-v6-dropdown>
-                        </pf-v6-toolbar-item>
-                      </pf-v6-toolbar-group>
-                      <pf-v6-toolbar-group variant="action-group">
-                        <pf-v6-toolbar-item>
-                          <pf-v6-button id="clear-events"
+                          </cem-pf-v6-dropdown>
+                        </cem-pf-v6-toolbar-item>
+                      </cem-pf-v6-toolbar-group>
+                      <cem-pf-v6-toolbar-group variant="action-group">
+                        <cem-pf-v6-toolbar-item>
+                          <cem-pf-v6-button id="clear-events"
                                         variant="tertiary"
                                         size="small">
                             <svg slot="icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -546,103 +546,103 @@ export class CemServeChrome extends LitElement {
                               <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
                             </svg>
                             Clear Events
-                          </pf-v6-button>
-                        </pf-v6-toolbar-item>
-                        <pf-v6-toolbar-item>
-                          <pf-v6-button id="copy-events"
+                          </cem-pf-v6-button>
+                        </cem-pf-v6-toolbar-item>
+                        <cem-pf-v6-toolbar-item>
+                          <cem-pf-v6-button id="copy-events"
                                         variant="tertiary"
                                         size="small">
                             <svg slot="icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                               <path d="M13 0H6a2 2 0 0 0-2 2 2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2 2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 13V4a2 2 0 0 0-2-2H5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1zM3 13V4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>
                             </svg>
                             Copy Events
-                          </pf-v6-button>
-                        </pf-v6-toolbar-item>
-                      </pf-v6-toolbar-group>
-                    </pf-v6-toolbar>
-                    <pf-v6-drawer id="event-drawer" expanded>
+                          </cem-pf-v6-button>
+                        </cem-pf-v6-toolbar-item>
+                      </cem-pf-v6-toolbar-group>
+                    </cem-pf-v6-toolbar>
+                    <cem-pf-v6-drawer id="event-drawer" expanded>
                       <div id="event-list"></div>
                       <div id="event-detail-header" slot="panel-header"></div>
                       <div id="event-detail-body" slot="panel-body"></div>
-                    </pf-v6-drawer>
+                    </cem-pf-v6-drawer>
                   </div>
-                </pf-v6-tab>
-                <pf-v6-tab title="Health">
+                </cem-pf-v6-tab>
+                <cem-pf-v6-tab title="Health">
                   <cem-health-panel component=${ifDefined(this.primaryTagName)}>
                   </cem-health-panel>
-                </pf-v6-tab>
-              </pf-v6-tabs>
+                </cem-pf-v6-tab>
+              </cem-pf-v6-tabs>
             </cem-drawer>
           </footer>
-        </pf-v6-page-main>
-      </pf-v6-page>
+        </cem-pf-v6-page-main>
+      </cem-pf-v6-page>
 
-      <pf-v6-modal id="debug-modal" variant="large">
+      <cem-pf-v6-modal id="debug-modal" variant="large">
         <h2 slot="header">Debug Information</h2>
-        <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-          <div class="pf-v6-c-description-list__group">
-            <dt class="pf-v6-c-description-list__term">Server Version</dt>
-            <dd class="pf-v6-c-description-list__description" id="debug-version">-</dd>
+        <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+          <div class="cem-pf-v6-c-description-list__group">
+            <dt class="cem-pf-v6-c-description-list__term">Server Version</dt>
+            <dd class="cem-pf-v6-c-description-list__description" id="debug-version">-</dd>
           </div>
-          <div class="pf-v6-c-description-list__group">
-            <dt class="pf-v6-c-description-list__term">Server OS</dt>
-            <dd class="pf-v6-c-description-list__description" id="debug-os">-</dd>
+          <div class="cem-pf-v6-c-description-list__group">
+            <dt class="cem-pf-v6-c-description-list__term">Server OS</dt>
+            <dd class="cem-pf-v6-c-description-list__description" id="debug-os">-</dd>
           </div>
-          <div class="pf-v6-c-description-list__group">
-            <dt class="pf-v6-c-description-list__term">Watch Directory</dt>
-            <dd class="pf-v6-c-description-list__description" id="debug-watch-dir">-</dd>
+          <div class="cem-pf-v6-c-description-list__group">
+            <dt class="cem-pf-v6-c-description-list__term">Watch Directory</dt>
+            <dd class="cem-pf-v6-c-description-list__description" id="debug-watch-dir">-</dd>
           </div>
-          <div class="pf-v6-c-description-list__group">
-            <dt class="pf-v6-c-description-list__term">Manifest Size</dt>
-            <dd class="pf-v6-c-description-list__description" id="debug-manifest-size">-</dd>
+          <div class="cem-pf-v6-c-description-list__group">
+            <dt class="cem-pf-v6-c-description-list__term">Manifest Size</dt>
+            <dd class="cem-pf-v6-c-description-list__description" id="debug-manifest-size">-</dd>
           </div>
-          <div class="pf-v6-c-description-list__group">
-            <dt class="pf-v6-c-description-list__term">Demos Found</dt>
-            <dd class="pf-v6-c-description-list__description" id="debug-demo-count">-</dd>
+          <div class="cem-pf-v6-c-description-list__group">
+            <dt class="cem-pf-v6-c-description-list__term">Demos Found</dt>
+            <dd class="cem-pf-v6-c-description-list__description" id="debug-demo-count">-</dd>
           </div>
-          <div class="pf-v6-c-description-list__group">
-            <dt class="pf-v6-c-description-list__term">Tag Name</dt>
-            <dd class="pf-v6-c-description-list__description">${this.primaryTagName || '-'}</dd>
+          <div class="cem-pf-v6-c-description-list__group">
+            <dt class="cem-pf-v6-c-description-list__term">Tag Name</dt>
+            <dd class="cem-pf-v6-c-description-list__description">${this.primaryTagName || '-'}</dd>
           </div>
-          <div class="pf-v6-c-description-list__group">
-            <dt class="pf-v6-c-description-list__term">Demo Title</dt>
-            <dd class="pf-v6-c-description-list__description">${this.demoTitle || '-'}</dd>
+          <div class="cem-pf-v6-c-description-list__group">
+            <dt class="cem-pf-v6-c-description-list__term">Demo Title</dt>
+            <dd class="cem-pf-v6-c-description-list__description">${this.demoTitle || '-'}</dd>
           </div>
-          <div class="pf-v6-c-description-list__group">
-            <dt class="pf-v6-c-description-list__term">Browser</dt>
-            <dd class="pf-v6-c-description-list__description" id="debug-browser">-</dd>
+          <div class="cem-pf-v6-c-description-list__group">
+            <dt class="cem-pf-v6-c-description-list__term">Browser</dt>
+            <dd class="cem-pf-v6-c-description-list__description" id="debug-browser">-</dd>
           </div>
-          <div class="pf-v6-c-description-list__group">
-            <dt class="pf-v6-c-description-list__term">User Agent</dt>
-            <dd class="pf-v6-c-description-list__description" id="debug-ua">-</dd>
+          <div class="cem-pf-v6-c-description-list__group">
+            <dt class="cem-pf-v6-c-description-list__term">User Agent</dt>
+            <dd class="cem-pf-v6-c-description-list__description" id="debug-ua">-</dd>
           </div>
         </dl>
         <div id="demo-urls-container"></div>
-        <pf-v6-expandable-section id="debug-importmap-details"
+        <cem-pf-v6-expandable-section id="debug-importmap-details"
                                   toggle-text="Show Import Map">
           <pre id="debug-importmap">-</pre>
-        </pf-v6-expandable-section>
+        </cem-pf-v6-expandable-section>
         <div slot="footer" class="button-container">
-          <pf-v6-button class="debug-copy" variant="primary">
+          <cem-pf-v6-button class="debug-copy" variant="primary">
             Copy Debug Info
-          </pf-v6-button>
-          <pf-v6-button class="debug-close" variant="secondary">
+          </cem-pf-v6-button>
+          <cem-pf-v6-button class="debug-close" variant="secondary">
             Close
-          </pf-v6-button>
+          </cem-pf-v6-button>
         </div>
-      </pf-v6-modal>
+      </cem-pf-v6-modal>
 
       <!-- Reconnection modal -->
-      <pf-v6-modal id="reconnection-modal" variant="large">
+      <cem-pf-v6-modal id="reconnection-modal" variant="large">
         <h2 slot="header">Development Server Disconnected</h2>
         <cem-reconnection-content id="reconnection-content"></cem-reconnection-content>
-        <pf-v6-button id="reload-button"
+        <cem-pf-v6-button id="reload-button"
                       slot="footer"
-                      variant="primary">Reload Page</pf-v6-button>
-        <pf-v6-button id="retry-button"
+                      variant="primary">Reload Page</cem-pf-v6-button>
+        <cem-pf-v6-button id="retry-button"
                       slot="footer"
-                      variant="secondary">Retry Now</pf-v6-button>
-      </pf-v6-modal>
+                      variant="secondary">Retry Now</cem-pf-v6-button>
+      </cem-pf-v6-modal>
 
       <!-- Transform error overlay -->
       <cem-transform-error-overlay id="error-overlay">
@@ -668,8 +668,8 @@ export class CemServeChrome extends LitElement {
     }
 
     return html`
-      <pf-v6-toolbar-item>
-        <pf-v6-button href="${this.sourceURL}"
+      <cem-pf-v6-toolbar-item>
+        <cem-pf-v6-button href="${this.sourceURL}"
                       target="_blank"
                       rel="noopener noreferrer"
                       variant="plain"
@@ -681,8 +681,8 @@ export class CemServeChrome extends LitElement {
                viewBox="0 0 16 16">
             <path d="${path}"/>
           </svg>
-        </pf-v6-button>
-      </pf-v6-toolbar-item>
+        </cem-pf-v6-button>
+      </cem-pf-v6-toolbar-item>
     `;
   }
 
@@ -958,7 +958,7 @@ export class CemServeChrome extends LitElement {
 
   #syncCheckboxStates() {
     if (!this.#logLevelDropdown) return;
-    const menuItems = this.#logLevelDropdown.querySelectorAll('pf-v6-menu-item');
+    const menuItems = this.#logLevelDropdown.querySelectorAll('cem-pf-v6-menu-item');
     menuItems.forEach(item => {
       const value = (item as any).value;
       (item as any).checked = this.#logLevelFilters.has(value);
@@ -1051,7 +1051,7 @@ export class CemServeChrome extends LitElement {
 
   #setupFooterDrawer() {
     const drawer = this.shadowRoot?.querySelector('cem-drawer');
-    const tabs = this.shadowRoot?.querySelector('pf-v6-tabs');
+    const tabs = this.shadowRoot?.querySelector('cem-pf-v6-tabs');
 
     if (!drawer || !tabs) return;
 
@@ -1283,14 +1283,14 @@ Generated: ${new Date().toISOString()}`;
 
     this.#applyColorScheme(state.colorScheme);
 
-    const items = toggleGroup.querySelectorAll('pf-v6-toggle-group-item');
+    const items = toggleGroup.querySelectorAll('cem-pf-v6-toggle-group-item');
     items.forEach(item => {
       if ((item as any).value === state.colorScheme) {
         item.setAttribute('selected', '');
       }
     });
 
-    toggleGroup.addEventListener('pf-v6-toggle-group-change', (e: Event) => {
+    toggleGroup.addEventListener('cem-pf-v6-toggle-group-change', (e: Event) => {
       const scheme = (e as any).value;
       this.#applyColorScheme(scheme);
       StatePersistence.updateState({ colorScheme: scheme });
@@ -1435,7 +1435,7 @@ Generated: ${new Date().toISOString()}`;
 
   #setupTreeStatePersistence() {
     this.#handleTreeExpand = (e: Event) => {
-      if ((e.target as Element)?.tagName !== 'PF-V6-TREE-ITEM') return;
+      if ((e.target as Element)?.tagName !== 'CEM-PF-V6-TREE-ITEM') return;
 
       const nodeId = this.#getTreeNodeId(e.target as Element);
       const treeState = StatePersistence.getTreeState();
@@ -1447,7 +1447,7 @@ Generated: ${new Date().toISOString()}`;
     this.addEventListener('expand', this.#handleTreeExpand);
 
     this.#handleTreeCollapse = (e: Event) => {
-      if ((e.target as Element)?.tagName !== 'PF-V6-TREE-ITEM') return;
+      if ((e.target as Element)?.tagName !== 'CEM-PF-V6-TREE-ITEM') return;
 
       const nodeId = this.#getTreeNodeId(e.target as Element);
       const treeState = StatePersistence.getTreeState();
@@ -1460,7 +1460,7 @@ Generated: ${new Date().toISOString()}`;
     this.addEventListener('collapse', this.#handleTreeCollapse);
 
     this.#handleTreeSelect = (e: Event) => {
-      if ((e.target as Element)?.tagName !== 'PF-V6-TREE-ITEM') return;
+      if ((e.target as Element)?.tagName !== 'CEM-PF-V6-TREE-ITEM') return;
 
       const nodeId = this.#getTreeNodeId(e.target as Element);
       StatePersistence.updateTreeState({ selected: nodeId });
@@ -1489,7 +1489,7 @@ Generated: ${new Date().toISOString()}`;
   }
 
   #setupSidebarStatePersistence() {
-    const page = this.shadowRoot?.querySelector('pf-v6-page');
+    const page = this.shadowRoot?.querySelector('cem-pf-v6-page');
 
     if (!page) return;
 
@@ -1514,12 +1514,12 @@ Generated: ${new Date().toISOString()}`;
       attrSuffix += `[data-name="${CSS.escape(name)}"]`;
     }
 
-    let selector = `pf-v6-tree-item[data-type="${CSS.escape(type)}"]`;
+    let selector = `cem-pf-v6-tree-item[data-type="${CSS.escape(type)}"]`;
     if (modulePath) {
       const escapedModulePath = CSS.escape(modulePath);
       const escapedType = CSS.escape(type);
-      const selector1 = `pf-v6-tree-item[data-type="${escapedType}"][data-module-path="${escapedModulePath}"]${attrSuffix}`;
-      const selector2 = `pf-v6-tree-item[data-type="${escapedType}"][data-path="${escapedModulePath}"]${attrSuffix}`;
+      const selector1 = `cem-pf-v6-tree-item[data-type="${escapedType}"][data-module-path="${escapedModulePath}"]${attrSuffix}`;
+      const selector2 = `cem-pf-v6-tree-item[data-type="${escapedType}"][data-path="${escapedModulePath}"]${attrSuffix}`;
       selector = `${selector1}, ${selector2}`;
     } else {
       selector += attrSuffix;
@@ -1990,7 +1990,7 @@ Generated: ${new Date().toISOString()}`;
   }
 
   #isEventsTabActive(): boolean {
-    const tabs = this.shadowRoot?.querySelector('pf-v6-tabs');
+    const tabs = this.shadowRoot?.querySelector('cem-pf-v6-tabs');
     if (!tabs) return false;
 
     const selectedIndex = parseInt(tabs.getAttribute('selected') || '0', 10);
@@ -2037,13 +2037,13 @@ Generated: ${new Date().toISOString()}`;
 
     const eventTypeFilter = this.#$('event-type-filter');
     if (eventTypeFilter && this.#elementEventMap) {
-      let menu = eventTypeFilter.querySelector('pf-v6-menu');
+      let menu = eventTypeFilter.querySelector('cem-pf-v6-menu');
       if (!menu) {
-        menu = document.createElement('pf-v6-menu');
+        menu = document.createElement('cem-pf-v6-menu');
         eventTypeFilter.appendChild(menu);
       }
 
-      const existingItems = menu.querySelectorAll('pf-v6-menu-item');
+      const existingItems = menu.querySelectorAll('cem-pf-v6-menu-item');
       existingItems.forEach(item => item.remove());
 
       const allEventTypes = new Set<string>();
@@ -2062,7 +2062,7 @@ Generated: ${new Date().toISOString()}`;
       }
 
       for (const eventName of allEventTypes) {
-        const item = document.createElement('pf-v6-menu-item');
+        const item = document.createElement('cem-pf-v6-menu-item');
         item.setAttribute('variant', 'checkbox');
         item.setAttribute('value', eventName);
         if (this.#eventTypeFilters.has(eventName)) {
@@ -2075,13 +2075,13 @@ Generated: ${new Date().toISOString()}`;
 
     const elementFilter = this.#$('element-filter');
     if (elementFilter && this.#elementEventMap) {
-      let menu = elementFilter.querySelector('pf-v6-menu');
+      let menu = elementFilter.querySelector('cem-pf-v6-menu');
       if (!menu) {
-        menu = document.createElement('pf-v6-menu');
+        menu = document.createElement('cem-pf-v6-menu');
         elementFilter.appendChild(menu);
       }
 
-      const existingItems = menu.querySelectorAll('pf-v6-menu-item');
+      const existingItems = menu.querySelectorAll('cem-pf-v6-menu-item');
       existingItems.forEach(item => item.remove());
 
       const allElements = new Set<string>();
@@ -2098,7 +2098,7 @@ Generated: ${new Date().toISOString()}`;
       }
 
       for (const tagName of allElements) {
-        const item = document.createElement('pf-v6-menu-item');
+        const item = document.createElement('cem-pf-v6-menu-item');
         item.setAttribute('variant', 'checkbox');
         item.setAttribute('value', tagName);
         if (this.#elementFilters.has(tagName)) {

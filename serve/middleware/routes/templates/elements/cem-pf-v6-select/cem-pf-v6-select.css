@@ -1,0 +1,102 @@
+:host {
+
+  /* Form control custom properties */
+  --cem-pf-v6-c-form-control--ColumnGap: var(--pf-t--global--spacer--gap--text-to-element--default);
+  --cem-pf-v6-c-form-control--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-form-control--FontSize: var(--pf-t--global--font--size--body--default);
+  --cem-pf-v6-c-form-control--LineHeight: var(--pf-t--global--font--line-height--body);
+  --cem-pf-v6-c-form-control--Resize: none;
+  --cem-pf-v6-c-form-control--OutlineOffset: -6px;
+  --cem-pf-v6-c-form-control--BorderRadius: var(--pf-t--global--border--radius--small);
+  --cem-pf-v6-c-form-control--before--BorderWidth: var(--pf-t--global--border--width--control--default);
+  --cem-pf-v6-c-form-control--before--BorderStyle: solid;
+  --cem-pf-v6-c-form-control--before--BorderColor: var(--pf-t--global--border--color--default);
+  --cem-pf-v6-c-form-control--before--BorderRadius: var(--cem-pf-v6-c-form-control--BorderRadius);
+  --cem-pf-v6-c-form-control--after--BorderWidth: var(--pf-t--global--border--width--control--default);
+  --cem-pf-v6-c-form-control--after--BorderStyle: solid;
+  --cem-pf-v6-c-form-control--after--BorderColor: transparent;
+  --cem-pf-v6-c-form-control--after--BorderRadius: var(--cem-pf-v6-c-form-control--BorderRadius);
+  --cem-pf-v6-c-form-control--BackgroundColor: var(--pf-t--global--background--color--control--default);
+  --cem-pf-v6-c-form-control--Width: 100%;
+  --cem-pf-v6-c-form-control--inset--base: var(--pf-t--global--spacer--control--horizontal--default);
+  --cem-pf-v6-c-form-control--PaddingBlockStart--base: var(--pf-t--global--spacer--control--vertical--default);
+  --cem-pf-v6-c-form-control--PaddingBlockEnd--base: var(--pf-t--global--spacer--control--vertical--default);
+  --cem-pf-v6-c-form-control--PaddingInlineEnd--base: var(--cem-pf-v6-c-form-control--inset--base);
+  --cem-pf-v6-c-form-control--PaddingInlineStart--base: var(--cem-pf-v6-c-form-control--inset--base);
+  --cem-pf-v6-c-form-control--PaddingBlockStart: var(--cem-pf-v6-c-form-control__select--PaddingBlockStart);
+  --cem-pf-v6-c-form-control--PaddingBlockEnd: var(--cem-pf-v6-c-form-control__select--PaddingBlockEnd);
+  --cem-pf-v6-c-form-control--PaddingInlineStart: var(--cem-pf-v6-c-form-control__select--PaddingInlineStart);
+  --cem-pf-v6-c-form-control--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__select--PaddingInlineEnd);
+  --cem-pf-v6-c-form-control__select--PaddingBlockStart: var(--cem-pf-v6-c-form-control--PaddingBlockStart--base);
+  --cem-pf-v6-c-form-control__select--PaddingBlockEnd: var(--cem-pf-v6-c-form-control--PaddingBlockEnd--base);
+  --cem-pf-v6-c-form-control__select--PaddingInlineEnd: var(--cem-pf-v6-c-form-control--PaddingInlineEnd--base);
+  --cem-pf-v6-c-form-control__select--PaddingInlineStart: var(--cem-pf-v6-c-form-control--PaddingInlineStart--base);
+  --cem-pf-v6-c-form-control__utilities--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__utilities--select--PaddingInlineEnd);
+  --cem-pf-v6-c-form-control__utilities--select--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__select--PaddingInlineEnd);
+  --cem-pf-v6-c-form-control--hover--after--BorderWidth: var(--pf-t--global--border--width--control--hover);
+  --cem-pf-v6-c-form-control--hover--after--BorderColor: var(--pf-t--global--border--color--hover);
+
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: var(--cem-pf-v6-c-form-control--ColumnGap);
+  align-items: start;
+  width: var(--cem-pf-v6-c-form-control--Width);
+  font-size: var(--cem-pf-v6-c-form-control--FontSize);
+  line-height: var(--cem-pf-v6-c-form-control--LineHeight);
+  resize: var(--cem-pf-v6-c-form-control--Resize);
+  background-color: var(--cem-pf-v6-c-form-control--BackgroundColor);
+  border-radius: var(--cem-pf-v6-c-form-control--BorderRadius);
+}
+
+:host::before,
+:host::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+}
+
+:host::before {
+  border-color: var(--cem-pf-v6-c-form-control--before--BorderColor);
+  border-style: var(--cem-pf-v6-c-form-control--before--BorderStyle);
+  border-width: var(--cem-pf-v6-c-form-control--before--BorderWidth);
+  border-radius: var(--cem-pf-v6-c-form-control--before--BorderRadius);
+}
+
+:host::after {
+  border: var(--cem-pf-v6-c-form-control--after--BorderWidth) var(--cem-pf-v6-c-form-control--after--BorderStyle) var(--cem-pf-v6-c-form-control--after--BorderColor);
+  border-radius: var(--cem-pf-v6-c-form-control--before--BorderRadius);
+}
+
+:host(:hover) {
+  --cem-pf-v6-c-form-control--after--BorderColor: var(--cem-pf-v6-c-form-control--hover--after--BorderColor);
+  --cem-pf-v6-c-form-control--after--BorderWidth: var(--cem-pf-v6-c-form-control--hover--after--BorderWidth);
+}
+
+#select {
+  grid-row: 1 / 2;
+  grid-column: 1 / -1;
+  padding-block-start: var(--cem-pf-v6-c-form-control--PaddingBlockStart);
+  padding-block-end: var(--cem-pf-v6-c-form-control--PaddingBlockEnd);
+  padding-inline-start: var(--cem-pf-v6-c-form-control--PaddingInlineStart);
+  padding-inline-end: var(--cem-pf-v6-c-form-control--PaddingInlineEnd);
+  margin: 0;
+  font-family: inherit;
+  font-size: 100%;
+  line-height: var(--pf-t--global--font--line-height--body);
+  color: var(--cem-pf-v6-c-form-control--Color);
+  appearance: none;
+  background-color: var(--cem-pf-v6-c-form-control--BackgroundColor);
+  border: none;
+  border-radius: var(--cem-pf-v6-c-form-control--BorderRadius);
+  outline-offset: var(--cem-pf-v6-c-form-control--OutlineOffset);
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236a6e73' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--pf-t--global--spacer--md) center;
+}
+
+#select * {
+  color: var(--cem-pf-v6-c-form-control--Color);
+}

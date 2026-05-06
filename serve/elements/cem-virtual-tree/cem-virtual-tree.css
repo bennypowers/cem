@@ -17,7 +17,7 @@
   overflow-x: hidden;
   position: relative;
 
-  pf-v6-tree-item {
+  cem-pf-v6-tree-item {
     cursor: pointer;
 
     &:hover {

@@ -34,24 +34,24 @@ func TestTreeViewComponentFiles(t *testing.T) {
 		description string
 	}{
 		{
-			name: "pf-v6-tree-view.js",
-			path: "templates/elements/pf-v6-tree-view/pf-v6-tree-view.js",
+			name: "cem-pf-v6-tree-view.js",
+			path: "templates/elements/cem-pf-v6-tree-view/cem-pf-v6-tree-view.js",
 			mustContain: []string{
 				"PfV6TreeView",
 				"LitElement",
-				"pf-v6-tree-view",
+				"cem-pf-v6-tree-view",
 				"expandAll",
 				"collapseAll",
 			},
 			description: "Tree view web component JavaScript",
 		},
 		{
-			name: "pf-v6-tree-item.js",
-			path: "templates/elements/pf-v6-tree-item/pf-v6-tree-item.js",
+			name: "cem-pf-v6-tree-item.js",
+			path: "templates/elements/cem-pf-v6-tree-item/cem-pf-v6-tree-item.js",
 			mustContain: []string{
 				"PfV6TreeItem",
 				"LitElement",
-				"pf-v6-tree-item",
+				"cem-pf-v6-tree-item",
 				"PfTreeItemSelectEvent",
 				"PfTreeItemExpandEvent",
 				"PfTreeItemCollapseEvent",
@@ -184,7 +184,7 @@ func TestManifestTreeBuilder_Structure(t *testing.T) {
 
 // TestTreeViewEventClasses verifies custom event classes follow the pattern
 func TestTreeViewEventClasses(t *testing.T) {
-	jsPath := filepath.Join(".", "templates/elements/pf-v6-tree-item/pf-v6-tree-item.js")
+	jsPath := filepath.Join(".", "templates/elements/cem-pf-v6-tree-item/cem-pf-v6-tree-item.js")
 	content, err := os.ReadFile(jsPath)
 	if err != nil {
 		t.Fatalf("Failed to read tree item JS: %v", err)
@@ -218,7 +218,7 @@ func TestTreeViewEventClasses(t *testing.T) {
 
 // TestTreeViewAccessibility verifies ARIA attributes are present in the Lit component JS
 func TestTreeViewAccessibility(t *testing.T) {
-	jsPath := filepath.Join(".", "templates/elements/pf-v6-tree-view/pf-v6-tree-view.js")
+	jsPath := filepath.Join(".", "templates/elements/cem-pf-v6-tree-view/cem-pf-v6-tree-view.js")
 	content, err := os.ReadFile(jsPath)
 	if err != nil {
 		t.Fatalf("Failed to read tree view JS: %v", err)
@@ -241,7 +241,7 @@ func TestTreeViewAccessibility(t *testing.T) {
 
 // TestTreeItemCSS_Structure verifies tree item CSS file has required structure
 func TestTreeItemCSS_Structure(t *testing.T) {
-	cssPath := filepath.Join(".", "templates/elements/pf-v6-tree-item/pf-v6-tree-item.css")
+	cssPath := filepath.Join(".", "templates/elements/cem-pf-v6-tree-item/cem-pf-v6-tree-item.css")
 	content, err := os.ReadFile(cssPath)
 	if err != nil {
 		t.Fatalf("Failed to read tree item CSS: %v", err)
@@ -449,7 +449,7 @@ func TestDemoChromeNoSSR(t *testing.T) {
 
 	// Verify SSR tree elements are NOT present
 	shouldNotContain := []string{
-		"<pf-v6-tree-view slot=\"manifest-tree\"",
+		"<cem-pf-v6-tree-view slot=\"manifest-tree\"",
 		"slot=\"manifest-details\"",
 		"data-type=\"custom-element\"",
 		"data-type=\"attribute\"",

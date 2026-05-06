@@ -4,7 +4,7 @@ import { property } from 'lit/decorators/property.js';
 
 import styles from './cem-drawer.css' with { type: 'css' };
 
-import '../pf-v6-button/pf-v6-button.js';
+import '../cem-pf-v6-button/cem-pf-v6-button.js';
 
 /**
  * Custom event fired when the drawer opens or closes
@@ -95,7 +95,7 @@ export class CemServeDrawer extends LitElement {
            aria-valuenow="400"
            @mousedown=${this.#startResize}
            @keydown=${this.#handleKeydown}></div>
-      <pf-v6-button id="toggle"
+      <cem-pf-v6-button id="toggle"
                      variant="plain"
                      aria-label="Toggle drawer"
                      aria-expanded="${this.open}"
@@ -109,7 +109,7 @@ export class CemServeDrawer extends LitElement {
           <path fill-rule="evenodd"
                 d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
         </svg>
-      </pf-v6-button>
+      </cem-pf-v6-button>
       <div id="content"
            style="height: ${this.open ? this.drawerHeight : 0}px;">
         <slot></slot>

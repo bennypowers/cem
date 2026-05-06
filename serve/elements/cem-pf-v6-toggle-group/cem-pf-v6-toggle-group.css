@@ -1,0 +1,52 @@
+:host {
+  display: inline-flex;
+  --cem-pf-v6-c-toggle-group__button--PaddingBlockStart: var(--pf-t--global--spacer--sm);
+  --cem-pf-v6-c-toggle-group__button--PaddingInlineEnd: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-toggle-group__button--PaddingBlockEnd: var(--pf-t--global--spacer--sm);
+  --cem-pf-v6-c-toggle-group__button--PaddingInlineStart: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-toggle-group__button--FontSize: var(--pf-t--global--font--size--body--default);
+  --cem-pf-v6-c-toggle-group__button--LineHeight: var(--pf-t--global--font--line-height--body);
+  --cem-pf-v6-c-toggle-group__button--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-toggle-group__button--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);
+  --cem-pf-v6-c-toggle-group__button--ZIndex: auto;
+  --cem-pf-v6-c-toggle-group__button--hover--BackgroundColor: var(--pf-t--global--background--color--primary--hover);
+  --cem-pf-v6-c-toggle-group__button--hover--ZIndex: var(--pf-t--global--z-index--xs);
+  --cem-pf-v6-c-toggle-group__button--hover--before--BorderColor: var(--pf-t--global--border--color--default);
+  --cem-pf-v6-c-toggle-group__button--hover--after--BorderWidth: var(--pf-t--global--border--width--high-contrast--regular);
+  --cem-pf-v6-c-toggle-group__button--before--BorderWidth: var(--pf-t--global--border--width--control--default);
+  --cem-pf-v6-c-toggle-group__button--before--BorderColor: var(--pf-t--global--border--color--default);
+  --cem-pf-v6-c-toggle-group__item--item--MarginInlineStart: calc(-1 * var(--pf-t--global--border--width--control--default));
+  --cem-pf-v6-c-toggle-group__item--first-child__button--BorderStartStartRadius: var(--pf-t--global--border--radius--tiny);
+  --cem-pf-v6-c-toggle-group__item--first-child__button--BorderEndStartRadius: var(--pf-t--global--border--radius--tiny);
+  --cem-pf-v6-c-toggle-group__item--last-child__button--BorderStartEndRadius: var(--pf-t--global--border--radius--tiny);
+  --cem-pf-v6-c-toggle-group__item--last-child__button--BorderEndEndRadius: var(--pf-t--global--border--radius--tiny);
+  --cem-pf-v6-c-toggle-group__icon--text--MarginInlineStart: var(--pf-t--global--spacer--sm);
+  --cem-pf-v6-c-toggle-group__button--m-selected--BackgroundColor: var(--pf-t--global--color--brand--default);
+  --cem-pf-v6-c-toggle-group__button--m-selected--Color: var(--pf-t--global--text--color--on-brand--default);
+  --cem-pf-v6-c-toggle-group__button--m-selected--before--BorderColor: var(--pf-t--global--border--color--clicked);
+  --cem-pf-v6-c-toggle-group__button--m-selected-selected--before--BorderInlineStartColor: var(--pf-t--global--border--color--alt);
+  --cem-pf-v6-c-toggle-group__button--m-selected--ZIndex: var(--pf-t--global--z-index--xs);
+  --cem-pf-v6-c-toggle-group__button--m-selected--after--BorderWidth: var(--pf-t--global--border--width--high-contrast--strong);
+  --cem-pf-v6-c-toggle-group__button--disabled--BackgroundColor: var(--pf-t--global--background--color--disabled--default);
+  --cem-pf-v6-c-toggle-group__button--disabled--Color: var(--pf-t--global--text--color--on-disabled);
+  --cem-pf-v6-c-toggle-group__button--disabled--before--BorderColor: var(--pf-t--global--border--color--disabled);
+  --cem-pf-v6-c-toggle-group__button--disabled-disabled--before--BorderInlineStartColor: var(--pf-t--global--border--color--disabled);
+  --cem-pf-v6-c-toggle-group__button--disabled--ZIndex: var(--pf-t--global--z-index--xs);
+  --cem-pf-v6-c-toggle-group--m-compact__button--PaddingBlockStart: 0;
+  --cem-pf-v6-c-toggle-group--m-compact__button--PaddingInlineEnd: var(--pf-t--global--spacer--sm);
+  --cem-pf-v6-c-toggle-group--m-compact__button--PaddingBlockEnd: 0;
+  --cem-pf-v6-c-toggle-group--m-compact__button--PaddingInlineStart: var(--pf-t--global--spacer--sm);
+  --cem-pf-v6-c-toggle-group--m-compact__button--FontSize: var(--pf-t--global--font--size--body--default);
+}
+
+#container {
+  display: flex;
+}
+
+:host([compact]) {
+  --cem-pf-v6-c-toggle-group__button--PaddingBlockStart: var(--cem-pf-v6-c-toggle-group--m-compact__button--PaddingBlockStart);
+  --cem-pf-v6-c-toggle-group__button--PaddingInlineEnd: var(--cem-pf-v6-c-toggle-group--m-compact__button--PaddingInlineEnd);
+  --cem-pf-v6-c-toggle-group__button--PaddingBlockEnd: var(--cem-pf-v6-c-toggle-group--m-compact__button--PaddingBlockEnd);
+  --cem-pf-v6-c-toggle-group__button--PaddingInlineStart: var(--cem-pf-v6-c-toggle-group--m-compact__button--PaddingInlineStart);
+  --cem-pf-v6-c-toggle-group__button--FontSize: var(--cem-pf-v6-c-toggle-group--m-compact__button--FontSize);
+}

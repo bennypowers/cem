@@ -152,6 +152,7 @@ func Generate(rootDir string, config *Config) (*ImportMap, error) {
 	// Use mappa for import map resolution (auto-discovers workspace packages)
 	result, err := resolveWithMappa(
 		workspaceRoot, // Use workspace root for resolution
+		rootDir,       // Rebase paths to serve root (issue #320)
 		fs,
 		config.Logger,
 		nil, // No input map - we'll apply overrides separately
@@ -237,6 +238,7 @@ func GenerateWithGraph(rootDir string, config *Config) (*IncrementalResult, erro
 	// Use mappa for resolution with graph
 	result, err := resolveWithMappaGraph(
 		workspaceRoot,
+		rootDir, // Rebase paths to serve root (issue #320)
 		fs,
 		config.Logger,
 		nil,
@@ -295,6 +297,7 @@ func GenerateIncremental(rootDir string, config *Config, update IncrementalUpdat
 	// Perform incremental resolution
 	result, err := resolveIncrementalWithMappa(
 		workspaceRoot,
+		rootDir, // Rebase paths to serve root (issue #320)
 		fs,
 		config.Logger,
 		update,
@@ -471,6 +474,7 @@ func generateWorkspaceImportMap(workspaceRoot string, packages []middleware.Work
 	// Use mappa for import map resolution with the pre-filtered workspace packages
 	result, err := resolveWithMappa(
 		workspaceRoot,
+		"",                // No path rebasing in workspace mode (already at workspace root)
 		fs,
 		logger,
 		nil,               // No input map - overrides applied separately

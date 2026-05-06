@@ -1,0 +1,424 @@
+:host {
+  display: var(--cem-pf-v6-c-button--Display, inline-flex);
+
+  /* Base button variables */
+  --cem-pf-v6-c-button--Display: inline-flex;
+  --cem-pf-v6-c-button--AlignItems: baseline;
+  --cem-pf-v6-c-button--JustifyContent: center;
+  --cem-pf-v6-c-button--Gap: var(--pf-t--global--spacer--gap--text-to-element--default);
+  --cem-pf-v6-c-button--MinWidth: calc(1em * var(--cem-pf-v6-c-button--LineHeight) + var(--cem-pf-v6-c-button--PaddingBlockStart) + var(--cem-pf-v6-c-button--PaddingBlockEnd));
+  --cem-pf-v6-c-button--PaddingBlockStart: var(--pf-t--global--spacer--control--vertical--default);
+  --cem-pf-v6-c-button--PaddingInlineEnd: var(--pf-t--global--spacer--action--horizontal--default);
+  --cem-pf-v6-c-button--PaddingBlockEnd: var(--pf-t--global--spacer--control--vertical--default);
+  --cem-pf-v6-c-button--PaddingInlineStart: var(--pf-t--global--spacer--action--horizontal--default);
+  --cem-pf-v6-c-button--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-button--LineHeight: var(--pf-t--global--font--line-height--body);
+  --cem-pf-v6-c-button--FontWeight: var(--pf-t--global--font--weight--body--default);
+  --cem-pf-v6-c-button--FontSize: var(--pf-t--global--font--size--body--default);
+  --cem-pf-v6-c-button--BackgroundColor: transparent;
+  --cem-pf-v6-c-button--BorderColor: transparent;
+  --cem-pf-v6-c-button--BorderWidth: var(--pf-t--global--border--width--action--default);
+  --cem-pf-v6-c-button--BorderRadius: var(--pf-t--global--border--radius--pill);
+  --cem-pf-v6-c-button--TextDecorationLine: none;
+  --cem-pf-v6-c-button--TextDecorationStyle: none;
+  --cem-pf-v6-c-button--TextDecorationColor: currentcolor;
+  --cem-pf-v6-c-button--TransitionDelay: 0s;
+  --cem-pf-v6-c-button--TransitionDuration: var(--pf-t--global--motion--duration--fade--default);
+  --cem-pf-v6-c-button--TransitionTimingFunction: var(--pf-t--global--motion--timing-function--accelerate);
+  --cem-pf-v6-c-button--TransitionProperty: color, background, border-color;
+  --cem-pf-v6-c-button--ScaleX: 1;
+  --cem-pf-v6-c-button--ScaleY: 1;
+  --cem-pf-v6-c-button--border--offset: 0;
+  --cem-pf-v6-c-button--hover--BackgroundColor: transparent;
+  --cem-pf-v6-c-button--hover--BorderColor: transparent;
+  --cem-pf-v6-c-button--hover--BorderWidth: var(--pf-t--global--border--width--action--hover);
+  --cem-pf-v6-c-button--hover--ScaleX: 1;
+  --cem-pf-v6-c-button--hover--ScaleY: 1;
+  --cem-pf-v6-c-button--m-clicked--BackgroundColor: transparent;
+  --cem-pf-v6-c-button--m-clicked--BorderColor: transparent;
+  --cem-pf-v6-c-button--m-clicked--BorderWidth: var(--pf-t--global--border--width--action--clicked);
+  --cem-pf-v6-c-button--disabled--Color: var(--pf-t--global--text--color--on-disabled);
+  --cem-pf-v6-c-button--disabled--BackgroundColor: var(--pf-t--global--background--color--disabled--default);
+  --cem-pf-v6-c-button--disabled--BorderColor: transparent;
+  --cem-pf-v6-c-button__icon--Color: var(--pf-t--global--icon--color--regular);
+  --cem-pf-v6-c-button--hover__icon--Color: var(--pf-t--global--icon--color--regular);
+  --cem-pf-v6-c-button--m-clicked__icon--Color: var(--pf-t--global--icon--color--regular);
+  --cem-pf-v6-c-button--disabled__icon--Color: var(--pf-t--global--icon--color--on-disabled);
+
+  /* Primary variant variables */
+  --cem-pf-v6-c-button--m-primary--Color: var(--pf-t--global--text--color--on-brand--default);
+  --cem-pf-v6-c-button--m-primary--BackgroundColor: var(--pf-t--global--color--brand--default);
+  --cem-pf-v6-c-button--m-primary__icon--Color: var(--pf-t--global--icon--color--on-brand--default);
+  --cem-pf-v6-c-button--m-primary--hover--Color: var(--pf-t--global--text--color--on-brand--hover);
+  --cem-pf-v6-c-button--m-primary--hover--BackgroundColor: var(--pf-t--global--color--brand--hover);
+  --cem-pf-v6-c-button--m-primary--hover__icon--Color: var(--pf-t--global--icon--color--on-brand--hover);
+  --cem-pf-v6-c-button--m-primary--m-clicked--Color: var(--pf-t--global--text--color--on-brand--clicked);
+  --cem-pf-v6-c-button--m-primary--m-clicked--BackgroundColor: var(--pf-t--global--color--brand--clicked);
+  --cem-pf-v6-c-button--m-primary--m-clicked__icon--Color: var(--pf-t--global--icon--color--on-brand--clicked);
+
+  /* Secondary variant variables */
+  --cem-pf-v6-c-button--m-secondary--Color: var(--pf-t--global--text--color--brand--default);
+  --cem-pf-v6-c-button--m-secondary--BorderColor: var(--pf-t--global--border--color--brand--default);
+  --cem-pf-v6-c-button--m-secondary--TransitionDuration: var(--pf-t--global--motion--duration--fade--short);
+  --cem-pf-v6-c-button--m-secondary__icon--Color: var(--pf-t--global--icon--color--brand--default);
+  --cem-pf-v6-c-button--m-secondary--hover--Color: var(--pf-t--global--text--color--brand--hover);
+  --cem-pf-v6-c-button--m-secondary--hover--BorderColor: var(--pf-t--global--border--color--brand--hover);
+  --cem-pf-v6-c-button--m-secondary--hover__icon--Color: var(--pf-t--global--icon--color--brand--hover);
+  --cem-pf-v6-c-button--m-secondary--m-clicked--Color: var(--pf-t--global--text--color--brand--clicked);
+  --cem-pf-v6-c-button--m-secondary--m-clicked--BorderColor: var(--pf-t--global--border--color--brand--clicked);
+  --cem-pf-v6-c-button--m-secondary--m-clicked__icon--Color: var(--pf-t--global--icon--color--brand--clicked);
+
+  /* Tertiary variant variables */
+  --cem-pf-v6-c-button--m-tertiary--Color: var(--pf-t--global--text--color--brand--default);
+  --cem-pf-v6-c-button--m-tertiary--BorderColor: var(--pf-t--global--border--color--default);
+  --cem-pf-v6-c-button--m-tertiary--TransitionDuration: var(--pf-t--global--motion--duration--fade--short);
+  --cem-pf-v6-c-button--m-tertiary__icon--Color: var(--pf-t--global--icon--color--brand--default);
+  --cem-pf-v6-c-button--m-tertiary--hover--Color: var(--pf-t--global--text--color--brand--hover);
+  --cem-pf-v6-c-button--m-tertiary--hover--BorderColor: var(--pf-t--global--border--color--hover);
+  --cem-pf-v6-c-button--m-tertiary--hover__icon--Color: var(--pf-t--global--icon--color--brand--hover);
+  --cem-pf-v6-c-button--m-tertiary--m-clicked--Color: var(--pf-t--global--text--color--brand--clicked);
+  --cem-pf-v6-c-button--m-tertiary--m-clicked--BorderColor: var(--pf-t--global--border--color--clicked);
+  --cem-pf-v6-c-button--m-tertiary--m-clicked__icon--Color: var(--pf-t--global--icon--color--brand--clicked);
+
+  /* Plain variant variables */
+  --cem-pf-v6-c-button--m-plain--BorderRadius: var(--pf-t--global--border--radius--small);
+  --cem-pf-v6-c-button--m-plain--PaddingInlineEnd: var(--pf-t--global--spacer--action--horizontal--plain--default);
+  --cem-pf-v6-c-button--m-plain--PaddingInlineStart: var(--pf-t--global--spacer--action--horizontal--plain--default);
+  --cem-pf-v6-c-button--m-plain--Color: var(--pf-t--global--icon--color--regular);
+  --cem-pf-v6-c-button--m-plain__icon--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-button--m-plain--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);
+  --cem-pf-v6-c-button--m-plain--hover--Color: var(--pf-t--global--icon--color--regular);
+  --cem-pf-v6-c-button--m-plain--hover--BackgroundColor: var(--pf-t--global--background--color--action--plain--hover);
+  --cem-pf-v6-c-button--m-plain--m-clicked--Color: var(--pf-t--global--icon--color--regular);
+  --cem-pf-v6-c-button--m-plain--m-clicked--BackgroundColor: var(--pf-t--global--background--color--action--plain--clicked);
+  --cem-pf-v6-c-button--m-plain--disabled--Color: var(--pf-t--global--text--color--disabled);
+  --cem-pf-v6-c-button--m-plain--disabled__icon--Color: var(--pf-t--global--icon--color--disabled);
+  --cem-pf-v6-c-button--m-plain--disabled--BackgroundColor: transparent;
+  --cem-pf-v6-c-button--m-plain--m-small--PaddingInlineEnd: var(--pf-t--global--spacer--action--horizontal--plain--compact);
+  --cem-pf-v6-c-button--m-plain--m-small--PaddingInlineStart: var(--pf-t--global--spacer--action--horizontal--plain--compact);
+  --cem-pf-v6-c-button--m-plain--BorderWidth: var(--pf-t--global--border--width--action--plain--default);
+  --cem-pf-v6-c-button--m-plain--m-clicked--BorderWidth: var(--pf-t--global--border--width--action--plain--clicked);
+  --cem-pf-v6-c-button--m-plain--hover--BorderWidth: var(--pf-t--global--border--width--action--plain--hover);
+  --cem-pf-v6-c-button--m-plain--BorderColor: transparent;
+  --cem-pf-v6-c-button--m-plain--m-clicked--BorderColor: var(--pf-t--global--border--color--high-contrast);
+  --cem-pf-v6-c-button--m-plain--hover--BorderColor: var(--pf-t--global--border--color--high-contrast);
+  --cem-pf-v6-c-button--m-plain--m-no-padding--MinWidth: auto;
+  --cem-pf-v6-c-button--m-plain--m-no-padding--PaddingBlockStart: 0;
+  --cem-pf-v6-c-button--m-plain--m-no-padding--PaddingInlineEnd: 0;
+  --cem-pf-v6-c-button--m-plain--m-no-padding--PaddingBlockEnd: 0;
+  --cem-pf-v6-c-button--m-plain--m-no-padding--PaddingInlineStart: 0;
+
+  /* Link variant variables */
+  --cem-pf-v6-c-button--m-link--BorderRadius: var(--pf-t--global--border--radius--small);
+  --cem-pf-v6-c-button--m-link--PaddingInlineEnd: var(--pf-t--global--spacer--action--horizontal--plain--default);
+  --cem-pf-v6-c-button--m-link--PaddingInlineStart: var(--pf-t--global--spacer--action--horizontal--plain--default);
+  --cem-pf-v6-c-button--m-link--Color: var(--pf-t--global--text--color--brand--default);
+  --cem-pf-v6-c-button--m-link--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);
+  --cem-pf-v6-c-button--m-link__icon--Color: var(--pf-t--global--icon--color--brand--default);
+  --cem-pf-v6-c-button--m-link--hover--Color: var(--pf-t--global--text--color--brand--hover);
+  --cem-pf-v6-c-button--m-link--hover--BackgroundColor: var(--pf-t--global--background--color--action--plain--hover);
+  --cem-pf-v6-c-button--m-link--hover__icon--Color: var(--pf-t--global--text--color--brand--hover);
+  --cem-pf-v6-c-button--m-link--m-clicked--Color: var(--pf-t--global--text--color--brand--clicked);
+  --cem-pf-v6-c-button--m-link--m-clicked--BackgroundColor: var(--pf-t--global--background--color--action--plain--clicked);
+  --cem-pf-v6-c-button--m-link--m-clicked__icon--Color: var(--pf-t--global--text--color--brand--clicked);
+
+  /* Danger variant variables */
+  --cem-pf-v6-c-button--m-danger--Color: var(--pf-t--global--text--color--status--on-danger--default);
+  --cem-pf-v6-c-button--m-danger--BackgroundColor: var(--pf-t--global--color--status--danger--default);
+  --cem-pf-v6-c-button--m-danger__icon--Color: var(--pf-t--global--icon--color--status--on-danger--default);
+  --cem-pf-v6-c-button--m-danger--hover--Color: var(--pf-t--global--text--color--status--on-danger--hover);
+  --cem-pf-v6-c-button--m-danger--hover--BackgroundColor: var(--pf-t--global--color--status--danger--hover);
+  --cem-pf-v6-c-button--m-danger--hover__icon--Color: var(--pf-t--global--icon--color--status--on-danger--hover);
+  --cem-pf-v6-c-button--m-danger--m-clicked--Color: var(--pf-t--global--text--color--status--on-danger--clicked);
+  --cem-pf-v6-c-button--m-danger--m-clicked--BackgroundColor: var(--pf-t--global--color--status--danger--clicked);
+  --cem-pf-v6-c-button--m-danger--m-clicked__icon--Color: var(--pf-t--global--icon--color--status--on-danger--clicked);
+
+  /* Warning variant variables */
+  --cem-pf-v6-c-button--m-warning--Color: var(--pf-t--global--text--color--status--on-warning--default);
+  --cem-pf-v6-c-button--m-warning--BackgroundColor: var(--pf-t--global--color--status--warning--default);
+  --cem-pf-v6-c-button--m-warning__icon--Color: var(--pf-t--global--icon--color--status--on-warning--default);
+  --cem-pf-v6-c-button--m-warning--hover--Color: var(--pf-t--global--text--color--status--on-warning--hover);
+  --cem-pf-v6-c-button--m-warning--hover--BackgroundColor: var(--pf-t--global--color--status--warning--hover);
+  --cem-pf-v6-c-button--m-warning--hover__icon--Color: var(--pf-t--global--icon--color--status--on-warning--hover);
+  --cem-pf-v6-c-button--m-warning--m-clicked--Color: var(--pf-t--global--text--color--status--on-warning--clicked);
+  --cem-pf-v6-c-button--m-warning--m-clicked--BackgroundColor: var(--pf-t--global--color--status--warning--clicked);
+  --cem-pf-v6-c-button--m-warning--m-clicked__icon--Color: var(--pf-t--global--icon--color--status--on-warning--clicked);
+
+  /* Small size variant variables */
+  --cem-pf-v6-c-button--m-small--PaddingBlockStart: var(--pf-t--global--spacer--control--vertical--compact);
+  --cem-pf-v6-c-button--m-small--PaddingInlineEnd: var(--pf-t--global--spacer--action--horizontal--compact);
+  --cem-pf-v6-c-button--m-small--PaddingBlockEnd: var(--pf-t--global--spacer--control--vertical--compact);
+  --cem-pf-v6-c-button--m-small--PaddingInlineStart: var(--pf-t--global--spacer--action--horizontal--compact);
+
+  /* Large size variant variables */
+  --cem-pf-v6-c-button--m-display-lg--PaddingBlockStart: var(--pf-t--global--spacer--control--vertical--spacious);
+  --cem-pf-v6-c-button--m-display-lg--PaddingInlineEnd: var(--pf-t--global--spacer--action--horizontal--spacious);
+  --cem-pf-v6-c-button--m-display-lg--PaddingBlockEnd: var(--pf-t--global--spacer--control--vertical--spacious);
+  --cem-pf-v6-c-button--m-display-lg--PaddingInlineStart: var(--pf-t--global--spacer--action--horizontal--spacious);
+  --cem-pf-v6-c-button--m-display-lg--FontWeight: var(--pf-t--global--font--weight--body--bold);
+
+  /* Block variant variables */
+  --cem-pf-v6-c-button--m-block--Display: flex;
+  --cem-pf-v6-c-button--m-block--Width: 100%;
+}
+
+/* Shared styles for both button (host) and link (shadow a) */
+:host(:not([href])),
+a {
+  position: relative;
+  display: var(--cem-pf-v6-c-button--Display);
+  box-sizing: border-box;
+  gap: var(--cem-pf-v6-c-button--Gap);
+  align-items: var(--cem-pf-v6-c-button--AlignItems);
+  justify-content: var(--cem-pf-v6-c-button--JustifyContent);
+  min-width: var(--cem-pf-v6-c-button--MinWidth);
+  padding-block-start: var(--cem-pf-v6-c-button--PaddingBlockStart);
+  padding-block-end: var(--cem-pf-v6-c-button--PaddingBlockEnd);
+  padding-inline-start: var(--cem-pf-v6-c-button--PaddingInlineStart);
+  padding-inline-end: var(--cem-pf-v6-c-button--PaddingInlineEnd);
+  font-size: var(--cem-pf-v6-c-button--FontSize);
+  font-weight: var(--cem-pf-v6-c-button--FontWeight);
+  line-height: var(--cem-pf-v6-c-button--LineHeight);
+  color: var(--cem-pf-v6-c-button--Color);
+  text-align: center;
+  text-decoration-line: var(--cem-pf-v6-c-button--TextDecorationLine);
+  text-decoration-style: var(--cem-pf-v6-c-button--TextDecorationStyle);
+  text-decoration-color: var(--cem-pf-v6-c-button--TextDecorationColor);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  background: var(--cem-pf-v6-c-button--BackgroundColor) radial-gradient(circle, transparent 1%, color-mix(in srgb, currentcolor 15%, transparent) 2%) center/15000% 15000%;
+  border: 0;
+  border-start-start-radius: var(--cem-pf-v6-c-button--BorderRadius);
+  border-start-end-radius: var(--cem-pf-v6-c-button--BorderRadius);
+  border-end-start-radius: var(--cem-pf-v6-c-button--BorderRadius);
+  border-end-end-radius: var(--cem-pf-v6-c-button--BorderRadius);
+  transition-delay: var(--cem-pf-v6-c-button--TransitionDelay);
+  transition-timing-function: var(--cem-pf-v6-c-button--TransitionTimingFunction);
+  transition-duration: var(--cem-pf-v6-c-button--TransitionDuration);
+  transition-property: var(--cem-pf-v6-c-button--TransitionProperty);
+  scale: var(--cem-pf-v6-c-button--ScaleX) var(--cem-pf-v6-c-button--ScaleY);
+}
+
+:host(:not([href]))::after,
+a::after {
+  position: absolute;
+  inset: var(--cem-pf-v6-c-button--border--offset, 0);
+  pointer-events: none;
+  content: "";
+  border: var(--cem-pf-v6-c-button--BorderWidth) solid var(--cem-pf-v6-c-button--BorderColor);
+  border-radius: inherit;
+  transition: inherit;
+}
+
+:host(:not([href]):hover:not([aria-disabled="true"])),
+a:hover:not([aria-disabled="true"]) {
+  --cem-pf-v6-c-button--Color: var(--cem-pf-v6-c-button--hover--Color);
+  --cem-pf-v6-c-button--BackgroundColor: var(--cem-pf-v6-c-button--hover--BackgroundColor);
+  --cem-pf-v6-c-button--BorderColor: var(--cem-pf-v6-c-button--hover--BorderColor);
+  --cem-pf-v6-c-button--BorderWidth: var(--cem-pf-v6-c-button--hover--BorderWidth);
+  --cem-pf-v6-c-button--ScaleX: var(--cem-pf-v6-c-button--hover--ScaleX);
+  --cem-pf-v6-c-button--ScaleY: var(--cem-pf-v6-c-button--hover--ScaleY);
+  --cem-pf-v6-c-button__icon--Color: var(--cem-pf-v6-c-button--hover__icon--Color);
+}
+
+:host(:not([href]):active:not([aria-disabled="true"])),
+:host(:not([href]).pf-m-clicked),
+a:active:not([aria-disabled="true"]),
+a.pf-m-clicked {
+  --cem-pf-v6-c-button--Color: var(--cem-pf-v6-c-button--m-clicked--Color);
+  --cem-pf-v6-c-button--BackgroundColor: var(--cem-pf-v6-c-button--m-clicked--BackgroundColor);
+  --cem-pf-v6-c-button--BorderColor: var(--cem-pf-v6-c-button--m-clicked--BorderColor);
+  --cem-pf-v6-c-button--BorderWidth: var(--cem-pf-v6-c-button--m-clicked--BorderWidth);
+  --cem-pf-v6-c-button__icon--Color: var(--cem-pf-v6-c-button--m-clicked__icon--Color);
+}
+
+:host(:not([href]):active:not([aria-disabled="true"])),
+a:active:not([aria-disabled="true"]) {
+  background-size: 100% 100%;
+  transition: background 0s;
+}
+
+:host(:not([href]):focus-visible),
+a:focus-visible {
+  outline: 2px solid var(--pf-t--global--color--brand--default);
+  outline-offset: 2px;
+}
+
+:host(:not([href])[aria-disabled="true"]),
+a[aria-disabled="true"] {
+  --cem-pf-v6-c-button--Color: var(--cem-pf-v6-c-button--disabled--Color);
+  --cem-pf-v6-c-button--BackgroundColor: var(--cem-pf-v6-c-button--disabled--BackgroundColor);
+  --cem-pf-v6-c-button--BorderColor: var(--cem-pf-v6-c-button--disabled--BorderColor);
+  --cem-pf-v6-c-button__icon--Color: var(--cem-pf-v6-c-button--disabled__icon--Color);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Primary variant */
+:host([variant="primary"]) {
+  --cem-pf-v6-c-button--Color: var(--cem-pf-v6-c-button--m-primary--Color);
+  --cem-pf-v6-c-button--BackgroundColor: var(--cem-pf-v6-c-button--m-primary--BackgroundColor);
+  --cem-pf-v6-c-button__icon--Color: var(--cem-pf-v6-c-button--m-primary__icon--Color);
+  --cem-pf-v6-c-button--hover--Color: var(--cem-pf-v6-c-button--m-primary--hover--Color);
+  --cem-pf-v6-c-button--hover--BackgroundColor: var(--cem-pf-v6-c-button--m-primary--hover--BackgroundColor);
+  --cem-pf-v6-c-button--hover__icon--Color: var(--cem-pf-v6-c-button--m-primary--hover__icon--Color);
+  --cem-pf-v6-c-button--m-clicked--Color: var(--cem-pf-v6-c-button--m-primary--m-clicked--Color);
+  --cem-pf-v6-c-button--m-clicked--BackgroundColor: var(--cem-pf-v6-c-button--m-primary--m-clicked--BackgroundColor);
+  --cem-pf-v6-c-button--m-clicked__icon--Color: var(--cem-pf-v6-c-button--m-primary--m-clicked__icon--Color);
+}
+
+/* Secondary variant */
+:host([variant="secondary"]) {
+  --cem-pf-v6-c-button--Color: var(--cem-pf-v6-c-button--m-secondary--Color);
+  --cem-pf-v6-c-button--BorderColor: var(--cem-pf-v6-c-button--m-secondary--BorderColor);
+  --cem-pf-v6-c-button--TransitionDuration: var(--cem-pf-v6-c-button--m-secondary--TransitionDuration);
+  --cem-pf-v6-c-button__icon--Color: var(--cem-pf-v6-c-button--m-secondary__icon--Color);
+  --cem-pf-v6-c-button--hover--Color: var(--cem-pf-v6-c-button--m-secondary--hover--Color);
+  --cem-pf-v6-c-button--hover--BorderColor: var(--cem-pf-v6-c-button--m-secondary--hover--BorderColor);
+  --cem-pf-v6-c-button--hover__icon--Color: var(--cem-pf-v6-c-button--m-secondary--hover__icon--Color);
+  --cem-pf-v6-c-button--m-clicked--Color: var(--cem-pf-v6-c-button--m-secondary--m-clicked--Color);
+  --cem-pf-v6-c-button--m-clicked--BorderColor: var(--cem-pf-v6-c-button--m-secondary--m-clicked--BorderColor);
+  --cem-pf-v6-c-button--m-clicked__icon--Color: var(--cem-pf-v6-c-button--m-secondary--m-clicked__icon--Color);
+}
+
+/* Tertiary variant */
+:host([variant="tertiary"]) {
+  --cem-pf-v6-c-button--Color: var(--cem-pf-v6-c-button--m-tertiary--Color);
+  --cem-pf-v6-c-button--BorderColor: var(--cem-pf-v6-c-button--m-tertiary--BorderColor);
+  --cem-pf-v6-c-button--TransitionDuration: var(--cem-pf-v6-c-button--m-tertiary--TransitionDuration);
+  --cem-pf-v6-c-button__icon--Color: var(--cem-pf-v6-c-button--m-tertiary__icon--Color);
+  --cem-pf-v6-c-button--hover--Color: var(--cem-pf-v6-c-button--m-tertiary--hover--Color);
+  --cem-pf-v6-c-button--hover--BorderColor: var(--cem-pf-v6-c-button--m-tertiary--hover--BorderColor);
+  --cem-pf-v6-c-button--hover__icon--Color: var(--cem-pf-v6-c-button--m-tertiary--hover__icon--Color);
+  --cem-pf-v6-c-button--m-clicked--Color: var(--cem-pf-v6-c-button--m-tertiary--m-clicked--Color);
+  --cem-pf-v6-c-button--m-clicked--BorderColor: var(--cem-pf-v6-c-button--m-tertiary--m-clicked--BorderColor);
+  --cem-pf-v6-c-button--m-clicked__icon--Color: var(--cem-pf-v6-c-button--m-tertiary--m-clicked__icon--Color);
+}
+
+/* Plain variant (icon-only) */
+:host([variant="plain"]) {
+  --cem-pf-v6-c-button--BorderRadius: var(--cem-pf-v6-c-button--m-plain--BorderRadius);
+  --cem-pf-v6-c-button--PaddingInlineEnd: var(--cem-pf-v6-c-button--m-plain--PaddingInlineEnd);
+  --cem-pf-v6-c-button--PaddingInlineStart: var(--cem-pf-v6-c-button--m-plain--PaddingInlineStart);
+  --cem-pf-v6-c-button--Color: var(--cem-pf-v6-c-button--m-plain--Color);
+  --cem-pf-v6-c-button__icon--Color: var(--cem-pf-v6-c-button--m-plain__icon--Color);
+  --cem-pf-v6-c-button--BackgroundColor: var(--cem-pf-v6-c-button--m-plain--BackgroundColor);
+  --cem-pf-v6-c-button--hover--Color: var(--cem-pf-v6-c-button--m-plain--hover--Color);
+  --cem-pf-v6-c-button--hover--BackgroundColor: var(--cem-pf-v6-c-button--m-plain--hover--BackgroundColor);
+  --cem-pf-v6-c-button--m-clicked--Color: var(--cem-pf-v6-c-button--m-plain--m-clicked--Color);
+  --cem-pf-v6-c-button--m-clicked--BackgroundColor: var(--cem-pf-v6-c-button--m-plain--m-clicked--BackgroundColor);
+  --cem-pf-v6-c-button--disabled--Color: var(--cem-pf-v6-c-button--m-plain--disabled--Color);
+  --cem-pf-v6-c-button--disabled__icon--Color: var(--cem-pf-v6-c-button--m-plain--disabled__icon--Color);
+  --cem-pf-v6-c-button--disabled--BackgroundColor: var(--cem-pf-v6-c-button--m-plain--disabled--BackgroundColor);
+  --cem-pf-v6-c-button--BorderWidth: var(--cem-pf-v6-c-button--m-plain--BorderWidth);
+  --cem-pf-v6-c-button--m-clicked--BorderWidth: var(--cem-pf-v6-c-button--m-plain--m-clicked--BorderWidth);
+  --cem-pf-v6-c-button--hover--BorderWidth: var(--cem-pf-v6-c-button--m-plain--hover--BorderWidth);
+  --cem-pf-v6-c-button--BorderColor: var(--cem-pf-v6-c-button--m-plain--BorderColor);
+  --cem-pf-v6-c-button--m-clicked--BorderColor: var(--cem-pf-v6-c-button--m-plain--m-clicked--BorderColor);
+  --cem-pf-v6-c-button--hover--BorderColor: var(--cem-pf-v6-c-button--m-plain--hover--BorderColor);
+}
+
+/* Link variant */
+:host([variant="link"]) {
+  --cem-pf-v6-c-button--BorderRadius: var(--cem-pf-v6-c-button--m-link--BorderRadius);
+  --cem-pf-v6-c-button--PaddingInlineEnd: var(--cem-pf-v6-c-button--m-link--PaddingInlineEnd);
+  --cem-pf-v6-c-button--PaddingInlineStart: var(--cem-pf-v6-c-button--m-link--PaddingInlineStart);
+  --cem-pf-v6-c-button--Color: var(--cem-pf-v6-c-button--m-link--Color);
+  --cem-pf-v6-c-button--BackgroundColor: var(--cem-pf-v6-c-button--m-link--BackgroundColor);
+  --cem-pf-v6-c-button__icon--Color: var(--cem-pf-v6-c-button--m-link__icon--Color);
+  --cem-pf-v6-c-button--hover--Color: var(--cem-pf-v6-c-button--m-link--hover--Color);
+  --cem-pf-v6-c-button--hover--BackgroundColor: var(--cem-pf-v6-c-button--m-link--hover--BackgroundColor);
+  --cem-pf-v6-c-button--hover__icon--Color: var(--cem-pf-v6-c-button--m-link--hover__icon--Color);
+  --cem-pf-v6-c-button--m-clicked--Color: var(--cem-pf-v6-c-button--m-link--m-clicked--Color);
+  --cem-pf-v6-c-button--m-clicked--BackgroundColor: var(--cem-pf-v6-c-button--m-link--m-clicked--BackgroundColor);
+  --cem-pf-v6-c-button--m-clicked__icon--Color: var(--cem-pf-v6-c-button--m-link--m-clicked__icon--Color);
+}
+
+/* Danger variant */
+:host([variant="danger"]) {
+  --cem-pf-v6-c-button--Color: var(--cem-pf-v6-c-button--m-danger--Color);
+  --cem-pf-v6-c-button--BackgroundColor: var(--cem-pf-v6-c-button--m-danger--BackgroundColor);
+  --cem-pf-v6-c-button__icon--Color: var(--cem-pf-v6-c-button--m-danger__icon--Color);
+  --cem-pf-v6-c-button--hover--Color: var(--cem-pf-v6-c-button--m-danger--hover--Color);
+  --cem-pf-v6-c-button--hover--BackgroundColor: var(--cem-pf-v6-c-button--m-danger--hover--BackgroundColor);
+  --cem-pf-v6-c-button--hover__icon--Color: var(--cem-pf-v6-c-button--m-danger--hover__icon--Color);
+  --cem-pf-v6-c-button--m-clicked--Color: var(--cem-pf-v6-c-button--m-danger--m-clicked--Color);
+  --cem-pf-v6-c-button--m-clicked--BackgroundColor: var(--cem-pf-v6-c-button--m-danger--m-clicked--BackgroundColor);
+  --cem-pf-v6-c-button--m-clicked__icon--Color: var(--cem-pf-v6-c-button--m-danger--m-clicked__icon--Color);
+}
+
+/* Warning variant */
+:host([variant="warning"]) {
+  --cem-pf-v6-c-button--Color: var(--cem-pf-v6-c-button--m-warning--Color);
+  --cem-pf-v6-c-button--BackgroundColor: var(--cem-pf-v6-c-button--m-warning--BackgroundColor);
+  --cem-pf-v6-c-button__icon--Color: var(--cem-pf-v6-c-button--m-warning__icon--Color);
+  --cem-pf-v6-c-button--hover--Color: var(--cem-pf-v6-c-button--m-warning--hover--Color);
+  --cem-pf-v6-c-button--hover--BackgroundColor: var(--cem-pf-v6-c-button--m-warning--hover--BackgroundColor);
+  --cem-pf-v6-c-button--hover__icon--Color: var(--cem-pf-v6-c-button--m-warning--hover__icon--Color);
+  --cem-pf-v6-c-button--m-clicked--Color: var(--cem-pf-v6-c-button--m-warning--m-clicked--Color);
+  --cem-pf-v6-c-button--m-clicked--BackgroundColor: var(--cem-pf-v6-c-button--m-warning--m-clicked--BackgroundColor);
+  --cem-pf-v6-c-button--m-clicked__icon--Color: var(--cem-pf-v6-c-button--m-warning--m-clicked__icon--Color);
+}
+
+/* Size variants */
+:host([size="sm"]) {
+  --cem-pf-v6-c-button--PaddingBlockStart: var(--cem-pf-v6-c-button--m-small--PaddingBlockStart);
+  --cem-pf-v6-c-button--PaddingInlineEnd: var(--cem-pf-v6-c-button--m-small--PaddingInlineEnd);
+  --cem-pf-v6-c-button--PaddingBlockEnd: var(--cem-pf-v6-c-button--m-small--PaddingBlockEnd);
+  --cem-pf-v6-c-button--PaddingInlineStart: var(--cem-pf-v6-c-button--m-small--PaddingInlineStart);
+}
+
+:host([size="sm"][variant="plain"]) {
+  --cem-pf-v6-c-button--PaddingInlineEnd: var(--cem-pf-v6-c-button--m-plain--m-small--PaddingInlineEnd);
+  --cem-pf-v6-c-button--PaddingInlineStart: var(--cem-pf-v6-c-button--m-plain--m-small--PaddingInlineStart);
+}
+
+/* Plain no-padding modifier (for icon-only buttons) */
+:host([variant="plain"][no-padding]) {
+  --cem-pf-v6-c-button--MinWidth: var(--cem-pf-v6-c-button--m-plain--m-no-padding--MinWidth);
+  --cem-pf-v6-c-button--PaddingBlockStart: var(--cem-pf-v6-c-button--m-plain--m-no-padding--PaddingBlockStart);
+  --cem-pf-v6-c-button--PaddingInlineEnd: var(--cem-pf-v6-c-button--m-plain--m-no-padding--PaddingInlineEnd);
+  --cem-pf-v6-c-button--PaddingBlockEnd: var(--cem-pf-v6-c-button--m-plain--m-no-padding--PaddingBlockEnd);
+  --cem-pf-v6-c-button--PaddingInlineStart: var(--cem-pf-v6-c-button--m-plain--m-no-padding--PaddingInlineStart);
+}
+
+:host([size="lg"]) {
+  --cem-pf-v6-c-button--PaddingBlockStart: var(--cem-pf-v6-c-button--m-display-lg--PaddingBlockStart);
+  --cem-pf-v6-c-button--PaddingInlineEnd: var(--cem-pf-v6-c-button--m-display-lg--PaddingInlineEnd);
+  --cem-pf-v6-c-button--PaddingBlockEnd: var(--cem-pf-v6-c-button--m-display-lg--PaddingBlockEnd);
+  --cem-pf-v6-c-button--PaddingInlineStart: var(--cem-pf-v6-c-button--m-display-lg--PaddingInlineStart);
+  --cem-pf-v6-c-button--FontWeight: var(--cem-pf-v6-c-button--m-display-lg--FontWeight);
+}
+
+/* Block variant */
+:host([block]) {
+  display: var(--cem-pf-v6-c-button--m-block--Display);
+  width: var(--cem-pf-v6-c-button--m-block--Width);
+}
+
+:host([block]) button {
+  width: 100%;
+}
+
+slot {
+  display: inline;
+}
+
+/* Slot visibility controlled by custom properties set from light DOM */
+slot[name="icon-start"] {
+  display: var(--_has-icon-start, inline);
+}
+
+slot[name="icon-end"] {
+  display: var(--_has-icon-end, inline);
+}
+
+/* Icon slot styling */
+::slotted([slot=icon-start]),
+::slotted([slot=icon-end]) {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  color: var(--cem-pf-v6-c-button__icon--Color);
+}

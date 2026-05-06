@@ -26,7 +26,7 @@
   min-height: 0;
 }
 
-::slotted(pf-v6-tree-view) {
+::slotted(cem-pf-v6-tree-view) {
   margin: var(--pf-t--global--spacer--md, 1rem);
 }
 

@@ -139,41 +139,47 @@ func newMappaResolver(fs platform.FileSystem, logger types.Logger, cache package
 	return resolver
 }
 
+// withServeRoot configures path rebasing and dependency scoping when the serve
+// root differs from the resolution root (workspace subdirectory mode).
+func withServeRoot(resolver *local.Resolver, workspaceRoot, serveRoot string) *local.Resolver {
+	if serveRoot != "" && serveRoot != workspaceRoot {
+		return resolver.WithPathBase(serveRoot).WithPackageDeps(serveRoot)
+	}
+	return resolver
+}
+
 // resolveWithMappa uses mappa's resolver for import map generation.
 // This is the main integration point between cem and mappa.
 //
 // For hot-reload performance, consider using ResolveWithGraph() and ResolveIncremental()
 // which only re-resolve changed packages and their dependents.
 func resolveWithMappa(
-	rootDir string,
+	workspaceRoot string,
+	serveRoot string,
 	fs platform.FileSystem,
 	logger types.Logger,
 	inputMap *ImportMap,
 	workspacePackages []workspacePackageInfo,
 	includeRootExports bool,
 ) (*ImportMap, error) {
-	// Create a memory cache for this resolution to avoid repeated parsing
-	// of the same package.json files (especially important for workspace mode)
 	cache := packagejson.NewMemoryCache()
 	resolver := newMappaResolver(fs, logger, cache)
 
-	// Configure workspace packages if provided
 	if len(workspacePackages) > 0 {
 		resolver = resolver.WithWorkspacePackages(convertWorkspacePackages(workspacePackages))
 	}
 
-	// Include root package exports for dev server self-imports
 	if includeRootExports {
 		resolver = resolver.WithIncludeRootExports()
 	}
 
-	// Merge with input map if provided
 	if inputMap != nil {
 		resolver = resolver.WithInputMap(convertToMappaImportMap(inputMap))
 	}
 
-	// Resolve the import map
-	result, err := resolver.Resolve(rootDir)
+	resolver = withServeRoot(resolver, workspaceRoot, serveRoot)
+
+	result, err := resolver.Resolve(workspaceRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +190,8 @@ func resolveWithMappa(
 // resolveWithMappaGraph uses mappa's resolver and returns both import map and dependency graph.
 // This is used for initial resolution when incremental updates will be needed.
 func resolveWithMappaGraph(
-	rootDir string,
+	workspaceRoot string,
+	serveRoot string,
 	fs platform.FileSystem,
 	logger types.Logger,
 	inputMap *ImportMap,
@@ -194,23 +201,21 @@ func resolveWithMappaGraph(
 ) (*IncrementalResult, error) {
 	resolver := newMappaResolver(fs, logger, cache)
 
-	// Configure workspace packages if provided (overrides auto-discovery)
 	if len(workspacePackages) > 0 {
 		resolver = resolver.WithWorkspacePackages(convertWorkspacePackages(workspacePackages))
 	}
 
-	// Include root package exports for dev server self-imports
 	if includeRootExports {
 		resolver = resolver.WithIncludeRootExports()
 	}
 
-	// Merge with input map if provided
 	if inputMap != nil {
 		resolver = resolver.WithInputMap(convertToMappaImportMap(inputMap))
 	}
 
-	// Resolve with graph for incremental updates
-	result, err := resolver.ResolveWithGraph(rootDir)
+	resolver = withServeRoot(resolver, workspaceRoot, serveRoot)
+
+	result, err := resolver.ResolveWithGraph(workspaceRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -224,13 +229,15 @@ func resolveWithMappaGraph(
 // resolveIncrementalWithMappa performs an incremental update using mappa's resolver.
 // Only changed packages and their dependents are re-resolved.
 func resolveIncrementalWithMappa(
-	rootDir string,
+	workspaceRoot string,
+	serveRoot string,
 	fs platform.FileSystem,
 	logger types.Logger,
 	update IncrementalUpdate,
 	cache packagejson.Cache,
 ) (*IncrementalResult, error) {
 	resolver := newMappaResolver(fs, logger, cache)
+	resolver = withServeRoot(resolver, workspaceRoot, serveRoot)
 
 	// Extract mappa's dependency graph from our wrapper
 	var mappaGraph *resolve.DependencyGraph
@@ -250,7 +257,7 @@ func resolveIncrementalWithMappa(
 	}
 
 	// Perform incremental resolution
-	result, err := resolver.ResolveIncremental(rootDir, mappaUpdate)
+	result, err := resolver.ResolveIncremental(workspaceRoot, mappaUpdate)
 	if err != nil {
 		return nil, err
 	}

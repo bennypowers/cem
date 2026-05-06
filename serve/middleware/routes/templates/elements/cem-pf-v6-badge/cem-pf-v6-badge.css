@@ -1,0 +1,67 @@
+:host {
+
+  --cem-pf-v6-c-badge--BorderColor: transparent;
+  --cem-pf-v6-c-badge--BorderWidth: var(--pf-t--global--border--width--regular);
+  --cem-pf-v6-c-badge--BorderRadius: var(--pf-t--global--border--radius--pill);
+  --cem-pf-v6-c-badge--FontSize: var(--pf-t--global--font--size--body--sm);
+  --cem-pf-v6-c-badge--FontWeight: var(--pf-t--global--font--weight--body--bold);
+  --cem-pf-v6-c-badge--PaddingInlineEnd: var(--pf-t--global--spacer--sm);
+  --cem-pf-v6-c-badge--PaddingInlineStart: var(--pf-t--global--spacer--sm);
+  --cem-pf-v6-c-badge--Color: var(--pf-t--global--text--color--nonstatus--on-gray--default);
+  --cem-pf-v6-c-badge--MinWidth: var(--pf-t--global--spacer--xl);
+  --cem-pf-v6-c-badge--BackgroundColor: var(--pf-t--global--color--nonstatus--gray--default);
+
+  position: relative;
+  display: inline-block;
+  min-width: var(--cem-pf-v6-c-badge--MinWidth);
+  padding-inline-start: var(--cem-pf-v6-c-badge--PaddingInlineStart);
+  padding-inline-end: var(--cem-pf-v6-c-badge--PaddingInlineEnd);
+  font-size: var(--cem-pf-v6-c-badge--FontSize);
+  font-weight: var(--cem-pf-v6-c-badge--FontWeight);
+  color: var(--cem-pf-v6-c-badge--Color);
+  text-align: center;
+  white-space: nowrap;
+  background-color: var(--cem-pf-v6-c-badge--BackgroundColor);
+  border-radius: var(--cem-pf-v6-c-badge--BorderRadius);
+}
+
+:host::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  border: var(--cem-pf-v6-c-badge--BorderWidth) solid var(--cem-pf-v6-c-badge--BorderColor);
+  border-radius: inherit;
+}
+
+:host([read]) {
+  --cem-pf-v6-c-badge--BorderColor: var(--pf-t--global--border--color--high-contrast);
+  --cem-pf-v6-c-badge--Color: var(--pf-t--global--text--color--nonstatus--on-gray--default);
+  --cem-pf-v6-c-badge--BackgroundColor: var(--pf-t--global--color--nonstatus--gray--default);
+}
+
+:host([unread]) {
+  --cem-pf-v6-c-badge--Color: var(--pf-t--global--text--color--on-brand--default);
+  --cem-pf-v6-c-badge--BackgroundColor: var(--pf-t--global--color--brand--default);
+}
+
+:host([disabled]) {
+  --cem-pf-v6-c-badge--Color: var(--pf-t--global--text--color--on-disabled);
+  --cem-pf-v6-c-badge--BackgroundColor: var(--pf-t--global--background--color--disabled--default);
+}
+
+:host([disabled])::after {
+  border-color: var(--pf-t--global--border--color--disabled);
+}
+
+#sr-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

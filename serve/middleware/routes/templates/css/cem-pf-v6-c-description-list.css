@@ -1,0 +1,86 @@
+/* START: Description List Component (PatternFly v6) */
+/* Shared stylesheet for PatternFly v6 description list component */
+
+.cem-pf-v6-c-description-list {
+  --cem-pf-v6-c-description-list--RowGap: var(--pf-t--global--spacer--gap--group-to-group--vertical--default);
+  --cem-pf-v6-c-description-list--ColumnGap: var(--pf-t--global--spacer--gap--group-to-group--horizontal--default);
+  --cem-pf-v6-c-description-list--GridTemplateColumns--count: 1;
+  --cem-pf-v6-c-description-list--GridTemplateColumns--width: 1fr;
+  --cem-pf-v6-c-description-list--GridTemplateColumns--min: 0;
+  --cem-pf-v6-c-description-list__group--RowGap: var(--pf-t--global--spacer--gap--group--vertical);
+  --cem-pf-v6-c-description-list__group--ColumnGap: var(--pf-t--global--spacer--gap--group--horizontal);
+  --cem-pf-v6-c-description-list__group--GridTemplateColumns: auto;
+  --cem-pf-v6-c-description-list__group--GridTemplateRows: auto 1fr;
+  --cem-pf-v6-c-description-list__group--GridColumn: auto;
+  --cem-pf-v6-c-description-list--m-compact--RowGap: var(--pf-t--global--spacer--gap--group-to-group--vertical--compact);
+  --cem-pf-v6-c-description-list--m-compact--ColumnGap: var(--pf-t--global--spacer--gap--group-to-group--horizontal--compact);
+  --cem-pf-v6-c-description-list__term--Display: inline;
+  --cem-pf-v6-c-description-list__term--sm--Display: flex;
+  --cem-pf-v6-c-description-list__term--FontWeight: var(--pf-t--global--font--weight--body--bold);
+  --cem-pf-v6-c-description-list__term--FontSize: var(--pf-t--global--font--size--body--default);
+  --cem-pf-v6-c-description-list__term--LineHeight: var(--pf-t--global--font--line-height--body);
+  --cem-pf-v6-c-description-list--m-horizontal__term--width: 12ch;
+  --cem-pf-v6-c-description-list--m-horizontal__description--width: minmax(10ch, auto);
+  --cem-pf-v6-c-description-list--m-horizontal__group--GridTemplateColumns: var(--cem-pf-v6-c-description-list__term--width) var(--cem-pf-v6-c-description-list--m-horizontal__description--width);
+  --cem-pf-v6-c-description-list--m-horizontal__group--GridTemplateRows: auto;
+  --cem-pf-v6-c-description-list__term--width: var(--cem-pf-v6-c-description-list--m-horizontal__term--width);
+
+  display: grid;
+  grid-template-columns: repeat(var(--cem-pf-v6-c-description-list--GridTemplateColumns--count), var(--cem-pf-v6-c-description-list--GridTemplateColumns--width));
+  row-gap: var(--cem-pf-v6-c-description-list--RowGap);
+  column-gap: var(--cem-pf-v6-c-description-list--ColumnGap);
+  align-items: baseline;
+}
+
+.cem-pf-v6-c-description-list.pf-m-horizontal {
+  --cem-pf-v6-c-description-list__group--GridTemplateColumns: var(--cem-pf-v6-c-description-list--m-horizontal__group--GridTemplateColumns);
+  --cem-pf-v6-c-description-list__group--GridTemplateRows: var(--cem-pf-v6-c-description-list--m-horizontal__group--GridTemplateRows);
+}
+
+.cem-pf-v6-c-description-list.pf-m-compact {
+  --cem-pf-v6-c-description-list--RowGap: var(--cem-pf-v6-c-description-list--m-compact--RowGap);
+  --cem-pf-v6-c-description-list--ColumnGap: var(--cem-pf-v6-c-description-list--m-compact--ColumnGap);
+}
+
+.cem-pf-v6-c-description-list__group {
+  display: grid;
+  grid-template-columns: var(--cem-pf-v6-c-description-list__group--GridTemplateColumns);
+  grid-template-rows: var(--cem-pf-v6-c-description-list__group--GridTemplateRows);
+  row-gap: var(--cem-pf-v6-c-description-list__group--RowGap);
+  column-gap: var(--cem-pf-v6-c-description-list__group--ColumnGap);
+  grid-column: var(--cem-pf-v6-c-description-list__group--GridColumn);
+}
+
+.cem-pf-v6-c-description-list__term {
+  display: var(--cem-pf-v6-c-description-list__term--Display);
+  font-weight: var(--cem-pf-v6-c-description-list__term--FontWeight);
+  font-size: var(--cem-pf-v6-c-description-list__term--FontSize);
+  line-height: var(--cem-pf-v6-c-description-list__term--LineHeight);
+}
+
+.cem-pf-v6-c-description-list__description {
+  /* Note: --cem-pf-v6-c-description-list__description--FontSize is intentionally undefined in base case.
+     It's only defined when display modifiers (.pf-m-display-lg, .pf-m-display-2xl) are applied.
+     Fallback to 'inherit' is correct PatternFly behavior. */
+  font-size: var(--cem-pf-v6-c-description-list__description--FontSize, inherit);
+}
+
+.cem-pf-v6-c-description-list__term,
+.cem-pf-v6-c-description-list__description {
+  min-width: 0;
+  text-align: start;
+  overflow-wrap: break-word;
+}
+
+.cem-pf-v6-c-description-list__text {
+  min-width: 0;
+}
+
+/* Container query breakpoints (using container queries instead of media queries) */
+@container (min-width: 36rem) {
+  .cem-pf-v6-c-description-list {
+    --cem-pf-v6-c-description-list__term--Display: var(--cem-pf-v6-c-description-list__term--sm--Display);
+  }
+}
+
+/* END: Description List Component */

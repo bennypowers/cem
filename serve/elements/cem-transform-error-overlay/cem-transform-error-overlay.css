@@ -64,11 +64,11 @@
 }
 
 #close {
-  --pf-v6-c-button--Color: var(--pf-t--global--text--color--on-status--danger);
-  --pf-v6-c-button--BackgroundColor: rgba(255, 255, 255, 0.2);
-  --pf-v6-c-button--BorderColor: transparent;
-  --pf-v6-c-button--hover--BackgroundColor: rgba(255, 255, 255, 0.3);
-  --pf-v6-c-button--hover--Color: var(--pf-t--global--text--color--on-status--danger);
+  --cem-pf-v6-c-button--Color: var(--pf-t--global--text--color--on-status--danger);
+  --cem-pf-v6-c-button--BackgroundColor: rgba(255, 255, 255, 0.2);
+  --cem-pf-v6-c-button--BorderColor: transparent;
+  --cem-pf-v6-c-button--hover--BackgroundColor: rgba(255, 255, 255, 0.3);
+  --cem-pf-v6-c-button--hover--Color: var(--pf-t--global--text--color--on-status--danger);
 }
 
 #body {

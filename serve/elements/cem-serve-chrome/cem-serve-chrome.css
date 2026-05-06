@@ -2,8 +2,8 @@
   display: block;
   height: 100vh;
   overflow: hidden;
-  --pf-v6-c-masthead__logo--Width: max-content;
-  --pf-v6-c-masthead__toggle--Size: 1rem;
+  --cem-pf-v6-c-masthead__logo--Width: max-content;
+  --cem-pf-v6-c-masthead__toggle--Size: 1rem;
 }
 
 [hidden] {
@@ -16,11 +16,11 @@
   align-items: center;
   text-decoration: none;
   color: inherit;
-  max-height: var(--pf-v6-c-masthead__logo--MaxHeight);
+  max-height: var(--cem-pf-v6-c-masthead__logo--MaxHeight);
   gap: 4px;
   & img {
     display: block;
-    max-height: var(--pf-v6-c-masthead__logo--MaxHeight);
+    max-height: var(--cem-pf-v6-c-masthead__logo--MaxHeight);
     width: auto;
   }
   & ::slotted([slot="title"]) {
@@ -36,7 +36,7 @@
 }
 
 /* Toolbar group alignment */
-pf-v6-toolbar-group[variant="action-group"] {
+cem-pf-v6-toolbar-group[variant="action-group"] {
   margin-inline-start: auto;
   align-items: center;
 }
@@ -148,7 +148,7 @@ pf-v6-toolbar-group[variant="action-group"] {
 }
 
 /* Content area padding for demo */
-pf-v6-page-main {
+cem-pf-v6-page-main {
   min-height: calc(100dvh - 72px - var(--pf-t--global--spacer--inset--page-chrome));
   display: flex;
   flex-direction: column;
@@ -159,8 +159,8 @@ pf-v6-page-main {
 }
 
 cem-drawer {
-  pf-v6-tabs {
-    pf-v6-tab {
+  cem-pf-v6-tabs {
+    cem-pf-v6-tab {
       padding-block-end: 0;
     }
   }
@@ -239,7 +239,7 @@ cem-drawer {
 }
 
 /* PatternFly v6 form - horizontal layout */
-pf-v6-form[horizontal] pf-v6-form-field-group {
+cem-pf-v6-form[horizontal] cem-pf-v6-form-field-group {
   grid-column: span 2
 }
 
@@ -312,8 +312,8 @@ footer.pf-m-sticky-bottom {
   bottom: 0;
   background: var(--pf-t--global--background--color--primary--default);
   border-top: 1px solid var(--pf-t--global--border--color--default);
-  z-index: var(--pf-v6-c-page--section--m-sticky-bottom--ZIndex, var(--pf-t--global--z-index--md));
-  box-shadow: var(--pf-v6-c-page--section--m-sticky-bottom--BoxShadow, var(--pf-t--global--box-shadow--sm--top));
+  z-index: var(--cem-pf-v6-c-page--section--m-sticky-bottom--ZIndex, var(--pf-t--global--z-index--md));
+  box-shadow: var(--cem-pf-v6-c-page--section--m-sticky-bottom--BoxShadow, var(--pf-t--global--box-shadow--sm--top));
 }
 
 .footer-description {
@@ -355,7 +355,7 @@ footer ::slotted([slot="description"]) {
   display: flex;
   gap: var(--cem-dev-server-spacing-sm);
   align-items: baseline;
-  pf-v6-label {
+  cem-pf-v6-label {
     flex-shrink: 0;
   }
 }
@@ -377,7 +377,7 @@ footer ::slotted([slot="description"]) {
   word-break: break-word;
 }
 
-/* Navigation content (light DOM slotted content for pf-v6-page-sidebar) */
+/* Navigation content (light DOM slotted content for cem-pf-v6-page-sidebar) */
 .nav-package {
   margin-bottom: var(--cem-dev-server-spacing-md);
 
@@ -506,14 +506,14 @@ footer ::slotted([slot="description"]) {
 }
 
 /* Info button popover triggers in knobs - override plain button padding */
-pf-v6-popover pf-v6-button[variant="plain"] {
-  --pf-v6-c-button--m-plain--PaddingInlineEnd: 0;
-  --pf-v6-c-button--m-plain--PaddingInlineStart: 0;
-  --pf-v6-c-button--MinWidth: auto;
+cem-pf-v6-popover cem-pf-v6-button[variant="plain"] {
+  --cem-pf-v6-c-button--m-plain--PaddingInlineEnd: 0;
+  --cem-pf-v6-c-button--m-plain--PaddingInlineStart: 0;
+  --cem-pf-v6-c-button--MinWidth: auto;
 }
 
 /* Knob description content (slotted in form group helper) */
-pf-v6-form-group [slot="helper"] {
+cem-pf-v6-form-group [slot="helper"] {
   p {
     margin: var(--cem-dev-server-spacing-xs) 0;
   }
@@ -544,7 +544,7 @@ pf-v6-form-group [slot="helper"] {
 }
 
 /* Syntax highlighting (chroma - themable via CSS custom properties) */
-pf-v6-form-group [slot="helper"] {
+cem-pf-v6-form-group [slot="helper"] {
   .chroma {
     background-color: var(--cem-dev-server-bg-tertiary);
     padding: var(--cem-dev-server-spacing-sm);
@@ -719,7 +719,7 @@ pf-v6-form-group [slot="helper"] {
   cursor: pointer;
   transition: background 100ms ease-in-out, border-color 100ms ease-in-out;
 
-  pf-v6-label {
+  cem-pf-v6-label {
     flex-shrink: 0;
   }
 

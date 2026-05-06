@@ -5,8 +5,8 @@ import { state } from 'lit/decorators/state.js';
 
 import styles from './cem-health-panel.css' with { type: 'css' };
 
-import '../pf-v6-label/pf-v6-label.js';
-import '../pf-v6-expandable-section/pf-v6-expandable-section.js';
+import '../cem-pf-v6-label/cem-pf-v6-label.js';
+import '../cem-pf-v6-expandable-section/cem-pf-v6-expandable-section.js';
 
 const STATUS_COLORS: Record<string, string> = {
   pass: 'green',
@@ -114,11 +114,11 @@ export class CemHealthPanel extends LitElement {
 
     return html`
       <div id="overall">
-        <pf-v6-label color=${STATUS_COLORS[overallStatus]}
-                     size="lg">${pct}% -- ${decl.score}/${decl.maxScore}</pf-v6-label>
+        <cem-pf-v6-label color=${STATUS_COLORS[overallStatus]}
+                     size="lg">${pct}% -- ${decl.score}/${decl.maxScore}</cem-pf-v6-label>
       </div>
       <dl id="categories"
-          class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+          class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
         ${decl.categories.map(cat => this.#renderCategory(cat))}
       </dl>
       ${this.#renderRecommendations()}
@@ -146,16 +146,16 @@ export class CemHealthPanel extends LitElement {
     const findings = cat.findings?.filter(f => f.message) ?? [];
 
     return html`
-      <div class="pf-v6-c-description-list__group">
-        <dt class="pf-v6-c-description-list__term">${cat.category}</dt>
-        <dd class="pf-v6-c-description-list__description">
+      <div class="cem-pf-v6-c-description-list__group">
+        <dt class="cem-pf-v6-c-description-list__term">${cat.category}</dt>
+        <dd class="cem-pf-v6-c-description-list__description">
           <div class="category-bar">
             <div class="category-meter">
               <div class="category-fill fill-${cat.status}"
                    style="width: ${pct}%"></div>
             </div>
             <span class="category-score">${cat.points}/${cat.maxPoints}</span>
-            <pf-v6-label color=${STATUS_COLORS[cat.status]}>${cat.status}</pf-v6-label>
+            <cem-pf-v6-label color=${STATUS_COLORS[cat.status]}>${cat.status}</cem-pf-v6-label>
           </div>
           ${findings.length > 0 ? html`
             <div class="finding-details">

@@ -3,7 +3,7 @@
   <h2 class="package-heading">{{.Name}}</h2>
   <div class="listing-grid">
     {{range .Elements}}
-    <pf-v6-card data-tag-name="{{.TagName}}">
+    <cem-pf-v6-card data-tag-name="{{.TagName}}">
       <h3 slot="title"><code>&lt;{{.TagName}}&gt;</code></h3>
       {{if .Summary}}
       <div class="element-summary">{{.Summary}}</div>
@@ -13,15 +13,15 @@
       {{end}}
       {{range .Demos}}
       <div slot="footer" class="demo-link">
-        <pf-v6-button href="{{.URL}}" variant="link">
+        <cem-pf-v6-button href="{{.URL}}" variant="link">
           {{.Name}}
-        </pf-v6-button>
+        </cem-pf-v6-button>
         {{if .Description}}
         <span class="demo-description">{{.Description}}</span>
         {{end}}
       </div>
       {{end}}
-    </pf-v6-card>
+    </cem-pf-v6-card>
     {{end}}
   </div>
 </section>

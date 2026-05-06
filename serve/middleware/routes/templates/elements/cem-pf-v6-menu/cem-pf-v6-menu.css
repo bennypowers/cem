@@ -1,0 +1,40 @@
+:host {
+  --cem-pf-v6-c-menu--RowGap: var(--pf-t--global--spacer--sm);
+  --cem-pf-v6-c-menu--Width: auto;
+  --cem-pf-v6-c-menu--MinWidth: auto;
+  --cem-pf-v6-c-menu--PaddingBlockStart: var(--pf-t--global--spacer--sm);
+  --cem-pf-v6-c-menu--PaddingBlockEnd: var(--pf-t--global--spacer--sm);
+  --cem-pf-v6-c-menu--BackgroundColor: var(--pf-t--global--background--color--floating--default);
+  --cem-pf-v6-c-menu--BoxShadow: var(--pf-t--global--box-shadow--md);
+  --cem-pf-v6-c-menu--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-menu--BorderWidth: var(--pf-t--global--border--width--high-contrast--regular);
+  --cem-pf-v6-c-menu--BorderColor: var(--pf-t--global--border--color--high-contrast);
+  --cem-pf-v6-c-menu--BorderRadius: var(--pf-t--global--border--radius--small);
+  --cem-pf-v6-c-menu--OutlineOffset: calc(var(--pf-t--global--border--width--control--default) * -3);
+  --cem-pf-v6-c-menu--ZIndex: var(--pf-t--global--z-index--sm);
+  --cem-pf-v6-c-menu--TransitionDuration: 0s;
+  --cem-pf-v6-c-menu--TransitionTimingFunction: var(--pf-t--global--motion--timing-function--default);
+
+  @media (prefers-reduced-motion: no-preference) {
+    --cem-pf-v6-c-menu--TransitionDuration: var(--pf-t--global--motion--duration--fade--default);
+  }
+
+  display: grid;
+  row-gap: var(--cem-pf-v6-c-menu--RowGap);
+  width: var(--cem-pf-v6-c-menu--Width);
+  min-width: var(--cem-pf-v6-c-menu--MinWidth);
+  padding-block-start: var(--cem-pf-v6-c-menu--PaddingBlockStart);
+  padding-block-end: var(--cem-pf-v6-c-menu--PaddingBlockEnd);
+  overflow: hidden;
+  color: var(--cem-pf-v6-c-menu--Color);
+  background-color: var(--cem-pf-v6-c-menu--BackgroundColor);
+  border: var(--cem-pf-v6-c-menu--BorderWidth) solid var(--cem-pf-v6-c-menu--BorderColor);
+  border-radius: var(--cem-pf-v6-c-menu--BorderRadius);
+  box-shadow: var(--cem-pf-v6-c-menu--BoxShadow);
+  transition-timing-function: var(--cem-pf-v6-c-menu--TransitionTimingFunction) !important;
+  transition-duration: var(--cem-pf-v6-c-menu--TransitionDuration) !important;
+}
+
+slot {
+  display: contents;
+}

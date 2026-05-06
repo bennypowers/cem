@@ -1,0 +1,7 @@
+/**
+ * cem-pf-v6-alert-group lightdom styles
+ * Hides the component when empty
+ */
+cem-pf-v6-alert-group:empty {
+  display: none;
+}

@@ -5,7 +5,7 @@
   height: 100%;
 }
 
-pf-v6-navigation {
+cem-pf-v6-navigation {
   flex-shrink: 0;
 }
 
@@ -23,7 +23,7 @@ pf-v6-navigation {
   align-items: start;
 }
 
-::slotted(pf-v6-card.active) {
-  --pf-v6-c-card--BorderColor: var(--pf-v6-c-card--m-selectable--m-selected--BorderColor);
-  --pf-v6-c-card--BorderWidth: var(--pf-v6-c-card--m-selectable--m-selected--BorderWidth);
+::slotted(cem-pf-v6-card.active) {
+  --cem-pf-v6-c-card--BorderColor: var(--cem-pf-v6-c-card--m-selectable--m-selected--BorderColor);
+  --cem-pf-v6-c-card--BorderWidth: var(--cem-pf-v6-c-card--m-selectable--m-selected--BorderWidth);
 }

@@ -1,4 +1,5 @@
-import { expect, waitUntil } from '@open-wc/testing';
+import { expect, fixture, html, waitUntil } from '@open-wc/testing';
+import { visualDiff } from '@web/test-runner-visual-regression';
 import sinon from 'sinon';
 import './cem-serve-knobs.js';
 
@@ -55,11 +56,11 @@ describe('cem-serve-knobs', () => {
 
   describe('navigation generation', () => {
     it('creates nav items from slotted cards', async () => {
-      const card1 = document.createElement('pf-v6-card');
+      const card1 = document.createElement('cem-pf-v6-card');
       card1.dataset.card = 'instance-1';
       card1.dataset.label = 'First Instance';
 
-      const card2 = document.createElement('pf-v6-card');
+      const card2 = document.createElement('cem-pf-v6-card');
       card2.dataset.card = 'instance-2';
       card2.dataset.label = 'Second Instance';
 
@@ -68,11 +69,11 @@ describe('cem-serve-knobs', () => {
 
       // Wait for slotchange event to fire and navigation to update
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 2;
       }, 'Should create 2 nav links', { timeout: 1000 });
 
-      const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+      const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
       expect(navLinks).to.have.lengthOf(2);
 
       expect(navLinks[0].getAttribute('href')).to.equal('#instance-1');
@@ -83,55 +84,55 @@ describe('cem-serve-knobs', () => {
     });
 
     it('marks first nav item as current by default', async () => {
-      const card = document.createElement('pf-v6-card');
+      const card = document.createElement('cem-pf-v6-card');
       card.dataset.card = 'test-instance';
       el.appendChild(card);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 1;
       });
 
-      const navLink = el.shadowRoot.querySelector('pf-v6-nav-link');
+      const navLink = el.shadowRoot.querySelector('cem-pf-v6-nav-link');
       expect(navLink.hasAttribute('current')).to.be.true;
     });
 
     it('generates default IDs when dataset.card is missing', async () => {
-      const card1 = document.createElement('pf-v6-card');
-      const card2 = document.createElement('pf-v6-card');
+      const card1 = document.createElement('cem-pf-v6-card');
+      const card2 = document.createElement('cem-pf-v6-card');
 
       el.appendChild(card1);
       el.appendChild(card2);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 2;
       });
 
-      const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+      const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
       expect(navLinks[0].getAttribute('href')).to.equal('#instance-0');
       expect(navLinks[1].getAttribute('href')).to.equal('#instance-1');
     });
 
     it('generates default labels when dataset.label is missing', async () => {
-      const card1 = document.createElement('pf-v6-card');
-      const card2 = document.createElement('pf-v6-card');
+      const card1 = document.createElement('cem-pf-v6-card');
+      const card2 = document.createElement('cem-pf-v6-card');
 
       el.appendChild(card1);
       el.appendChild(card2);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 2;
       });
 
-      const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+      const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
       expect(navLinks[0].querySelector('.instance-label').textContent).to.equal('Instance 1');
       expect(navLinks[1].querySelector('.instance-label').textContent).to.equal('Instance 2');
     });
 
     it('ignores non-card elements in slot', async () => {
-      const card = document.createElement('pf-v6-card');
+      const card = document.createElement('cem-pf-v6-card');
       card.dataset.card = 'instance-1';
 
       const div = document.createElement('div');
@@ -142,49 +143,49 @@ describe('cem-serve-knobs', () => {
       el.appendChild(span);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 1;
       });
 
-      const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+      const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
       expect(navLinks).to.have.lengthOf(1);
     });
 
     it('updates navigation when cards are added dynamically', async () => {
-      const card1 = document.createElement('pf-v6-card');
+      const card1 = document.createElement('cem-pf-v6-card');
       card1.dataset.card = 'instance-1';
       el.appendChild(card1);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 1;
       });
 
       // Add another card
-      const card2 = document.createElement('pf-v6-card');
+      const card2 = document.createElement('cem-pf-v6-card');
       card2.dataset.card = 'instance-2';
       el.appendChild(card2);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 2;
       });
 
-      const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+      const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
       expect(navLinks).to.have.lengthOf(2);
     });
 
     it('updates navigation when cards are removed', async () => {
-      const card1 = document.createElement('pf-v6-card');
+      const card1 = document.createElement('cem-pf-v6-card');
       card1.dataset.card = 'instance-1';
-      const card2 = document.createElement('pf-v6-card');
+      const card2 = document.createElement('cem-pf-v6-card');
       card2.dataset.card = 'instance-2';
 
       el.appendChild(card1);
       el.appendChild(card2);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 2;
       });
 
@@ -192,17 +193,17 @@ describe('cem-serve-knobs', () => {
       el.removeChild(card1);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 1;
       });
 
-      const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+      const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
       expect(navLinks).to.have.lengthOf(1);
       expect(navLinks[0].getAttribute('href')).to.equal('#instance-2');
     });
 
     it('handles no slotted cards gracefully', () => {
-      const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+      const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
       expect(navLinks).to.have.lengthOf(0);
     });
   });
@@ -211,11 +212,11 @@ describe('cem-serve-knobs', () => {
     let card1, card2;
 
     beforeEach(async () => {
-      card1 = document.createElement('pf-v6-card');
+      card1 = document.createElement('cem-pf-v6-card');
       card1.dataset.card = 'instance-1';
       card1.dataset.label = 'First';
 
-      card2 = document.createElement('pf-v6-card');
+      card2 = document.createElement('cem-pf-v6-card');
       card2.dataset.card = 'instance-2';
       card2.dataset.label = 'Second';
 
@@ -223,7 +224,7 @@ describe('cem-serve-knobs', () => {
       el.appendChild(card2);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 2;
       });
     });
@@ -242,7 +243,7 @@ describe('cem-serve-knobs', () => {
       window.location.hash = '#instance-2';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
 
-      const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+      const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
       expect(navLinks[0].hasAttribute('current')).to.be.false;
       expect(navLinks[1].hasAttribute('current')).to.be.true;
     });
@@ -254,7 +255,7 @@ describe('cem-serve-knobs', () => {
       expect(card1.classList.contains('active')).to.be.true;
       expect(card2.classList.contains('active')).to.be.false;
 
-      const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+      const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
       expect(navLinks[0].hasAttribute('current')).to.be.true;
       expect(navLinks[1].hasAttribute('current')).to.be.false;
     });
@@ -306,17 +307,17 @@ describe('cem-serve-knobs', () => {
     let card1, card2, knobsContainer;
 
     beforeEach(async () => {
-      card1 = document.createElement('pf-v6-card');
+      card1 = document.createElement('cem-pf-v6-card');
       card1.dataset.card = 'instance-1';
 
-      card2 = document.createElement('pf-v6-card');
+      card2 = document.createElement('cem-pf-v6-card');
       card2.dataset.card = 'instance-2';
 
       el.appendChild(card1);
       el.appendChild(card2);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 2;
       });
 
@@ -407,7 +408,7 @@ describe('cem-serve-knobs', () => {
     it('handles initial hash on load', async () => {
       window.location.hash = '#test-instance';
 
-      const card = document.createElement('pf-v6-card');
+      const card = document.createElement('cem-pf-v6-card');
       card.dataset.card = 'test-instance';
 
       const newEl = document.createElement('cem-serve-knobs');
@@ -430,47 +431,47 @@ describe('cem-serve-knobs', () => {
   });
 
   describe('navigation structure', () => {
-    it('creates pf-v6-nav-item elements', async () => {
-      const card = document.createElement('pf-v6-card');
+    it('creates cem-pf-v6-nav-item elements', async () => {
+      const card = document.createElement('cem-pf-v6-card');
       card.dataset.card = 'instance-1';
       el.appendChild(card);
 
       await waitUntil(() => {
-        const navItems = el.shadowRoot.querySelectorAll('pf-v6-nav-item');
+        const navItems = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-item');
         return navItems.length === 1;
       });
 
-      const navItems = el.shadowRoot.querySelectorAll('pf-v6-nav-item');
+      const navItems = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-item');
       expect(navItems).to.have.lengthOf(1);
     });
 
-    it('nests pf-v6-nav-link inside pf-v6-nav-item', async () => {
-      const card = document.createElement('pf-v6-card');
+    it('nests cem-pf-v6-nav-link inside cem-pf-v6-nav-item', async () => {
+      const card = document.createElement('cem-pf-v6-card');
       card.dataset.card = 'instance-1';
       el.appendChild(card);
 
       await waitUntil(() => {
-        const navItems = el.shadowRoot.querySelectorAll('pf-v6-nav-item');
+        const navItems = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-item');
         return navItems.length === 1;
       });
 
-      const navItem = el.shadowRoot.querySelector('pf-v6-nav-item');
-      const navLink = navItem.querySelector('pf-v6-nav-link');
+      const navItem = el.shadowRoot.querySelector('cem-pf-v6-nav-item');
+      const navLink = navItem.querySelector('cem-pf-v6-nav-link');
       expect(navLink).to.exist;
     });
 
     it('adds label span inside nav link', async () => {
-      const card = document.createElement('pf-v6-card');
+      const card = document.createElement('cem-pf-v6-card');
       card.dataset.card = 'instance-1';
       card.dataset.label = 'Test Label';
       el.appendChild(card);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 1;
       });
 
-      const navLink = el.shadowRoot.querySelector('pf-v6-nav-link');
+      const navLink = el.shadowRoot.querySelector('cem-pf-v6-nav-link');
       const label = navLink.querySelector('span.instance-label');
 
       expect(label).to.exist;
@@ -483,14 +484,14 @@ describe('cem-serve-knobs', () => {
     it('handles rapid card additions and removals', async () => {
       const cards = [];
       for (let i = 0; i < 5; i++) {
-        const card = document.createElement('pf-v6-card');
+        const card = document.createElement('cem-pf-v6-card');
         card.dataset.card = `instance-${i}`;
         cards.push(card);
         el.appendChild(card);
       }
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 5;
       });
 
@@ -498,22 +499,22 @@ describe('cem-serve-knobs', () => {
       cards.slice(0, 3).forEach(card => el.removeChild(card));
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 2;
       });
 
-      const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+      const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
       expect(navLinks).to.have.lengthOf(2);
     });
 
     it('handles special characters in labels', async () => {
-      const card = document.createElement('pf-v6-card');
+      const card = document.createElement('cem-pf-v6-card');
       card.dataset.card = 'instance-1';
       card.dataset.label = 'Label with <>&"\'';
       el.appendChild(card);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 1;
       });
 
@@ -522,31 +523,31 @@ describe('cem-serve-knobs', () => {
     });
 
     it('handles special characters in card IDs', async () => {
-      const card = document.createElement('pf-v6-card');
+      const card = document.createElement('cem-pf-v6-card');
       card.dataset.card = 'instance-with-dashes-and_underscores';
       el.appendChild(card);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 1;
       });
 
-      const navLink = el.shadowRoot.querySelector('pf-v6-nav-link');
+      const navLink = el.shadowRoot.querySelector('cem-pf-v6-nav-link');
       expect(navLink.getAttribute('href')).to.equal('#instance-with-dashes-and_underscores');
     });
 
     it('handles numeric card IDs and labels', async () => {
-      const card = document.createElement('pf-v6-card');
+      const card = document.createElement('cem-pf-v6-card');
       card.dataset.card = '123';
       card.dataset.label = '456';
       el.appendChild(card);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 1;
       });
 
-      const navLink = el.shadowRoot.querySelector('pf-v6-nav-link');
+      const navLink = el.shadowRoot.querySelector('cem-pf-v6-nav-link');
       const label = navLink.querySelector('.instance-label');
 
       expect(navLink.getAttribute('href')).to.equal('#123');
@@ -564,7 +565,7 @@ describe('cem-serve-knobs', () => {
       ];
 
       const cards = instances.map(({ id, label }) => {
-        const card = document.createElement('pf-v6-card');
+        const card = document.createElement('cem-pf-v6-card');
         card.dataset.card = id;
         card.dataset.label = label;
         return card;
@@ -573,7 +574,7 @@ describe('cem-serve-knobs', () => {
       cards.forEach(card => el.appendChild(card));
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 3;
       });
 
@@ -592,20 +593,20 @@ describe('cem-serve-knobs', () => {
     });
 
     it('simulates user clicking navigation links', async () => {
-      const card1 = document.createElement('pf-v6-card');
+      const card1 = document.createElement('cem-pf-v6-card');
       card1.dataset.card = 'instance-1';
-      const card2 = document.createElement('pf-v6-card');
+      const card2 = document.createElement('cem-pf-v6-card');
       card2.dataset.card = 'instance-2';
 
       el.appendChild(card1);
       el.appendChild(card2);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 2;
       });
 
-      const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+      const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
 
       // Simulate clicking second nav link
       window.location.hash = navLinks[1].getAttribute('href');
@@ -616,16 +617,16 @@ describe('cem-serve-knobs', () => {
     });
 
     it('handles browser back/forward navigation', async () => {
-      const card1 = document.createElement('pf-v6-card');
+      const card1 = document.createElement('cem-pf-v6-card');
       card1.dataset.card = 'instance-1';
-      const card2 = document.createElement('pf-v6-card');
+      const card2 = document.createElement('cem-pf-v6-card');
       card2.dataset.card = 'instance-2';
 
       el.appendChild(card1);
       el.appendChild(card2);
 
       await waitUntil(() => {
-        const navLinks = el.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = el.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 2;
       });
 
@@ -670,19 +671,89 @@ describe('cem-serve-knobs', () => {
         timeout: 3000
       });
 
-      const card = document.createElement('pf-v6-card');
+      const card = document.createElement('cem-pf-v6-card');
       card.dataset.card = 'test';
       newEl.appendChild(card);
 
       await waitUntil(() => {
-        const navLinks = newEl.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        const navLinks = newEl.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
         return navLinks.length === 1;
       });
 
-      const navLinks = newEl.shadowRoot.querySelectorAll('pf-v6-nav-link');
+      const navLinks = newEl.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
       expect(navLinks).to.have.lengthOf(1);
 
       document.body.removeChild(newEl);
+    });
+  });
+
+  const isChromium = navigator.userAgent.includes('Chrome');
+  (isChromium ? describe : describe.skip)('visual regression', () => {
+    it('multiple cards with navigation', async () => {
+      const container = await fixture(html`
+        <div style="width: 300px; height: 400px;">
+          <cem-serve-knobs>
+            <cem-pf-v6-card data-card="instance-0" data-label="Default">
+              <h3 slot="title">my-button: Default</h3>
+            </cem-pf-v6-card>
+            <cem-pf-v6-card data-card="instance-1" data-label="Primary">
+              <h3 slot="title">my-button: Primary</h3>
+            </cem-pf-v6-card>
+          </cem-serve-knobs>
+        </div>
+      `);
+      const knobs = container.querySelector('cem-serve-knobs');
+      await knobs.updateComplete;
+      await waitUntil(() => {
+        const navLinks = knobs.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
+        return navLinks.length === 2;
+      }, '', { timeout: 2000 });
+      await visualDiff(container, 'cem-serve-knobs-multi-card');
+    });
+
+    it('single card no navigation', async () => {
+      const container = await fixture(html`
+        <div style="width: 300px; height: 400px;">
+          <cem-serve-knobs>
+            <cem-pf-v6-card data-card="only" data-label="Only Instance">
+              <h3 slot="title">my-button: Only</h3>
+            </cem-pf-v6-card>
+          </cem-serve-knobs>
+        </div>
+      `);
+      const knobs = container.querySelector('cem-serve-knobs');
+      await knobs.updateComplete;
+      await waitUntil(() => {
+        const navLinks = knobs.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
+        return navLinks.length === 1;
+      }, '', { timeout: 2000 });
+      await visualDiff(container, 'cem-serve-knobs-single-card');
+    });
+
+    it('active card highlight', async () => {
+      const container = await fixture(html`
+        <div style="width: 300px; height: 400px;">
+          <cem-serve-knobs>
+            <cem-pf-v6-card data-card="first" data-label="First">
+              <h3 slot="title">First</h3>
+            </cem-pf-v6-card>
+            <cem-pf-v6-card data-card="second" data-label="Second">
+              <h3 slot="title">Second</h3>
+            </cem-pf-v6-card>
+          </cem-serve-knobs>
+        </div>
+      `);
+      const knobs = container.querySelector('cem-serve-knobs');
+      await knobs.updateComplete;
+      await waitUntil(() => {
+        const navLinks = knobs.shadowRoot.querySelectorAll('cem-pf-v6-nav-link');
+        return navLinks.length === 2;
+      }, '', { timeout: 2000 });
+      window.location.hash = '#second';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      await knobs.updateComplete;
+      await visualDiff(container, 'cem-serve-knobs-active-second');
+      window.location.hash = '';
     });
   });
 });

@@ -29,13 +29,13 @@ html::view-transition-new(*) {
 }
 
 /* Stable transition names for persistent elements */
-pf-v6-masthead {
+cem-pf-v6-masthead {
   view-transition-name: masthead;
   /* Match toggle button size to toolbar icons */
-  --pf-v6-c-masthead__toggle--Size: 0.875rem;
+  --cem-pf-v6-c-masthead__toggle--Size: 0.875rem;
 }
 
-pf-v6-page-sidebar {
+cem-pf-v6-page-sidebar {
   view-transition-name: sidebar;
 }
 
@@ -43,11 +43,11 @@ cem-drawer {
   view-transition-name: drawer;
 }
 
-pf-v6-page-main {
+cem-pf-v6-page-main {
   view-transition-name: main-content;
 }
 
-pf-v6-tree-view {
+cem-pf-v6-tree-view {
   view-transition-name: tree-view;
 }
 
@@ -271,11 +271,11 @@ cem-serve-knobs {
     font-size: var(--cem-dev-server-font-size-sm);
   }
 
-  & pf-v6-switch {
+  & cem-pf-v6-switch {
     align-self: center;
   }
 
-  pf-v6-form[horizontal] pf-v6-form-field-group {
+  cem-pf-v6-form[horizontal] cem-pf-v6-form-field-group {
     grid-column: span 2;
   }
 }

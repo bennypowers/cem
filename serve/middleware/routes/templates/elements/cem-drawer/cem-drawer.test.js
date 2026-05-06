@@ -1,4 +1,5 @@
-import { expect, waitUntil } from '@open-wc/testing';
+import { expect, fixture, html, waitUntil } from '@open-wc/testing';
+import { visualDiff } from '@web/test-runner-visual-regression';
 import sinon from 'sinon';
 import './cem-drawer.js';
 import { CemDrawerChangeEvent, CemDrawerResizeEvent } from './cem-drawer.js';
@@ -664,6 +665,46 @@ describe('cem-drawer', () => {
 
       const content = el.shadowRoot.getElementById('content');
       expect(content.style.height).to.equal('0px');
+    });
+  });
+
+  const isChromium = navigator.userAgent.includes('Chrome');
+  (isChromium ? describe : describe.skip)('visual regression', () => {
+    it('closed state', async () => {
+      const container = await fixture(html`
+        <div style="width: 600px; position: relative;">
+          <cem-drawer></cem-drawer>
+        </div>
+      `);
+      const drawer = container.querySelector('cem-drawer');
+      await drawer.updateComplete;
+      await visualDiff(container, 'cem-drawer-closed');
+    });
+
+    it('open state', async () => {
+      const container = await fixture(html`
+        <div style="width: 600px; position: relative;">
+          <cem-drawer open>
+            <div style="padding: 1rem;">Drawer panel content</div>
+          </cem-drawer>
+        </div>
+      `);
+      const drawer = container.querySelector('cem-drawer');
+      await drawer.updateComplete;
+      await visualDiff(container, 'cem-drawer-open');
+    });
+
+    it('open with custom height', async () => {
+      const container = await fixture(html`
+        <div style="width: 600px; position: relative;">
+          <cem-drawer open drawer-height="200">
+            <div style="padding: 1rem;">Short drawer</div>
+          </cem-drawer>
+        </div>
+      `);
+      const drawer = container.querySelector('cem-drawer');
+      await drawer.updateComplete;
+      await visualDiff(container, 'cem-drawer-open-short');
     });
   });
 });

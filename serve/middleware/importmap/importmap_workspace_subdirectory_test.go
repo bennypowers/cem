@@ -195,6 +195,290 @@ func TestImportMap_WorkspaceSubdirectoryPaths(t *testing.T) {
 	})
 }
 
+// TestImportMap_WorkspaceSubdirectory_SelfExports is a regression test for issue #320.
+// When a workspace package has exports and is served from a subdirectory,
+// its own paths must be relative to the serve root (/), not the workspace root.
+func TestImportMap_WorkspaceSubdirectory_SelfExports(t *testing.T) {
+	workspaceRoot := t.TempDir()
+
+	err := os.WriteFile(filepath.Join(workspaceRoot, "package.json"), []byte(`{
+  "name": "monorepo",
+  "workspaces": ["examples/*"]
+}`), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write workspace package.json: %v", err)
+	}
+
+	litPath := filepath.Join(workspaceRoot, "node_modules", "lit")
+	if err := os.MkdirAll(litPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(litPath, "package.json"), []byte(`{
+  "name": "lit",
+  "exports": { ".": "./index.js" }
+}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	pkgPath := filepath.Join(workspaceRoot, "examples", "kitchen-sink")
+	if err := os.MkdirAll(pkgPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(pkgPath, "package.json"), []byte(`{
+  "name": "@cem-examples/kitchen-sink",
+  "exports": { "./*": "./*" },
+  "dependencies": { "lit": "^3.0.0" }
+}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	importMap, err := Generate(pkgPath, nil)
+	if err != nil {
+		t.Fatalf("Generate returned error: %v", err)
+	}
+
+	selfExport := importMap.Imports["@cem-examples/kitchen-sink/"]
+	if selfExport == "" {
+		t.Fatal("Expected @cem-examples/kitchen-sink/ import to exist")
+	}
+	if selfExport != "/" {
+		t.Errorf("Expected self-export to be /, got: %s", selfExport)
+	}
+
+	litImport := importMap.Imports["lit"]
+	if litImport != "/node_modules/lit/index.js" {
+		t.Errorf("Expected lit import to be /node_modules/lit/index.js, got: %s", litImport)
+	}
+}
+
+// TestImportMap_WorkspaceSubdirectory_DeeplyNested tests rebasing for a package
+// nested in a workspace subdirectory (e.g., apps/my-app)
+func TestImportMap_WorkspaceSubdirectory_DeeplyNested(t *testing.T) {
+	workspaceRoot := t.TempDir()
+
+	err := os.WriteFile(filepath.Join(workspaceRoot, "package.json"), []byte(`{
+  "name": "monorepo",
+  "workspaces": ["apps/*"]
+}`), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write workspace package.json: %v", err)
+	}
+
+	litPath := filepath.Join(workspaceRoot, "node_modules", "lit")
+	if err := os.MkdirAll(litPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(litPath, "package.json"), []byte(`{
+  "name": "lit",
+  "exports": { ".": "./index.js" }
+}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	pkgPath := filepath.Join(workspaceRoot, "apps", "my-app")
+	if err := os.MkdirAll(pkgPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(pkgPath, "package.json"), []byte(`{
+  "name": "@myorg/my-app",
+  "exports": {
+    ".": "./src/index.js",
+    "./*": "./src/*"
+  },
+  "dependencies": { "lit": "^3.0.0" }
+}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	importMap, err := Generate(pkgPath, nil)
+	if err != nil {
+		t.Fatalf("Generate returned error: %v", err)
+	}
+
+	for key, value := range importMap.Imports {
+		if strings.Contains(value, "/apps/my-app/") {
+			t.Errorf("Import %s still has workspace-relative prefix: %s", key, value)
+		}
+	}
+
+	selfWildcard := importMap.Imports["@myorg/my-app/"]
+	if selfWildcard == "" {
+		t.Fatal("Expected @myorg/my-app/ import to exist")
+	}
+	if selfWildcard != "/src/" {
+		t.Errorf("Expected wildcard self-export to be /src/, got: %s", selfWildcard)
+	}
+
+	litImport := importMap.Imports["lit"]
+	if litImport != "/node_modules/lit/index.js" {
+		t.Errorf("Expected lit import /node_modules/lit/index.js, got: %s", litImport)
+	}
+}
+
+// TestImportMap_WorkspaceSubdirectory_IncrementalRebasing verifies that
+// GenerateWithGraph and GenerateIncremental also rebase workspace paths
+func TestImportMap_WorkspaceSubdirectory_IncrementalRebasing(t *testing.T) {
+	workspaceRoot := t.TempDir()
+
+	err := os.WriteFile(filepath.Join(workspaceRoot, "package.json"), []byte(`{
+  "name": "monorepo",
+  "workspaces": ["examples/*"]
+}`), 0644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	litPath := filepath.Join(workspaceRoot, "node_modules", "lit")
+	if err := os.MkdirAll(litPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(litPath, "package.json"), []byte(`{
+  "name": "lit",
+  "exports": { ".": "./index.js" }
+}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	pkgPath := filepath.Join(workspaceRoot, "examples", "my-app")
+	if err := os.MkdirAll(pkgPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(pkgPath, "package.json"), []byte(`{
+  "name": "@examples/my-app",
+  "exports": { "./*": "./*" },
+  "dependencies": { "lit": "^3.0.0" }
+}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("GenerateWithGraph", func(t *testing.T) {
+		result, err := GenerateWithGraph(pkgPath, nil)
+		if err != nil {
+			t.Fatalf("GenerateWithGraph returned error: %v", err)
+		}
+
+		selfExport := result.ImportMap.Imports["@examples/my-app/"]
+		if selfExport != "/" {
+			t.Errorf("GenerateWithGraph: expected self-export /, got: %s", selfExport)
+		}
+
+		litImport := result.ImportMap.Imports["lit"]
+		if litImport != "/node_modules/lit/index.js" {
+			t.Errorf("GenerateWithGraph: expected lit at /node_modules/lit/index.js, got: %s", litImport)
+		}
+	})
+
+	t.Run("GenerateIncremental", func(t *testing.T) {
+		result, err := GenerateIncremental(pkgPath, nil, IncrementalUpdate{})
+		if err != nil {
+			t.Fatalf("GenerateIncremental returned error: %v", err)
+		}
+
+		selfExport := result.ImportMap.Imports["@examples/my-app/"]
+		if selfExport != "/" {
+			t.Errorf("GenerateIncremental: expected self-export /, got: %s", selfExport)
+		}
+
+		litImport := result.ImportMap.Imports["lit"]
+		if litImport != "/node_modules/lit/index.js" {
+			t.Errorf("GenerateIncremental: expected lit at /node_modules/lit/index.js, got: %s", litImport)
+		}
+	})
+}
+
+// TestImportMap_WorkspaceSubdirectory_MixedPaths verifies that after rebasing,
+// both self-paths and node_modules paths coexist correctly
+func TestImportMap_WorkspaceSubdirectory_MixedPaths(t *testing.T) {
+	workspaceRoot := t.TempDir()
+
+	err := os.WriteFile(filepath.Join(workspaceRoot, "package.json"), []byte(`{
+  "name": "monorepo",
+  "workspaces": ["packages/*"]
+}`), 0644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, dep := range []struct{ name, dir, exports string }{
+		{"lit", "lit", `{ ".": "./index.js", "./html.js": "./html.js" }`},
+		{"@lit/reactive-element", "@lit/reactive-element", `{ ".": "./reactive-element.js" }`},
+	} {
+		depPath := filepath.Join(workspaceRoot, "node_modules", dep.dir)
+		if err := os.MkdirAll(depPath, 0755); err != nil {
+			t.Fatal(err)
+		}
+		pkg := `{"name": "` + dep.name + `", "exports": ` + dep.exports + `}`
+		if err := os.WriteFile(filepath.Join(depPath, "package.json"), []byte(pkg), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	pkgPath := filepath.Join(workspaceRoot, "packages", "my-element")
+	if err := os.MkdirAll(pkgPath, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(pkgPath, "package.json"), []byte(`{
+  "name": "@myorg/my-element",
+  "exports": {
+    ".": "./my-element.js",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "lit": "^3.0.0",
+    "@lit/reactive-element": "^2.0.0"
+  }
+}`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	importMap, err := Generate(pkgPath, nil)
+	if err != nil {
+		t.Fatalf("Generate returned error: %v", err)
+	}
+
+	selfRoot := importMap.Imports["@myorg/my-element"]
+	if selfRoot != "/my-element.js" {
+		t.Errorf("Expected @myorg/my-element -> /my-element.js, got: %s", selfRoot)
+	}
+
+	selfWildcard := importMap.Imports["@myorg/my-element/"]
+	if selfWildcard != "/" {
+		t.Errorf("Expected @myorg/my-element/ -> /, got: %s", selfWildcard)
+	}
+
+	litImport := importMap.Imports["lit"]
+	if litImport != "/node_modules/lit/index.js" {
+		t.Errorf("Expected lit -> /node_modules/lit/index.js, got: %s", litImport)
+	}
+
+	litHTML := importMap.Imports["lit/html.js"]
+	if litHTML != "/node_modules/lit/html.js" {
+		t.Errorf("Expected lit/html.js -> /node_modules/lit/html.js, got: %s", litHTML)
+	}
+
+	reImport := importMap.Imports["@lit/reactive-element"]
+	if reImport != "/node_modules/@lit/reactive-element/reactive-element.js" {
+		t.Errorf("Expected @lit/reactive-element -> /node_modules/@lit/reactive-element/reactive-element.js, got: %s", reImport)
+	}
+
+	for key, value := range importMap.Imports {
+		if strings.Contains(value, "/packages/my-element/") {
+			t.Errorf("Import %s still has workspace-relative prefix: %s", key, value)
+		}
+	}
+
+	for scopeKey, scopeMap := range importMap.Scopes {
+		if strings.Contains(scopeKey, "/packages/my-element/") {
+			t.Errorf("Scope key still has workspace-relative prefix: %s", scopeKey)
+		}
+		for k, v := range scopeMap {
+			if strings.Contains(v, "/packages/my-element/") {
+				t.Errorf("Scope value %s in scope %s still has workspace-relative prefix: %s", k, scopeKey, v)
+			}
+		}
+	}
+}
+
 // TestImportMap_WorkspaceSubdirectoryTransitiveDeps verifies transitive dependencies
 // in scopes are correctly generated when running from a workspace subdirectory
 func TestImportMap_WorkspaceSubdirectoryTransitiveDeps(t *testing.T) {

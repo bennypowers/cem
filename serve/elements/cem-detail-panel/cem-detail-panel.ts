@@ -220,10 +220,10 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>${this.#escapeHtml(pkg.name)}</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Package</dd></div>
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Modules</dt><dd class="pf-v6-c-description-list__description">${pkg.modules?.length || 0}</dd></div>
-        ${pkg.schemaVersion ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Schema Version</dt><dd class="pf-v6-c-description-list__description">${this.#escapeHtml(pkg.schemaVersion)}</dd></div>` : ''}
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Type</dt><dd class="cem-pf-v6-c-description-list__description">Package</dd></div>
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Modules</dt><dd class="cem-pf-v6-c-description-list__description">${pkg.modules?.length || 0}</dd></div>
+        ${pkg.schemaVersion ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Schema Version</dt><dd class="cem-pf-v6-c-description-list__description">${this.#escapeHtml(pkg.schemaVersion)}</dd></div>` : ''}
       </dl>
     `;
   }
@@ -241,10 +241,10 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>${this.#escapeHtml(module.path)}</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Declarations</dt><dd class="pf-v6-c-description-list__description">${module.declarations?.length || 0}</dd></div>
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        ${summary ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Summary</dt><dd class="cem-pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Declarations</dt><dd class="cem-pf-v6-c-description-list__description">${module.declarations?.length || 0}</dd></div>
       </dl>
     `;
   }
@@ -267,14 +267,14 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Name</dt><dd class="pf-v6-c-description-list__description">${this.#escapeHtml(ce.name)}</dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${ce.superclass?.name ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Extends</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(ce.superclass.name)}</code></dd></div>` : ''}
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Attributes</dt><dd class="pf-v6-c-description-list__description">${ce.attributes?.length || 0}</dd></div>
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Events</dt><dd class="pf-v6-c-description-list__description">${ce.events?.length || 0}</dd></div>
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Slots</dt><dd class="pf-v6-c-description-list__description">${ce.slots?.length || 0}</dd></div>
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Name</dt><dd class="cem-pf-v6-c-description-list__description">${this.#escapeHtml(ce.name)}</dd></div>
+        ${summary ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Summary</dt><dd class="cem-pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        ${ce.superclass?.name ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Extends</dt><dd class="cem-pf-v6-c-description-list__description"><code>${this.#escapeHtml(ce.superclass.name)}</code></dd></div>` : ''}
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Attributes</dt><dd class="cem-pf-v6-c-description-list__description">${ce.attributes?.length || 0}</dd></div>
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Events</dt><dd class="cem-pf-v6-c-description-list__description">${ce.events?.length || 0}</dd></div>
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Slots</dt><dd class="cem-pf-v6-c-description-list__description">${ce.slots?.length || 0}</dd></div>
       </dl>
     `;
   }
@@ -297,13 +297,13 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>${this.#escapeHtml(attr.name)}</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
-        ${attr.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(attr.type.text)}</code></dd></div>` : ''}
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${attr.default ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(attr.default)}</code></dd></div>` : ''}
-        ${attr.fieldName ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Reflects to</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(attr.fieldName)}</code></dd></div>` : ''}
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Element</dt><dd class="cem-pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
+        ${attr.type?.text ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Type</dt><dd class="cem-pf-v6-c-description-list__description"><code>${this.#escapeHtml(attr.type.text)}</code></dd></div>` : ''}
+        ${summary ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Summary</dt><dd class="cem-pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        ${attr.default ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Default</dt><dd class="cem-pf-v6-c-description-list__description"><code>${this.#escapeHtml(attr.default)}</code></dd></div>` : ''}
+        ${attr.fieldName ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Reflects to</dt><dd class="cem-pf-v6-c-description-list__description"><code>${this.#escapeHtml(attr.fieldName)}</code></dd></div>` : ''}
       </dl>
     `;
   }
@@ -326,13 +326,13 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>${this.#escapeHtml(prop.name)}</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
-        ${prop.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(prop.type.text)}</code></dd></div>` : ''}
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${prop.default ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(prop.default)}</code></dd></div>` : ''}
-        ${prop.privacy ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Privacy</dt><dd class="pf-v6-c-description-list__description">${this.#escapeHtml(prop.privacy)}</dd></div>` : ''}
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Element</dt><dd class="cem-pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
+        ${prop.type?.text ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Type</dt><dd class="cem-pf-v6-c-description-list__description"><code>${this.#escapeHtml(prop.type.text)}</code></dd></div>` : ''}
+        ${summary ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Summary</dt><dd class="cem-pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        ${prop.default ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Default</dt><dd class="cem-pf-v6-c-description-list__description"><code>${this.#escapeHtml(prop.default)}</code></dd></div>` : ''}
+        ${prop.privacy ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Privacy</dt><dd class="cem-pf-v6-c-description-list__description">${this.#escapeHtml(prop.privacy)}</dd></div>` : ''}
       </dl>
     `;
   }
@@ -355,12 +355,12 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>${this.#escapeHtml(method.name)}()</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${method.return?.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Returns</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(method.return.type.text)}</code></dd></div>` : ''}
-        ${method.privacy ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Privacy</dt><dd class="pf-v6-c-description-list__description">${this.#escapeHtml(method.privacy)}</dd></div>` : ''}
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Element</dt><dd class="cem-pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
+        ${summary ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Summary</dt><dd class="cem-pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        ${method.return?.type?.text ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Returns</dt><dd class="cem-pf-v6-c-description-list__description"><code>${this.#escapeHtml(method.return.type.text)}</code></dd></div>` : ''}
+        ${method.privacy ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Privacy</dt><dd class="cem-pf-v6-c-description-list__description">${this.#escapeHtml(method.privacy)}</dd></div>` : ''}
       </dl>
     `;
   }
@@ -383,11 +383,11 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>${this.#escapeHtml(event.name)}</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
-        ${event.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Detail Type</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(event.type.text)}</code></dd></div>` : ''}
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Element</dt><dd class="cem-pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
+        ${event.type?.text ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Detail Type</dt><dd class="cem-pf-v6-c-description-list__description"><code>${this.#escapeHtml(event.type.text)}</code></dd></div>` : ''}
+        ${summary ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Summary</dt><dd class="cem-pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
       </dl>
     `;
   }
@@ -410,10 +410,10 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>${this.#escapeHtml(slot.name) || '(default)'}</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Element</dt><dd class="cem-pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
+        ${summary ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Summary</dt><dd class="cem-pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
       </dl>
     `;
   }
@@ -436,12 +436,12 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>${this.#escapeHtml(cssProp.name)}</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
-        ${cssProp.syntax ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Syntax</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(cssProp.syntax)}</code></dd></div>` : ''}
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${cssProp.default ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(cssProp.default)}</code></dd></div>` : ''}
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Element</dt><dd class="cem-pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
+        ${cssProp.syntax ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Syntax</dt><dd class="cem-pf-v6-c-description-list__description"><code>${this.#escapeHtml(cssProp.syntax)}</code></dd></div>` : ''}
+        ${summary ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Summary</dt><dd class="cem-pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        ${cssProp.default ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Default</dt><dd class="cem-pf-v6-c-description-list__description"><code>${this.#escapeHtml(cssProp.default)}</code></dd></div>` : ''}
       </dl>
     `;
   }
@@ -464,10 +464,10 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>${this.#escapeHtml(cssPart.name)}</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Element</dt><dd class="cem-pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
+        ${summary ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Summary</dt><dd class="cem-pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
       </dl>
     `;
   }
@@ -490,10 +490,10 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>:--${this.#escapeHtml(cssState.name)}</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Element</dt><dd class="cem-pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
+        ${summary ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Summary</dt><dd class="cem-pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
       </dl>
     `;
   }
@@ -514,10 +514,10 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>Demo</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Element</dt><dd class="pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
-        ${demo.url ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">URL</dt><dd class="pf-v6-c-description-list__description"><a href="${this.#escapeHtml(demo.url)}" target="_blank" rel="noopener noreferrer">${this.#escapeHtml(demo.url)}</a></dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Element</dt><dd class="cem-pf-v6-c-description-list__description"><code>&lt;${this.#escapeHtml(ce.tagName!)}&gt;</code></dd></div>
+        ${demo.url ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">URL</dt><dd class="cem-pf-v6-c-description-list__description"><a href="${this.#escapeHtml(demo.url)}" target="_blank" rel="noopener noreferrer">${this.#escapeHtml(demo.url)}</a></dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
       </dl>
     `;
   }
@@ -536,11 +536,11 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>${this.#escapeHtml(cls.name)}</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Class</dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${cls.superclass?.name ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Extends</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(cls.superclass.name)}</code></dd></div>` : ''}
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Type</dt><dd class="cem-pf-v6-c-description-list__description">Class</dd></div>
+        ${summary ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Summary</dt><dd class="cem-pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        ${cls.superclass?.name ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Extends</dt><dd class="cem-pf-v6-c-description-list__description"><code>${this.#escapeHtml(cls.superclass.name)}</code></dd></div>` : ''}
       </dl>
     `;
   }
@@ -559,11 +559,11 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>${this.#escapeHtml(func.name)}()</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Function</dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${func.return?.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Returns</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(func.return.type.text)}</code></dd></div>` : ''}
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Type</dt><dd class="cem-pf-v6-c-description-list__description">Function</dd></div>
+        ${summary ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Summary</dt><dd class="cem-pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        ${func.return?.type?.text ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Returns</dt><dd class="cem-pf-v6-c-description-list__description"><code>${this.#escapeHtml(func.return.type.text)}</code></dd></div>` : ''}
       </dl>
     `;
   }
@@ -582,12 +582,12 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>${this.#escapeHtml(variable.name)}</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Variable</dd></div>
-        ${variable.type?.text ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Value Type</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(variable.type.text)}</code></dd></div>` : ''}
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
-        ${variable.default ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Default</dt><dd class="pf-v6-c-description-list__description"><code>${this.#escapeHtml(variable.default)}</code></dd></div>` : ''}
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Type</dt><dd class="cem-pf-v6-c-description-list__description">Variable</dd></div>
+        ${variable.type?.text ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Value Type</dt><dd class="cem-pf-v6-c-description-list__description"><code>${this.#escapeHtml(variable.type.text)}</code></dd></div>` : ''}
+        ${summary ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Summary</dt><dd class="cem-pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+        ${variable.default ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Default</dt><dd class="cem-pf-v6-c-description-list__description"><code>${this.#escapeHtml(variable.default)}</code></dd></div>` : ''}
       </dl>
     `;
   }
@@ -606,10 +606,10 @@ export class CemDetailPanel extends LitElement {
 
     return `
       <h3>${this.#escapeHtml(mixin.name)}()</h3>
-      <dl class="pf-v6-c-description-list pf-m-horizontal pf-m-compact">
-        <div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Type</dt><dd class="pf-v6-c-description-list__description">Mixin</dd></div>
-        ${summary ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Summary</dt><dd class="pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
-        ${description ? `<div class="pf-v6-c-description-list__group"><dt class="pf-v6-c-description-list__term">Description</dt><dd class="pf-v6-c-description-list__description">${description}</dd></div>` : ''}
+      <dl class="cem-pf-v6-c-description-list pf-m-horizontal pf-m-compact">
+        <div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Type</dt><dd class="cem-pf-v6-c-description-list__description">Mixin</dd></div>
+        ${summary ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Summary</dt><dd class="cem-pf-v6-c-description-list__description">${summary}</dd></div>` : ''}
+        ${description ? `<div class="cem-pf-v6-c-description-list__group"><dt class="cem-pf-v6-c-description-list__term">Description</dt><dd class="cem-pf-v6-c-description-list__description">${description}</dd></div>` : ''}
       </dl>
     `;
   }

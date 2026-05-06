@@ -1,0 +1,77 @@
+:host {
+  --cem-pf-v6-c-masthead--ColumnGap: var(--cem-pf-v6-c-masthead--m-display-stack--ColumnGap);
+  --cem-pf-v6-c-masthead--GridTemplateColumns: var(--cem-pf-v6-c-masthead--m-display-stack--GridTemplateColumns);
+  --cem-pf-v6-c-masthead__toggle--GridColumn: var(--cem-pf-v6-c-masthead--m-display-stack__toggle--GridColumn);
+  --cem-pf-v6-c-masthead__brand--GridColumn: var(--cem-pf-v6-c-masthead--m-display-stack__brand--GridColumn);
+  --cem-pf-v6-c-masthead__brand--Order: var(--cem-pf-v6-c-masthead--m-display-stack__brand--Order);
+  --cem-pf-v6-c-masthead__brand--PaddingBlockEnd: var(--cem-pf-v6-c-masthead--m-display-stack__brand--PaddingBlockEnd);
+  --cem-pf-v6-c-masthead__brand--BorderBlockEnd: var(--cem-pf-v6-c-masthead--m-display-stack__brand--BorderBlockEnd);
+  --cem-pf-v6-c-masthead__main--GridColumn: unset;
+  --cem-pf-v6-c-masthead__content--GridColumn: var(--cem-pf-v6-c-masthead--m-display-stack__content--GridColumn);
+  --cem-pf-v6-c-masthead__content--Order: var(--cem-pf-v6-c-masthead--m-display-stack__content--Order);
+  --cem-pf-v6-c-masthead__main--Display: var(--cem-pf-v6-c-masthead--m-display-stack__main--Display);
+  --cem-pf-v6-c-masthead__main--ColumnGap: var(--cem-pf-v6-c-masthead--m-display-stack__main--ColumnGap);
+
+  position: relative;
+  z-index: var(--cem-pf-v6-c-page--c-masthead--ZIndex);
+  grid-area: header;
+  display: grid;
+  grid-template-columns: var(--cem-pf-v6-c-masthead--GridTemplateColumns);
+  row-gap: var(--cem-pf-v6-c-masthead--RowGap);
+  column-gap: var(--cem-pf-v6-c-masthead--ColumnGap);
+  align-items: start;
+  min-width: 0;
+  padding-block-start: var(--cem-pf-v6-c-masthead--PaddingBlockStart, var(--cem-pf-v6-c-masthead--PaddingBlock));
+  padding-block-end: var(--cem-pf-v6-c-masthead--PaddingBlockEnd, var(--cem-pf-v6-c-masthead--PaddingBlock));
+  padding-inline-start: var(--cem-pf-v6-c-masthead--PaddingInlineStart, var(--cem-pf-v6-c-masthead--PaddingInline));
+  padding-inline-end: var(--cem-pf-v6-c-masthead--PaddingInlineEnd, var(--cem-pf-v6-c-masthead--PaddingInline));
+  background-color: var(--cem-pf-v6-c-masthead--BackgroundColor);
+}
+
+#main {
+  display: var(--cem-pf-v6-c-masthead__main--Display);
+  grid-column: var(--cem-pf-v6-c-masthead__main--GridColumn);
+  column-gap: var(--cem-pf-v6-c-masthead__main--ColumnGap);
+  align-items: center;
+}
+
+#toggle {
+  grid-column: var(--cem-pf-v6-c-masthead__toggle--GridColumn);
+  display: flex;
+  align-items: center;
+}
+
+#brand {
+  position: relative;
+  grid-column: var(--cem-pf-v6-c-masthead__brand--GridColumn);
+  order: var(--cem-pf-v6-c-masthead__brand--Order);
+  padding-block-end: var(--cem-pf-v6-c-masthead__brand--PaddingBlockEnd);
+  border-block-end: var(--cem-pf-v6-c-masthead__brand--BorderBlockEnd);
+}
+
+#content {
+  grid-column: var(--cem-pf-v6-c-masthead__content--GridColumn);
+  order: var(--cem-pf-v6-c-masthead__content--Order);
+  column-gap: var(--cem-pf-v6-c-masthead__content--ColumnGap);
+}
+
+::slotted(a[slot="logo"]),
+::slotted(img[slot="logo"]),
+::slotted(svg[slot="logo"]) {
+  position: relative;
+  width: var(--cem-pf-v6-c-masthead__logo--Width);
+  max-height: var(--cem-pf-v6-c-masthead__logo--MaxHeight);
+}
+
+#toggle cem-pf-v6-button {
+  font-size: var(--cem-pf-v6-c-masthead__toggle--Size);
+}
+
+::slotted(cem-pf-v6-toolbar) {
+  --cem-pf-v6-c-toolbar--Width: var(--cem-pf-v6-c-masthead--c-toolbar--Width);
+  --cem-pf-v6-c-toolbar--PaddingBlockEnd: var(--cem-pf-v6-c-masthead--c-toolbar--PaddingBlockEnd);
+  --cem-pf-v6-c-toolbar__content--MinWidth: var(--cem-pf-v6-c-masthead--c-toolbar__content--MinWidth);
+  --cem-pf-v6-c-toolbar__content--PaddingInlineStart: var(--cem-pf-v6-c-masthead--c-toolbar__content--PaddingInlineStart);
+  --cem-pf-v6-c-toolbar__content--PaddingInlineEnd: var(--cem-pf-v6-c-masthead--c-toolbar__content--PaddingInlineEnd);
+  --cem-pf-v6-c-toolbar__content-section--FlexWrap: var(--cem-pf-v6-c-masthead--c-toolbar__content-section--FlexWrap);
+}

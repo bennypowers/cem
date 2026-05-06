@@ -55,7 +55,7 @@ func render(t *testing.T, r *litssr.Renderer, html string) string {
 // TestSSR_Lifecycle verifies init, render, and shutdown without race.
 func TestSSR_Lifecycle(t *testing.T) {
 	r := getSharedRenderer(t)
-	out := render(t, r, "<pf-v6-badge>42</pf-v6-badge>")
+	out := render(t, r, "<cem-pf-v6-badge>42</cem-pf-v6-badge>")
 	if !strings.Contains(out, "shadowrootmode") {
 		t.Error("expected shadowrootmode in output")
 	}
@@ -69,9 +69,9 @@ func TestSSR_DSDInjection(t *testing.T) {
 		name  string
 		input string
 	}{
-		{"badge", `<pf-v6-badge>42</pf-v6-badge>`},
-		{"button", `<pf-v6-button>Click</pf-v6-button>`},
-		{"card", `<pf-v6-card><h3 slot="title">Title</h3>Body</pf-v6-card>`},
+		{"badge", `<cem-pf-v6-badge>42</cem-pf-v6-badge>`},
+		{"button", `<cem-pf-v6-button>Click</cem-pf-v6-button>`},
+		{"card", `<cem-pf-v6-card><h3 slot="title">Title</h3>Body</cem-pf-v6-card>`},
 	}
 
 	for _, tt := range tests {
@@ -96,9 +96,9 @@ func TestSSR_StylesNonEmpty(t *testing.T) {
 		input    string
 		cssToken string
 	}{
-		{"badge", `<pf-v6-badge>42</pf-v6-badge>`, "--pf-v6-c-badge"},
-		{"button", `<pf-v6-button>Click</pf-v6-button>`, "--pf-v6-c-button"},
-		{"card", `<pf-v6-card>Body</pf-v6-card>`, "--pf-v6-c-card"},
+		{"badge", `<cem-pf-v6-badge>42</cem-pf-v6-badge>`, "--cem-pf-v6-c-badge"},
+		{"button", `<cem-pf-v6-button>Click</cem-pf-v6-button>`, "--cem-pf-v6-c-button"},
+		{"card", `<cem-pf-v6-card>Body</cem-pf-v6-card>`, "--cem-pf-v6-c-card"},
 	}
 
 	for _, tt := range tests {
@@ -117,7 +117,7 @@ func TestSSR_StylesNonEmpty(t *testing.T) {
 // TestSSR_HydrationDigests verifies template digests are base64-encoded.
 func TestSSR_HydrationDigests(t *testing.T) {
 	r := getSharedRenderer(t)
-	out := render(t, r, "<pf-v6-badge>42</pf-v6-badge>")
+	out := render(t, r, "<cem-pf-v6-badge>42</cem-pf-v6-badge>")
 
 	// Extract lit-part digest
 	idx := strings.Index(out, "lit-part ")
@@ -159,7 +159,7 @@ func TestSSR_ButtonConditionalRendering(t *testing.T) {
 	r := getSharedRenderer(t)
 
 	t.Run("without href", func(t *testing.T) {
-		out := render(t, r, `<pf-v6-button>Click</pf-v6-button>`)
+		out := render(t, r, `<cem-pf-v6-button>Click</cem-pf-v6-button>`)
 		if strings.Contains(out, "<a ") {
 			t.Error("button without href should not render <a>")
 		}
@@ -169,7 +169,7 @@ func TestSSR_ButtonConditionalRendering(t *testing.T) {
 	})
 
 	t.Run("with href", func(t *testing.T) {
-		out := render(t, r, `<pf-v6-button href="/foo">Link</pf-v6-button>`)
+		out := render(t, r, `<cem-pf-v6-button href="/foo">Link</cem-pf-v6-button>`)
 		if !strings.Contains(out, `<a `) {
 			t.Error("button with href should render <a>")
 		}
@@ -188,9 +188,9 @@ func TestSSR_ModuleScopeBrowserAPIs(t *testing.T) {
 		name  string
 		input string
 	}{
-		{"dropdown (document.addEventListener)", `<pf-v6-dropdown>menu</pf-v6-dropdown>`},
-		{"page (window.matchMedia)", `<pf-v6-page>content</pf-v6-page>`},
-		{"popover (CSS.supports)", `<pf-v6-popover>tip</pf-v6-popover>`},
+		{"dropdown (document.addEventListener)", `<cem-pf-v6-dropdown>menu</cem-pf-v6-dropdown>`},
+		{"page (window.matchMedia)", `<cem-pf-v6-page>content</cem-pf-v6-page>`},
+		{"popover (CSS.supports)", `<cem-pf-v6-popover>tip</cem-pf-v6-popover>`},
 	}
 
 	for _, tt := range tests {
@@ -225,7 +225,7 @@ func TestSSR_BytecodeLifecycle(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = r.Close(context.Background()) })
 
-	out := render(t, r, "<pf-v6-badge>42</pf-v6-badge>")
+	out := render(t, r, "<cem-pf-v6-badge>42</cem-pf-v6-badge>")
 	if !strings.Contains(out, `shadowrootmode="open"`) {
 		t.Error("bytecode render missing DSD")
 	}
