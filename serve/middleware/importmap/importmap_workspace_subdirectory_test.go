@@ -251,59 +251,6 @@ func TestImportMap_WorkspaceSubdirectory_SelfExports(t *testing.T) {
 	}
 }
 
-// TestImportMap_WorkspaceSubdirectory_SelfExports_FromSubdir tests the same scenario
-// but using an absolute path (simulating `cd examples/kitchen-sink && ../../dist/cem serve`).
-// After filepath.Abs(), both invocations produce identical results.
-func TestImportMap_WorkspaceSubdirectory_SelfExports_FromSubdir(t *testing.T) {
-	workspaceRoot := t.TempDir()
-
-	err := os.WriteFile(filepath.Join(workspaceRoot, "package.json"), []byte(`{
-  "name": "monorepo",
-  "workspaces": ["examples/*"]
-}`), 0644)
-	if err != nil {
-		t.Fatalf("Failed to write workspace package.json: %v", err)
-	}
-
-	litPath := filepath.Join(workspaceRoot, "node_modules", "lit")
-	if err := os.MkdirAll(litPath, 0755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(litPath, "package.json"), []byte(`{
-  "name": "lit",
-  "exports": { ".": "./index.js" }
-}`), 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	pkgPath := filepath.Join(workspaceRoot, "examples", "kitchen-sink")
-	if err := os.MkdirAll(pkgPath, 0755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(pkgPath, "package.json"), []byte(`{
-  "name": "@cem-examples/kitchen-sink",
-  "exports": { "./*": "./*" },
-  "dependencies": { "lit": "^3.0.0" }
-}`), 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	importMap, err := Generate(pkgPath, nil)
-	if err != nil {
-		t.Fatalf("Generate returned error: %v", err)
-	}
-
-	selfExport := importMap.Imports["@cem-examples/kitchen-sink/"]
-	if selfExport != "/" {
-		t.Errorf("Expected self-export to be /, got: %s", selfExport)
-	}
-
-	litImport := importMap.Imports["lit"]
-	if litImport != "/node_modules/lit/index.js" {
-		t.Errorf("Expected lit import to be /node_modules/lit/index.js, got: %s", litImport)
-	}
-}
-
 // TestImportMap_WorkspaceSubdirectory_DeeplyNested tests rebasing for a package
 // nested in a workspace subdirectory (e.g., apps/my-app)
 func TestImportMap_WorkspaceSubdirectory_DeeplyNested(t *testing.T) {
