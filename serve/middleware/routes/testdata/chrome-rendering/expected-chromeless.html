@@ -19,6 +19,40 @@
             onTransformError: (error) => console.error('[CEM] Transform Error:', error.title, error.message, error.file),
         });
         client.connect(new URL('/__cem/reload', window.location.origin).toString() + `?page=${encodeURIComponent(window.location.pathname)}`);
+
+        window.addEventListener('message', event => {
+            if (event.origin !== window.location.origin) return;
+            if (event.data?.type !== 'cem-knob-change') return;
+            const { knobType, name, value, tagName, instanceIndex = 0 } = event.data;
+            const elements = document.querySelectorAll(tagName);
+            const element = elements[instanceIndex];
+            if (!element) return;
+            switch (knobType) {
+                case 'attribute':
+                    if (typeof value === 'boolean')
+                        element.toggleAttribute(name, value);
+                    else if (value === '' || value == null)
+                        element.removeAttribute(name);
+                    else
+                        element.setAttribute(name, String(value));
+                    break;
+                case 'property':
+                    if (value === undefined) {
+                        try { delete element[name]; } catch { element[name] = undefined; }
+                    } else {
+                        element[name] = value;
+                    }
+                    break;
+                case 'css-property': {
+                    const prop = name.startsWith('--') ? name : `--${name}`;
+                    if (value === '' || value == null)
+                        element.style.removeProperty(prop);
+                    else
+                        element.style.setProperty(prop, String(value));
+                    break;
+                }
+            }
+        });
     </script>
 </head>
 <body>

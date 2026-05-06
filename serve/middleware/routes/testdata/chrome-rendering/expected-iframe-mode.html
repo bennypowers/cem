@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)">
+  <title>Basic Example - my-element</title>
+  <link rel="icon" href="/__cem/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/__cem/pf-tokens.css">
+  <link rel="stylesheet" href="/__cem/demo-chrome.css">
+  <link rel="stylesheet" href="/__cem/pf-lightdom.css">
+  
+  <script type="importmap">{}</script>
+  
+  
+  <script type="module" src="/__cem/vendor/lit-element-hydrate-support.js"></script>
+  <link rel="modulepreload" href="/__cem/elements/cem-serve-chrome/cem-serve-chrome.js">
+  <script type="module">
+    import '/__cem/elements/cem-serve-chrome/cem-serve-chrome.js';
+  </script>
+  
+</head>
+<body style="color-scheme: light dark">
+  <link rel="stylesheet" href="/__cem/cem-pf-v6-c-description-list.css">
+  <cem-serve-chrome role="none"
+                    
+                    primary-tag-name="my-element"
+                    demo-title="Basic Example"
+                    
+                    
+                    
+                    drawer="collapsed"
+                    drawer-height="0"
+                    tabs-selected="0"
+                    sidebar="expanded"
+                    >
+    
+
+    
+
+    
+    
+    <cem-serve-demo id="demo" rendering="iframe">
+      <meta itemprop="name" content="Basic Example">
+<meta itemprop="description" content="A simple example showing basic usage">
+
+<my-element id="example" variant="primary">
+  <span slot="label">Hello World</span>
+</my-element>
+
+    </cem-serve-demo>
+    
+
+    
+
+    
+    
+  </cem-serve-chrome>
+</body>
+</html>

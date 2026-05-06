@@ -3,7 +3,7 @@ title: Rendering Modes
 weight: 100
 ---
 
-The [dev server][workflow] supports three rendering modes that control how your [demos][demos] are presented: light mode (full development UI), shadow mode (demos in [shadow DOM][shadowdom]), and chromeless mode (minimal standalone pages). Choose the mode that fits your workflow—light for interactive development with [knobs][knobs] and live monitoring, shadow for testing CSS encapsulation, or chromeless for [automated testing](#chromeless-mode) and clean demo sharing.
+The [dev server][workflow] supports four rendering modes that control how your [demos][demos] are presented: light mode (full development UI), shadow mode (demos in [shadow DOM][shadowdom]), iframe mode (full isolation with knobs), and chromeless mode (minimal standalone pages). Choose the mode that fits your workflow--light for interactive development with [knobs][knobs] and live monitoring, shadow for testing CSS encapsulation, iframe for full style and tag name isolation, or chromeless for [automated testing](#chromeless-mode) and clean demo sharing.
 
 All modes include [live reload][websocket] with smart dependency tracking and support [query parameter overrides](#query-parameter-override) for quick testing. The rendering mode affects UI presentation and error handling but preserves core functionality like TypeScript transforms, [import map][importmaps] injection, and file watching across all modes.
 
@@ -32,6 +32,22 @@ serve:
   demos:
     rendering: shadow
 ```
+
+## Iframe Mode
+
+Iframe mode provides the same full UI as light mode--sidebar navigation, knobs, manifest browser--but renders demo content inside an `<iframe>` for complete isolation. The demo runs in a separate document, so its styles, custom element registrations, and DOM queries cannot leak into or be affected by the dev server chrome. Knobs still work: changes bridge to the iframe via `postMessage`.
+
+Use iframe mode when scoped custom element registries are not available and you need to prevent tag name collisions between demo components and the dev server UI, ensure demo `querySelector` calls cannot reach outside the demo boundary, or verify that components render correctly without any inherited styles.
+
+Start the server with `cem serve --rendering=iframe` or configure it in `.config/cem.yaml`:
+
+```yaml
+serve:
+  demos:
+    rendering: iframe
+```
+
+Iframe mode loads each demo as a chromeless page inside the iframe, so live reload, TypeScript/CSS transforms, and import map injection all work as expected. The tradeoff is slightly slower initial load compared to light or shadow mode due to the separate document.
 
 ## Chromeless Mode
 
@@ -81,14 +97,11 @@ Override the default rendering mode for any demo with the `?rendering=` query pa
 ```text
 http://localhost:8000/elements/button/demo/?rendering=chromeless
 http://localhost:8000/elements/button/demo/?rendering=shadow
+http://localhost:8000/elements/button/demo/?rendering=iframe
 http://localhost:8000/elements/button/demo/?rendering=light
 ```
 
-Valid values are `light`, `shadow`, and `chromeless`. Invalid values are ignored and the configured default is used.
-
-{{<tip "warning">}}
-**Iframe mode not yet implemented:** Specifying `iframe` mode in the config will cause the server to fail at startup. If `iframe` is requested via query parameter, the server logs a warning, broadcasts an error overlay, and falls back to `shadow` mode.
-{{</tip>}}
+Valid values are `light`, `shadow`, `iframe`, and `chromeless`. Invalid values are ignored and the configured default is used.
 
 ### Backward Compatibility
 
@@ -121,6 +134,12 @@ Check the browser console when using chromeless mode—all dev server messages a
 - Verifying CSS custom properties penetrate shadow boundaries
 - Testing `::part()` and `::slotted()` selectors
 - Ensuring styles don't leak in or out
+
+**Iframe:**
+- Full style and tag name isolation without scoped registries
+- Preventing demo `querySelector` from reaching dev server UI
+- Testing components free of inherited styles
+- Interactive development with knobs in an isolated context
 
 **Chromeless:**
 - Automated testing with Playwright/Puppeteer

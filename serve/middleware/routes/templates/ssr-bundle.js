@@ -6573,89 +6573,53 @@ var cem_serve_chrome_default = s52;
 
 // lit-css:elements/cem-serve-demo/cem-serve-demo.css
 var s53 = new CSSStyleSheet();
-s53.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n"'));
+s53.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n\\niframe {\\n  border: none;\\n  width: 100%;\\n  height: 100%;\\n}\\n"'));
 var cem_serve_demo_default = s53;
 
 // elements/cem-serve-demo/cem-serve-demo.ts
-var _CemServeDemo_decorators, _init49, _a49;
+var _rendering_dec, _a49, _CemServeDemo_decorators, _init49, _rendering, _CemServeDemo_instances, iframe_get, iframeSrc_fn, onIframeLoad_fn, getElementInstance_fn, postKnobChange_fn, applyAttributeChange_fn, applyPropertyChange_fn, applyCSSPropertyChange_fn;
 _CemServeDemo_decorators = [t3("cem-serve-demo")];
-var CemServeDemo = class extends (_a49 = i3) {
-  static styles = cem_serve_demo_default;
-  render() {
-    return T`<slot></slot>`;
+var CemServeDemo = class extends (_a49 = i3, _rendering_dec = [n4({ reflect: true })], _a49) {
+  constructor() {
+    super(...arguments);
+    __privateAdd(this, _CemServeDemo_instances);
+    __privateAdd(this, _rendering, __runInitializers(_init49, 8, this)), __runInitializers(_init49, 11, this);
   }
-  /**
-   * Find the Nth instance of an element by tag name
-   */
-  #getElementInstance(tagName, instanceIndex = 0) {
-    const elements = this.querySelectorAll(tagName);
-    return elements[instanceIndex] || null;
+  render() {
+    return this.rendering === "iframe" ? T`
+      <iframe part="iframe"
+              src="${__privateMethod(this, _CemServeDemo_instances, iframeSrc_fn).call(this)}"
+              @load="${__privateMethod(this, _CemServeDemo_instances, onIframeLoad_fn)}"></iframe>` : T`
+      <slot></slot>`;
   }
   /**
    * Apply a knob change to an element in the demo.
    * Called by parent chrome element when knob events occur.
-   * @param type - 'attribute', 'property', or 'css-property'
-   * @param name - Attribute/property/CSS name
-   * @param value - Value to apply
-   * @param tagName - Target element tag name
-   * @param instanceIndex - Which instance of the element (0-based)
-   * @returns Whether the operation succeeded
+   * In iframe mode, bridges via postMessage instead of direct DOM access.
    */
   applyKnobChange(type, name, value, tagName, instanceIndex = 0) {
-    const element = this.#getElementInstance(tagName, instanceIndex);
+    if (this.rendering === "iframe") {
+      return __privateMethod(this, _CemServeDemo_instances, postKnobChange_fn).call(this, type, name, value, tagName, instanceIndex);
+    }
+    const element = __privateMethod(this, _CemServeDemo_instances, getElementInstance_fn).call(this, tagName, instanceIndex);
     if (!element) {
       console.warn("[cem-serve-demo] Element not found:", tagName, "at index", instanceIndex);
       return false;
     }
     switch (type) {
       case "attribute":
-        return this.#applyAttributeChange(element, name, value);
+        return __privateMethod(this, _CemServeDemo_instances, applyAttributeChange_fn).call(this, element, name, value);
       case "property":
-        return this.#applyPropertyChange(element, name, value);
+        return __privateMethod(this, _CemServeDemo_instances, applyPropertyChange_fn).call(this, element, name, value);
       case "css-property":
-        return this.#applyCSSPropertyChange(element, name, value);
+        return __privateMethod(this, _CemServeDemo_instances, applyCSSPropertyChange_fn).call(this, element, name, value);
       default:
         console.warn("[cem-serve-demo] Unknown knob type:", type);
         return false;
     }
   }
-  #applyAttributeChange(element, name, value) {
-    if (typeof value === "boolean") {
-      element.toggleAttribute(name, value);
-    } else if (value === "" || value === null || value === void 0) {
-      element.removeAttribute(name);
-    } else {
-      element.setAttribute(name, String(value));
-    }
-    return true;
-  }
-  #applyPropertyChange(element, name, value) {
-    if (value === void 0) {
-      try {
-        delete element[name];
-      } catch {
-        element[name] = void 0;
-      }
-    } else {
-      element[name] = value;
-    }
-    return true;
-  }
-  #applyCSSPropertyChange(element, name, value) {
-    const propertyName = name.startsWith("--") ? name : `--${name}`;
-    if (value === "" || value === null || value === void 0) {
-      element.style.removeProperty(propertyName);
-    } else {
-      element.style.setProperty(propertyName, String(value));
-    }
-    return true;
-  }
   /**
    * Set an attribute on an element in the demo
-   * @param selector - CSS selector for target element
-   * @param attribute - Attribute name
-   * @param value - Attribute value (boolean for presence/absence)
-   * @returns Whether the operation succeeded
    */
   setDemoAttribute(selector, attribute, value) {
     const target = this.querySelector(selector);
@@ -6671,10 +6635,6 @@ var CemServeDemo = class extends (_a49 = i3) {
   }
   /**
    * Set a property on an element in the demo
-   * @param selector - CSS selector for target element
-   * @param property - Property name
-   * @param value - Property value
-   * @returns Whether the operation succeeded
    */
   setDemoProperty(selector, property, value) {
     const target = this.querySelector(selector);
@@ -6686,10 +6646,6 @@ var CemServeDemo = class extends (_a49 = i3) {
   }
   /**
    * Set a CSS custom property on an element in the demo
-   * @param selector - CSS selector for target element
-   * @param cssProperty - CSS custom property name (with or without --)
-   * @param value - CSS property value
-   * @returns Whether the operation succeeded
    */
   setDemoCssCustomProperty(selector, cssProperty, value) {
     const target = this.querySelector(selector);
@@ -6702,7 +6658,72 @@ var CemServeDemo = class extends (_a49 = i3) {
   }
 };
 _init49 = __decoratorStart(_a49);
+_rendering = new WeakMap();
+_CemServeDemo_instances = new WeakSet();
+iframe_get = function() {
+  return this.renderRoot.querySelector("iframe");
+};
+iframeSrc_fn = function() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("rendering", "chromeless");
+  return url.toString();
+};
+onIframeLoad_fn = function() {
+  this.dispatchEvent(new Event("iframe-ready"));
+};
+/**
+ * Find the Nth instance of an element by tag name
+ */
+getElementInstance_fn = function(tagName, instanceIndex = 0) {
+  const elements = this.querySelectorAll(tagName);
+  return elements[instanceIndex] || null;
+};
+postKnobChange_fn = function(knobType, name, value, tagName, instanceIndex) {
+  const iframe = __privateGet(this, _CemServeDemo_instances, iframe_get);
+  if (!iframe?.contentWindow) {
+    console.warn("[cem-serve-demo] Iframe not ready for postMessage");
+    return false;
+  }
+  iframe.contentWindow.postMessage(
+    { type: "cem-knob-change", knobType, name, value, tagName, instanceIndex },
+    window.location.origin
+  );
+  return true;
+};
+applyAttributeChange_fn = function(element, name, value) {
+  if (typeof value === "boolean") {
+    element.toggleAttribute(name, value);
+  } else if (value === "" || value === null || value === void 0) {
+    element.removeAttribute(name);
+  } else {
+    element.setAttribute(name, String(value));
+  }
+  return true;
+};
+applyPropertyChange_fn = function(element, name, value) {
+  if (value === void 0) {
+    try {
+      delete element[name];
+    } catch {
+      element[name] = value;
+    }
+  } else {
+    element[name] = value;
+  }
+  return true;
+};
+applyCSSPropertyChange_fn = function(element, name, value) {
+  const propertyName = name.startsWith("--") ? name : `--${name}`;
+  if (value === "" || value === null || value === void 0) {
+    element.style.removeProperty(propertyName);
+  } else {
+    element.style.setProperty(propertyName, String(value));
+  }
+  return true;
+};
+__decorateElement(_init49, 4, "rendering", _rendering_dec, CemServeDemo, _rendering);
 CemServeDemo = __decorateElement(_init49, 0, "CemServeDemo", _CemServeDemo_decorators, CemServeDemo);
+__publicField(CemServeDemo, "styles", cem_serve_demo_default);
 __runInitializers(_init49, 1, CemServeDemo);
 
 // lit-css:elements/cem-serve-knob-group/cem-serve-knob-group.css

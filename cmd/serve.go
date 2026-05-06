@@ -149,10 +149,6 @@ var serveCmd = &cobra.Command{
 		if !slices.Contains(validModes, demoRendering) {
 			return fmt.Errorf("invalid demo rendering mode '%s': must be 'light', 'shadow', 'iframe', or 'chromeless'", demoRendering)
 		}
-		if demoRendering == "iframe" {
-			return fmt.Errorf("iframe rendering mode is not yet implemented - use 'light', 'shadow', or 'chromeless'")
-		}
-
 		// Create server config
 		config := serve.Config{
 			Port:                 port,
