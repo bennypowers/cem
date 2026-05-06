@@ -146,6 +146,7 @@ func newMappaResolver(fs platform.FileSystem, logger types.Logger, cache package
 // which only re-resolve changed packages and their dependents.
 func resolveWithMappa(
 	rootDir string,
+	pathBase string,
 	fs platform.FileSystem,
 	logger types.Logger,
 	inputMap *ImportMap,
@@ -172,6 +173,11 @@ func resolveWithMappa(
 		resolver = resolver.WithInputMap(convertToMappaImportMap(inputMap))
 	}
 
+	// Rebase paths and scope deps to serve root when in workspace subdirectory
+	if pathBase != "" && pathBase != rootDir {
+		resolver = resolver.WithPathBase(pathBase).WithPackageDeps(pathBase)
+	}
+
 	// Resolve the import map
 	result, err := resolver.Resolve(rootDir)
 	if err != nil {
@@ -185,6 +191,7 @@ func resolveWithMappa(
 // This is used for initial resolution when incremental updates will be needed.
 func resolveWithMappaGraph(
 	rootDir string,
+	pathBase string,
 	fs platform.FileSystem,
 	logger types.Logger,
 	inputMap *ImportMap,
@@ -209,6 +216,11 @@ func resolveWithMappaGraph(
 		resolver = resolver.WithInputMap(convertToMappaImportMap(inputMap))
 	}
 
+	// Rebase paths and scope deps to serve root when in workspace subdirectory
+	if pathBase != "" && pathBase != rootDir {
+		resolver = resolver.WithPathBase(pathBase).WithPackageDeps(pathBase)
+	}
+
 	// Resolve with graph for incremental updates
 	result, err := resolver.ResolveWithGraph(rootDir)
 	if err != nil {
@@ -225,12 +237,18 @@ func resolveWithMappaGraph(
 // Only changed packages and their dependents are re-resolved.
 func resolveIncrementalWithMappa(
 	rootDir string,
+	pathBase string,
 	fs platform.FileSystem,
 	logger types.Logger,
 	update IncrementalUpdate,
 	cache packagejson.Cache,
 ) (*IncrementalResult, error) {
 	resolver := newMappaResolver(fs, logger, cache)
+
+	// Rebase paths and scope deps to serve root when in workspace subdirectory
+	if pathBase != "" && pathBase != rootDir {
+		resolver = resolver.WithPathBase(pathBase).WithPackageDeps(pathBase)
+	}
 
 	// Extract mappa's dependency graph from our wrapper
 	var mappaGraph *resolve.DependencyGraph
