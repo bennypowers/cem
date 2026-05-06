@@ -20,7 +20,11 @@ export class CemServeDemo extends LitElement {
 
   @property({ reflect: true }) accessor rendering: string | undefined;
 
-  get #iframe(): HTMLIFrameElement | null { return this.renderRoot.querySelector('iframe');
+  #iframeReady = false;
+  #pendingMessages: Array<Record<string, unknown>> = [];
+
+  get #iframe(): HTMLIFrameElement | null {
+    return this.renderRoot.querySelector('iframe');
   }
 
   render() {
@@ -124,6 +128,10 @@ export class CemServeDemo extends LitElement {
   }
 
   #onIframeLoad() {
+    this.#iframeReady = true;
+    for (const msg of this.#pendingMessages)
+      this.#iframe?.contentWindow?.postMessage(msg, window.location.origin);
+    this.#pendingMessages = [];
     this.dispatchEvent(new Event('iframe-ready'));
   }
 
@@ -142,15 +150,17 @@ export class CemServeDemo extends LitElement {
     tagName: string,
     instanceIndex: number,
   ): boolean {
+    const msg = { type: 'cem-knob-change', knobType, name, value, tagName, instanceIndex };
+    if (!this.#iframeReady) {
+      this.#pendingMessages.push(msg);
+      return true;
+    }
     const iframe = this.#iframe;
     if (!iframe?.contentWindow) {
       console.warn('[cem-serve-demo] Iframe not ready for postMessage');
       return false;
     }
-    iframe.contentWindow.postMessage(
-      { type: 'cem-knob-change', knobType, name, value, tagName, instanceIndex },
-      window.location.origin,
-    );
+    iframe.contentWindow.postMessage(msg, window.location.origin);
     return true;
   }
 

@@ -598,52 +598,59 @@ describe('cem-serve-demo', () => {
       expect(iframe).to.not.exist;
     });
 
-    it('applyKnobChange posts message to iframe contentWindow', () => {
+    it('queues knob changes before iframe load, flushes on load', () => {
+      const result = iframeEl.applyKnobChange('attribute', 'label', 'Queued', 'my-element', 0);
+      expect(result).to.be.true;
+
       const iframe = iframeEl.shadowRoot.querySelector('iframe');
       const messages = [];
-
-      // Mock contentWindow.postMessage
       Object.defineProperty(iframe, 'contentWindow', {
         value: {
           postMessage: (data, origin) => messages.push({ data, origin }),
         },
       });
 
-      const result = iframeEl.applyKnobChange('attribute', 'label', 'Test', 'my-element', 0);
+      iframe.dispatchEvent(new Event('load'));
 
-      expect(result).to.be.true;
       expect(messages).to.have.lengthOf(1);
       expect(messages[0].data).to.deep.equal({
         type: 'cem-knob-change',
         knobType: 'attribute',
         name: 'label',
-        value: 'Test',
+        value: 'Queued',
         tagName: 'my-element',
         instanceIndex: 0,
       });
-      expect(messages[0].origin).to.equal(window.location.origin);
     });
 
-    it('applyKnobChange returns false when iframe not ready', () => {
-      const iframe = iframeEl.shadowRoot.querySelector('iframe');
-
-      // Mock contentWindow as null (iframe not loaded)
-      Object.defineProperty(iframe, 'contentWindow', { value: null });
-
-      const result = iframeEl.applyKnobChange('attribute', 'label', 'Test', 'my-element', 0);
-
-      expect(result).to.be.false;
-    });
-
-    it('posts css-property knob changes via postMessage', () => {
+    it('posts message directly after iframe is loaded', () => {
       const iframe = iframeEl.shadowRoot.querySelector('iframe');
       const messages = [];
-
       Object.defineProperty(iframe, 'contentWindow', {
         value: {
           postMessage: (data, origin) => messages.push({ data, origin }),
         },
       });
+
+      iframe.dispatchEvent(new Event('load'));
+
+      const result = iframeEl.applyKnobChange('attribute', 'label', 'Direct', 'my-element', 0);
+
+      expect(result).to.be.true;
+      expect(messages).to.have.lengthOf(1);
+      expect(messages[0].data.value).to.equal('Direct');
+      expect(messages[0].origin).to.equal(window.location.origin);
+    });
+
+    it('posts css-property knob changes via postMessage', () => {
+      const iframe = iframeEl.shadowRoot.querySelector('iframe');
+      const messages = [];
+      Object.defineProperty(iframe, 'contentWindow', {
+        value: {
+          postMessage: (data, origin) => messages.push({ data, origin }),
+        },
+      });
+      iframe.dispatchEvent(new Event('load'));
 
       const result = iframeEl.applyKnobChange('css-property', '--color', 'red', 'my-element', 2);
 
@@ -661,12 +668,12 @@ describe('cem-serve-demo', () => {
     it('posts property knob changes via postMessage', () => {
       const iframe = iframeEl.shadowRoot.querySelector('iframe');
       const messages = [];
-
       Object.defineProperty(iframe, 'contentWindow', {
         value: {
           postMessage: (data, origin) => messages.push({ data, origin }),
         },
       });
+      iframe.dispatchEvent(new Event('load'));
 
       const result = iframeEl.applyKnobChange('property', 'variant', 'primary', 'my-element', 0);
 

@@ -6577,13 +6577,15 @@ s53.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n\\niframe {\\n  b
 var cem_serve_demo_default = s53;
 
 // elements/cem-serve-demo/cem-serve-demo.ts
-var _rendering_dec, _a49, _CemServeDemo_decorators, _init49, _rendering, _CemServeDemo_instances, iframe_get, iframeSrc_fn, onIframeLoad_fn, getElementInstance_fn, postKnobChange_fn, applyAttributeChange_fn, applyPropertyChange_fn, applyCSSPropertyChange_fn;
+var _rendering_dec, _a49, _CemServeDemo_decorators, _init49, _rendering, _iframeReady, _pendingMessages, _CemServeDemo_instances, iframe_get, iframeSrc_fn, onIframeLoad_fn, getElementInstance_fn, postKnobChange_fn, applyAttributeChange_fn, applyPropertyChange_fn, applyCSSPropertyChange_fn;
 _CemServeDemo_decorators = [t3("cem-serve-demo")];
 var CemServeDemo = class extends (_a49 = i3, _rendering_dec = [n4({ reflect: true })], _a49) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _CemServeDemo_instances);
     __privateAdd(this, _rendering, __runInitializers(_init49, 8, this)), __runInitializers(_init49, 11, this);
+    __privateAdd(this, _iframeReady, false);
+    __privateAdd(this, _pendingMessages, []);
   }
   render() {
     return this.rendering === "iframe" ? T`
@@ -6659,6 +6661,8 @@ var CemServeDemo = class extends (_a49 = i3, _rendering_dec = [n4({ reflect: tru
 };
 _init49 = __decoratorStart(_a49);
 _rendering = new WeakMap();
+_iframeReady = new WeakMap();
+_pendingMessages = new WeakMap();
 _CemServeDemo_instances = new WeakSet();
 iframe_get = function() {
   return this.renderRoot.querySelector("iframe");
@@ -6669,6 +6673,10 @@ iframeSrc_fn = function() {
   return url.toString();
 };
 onIframeLoad_fn = function() {
+  __privateSet(this, _iframeReady, true);
+  for (const msg of __privateGet(this, _pendingMessages))
+    __privateGet(this, _CemServeDemo_instances, iframe_get)?.contentWindow?.postMessage(msg, window.location.origin);
+  __privateSet(this, _pendingMessages, []);
   this.dispatchEvent(new Event("iframe-ready"));
 };
 /**
@@ -6679,15 +6687,17 @@ getElementInstance_fn = function(tagName, instanceIndex = 0) {
   return elements[instanceIndex] || null;
 };
 postKnobChange_fn = function(knobType, name, value, tagName, instanceIndex) {
+  const msg = { type: "cem-knob-change", knobType, name, value, tagName, instanceIndex };
+  if (!__privateGet(this, _iframeReady)) {
+    __privateGet(this, _pendingMessages).push(msg);
+    return true;
+  }
   const iframe = __privateGet(this, _CemServeDemo_instances, iframe_get);
   if (!iframe?.contentWindow) {
     console.warn("[cem-serve-demo] Iframe not ready for postMessage");
     return false;
   }
-  iframe.contentWindow.postMessage(
-    { type: "cem-knob-change", knobType, name, value, tagName, instanceIndex },
-    window.location.origin
-  );
+  iframe.contentWindow.postMessage(msg, window.location.origin);
   return true;
 };
 applyAttributeChange_fn = function(element, name, value) {
