@@ -1,4 +1,5 @@
-import { expect, waitUntil } from '@open-wc/testing';
+import { expect, fixture, html, waitUntil } from '@open-wc/testing';
+import { visualDiff } from '@web/test-runner-visual-regression';
 import sinon from 'sinon';
 import './cem-serve-knob-group.js';
 import { KnobAttributeChangeEvent, KnobPropertyChangeEvent, KnobCssPropertyChangeEvent } from './cem-serve-knob-group.js';
@@ -789,6 +790,67 @@ describe('cem-serve-knob-group', () => {
       expect(spy.called).to.be.true;
 
       document.body.removeChild(newEl);
+    });
+  });
+
+  describe('visual regression', () => {
+    it('attribute knobs with text inputs', async () => {
+      const container = await fixture(html`
+        <div style="width: 400px;">
+          <cem-serve-knob-group>
+            <pf-v6-form horizontal>
+              <pf-v6-form-field-group expandable expanded toggle-text="Attributes">
+                <pf-v6-form-group>
+                  <pf-v6-form-label slot="label">label</pf-v6-form-label>
+                  <pf-v6-text-input-group data-knob-type="attribute"
+                                          data-knob-name="label"
+                                          value="Click me">
+                  </pf-v6-text-input-group>
+                </pf-v6-form-group>
+                <pf-v6-form-group>
+                  <pf-v6-form-label slot="label">variant</pf-v6-form-label>
+                  <pf-v6-select data-knob-type="attribute"
+                                data-knob-name="variant"
+                                value="primary">
+                    <option value="primary">primary</option>
+                    <option value="secondary">secondary</option>
+                  </pf-v6-select>
+                </pf-v6-form-group>
+              </pf-v6-form-field-group>
+            </pf-v6-form>
+          </cem-serve-knob-group>
+        </div>
+      `);
+      const knobGroup = container.querySelector('cem-serve-knob-group');
+      await knobGroup.updateComplete;
+      await waitUntil(() => knobGroup.shadowRoot?.querySelector('slot'), '', { timeout: 2000 });
+      await new Promise(resolve => setTimeout(resolve, 200));
+      await visualDiff(container, 'cem-knob-group-attributes');
+    });
+
+    it('boolean switch knob', async () => {
+      const container = await fixture(html`
+        <div style="width: 400px;">
+          <cem-serve-knob-group>
+            <pf-v6-form horizontal>
+              <pf-v6-form-field-group expandable expanded toggle-text="Attributes">
+                <pf-v6-form-group>
+                  <pf-v6-form-label slot="label">disabled</pf-v6-form-label>
+                  <pf-v6-switch data-knob-type="attribute"
+                                data-knob-name="disabled"
+                                checked>
+                  </pf-v6-switch>
+                </pf-v6-form-group>
+              </pf-v6-form-field-group>
+            </pf-v6-form>
+          </cem-serve-knob-group>
+        </div>
+      `);
+      const knobGroup = container.querySelector('cem-serve-knob-group');
+      await knobGroup.updateComplete;
+      await waitUntil(() => knobGroup.shadowRoot?.querySelector('slot'), '', { timeout: 2000 });
+      await new Promise(resolve => setTimeout(resolve, 200));
+      await visualDiff(container, 'cem-knob-group-switch');
     });
   });
 });

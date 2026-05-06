@@ -1,4 +1,5 @@
-import { expect, waitUntil } from '@open-wc/testing';
+import { expect, fixture, html, waitUntil } from '@open-wc/testing';
+import { visualDiff } from '@web/test-runner-visual-regression';
 import sinon from 'sinon';
 import './cem-serve-chrome.js';
 import { CemLogsEvent } from './cem-serve-chrome.js';
@@ -1678,6 +1679,69 @@ describe('cem-serve-chrome', () => {
 
       // The timeout callback includes isConnected check
       expect(el.isConnected).to.be.true;
+    });
+  });
+
+  describe('visual regression', () => {
+    let chromeEl;
+    let container;
+
+    beforeEach(async () => {
+      container = await fixture(html`
+        <div style="width: 800px; height: 600px; position: relative;">
+          <cem-serve-chrome></cem-serve-chrome>
+        </div>
+      `);
+      chromeEl = container.querySelector('cem-serve-chrome');
+      await chromeEl.updateComplete;
+      await waitUntil(() => chromeEl.shadowRoot?.querySelector('cem-drawer'), '', { timeout: 3000 });
+    });
+
+    it('default state with drawer closed', async () => {
+      await visualDiff(container, 'cem-serve-chrome-default');
+    });
+
+    it('drawer open', async () => {
+      const drawer = chromeEl.shadowRoot.querySelector('cem-drawer');
+      drawer.open = true;
+      await drawer.updateComplete;
+      await chromeEl.updateComplete;
+      await visualDiff(container, 'cem-serve-chrome-drawer-open');
+    });
+
+    it('with log entries', async () => {
+      const drawer = chromeEl.shadowRoot.querySelector('cem-drawer');
+      drawer.open = true;
+      await drawer.updateComplete;
+
+      window.dispatchEvent(new CemLogsEvent([
+        { type: 'info', date: new Date().toISOString(), message: 'Server started on port 8080' },
+        { type: 'warning', date: new Date().toISOString(), message: 'Deprecated API usage detected' },
+        { type: 'error', date: new Date().toISOString(), message: 'Failed to load manifest' },
+        { type: 'debug', date: new Date().toISOString(), message: 'Watching /src for changes' },
+      ]));
+      await chromeEl.updateComplete;
+      await waitUntil(
+        () => chromeEl.shadowRoot.querySelector('.log-entry'),
+        'Log entries should render',
+        { timeout: 2000 }
+      );
+      await visualDiff(container, 'cem-serve-chrome-logs');
+    });
+
+    it('events tab active', async () => {
+      const drawer = chromeEl.shadowRoot.querySelector('cem-drawer');
+      drawer.open = true;
+      await drawer.updateComplete;
+
+      const tabs = chromeEl.shadowRoot.querySelector('pf-v6-tabs');
+      if (tabs) {
+        const changeEvent = new Event('change', { bubbles: true });
+        changeEvent.selectedIndex = 3;
+        tabs.dispatchEvent(changeEvent);
+        await chromeEl.updateComplete;
+      }
+      await visualDiff(container, 'cem-serve-chrome-events-tab');
     });
   });
 });

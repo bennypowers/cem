@@ -1,4 +1,5 @@
-import { expect, waitUntil } from '@open-wc/testing';
+import { expect, fixture, html, waitUntil } from '@open-wc/testing';
+import { visualDiff } from '@web/test-runner-visual-regression';
 import sinon from 'sinon';
 import './cem-serve-knobs.js';
 
@@ -683,6 +684,75 @@ describe('cem-serve-knobs', () => {
       expect(navLinks).to.have.lengthOf(1);
 
       document.body.removeChild(newEl);
+    });
+  });
+
+  describe('visual regression', () => {
+    it('multiple cards with navigation', async () => {
+      const container = await fixture(html`
+        <div style="width: 300px; height: 400px;">
+          <cem-serve-knobs>
+            <pf-v6-card data-card="instance-0" data-label="Default">
+              <h3 slot="title">my-button: Default</h3>
+            </pf-v6-card>
+            <pf-v6-card data-card="instance-1" data-label="Primary">
+              <h3 slot="title">my-button: Primary</h3>
+            </pf-v6-card>
+          </cem-serve-knobs>
+        </div>
+      `);
+      const knobs = container.querySelector('cem-serve-knobs');
+      await knobs.updateComplete;
+      await waitUntil(() => {
+        const navLinks = knobs.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        return navLinks.length === 2;
+      }, '', { timeout: 2000 });
+      await visualDiff(container, 'cem-serve-knobs-multi-card');
+    });
+
+    it('single card no navigation', async () => {
+      const container = await fixture(html`
+        <div style="width: 300px; height: 400px;">
+          <cem-serve-knobs>
+            <pf-v6-card data-card="only" data-label="Only Instance">
+              <h3 slot="title">my-button: Only</h3>
+            </pf-v6-card>
+          </cem-serve-knobs>
+        </div>
+      `);
+      const knobs = container.querySelector('cem-serve-knobs');
+      await knobs.updateComplete;
+      await waitUntil(() => {
+        const navLinks = knobs.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        return navLinks.length === 1;
+      }, '', { timeout: 2000 });
+      await visualDiff(container, 'cem-serve-knobs-single-card');
+    });
+
+    it('active card highlight', async () => {
+      const container = await fixture(html`
+        <div style="width: 300px; height: 400px;">
+          <cem-serve-knobs>
+            <pf-v6-card data-card="first" data-label="First">
+              <h3 slot="title">First</h3>
+            </pf-v6-card>
+            <pf-v6-card data-card="second" data-label="Second">
+              <h3 slot="title">Second</h3>
+            </pf-v6-card>
+          </cem-serve-knobs>
+        </div>
+      `);
+      const knobs = container.querySelector('cem-serve-knobs');
+      await knobs.updateComplete;
+      await waitUntil(() => {
+        const navLinks = knobs.shadowRoot.querySelectorAll('pf-v6-nav-link');
+        return navLinks.length === 2;
+      }, '', { timeout: 2000 });
+      window.location.hash = '#second';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      await knobs.updateComplete;
+      await visualDiff(container, 'cem-serve-knobs-active-second');
+      window.location.hash = '';
     });
   });
 });

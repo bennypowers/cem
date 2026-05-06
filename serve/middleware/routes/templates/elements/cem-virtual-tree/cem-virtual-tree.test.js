@@ -1,4 +1,5 @@
-import { expect } from '@open-wc/testing';
+import { expect, fixture, html } from '@open-wc/testing';
+import { visualDiff } from '@web/test-runner-visual-regression';
 import sinon from 'sinon';
 import './cem-virtual-tree.js';
 
@@ -547,6 +548,35 @@ describe('cem-virtual-tree', () => {
 
       expect(demosCategory).to.exist;
       expect(demosCategory.getAttribute('badge')).to.equal('1');
+    });
+  });
+
+  describe('visual regression', () => {
+    it('collapsed tree', async () => {
+      const container = await fixture(html`
+        <div style="width: 300px; height: 400px; overflow: auto;">
+          <cem-virtual-tree></cem-virtual-tree>
+        </div>
+      `);
+      const tree = container.querySelector('cem-virtual-tree');
+      tree.manifest = testManifest;
+      await tree.updateComplete;
+      await new Promise(resolve => setTimeout(resolve, 200));
+      await visualDiff(container, 'cem-virtual-tree-collapsed');
+    });
+
+    it('expanded tree', async () => {
+      const container = await fixture(html`
+        <div style="width: 300px; height: 400px; overflow: auto;">
+          <cem-virtual-tree></cem-virtual-tree>
+        </div>
+      `);
+      const tree = container.querySelector('cem-virtual-tree');
+      tree.manifest = testManifest;
+      await tree.updateComplete;
+      tree.expandAll();
+      await new Promise(resolve => setTimeout(resolve, 200));
+      await visualDiff(container, 'cem-virtual-tree-expanded');
     });
   });
 });
