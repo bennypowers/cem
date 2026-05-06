@@ -317,8 +317,8 @@ describe('cem-serve-knob-group', () => {
       checkbox.dispatchEvent(new Event('change', { bubbles: true }));
     });
 
-    it('handles pf-v6-switch element', (done) => {
-      const switchEl = document.createElement('pf-v6-switch');
+    it('handles cem-pf-v6-switch element', (done) => {
+      const switchEl = document.createElement('cem-pf-v6-switch');
       switchEl.dataset.knobType = 'property';
       switchEl.dataset.knobName = 'active';
       el.appendChild(switchEl);
@@ -384,7 +384,7 @@ describe('cem-serve-knob-group', () => {
     let button, textInputGroup;
 
     beforeEach(() => {
-      textInputGroup = document.createElement('pf-v6-text-input-group');
+      textInputGroup = document.createElement('cem-pf-v6-text-input-group');
       textInputGroup.value = '#000000';
 
       button = document.createElement('button');
@@ -798,26 +798,26 @@ describe('cem-serve-knob-group', () => {
       const container = await fixture(html`
         <div style="width: 400px;">
           <cem-serve-knob-group>
-            <pf-v6-form horizontal>
-              <pf-v6-form-field-group expandable expanded toggle-text="Attributes">
-                <pf-v6-form-group>
-                  <pf-v6-form-label slot="label">label</pf-v6-form-label>
-                  <pf-v6-text-input-group data-knob-type="attribute"
+            <cem-pf-v6-form horizontal>
+              <cem-pf-v6-form-field-group expandable expanded toggle-text="Attributes">
+                <cem-pf-v6-form-group>
+                  <cem-pf-v6-form-label slot="label">label</cem-pf-v6-form-label>
+                  <cem-pf-v6-text-input-group data-knob-type="attribute"
                                           data-knob-name="label"
                                           value="Click me">
-                  </pf-v6-text-input-group>
-                </pf-v6-form-group>
-                <pf-v6-form-group>
-                  <pf-v6-form-label slot="label">variant</pf-v6-form-label>
-                  <pf-v6-select data-knob-type="attribute"
+                  </cem-pf-v6-text-input-group>
+                </cem-pf-v6-form-group>
+                <cem-pf-v6-form-group>
+                  <cem-pf-v6-form-label slot="label">variant</cem-pf-v6-form-label>
+                  <cem-pf-v6-select data-knob-type="attribute"
                                 data-knob-name="variant"
                                 value="primary">
                     <option value="primary">primary</option>
                     <option value="secondary">secondary</option>
-                  </pf-v6-select>
-                </pf-v6-form-group>
-              </pf-v6-form-field-group>
-            </pf-v6-form>
+                  </cem-pf-v6-select>
+                </cem-pf-v6-form-group>
+              </cem-pf-v6-form-field-group>
+            </cem-pf-v6-form>
           </cem-serve-knob-group>
         </div>
       `);
@@ -832,17 +832,17 @@ describe('cem-serve-knob-group', () => {
       const container = await fixture(html`
         <div style="width: 400px;">
           <cem-serve-knob-group>
-            <pf-v6-form horizontal>
-              <pf-v6-form-field-group expandable expanded toggle-text="Attributes">
-                <pf-v6-form-group>
-                  <pf-v6-form-label slot="label">disabled</pf-v6-form-label>
-                  <pf-v6-switch data-knob-type="attribute"
+            <cem-pf-v6-form horizontal>
+              <cem-pf-v6-form-field-group expandable expanded toggle-text="Attributes">
+                <cem-pf-v6-form-group>
+                  <cem-pf-v6-form-label slot="label">disabled</cem-pf-v6-form-label>
+                  <cem-pf-v6-switch data-knob-type="attribute"
                                 data-knob-name="disabled"
                                 checked>
-                  </pf-v6-switch>
-                </pf-v6-form-group>
-              </pf-v6-form-field-group>
-            </pf-v6-form>
+                  </cem-pf-v6-switch>
+                </cem-pf-v6-form-group>
+              </cem-pf-v6-form-field-group>
+            </cem-pf-v6-form>
           </cem-serve-knob-group>
         </div>
       `);

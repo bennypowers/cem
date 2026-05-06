@@ -1,0 +1,230 @@
+:host {
+  display: grid;
+  position: relative;
+  grid-template-areas: var(--cem-pf-v6-c-alert--GridTemplateAreas);
+  grid-template-columns: var(--cem-pf-v6-c-alert--GridTemplateColumns);
+  padding-block-start: var(--cem-pf-v6-c-alert--PaddingBlockStart);
+  padding-block-end: var(--cem-pf-v6-c-alert--PaddingBlockEnd);
+  padding-inline-start: var(--cem-pf-v6-c-alert--PaddingInlineStart);
+  padding-inline-end: var(--cem-pf-v6-c-alert--PaddingInlineEnd);
+  font-size: var(--cem-pf-v6-c-alert--FontSize);
+  background-color: var(--cem-pf-v6-c-alert--BackgroundColor);
+  border: var(--cem-pf-v6-c-alert--BorderWidth) solid var(--cem-pf-v6-c-alert--BorderColor);
+  border-radius: var(--cem-pf-v6-c-alert--BorderRadius);
+  box-shadow: var(--cem-pf-v6-c-alert--BoxShadow);
+
+  /* CSS variables from cem-pf-v6-c-alert */
+  --cem-pf-v6-c-alert--BoxShadow: var(--pf-t--global--box-shadow--lg);
+  --cem-pf-v6-c-alert--BackgroundColor: var(--pf-t--global--background--color--floating--default);
+  --cem-pf-v6-c-alert--GridTemplateColumns: max-content 1fr max-content;
+  --cem-pf-v6-c-alert--GridTemplateAreas:
+    "icon title action"
+    ". description description"
+    ". actiongroup actiongroup";
+  --cem-pf-v6-c-alert--BorderWidth: var(--pf-t--global--border--width--box--status--default);
+  --cem-pf-v6-c-alert--BorderColor: transparent;
+  --cem-pf-v6-c-alert--BorderRadius: var(--pf-t--global--border--radius--medium);
+  --cem-pf-v6-c-alert--PaddingBlockStart: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-alert--PaddingInlineEnd: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-alert--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-alert--PaddingInlineStart: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-alert--FontSize: var(--pf-t--global--font--size--body--default);
+  --cem-pf-v6-c-alert__toggle--MarginBlockStart: calc(-1 * var(--pf-t--global--spacer--control--vertical--default));
+  --cem-pf-v6-c-alert__toggle--MarginBlockEnd: calc(-1 * var(--pf-t--global--spacer--control--vertical--default));
+  --cem-pf-v6-c-alert__toggle--MarginInlineStart: calc(-1 * var(--pf-t--global--spacer--action--horizontal--plain--default));
+  --cem-pf-v6-c-alert__toggle--MarginInlineEnd: var(--pf-t--global--spacer--sm);
+  --cem-pf-v6-c-alert__toggle-icon--Rotate: 0;
+  --cem-pf-v6-c-alert__toggle-icon--TransitionTimingFunction: var(--pf-t--global--motion--timing-function--default);
+  --cem-pf-v6-c-alert__toggle-icon--TransitionDuration: var(--pf-t--global--motion--duration--icon--long);
+  --cem-pf-v6-c-alert__icon--Color: var(--pf-t--global--icon--color--regular);
+  --cem-pf-v6-c-alert__icon--MarginBlockStart: 0.25rem;
+  --cem-pf-v6-c-alert__icon--MarginInlineEnd: var(--pf-t--global--spacer--gap--text-to-element--default);
+  --cem-pf-v6-c-alert__icon--FontSize: var(--pf-t--global--icon--size--md);
+  --cem-pf-v6-c-alert__title--FontWeight: var(--pf-t--global--font--weight--body--bold);
+  --cem-pf-v6-c-alert__title--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-alert__title--max-lines: 1;
+  --cem-pf-v6-c-alert__action--MarginBlockStart: calc(var(--pf-t--global--spacer--control--vertical--default) * -1);
+  --cem-pf-v6-c-alert__action--MarginBlockEnd: calc(var(--pf-t--global--spacer--control--vertical--default) * -1);
+  --cem-pf-v6-c-alert__action--TranslateY: 0.125rem;
+  --cem-pf-v6-c-alert__action--MarginInlineEnd: calc(var(--pf-t--global--spacer--sm) * -1);
+  --cem-pf-v6-c-alert__description--PaddingBlockStart: var(--pf-t--global--spacer--xs);
+  --cem-pf-v6-c-alert__action-group--PaddingBlockStart-base: var(--pf-t--global--spacer--sm);
+  --cem-pf-v6-c-alert__action-group--PaddingBlockStart: var(--cem-pf-v6-c-alert__action-group--PaddingBlockStart-base);
+  --cem-pf-v6-c-alert__description--action-group--PaddingBlockStart-base: var(--pf-t--global--spacer--sm);
+  --cem-pf-v6-c-alert__description--action-group--PaddingBlockStart: var(--cem-pf-v6-c-alert__description--action-group--PaddingBlockStart-base);
+  --cem-pf-v6-c-alert__action-group__c-button--not-last-child--MarginInlineEnd: var(--pf-t--global--spacer--gap--action-to-action--default);
+  --cem-pf-v6-c-alert--m-custom--BorderColor: var(--pf-t--global--border--color--status--custom--default);
+  --cem-pf-v6-c-alert--m-custom__icon--Color: var(--pf-t--global--icon--color--status--custom--default);
+  --cem-pf-v6-c-alert--m-custom__title--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-alert--m-success--BorderColor: var(--pf-t--global--border--color--status--success--default);
+  --cem-pf-v6-c-alert--m-success__icon--Color: var(--pf-t--global--icon--color--status--success--default);
+  --cem-pf-v6-c-alert--m-success__title--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-alert--m-danger--BorderColor: var(--pf-t--global--border--color--status--danger--default);
+  --cem-pf-v6-c-alert--m-danger__icon--Color: var(--pf-t--global--icon--color--status--danger--default);
+  --cem-pf-v6-c-alert--m-danger__title--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-alert--m-warning--BorderColor: var(--pf-t--global--border--color--status--warning--default);
+  --cem-pf-v6-c-alert--m-warning__icon--Color: var(--pf-t--global--icon--color--status--warning--default);
+  --cem-pf-v6-c-alert--m-warning__title--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-alert--m-info--BorderColor: var(--pf-t--global--border--color--status--info--default);
+  --cem-pf-v6-c-alert--m-info__icon--Color: var(--pf-t--global--icon--color--status--info--default);
+  --cem-pf-v6-c-alert--m-info__title--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-alert--m-inline--BackgroundColor: var(--pf-t--global--background--color--primary--default);
+  --cem-pf-v6-c-alert--m-inline--BoxShadow: none;
+  --cem-pf-v6-c-alert--m-inline--m-plain--BorderWidth: 0;
+  --cem-pf-v6-c-alert--m-inline--m-plain--BackgroundColor: transparent;
+  --cem-pf-v6-c-alert--m-inline--m-plain--PaddingBlockStart: 0;
+  --cem-pf-v6-c-alert--m-inline--m-plain--PaddingInlineEnd: 0;
+  --cem-pf-v6-c-alert--m-inline--m-plain--PaddingBlockEnd: 0;
+  --cem-pf-v6-c-alert--m-inline--m-plain--PaddingInlineStart: 0;
+  --cem-pf-v6-c-alert--m-expandable--GridTemplateColumns: auto max-content 1fr max-content;
+  --cem-pf-v6-c-alert--m-expandable--GridTemplateAreas:
+    "toggle icon title action"
+    ". . description description"
+    ". . actiongroup actiongroup";
+  --cem-pf-v6-c-alert--m-expandable__description--action-group--PaddingBlockStart: var(--cem-pf-v6-c-alert__action-group--PaddingBlockStart-base);
+  --cem-pf-v6-c-alert--m-expanded__toggle-icon--Rotate: 90deg;
+  --cem-pf-v6-c-alert--m-expanded__description--action-group--PaddingBlockStart: var(--cem-pf-v6-c-alert__description--action-group--PaddingBlockStart-base);
+}
+
+/* Variant modifiers */
+:host([variant="custom"]) {
+  --cem-pf-v6-c-alert--BorderColor: var(--cem-pf-v6-c-alert--m-custom--BorderColor);
+  --cem-pf-v6-c-alert__icon--Color: var(--cem-pf-v6-c-alert--m-custom__icon--Color);
+  --cem-pf-v6-c-alert__title--Color: var(--cem-pf-v6-c-alert--m-custom__title--Color);
+}
+
+:host([variant="success"]) {
+  --cem-pf-v6-c-alert--BorderColor: var(--cem-pf-v6-c-alert--m-success--BorderColor);
+  --cem-pf-v6-c-alert__icon--Color: var(--cem-pf-v6-c-alert--m-success__icon--Color);
+  --cem-pf-v6-c-alert__title--Color: var(--cem-pf-v6-c-alert--m-success__title--Color);
+}
+
+:host([variant="danger"]) {
+  --cem-pf-v6-c-alert--BorderColor: var(--cem-pf-v6-c-alert--m-danger--BorderColor);
+  --cem-pf-v6-c-alert__icon--Color: var(--cem-pf-v6-c-alert--m-danger__icon--Color);
+  --cem-pf-v6-c-alert__title--Color: var(--cem-pf-v6-c-alert--m-danger__title--Color);
+}
+
+:host([variant="warning"]) {
+  --cem-pf-v6-c-alert--BorderColor: var(--cem-pf-v6-c-alert--m-warning--BorderColor);
+  --cem-pf-v6-c-alert__icon--Color: var(--cem-pf-v6-c-alert--m-warning__icon--Color);
+  --cem-pf-v6-c-alert__title--Color: var(--cem-pf-v6-c-alert--m-warning__title--Color);
+}
+
+:host([variant="info"]) {
+  --cem-pf-v6-c-alert--BorderColor: var(--cem-pf-v6-c-alert--m-info--BorderColor);
+  --cem-pf-v6-c-alert__icon--Color: var(--cem-pf-v6-c-alert--m-info__icon--Color);
+  --cem-pf-v6-c-alert__title--Color: var(--cem-pf-v6-c-alert--m-info__title--Color);
+}
+
+/* Inline modifier */
+:host([inline]) {
+  --cem-pf-v6-c-alert--BoxShadow: var(--cem-pf-v6-c-alert--m-inline--BoxShadow);
+  --cem-pf-v6-c-alert--BackgroundColor: var(--cem-pf-v6-c-alert--m-inline--BackgroundColor);
+}
+
+/* Plain modifier */
+:host([plain]) {
+  --cem-pf-v6-c-alert--BorderWidth: var(--cem-pf-v6-c-alert--m-inline--m-plain--BorderWidth);
+  --cem-pf-v6-c-alert--BackgroundColor: var(--cem-pf-v6-c-alert--m-inline--m-plain--BackgroundColor);
+  --cem-pf-v6-c-alert--PaddingBlockStart: var(--cem-pf-v6-c-alert--m-inline--m-plain--PaddingBlockStart);
+  --cem-pf-v6-c-alert--PaddingInlineEnd: var(--cem-pf-v6-c-alert--m-inline--m-plain--PaddingInlineEnd);
+  --cem-pf-v6-c-alert--PaddingBlockEnd: var(--cem-pf-v6-c-alert--m-inline--m-plain--PaddingBlockEnd);
+  --cem-pf-v6-c-alert--PaddingInlineStart: var(--cem-pf-v6-c-alert--m-inline--m-plain--PaddingInlineStart);
+}
+
+/* Expandable modifier */
+:host([expandable]) {
+  --cem-pf-v6-c-alert--GridTemplateColumns: var(--cem-pf-v6-c-alert--m-expandable--GridTemplateColumns);
+  --cem-pf-v6-c-alert--GridTemplateAreas: var(--cem-pf-v6-c-alert--m-expandable--GridTemplateAreas);
+  --cem-pf-v6-c-alert__description--action-group--PaddingBlockStart: var(--cem-pf-v6-c-alert--m-expandable__description--action-group--PaddingBlockStart);
+}
+
+/* Expanded modifier */
+:host([expanded]) {
+  --cem-pf-v6-c-alert__toggle-icon--Rotate: var(--cem-pf-v6-c-alert--m-expanded__toggle-icon--Rotate);
+  --cem-pf-v6-c-alert__description--action-group--PaddingBlockStart: var(--cem-pf-v6-c-alert--m-expanded__description--action-group--PaddingBlockStart);
+}
+
+/* Internal element styles */
+#toggle {
+  grid-area: toggle;
+  margin-block-start: var(--cem-pf-v6-c-alert__toggle--MarginBlockStart);
+  margin-block-end: var(--cem-pf-v6-c-alert__toggle--MarginBlockEnd);
+  margin-inline-start: var(--cem-pf-v6-c-alert__toggle--MarginInlineStart);
+  margin-inline-end: var(--cem-pf-v6-c-alert__toggle--MarginInlineEnd);
+}
+
+#toggle-icon {
+  display: inline-block;
+  transition: transform var(--cem-pf-v6-c-alert__toggle-icon--TransitionDuration) var(--cem-pf-v6-c-alert__toggle-icon--TransitionTimingFunction);
+  transform: rotate(var(--cem-pf-v6-c-alert__toggle-icon--Rotate));
+}
+
+:host(:dir(rtl)) #toggle-icon {
+  scale: -1 1;
+}
+
+#icon-container {
+  grid-area: icon;
+  margin-inline-end: var(--cem-pf-v6-c-alert__icon--MarginInlineEnd);
+  font-size: var(--cem-pf-v6-c-alert__icon--FontSize);
+  color: var(--cem-pf-v6-c-alert__icon--Color);
+}
+
+#title {
+  display: var(--_has-title, block);
+  grid-area: title;
+  font-weight: var(--cem-pf-v6-c-alert__title--FontWeight);
+  color: var(--cem-pf-v6-c-alert__title--Color);
+  word-break: break-word;
+}
+
+:host([truncate]) #title {
+  display: var(--_has-title, -webkit-box);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--cem-pf-v6-c-alert__title--max-lines);
+  overflow: hidden;
+}
+
+#description {
+  display: var(--_has-description, block);
+  grid-area: description;
+  padding-block-start: var(--cem-pf-v6-c-alert__description--PaddingBlockStart);
+  word-break: break-word;
+}
+
+#description + #action-group {
+  --cem-pf-v6-c-alert__action-group--PaddingBlockStart: var(--cem-pf-v6-c-alert__description--action-group--PaddingBlockStart);
+}
+
+#action {
+  display: var(--_has-action, block);
+  grid-area: action;
+  margin-block-start: var(--cem-pf-v6-c-alert__action--MarginBlockStart);
+  margin-block-end: var(--cem-pf-v6-c-alert__action--MarginBlockEnd);
+  margin-inline-end: var(--cem-pf-v6-c-alert__action--MarginInlineEnd);
+}
+
+#action-group {
+  display: var(--_has-actions, block);
+  grid-area: actiongroup;
+  padding-block-start: var(--cem-pf-v6-c-alert__action-group--PaddingBlockStart);
+}
+
+#action-group > :is(cem-pf-v6-button, .cem-pf-v6-c-button):not(:last-child) {
+  margin-inline-end: var(--cem-pf-v6-c-alert__action-group__c-button--not-last-child--MarginInlineEnd);
+}
+
+#sr-variant {
+  position: absolute;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+:is(h1, h2, h3, h4, h5, h6),
+::slotted(:is(h1, h2, h3, h4, h5, h6)) {
+  margin: 0 !important;
+}

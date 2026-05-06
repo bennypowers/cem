@@ -290,7 +290,7 @@ func TestChromeRendering_NilManifest(t *testing.T) {
 	}
 
 	// Verify it doesn't have manifest tree element (should be skipped, though modulepreload in head is OK)
-	if strings.Contains(rendered, `<pf-v6-tree-view`) {
-		t.Error("Rendered chrome contains <pf-v6-tree-view> element when manifest is nil")
+	if strings.Contains(rendered, `<cem-pf-v6-tree-view`) {
+		t.Error("Rendered chrome contains <cem-pf-v6-tree-view> element when manifest is nil")
 	}
 }

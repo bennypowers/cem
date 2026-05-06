@@ -3,7 +3,7 @@ import { customElement } from 'lit/decorators/custom-element.js';
 
 import styles from './cem-virtual-tree.css' with { type: 'css' };
 
-import '../pf-v6-tree-item/pf-v6-tree-item.js';
+import '../cem-pf-v6-tree-item/cem-pf-v6-tree-item.js';
 
 interface TreeItem {
   id: number;
@@ -655,7 +655,7 @@ export class CemVirtualTree extends LitElement {
    * Create a tree item element with its nested children
    */
   #createTreeItemWithChildren(item: TreeItem): HTMLElement {
-    const el = document.createElement('pf-v6-tree-item');
+    const el = document.createElement('cem-pf-v6-tree-item');
     el.setAttribute('label', item.label);
 
     if (item.badge) {

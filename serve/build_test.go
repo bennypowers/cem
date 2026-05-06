@@ -341,9 +341,9 @@ func TestRewriteAssetPaths(t *testing.T) {
 		},
 		{
 			name:     "rewrites CSS import url",
-			input:    `@import url('/__cem/elements/pf-v6-card/pf-v6-card-lightdom.css');`,
+			input:    `@import url('/__cem/elements/cem-pf-v6-card/cem-pf-v6-card-lightdom.css');`,
 			basePath: "/docs",
-			want:     `@import url('/docs/__cem/elements/pf-v6-card/pf-v6-card-lightdom.css');`,
+			want:     `@import url('/docs/__cem/elements/cem-pf-v6-card/cem-pf-v6-card-lightdom.css');`,
 		},
 		{
 			name:     "rewrites new URL pattern",

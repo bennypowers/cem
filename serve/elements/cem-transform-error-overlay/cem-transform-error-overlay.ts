@@ -2,7 +2,7 @@ import { LitElement, html } from 'lit';
 import { customElement } from 'lit/decorators/custom-element.js';
 import { property } from 'lit/decorators/property.js';
 
-import '../pf-v6-button/pf-v6-button.js';
+import '../cem-pf-v6-button/cem-pf-v6-button.js';
 
 import styles from './cem-transform-error-overlay.css' with { type: 'css' };
 
@@ -52,9 +52,9 @@ export class CemTransformErrorOverlay extends LitElement {
             <span id="error-icon">\u26A0\uFE0F</span>
             <span>${this.title}</span>
           </h2>
-          <pf-v6-button id="close"
+          <cem-pf-v6-button id="close"
                         variant="plain"
-                        @click=${this.hide}>Dismiss</pf-v6-button>
+                        @click=${this.hide}>Dismiss</cem-pf-v6-button>
         </div>
         <div id="body">
           <div id="file">${this.file ? `File: ${this.file}` : ''}</div>

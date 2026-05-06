@@ -26,9 +26,9 @@ Chrome components are LitElement classes in `serve/elements/`:
 
 ```
 serve/elements/
-  pf-v6-badge/
-    pf-v6-badge.ts     # LitElement source
-    pf-v6-badge.css    # Styles (imported with { type: 'css' })
+  cem-pf-v6-badge/
+    cem-pf-v6-badge.ts     # LitElement source
+    cem-pf-v6-badge.css    # Styles (imported with { type: 'css' })
   cem-serve-chrome/
     cem-serve-chrome.ts # Top-level chrome wrapper
     cem-serve-chrome.css

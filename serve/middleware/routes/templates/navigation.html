@@ -1,67 +1,67 @@
-<pf-v6-navigation slot="navigation" aria-label="Component navigation" inset>
-  <pf-v6-nav-list>
+<cem-pf-v6-navigation slot="navigation" aria-label="Component navigation" inset>
+  <cem-pf-v6-nav-list>
     {{range .Packages}}
     {{if $.SinglePackage}}
     {{/* Single package: show elements directly without package disclosure */}}
     {{range .Elements}}
     {{$expanded := elementHasDemo . $.CurrentPath}}
-    <pf-v6-nav-item>
-      <pf-v6-nav-link expandable
+    <cem-pf-v6-nav-item>
+      <cem-pf-v6-nav-link expandable
                       aria-expanded="{{$expanded}}"{{if $expanded}}
                       expanded{{end}}>
         <code>&lt;{{.TagName}}&gt;</code>
-      </pf-v6-nav-link>
-      <pf-v6-nav-group{{if not $expanded}} hidden{{end}}>
-        <pf-v6-nav-list>
+      </cem-pf-v6-nav-link>
+      <cem-pf-v6-nav-group{{if not $expanded}} hidden{{end}}>
+        <cem-pf-v6-nav-list>
           {{range .Demos}}
-          <pf-v6-nav-item>
-            <pf-v6-nav-link href="{{.URL}}"{{if .Description}}
+          <cem-pf-v6-nav-item>
+            <cem-pf-v6-nav-link href="{{.URL}}"{{if .Description}}
                             title="{{.Description}}"{{end}}>
               {{.Name}}
-            </pf-v6-nav-link>
-          </pf-v6-nav-item>
+            </cem-pf-v6-nav-link>
+          </cem-pf-v6-nav-item>
           {{end}}
-        </pf-v6-nav-list>
-      </pf-v6-nav-group>
-    </pf-v6-nav-item>
+        </cem-pf-v6-nav-list>
+      </cem-pf-v6-nav-group>
+    </cem-pf-v6-nav-item>
     {{end}}
     {{else}}
     {{/* Multiple packages: show package disclosure */}}
     {{$packageExpanded := packageHasDemo . $.CurrentPath}}
-    <pf-v6-nav-item>
-      <pf-v6-nav-link expandable
+    <cem-pf-v6-nav-item>
+      <cem-pf-v6-nav-link expandable
                       aria-expanded="{{$packageExpanded}}"{{if $packageExpanded}}
                       expanded{{end}}>
         {{.Name}}
-      </pf-v6-nav-link>
-      <pf-v6-nav-group{{if not $packageExpanded}} hidden{{end}}>
-        <pf-v6-nav-list>
+      </cem-pf-v6-nav-link>
+      <cem-pf-v6-nav-group{{if not $packageExpanded}} hidden{{end}}>
+        <cem-pf-v6-nav-list>
           {{range .Elements}}
           {{$elementExpanded := elementHasDemo . $.CurrentPath}}
-          <pf-v6-nav-item>
-            <pf-v6-nav-link expandable
+          <cem-pf-v6-nav-item>
+            <cem-pf-v6-nav-link expandable
                             aria-expanded="{{$elementExpanded}}"{{if $elementExpanded}}
                             expanded{{end}}>
               <code>&lt;{{.TagName}}&gt;</code>
-            </pf-v6-nav-link>
-            <pf-v6-nav-group{{if not $elementExpanded}} hidden{{end}}>
-              <pf-v6-nav-list>
+            </cem-pf-v6-nav-link>
+            <cem-pf-v6-nav-group{{if not $elementExpanded}} hidden{{end}}>
+              <cem-pf-v6-nav-list>
                 {{range .Demos}}
-                <pf-v6-nav-item>
-                  <pf-v6-nav-link href="{{.URL}}"{{if .Description}}
+                <cem-pf-v6-nav-item>
+                  <cem-pf-v6-nav-link href="{{.URL}}"{{if .Description}}
                                   title="{{.Description}}"{{end}}>
                     {{.Name}}
-                  </pf-v6-nav-link>
-                </pf-v6-nav-item>
+                  </cem-pf-v6-nav-link>
+                </cem-pf-v6-nav-item>
                 {{end}}
-              </pf-v6-nav-list>
-            </pf-v6-nav-group>
-          </pf-v6-nav-item>
+              </cem-pf-v6-nav-list>
+            </cem-pf-v6-nav-group>
+          </cem-pf-v6-nav-item>
           {{end}}
-        </pf-v6-nav-list>
-      </pf-v6-nav-group>
-    </pf-v6-nav-item>
+        </cem-pf-v6-nav-list>
+      </cem-pf-v6-nav-group>
+    </cem-pf-v6-nav-item>
     {{end}}
     {{end}}
-  </pf-v6-nav-list>
-</pf-v6-navigation>
+  </cem-pf-v6-nav-list>
+</cem-pf-v6-navigation>

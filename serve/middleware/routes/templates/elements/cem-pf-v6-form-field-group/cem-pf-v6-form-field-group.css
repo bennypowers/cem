@@ -1,0 +1,197 @@
+:host {
+
+  --cem-pf-v6-c-form__field-group--border-width-base: var(--pf-t--global--border--width--divider--default);
+  --cem-pf-v6-c-form__field-group--BorderBlockStartWidth: var(--cem-pf-v6-c-form__field-group--border-width-base);
+  --cem-pf-v6-c-form__field-group--BorderBlockStartColor: var(--pf-t--global--border--color--default);
+  --cem-pf-v6-c-form__field-group--BorderBlockEndWidth: 0;
+  --cem-pf-v6-c-form__field-group--BorderBlockEndColor: var(--pf-t--global--border--color--default);
+  --cem-pf-v6-c-form__field-group--field-group--MarginBlockStart: var(--pf-t--global--spacer--lg);
+  --cem-pf-v6-c-form__field-group--GridTemplateColumns--toggle: var(--pf-t--global--spacer--action--horizontal--plain--default);
+  --cem-pf-v6-c-form__field-group-toggle--PaddingBlockStart: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-form__field-group-toggle--PaddingInlineEnd: var(--pf-t--global--spacer--gap--text-to-element--default);
+  --cem-pf-v6-c-form__field-group-toggle--field-group-header--GridColumn: 2 / 3;
+  --cem-pf-v6-c-form__field-group-header--GridColumn: 1 / -1;
+  --cem-pf-v6-c-form__field-group-header--PaddingBlockStart: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-form__field-group-header--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-form__field-group-header-description--MarginBlockStart: var(--pf-t--global--spacer--xs);
+  --cem-pf-v6-c-form__field-group-header-description--Color: var(--pf-t--global--text--color--subtle);
+  --cem-pf-v6-c-form__field-group-header-actions--MarginBlockStart: calc(var(--pf-t--global--spacer--control--vertical--default) * -1);
+  --cem-pf-v6-c-form__field-group-header-actions--MarginBlockEnd: calc(var(--pf-t--global--spacer--control--vertical--default) * -1);
+  --cem-pf-v6-c-form__field-group-header-actions--MarginInlineStart: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-form__field-group-body--GridColumn: 1 / -1;
+  --cem-pf-v6-c-form__field-group-body--Gap: var(--pf-t--global--spacer--gap--group-to-group--vertical--default);
+  --cem-pf-v6-c-form__field-group-body--PaddingBlockStart: 0;
+  --cem-pf-v6-c-form__field-group-body--PaddingBlockEnd: var(--pf-t--global--spacer--md);
+  --cem-pf-v6-c-form__field-group-body--TranslateY: -.5rem;
+  --cem-pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade: var(--pf-t--global--motion--duration--fade--short);
+  --cem-pf-v6-c-form__field-group-body--TransitionDuration--collapse--slide: var(--pf-t--global--motion--duration--fade--short);
+  --cem-pf-v6-c-form__field-group-body--TransitionDuration--expand--fade: var(--pf-t--global--motion--duration--fade--default);
+  --cem-pf-v6-c-form__field-group-body--TransitionDuration--expand--slide: var(--pf-t--global--motion--duration--fade--default);
+  --cem-pf-v6-c-form__field-group--m-expanded__field-group-body--TranslateY: 0;
+  --cem-pf-v6-c-form__field-group-toggle-icon--MinWidth: 1em;
+  --cem-pf-v6-c-form__field-group-toggle-icon--Rotate: 0;
+  --cem-pf-v6-c-form__field-group--m-expanded__toggle-icon--Rotate: 90deg;
+  --cem-pf-v6-c-form__field-group-toggle-icon--TransitionTimingFunction: var(--pf-t--global--motion--timing-function--default);
+  --cem-pf-v6-c-form__field-group-toggle-icon--TransitionDuration: var(--pf-t--global--motion--duration--icon--default);
+  --cem-pf-v6-c-form__field-group-toggle-button--MarginBlockStart: calc(var(--pf-t--global--spacer--control--vertical--default) * -1);
+  --cem-pf-v6-c-form__field-group-toggle-button--MarginBlockEnd: calc(var(--pf-t--global--spacer--control--vertical--default) * -1);
+  --cem-pf-v6-c-form__field-group__field-group__field-group-body--GridColumn: 1 / -1;
+  --cem-pf-v6-c-form__field-group__field-group__field-group-toggle--PaddingBlockStart: 0;
+  --cem-pf-v6-c-form__field-group__field-group__field-group-header--PaddingBlockStart: 0;
+  --cem-pf-v6-c-form__field-group__field-group__field-group-header--PaddingBlockEnd: var(--pf-t--global--spacer--sm);
+  --cem-pf-v6-c-form__field-group__field-group__field-group-toggle--field-group-body--GridColumn: 2 / -1;
+  --cem-pf-v6-c-form__field-group-body__field-group--last-child--MarginBlockEnd: calc(var(--pf-t--global--spacer--md) * -1);
+
+  display: grid;
+  grid-template-columns: minmax(var(--cem-pf-v6-c-form__field-group--GridTemplateColumns--toggle), max-content) 1fr;
+  border-block-start: var(--cem-pf-v6-c-form__field-group--BorderBlockStartWidth) solid var(--cem-pf-v6-c-form__field-group--BorderBlockStartColor);
+  border-block-end: var(--cem-pf-v6-c-form__field-group--BorderBlockEndWidth) solid var(--cem-pf-v6-c-form__field-group--BorderBlockEndColor);
+}
+
+:host(:last-child) {
+  --cem-pf-v6-c-form__field-group--BorderBlockEndWidth: 0;
+}
+
+:host + :host,
+:host(:first-child) {
+  --cem-pf-v6-c-form__field-group--BorderBlockStartWidth: 0;
+}
+
+:host + :host {
+  margin-block-start: var(--cem-pf-v6-c-form__field-group--field-group--MarginBlockStart);
+}
+
+/* Nested field groups - parent sets these via CSS vars on slotted children */
+:host {
+  --cem-pf-v6-c-form__field-group-body--GridColumn: var(--_nested-body-grid-column, 1 / -1);
+  --cem-pf-v6-c-form__field-group-toggle--PaddingBlockStart: var(--_nested-toggle-padding-block-start, var(--pf-t--global--spacer--md));
+  --cem-pf-v6-c-form__field-group-header--PaddingBlockStart: var(--_nested-header-padding-block-start, var(--pf-t--global--spacer--md));
+  --cem-pf-v6-c-form__field-group-header--PaddingBlockEnd: var(--_nested-header-padding-block-end, var(--pf-t--global--spacer--md));
+  --cem-pf-v6-c-form__field-group-body--PaddingBlockStart: var(--_nested-body-padding-block-start, 0);
+}
+
+:host([expanded]) {
+  --cem-pf-v6-c-form__field-group-toggle-icon--Rotate: var(--cem-pf-v6-c-form__field-group--m-expanded__toggle-icon--Rotate);
+}
+
+:host([expanded][expandable]) #body {
+  max-height: 99999px;
+  padding-block-start: var(--cem-pf-v6-c-form__field-group-body--PaddingBlockStart);
+  padding-block-end: var(--cem-pf-v6-c-form__field-group-body--PaddingBlockEnd);
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+  transition-duration: var(--cem-pf-v6-c-form__field-group-body--TransitionDuration--expand--fade), var(--cem-pf-v6-c-form__field-group-body--TransitionDuration--expand--slide), 0s, 0s, 0s, 0s;
+  translate: 0 var(--cem-pf-v6-c-form__field-group--m-expanded__field-group-body--TranslateY);
+}
+
+/* Toggle button */
+#toggle-button {
+  grid-row: 1/2;
+  grid-column: 1/2;
+  padding: auto auto;
+  margin: auto auto;
+}
+
+#toggle-button ~ #header {
+  --cem-pf-v6-c-form__field-group-header--GridColumn: var(--cem-pf-v6-c-form__field-group-toggle--field-group-header--GridColumn);
+}
+
+#toggle-button ~ #header ~ #body {
+  padding-inline-start: calc(2 * var(--pf-t--global--spacer--action--horizontal--plain--default) + 1em * var(--pf-t--global--font--line-height--body));
+}
+
+#toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--cem-pf-v6-c-form__field-group-toggle-icon--MinWidth);
+  transition-timing-function: var(--cem-pf-v6-c-form__field-group-toggle-icon--TransitionTimingFunction);
+  transition-duration: var(--cem-pf-v6-c-form__field-group-toggle-icon--TransitionDuration);
+  transition-property: transform;
+  transform: rotate(var(--cem-pf-v6-c-form__field-group-toggle-icon--Rotate));
+  transform-origin: center;
+}
+
+:host(:dir(rtl)) #toggle-icon {
+  scale: -1 1;
+}
+
+/* Header */
+#header {
+  display: flex;
+  grid-row: 1/2;
+  grid-column: var(--cem-pf-v6-c-form__field-group-header--GridColumn);
+  align-items: flex-start;
+  padding-block-start: var(--cem-pf-v6-c-form__field-group-header--PaddingBlockStart);
+  padding-block-end: var(--cem-pf-v6-c-form__field-group-header--PaddingBlockEnd);
+}
+
+#header-main {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+#header-title {
+  display: flex;
+}
+
+#header-title-text {
+  flex-grow: 1;
+}
+
+#header-description {
+  margin-block-start: var(--cem-pf-v6-c-form__field-group-header-description--MarginBlockStart);
+  color: var(--cem-pf-v6-c-form__field-group-header-description--Color);
+}
+
+#header-actions {
+  margin-block-start: var(--cem-pf-v6-c-form__field-group-header-actions--MarginBlockStart);
+  margin-block-end: var(--cem-pf-v6-c-form__field-group-header-actions--MarginBlockEnd);
+  margin-inline-start: var(--cem-pf-v6-c-form__field-group-header-actions--MarginInlineStart);
+  white-space: nowrap;
+}
+
+/* Body */
+#body {
+  /* Set private vars for nested field groups */
+  --_nested-body-grid-column: var(--cem-pf-v6-c-form__field-group__field-group__field-group-body--GridColumn);
+  --_nested-toggle-padding-block-start: var(--cem-pf-v6-c-form__field-group__field-group__field-group-toggle--PaddingBlockStart);
+  --_nested-header-padding-block-start: var(--cem-pf-v6-c-form__field-group__field-group__field-group-header--PaddingBlockStart);
+  --_nested-header-padding-block-end: var(--cem-pf-v6-c-form__field-group__field-group__field-group-header--PaddingBlockEnd);
+  --_nested-body-padding-block-start: 0;
+
+  display: grid;
+  grid-column: var(--cem-pf-v6-c-form__field-group-body--GridColumn);
+  padding-block-start: var(--cem-pf-v6-c-form__field-group-body--PaddingBlockStart);
+  padding-block-end: var(--cem-pf-v6-c-form__field-group-body--PaddingBlockEnd);
+  grid-template-columns: inherit;
+  column-gap: var(--_form-column-gap, var(--cem-pf-v6-c-form__field-group-body--Gap));
+  row-gap: var(--pf-t--global--spacer--sm);
+}
+
+:host([expandable]) #body {
+  max-height: 0;
+  padding-block-start: 0;
+  padding-block-end: 0;
+  visibility: hidden;
+  opacity: 0;
+  transition-delay: 0s, 0s, var(--cem-pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade), var(--cem-pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade), var(--cem-pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade), var(--cem-pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade);
+  transition-duration: var(--cem-pf-v6-c-form__field-group-body--TransitionDuration--collapse--fade), var(--cem-pf-v6-c-form__field-group-body--TransitionDuration--collapse--slide), 0s, 0s, 0s, 0s;
+  transition-property: opacity, translate, visibility, max-height, padding-block-start, padding-block-end;
+  translate: 0 var(--cem-pf-v6-c-form__field-group-body--TranslateY);
+}
+
+/* Accessibility: disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :host([expandable]) #body,
+  :host([expanded][expandable]) #body {
+    transition-duration: 0s;
+    transition-delay: 0s;
+  }
+
+  #toggle-icon {
+    transition-duration: 0s;
+  }
+}

@@ -102,21 +102,21 @@ describe('cem-virtual-tree', () => {
       const viewport = el.shadowRoot.getElementById('viewport');
 
       // Should have rendered the module item
-      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      const moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
       expect(moduleItem).to.exist;
       expect(moduleItem.getAttribute('label')).to.equal('./rh-accordion/rh-accordion-header.js');
     });
 
     it('renders module with badge showing declaration count', () => {
       const viewport = el.shadowRoot.getElementById('viewport');
-      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      const moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
 
       expect(moduleItem.getAttribute('badge')).to.equal('1');
     });
 
     it('marks items with children', () => {
       const viewport = el.shadowRoot.getElementById('viewport');
-      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      const moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
 
       expect(moduleItem.hasAttribute('has-children')).to.be.true;
     });
@@ -125,11 +125,11 @@ describe('cem-virtual-tree', () => {
   describe('nested expand/collapse', () => {
     it('expands module to show custom element', async () => {
       const viewport = el.shadowRoot.getElementById('viewport');
-      let moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      let moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
 
       // Initially collapsed - no nested items
       expect(moduleItem.expanded).to.be.false;
-      expect(moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]')).to.not.exist;
+      expect(moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]')).to.not.exist;
 
       // Expand module
       moduleItem.expanded = true;
@@ -138,10 +138,10 @@ describe('cem-virtual-tree', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       // Re-query after render
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
 
       // Should now have custom element as child
-      const customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
+      const customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
       expect(customElement).to.exist;
       expect(customElement.getAttribute('label')).to.equal('<rh-accordion-header>');
     });
@@ -150,22 +150,22 @@ describe('cem-virtual-tree', () => {
       const viewport = el.shadowRoot.getElementById('viewport');
 
       // Expand module first
-      let moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      let moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
       moduleItem.expanded = true;
       await new Promise(resolve => setTimeout(resolve, 50));
 
       // Re-query and expand custom element
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
-      let customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
+      let customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
       customElement.expanded = true;
       await new Promise(resolve => setTimeout(resolve, 50));
 
       // Re-query after render
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
-      customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
+      customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
 
       // Should have Properties and Events categories
-      const propertiesCategory = customElement.querySelector('pf-v6-tree-item[data-type="category"]');
+      const propertiesCategory = customElement.querySelector('cem-pf-v6-tree-item[data-type="category"]');
       expect(propertiesCategory).to.exist;
       expect(propertiesCategory.getAttribute('label')).to.equal('Properties');
     });
@@ -174,27 +174,27 @@ describe('cem-virtual-tree', () => {
       const viewport = el.shadowRoot.getElementById('viewport');
 
       // Step 1: Expand module
-      let moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      let moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
       moduleItem.expanded = true;
       await new Promise(resolve => setTimeout(resolve, 50));
 
       // Step 2: Expand custom element
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
-      let customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
+      let customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
       customElement.expanded = true;
       await new Promise(resolve => setTimeout(resolve, 50));
 
       // Step 3: Expand properties category
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
-      customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
-      let propertiesCategory = customElement.querySelector('pf-v6-tree-item[data-type="category"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
+      customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
+      let propertiesCategory = customElement.querySelector('cem-pf-v6-tree-item[data-type="category"]');
       propertiesCategory.expanded = true;
       await new Promise(resolve => setTimeout(resolve, 50));
 
       // Step 4: Verify all three levels are expanded
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
-      customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
-      propertiesCategory = customElement.querySelector('pf-v6-tree-item[data-type="category"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
+      customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
+      propertiesCategory = customElement.querySelector('cem-pf-v6-tree-item[data-type="category"]');
 
       expect(moduleItem.expanded, 'module should be expanded').to.be.true;
       expect(customElement.expanded, 'custom element should be expanded').to.be.true;
@@ -205,9 +205,9 @@ describe('cem-virtual-tree', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       // Step 6: Verify ONLY properties collapsed, parents stay expanded
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
-      customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
-      propertiesCategory = customElement.querySelector('pf-v6-tree-item[data-type="category"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
+      customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
+      propertiesCategory = customElement.querySelector('cem-pf-v6-tree-item[data-type="category"]');
 
       expect(moduleItem.expanded, 'module should STILL be expanded').to.be.true;
       expect(customElement.expanded, 'custom element should STILL be expanded').to.be.true;
@@ -218,25 +218,25 @@ describe('cem-virtual-tree', () => {
       const viewport = el.shadowRoot.getElementById('viewport');
 
       // Expand all three levels
-      let moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      let moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
       moduleItem.expanded = true;
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
-      let customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
+      let customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
       customElement.expanded = true;
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
-      customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
-      let propertiesCategory = customElement.querySelector('pf-v6-tree-item[data-type="category"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
+      customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
+      let propertiesCategory = customElement.querySelector('cem-pf-v6-tree-item[data-type="category"]');
       propertiesCategory.expanded = true;
       await new Promise(resolve => setTimeout(resolve, 50));
 
       // Verify all expanded
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
-      customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
-      propertiesCategory = customElement.querySelector('pf-v6-tree-item[data-type="category"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
+      customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
+      propertiesCategory = customElement.querySelector('cem-pf-v6-tree-item[data-type="category"]');
 
       expect(moduleItem.expanded).to.be.true;
       expect(customElement.expanded).to.be.true;
@@ -247,11 +247,11 @@ describe('cem-virtual-tree', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       // Re-query
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
 
       // Module should be collapsed and have no visible children
       expect(moduleItem.expanded).to.be.false;
-      expect(moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]')).to.not.exist;
+      expect(moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]')).to.not.exist;
     });
   });
 
@@ -266,7 +266,7 @@ describe('cem-virtual-tree', () => {
       el.search('accordion');
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      const moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
       expect(moduleItem).to.exist;
 
       // Should auto-expand to show matching items
@@ -282,7 +282,7 @@ describe('cem-virtual-tree', () => {
       el.search('');
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      const moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
       expect(moduleItem).to.exist;
     });
   });
@@ -292,26 +292,26 @@ describe('cem-virtual-tree', () => {
       const viewport = el.shadowRoot.getElementById('viewport');
 
       // Expand tree to access properties
-      let moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      let moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
       moduleItem.expanded = true;
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
-      let customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
+      let customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
       customElement.expanded = true;
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
-      customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
-      let propertiesCategory = customElement.querySelector('pf-v6-tree-item[data-type="category"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
+      customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
+      let propertiesCategory = customElement.querySelector('cem-pf-v6-tree-item[data-type="category"]');
       propertiesCategory.expanded = true;
       await new Promise(resolve => setTimeout(resolve, 50));
 
       // Get the two property items
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
-      customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
-      propertiesCategory = customElement.querySelector('pf-v6-tree-item[data-type="category"]');
-      const properties = propertiesCategory.querySelectorAll('pf-v6-tree-item[data-type="property"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
+      customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
+      propertiesCategory = customElement.querySelector('cem-pf-v6-tree-item[data-type="category"]');
+      const properties = propertiesCategory.querySelectorAll('cem-pf-v6-tree-item[data-type="property"]');
 
       expect(properties.length).to.be.at.least(2);
 
@@ -339,17 +339,17 @@ describe('cem-virtual-tree', () => {
       const viewport = el.shadowRoot.getElementById('viewport');
 
       // Expand and select an item
-      let moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      let moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
       moduleItem.expanded = true;
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
-      let customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
+      moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
+      let customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
       customElement.dispatchEvent(new Event('select', { bubbles: true }));
       await new Promise(resolve => setTimeout(resolve, 50));
 
       // Verify current is set
-      customElement = viewport.querySelector('pf-v6-tree-item[data-type="custom-element"]');
+      customElement = viewport.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
       expect(customElement.hasAttribute('current')).to.be.true;
 
       // Search
@@ -357,7 +357,7 @@ describe('cem-virtual-tree', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       // Current should still be maintained (search doesn't affect selection)
-      customElement = viewport.querySelector('pf-v6-tree-item[data-type="custom-element"]');
+      customElement = viewport.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
       expect(customElement.hasAttribute('current')).to.be.true;
     });
   });
@@ -376,8 +376,8 @@ describe('cem-virtual-tree', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const viewport = el.shadowRoot.getElementById('viewport');
-      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
-      const customElement = moduleItem.querySelector('pf-v6-tree-item[data-type="custom-element"]');
+      const moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
+      const customElement = moduleItem.querySelector('cem-pf-v6-tree-item[data-type="custom-element"]');
 
       expect(moduleItem.expanded).to.be.true;
       expect(customElement.expanded).to.be.true;
@@ -393,10 +393,10 @@ describe('cem-virtual-tree', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const viewport = el.shadowRoot.getElementById('viewport');
-      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      const moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
 
       expect(moduleItem.expanded).to.be.false;
-      expect(moduleItem.querySelector('pf-v6-tree-item')).to.not.exist;
+      expect(moduleItem.querySelector('cem-pf-v6-tree-item')).to.not.exist;
     });
   });
 
@@ -408,7 +408,7 @@ describe('cem-virtual-tree', () => {
       });
 
       const viewport = el.shadowRoot.getElementById('viewport');
-      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      const moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
 
       // Simulate selection
       moduleItem.dispatchEvent(new CustomEvent('select', {
@@ -423,7 +423,7 @@ describe('cem-virtual-tree', () => {
 
     it('maintains visibility through expand/collapse cycle', async () => {
       const viewport = el.shadowRoot.getElementById('viewport');
-      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      const moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
 
       // Initially not expanded
       expect(moduleItem.expanded).to.be.false;
@@ -453,14 +453,14 @@ describe('cem-virtual-tree', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const viewport = el.shadowRoot.getElementById('viewport');
-      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      const moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
 
       expect(moduleItem).to.exist;
     });
 
     it('handles expand and search combination', async () => {
       const viewport = el.shadowRoot.getElementById('viewport');
-      const moduleItem = viewport.querySelector('pf-v6-tree-item[data-type="module"]');
+      const moduleItem = viewport.querySelector('cem-pf-v6-tree-item[data-type="module"]');
 
       // Expand first
       moduleItem.expanded = true;
@@ -485,7 +485,7 @@ describe('cem-virtual-tree', () => {
       const viewport = el.shadowRoot.getElementById('viewport');
 
       // Find CSS Properties category directly
-      const categories = viewport.querySelectorAll('pf-v6-tree-item[data-type="category"]');
+      const categories = viewport.querySelectorAll('cem-pf-v6-tree-item[data-type="category"]');
       const cssPropsCategory = Array.from(categories).find(
         cat => cat.getAttribute('label') === 'CSS Properties'
       );
@@ -499,7 +499,7 @@ describe('cem-virtual-tree', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const viewport = el.shadowRoot.getElementById('viewport');
-      const categories = viewport.querySelectorAll('pf-v6-tree-item[data-type="category"]');
+      const categories = viewport.querySelectorAll('cem-pf-v6-tree-item[data-type="category"]');
       const cssPartsCategory = Array.from(categories).find(
         cat => cat.getAttribute('label') === 'CSS Parts'
       );
@@ -513,7 +513,7 @@ describe('cem-virtual-tree', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const viewport = el.shadowRoot.getElementById('viewport');
-      const categories = viewport.querySelectorAll('pf-v6-tree-item[data-type="category"]');
+      const categories = viewport.querySelectorAll('cem-pf-v6-tree-item[data-type="category"]');
       const cssStatesCategory = Array.from(categories).find(
         cat => cat.getAttribute('label') === 'CSS States'
       );
@@ -527,7 +527,7 @@ describe('cem-virtual-tree', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const viewport = el.shadowRoot.getElementById('viewport');
-      const categories = viewport.querySelectorAll('pf-v6-tree-item[data-type="category"]');
+      const categories = viewport.querySelectorAll('cem-pf-v6-tree-item[data-type="category"]');
       const slotsCategory = Array.from(categories).find(
         cat => cat.getAttribute('label') === 'Slots'
       );
@@ -541,7 +541,7 @@ describe('cem-virtual-tree', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const viewport = el.shadowRoot.getElementById('viewport');
-      const categories = viewport.querySelectorAll('pf-v6-tree-item[data-type="category"]');
+      const categories = viewport.querySelectorAll('cem-pf-v6-tree-item[data-type="category"]');
       const demosCategory = Array.from(categories).find(
         cat => cat.getAttribute('label') === 'Demos'
       );

@@ -4,7 +4,7 @@ import { property } from 'lit/decorators/property.js';
 
 import styles from './cem-serve-knob-group.css' with { type: 'css' };
 
-import '../pf-v6-text-input-group/pf-v6-text-input-group.js';
+import '../cem-pf-v6-text-input-group/cem-pf-v6-text-input-group.js';
 
 /**
  * Custom event fired when a knob attribute changes
@@ -181,7 +181,7 @@ export class CemServeKnobGroup extends LitElement {
 
     if (!knobType || !knobName) return;
 
-    const formGroup = button.closest('pf-v6-form-group');
+    const formGroup = button.closest('cem-pf-v6-form-group');
     if (!formGroup) return;
 
     const control = formGroup.querySelector(
@@ -218,7 +218,7 @@ export class CemServeKnobGroup extends LitElement {
 
     if (!knobType || !knobName) return;
 
-    const formGroup = control.closest('pf-v6-form-group');
+    const formGroup = control.closest('cem-pf-v6-form-group');
     if (!formGroup) return;
 
     const clearButton = formGroup.querySelector(
@@ -273,7 +273,7 @@ export class CemServeKnobGroup extends LitElement {
   };
 
   #isBooleanControl(control: HTMLElement): boolean {
-    if (control.tagName === 'PF-V6-SWITCH') {
+    if (control.tagName === 'CEM-PF-V6-SWITCH') {
       return true;
     }
     if (control.tagName === 'INPUT' && (control as HTMLInputElement).type === 'checkbox') {
@@ -285,7 +285,7 @@ export class CemServeKnobGroup extends LitElement {
   #handleColorButtonClick = async (e: Event, button: Element) => {
     e.preventDefault();
 
-    const textInputGroup = button.closest('pf-v6-text-input-group') as HTMLElement & { value?: string } | null;
+    const textInputGroup = button.closest('cem-pf-v6-text-input-group') as HTMLElement & { value?: string } | null;
     if (!textInputGroup) return;
 
     const currentValue = textInputGroup.value || '#000000';

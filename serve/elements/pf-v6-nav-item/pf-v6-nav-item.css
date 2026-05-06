@@ -1,8 +1,0 @@
-:host {
-
-  display: grid;
-}
-
-:host([expanded]:last-child) ::slotted(pf-v6-nav-group) {
-  margin-block-end: calc(var(--pf-v6-c-nav__subnav--PaddingBlockEnd, var(--pf-t--global--spacer--sm)) * -1);
-}

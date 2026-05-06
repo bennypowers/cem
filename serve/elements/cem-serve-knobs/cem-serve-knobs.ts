@@ -3,17 +3,17 @@ import { customElement } from 'lit/decorators/custom-element.js';
 
 import styles from './cem-serve-knobs.css' with { type: 'css' };
 
-import '../pf-v6-navigation/pf-v6-navigation.js';
-import '../pf-v6-nav-list/pf-v6-nav-list.js';
-import '../pf-v6-nav-item/pf-v6-nav-item.js';
-import '../pf-v6-nav-link/pf-v6-nav-link.js';
-import '../pf-v6-card/pf-v6-card.js';
-import '../pf-v6-form-field-group/pf-v6-form-field-group.js';
+import '../cem-pf-v6-navigation/cem-pf-v6-navigation.js';
+import '../cem-pf-v6-nav-list/cem-pf-v6-nav-list.js';
+import '../cem-pf-v6-nav-item/cem-pf-v6-nav-item.js';
+import '../cem-pf-v6-nav-link/cem-pf-v6-nav-link.js';
+import '../cem-pf-v6-card/cem-pf-v6-card.js';
+import '../cem-pf-v6-form-field-group/cem-pf-v6-form-field-group.js';
 
 /**
  * CEM Serve Knobs - Container for multi-instance knobs panels
  *
- * @slot - Default slot for pf-v6-card knob panels
+ * @slot - Default slot for cem-pf-v6-card knob panels
  */
 @customElement('cem-serve-knobs')
 export class CemServeKnobs extends LitElement {
@@ -25,8 +25,8 @@ export class CemServeKnobs extends LitElement {
     if (!hash || hash === '#') return;
 
     const cardId = hash.substring(1);
-    const cards = this.querySelectorAll('pf-v6-card');
-    const navLinks = this.#navList?.querySelectorAll('pf-v6-nav-link');
+    const cards = this.querySelectorAll('cem-pf-v6-card');
+    const navLinks = this.#navList?.querySelectorAll('cem-pf-v6-nav-link');
     const knobsContainer = this.shadowRoot?.getElementById('knobs');
 
     if (navLinks) {
@@ -53,12 +53,12 @@ export class CemServeKnobs extends LitElement {
 
   render() {
     return html`
-      <pf-v6-navigation horizontal
+      <cem-pf-v6-navigation horizontal
                         variant="horizontal-subnav">
-        <pf-v6-nav-list id="nav-list"
+        <cem-pf-v6-nav-list id="nav-list"
                         aria-label="Elements">
-        </pf-v6-nav-list>
-      </pf-v6-navigation>
+        </cem-pf-v6-nav-list>
+      </cem-pf-v6-navigation>
       <div id="knobs">
         <slot @slotchange=${this.#onSlotChange}></slot>
       </div>
@@ -89,14 +89,14 @@ export class CemServeKnobs extends LitElement {
     const slot = this.shadowRoot?.querySelector('slot');
     if (!slot || !this.#navList) return;
 
-    const panels = slot.assignedElements().filter(el => el.tagName === 'PF-V6-CARD');
+    const panels = slot.assignedElements().filter(el => el.tagName === 'CEM-PF-V6-CARD');
     if (panels.length === 0) return;
 
     this.#navList.innerHTML = '';
 
     panels.forEach((panel, index) => {
-      const navItem = document.createElement('pf-v6-nav-item');
-      const navLink = document.createElement('pf-v6-nav-link');
+      const navItem = document.createElement('cem-pf-v6-nav-item');
+      const navLink = document.createElement('cem-pf-v6-nav-link');
       const label = document.createElement('span');
 
       const panelId = (panel as HTMLElement).dataset.card || `instance-${index}`;

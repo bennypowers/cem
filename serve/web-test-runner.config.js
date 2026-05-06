@@ -30,7 +30,7 @@ export default {
     exclude: [
       '**/__cem/**',  // Exclude virtual modules served by mock server
       '**/node_modules/**',
-      '**/elements/pf-v6-*/**',  // Generated Lit element bundles (decorator boilerplate)
+      '**/elements/cem-pf-v6-*/**',  // Generated Lit element bundles (decorator boilerplate)
       '**/elements/cem-*/**',    // Generated Lit element bundles (decorator boilerplate)
     ],
     threshold: {

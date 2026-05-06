@@ -1,0 +1,23 @@
+:host {
+  display: block;
+
+  --cem-pf-v6-c-alert-group__item--MarginBlockStart: var(--pf-t--global--spacer--gap--group--vertical);
+  --cem-pf-v6-c-alert-group--m-toast--InsetBlockStart: var(--pf-t--global--spacer--2xl);
+  --cem-pf-v6-c-alert-group--m-toast--InsetInlineEnd: var(--pf-t--global--spacer--xl);
+  --cem-pf-v6-c-alert-group--m-toast--MaxWidth: 37.5rem;
+  --cem-pf-v6-c-alert-group--m-toast--ZIndex: var(--pf-t--global--z-index--2xl);
+}
+
+:host([toast]) {
+  position: fixed;
+  inset-block-start: var(--cem-pf-v6-c-alert-group--m-toast--InsetBlockStart);
+  inset-inline-end: var(--cem-pf-v6-c-alert-group--m-toast--InsetInlineEnd);
+  z-index: var(--cem-pf-v6-c-alert-group--m-toast--ZIndex);
+  width: calc(100% - var(--cem-pf-v6-c-alert-group--m-toast--InsetInlineEnd) * 2);
+  max-width: var(--cem-pf-v6-c-alert-group--m-toast--MaxWidth);
+}
+
+:host ::slotted(*:not(:first-child)),
+:host ::slotted(.cem-pf-v6-c-alert-group__item:not(:first-child)) {
+  margin-block-start: var(--cem-pf-v6-c-alert-group__item--MarginBlockStart);
+}

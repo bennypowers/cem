@@ -104,7 +104,7 @@ describe('cem-serve-chrome', () => {
     });
 
     it('renders tabs component', () => {
-      const tabs = el.shadowRoot.querySelector('pf-v6-tabs');
+      const tabs = el.shadowRoot.querySelector('cem-pf-v6-tabs');
       expect(tabs).to.exist;
     });
 
@@ -382,7 +382,7 @@ describe('cem-serve-chrome', () => {
 
   describe('tree state persistence', () => {
     it('listens for expand events', () => {
-      const treeItem = document.createElement('pf-v6-tree-item');
+      const treeItem = document.createElement('cem-pf-v6-tree-item');
       treeItem.setAttribute('data-type', 'class');
       treeItem.setAttribute('data-module-path', '/components/button');
       el.appendChild(treeItem);
@@ -395,7 +395,7 @@ describe('cem-serve-chrome', () => {
     });
 
     it('listens for collapse events', () => {
-      const treeItem = document.createElement('pf-v6-tree-item');
+      const treeItem = document.createElement('cem-pf-v6-tree-item');
       treeItem.setAttribute('data-type', 'class');
       treeItem.setAttribute('data-module-path', '/components/button');
       el.appendChild(treeItem);
@@ -408,7 +408,7 @@ describe('cem-serve-chrome', () => {
     });
 
     it('listens for select events', () => {
-      const treeItem = document.createElement('pf-v6-tree-item');
+      const treeItem = document.createElement('cem-pf-v6-tree-item');
       treeItem.setAttribute('data-type', 'class');
       treeItem.setAttribute('data-module-path', '/components/button');
       el.appendChild(treeItem);
@@ -459,7 +459,7 @@ describe('cem-serve-chrome', () => {
 
   describe('tabs state management', () => {
     it('handles tab changes', () => {
-      const tabs = el.shadowRoot.querySelector('pf-v6-tabs');
+      const tabs = el.shadowRoot.querySelector('cem-pf-v6-tabs');
 
       const changeEvent = new Event('change', { bubbles: true });
       changeEvent.selectedIndex = 1;
@@ -606,7 +606,7 @@ describe('cem-serve-chrome', () => {
     });
 
     it('simulates tab switching', () => {
-      const tabs = el.shadowRoot.querySelector('pf-v6-tabs');
+      const tabs = el.shadowRoot.querySelector('cem-pf-v6-tabs');
 
       // User switches tabs
       for (let i = 0; i < 3; i++) {
@@ -725,7 +725,7 @@ describe('cem-serve-chrome', () => {
     });
 
     it('scrolls events when switching to events tab', async () => {
-      const tabs = el.shadowRoot.querySelector('pf-v6-tabs');
+      const tabs = el.shadowRoot.querySelector('cem-pf-v6-tabs');
       const drawer = el.shadowRoot.querySelector('cem-drawer');
       const eventList = el.shadowRoot.querySelector('#event-list');
 
@@ -785,7 +785,7 @@ describe('cem-serve-chrome', () => {
       button1.className = 'event-list-item';
       button1.dataset.eventId = 'event-1';
       button1.innerHTML = `
-        <pf-v6-label compact status="info">click</pf-v6-label>
+        <cem-pf-v6-label compact status="info">click</cem-pf-v6-label>
         <time class="event-time">12:00:00</time>
         <span class="event-element">&lt;my-button&gt;#btn1</span>
       `;
@@ -794,7 +794,7 @@ describe('cem-serve-chrome', () => {
       button2.className = 'event-list-item';
       button2.dataset.eventId = 'event-2';
       button2.innerHTML = `
-        <pf-v6-label compact status="info">change</pf-v6-label>
+        <cem-pf-v6-label compact status="info">change</cem-pf-v6-label>
         <time class="event-time">12:00:01</time>
         <span class="event-element">&lt;my-input&gt;#input1</span>
       `;
@@ -1035,7 +1035,7 @@ describe('cem-serve-chrome', () => {
 
         const logEntry = el.shadowRoot.querySelector('.log-entry.info');
         expect(logEntry).to.exist;
-        const label = logEntry.querySelector('pf-v6-label');
+        const label = logEntry.querySelector('cem-pf-v6-label');
         expect(label.textContent).to.equal('Info');
         expect(label.getAttribute('status')).to.equal('info');
       });
@@ -1052,7 +1052,7 @@ describe('cem-serve-chrome', () => {
 
         const logEntry = el.shadowRoot.querySelector('.log-entry.warning');
         expect(logEntry).to.exist;
-        const label = logEntry.querySelector('pf-v6-label');
+        const label = logEntry.querySelector('cem-pf-v6-label');
         expect(label.textContent).to.equal('Warn');
         expect(label.getAttribute('status')).to.equal('warning');
       });
@@ -1069,7 +1069,7 @@ describe('cem-serve-chrome', () => {
 
         const logEntry = el.shadowRoot.querySelector('.log-entry.error');
         expect(logEntry).to.exist;
-        const label = logEntry.querySelector('pf-v6-label');
+        const label = logEntry.querySelector('cem-pf-v6-label');
         expect(label.textContent).to.equal('Error');
         expect(label.getAttribute('status')).to.equal('danger');
       });
@@ -1086,7 +1086,7 @@ describe('cem-serve-chrome', () => {
 
         const logEntry = el.shadowRoot.querySelector('.log-entry.debug');
         expect(logEntry).to.exist;
-        const label = logEntry.querySelector('pf-v6-label');
+        const label = logEntry.querySelector('cem-pf-v6-label');
         expect(label.textContent).to.equal('Debug');
         expect(label.getAttribute('color')).to.equal('purple');
       });
@@ -1096,7 +1096,7 @@ describe('cem-serve-chrome', () => {
       it('applies light color scheme', () => {
         const toggle = el.shadowRoot.querySelector('.color-scheme-toggle');
         if (toggle) {
-          const event = new Event('pf-v6-toggle-group-change', { bubbles: true });
+          const event = new Event('cem-pf-v6-toggle-group-change', { bubbles: true });
           event.value = 'light';
           toggle.dispatchEvent(event);
 
@@ -1110,7 +1110,7 @@ describe('cem-serve-chrome', () => {
       it('applies dark color scheme', () => {
         const toggle = el.shadowRoot.querySelector('.color-scheme-toggle');
         if (toggle) {
-          const event = new Event('pf-v6-toggle-group-change', { bubbles: true });
+          const event = new Event('cem-pf-v6-toggle-group-change', { bubbles: true });
           event.value = 'dark';
           toggle.dispatchEvent(event);
 
@@ -1123,7 +1123,7 @@ describe('cem-serve-chrome', () => {
       it('applies system color scheme', () => {
         const toggle = el.shadowRoot.querySelector('.color-scheme-toggle');
         if (toggle) {
-          const event = new Event('pf-v6-toggle-group-change', { bubbles: true });
+          const event = new Event('cem-pf-v6-toggle-group-change', { bubbles: true });
           event.value = 'system';
           toggle.dispatchEvent(event);
 
@@ -1414,7 +1414,7 @@ describe('cem-serve-chrome', () => {
       });
 
       it('switches tabs when change event fired', () => {
-        const tabs = el.shadowRoot.querySelector('pf-v6-tabs');
+        const tabs = el.shadowRoot.querySelector('cem-pf-v6-tabs');
         if (tabs) {
           const changeEvent = new Event('change', { bubbles: true });
           changeEvent.selectedIndex = 2; // Logs tab
@@ -1443,13 +1443,13 @@ describe('cem-serve-chrome', () => {
         const mockEvent1 = document.createElement('button');
         mockEvent1.className = 'event-list-item';
         mockEvent1.dataset.eventId = 'event-1';
-        mockEvent1.innerHTML = '<pf-v6-label compact>click</pf-v6-label>';
+        mockEvent1.innerHTML = '<cem-pf-v6-label compact>click</cem-pf-v6-label>';
         eventList.appendChild(mockEvent1);
 
         const mockEvent2 = document.createElement('button');
         mockEvent2.className = 'event-list-item';
         mockEvent2.dataset.eventId = 'event-2';
-        mockEvent2.innerHTML = '<pf-v6-label compact>change</pf-v6-label>';
+        mockEvent2.innerHTML = '<cem-pf-v6-label compact>change</cem-pf-v6-label>';
         eventList.appendChild(mockEvent2);
 
         // Add some detail panel content to simulate a selected event
@@ -1494,18 +1494,18 @@ describe('cem-serve-chrome', () => {
       expect(elementFilter).to.exist;
 
       // If menus exist, verify they can have items
-      const eventTypeMenu = eventTypeFilter?.querySelector('pf-v6-menu');
-      const elementMenu = elementFilter?.querySelector('pf-v6-menu');
+      const eventTypeMenu = eventTypeFilter?.querySelector('cem-pf-v6-menu');
+      const elementMenu = elementFilter?.querySelector('cem-pf-v6-menu');
 
       if (eventTypeMenu) {
         // Menu exists, check it can contain items (may be empty if no elements in demo)
-        const items = eventTypeMenu.querySelectorAll('pf-v6-menu-item');
+        const items = eventTypeMenu.querySelectorAll('cem-pf-v6-menu-item');
         expect(items).to.exist;
       }
 
       if (elementMenu) {
         // Menu exists, check it can contain items (may be empty if no elements in demo)
-        const items = elementMenu.querySelectorAll('pf-v6-menu-item');
+        const items = elementMenu.querySelectorAll('cem-pf-v6-menu-item');
         expect(items).to.exist;
       }
     });
@@ -1734,7 +1734,7 @@ describe('cem-serve-chrome', () => {
       drawer.open = true;
       await drawer.updateComplete;
 
-      const tabs = chromeEl.shadowRoot.querySelector('pf-v6-tabs');
+      const tabs = chromeEl.shadowRoot.querySelector('cem-pf-v6-tabs');
       if (tabs) {
         const changeEvent = new Event('change', { bubbles: true });
         changeEvent.selectedIndex = 3;

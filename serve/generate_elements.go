@@ -77,7 +77,7 @@ func generateManifests() error {
 		glob    string
 		outPath string
 	}{
-		{"pf-v6-*/*.ts", "elements/patternfly/custom-elements.json"},
+		{"cem-pf-v6-*/*.ts", "elements/patternfly/custom-elements.json"},
 		{"cem-*/*.ts", "elements/chrome/custom-elements.json"},
 	}
 
@@ -287,7 +287,7 @@ func transpileElements() error {
 		result := api.Build(api.BuildOptions{
 			Stdin: &api.StdinOptions{
 				Contents:   processed,
-				Sourcefile: filepath.Base(entry), // e.g. "pf-v6-badge.ts" for sourcemaps
+				Sourcefile: filepath.Base(entry), // e.g. "cem-pf-v6-badge.ts" for sourcemaps
 				Loader:     api.LoaderTS,
 				ResolveDir: filepath.Dir(entry), // resolve imports relative to source dir
 			},

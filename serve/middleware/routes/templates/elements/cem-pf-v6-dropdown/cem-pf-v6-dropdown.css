@@ -1,0 +1,98 @@
+:host {
+  display: inline-block;
+  position: relative;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+#toggle {
+  --cem-pf-v6-c-menu-toggle--Gap: var(--pf-t--global--spacer--gap--text-to-element--default);
+  --cem-pf-v6-c-menu-toggle--PaddingBlockStart: var(--pf-t--global--spacer--control--vertical--default);
+  --cem-pf-v6-c-menu-toggle--PaddingInlineEnd: var(--pf-t--global--spacer--control--horizontal--default);
+  --cem-pf-v6-c-menu-toggle--PaddingBlockEnd: var(--pf-t--global--spacer--control--vertical--default);
+  --cem-pf-v6-c-menu-toggle--PaddingInlineStart: var(--pf-t--global--spacer--control--horizontal--default);
+  --cem-pf-v6-c-menu-toggle--MinWidth: calc(var(--cem-pf-v6-c-menu-toggle--FontSize) * var(--cem-pf-v6-c-menu-toggle--LineHeight) + var(--cem-pf-v6-c-menu-toggle--PaddingBlockStart) + var(--cem-pf-v6-c-menu-toggle--PaddingBlockEnd));
+  --cem-pf-v6-c-menu-toggle--FontSize: var(--pf-t--global--font--size--body--default);
+  --cem-pf-v6-c-menu-toggle--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-menu-toggle--LineHeight: var(--pf-t--global--font--line-height--body);
+  --cem-pf-v6-c-menu-toggle--BackgroundColor: var(--pf-t--global--background--color--control--default);
+  --cem-pf-v6-c-menu-toggle--BorderRadius: var(--pf-t--global--border--radius--small);
+  --cem-pf-v6-c-menu-toggle--BorderColor: var(--pf-t--global--border--color--default);
+  --cem-pf-v6-c-menu-toggle--BorderWidth: var(--pf-t--global--border--width--control--default);
+  --cem-pf-v6-c-menu-toggle--border--ZIndex: var(--pf-t--global--z-index--xs);
+  --cem-pf-v6-c-menu-toggle--TransitionTimingFunction: var(--pf-t--global--motion--timing-function--default);
+  --cem-pf-v6-c-menu-toggle--TransitionDuration: var(--pf-t--global--motion--duration--fade--short);
+  --cem-pf-v6-c-menu-toggle--TransitionProperty: color, background-color, border-width, border-color;
+  --cem-pf-v6-c-menu-toggle--hover--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-menu-toggle--hover--BackgroundColor: var(--pf-t--global--background--color--control--default);
+  --cem-pf-v6-c-menu-toggle--hover--BorderWidth: var(--pf-t--global--border--width--control--hover);
+  --cem-pf-v6-c-menu-toggle--hover--BorderColor: var(--pf-t--global--border--color--hover);
+  --cem-pf-v6-c-menu-toggle--expanded--Color: var(--pf-t--global--text--color--regular);
+  --cem-pf-v6-c-menu-toggle--expanded--BackgroundColor: var(--pf-t--global--background--color--control--default);
+  --cem-pf-v6-c-menu-toggle--expanded--BorderWidth: var(--pf-t--global--border--width--control--clicked);
+  --cem-pf-v6-c-menu-toggle--expanded--BorderColor: var(--pf-t--global--border--color--clicked);
+  --cem-pf-v6-c-menu-toggle__toggle-icon--Color: var(--pf-t--global--icon--color--regular);
+
+  --cem-pf-v6-c-button--Color: var(--cem-pf-v6-c-menu-toggle--Color);
+  --cem-pf-v6-c-button--BackgroundColor: var(--cem-pf-v6-c-menu-toggle--BackgroundColor);
+  --cem-pf-v6-c-button--BorderRadius: var(--cem-pf-v6-c-menu-toggle--BorderRadius);
+  --cem-pf-v6-c-button--PaddingBlockStart: var(--cem-pf-v6-c-menu-toggle--PaddingBlockStart);
+  --cem-pf-v6-c-button--PaddingBlockEnd: var(--cem-pf-v6-c-menu-toggle--PaddingBlockEnd);
+  --cem-pf-v6-c-button--PaddingInlineStart: var(--cem-pf-v6-c-menu-toggle--PaddingInlineStart);
+  --cem-pf-v6-c-button--PaddingInlineEnd: var(--cem-pf-v6-c-menu-toggle--PaddingInlineEnd);
+  --cem-pf-v6-c-button--FontSize: var(--cem-pf-v6-c-menu-toggle--FontSize);
+  --cem-pf-v6-c-button--LineHeight: var(--cem-pf-v6-c-menu-toggle--LineHeight);
+  --cem-pf-v6-c-button--MinWidth: var(--cem-pf-v6-c-menu-toggle--MinWidth);
+
+  &::after {
+    position: absolute;
+    inset: 0;
+    z-index: var(--cem-pf-v6-c-menu-toggle--border--ZIndex);
+    pointer-events: none;
+    content: "";
+    border: var(--cem-pf-v6-c-menu-toggle--BorderWidth) solid var(--cem-pf-v6-c-menu-toggle--BorderColor);
+    border-radius: var(--cem-pf-v6-c-menu-toggle--BorderRadius);
+    transition: inherit;
+  }
+
+  &:hover:not([disabled]) {
+    --cem-pf-v6-c-menu-toggle--Color: var(--cem-pf-v6-c-menu-toggle--hover--Color);
+    --cem-pf-v6-c-menu-toggle--BackgroundColor: var(--cem-pf-v6-c-menu-toggle--hover--BackgroundColor);
+    --cem-pf-v6-c-menu-toggle--BorderWidth: var(--cem-pf-v6-c-menu-toggle--hover--BorderWidth);
+    --cem-pf-v6-c-menu-toggle--BorderColor: var(--cem-pf-v6-c-menu-toggle--hover--BorderColor);
+  }
+}
+
+:host([expanded]) #toggle {
+  --cem-pf-v6-c-menu-toggle--Color: var(--cem-pf-v6-c-menu-toggle--expanded--Color);
+  --cem-pf-v6-c-menu-toggle--BackgroundColor: var(--cem-pf-v6-c-menu-toggle--expanded--BackgroundColor);
+  --cem-pf-v6-c-menu-toggle--BorderWidth: var(--cem-pf-v6-c-menu-toggle--expanded--BorderWidth);
+  --cem-pf-v6-c-menu-toggle--BorderColor: var(--cem-pf-v6-c-menu-toggle--expanded--BorderColor);
+}
+
+#toggle svg[slot="icon-end"] {
+  width: 0.75em;
+  height: 0.75em;
+  fill: currentColor;
+  color: var(--cem-pf-v6-c-menu-toggle__toggle-icon--Color);
+  transition: transform 150ms ease-in-out;
+}
+
+:host([expanded]) #toggle svg[slot="icon-end"] {
+  transform: rotate(180deg);
+}
+
+#menu-container {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: var(--pf-t--global--spacer--xs);
+  z-index: var(--pf-t--global--z-index--sm, 1000);
+}
+
+:host([disabled]) {
+  pointer-events: none;
+  opacity: 0.6;
+}
