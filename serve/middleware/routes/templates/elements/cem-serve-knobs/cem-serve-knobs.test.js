@@ -687,7 +687,8 @@ describe('cem-serve-knobs', () => {
     });
   });
 
-  describe('visual regression', () => {
+  const isChromium = navigator.userAgent.includes('Chrome');
+  (isChromium ? describe : describe.skip)('visual regression', () => {
     it('multiple cards with navigation', async () => {
       const container = await fixture(html`
         <div style="width: 300px; height: 400px;">

@@ -1682,7 +1682,8 @@ describe('cem-serve-chrome', () => {
     });
   });
 
-  describe('visual regression', () => {
+  const isChromium = navigator.userAgent.includes('Chrome');
+  (isChromium ? describe : describe.skip)('visual regression', () => {
     let chromeEl;
     let container;
 

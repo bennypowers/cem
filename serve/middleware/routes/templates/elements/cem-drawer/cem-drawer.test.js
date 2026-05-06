@@ -668,7 +668,8 @@ describe('cem-drawer', () => {
     });
   });
 
-  describe('visual regression', () => {
+  const isChromium = navigator.userAgent.includes('Chrome');
+  (isChromium ? describe : describe.skip)('visual regression', () => {
     it('closed state', async () => {
       const container = await fixture(html`
         <div style="width: 600px; position: relative;">

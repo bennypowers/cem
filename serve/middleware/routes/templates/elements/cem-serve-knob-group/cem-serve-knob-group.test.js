@@ -793,7 +793,8 @@ describe('cem-serve-knob-group', () => {
     });
   });
 
-  describe('visual regression', () => {
+  const isChromium = navigator.userAgent.includes('Chrome');
+  (isChromium ? describe : describe.skip)('visual regression', () => {
     it('attribute knobs with text inputs', async () => {
       const container = await fixture(html`
         <div style="width: 400px;">
