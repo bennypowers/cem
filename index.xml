@@ -723,26 +723,17 @@ component knowledge you document for humans.&lt;/p></description></item><item><t
 &lt;h2 id="overview">Overview&lt;/h2>
 &lt;p>CEM provides two types of benchmarks for comprehensive performance analysis:&lt;/p></description></item><item><title>Rendering Modes</title><link>https://bennypowers.dev/cem/docs/usage/rendering-modes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/usage/rendering-modes/</guid><description>&lt;p>The 
 &lt;a href="../workflow/">dev server
-&lt;/a> supports three rendering modes that control how your 
+&lt;/a> supports four rendering modes that control how your 
 &lt;a href="../demos/">demos
 &lt;/a> are presented: light mode (full development UI), shadow mode (demos in 
 &lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM" 
  target="_blank" 
  rel="noopener">shadow DOM
-&lt;/a>), and chromeless mode (minimal standalone pages). Choose the mode that fits your workflow—light for interactive development with 
+&lt;/a>), iframe mode (full isolation with knobs), and chromeless mode (minimal standalone pages). Choose the mode that fits your workflow&amp;ndash;light for interactive development with 
 &lt;a href="../knobs/">knobs
-&lt;/a> and live monitoring, shadow for testing CSS encapsulation, or chromeless for 
+&lt;/a> and live monitoring, shadow for testing CSS encapsulation, iframe for full style and tag name isolation, or chromeless for 
 &lt;a href="#chromeless-mode">automated testing
-&lt;/a> and clean demo sharing.&lt;/p>
-&lt;p>All modes include 
-&lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/WebSocket" 
- target="_blank" 
- rel="noopener">live reload
-&lt;/a> with smart dependency tracking and support 
-&lt;a href="#query-parameter-override">query parameter overrides
-&lt;/a> for quick testing. The rendering mode affects UI presentation and error handling but preserves core functionality like TypeScript transforms, 
-&lt;a href="../import-maps/">import map
-&lt;/a> injection, and file watching across all modes.&lt;/p></description></item><item><title>Contributing</title><link>https://bennypowers.dev/cem/docs/contributing/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/contributing/</guid><description>&lt;h1 id="contributing-to-cem">Contributing to cem&lt;/h1>
+&lt;/a> and clean demo sharing.&lt;/p></description></item><item><title>Contributing</title><link>https://bennypowers.dev/cem/docs/contributing/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/contributing/</guid><description>&lt;h1 id="contributing-to-cem">Contributing to cem&lt;/h1>
 &lt;p>Thank you for your interest in contributing to &lt;code>cem&lt;/code>! This guide will help you set up your environment for development, building, and testing. Please read carefully and reach out if you have questions.&lt;/p>
 &lt;h2 id="getting-started">Getting Started&lt;/h2>
 &lt;ul>
