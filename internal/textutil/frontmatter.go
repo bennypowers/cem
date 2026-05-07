@@ -35,16 +35,27 @@ func StripFrontmatter(content []byte) []byte {
 	}
 
 	rest := trimmed[openLen:]
-	_, after, found := bytes.Cut(rest, []byte("\n---"))
-	if !found {
-		return content
+
+	for i := range len(rest) {
+		if rest[i] != '\n' {
+			continue
+		}
+		line := rest[i+1:]
+		if !bytes.HasPrefix(line, []byte("---")) {
+			continue
+		}
+		after := line[3:]
+		switch {
+		case len(after) == 0:
+			return after
+		case after[0] == '\n':
+			return after[1:]
+		case after[0] == '\r' && len(after) > 1 && after[1] == '\n':
+			return after[2:]
+		default:
+			continue
+		}
 	}
 
-	if len(after) > 0 && after[0] == '\n' {
-		after = after[1:]
-	} else if len(after) > 1 && after[0] == '\r' && after[1] == '\n' {
-		after = after[2:]
-	}
-
-	return after
+	return content
 }

@@ -67,9 +67,9 @@ func TestStripFrontmatter(t *testing.T) {
 			want:  "",
 		},
 		{
-			name:  "closing delimiter followed by lone CR",
+			name:  "closing delimiter followed by lone CR not treated as delimiter",
 			input: "---\nfield: value\n---\r<content>",
-			want:  "\r<content>",
+			want:  "---\nfield: value\n---\r<content>",
 		},
 		{
 			name:  "triple dash in HTML content not stripped",
@@ -80,6 +80,31 @@ func TestStripFrontmatter(t *testing.T) {
 			name:  "frontmatter then body with triple dash",
 			input: "---\ndescription: A demo\n---\n<div>---</div>\n<my-element>content</my-element>\n",
 			want:  "<div>---</div>\n<my-element>content</my-element>\n",
+		},
+		{
+			name:  "dashes inside YAML value not treated as delimiter",
+			input: "---\ndescription: foo---bar\n---\n<my-element>content</my-element>\n",
+			want:  "<my-element>content</my-element>\n",
+		},
+		{
+			name:  "line starting with dashes but not exactly three",
+			input: "---\ndescription: |\n  ----\n---\n<my-element>content</my-element>\n",
+			want:  "<my-element>content</my-element>\n",
+		},
+		{
+			name:  "line with dashes followed by text not treated as delimiter",
+			input: "---\ndescription: A demo\n---not-a-delimiter\nmore: data\n---\n<my-element>content</my-element>\n",
+			want:  "<my-element>content</my-element>\n",
+		},
+		{
+			name:  "closing delimiter at EOF without trailing newline",
+			input: "---\ndescription: A demo\n---",
+			want:  "",
+		},
+		{
+			name:  "closing delimiter with CRLF at EOF",
+			input: "---\ndescription: A demo\r\n---\r\n",
+			want:  "",
 		},
 	}
 
