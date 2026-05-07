@@ -25,7 +25,6 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform/testutil"
-	"bennypowers.dev/cem/internal/textutil"
 )
 
 // testTemplates creates a template registry for testing (with nil context)
@@ -289,52 +288,6 @@ func TestChromeRendering_Chromeless(t *testing.T) {
 	if rendered != string(expected) {
 		t.Errorf("Rendered chromeless does not match golden file.\nGot:\n%s\n\nExpected:\n%s", rendered, string(expected))
 		t.Log("Run 'make update' to update golden files")
-	}
-}
-
-// TestChromeRendering_FrontmatterStripped verifies YAML frontmatter is stripped before rendering
-func TestChromeRendering_FrontmatterStripped(t *testing.T) {
-	demoHTML := testutil.LoadFixtureFile(t, filepath.Join("chrome-rendering", "frontmatter-demo.html"))
-
-	// Strip frontmatter the same way renderDemoFromRoute should
-	stripped := textutil.StripFrontmatter(demoHTML)
-
-	rendered, err := renderDemo(testTemplates(), nil, ChromeData{
-		TagName:      "my-element",
-		DemoTitle:    "Frontmatter Example",
-		DemoHTML:     template.HTML(stripped),
-		EnabledKnobs: "attributes properties",
-		ImportMap:    "{}",
-		Description:  "Testing frontmatter stripping",
-	})
-	if err != nil {
-		t.Fatalf("Failed to render chrome: %v", err)
-	}
-
-	// Frontmatter delimiters and content must not appear in output
-	if strings.Contains(rendered, "---\n") || strings.Contains(rendered, "---\r\n") {
-		t.Error("Rendered output contains frontmatter delimiter '---'")
-	}
-	if strings.Contains(rendered, "Default accordion with multiple collapsible panels") {
-		// The description field from frontmatter should not appear in the demo body.
-		// It may appear in the description slot (passed separately), but not as raw text in the demo area.
-		// Check specifically in the demo area
-		demoStart := strings.Index(rendered, `<cem-serve-demo`)
-		demoEnd := strings.Index(rendered, `</cem-serve-demo>`)
-		if demoStart >= 0 && demoEnd > demoStart {
-			demoArea := rendered[demoStart:demoEnd]
-			if strings.Contains(demoArea, "Default accordion with multiple collapsible panels") {
-				t.Error("Frontmatter description leaked into demo rendering area")
-			}
-		}
-	}
-
-	// Actual demo content must still be present
-	if !strings.Contains(rendered, `<my-element id="example"`) {
-		t.Error("Demo content missing from rendered output")
-	}
-	if !strings.Contains(rendered, `<span slot="label">Hello World</span>`) {
-		t.Error("Demo slot content missing from rendered output")
 	}
 }
 

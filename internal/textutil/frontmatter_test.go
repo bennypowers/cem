@@ -67,8 +67,18 @@ func TestStripFrontmatter(t *testing.T) {
 			want:  "",
 		},
 		{
+			name:  "closing delimiter followed by lone CR",
+			input: "---\nfield: value\n---\r<content>",
+			want:  "\r<content>",
+		},
+		{
 			name:  "triple dash in HTML content not stripped",
 			input: "<div>---</div>\n<my-element>content</my-element>\n",
+			want:  "<div>---</div>\n<my-element>content</my-element>\n",
+		},
+		{
+			name:  "frontmatter then body with triple dash",
+			input: "---\ndescription: A demo\n---\n<div>---</div>\n<my-element>content</my-element>\n",
 			want:  "<div>---</div>\n<my-element>content</my-element>\n",
 		},
 	}
