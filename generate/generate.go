@@ -166,6 +166,17 @@ func postprocess(
 	var errsMu sync.Mutex
 	errsList := make([]error, 0)
 
+	// Auto-derive aliases for elements without explicit @alias
+	var allTagNames []string
+	for i := range modules {
+		for _, decl := range modules[i].Declarations {
+			if ced, ok := decl.(*M.CustomElementDeclaration); ok && ced.TagName != "" {
+				allTagNames = append(allTagNames, ced.TagName)
+			}
+		}
+	}
+	allTagAliases = DD.AutoDeriveAliases(allTagNames, allTagAliases)
+
 	// Build the demo map once
 	cfg, cfgErr := ctx.Config()
 	if cfgErr != nil {
