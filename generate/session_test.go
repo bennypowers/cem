@@ -22,6 +22,8 @@ import (
 	"testing/synctest"
 	"time"
 
+	"strings"
+
 	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
@@ -598,5 +600,51 @@ func BenchmarkGenerateSession_ReusedSession(b *testing.B) {
 	for b.Loop() {
 		_, err = session.GenerateFullManifest(context.Background())
 		require.NoError(b, err)
+	}
+}
+
+func TestGenerateSession_IncrementalAutoDeriveAliases(t *testing.T) {
+	ctx := setupTestContext(t, "../examples/intermediate")
+
+	cfg, err := ctx.Config()
+	require.NoError(t, err)
+	cfg.Generate.Files = []string{"elements/**/*.ts"}
+	cfg.Generate.DemoDiscovery.URLTemplate = "https://example.com/elements/{{.tag | alias}}/demo/{{.demo}}/"
+
+	session, err := NewGenerateSession(ctx)
+	require.NoError(t, err)
+	defer session.Close()
+
+	// Full generate first to populate the manifest with all modules
+	fullPkg, err := session.GenerateFullManifest(context.Background())
+	require.NoError(t, err)
+
+	// Verify full generate auto-derived aliases (ui- prefix stripped)
+	for _, tag := range fullPkg.GetAllTagNames() {
+		decl := fullPkg.FindCustomElementDeclaration(tag)
+		require.NotNil(t, decl, "should find declaration for %s", tag)
+		for _, demo := range decl.Demos {
+			assert.False(t, strings.Contains(demo.URL, "/ui-"),
+				"full generate: demo URL %q for %s should not contain /ui-", demo.URL, tag)
+		}
+	}
+
+	// Incremental rebuild of just one module
+	pkg, err := session.ProcessModulesIncrementalWithSkip(
+		context.Background(),
+		[]string{"elements/ui-button/ui-button.ts"},
+		false,
+	)
+	require.NoError(t, err)
+
+	// Verify incremental rebuild also auto-derived aliases
+	buttonDecl := pkg.FindCustomElementDeclaration("ui-button")
+	require.NotNil(t, buttonDecl)
+	require.NotEmpty(t, buttonDecl.Demos, "ui-button should have demos after incremental rebuild")
+	for _, demo := range buttonDecl.Demos {
+		assert.False(t, strings.Contains(demo.URL, "/ui-"),
+			"incremental: demo URL %q should not contain /ui-", demo.URL)
+		assert.True(t, strings.Contains(demo.URL, "/button/"),
+			"incremental: demo URL %q should contain /button/ (alias-stripped)", demo.URL)
 	}
 }

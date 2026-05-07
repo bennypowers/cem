@@ -132,8 +132,11 @@ func (gs *GenerateSession) ProcessModulesIncrementalWithSkip(ctx context.Context
 		return nil, NewError("updated manifest is nil after incremental processing")
 	}
 
+	// Auto-derive aliases using all tag names from the full manifest
+	allTagAliases := DD.AutoDeriveAliases(updatedManifest.GetAllTagNames(), aliases)
+
 	// Apply demo discovery and design tokens to affected modules only
-	if err := gs.applyPostProcessingToModules(ctx, result, aliases, updatedModules, skipDemoDiscovery); err != nil {
+	if err := gs.applyPostProcessingToModules(ctx, result, allTagAliases, updatedModules, skipDemoDiscovery); err != nil {
 		pterm.Warning.Printf("Incremental post-processing failed: %v\n", err)
 		// Don't fail the entire build for post-processing issues
 	}

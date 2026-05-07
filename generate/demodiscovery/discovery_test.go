@@ -255,6 +255,40 @@ func TestGenerateFallbackURL(t *testing.T) {
 			tagAliases: map[string]string{},
 			expected:   "https://site.com/elements/button/demo/primary/",
 		},
+		{
+			name: "auto-derived alias strips prefix in URL template",
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{
+						URLPattern:  "/elements/:tag/demo/:demo.html",
+						URLTemplate: "https://site.com/elements/{{.tag | alias | slug}}/demo/{{.demo}}/",
+					},
+				},
+			},
+			demoPath: "/elements/ex-textarea/demo/index.html",
+			tagAliases: AutoDeriveAliases(
+				[]string{"ex-button", "ex-accordion", "ex-textarea"},
+				map[string]string{},
+			),
+			expected: "https://site.com/elements/textarea/demo/",
+		},
+		{
+			name: "auto-derived alias respects explicit override",
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{
+						URLPattern:  "/elements/:tag/demo/:demo.html",
+						URLTemplate: "https://site.com/elements/{{.tag | alias | slug}}/demo/{{.demo}}/",
+					},
+				},
+			},
+			demoPath: "/elements/ex-cta/demo/index.html",
+			tagAliases: AutoDeriveAliases(
+				[]string{"ex-cta", "ex-button", "ex-textarea"},
+				map[string]string{"ex-cta": "call-to-action"},
+			),
+			expected: "https://site.com/elements/call-to-action/demo/",
+		},
 	}
 
 	for _, tt := range tests {
