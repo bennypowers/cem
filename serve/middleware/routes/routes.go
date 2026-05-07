@@ -30,6 +30,7 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/health"
+	"bennypowers.dev/cem/internal/textutil"
 	V "bennypowers.dev/cem/internal/version"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/serve/logger"
@@ -658,6 +659,8 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 	if err != nil {
 		return "", fmt.Errorf("reading demo file %s: %w", entry.FilePath, err)
 	}
+
+	demoHTML = textutil.StripFrontmatter(demoHTML)
 
 	// Get import map as JSON (pre-computed during server initialization)
 	var importMapJSON string
