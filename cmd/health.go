@@ -39,16 +39,28 @@ func healthWorkspace(cmd *cobra.Command) error {
 	}
 
 	format, _ := cmd.Flags().GetString("format")
-	failBelow, _ := cmd.Flags().GetInt("fail-below")
+	cliFailBelow, _ := cmd.Flags().GetInt("fail-below")
 	disableFlags, _ := cmd.Flags().GetStringArray("disable")
-	configDisabled := viper.GetStringSlice("health.disable")
-	allDisabled := append(configDisabled, disableFlags...)
-	configFailBelow := viper.GetInt("health.failBelow")
-	if failBelow == 0 && configFailBelow > 0 {
-		failBelow = configFailBelow
-	}
 
 	results := workspace.ForEachPackage(ctx.Root(), func(pkg workspace.PackageInfo) error {
+		pkgCtx := workspace.NewFileSystemWorkspaceContext(pkg.Path)
+		if err := pkgCtx.Init(); err != nil {
+			return err
+		}
+		cfg, err := pkgCtx.Config()
+		if err != nil {
+			return err
+		}
+
+		allDisabled := make([]string, 0, len(cfg.Health.Disable)+len(disableFlags))
+		allDisabled = append(allDisabled, cfg.Health.Disable...)
+		allDisabled = append(allDisabled, disableFlags...)
+
+		failBelow := cliFailBelow
+		if failBelow == 0 && cfg.Health.FailBelow > 0 {
+			failBelow = cfg.Health.FailBelow
+		}
+
 		manifestPath := filepath.Join(pkg.Path, pkg.CustomElementsRef)
 		options := health.Options{
 			Disable: allDisabled,

@@ -37,7 +37,9 @@ func validateWorkspace(cmd *cobra.Command) error {
 	disableFlags, _ := cmd.Flags().GetStringArray("disable")
 	format, _ := cmd.Flags().GetString("format")
 	configDisabled := viper.GetStringSlice("warnings.disable")
-	allDisabled := append(configDisabled, disableFlags...)
+	allDisabled := make([]string, 0, len(configDisabled)+len(disableFlags))
+	allDisabled = append(allDisabled, configDisabled...)
+	allDisabled = append(allDisabled, disableFlags...)
 
 	results := workspace.ForEachPackage(ctx.Root(), func(pkg workspace.PackageInfo) error {
 		manifestPath := filepath.Join(pkg.Path, pkg.CustomElementsRef)

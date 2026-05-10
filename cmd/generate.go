@@ -275,6 +275,34 @@ func generateWorkspace(cmd *cobra.Command) error {
 			return fmt.Errorf("initializing context: %w", err)
 		}
 
+		cfg, err := ctx.Config()
+		if err != nil {
+			return fmt.Errorf("loading config: %w", err)
+		}
+
+		// Merge CLI flag overrides into per-package config
+		if v := viper.GetStringSlice("generate.exclude"); len(v) > 0 {
+			cfg.Generate.Exclude = append(cfg.Generate.Exclude, v...)
+		}
+		if v := viper.GetString("generate.designTokens.spec"); v != "" {
+			cfg.Generate.DesignTokens.Spec = v
+		}
+		if v := viper.GetString("generate.designTokens.prefix"); v != "" {
+			cfg.Generate.DesignTokens.Prefix = v
+		}
+		if viper.GetBool("generate.noDefaultExcludes") {
+			cfg.Generate.NoDefaultExcludes = true
+		}
+		if v := viper.GetString("generate.demoDiscovery.fileGlob"); v != "" {
+			cfg.Generate.DemoDiscovery.FileGlob = v
+		}
+		if v := viper.GetString("generate.demoDiscovery.urlPattern"); v != "" {
+			cfg.Generate.DemoDiscovery.URLPattern = v
+		}
+		if v := viper.GetString("generate.demoDiscovery.urlTemplate"); v != "" {
+			cfg.Generate.DemoDiscovery.URLTemplate = v
+		}
+
 		manifestStr, err := G.Generate(ctx)
 		if err != nil {
 			return err
