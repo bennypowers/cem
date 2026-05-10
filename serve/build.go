@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/set"
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/importmap"
 	"bennypowers.dev/cem/serve/middleware/routes"
@@ -228,6 +229,7 @@ func (s *Server) copyStaticAssets(config BuildConfig) error {
 	// /__cem/foo.css -> templates/css/foo.css
 	// /__cem/foo.svg -> templates/images/foo.svg
 	// /__cem/elements/... -> templates/elements/...
+	// fs.WalkDir is fine here: routes.InternalModules is an embedded FS with no .git
 	return fs.WalkDir(routes.InternalModules, "templates", func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
@@ -289,6 +291,7 @@ func (s *Server) copyStaticAssets(config BuildConfig) error {
 func (s *Server) buildLightdomCSS(config BuildConfig) error {
 	var combined strings.Builder
 
+	// fs.WalkDir is fine here: routes.InternalModules is an embedded FS with no .git
 	if err := fs.WalkDir(routes.InternalModules, "templates/elements", func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
@@ -364,6 +367,9 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 	if err != nil {
 		return err
 	}
+	if relDir == ".." || strings.HasPrefix(relDir, ".."+string(filepath.Separator)) {
+		return fmt.Errorf("watchDir %s is outside working directory %s", watchDir, cwd)
+	}
 
 	// Resolve output directory to an absolute path for skipping during walk
 	absOutputDir, err := filepath.Abs(config.OutputDir)
@@ -378,22 +384,14 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 	}
 
 	count := 0
-	err = filepath.WalkDir(watchDir, func(path string, d fs.DirEntry, err error) error {
+	err = platform.WalkDir(os.DirFS(watchDir), ".", set.NewSet("node_modules"), func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		// Skip node_modules (handled by buildDependencies)
-		rel, _ := filepath.Rel(watchDir, path)
-		if strings.HasPrefix(rel, "node_modules") {
-			if d.IsDir() {
-				return fs.SkipDir
-			}
-			return nil
-		}
-
 		// Skip the output directory to avoid infinite recursion
-		absPath, _ := filepath.Abs(path)
+		fullPath := filepath.Join(watchDir, path)
+		absPath, _ := filepath.Abs(fullPath)
 		if d.IsDir() && absPath == absOutputDir {
 			return fs.SkipDir
 		}
@@ -403,7 +401,7 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 		}
 
 		// Skip demo source files (already rendered with chrome by buildPage)
-		if demoSourceFiles[rel] {
+		if demoSourceFiles[path] {
 			return nil
 		}
 
@@ -411,7 +409,7 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 		switch ext {
 		case ".ts", ".js", ".css", ".html", ".json", ".svg", ".png", ".jpg", ".gif", ".woff", ".woff2":
 			// Dev server serves files relative to watchDir
-			urlPath := "/" + rel
+			urlPath := "/" + path
 			if ext == ".ts" {
 				urlPath = strings.TrimSuffix(urlPath, ".ts") + ".js"
 			}
@@ -430,7 +428,7 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 			}
 
 			// Write to the CWD-relative path so import map URLs resolve
-			outPath := filepath.Join(config.siteRoot(), relDir, rel)
+			outPath := filepath.Join(config.siteRoot(), relDir, path)
 			if ext == ".ts" {
 				outPath = strings.TrimSuffix(outPath, ".ts") + ".js"
 			}
@@ -572,12 +570,13 @@ func (s *Server) rewriteImportMapToCDN(config BuildConfig) error {
 	root := config.siteRoot()
 	count := 0
 
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err := platform.WalkDir(os.DirFS(root), ".", nil, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".html") {
 			return err
 		}
 
-		data, readErr := s.fs.ReadFile(path)
+		fullPath := filepath.Join(root, path)
+		data, readErr := s.fs.ReadFile(fullPath)
 		if readErr != nil {
 			return readErr
 		}
@@ -589,7 +588,7 @@ func (s *Server) rewriteImportMapToCDN(config BuildConfig) error {
 		}
 
 		count++
-		return s.fs.WriteFile(path, []byte(rewritten), 0o644)
+		return s.fs.WriteFile(fullPath, []byte(rewritten), 0o644)
 	})
 
 	if err != nil {

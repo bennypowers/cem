@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package modulegraph
 
 import (
-	"path/filepath"
+	"io/fs"
 	"time"
 
 	"bennypowers.dev/cem/internal/treesitter"
@@ -38,8 +38,9 @@ const DefaultMaxTransitiveDepth = 5
 type FileParser interface {
 	// ReadFile reads the content of a file at the given path
 	ReadFile(path string) ([]byte, error)
-	// WalkWorkspace walks through a workspace directory calling the walkFn for each file
-	WalkWorkspace(workspaceRoot string, walkFn filepath.WalkFunc) error
+	// WorkspaceFS returns an fs.FS rooted at the given workspace directory.
+	// Callers must use platform.WalkDir to walk it.
+	WorkspaceFS(workspaceRoot string) fs.FS
 }
 
 // ExportParser interface abstracts the parsing of export statements from content

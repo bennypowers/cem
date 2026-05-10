@@ -18,12 +18,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package serve
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
+	"bennypowers.dev/cem/internal/platform"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -156,28 +158,24 @@ func (fw *fileWatcher) Watch(path string) error {
 	}
 
 	// Walk subdirectories and add them to the watcher
-	return filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+	return platform.WalkDir(os.DirFS(path), ".", nil, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		// Skip non-directories
-		if !info.IsDir() {
+		if !d.IsDir() || p == "." {
 			return nil
 		}
 
-		// Skip if it's the root path (already added)
-		if p == path {
-			return nil
-		}
+		fullPath := filepath.Join(path, p)
 
 		// Skip ignored directories
-		if fw.shouldIgnore(p) {
-			return filepath.SkipDir
+		if fw.shouldIgnore(fullPath) {
+			return fs.SkipDir
 		}
 
 		// Add this directory to the watcher
-		if err := fw.watcher.Add(p); err != nil {
+		if err := fw.watcher.Add(fullPath); err != nil {
 			return err
 		}
 
@@ -250,33 +248,34 @@ func (fw *fileWatcher) processEvents() {
 			// as create changes (handles mkdir + immediate file write race)
 			if event.Op&fsnotify.Create == fsnotify.Create {
 				if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
-					_ = filepath.Walk(event.Name, func(p string, fi os.FileInfo, walkErr error) error {
+					_ = platform.WalkDir(os.DirFS(event.Name), ".", nil, func(p string, d fs.DirEntry, walkErr error) error {
 						if walkErr != nil {
 							return walkErr
 						}
-						if fi.IsDir() {
-							if fw.shouldIgnore(p) {
-								return filepath.SkipDir
+						fullPath := filepath.Join(event.Name, p)
+						if d.IsDir() {
+							if fw.shouldIgnore(fullPath) {
+								return fs.SkipDir
 							}
-							if addErr := fw.watcher.Add(p); addErr == nil {
+							if addErr := fw.watcher.Add(fullPath); addErr == nil {
 								if fw.logger != nil {
-									fw.logger.Debug("Watching new directory: %s", p)
+									fw.logger.Debug("Watching new directory: %s", fullPath)
 								}
 							}
 						} else {
-							if fw.shouldIgnore(p) {
+							if fw.shouldIgnore(fullPath) {
 								return nil
 							}
 							// Record pre-existing file as a create change
 							fw.mu.Lock()
-							fw.debouncedFiles[p] = time.Now()
+							fw.debouncedFiles[fullPath] = time.Now()
 							if fw.fileEventTypes == nil {
 								fw.fileEventTypes = make(map[string]string)
 							}
-							fw.fileEventTypes[p] = "create"
+							fw.fileEventTypes[fullPath] = "create"
 							fw.mu.Unlock()
 							if fw.logger != nil {
-								fw.logger.Debug("File create: %s", p)
+								fw.logger.Debug("File create: %s", fullPath)
 							}
 						}
 						return nil

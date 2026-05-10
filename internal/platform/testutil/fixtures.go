@@ -60,8 +60,7 @@ func NewFixtureFS(t *testing.T, fixtureDir string, rootPath string) *platform.Ma
 
 	// Walk fixture directory and load all files into memory
 	// Callback returns errors immediately to terminate on first failure
-	err := filepath.WalkDir(fixturePath, func(path string, d fs.DirEntry, err error) error {
-		// Propagate any errors from WalkDir (e.g., permission denied)
+	err := platform.WalkDir(os.DirFS(fixturePath), ".", nil, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -69,20 +68,12 @@ func NewFixtureFS(t *testing.T, fixtureDir string, rootPath string) *platform.Ma
 			return nil
 		}
 
-		// Read fixture file
-		content, err := os.ReadFile(path)
+		content, err := os.ReadFile(filepath.Join(fixturePath, path))
 		if err != nil {
 			return err
 		}
 
-		// Get relative path from fixture directory
-		relPath, err := filepath.Rel(fixturePath, path)
-		if err != nil {
-			return err
-		}
-
-		// Map to virtual filesystem at rootPath
-		virtualPath := filepath.Join(rootPath, relPath)
+		virtualPath := filepath.Join(rootPath, path)
 		mfs.AddFile(virtualPath, string(content), 0644)
 
 		return nil

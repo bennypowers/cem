@@ -42,7 +42,7 @@ type FileSystem interface {
 	Stat(name string) (fs.FileInfo, error)
 	Exists(path string) bool
 
-	// fs.FS compatibility - allows use with fs.WalkDir
+	// fs.FS compatibility - allows use with platform.WalkDir
 	Open(name string) (fs.File, error)
 }
 
