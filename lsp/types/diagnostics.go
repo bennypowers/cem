@@ -27,6 +27,7 @@ const (
 	DiagnosticTypeMissingImport            DiagnosticType = "missing-import"
 	DiagnosticTypeAttributeSuggestion      DiagnosticType = "attribute-suggestion"
 	DiagnosticTypeAttributeValueSuggestion DiagnosticType = "attribute-value-suggestion"
+	DiagnosticTypeCSSAmbiguousComment      DiagnosticType = "css-ambiguous-comment"
 )
 
 // AutofixData contains the data needed for creating autofix code actions

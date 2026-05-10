@@ -1,0 +1,3 @@
+:host {
+  line-height: var(--rh-line-height-body-text-sm, var(--rh-line-height-body-text-xs, 1.5));
+}

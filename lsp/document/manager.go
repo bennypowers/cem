@@ -22,6 +22,7 @@ import (
 	"sync"
 
 	"bennypowers.dev/cem/lsp/document/blade"
+	"bennypowers.dev/cem/lsp/document/css"
 	"bennypowers.dev/cem/lsp/document/html"
 	"bennypowers.dev/cem/lsp/document/php"
 	"bennypowers.dev/cem/lsp/document/template"
@@ -405,6 +406,12 @@ func (dm *documentManager) initializeLanguageHandlers() error {
 	}
 	dm.addLanguageHandler(bladeHandler)
 
+	cssHandler, err := createCSSHandler(dm.queryManager)
+	if err != nil {
+		return fmt.Errorf("failed to create CSS handler: %w", err)
+	}
+	dm.addLanguageHandler(cssHandler)
+
 	return nil
 }
 
@@ -450,4 +457,9 @@ func createTemplateHandler(htmlHandler types.LanguageHandler) (types.LanguageHan
 // createBladeHandler creates a new Blade language handler
 func createBladeHandler(queryManager *Q.QueryManager) (types.LanguageHandler, error) {
 	return blade.NewHandler(queryManager)
+}
+
+// createCSSHandler creates a new CSS language handler
+func createCSSHandler(queryManager *Q.QueryManager) (types.LanguageHandler, error) {
+	return css.NewHandler(queryManager)
 }

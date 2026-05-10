@@ -80,17 +80,22 @@ func loadLSPFixture(t *testing.T, scenarioDir, scenarioName string) *LSPFixture 
 		AdditionalFiles: make(map[string]string),
 	}
 
-	// Try input.html first, then input.ts
+	// Try input.html first, then input.ts, then input.css
 	inputPath := filepath.Join(scenarioDir, "input.html")
 	inputBytes, err := os.ReadFile(inputPath)
 	if err != nil {
-		// Try TypeScript input
 		inputPath = filepath.Join(scenarioDir, "input.ts")
 		inputBytes, err = os.ReadFile(inputPath)
 		if err != nil {
-			t.Fatalf("Failed to read input.html or input.ts for scenario %s: %v", scenarioName, err)
+			inputPath = filepath.Join(scenarioDir, "input.css")
+			inputBytes, err = os.ReadFile(inputPath)
+			if err != nil {
+				t.Fatalf("Failed to read input.html, input.ts, or input.css for scenario %s: %v", scenarioName, err)
+			}
+			fixture.InputType = "css"
+		} else {
+			fixture.InputType = "ts"
 		}
-		fixture.InputType = "ts"
 	} else {
 		fixture.InputType = "html"
 	}
@@ -109,8 +114,11 @@ func loadLSPFixture(t *testing.T, scenarioDir, scenarioName string) *LSPFixture 
 	if err == nil {
 		// Determine the primary input filename to exclude from additional files
 		primaryInput := "input.html"
-		if fixture.InputType == "ts" {
+		switch fixture.InputType {
+		case "ts":
 			primaryInput = "input.ts"
+		case "css":
+			primaryInput = "input.css"
 		}
 
 		for _, entry := range entries {

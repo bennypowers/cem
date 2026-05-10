@@ -56,6 +56,8 @@ func getLanguageFromURI(uri string) string {
 	}
 	ext := strings.ToLower(filepath.Ext(uri))
 	switch ext {
+	case ".css":
+		return "css"
 	case ".html", ".htm":
 		return "html"
 	case ".php":
