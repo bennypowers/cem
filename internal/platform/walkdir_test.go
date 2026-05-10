@@ -42,7 +42,7 @@ func TestWalkDir(t *testing.T) {
 
 	t.Run("prunes .git at any depth", func(t *testing.T) {
 		var visited []string
-		err := platform.WalkDir(fsys, ".", set.NewSet(".git"), func(path string, d fs.DirEntry, err error) error {
+		err := platform.WalkDir(fsys, ".", nil, func(path string, d fs.DirEntry, err error) error {
 			visited = append(visited, path)
 			return nil
 		})

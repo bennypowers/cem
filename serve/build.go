@@ -367,6 +367,9 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 	if err != nil {
 		return err
 	}
+	if relDir == ".." || strings.HasPrefix(relDir, ".."+string(filepath.Separator)) {
+		return fmt.Errorf("watchDir %s is outside working directory %s", watchDir, cwd)
+	}
 
 	// Resolve output directory to an absolute path for skipping during walk
 	absOutputDir, err := filepath.Abs(config.OutputDir)

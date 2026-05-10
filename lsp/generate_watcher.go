@@ -167,7 +167,7 @@ func (w *InProcessGenerateWatcher) watchFiles() error {
 
 	err = platform.WalkDir(os.DirFS(rootDir), ".", set.NewSet("node_modules"), func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return nil // Skip errors
+			return err
 		}
 
 		// Skip hidden directories (e.g. .vscode, .idea)
