@@ -137,7 +137,7 @@ func TestLoadConfig_AllFields(t *testing.T) {
 	if cfg.Generate.Output != "custom-elements.json" {
 		t.Errorf("Generate.Output = %q", cfg.Generate.Output)
 	}
-	if !cfg.Generate.NoDefaultExcludes {
+	if cfg.Generate.NoDefaultExcludes == nil || !*cfg.Generate.NoDefaultExcludes {
 		t.Error("Generate.NoDefaultExcludes should be true")
 	}
 	if cfg.Generate.DesignTokens.Prefix != "my-prefix" {

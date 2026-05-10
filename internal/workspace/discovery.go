@@ -261,13 +261,13 @@ func mergeConfigDefaults(pkg, ws *C.CemConfig) {
 	if pkg.Serve.Port == 0 && ws.Serve.Port != 0 {
 		pkg.Serve.Port = ws.Serve.Port
 	}
-	if !pkg.Serve.OpenBrowser && ws.Serve.OpenBrowser {
+	if pkg.Serve.OpenBrowser == nil && ws.Serve.OpenBrowser != nil {
 		pkg.Serve.OpenBrowser = ws.Serve.OpenBrowser
 	}
 
 	// Generate (skip files/exclude -- they contain paths relative to workspace
 	// root which resolve incorrectly from package roots)
-	if !pkg.Generate.NoDefaultExcludes && ws.Generate.NoDefaultExcludes {
+	if pkg.Generate.NoDefaultExcludes == nil && ws.Generate.NoDefaultExcludes != nil {
 		pkg.Generate.NoDefaultExcludes = ws.Generate.NoDefaultExcludes
 	}
 	if pkg.Generate.DesignTokens.Spec == "" && ws.Generate.DesignTokens.Spec != "" {

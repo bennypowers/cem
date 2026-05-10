@@ -326,7 +326,8 @@ func generateWorkspace(cmd *cobra.Command) error {
 			cfg.Generate.DesignTokens.Prefix = viper.GetString("generate.designTokens.prefix")
 		}
 		if cmd.Flags().Changed("no-default-excludes") {
-			cfg.Generate.NoDefaultExcludes = true
+			v := true
+			cfg.Generate.NoDefaultExcludes = &v
 		}
 		if cmd.Flags().Changed("demo-discovery-file-glob") {
 			cfg.Generate.DemoDiscovery.FileGlob = viper.GetString("generate.demoDiscovery.fileGlob")

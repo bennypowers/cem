@@ -68,7 +68,7 @@ func preprocess(ctx types.WorkspaceContext) (r preprocessResult, errs error) {
 	r.includedFiles = make([]string, 0)
 	r.excludePatterns = append(r.excludePatterns, cfg.Generate.Exclude...)
 
-	if !cfg.Generate.NoDefaultExcludes {
+	if cfg.Generate.NoDefaultExcludes == nil || !*cfg.Generate.NoDefaultExcludes {
 		r.excludePatterns = append(r.excludePatterns, defaultExcludePatterns...)
 	}
 

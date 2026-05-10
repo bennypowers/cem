@@ -199,7 +199,8 @@ func TestLoadPackageConfigWithWorkspaceDefaults_NoPackageConfig(t *testing.T) {
 	// Should inherit workspace port since package has none
 	assert.Equal(t, 9000, cfg.Serve.Port)
 	// Should inherit workspace openBrowser since package has none
-	assert.True(t, cfg.Serve.OpenBrowser)
+	require.NotNil(t, cfg.Serve.OpenBrowser)
+	assert.True(t, *cfg.Serve.OpenBrowser)
 }
 
 func TestLoadPackageConfigWithWorkspaceDefaults_NoWorkspace(t *testing.T) {

@@ -30,7 +30,7 @@ type CemConfig struct {
 type GenerateConfig struct {
 	Files             []string           `mapstructure:"files" yaml:"files" json:"files"`
 	Exclude           []string           `mapstructure:"exclude" yaml:"exclude" json:"exclude"`
-	NoDefaultExcludes bool               `mapstructure:"noDefaultExcludes" yaml:"noDefaultExcludes" json:"noDefaultExcludes"`
+	NoDefaultExcludes *bool              `mapstructure:"noDefaultExcludes" yaml:"noDefaultExcludes" json:"noDefaultExcludes"`
 	Output            string             `mapstructure:"output" yaml:"output" json:"output"`
 	DesignTokens      DesignTokensConfig `mapstructure:"designTokens" yaml:"designTokens" json:"designTokens"`
 	DemoDiscovery     DemoDiscoveryConfig `mapstructure:"demoDiscovery" yaml:"demoDiscovery" json:"demoDiscovery"`
@@ -53,7 +53,7 @@ type MCPConfig struct {
 
 type ServeConfig struct {
 	Port        int                    `mapstructure:"port" yaml:"port" json:"port"`
-	OpenBrowser bool                   `mapstructure:"openBrowser" yaml:"openBrowser" json:"openBrowser"`
+	OpenBrowser *bool                  `mapstructure:"openBrowser" yaml:"openBrowser" json:"openBrowser"`
 	ImportMap   types.ImportMapConfig  `mapstructure:"importMap" yaml:"importMap" json:"importMap"`
 	Transforms  TransformsConfig       `mapstructure:"transforms" yaml:"transforms" json:"transforms"`
 	URLRewrites []URLRewrite           `mapstructure:"urlRewrites" yaml:"urlRewrites" json:"urlRewrites"`
