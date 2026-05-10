@@ -232,19 +232,20 @@ func TestLoadPackageConfigWithWorkspaceDefaults_InvalidWorkspaceConfig(t *testin
 	assert.Error(t, err)
 }
 
-func TestLoadPackageConfigWithWorkspaceDefaults_CascadesGenerateFiles(t *testing.T) {
-	// Package has no config; should inherit workspace root's generate.files
+func TestLoadPackageConfigWithWorkspaceDefaults_DoesNotCascadeGenerateFiles(t *testing.T) {
+	// generate.files are root-relative paths -- they must not cascade to packages
+	// because they resolve incorrectly from package roots
 	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
 	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
 	require.NoError(t, err)
-	assert.Equal(t, []string{"src/**/*.ts"}, cfg.Generate.Files)
+	assert.Empty(t, cfg.Generate.Files)
 }
 
-func TestLoadPackageConfigWithWorkspaceDefaults_CascadesGenerateExclude(t *testing.T) {
+func TestLoadPackageConfigWithWorkspaceDefaults_DoesNotCascadeGenerateExclude(t *testing.T) {
 	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
 	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
 	require.NoError(t, err)
-	assert.Equal(t, []string{"src/**/*.test.ts"}, cfg.Generate.Exclude)
+	assert.Empty(t, cfg.Generate.Exclude)
 }
 
 func TestLoadPackageConfigWithWorkspaceDefaults_CascadesDesignTokens(t *testing.T) {
@@ -294,14 +295,12 @@ func TestLoadPackageConfigWithWorkspaceDefaults_PackageOverridesGenerateFiles(t 
 
 func TestLoadPackageConfigWithWorkspaceDefaults_PartialOverride(t *testing.T) {
 	// elements package has generate.files but not generate.exclude
-	// Should keep its own files but inherit workspace exclude
+	// Should keep its own files; exclude does NOT cascade (root-relative paths)
 	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
 	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
 	require.NoError(t, err)
-	// Package's own files
 	assert.Equal(t, []string{"src/**/*.ts"}, cfg.Generate.Files)
-	// Inherited from workspace
-	assert.Equal(t, []string{"src/**/*.test.ts"}, cfg.Generate.Exclude)
+	assert.Empty(t, cfg.Generate.Exclude)
 }
 
 func TestLoadPackageConfigWithWorkspaceDefaults_PartialOverrideHealth(t *testing.T) {

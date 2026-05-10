@@ -269,6 +269,14 @@ func generateWorkspace(cmd *cobra.Command) error {
 		return fmt.Errorf("project context not initialized: %w", err)
 	}
 
+	rootCfg, err := baseCtx.Config()
+	if err != nil {
+		return fmt.Errorf("loading root config: %w", err)
+	}
+
+	rootFiles := rootCfg.Generate.Files
+	rootExclude := rootCfg.Generate.Exclude
+
 	results := W.ForEachPackage(baseCtx.Root(), func(pkg W.PackageInfo) error {
 		ctx := W.NewFileSystemWorkspaceContext(pkg.Path)
 		if err := ctx.Init(); err != nil {
@@ -280,7 +288,24 @@ func generateWorkspace(cmd *cobra.Command) error {
 			return fmt.Errorf("loading config: %w", err)
 		}
 
-		// Merge CLI flag overrides into per-package config
+		// Resolve root-level file patterns: expand from workspace root,
+		// filter to files under this package, return package-relative paths.
+		if len(rootFiles) > 0 {
+			resolved, err := W.ResolveWorkspaceFiles(baseCtx.Root(), rootFiles, pkg.Path)
+			if err != nil {
+				return fmt.Errorf("resolving workspace files: %w", err)
+			}
+			cfg.Generate.Files = append(cfg.Generate.Files, resolved...)
+		}
+		if len(rootExclude) > 0 {
+			resolved, err := W.ResolveWorkspaceFiles(baseCtx.Root(), rootExclude, pkg.Path)
+			if err != nil {
+				return fmt.Errorf("resolving workspace excludes: %w", err)
+			}
+			cfg.Generate.Exclude = append(cfg.Generate.Exclude, resolved...)
+		}
+
+		// Merge CLI flag overrides
 		if v := viper.GetStringSlice("generate.exclude"); len(v) > 0 {
 			cfg.Generate.Exclude = append(cfg.Generate.Exclude, v...)
 		}
@@ -301,6 +326,10 @@ func generateWorkspace(cmd *cobra.Command) error {
 		}
 		if v := viper.GetString("generate.demoDiscovery.urlTemplate"); v != "" {
 			cfg.Generate.DemoDiscovery.URLTemplate = v
+		}
+
+		if len(cfg.Generate.Files) == 0 {
+			return nil
 		}
 
 		manifestStr, err := G.Generate(ctx)

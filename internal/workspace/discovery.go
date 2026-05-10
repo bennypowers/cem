@@ -265,13 +265,8 @@ func mergeConfigDefaults(pkg, ws *C.CemConfig) {
 		pkg.Serve.OpenBrowser = ws.Serve.OpenBrowser
 	}
 
-	// Generate
-	if len(pkg.Generate.Files) == 0 && len(ws.Generate.Files) > 0 {
-		pkg.Generate.Files = ws.Generate.Files
-	}
-	if len(pkg.Generate.Exclude) == 0 && len(ws.Generate.Exclude) > 0 {
-		pkg.Generate.Exclude = ws.Generate.Exclude
-	}
+	// Generate (skip files/exclude -- they contain paths relative to workspace
+	// root which resolve incorrectly from package roots)
 	if !pkg.Generate.NoDefaultExcludes && ws.Generate.NoDefaultExcludes {
 		pkg.Generate.NoDefaultExcludes = ws.Generate.NoDefaultExcludes
 	}

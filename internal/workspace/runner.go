@@ -20,8 +20,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/bmatcuk/doublestar"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
@@ -63,6 +65,46 @@ func ForEachPackage(rootDir string, fn func(pkg PackageInfo) error) []PackageRes
 		}
 	}
 	return results
+}
+
+// ResolveWorkspaceFiles expands glob patterns from the workspace root and
+// returns only the files that fall under packageDir, with paths relative to
+// packageDir. This correctly partitions root-relative file patterns across
+// workspace packages.
+func ResolveWorkspaceFiles(workspaceRoot string, patterns []string, packageDir string) ([]string, error) {
+	absPackageDir, err := filepath.Abs(packageDir)
+	if err != nil {
+		return nil, err
+	}
+	prefix := absPackageDir + string(filepath.Separator)
+
+	var result []string
+	seen := make(map[string]bool)
+	for _, pattern := range patterns {
+		absPattern := filepath.Join(workspaceRoot, pattern)
+		matches, err := doublestar.Glob(absPattern)
+		if err != nil {
+			return nil, fmt.Errorf("glob %q: %w", pattern, err)
+		}
+		for _, match := range matches {
+			absMatch, err := filepath.Abs(match)
+			if err != nil {
+				continue
+			}
+			if !strings.HasPrefix(absMatch, prefix) {
+				continue
+			}
+			rel, err := filepath.Rel(absPackageDir, absMatch)
+			if err != nil {
+				continue
+			}
+			if !seen[rel] {
+				seen[rel] = true
+				result = append(result, rel)
+			}
+		}
+	}
+	return result, nil
 }
 
 // ReportResults prints per-package outcomes and returns an error if any failed.
