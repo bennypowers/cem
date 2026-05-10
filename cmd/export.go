@@ -28,6 +28,12 @@ import (
 )
 
 func exportWorkspace(cmd *cobra.Command) error {
+	if cmd.Flags().Changed("output") {
+		return fmt.Errorf("cannot use --output in workspace mode\n" +
+			"Each package resolves export output relative to its own root.\n" +
+			"To target a single package, use: cem export -p packages/foo -o out/")
+	}
+
 	ctx, err := workspace.GetWorkspaceContext(cmd)
 	if err != nil {
 		return err

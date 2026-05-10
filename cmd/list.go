@@ -437,12 +437,15 @@ Examples:
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if W.ShouldUseWorkspaceMode(cmd) {
+			format, err := requireFormat(cmd, []string{"table", "tree"})
+			if err != nil {
+				return err
+			}
+			deprecated, _ := cmd.Flags().GetBool("deprecated")
+			if deprecated && format != "tree" {
+				return errors.New("--deprecated currently only supported with --format tree")
+			}
 			return listFromWorkspaceManifests(cmd, func(pkg W.PackageInfo, manifest *M.Package) error {
-				format, err := requireFormat(cmd, []string{"table", "tree"})
-				if err != nil {
-					return err
-				}
-				deprecated, _ := cmd.Flags().GetBool("deprecated")
 				switch format {
 				case "tree":
 					pred := M.True

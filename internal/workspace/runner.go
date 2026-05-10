@@ -125,8 +125,8 @@ func ResolveWorkspaceGlob(workspaceRoot, pattern, packageDir string) string {
 }
 
 // DerivePackageGlob constructs a glob pattern from a list of package-relative
-// file paths by finding their common directory prefix and appending a wildcard.
-// For example, ["demo/a.html", "demo/b.html"] returns "demo/*".
+// file paths by finding their common directory ancestor and appending a wildcard.
+// For example, ["demo/a.html", "demo/sub/b.html"] returns "demo/**/*.html".
 func DerivePackageGlob(files []string) string {
 	if len(files) == 0 {
 		return ""
@@ -134,7 +134,11 @@ func DerivePackageGlob(files []string) string {
 	dir := filepath.Dir(files[0])
 	for _, f := range files[1:] {
 		d := filepath.Dir(f)
-		for dir != d && dir != "." {
+		for dir != "." {
+			rel, err := filepath.Rel(dir, d)
+			if err == nil && !strings.HasPrefix(rel, "..") {
+				break
+			}
 			dir = filepath.Dir(dir)
 		}
 		if dir == "." {

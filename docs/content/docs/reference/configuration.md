@@ -217,7 +217,7 @@ cem generate -p packages/button
 
 ### Restrictions
 
-The `--output` flag is not compatible with workspace mode. Each package writes
+The `--output` flag is incompatible with workspace mode. Each package writes
 its manifest to the path specified in its `customElements` field. Combining
 `--output` with workspace mode produces an error.
 

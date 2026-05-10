@@ -134,6 +134,7 @@ func TestFindPackagesForFiles_MultipleFilesMultiplePackages(t *testing.T) {
 
 func TestDerivePackageGlob(t *testing.T) {
 	assert.Equal(t, "demo/**/*.html", workspace.DerivePackageGlob([]string{"demo/a.html", "demo/b.html"}))
+	assert.Equal(t, "demo/**/*.html", workspace.DerivePackageGlob([]string{"demo/a.html", "demo/sub/b.html"}))
 	assert.Equal(t, "**/*.html", workspace.DerivePackageGlob([]string{"foo/a.html", "bar/b.html"}))
 	assert.Equal(t, "", workspace.DerivePackageGlob(nil))
 }

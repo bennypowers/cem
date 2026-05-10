@@ -184,11 +184,11 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo) (*middleware.
 						s.logger.Debug("Resolved %d files for %s", len(resolved), pkgInfo.Name)
 						pkgCfg.Generate.Files = append(pkgCfg.Generate.Files, resolved...)
 					}
-					if len(rootCfg.Generate.Exclude) > 0 {
-						resolvedExclude, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Exclude, pkgInfo.Path)
-						if err == nil {
-							pkgCfg.Generate.Exclude = append(pkgCfg.Generate.Exclude, resolvedExclude...)
-						}
+				}
+				if len(rootCfg.Generate.Exclude) > 0 {
+					resolvedExclude, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Exclude, pkgInfo.Path)
+					if err == nil {
+						pkgCfg.Generate.Exclude = append(pkgCfg.Generate.Exclude, resolvedExclude...)
 					}
 				}
 				if rootCfg.Generate.DemoDiscovery.FileGlob != "" && pkgCfg.Generate.DemoDiscovery.FileGlob == "" {

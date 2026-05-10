@@ -339,6 +339,7 @@ func generateWorkspace(cmd *cobra.Command) error {
 		}
 
 		if len(cfg.Generate.Files) == 0 {
+			logging.Warning("Skipping %s: no source files resolved (custom-elements.json left untouched)", pkg.Name)
 			return nil
 		}
 
