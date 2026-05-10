@@ -17,11 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package publishDiagnostics_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	_ "bennypowers.dev/cem/internal/languages/registry"
 	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/lsp/document"
+	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
@@ -76,4 +78,137 @@ func TestCssDiagnostics_Fixtures(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestCssDiagnostics_DataField(t *testing.T) {
+	ctx := testhelpers.NewMockServerContext()
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+
+	uri := "file:///test.css"
+	css := ".foo {\n  /** spacing values */\n  padding: var(--pad-top) var(--pad-right) var(--pad-bottom);\n}\n"
+	doc := dm.OpenDocument(uri, css, 1)
+	ctx.AddDocument(uri, doc)
+
+	diags := publishDiagnostics.AnalyzeCssDiagnosticsForTest(ctx, doc)
+	if len(diags) != 1 {
+		t.Fatalf("Expected 1 diagnostic, got %d", len(diags))
+	}
+
+	data, ok := diags[0].Data.(map[string]any)
+	if !ok {
+		t.Fatalf("Expected Data to be map[string]any, got %T", diags[0].Data)
+	}
+
+	if data["type"] != "css-ambiguous-comment" {
+		t.Errorf("Expected type css-ambiguous-comment, got %v", data["type"])
+	}
+
+	if data["commentText"] != "/** spacing values */" {
+		t.Errorf("Expected commentText, got %v", data["commentText"])
+	}
+
+	props, ok := data["properties"].([]map[string]any)
+	if !ok {
+		t.Fatalf("Expected properties to be []map[string]any, got %T", data["properties"])
+	}
+	if len(props) != 3 {
+		t.Fatalf("Expected 3 properties, got %d", len(props))
+	}
+
+	expectedNames := []string{"--pad-top", "--pad-right", "--pad-bottom"}
+	for i, name := range expectedNames {
+		if props[i]["name"] != name {
+			t.Errorf("Property %d: expected name %q, got %v", i, name, props[i]["name"])
+		}
+		pos, ok := props[i]["insertPosition"].(map[string]any)
+		if !ok {
+			t.Errorf("Property %d: missing insertPosition", i)
+			continue
+		}
+		if pos["line"] != float64(2) {
+			t.Errorf("Property %d: expected insertPosition line 2, got %v", i, pos["line"])
+		}
+	}
+
+	deleteRange, ok := data["deleteRange"].(map[string]any)
+	if !ok {
+		t.Fatalf("Expected deleteRange map, got %T", data["deleteRange"])
+	}
+	start := deleteRange["start"].(map[string]any)
+	end := deleteRange["end"].(map[string]any)
+	if start["line"] != float64(1) || start["character"] != float64(0) {
+		t.Errorf("deleteRange.start wrong: %v", start)
+	}
+	if end["line"] != float64(2) || end["character"] != float64(0) {
+		t.Errorf("deleteRange.end wrong: %v", end)
+	}
+}
+
+func TestCssDiagnostics_RoundTripCodeAction(t *testing.T) {
+	ctx := testhelpers.NewMockServerContext()
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+
+	uri := "file:///test.css"
+	css := ".foo {\n  /** Blue colors */\n  background: var(--blue) var(--dark-blue);\n}\n"
+	doc := dm.OpenDocument(uri, css, 1)
+	ctx.AddDocument(uri, doc)
+
+	diags := publishDiagnostics.AnalyzeCssDiagnosticsForTest(ctx, doc)
+	if len(diags) != 1 {
+		t.Fatalf("Expected 1 diagnostic, got %d", len(diags))
+	}
+
+	// Simulate JSON round-trip (LSP client → server)
+	serialized, err := json.Marshal(diags[0])
+	if err != nil {
+		t.Fatalf("Failed to marshal diagnostic: %v", err)
+	}
+	var roundTripped protocol.Diagnostic
+	if err := json.Unmarshal(serialized, &roundTripped); err != nil {
+		t.Fatalf("Failed to unmarshal diagnostic: %v", err)
+	}
+
+	params := &protocol.CodeActionParams{
+		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+		Context:      protocol.CodeActionContext{Diagnostics: []protocol.Diagnostic{roundTripped}},
+	}
+
+	result, err := codeAction.CodeAction(ctx, nil, params)
+	if err != nil {
+		t.Fatalf("CodeAction failed: %v", err)
+	}
+
+	actions, ok := result.([]protocol.CodeAction)
+	if !ok {
+		t.Fatalf("Expected []protocol.CodeAction, got %T", result)
+	}
+
+	if len(actions) != 2 {
+		t.Fatalf("Expected 2 code actions after round-trip, got %d", len(actions))
+	}
+
+	if actions[0].Title != "Associate comment with `--blue`" {
+		t.Errorf("Action 0 title: got %q", actions[0].Title)
+	}
+	if actions[1].Title != "Associate comment with `--dark-blue`" {
+		t.Errorf("Action 1 title: got %q", actions[1].Title)
+	}
+
+	// Verify edits exist and are well-formed
+	for i, action := range actions {
+		edits := action.Edit.Changes[uri]
+		if len(edits) != 2 {
+			t.Errorf("Action %d: expected 2 edits, got %d", i, len(edits))
+		}
+	}
 }
