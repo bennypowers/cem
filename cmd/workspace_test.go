@@ -12,9 +12,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestWorkspaceGenerate_PartitionsFilesByPackage(t *testing.T) {
+// generateWorkspaceFixture runs cem generate on the workspace-generate fixture
+// and returns the project dir. Most workspace tests need manifests to exist first.
+func generateWorkspaceFixture(t *testing.T) string {
+	t.Helper()
 	projectDir := setupTest(t, "workspace-generate")
 	runCemCommand(t, projectDir, "generate")
+	return projectDir
+}
+
+func TestWorkspaceGenerate_PartitionsFilesByPackage(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
 
 	for _, pkg := range []struct {
 		dir       string
@@ -31,19 +39,15 @@ func TestWorkspaceGenerate_PartitionsFilesByPackage(t *testing.T) {
 
 		content := string(data)
 
-		// Module paths must be package-relative
 		assert.Contains(t, content, `"path": "`+pkg.wantPath+`"`,
 			"module path in %s should be package-relative", pkg.dir)
 
-		// Must not contain workspace-root-relative paths
 		assert.NotContains(t, content, `"path": "packages/`,
 			"module path in %s must not have workspace-root prefix", pkg.dir)
 
-		// Each package should contain its own class
 		assert.True(t, strings.Contains(content, pkg.wantClass),
 			"%s manifest should contain %s", pkg.dir, pkg.wantClass)
 
-		// Each package must NOT contain other packages' classes
 		assert.False(t, strings.Contains(content, pkg.excludes),
 			"%s manifest must not contain %s", pkg.dir, pkg.excludes)
 	}
@@ -58,8 +62,6 @@ func TestWorkspaceGenerate_OutputFlagErrors(t *testing.T) {
 
 func TestWorkspaceGenerate_SinglePackageOverride(t *testing.T) {
 	projectDir := setupTest(t, "workspace-generate")
-	// With -p, only the targeted package is processed (single-package mode).
-	// Pass the file patterns explicitly since per-package config doesn't exist.
 	runCemCommand(t, projectDir, "generate", "-p", "packages/button", "src/**/*.ts")
 
 	buttonManifest := filepath.Join(projectDir, "packages", "button", "custom-elements.json")
@@ -70,4 +72,94 @@ func TestWorkspaceGenerate_SinglePackageOverride(t *testing.T) {
 	cardManifest := filepath.Join(projectDir, "packages", "card", "custom-elements.json")
 	_, err = os.ReadFile(cardManifest)
 	assert.True(t, os.IsNotExist(err), "card manifest should not exist when only button was targeted")
+}
+
+func TestWorkspaceValidate_ValidatesAllPackages(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	stdout, stderr := runCemCommand(t, projectDir, "validate")
+	combined := stdout + stderr
+
+	assert.Contains(t, combined, "@test/button")
+	assert.Contains(t, combined, "@test/card")
+	assert.Contains(t, combined, "Validated manifests")
+}
+
+func TestWorkspaceHealth_ScoresAllPackages(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	stdout, stderr := runCemCommand(t, projectDir, "health")
+	combined := stdout + stderr
+
+	assert.Contains(t, combined, "@test/button")
+	assert.Contains(t, combined, "@test/card")
+	assert.Contains(t, combined, "Checked health")
+}
+
+func TestWorkspaceListTags_ShowsAllPackages(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	stdout, _ := runCemCommand(t, projectDir, "list", "tags")
+
+	assert.Contains(t, stdout, "@test/button")
+	assert.Contains(t, stdout, "@test/card")
+	assert.Contains(t, stdout, "TestButton")
+	assert.Contains(t, stdout, "TestCard")
+}
+
+func TestWorkspaceListModules_ShowsAllPackages(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	stdout, _ := runCemCommand(t, projectDir, "list", "modules")
+
+	assert.Contains(t, stdout, "@test/button")
+	assert.Contains(t, stdout, "@test/card")
+	assert.Contains(t, stdout, "src/button.js")
+	assert.Contains(t, stdout, "src/card.js")
+}
+
+func TestWorkspaceList_ShowsAllPackages(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	stdout, _ := runCemCommand(t, projectDir, "list")
+
+	assert.Contains(t, stdout, "@test/button")
+	assert.Contains(t, stdout, "@test/card")
+}
+
+func TestWorkspaceSearch_FindsAcrossPackages(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	stdout, _ := runCemCommand(t, projectDir, "search", "button")
+
+	assert.Contains(t, stdout, "@test/button")
+	assert.Contains(t, stdout, "src/button.js")
+}
+
+func TestWorkspaceSearch_NoResults(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	stdout, _ := runCemCommand(t, projectDir, "search", "zzz-nonexistent-zzz")
+
+	assert.Contains(t, stdout, "Searched manifests")
+	assert.NotContains(t, stdout, "TestButton")
+}
+
+func TestWorkspaceExport_NoConfigErrors(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	stdout, stderr := runCemCommand(t, projectDir, "export")
+	combined := stdout + stderr
+
+	assert.Contains(t, combined, "no frameworks configured")
+}
+
+func TestWorkspaceExport_WithFormat(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	stdout, stderr := runCemCommand(t, projectDir, "export", "--format", "react")
+	combined := stdout + stderr
+
+	// Export runs per-package and reports results
+	assert.Contains(t, combined, "Exported wrappers")
+}
+
+func TestWorkspaceListAttributes_FindsInCorrectPackage(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	// TestButton has a 'label' field; search across workspace packages
+	stdout, _ := runCemCommand(t, projectDir, "list", "attributes", "-t", "test-button")
+
+	// Should find results (even if empty attributes, the command should succeed)
+	assert.Contains(t, stdout, "Listed from manifests")
 }
