@@ -1,0 +1,11 @@
+[
+  {
+    "range": {
+      "start": {"line": 1, "character": 2},
+      "end": {"line": 1, "character": 20}
+    },
+    "severity": 2,
+    "source": "cem-lsp",
+    "message": "Ambiguous comment ignored: more than one var() call in declaration."
+  }
+]

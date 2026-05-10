@@ -32,7 +32,7 @@ func (l *language) QueryFS() embed.FS        { return queryFiles }
 
 func (l *language) QueryNames(scope languages.Scope) []string {
 	switch scope {
-	case languages.ScopeGenerate, languages.ScopeAll:
+	case languages.ScopeGenerate, languages.ScopeLSP, languages.ScopeAll:
 		return []string{"cssCustomProperties"}
 	}
 	return nil

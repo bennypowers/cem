@@ -1,0 +1,4 @@
+:host {
+  /** Blue color */
+  color: var(--blue, blue);
+}

@@ -1,0 +1,4 @@
+.foo {
+  /** spacing values */
+  padding: var(--pad-top) var(--pad-right) var(--pad-bottom);
+}

@@ -69,6 +69,10 @@ func CodeAction(ctx types.ServerContext, context *glsp.Context, params *protocol
 								actions = append(actions, *action)
 								helpers.SafeDebugLog("[CODE_ACTION] Created attribute value autofix action")
 							}
+						case "css-ambiguous-comment":
+							cssActions := createCSSAmbiguousCommentActions(&diagnostic, dataMap, params.TextDocument.URI)
+							actions = append(actions, cssActions...)
+							helpers.SafeDebugLog("[CODE_ACTION] Created %d CSS ambiguous comment actions", len(cssActions))
 						}
 					}
 				}

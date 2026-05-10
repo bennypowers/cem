@@ -30,6 +30,7 @@ func ComputeDiagnostics(ctx types.ServerContext, doc types.Document) []protocol.
 	diagnostics = append(diagnostics, analyzeTagNameDiagnostics(ctx, doc)...)
 	diagnostics = append(diagnostics, analyzeAttributeDiagnostics(ctx, doc)...)
 	diagnostics = append(diagnostics, analyzeAttributeValueDiagnostics(ctx, doc)...)
+	diagnostics = append(diagnostics, analyzeCssDiagnostics(ctx, doc)...)
 	return diagnostics
 }
 
