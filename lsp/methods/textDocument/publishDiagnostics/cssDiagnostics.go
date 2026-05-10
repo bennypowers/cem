@@ -72,7 +72,7 @@ func AnalyzeCssDiagnosticsForTest(ctx types.ServerContext, doc types.Document) [
 		commentRange := doc.ByteRangeToProtocolRange(content, comments[0].StartByte, comments[0].EndByte)
 		deleteRange := protocol.Range{
 			Start: protocol.Position{Line: commentRange.Start.Line, Character: 0},
-			End:   protocol.Position{Line: commentRange.Start.Line + 1, Character: 0},
+			End:   protocol.Position{Line: commentRange.End.Line + 1, Character: 0},
 		}
 		propertyData := make([]map[string]any, 0, len(properties))
 		for i, prop := range properties {

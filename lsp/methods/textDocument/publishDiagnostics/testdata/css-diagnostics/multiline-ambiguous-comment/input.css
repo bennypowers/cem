@@ -1,0 +1,6 @@
+.foo {
+  /**
+   * Blue colors
+   */
+  background: var(--blue) var(--dark-blue);
+}
