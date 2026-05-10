@@ -139,8 +139,14 @@ func TestCssDiagnostics_DataField(t *testing.T) {
 	if !ok {
 		t.Fatalf("Expected deleteRange map, got %T", data["deleteRange"])
 	}
-	start := deleteRange["start"].(map[string]any)
-	end := deleteRange["end"].(map[string]any)
+	start, ok := deleteRange["start"].(map[string]any)
+	if !ok {
+		t.Fatalf("Expected deleteRange.start map, got %T", deleteRange["start"])
+	}
+	end, ok := deleteRange["end"].(map[string]any)
+	if !ok {
+		t.Fatalf("Expected deleteRange.end map, got %T", deleteRange["end"])
+	}
 	if start["line"] != float64(1) || start["character"] != float64(0) {
 		t.Errorf("deleteRange.start wrong: %v", start)
 	}
