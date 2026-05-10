@@ -199,7 +199,8 @@ func TestLoadPackageConfigWithWorkspaceDefaults_NoPackageConfig(t *testing.T) {
 	// Should inherit workspace port since package has none
 	assert.Equal(t, 9000, cfg.Serve.Port)
 	// Should inherit workspace openBrowser since package has none
-	assert.True(t, cfg.Serve.OpenBrowser)
+	require.NotNil(t, cfg.Serve.OpenBrowser)
+	assert.True(t, *cfg.Serve.OpenBrowser)
 }
 
 func TestLoadPackageConfigWithWorkspaceDefaults_NoWorkspace(t *testing.T) {
@@ -230,5 +231,105 @@ func TestLoadPackageConfigWithWorkspaceDefaults_InvalidWorkspaceConfig(t *testin
 	pkgDir := absFixture(t, "workspace-invalid-config/packages/elements")
 	_, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
 	assert.Error(t, err)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_DoesNotCascadeGenerateFiles(t *testing.T) {
+	// generate.files are root-relative paths -- they must not cascade to packages
+	// because they resolve incorrectly from package roots
+	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Empty(t, cfg.Generate.Files)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_DoesNotCascadeGenerateExclude(t *testing.T) {
+	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Empty(t, cfg.Generate.Exclude)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_CascadesDesignTokens(t *testing.T) {
+	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Equal(t, "tokens.json", cfg.Generate.DesignTokens.Spec)
+	assert.Equal(t, "rh", cfg.Generate.DesignTokens.Prefix)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_DoesNotCascadeDemoDiscovery(t *testing.T) {
+	// DemoDiscovery.FileGlob is root-relative, not cascaded
+	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Empty(t, cfg.Generate.DemoDiscovery.FileGlob)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_CascadesHealthConfig(t *testing.T) {
+	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Equal(t, 80, cfg.Health.FailBelow)
+	assert.Equal(t, []string{"no-description"}, cfg.Health.Disable)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_CascadesExportConfig(t *testing.T) {
+	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	require.NotNil(t, cfg.Export)
+	react, ok := cfg.Export["react"]
+	require.True(t, ok)
+	assert.Equal(t, "react", react.Output)
+	assert.Equal(t, "rh-", react.StripPrefix)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_PackageOverridesGenerateFiles(t *testing.T) {
+	// elements package has generate.files: ["src/**/*.ts"] in its own config
+	// workspace also has generate.files - package should win
+	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"src/**/*.ts"}, cfg.Generate.Files)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_PartialOverride(t *testing.T) {
+	// elements package has generate.files but not generate.exclude
+	// Should keep its own files; exclude does NOT cascade (root-relative paths)
+	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"src/**/*.ts"}, cfg.Generate.Files)
+	assert.Empty(t, cfg.Generate.Exclude)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_PartialOverrideHealth(t *testing.T) {
+	// elements package has no health config - inherits workspace health
+	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Equal(t, 80, cfg.Health.FailBelow)
+	assert.Equal(t, []string{"no-description"}, cfg.Health.Disable)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_PartialOverrideDesignTokens(t *testing.T) {
+	// elements package has no design tokens config - inherits workspace
+	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Equal(t, "tokens.json", cfg.Generate.DesignTokens.Spec)
+	assert.Equal(t, "rh", cfg.Generate.DesignTokens.Prefix)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_DesignTokensSpecIsWorkspaceRelative(t *testing.T) {
+	// Cascaded designTokens.spec is relative to workspace root, not package root.
+	// When a package at packages/utils inherits spec: "tokens.json",
+	// the path "tokens.json" must be understood as workspace-root-relative.
+	// The caller (generate pipeline) is responsible for resolving it.
+	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	// The spec value is cascaded as-is (workspace-root-relative)
+	assert.Equal(t, "tokens.json", cfg.Generate.DesignTokens.Spec)
 }
 

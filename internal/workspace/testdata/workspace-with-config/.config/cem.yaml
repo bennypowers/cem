@@ -1,3 +1,23 @@
+generate:
+  files:
+    - "src/**/*.ts"
+  exclude:
+    - "src/**/*.test.ts"
+  designTokens:
+    spec: "tokens.json"
+    prefix: "rh"
+  demoDiscovery:
+    fileGlob: "demo/**/*.html"
+    urlPattern: "^/demo/(?P<element>[^/]+)"
+    urlTemplate: "/demo/{{.element}}"
+health:
+  failBelow: 80
+  disable:
+    - "no-description"
+export:
+  react:
+    output: react
+    stripPrefix: rh-
 serve:
   port: 9000
   openBrowser: true

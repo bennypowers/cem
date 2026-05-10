@@ -19,12 +19,54 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	V "bennypowers.dev/cem/validate"
 	"bennypowers.dev/cem/internal/workspace"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+func validateWorkspace(cmd *cobra.Command) error {
+	ctx, err := workspace.GetWorkspaceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	verbose, _ := cmd.Flags().GetBool("verbose")
+	disableFlags, _ := cmd.Flags().GetStringArray("disable")
+	format, _ := cmd.Flags().GetString("format")
+	configDisabled := viper.GetStringSlice("warnings.disable")
+	allDisabled := make([]string, 0, len(configDisabled)+len(disableFlags))
+	allDisabled = append(allDisabled, configDisabled...)
+	allDisabled = append(allDisabled, disableFlags...)
+
+	results := workspace.ForEachPackage(ctx.Root(), func(pkg workspace.PackageInfo) error {
+		manifestPath := filepath.Join(pkg.Path, pkg.CustomElementsRef)
+		options := V.ValidationOptions{
+			IncludeWarnings: true,
+			DisabledRules:   allDisabled,
+		}
+		result, err := V.Validate(manifestPath, options)
+		if err != nil {
+			return err
+		}
+		displayOptions := V.DisplayOptions{
+			Verbose: verbose,
+			Format:  format,
+		}
+		fmt.Fprintf(os.Stderr, "\n%s:\n", pkg.Name)
+		if err := V.PrintValidationResult(manifestPath, result, displayOptions); err != nil {
+			return err
+		}
+		if !result.IsValid {
+			return fmt.Errorf("validation failed")
+		}
+		return nil
+	})
+
+	return workspace.ReportResults("Validated manifests", results)
+}
 
 func init() {
 	validateCmd.Flags().BoolP("verbose", "v", false, "Show detailed information including schema version")
@@ -39,6 +81,13 @@ var validateCmd = &cobra.Command{
 	Long:  `Validate a custom-elements.json manifest against its JSON schema.`,
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		if workspace.ShouldUseWorkspaceMode(cmd) {
+			if err := validateWorkspace(cmd); err != nil {
+				os.Exit(1)
+			}
+			return
+		}
+
 		ctx, err := workspace.GetWorkspaceContext(cmd)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting workspace context: %v\n", err)

@@ -146,6 +146,16 @@ cem health --disable demos --disable css
 cem health --fail-below 80
 ```
 
+### Workspace Mode
+
+In a monorepo, `cem health` scores each workspace package separately and
+displays per-package reports.
+
+```bash
+cem health              # score all packages
+cem health -p pkg/a     # score one package
+```
+
 ## GitHub Actions
 
 Two reusable workflows are available:

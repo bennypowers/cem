@@ -153,6 +153,16 @@ The search command also supports all global `cem` options:
 - `--config string` - Config file path
 - `-v, --verbose` - Verbose output
 
+## Workspace Mode
+
+In a monorepo, `cem search` searches across all workspace package manifests and
+groups results by package name.
+
+```bash
+cem search button          # search all packages
+cem search button -p pkg/a # search one package
+```
+
 ## See Also
 
 - [`cem list`](./list.md) - List specific types of elements from the manifest

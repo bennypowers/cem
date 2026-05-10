@@ -41,6 +41,10 @@ var generateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) (errs error) {
 		start = time.Now()
 
+		if W.ShouldUseWorkspaceMode(cmd) {
+			return generateWorkspace(cmd)
+		}
+
 		// Create workspace context with design tokens loader for generate command
 		baseCtx, err := W.GetWorkspaceContext(cmd)
 		if err != nil {
@@ -53,8 +57,14 @@ var generateCmd = &cobra.Command{
 			return fmt.Errorf("failed to initialize workspace context with design tokens: %w", err)
 		}
 
-		// de-dupe globs
+		cfg, err := ctx.Config()
+		if err != nil {
+			return fmt.Errorf("loading config: %w", err)
+		}
+
+		// Merge file patterns from CLI args, viper config, and workspace-cascaded config
 		allGlobs := append(args, viper.GetStringSlice("generate.files")...)
+		allGlobs = append(allGlobs, cfg.Generate.Files...)
 		seen := make(map[string]bool)
 		uniqueGlobs := []string{}
 		for _, glob := range allGlobs {
@@ -73,15 +83,10 @@ var generateCmd = &cobra.Command{
 			return errors.New("pass at least one file to generate")
 		}
 
-		exclude, err := expand(ctx, viper.GetStringSlice("generate.exclude"))
+		excludeGlobs := append(viper.GetStringSlice("generate.exclude"), cfg.Generate.Exclude...)
+		exclude, err := expand(ctx, excludeGlobs)
 		if err != nil {
 			errs = errors.Join(errs, err)
-		}
-
-		cfg, err := ctx.Config()
-		if err != nil {
-			errs = errors.Join(errs, err)
-			return errs
 		}
 
 		// Validate demo discovery configuration at startup to fail fast
@@ -250,6 +255,117 @@ func init() {
 	_ = viper.BindPFlag("generate.demoDiscovery.fileGlob", generateCmd.Flags().Lookup("demo-discovery-file-glob"))
 	_ = viper.BindPFlag("generate.demoDiscovery.urlPattern", generateCmd.Flags().Lookup("demo-discovery-url-pattern"))
 	_ = viper.BindPFlag("generate.demoDiscovery.urlTemplate", generateCmd.Flags().Lookup("demo-discovery-url-template"))
+}
+
+func generateWorkspace(cmd *cobra.Command) error {
+	if cmd.Flags().Changed("output") {
+		return fmt.Errorf("cannot use --output in workspace mode\n" +
+			"Each package writes to its customElements path from package.json.\n" +
+			"To target a single package, use: cem generate -p packages/foo -o custom-path.json")
+	}
+
+	baseCtx, err := W.GetWorkspaceContext(cmd)
+	if err != nil {
+		return fmt.Errorf("project context not initialized: %w", err)
+	}
+
+	rootCfg, err := baseCtx.Config()
+	if err != nil {
+		return fmt.Errorf("loading root config: %w", err)
+	}
+
+	rootFiles := rootCfg.Generate.Files
+	rootExclude := rootCfg.Generate.Exclude
+
+	results := W.ForEachPackage(baseCtx.Root(), func(pkg W.PackageInfo) error {
+		ctx := W.NewFileSystemWorkspaceContext(pkg.Path)
+		if err := ctx.Init(); err != nil {
+			return fmt.Errorf("initializing context: %w", err)
+		}
+
+		cfg, err := ctx.Config()
+		if err != nil {
+			return fmt.Errorf("loading config: %w", err)
+		}
+
+		// Resolve root-level file patterns: expand from workspace root,
+		// filter to files under this package, return package-relative paths.
+		if len(rootFiles) > 0 {
+			resolved, err := W.ResolveWorkspaceFiles(baseCtx.Root(), rootFiles, pkg.Path)
+			if err != nil {
+				return fmt.Errorf("resolving workspace files: %w", err)
+			}
+			cfg.Generate.Files = append(cfg.Generate.Files, resolved...)
+		}
+		if len(rootExclude) > 0 {
+			resolved, err := W.ResolveWorkspaceFiles(baseCtx.Root(), rootExclude, pkg.Path)
+			if err != nil {
+				return fmt.Errorf("resolving workspace excludes: %w", err)
+			}
+			cfg.Generate.Exclude = append(cfg.Generate.Exclude, resolved...)
+		}
+
+		// Resolve root-level demo discovery: expand from root, filter to this package,
+		// then derive a package-local glob from the matched file paths.
+		if rootCfg.Generate.DemoDiscovery.FileGlob != "" && cfg.Generate.DemoDiscovery.FileGlob == "" {
+			demoFiles, err := W.ResolveWorkspaceFiles(baseCtx.Root(), []string{rootCfg.Generate.DemoDiscovery.FileGlob}, pkg.Path)
+			if err == nil && len(demoFiles) > 0 {
+				cfg.Generate.DemoDiscovery = rootCfg.Generate.DemoDiscovery
+				cfg.Generate.DemoDiscovery.FileGlob = W.DerivePackageGlob(demoFiles)
+			}
+		}
+
+		// Merge CLI flag overrides (only when explicitly passed, not from viper/config)
+		if cmd.Flags().Changed("exclude") {
+			cfg.Generate.Exclude = append(cfg.Generate.Exclude, viper.GetStringSlice("generate.exclude")...)
+		}
+		if cmd.Flags().Changed("design-tokens") {
+			cfg.Generate.DesignTokens.Spec = viper.GetString("generate.designTokens.spec")
+		}
+		if cmd.Flags().Changed("design-tokens-prefix") {
+			cfg.Generate.DesignTokens.Prefix = viper.GetString("generate.designTokens.prefix")
+		}
+		if cmd.Flags().Changed("no-default-excludes") {
+			v := true
+			cfg.Generate.NoDefaultExcludes = &v
+		}
+		if cmd.Flags().Changed("demo-discovery-file-glob") {
+			cfg.Generate.DemoDiscovery.FileGlob = viper.GetString("generate.demoDiscovery.fileGlob")
+		}
+		if cmd.Flags().Changed("demo-discovery-url-pattern") {
+			cfg.Generate.DemoDiscovery.URLPattern = viper.GetString("generate.demoDiscovery.urlPattern")
+		}
+		if cmd.Flags().Changed("demo-discovery-url-template") {
+			cfg.Generate.DemoDiscovery.URLTemplate = viper.GetString("generate.demoDiscovery.urlTemplate")
+		}
+
+		if len(cfg.Generate.Files) == 0 {
+			logging.Warning("Skipping %s: no source files resolved (custom-elements.json left untouched)", pkg.Name)
+			return nil
+		}
+
+		manifestStr, err := G.Generate(ctx)
+		if err != nil {
+			return err
+		}
+		if manifestStr == nil {
+			return fmt.Errorf("no manifest produced")
+		}
+
+		outputPath := filepath.Join(pkg.Path, pkg.CustomElementsRef)
+		writer, err := ctx.OutputWriter(outputPath)
+		if err != nil {
+			return fmt.Errorf("opening output: %w", err)
+		}
+		defer func() { _ = writer.Close() }()
+
+		if _, err := writer.Write([]byte(*manifestStr + "\n")); err != nil {
+			return fmt.Errorf("writing manifest: %w", err)
+		}
+		return nil
+	})
+
+	return W.ReportResults("Generated manifests", results)
 }
 
 // runWatchMode starts the file watching mode - delegates to generate package

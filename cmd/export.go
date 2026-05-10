@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 
 	C "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/export"
@@ -25,6 +26,86 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+func exportWorkspace(cmd *cobra.Command) error {
+	if cmd.Flags().Changed("output") {
+		return fmt.Errorf("cannot use --output in workspace mode\n" +
+			"Each package resolves export output relative to its own root.\n" +
+			"To target a single package, use: cem export -p packages/foo -o out/")
+	}
+
+	ctx, err := workspace.GetWorkspaceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	results := workspace.ForEachPackage(ctx.Root(), func(pkg workspace.PackageInfo) error {
+		pkgCtx := workspace.NewFileSystemWorkspaceContext(pkg.Path)
+		if err := pkgCtx.Init(); err != nil {
+			return err
+		}
+
+		manifest, err := pkgCtx.Manifest()
+		if err != nil {
+			return fmt.Errorf("reading manifest: %w", err)
+		}
+		if manifest == nil {
+			return fmt.Errorf("could not find custom-elements.json")
+		}
+
+		pkgJSON, _ := pkgCtx.PackageJSON()
+		packageName := ""
+		if pkgJSON != nil {
+			packageName = pkgJSON.Name
+		}
+
+		cfg, err := pkgCtx.Config()
+		if err != nil {
+			return err
+		}
+
+		frameworks := make(map[string]export.FrameworkExportConfig)
+		for name, fwCfg := range cfg.Export {
+			output := fwCfg.Output
+			if output != "" && !filepath.IsAbs(output) {
+				output = filepath.Join(pkg.Path, output)
+			}
+			frameworks[name] = export.FrameworkExportConfig{
+				Output:      output,
+				StripPrefix: fwCfg.StripPrefix,
+				PackageName: fwCfg.PackageName,
+				ModuleName:  fwCfg.ModuleName,
+			}
+		}
+
+		// Apply CLI flag overrides
+		format, _ := cmd.Flags().GetString("format")
+		stripPrefix, _ := cmd.Flags().GetString("strip-prefix")
+
+		if format != "" {
+			fwCfg, exists := frameworks[format]
+			if !exists {
+				fwCfg = export.FrameworkExportConfig{}
+			}
+			if stripPrefix != "" {
+				fwCfg.StripPrefix = stripPrefix
+			}
+			frameworks = map[string]export.FrameworkExportConfig{format: fwCfg}
+		}
+
+		if len(frameworks) == 0 {
+			return fmt.Errorf("no frameworks configured")
+		}
+
+		return export.Export(export.Options{
+			Manifest:    manifest,
+			PackageName: packageName,
+			Frameworks:  frameworks,
+		})
+	})
+
+	return workspace.ReportResults("Exported wrappers", results)
+}
 
 func init() {
 	exportCmd.Flags().String("format", "", "Framework to export: react, vue, or angular (exports all configured frameworks if omitted)")
@@ -43,6 +124,10 @@ with compile-time type checking and IDE autocomplete.
 Frameworks can be configured in .config/cem.yaml under the 'export' key, or
 selected via the --format flag for one-off usage.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if workspace.ShouldUseWorkspaceMode(cmd) {
+			return exportWorkspace(cmd)
+		}
+
 		ctx, err := workspace.GetWorkspaceContext(cmd)
 		if err != nil {
 			return fmt.Errorf("getting workspace context: %w", err)

@@ -27,9 +27,64 @@ import (
 	"bennypowers.dev/cem/health"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/internal/workspace"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+func healthWorkspace(cmd *cobra.Command) error {
+	ctx, err := workspace.GetWorkspaceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	format, _ := cmd.Flags().GetString("format")
+	cliFailBelow, _ := cmd.Flags().GetInt("fail-below")
+	disableFlags, _ := cmd.Flags().GetStringArray("disable")
+
+	results := workspace.ForEachPackage(ctx.Root(), func(pkg workspace.PackageInfo) error {
+		pkgCtx := workspace.NewFileSystemWorkspaceContext(pkg.Path)
+		if err := pkgCtx.Init(); err != nil {
+			return err
+		}
+		cfg, err := pkgCtx.Config()
+		if err != nil {
+			return err
+		}
+
+		allDisabled := make([]string, 0, len(cfg.Health.Disable)+len(disableFlags))
+		allDisabled = append(allDisabled, cfg.Health.Disable...)
+		allDisabled = append(allDisabled, disableFlags...)
+
+		failBelow := cliFailBelow
+		if failBelow == 0 && cfg.Health.FailBelow > 0 {
+			failBelow = cfg.Health.FailBelow
+		}
+
+		manifestPath := filepath.Join(pkg.Path, pkg.CustomElementsRef)
+		options := health.Options{
+			Disable: allDisabled,
+		}
+		result, err := health.Analyze(manifestPath, options)
+		if err != nil {
+			return err
+		}
+		pterm.DefaultHeader.WithFullWidth(false).Println(pkg.Name)
+		displayOptions := health.DisplayOptions{Format: format}
+		if err := health.PrintHealthResult(result, displayOptions); err != nil {
+			return err
+		}
+		if failBelow > 0 && result.OverallMax > 0 {
+			pct := int(math.Round(float64(result.OverallScore) * 100 / float64(result.OverallMax)))
+			if pct < failBelow {
+				return fmt.Errorf("health score %d%% is below threshold of %d%%", pct, failBelow)
+			}
+		}
+		return nil
+	})
+
+	return workspace.ReportResults("Checked health", results)
+}
 
 func init() {
 	healthCmd.Flags().String("component", "", "Filter to a specific component by tag name or class name")
@@ -51,6 +106,13 @@ output equivalents (.ts -> .js, .tsx -> .js, etc.) and resolved through the
 package.json exports map, replicating the same logic used by cem generate.`,
 	Args: cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
+		if workspace.ShouldUseWorkspaceMode(cmd) {
+			if err := healthWorkspace(cmd); err != nil {
+				os.Exit(1)
+			}
+			return
+		}
+
 		ctx, err := workspace.GetWorkspaceContext(cmd)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting workspace context: %v\n", err)

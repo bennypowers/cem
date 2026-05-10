@@ -64,6 +64,14 @@ The dev server provides:
 - **[Error Overlay][developmentworkflow]** - Developer-friendly error messages with source maps
 - **[Rendering Modes][renderingmodes]** - Test in light DOM, shadow DOM, or chromeless mode
 
+## Monorepo Setup
+
+If your project uses npm, yarn, or pnpm workspaces, `cem` commands automatically
+operate on all workspace packages. Add a `customElements` field to each
+package's `package.json` to opt in, then run commands from the workspace root.
+
+See [Configuration: Workspace Mode][workspacemode] for details.
+
 ## Next Steps
 
 ### Reference Documentation
@@ -90,3 +98,4 @@ Need help? See **[Troubleshooting][troubleshooting]** for common issues and solu
 [configuration]: /docs/reference/configuration/
 [servecommand]: /docs/reference/commands/serve/
 [troubleshooting]: /docs/usage/troubleshooting/
+[workspacemode]: /docs/reference/configuration/#monorepo--workspace-mode

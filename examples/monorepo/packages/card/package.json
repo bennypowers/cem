@@ -1,0 +1,4 @@
+{
+  "name": "@example/card",
+  "customElements": "custom-elements.json"
+}
