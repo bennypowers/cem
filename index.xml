@@ -1033,9 +1033,9 @@ component knowledge you document for humans.&lt;/p></description></item><item><t
 &lt;code-highlighter>
  &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">cem list --deprecated --format tree
 &lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">cem list --package npm:@vaadin/button@24.3.5&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>
-&lt;/code-highlighter>&lt;h2 id="subcommands">Subcommands&lt;/h2>
-&lt;h3 id="tags">&lt;code>tags&lt;/code>&lt;/h3>
-&lt;p>Lists all custom element tag names in the project.&lt;/p></description></item><item><title>Search</title><link>https://bennypowers.dev/cem/docs/reference/commands/search/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/search/</guid><description>Search through custom elements manifests for any element by keyword
+&lt;/code-highlighter>&lt;h2 id="workspace-mode">Workspace Mode&lt;/h2>
+&lt;p>In a monorepo, &lt;code>cem list&lt;/code> and its subcommands display results grouped by
+package name.&lt;/p></description></item><item><title>Search</title><link>https://bennypowers.dev/cem/docs/reference/commands/search/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/search/</guid><description>Search through custom elements manifests for any element by keyword
 or regex pattern</description></item><item><title>Validate</title><link>https://bennypowers.dev/cem/docs/reference/commands/validate/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/validate/</guid><description>&lt;info-callout type="info">
  &lt;template shadowrootmode="open">
  &lt;style>
