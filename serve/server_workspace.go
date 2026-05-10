@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	G "bennypowers.dev/cem/generate"
@@ -158,6 +159,7 @@ func (s *Server) InitializeWorkspaceMode() error {
 // generateManifestForPackage generates a manifest for a single workspace package
 // Returns nil and an error if generation fails at any step.
 func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo) (*middleware.WorkspacePackage, error) {
+	fmt.Fprintf(os.Stderr, "[WORKSPACE-DEBUG] generateManifestForPackage: %s watchDir=%q\n", pkgInfo.Name, s.watchDir)
 	// Create workspace context for this package
 	workspace := W.NewFileSystemWorkspaceContext(pkgInfo.Path)
 	if err := workspace.Init(); err != nil {
@@ -167,22 +169,36 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo) (*middleware.
 	// Resolve root-level file patterns for this package
 	if s.watchDir != "" {
 		rootCtx := W.NewFileSystemWorkspaceContext(s.watchDir)
-		if err := rootCtx.Init(); err == nil {
-			if rootCfg, err := rootCtx.Config(); err == nil && len(rootCfg.Generate.Files) > 0 {
-				pkgCfg, _ := workspace.Config()
-				resolved, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Files, pkgInfo.Path)
-				if err == nil {
-					pkgCfg.Generate.Files = append(pkgCfg.Generate.Files, resolved...)
-				}
-				if len(rootCfg.Generate.Exclude) > 0 {
-					resolvedExclude, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Exclude, pkgInfo.Path)
-					if err == nil {
-						pkgCfg.Generate.Exclude = append(pkgCfg.Generate.Exclude, resolvedExclude...)
+		if err := rootCtx.Init(); err != nil {
+			s.logger.Debug("Root context init failed for %s: %v", pkgInfo.Name, err)
+		} else {
+			rootCfg, err := rootCtx.Config()
+			if err != nil {
+				s.logger.Debug("Root config load failed: %v", err)
+			} else {
+				fmt.Fprintf(os.Stderr, "[WORKSPACE-DEBUG] Root generate.files: %v\n", rootCfg.Generate.Files)
+				if len(rootCfg.Generate.Files) > 0 {
+					pkgCfg, _ := workspace.Config()
+					resolved, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Files, pkgInfo.Path)
+					if err != nil {
+						s.logger.Debug("ResolveWorkspaceFiles failed for %s: %v", pkgInfo.Name, err)
+					} else {
+						fmt.Fprintf(os.Stderr, "[WORKSPACE-DEBUG] Resolved %d files for %s: %v\n", len(resolved), pkgInfo.Name, resolved[:min(3, len(resolved))])
+						pkgCfg.Generate.Files = append(pkgCfg.Generate.Files, resolved...)
+					}
+					if len(rootCfg.Generate.Exclude) > 0 {
+						resolvedExclude, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Exclude, pkgInfo.Path)
+						if err == nil {
+							pkgCfg.Generate.Exclude = append(pkgCfg.Generate.Exclude, resolvedExclude...)
+						}
 					}
 				}
 			}
 		}
 	}
+
+	pkgCfgCheck, _ := workspace.Config()
+	fmt.Fprintf(os.Stderr, "[WORKSPACE-DEBUG] %s pkgCfg.Generate.Files=%v configFile=%q\n", pkgInfo.Name, pkgCfgCheck.Generate.Files, workspace.ConfigFile())
 
 	// Create generate session
 	session, err := G.NewGenerateSession(workspace)
@@ -192,12 +208,13 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo) (*middleware.
 	defer session.Close()
 
 	// Generate manifest with cancellable context (respects shutdown signal)
-	ctx, cancel := s.contextWithShutdown(30 * time.Second)
+	genCtx, cancel := s.contextWithShutdown(30 * time.Second)
 	defer cancel()
-	pkg, err := session.GenerateFullManifest(ctx)
+	pkg, err := session.GenerateFullManifest(genCtx)
 	if err != nil {
 		return nil, fmt.Errorf("generating manifest for %s: %w", pkgInfo.Name, err)
 	}
+	fmt.Fprintf(os.Stderr, "[WORKSPACE-DEBUG] %s generated %d modules\n", pkgInfo.Name, len(pkg.Modules))
 
 	// Marshal to JSON
 	manifestBytes, err := json.MarshalIndent(pkg, "", "  ")
