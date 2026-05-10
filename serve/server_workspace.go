@@ -164,6 +164,26 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo) (*middleware.
 		return nil, fmt.Errorf("initializing workspace for %s: %w", pkgInfo.Name, err)
 	}
 
+	// Resolve root-level file patterns for this package
+	if s.watchDir != "" {
+		rootCtx := W.NewFileSystemWorkspaceContext(s.watchDir)
+		if err := rootCtx.Init(); err == nil {
+			if rootCfg, err := rootCtx.Config(); err == nil && len(rootCfg.Generate.Files) > 0 {
+				pkgCfg, _ := workspace.Config()
+				resolved, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Files, pkgInfo.Path)
+				if err == nil {
+					pkgCfg.Generate.Files = append(pkgCfg.Generate.Files, resolved...)
+				}
+				if len(rootCfg.Generate.Exclude) > 0 {
+					resolvedExclude, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Exclude, pkgInfo.Path)
+					if err == nil {
+						pkgCfg.Generate.Exclude = append(pkgCfg.Generate.Exclude, resolvedExclude...)
+					}
+				}
+			}
+		}
+	}
+
 	// Create generate session
 	session, err := G.NewGenerateSession(workspace)
 	if err != nil {
