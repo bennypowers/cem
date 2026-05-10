@@ -1,3 +1,8 @@
 generate:
   files:
     - "packages/*/src/**/*.ts"
+  demoDiscovery:
+    fileGlob: "packages/*/demo/*.html"
+export:
+  react:
+    output: react

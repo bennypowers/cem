@@ -192,8 +192,11 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo) (*middleware.
 					}
 				}
 				if rootCfg.Generate.DemoDiscovery.FileGlob != "" && pkgCfg.Generate.DemoDiscovery.FileGlob == "" {
-					pkgCfg.Generate.DemoDiscovery = rootCfg.Generate.DemoDiscovery
-					pkgCfg.Generate.DemoDiscovery.FileGlob = W.ResolveWorkspaceGlob(s.watchDir, rootCfg.Generate.DemoDiscovery.FileGlob, pkgInfo.Path)
+					demoFiles, err := W.ResolveWorkspaceFiles(s.watchDir, []string{rootCfg.Generate.DemoDiscovery.FileGlob}, pkgInfo.Path)
+					if err == nil && len(demoFiles) > 0 {
+						pkgCfg.Generate.DemoDiscovery = rootCfg.Generate.DemoDiscovery
+						pkgCfg.Generate.DemoDiscovery.FileGlob = W.DerivePackageGlob(demoFiles)
+					}
 				}
 			}
 		}

@@ -320,3 +320,15 @@ func TestLoadPackageConfigWithWorkspaceDefaults_PartialOverrideDesignTokens(t *t
 	assert.Equal(t, "rh", cfg.Generate.DesignTokens.Prefix)
 }
 
+func TestLoadPackageConfigWithWorkspaceDefaults_DesignTokensSpecIsWorkspaceRelative(t *testing.T) {
+	// Cascaded designTokens.spec is relative to workspace root, not package root.
+	// When a package at packages/utils inherits spec: "tokens.json",
+	// the path "tokens.json" must be understood as workspace-root-relative.
+	// The caller (generate pipeline) is responsible for resolving it.
+	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	// The spec value is cascaded as-is (workspace-root-relative)
+	assert.Equal(t, "tokens.json", cfg.Generate.DesignTokens.Spec)
+}
+

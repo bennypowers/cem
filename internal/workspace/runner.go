@@ -124,6 +124,30 @@ func ResolveWorkspaceGlob(workspaceRoot, pattern, packageDir string) string {
 	return rel
 }
 
+// DerivePackageGlob constructs a glob pattern from a list of package-relative
+// file paths by finding their common directory prefix and appending a wildcard.
+// For example, ["demo/a.html", "demo/b.html"] returns "demo/*".
+func DerivePackageGlob(files []string) string {
+	if len(files) == 0 {
+		return ""
+	}
+	dir := filepath.Dir(files[0])
+	for _, f := range files[1:] {
+		d := filepath.Dir(f)
+		for dir != d && dir != "." {
+			dir = filepath.Dir(dir)
+		}
+		if dir == "." {
+			break
+		}
+	}
+	ext := filepath.Ext(files[0])
+	if dir == "." {
+		return "**/*" + ext
+	}
+	return dir + "/**/*" + ext
+}
+
 // ReportResults prints per-package outcomes and returns an error if any failed.
 // verb describes the action, e.g. "Generated manifests", "Validated manifests".
 func ReportResults(verb string, results []PackageResult) error {

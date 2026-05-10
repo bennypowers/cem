@@ -1,7 +1,7 @@
 /**
  * A card component
  * @summary A content card
- * @tag example-card
+ * @customElement example-card
  * @slot - Card content
  * @slot header - Card header content
  */

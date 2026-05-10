@@ -305,33 +305,37 @@ func generateWorkspace(cmd *cobra.Command) error {
 			cfg.Generate.Exclude = append(cfg.Generate.Exclude, resolved...)
 		}
 
-		// Resolve root-level demo discovery glob
+		// Resolve root-level demo discovery: expand from root, filter to this package,
+		// then derive a package-local glob from the matched file paths.
 		if rootCfg.Generate.DemoDiscovery.FileGlob != "" && cfg.Generate.DemoDiscovery.FileGlob == "" {
-			cfg.Generate.DemoDiscovery = rootCfg.Generate.DemoDiscovery
-			cfg.Generate.DemoDiscovery.FileGlob = W.ResolveWorkspaceGlob(baseCtx.Root(), rootCfg.Generate.DemoDiscovery.FileGlob, pkg.Path)
+			demoFiles, err := W.ResolveWorkspaceFiles(baseCtx.Root(), []string{rootCfg.Generate.DemoDiscovery.FileGlob}, pkg.Path)
+			if err == nil && len(demoFiles) > 0 {
+				cfg.Generate.DemoDiscovery = rootCfg.Generate.DemoDiscovery
+				cfg.Generate.DemoDiscovery.FileGlob = W.DerivePackageGlob(demoFiles)
+			}
 		}
 
-		// Merge CLI flag overrides
-		if v := viper.GetStringSlice("generate.exclude"); len(v) > 0 {
-			cfg.Generate.Exclude = append(cfg.Generate.Exclude, v...)
+		// Merge CLI flag overrides (only when explicitly passed, not from viper/config)
+		if cmd.Flags().Changed("exclude") {
+			cfg.Generate.Exclude = append(cfg.Generate.Exclude, viper.GetStringSlice("generate.exclude")...)
 		}
-		if v := viper.GetString("generate.designTokens.spec"); v != "" {
-			cfg.Generate.DesignTokens.Spec = v
+		if cmd.Flags().Changed("design-tokens") {
+			cfg.Generate.DesignTokens.Spec = viper.GetString("generate.designTokens.spec")
 		}
-		if v := viper.GetString("generate.designTokens.prefix"); v != "" {
-			cfg.Generate.DesignTokens.Prefix = v
+		if cmd.Flags().Changed("design-tokens-prefix") {
+			cfg.Generate.DesignTokens.Prefix = viper.GetString("generate.designTokens.prefix")
 		}
-		if viper.GetBool("generate.noDefaultExcludes") {
+		if cmd.Flags().Changed("no-default-excludes") {
 			cfg.Generate.NoDefaultExcludes = true
 		}
-		if v := viper.GetString("generate.demoDiscovery.fileGlob"); v != "" {
-			cfg.Generate.DemoDiscovery.FileGlob = v
+		if cmd.Flags().Changed("demo-discovery-file-glob") {
+			cfg.Generate.DemoDiscovery.FileGlob = viper.GetString("generate.demoDiscovery.fileGlob")
 		}
-		if v := viper.GetString("generate.demoDiscovery.urlPattern"); v != "" {
-			cfg.Generate.DemoDiscovery.URLPattern = v
+		if cmd.Flags().Changed("demo-discovery-url-pattern") {
+			cfg.Generate.DemoDiscovery.URLPattern = viper.GetString("generate.demoDiscovery.urlPattern")
 		}
-		if v := viper.GetString("generate.demoDiscovery.urlTemplate"); v != "" {
-			cfg.Generate.DemoDiscovery.URLTemplate = v
+		if cmd.Flags().Changed("demo-discovery-url-template") {
+			cfg.Generate.DemoDiscovery.URLTemplate = viper.GetString("generate.demoDiscovery.urlTemplate")
 		}
 
 		if len(cfg.Generate.Files) == 0 {

@@ -1,7 +1,7 @@
 /**
  * A simple button component
  * @summary A button for clicking
- * @tag example-button
+ * @customElement example-button
  * @csspart button - The button element
  */
 export class ExampleButton extends HTMLElement {

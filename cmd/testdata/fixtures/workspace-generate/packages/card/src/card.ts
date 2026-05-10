@@ -1,7 +1,7 @@
 /**
  * A card
  * @summary Test card
- * @tag test-card
+ * @customElement test-card
  * @slot - Card content
  */
 export class TestCard extends HTMLElement {
