@@ -20,9 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"runtime"
 	"strings"
-	"sync"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -49,7 +47,7 @@ func ShouldUseWorkspaceMode(cmd *cobra.Command) bool {
 }
 
 // ForEachPackage discovers workspace packages with customElements fields
-// and runs fn for each in parallel with bounded concurrency.
+// and runs fn for each sequentially.
 // Returns results for all packages, never short-circuits on error.
 func ForEachPackage(rootDir string, fn func(pkg PackageInfo) error) []PackageResult {
 	packages, err := FindPackagesWithManifests(rootDir)
@@ -58,25 +56,12 @@ func ForEachPackage(rootDir string, fn func(pkg PackageInfo) error) []PackageRes
 	}
 
 	results := make([]PackageResult, len(packages))
-	maxWorkers := min(runtime.NumCPU(), len(packages))
-
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, maxWorkers)
-
 	for i, pkg := range packages {
-		wg.Add(1)
-		go func(i int, pkg PackageInfo) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-			results[i] = PackageResult{
-				Package: pkg,
-				Err:     fn(pkg),
-			}
-		}(i, pkg)
+		results[i] = PackageResult{
+			Package: pkg,
+			Err:     fn(pkg),
+		}
 	}
-
-	wg.Wait()
 	return results
 }
 

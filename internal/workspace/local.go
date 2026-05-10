@@ -51,9 +51,19 @@ type FileSystemWorkspaceContext struct {
 }
 
 func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
-	cfg, err := LoadPackageConfigWithWorkspaceDefaults(c.Root())
-	if err != nil {
-		return nil, err
+	var cfg *C.CemConfig
+	if c.configFilePath != "" {
+		loaded, err := IC.LoadConfig(c.configFilePath)
+		if err != nil {
+			return nil, err
+		}
+		cfg = loaded
+	} else {
+		loaded, err := LoadPackageConfigWithWorkspaceDefaults(c.Root())
+		if err != nil {
+			return nil, err
+		}
+		cfg = loaded
 	}
 
 	cfg.ProjectDir = c.Root()

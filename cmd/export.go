@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 
 	C "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/export"
@@ -59,8 +60,12 @@ func exportWorkspace(cmd *cobra.Command) error {
 
 		frameworks := make(map[string]export.FrameworkExportConfig)
 		for name, fwCfg := range cfg.Export {
+			output := fwCfg.Output
+			if output != "" && !filepath.IsAbs(output) {
+				output = filepath.Join(pkg.Path, output)
+			}
 			frameworks[name] = export.FrameworkExportConfig{
-				Output:      fwCfg.Output,
+				Output:      output,
 				StripPrefix: fwCfg.StripPrefix,
 				PackageName: fwCfg.PackageName,
 				ModuleName:  fwCfg.ModuleName,
@@ -69,21 +74,17 @@ func exportWorkspace(cmd *cobra.Command) error {
 
 		// Apply CLI flag overrides
 		format, _ := cmd.Flags().GetString("format")
-		output, _ := cmd.Flags().GetString("output")
 		stripPrefix, _ := cmd.Flags().GetString("strip-prefix")
 
 		if format != "" {
-			cfg, exists := frameworks[format]
+			fwCfg, exists := frameworks[format]
 			if !exists {
-				cfg = export.FrameworkExportConfig{}
-			}
-			if output != "" {
-				cfg.Output = output
+				fwCfg = export.FrameworkExportConfig{}
 			}
 			if stripPrefix != "" {
-				cfg.StripPrefix = stripPrefix
+				fwCfg.StripPrefix = stripPrefix
 			}
-			frameworks = map[string]export.FrameworkExportConfig{format: cfg}
+			frameworks = map[string]export.FrameworkExportConfig{format: fwCfg}
 		}
 
 		if len(frameworks) == 0 {

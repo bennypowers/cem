@@ -2,7 +2,6 @@ package workspace_test
 
 import (
 	"errors"
-	"sync/atomic"
 	"testing"
 
 	"bennypowers.dev/cem/internal/workspace"
@@ -12,12 +11,12 @@ import (
 
 func TestForEachPackage_RunsAllPackages(t *testing.T) {
 	root := absFixture(t, "multi-package-workspace")
-	var count atomic.Int32
+	var count int
 	results := workspace.ForEachPackage(root, func(pkg workspace.PackageInfo) error {
-		count.Add(1)
+		count++
 		return nil
 	})
-	assert.Equal(t, int32(2), count.Load())
+	assert.Equal(t, 2, count)
 	assert.Len(t, results, 2)
 	for _, r := range results {
 		assert.NoError(t, r.Err)
