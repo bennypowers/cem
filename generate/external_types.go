@@ -18,6 +18,7 @@ package generate
 
 import (
 	"encoding/json"
+	"io/fs"
 	"maps"
 	"os"
 	"path/filepath"
@@ -28,6 +29,8 @@ import (
 
 	L "bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/languages/typescript"
+	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/set"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
@@ -199,16 +202,11 @@ func (r *ExternalTypeResolver) resolveFromWorkspaceSibling(pkgName string) map[s
 
 	aliases := make(map[string]aliasDefinition)
 
-	err := filepath.WalkDir(siblingPath, func(path string, d os.DirEntry, err error) error {
+	err := platform.WalkDir(os.DirFS(siblingPath), ".", set.NewSet("node_modules", "dist"), func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil // skip errors
 		}
-		// Skip directories we don't want
 		if d.IsDir() {
-			base := d.Name()
-			if base == "node_modules" || base == "dist" || base == ".git" {
-				return filepath.SkipDir
-			}
 			return nil
 		}
 		// Only parse .ts/.tsx files (not .d.ts)
@@ -219,9 +217,10 @@ func (r *ExternalTypeResolver) resolveFromWorkspaceSibling(pkgName string) map[s
 			return nil
 		}
 
-		fileAliases, err := r.scanTypeAliasesFromFile(path)
+		fullPath := filepath.Join(siblingPath, path)
+		fileAliases, err := r.scanTypeAliasesFromFile(fullPath)
 		if err != nil {
-			L.Debug("ExternalTypeResolver: error scanning %s: %v", path, err)
+			L.Debug("ExternalTypeResolver: error scanning %s: %v", fullPath, err)
 			return nil
 		}
 		maps.Copy(aliases, fileAliases)

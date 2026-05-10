@@ -19,6 +19,7 @@ package lsp
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,6 +27,8 @@ import (
 	"time"
 
 	G "bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/set"
 	"bennypowers.dev/cem/lsp/helpers"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
@@ -162,26 +165,21 @@ func (w *InProcessGenerateWatcher) watchFiles() error {
 	var filesToWatch []string
 	rootDir := w.workspace.Root()
 
-	err = filepath.WalkDir(rootDir, func(path string, d os.DirEntry, err error) error {
+	err = platform.WalkDir(os.DirFS(rootDir), ".", set.NewSet("node_modules"), func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil // Skip errors
 		}
 
-		// ALWAYS skip node_modules
-		if d.IsDir() && d.Name() == "node_modules" {
-			return filepath.SkipDir
-		}
-
-		// Skip hidden directories
-		if d.IsDir() && strings.HasPrefix(d.Name(), ".") {
-			return filepath.SkipDir
+		// Skip hidden directories (e.g. .vscode, .idea)
+		if d.IsDir() && path != "." && strings.HasPrefix(d.Name(), ".") {
+			return fs.SkipDir
 		}
 
 		// Only watch .ts and .js files
 		if !d.IsDir() && (strings.HasSuffix(path, ".ts") || strings.HasSuffix(path, ".js")) {
-			// Check if this file matches our globs
-			if w.shouldProcessFile(path) {
-				filesToWatch = append(filesToWatch, path)
+			fullPath := filepath.Join(rootDir, path)
+			if w.shouldProcessFile(fullPath) {
+				filesToWatch = append(filesToWatch, fullPath)
 			}
 		}
 

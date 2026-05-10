@@ -292,8 +292,8 @@ func findReferencesInWorkspaceWithFS(workspaceRoot string, elementName string, o
 		gitignoreMatcher = ignore.CompileIgnoreLines(strings.Split(string(gitignoreContent), "\n")...)
 	}
 
-	// Find all relevant files in workspace using fs.WalkDir
-	walkErr := fs.WalkDir(filesystem, workspaceRoot, func(path string, d fs.DirEntry, err error) error {
+	// Find all relevant files in workspace using platform.WalkDir
+	walkErr := platform.WalkDir(filesystem, workspaceRoot, nil, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil // Skip errors and continue
 		}
@@ -306,11 +306,6 @@ func findReferencesInWorkspaceWithFS(workspaceRoot string, elementName string, o
 
 		// Skip directories that should be ignored
 		if d.IsDir() {
-			// Always skip .git directory
-			if d.Name() == ".git" {
-				return fs.SkipDir
-			}
-
 			// Check gitignore for directories
 			if gitignoreMatcher != nil && gitignoreMatcher.MatchesPath(relPath+"/") {
 				return fs.SkipDir

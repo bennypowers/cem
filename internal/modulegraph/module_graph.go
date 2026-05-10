@@ -18,14 +18,16 @@ package modulegraph
 
 import (
 	"fmt"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	"bennypowers.dev/cem/lsp/helpers"
+	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/set"
 	"bennypowers.dev/cem/internal/treesitter"
+	"bennypowers.dev/cem/lsp/helpers"
 )
 
 // ModuleGraph tracks the import/export relationships between modules
@@ -427,18 +429,15 @@ func (mg *ModuleGraph) BuildFromWorkspace(workspaceRoot string) error {
 	mg.metrics.IncrementCounter("build_workspace_calls")
 
 	// Walk the workspace to find TypeScript/JavaScript files
-	err := mg.fileParser.WalkWorkspace(workspaceRoot, func(path string, info os.FileInfo, err error) error {
+	skipDirs := set.NewSet("node_modules", "dist", "build")
+	wsFS := mg.fileParser.WorkspaceFS(workspaceRoot)
+	err := platform.WalkDir(wsFS, ".", skipDirs, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			mg.metrics.IncrementCounter("file_walk_errors")
 			return err
 		}
 
-		// Skip node_modules and other common directories
-		if info.IsDir() {
-			dirName := info.Name()
-			if dirName == "node_modules" || dirName == ".git" || dirName == "dist" || dirName == "build" {
-				return filepath.SkipDir
-			}
+		if d.IsDir() {
 			return nil
 		}
 
@@ -452,7 +451,8 @@ func (mg *ModuleGraph) BuildFromWorkspace(workspaceRoot string) error {
 
 		// Parse exports from this file
 		parseStart := time.Now()
-		parseErr := mg.parseFileExports(path, workspaceRoot)
+		fullPath := filepath.Join(workspaceRoot, path)
+		parseErr := mg.parseFileExports(fullPath, workspaceRoot)
 		mg.metrics.RecordDuration("file_parse_time", time.Since(parseStart))
 
 		if parseErr != nil {

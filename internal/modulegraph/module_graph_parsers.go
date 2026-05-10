@@ -18,14 +18,13 @@ package modulegraph
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
-	"path/filepath"
 	"strings"
-	"time"
 
 	"bennypowers.dev/cem/internal/languages/typescript"
-	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/internal/treesitter"
+	"bennypowers.dev/cem/lsp/helpers"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -37,54 +36,11 @@ func (p *OSFileParser) ReadFile(path string) ([]byte, error) {
 	return os.ReadFile(path)
 }
 
-// WalkWorkspace implements FileParser using filepath.Walk
-func (p *OSFileParser) WalkWorkspace(workspaceRoot string, walkFn filepath.WalkFunc) error {
-	return filepath.Walk(workspaceRoot, walkFn)
+// WorkspaceFS returns an os.DirFS rooted at the workspace directory.
+func (p *OSFileParser) WorkspaceFS(workspaceRoot string) fs.FS {
+	return os.DirFS(workspaceRoot)
 }
 
-// MockFileParser implements FileParser for testing with in-memory file systems
-type MockFileParser struct {
-	Files map[string][]byte // Map of file paths to their contents
-}
-
-// ReadFile implements FileParser by returning content from the in-memory map
-func (p *MockFileParser) ReadFile(path string) ([]byte, error) {
-	content, exists := p.Files[path]
-	if !exists {
-		return nil, os.ErrNotExist
-	}
-	return content, nil
-}
-
-// WalkWorkspace implements FileParser by iterating through the in-memory file map
-func (p *MockFileParser) WalkWorkspace(workspaceRoot string, walkFn filepath.WalkFunc) error {
-	// Create a simplified mock directory structure
-	// In real usage, this would simulate proper filesystem traversal
-	for path := range p.Files {
-		// Create a mock FileInfo for each file
-		info := &mockFileInfo{name: filepath.Base(path), isDir: false}
-		if err := walkFn(path, info, nil); err != nil {
-			if err == filepath.SkipDir {
-				continue // Skip this path
-			}
-			return err
-		}
-	}
-	return nil
-}
-
-// mockFileInfo implements os.FileInfo for testing
-type mockFileInfo struct {
-	name  string
-	isDir bool
-}
-
-func (m *mockFileInfo) Name() string       { return m.name }
-func (m *mockFileInfo) Size() int64        { return 0 }
-func (m *mockFileInfo) Mode() os.FileMode  { return 0644 }
-func (m *mockFileInfo) ModTime() time.Time { return time.Time{} }
-func (m *mockFileInfo) IsDir() bool        { return m.isDir }
-func (m *mockFileInfo) Sys() any            { return nil }
 
 // DefaultExportParser implements ExportParser using tree-sitter queries
 type DefaultExportParser struct{}

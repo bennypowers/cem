@@ -15,6 +15,8 @@ Getter methods should be named `Foo()`, not `GetFoo()`.
 
 When adding debug logs in go code, always use `bennypowers.dev/cem/internal/logging`, to avoid polluting stdio.
 
+Use `platform.WalkDir` for all directory traversals. It silently prunes `.git` directories and accepts additional dirs to skip via `set.Set[string]`. Never use `filepath.WalkDir` or `fs.WalkDir` directly -- those bypass `.git` pruning.
+
 Run `go vet` to surface gopls suggestions. Common examples:
 - replace `interface{}` with `any`
 - replace `if/else` with `min`
