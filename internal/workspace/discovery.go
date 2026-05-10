@@ -273,9 +273,8 @@ func mergeConfigDefaults(pkg, ws *C.CemConfig) {
 	if pkg.Generate.DesignTokens.Spec == "" && ws.Generate.DesignTokens.Spec != "" {
 		pkg.Generate.DesignTokens = ws.Generate.DesignTokens
 	}
-	if pkg.Generate.DemoDiscovery.FileGlob == "" && ws.Generate.DemoDiscovery.FileGlob != "" {
-		pkg.Generate.DemoDiscovery = ws.Generate.DemoDiscovery
-	}
+	// DemoDiscovery not cascaded here -- FileGlob contains root-relative paths.
+	// Callers resolve it per-package via ResolveWorkspaceGlob.
 
 	// Health
 	if pkg.Health.FailBelow == 0 && ws.Health.FailBelow != 0 {

@@ -107,6 +107,23 @@ func ResolveWorkspaceFiles(workspaceRoot string, patterns []string, packageDir s
 	return result, nil
 }
 
+// ResolveWorkspaceGlob adjusts a single root-relative glob pattern to be
+// relative from packageDir. Returns the adjusted pattern.
+// For example, "elements/*/demo/*.html" from workspace root, resolved for
+// package at "elements/", returns "*/demo/*.html".
+func ResolveWorkspaceGlob(workspaceRoot, pattern, packageDir string) string {
+	absPattern := filepath.Join(workspaceRoot, pattern)
+	absPackageDir, err := filepath.Abs(packageDir)
+	if err != nil {
+		return pattern
+	}
+	rel, err := filepath.Rel(absPackageDir, absPattern)
+	if err != nil {
+		return pattern
+	}
+	return rel
+}
+
 // ReportResults prints per-package outcomes and returns an error if any failed.
 // verb describes the action, e.g. "Generated manifests", "Validated manifests".
 func ReportResults(verb string, results []PackageResult) error {

@@ -175,9 +175,8 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo) (*middleware.
 			if err != nil {
 				s.logger.Debug("Root config load failed: %v", err)
 			} else {
-				s.logger.Debug("Root generate.files: %v", rootCfg.Generate.Files)
+				pkgCfg, _ := workspace.Config()
 				if len(rootCfg.Generate.Files) > 0 {
-					pkgCfg, _ := workspace.Config()
 					resolved, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Files, pkgInfo.Path)
 					if err != nil {
 						s.logger.Debug("ResolveWorkspaceFiles failed for %s: %v", pkgInfo.Name, err)
@@ -191,6 +190,10 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo) (*middleware.
 							pkgCfg.Generate.Exclude = append(pkgCfg.Generate.Exclude, resolvedExclude...)
 						}
 					}
+				}
+				if rootCfg.Generate.DemoDiscovery.FileGlob != "" && pkgCfg.Generate.DemoDiscovery.FileGlob == "" {
+					pkgCfg.Generate.DemoDiscovery = rootCfg.Generate.DemoDiscovery
+					pkgCfg.Generate.DemoDiscovery.FileGlob = W.ResolveWorkspaceGlob(s.watchDir, rootCfg.Generate.DemoDiscovery.FileGlob, pkgInfo.Path)
 				}
 			}
 		}

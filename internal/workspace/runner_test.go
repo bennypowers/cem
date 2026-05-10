@@ -98,6 +98,18 @@ func TestResolveWorkspaceFiles_NoMatchReturnsEmpty(t *testing.T) {
 	assert.Empty(t, files)
 }
 
+func TestResolveWorkspaceGlob_AdjustsPath(t *testing.T) {
+	root := "/repo"
+	result := workspace.ResolveWorkspaceGlob(root, "elements/*/demo/*.html", "/repo/elements")
+	assert.Equal(t, "*/demo/*.html", result)
+}
+
+func TestResolveWorkspaceGlob_DifferentPackage(t *testing.T) {
+	root := "/repo"
+	result := workspace.ResolveWorkspaceGlob(root, "elements/*/demo/*.html", "/repo/core/pfe-core")
+	assert.Equal(t, "../../elements/*/demo/*.html", result)
+}
+
 func TestReportResults_NoPackages(t *testing.T) {
 	err := workspace.ReportResults("Generated manifests", nil)
 	assert.Error(t, err)

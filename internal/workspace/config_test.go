@@ -256,13 +256,12 @@ func TestLoadPackageConfigWithWorkspaceDefaults_CascadesDesignTokens(t *testing.
 	assert.Equal(t, "rh", cfg.Generate.DesignTokens.Prefix)
 }
 
-func TestLoadPackageConfigWithWorkspaceDefaults_CascadesDemoDiscovery(t *testing.T) {
+func TestLoadPackageConfigWithWorkspaceDefaults_DoesNotCascadeDemoDiscovery(t *testing.T) {
+	// DemoDiscovery.FileGlob is root-relative, not cascaded
 	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
 	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
 	require.NoError(t, err)
-	assert.Equal(t, "demo/**/*.html", cfg.Generate.DemoDiscovery.FileGlob)
-	assert.Equal(t, "^/demo/(?P<element>[^/]+)", cfg.Generate.DemoDiscovery.URLPattern)
-	assert.Equal(t, "/demo/{{.element}}", cfg.Generate.DemoDiscovery.URLTemplate)
+	assert.Empty(t, cfg.Generate.DemoDiscovery.FileGlob)
 }
 
 func TestLoadPackageConfigWithWorkspaceDefaults_CascadesHealthConfig(t *testing.T) {

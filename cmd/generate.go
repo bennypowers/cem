@@ -305,6 +305,12 @@ func generateWorkspace(cmd *cobra.Command) error {
 			cfg.Generate.Exclude = append(cfg.Generate.Exclude, resolved...)
 		}
 
+		// Resolve root-level demo discovery glob
+		if rootCfg.Generate.DemoDiscovery.FileGlob != "" && cfg.Generate.DemoDiscovery.FileGlob == "" {
+			cfg.Generate.DemoDiscovery = rootCfg.Generate.DemoDiscovery
+			cfg.Generate.DemoDiscovery.FileGlob = W.ResolveWorkspaceGlob(baseCtx.Root(), rootCfg.Generate.DemoDiscovery.FileGlob, pkg.Path)
+		}
+
 		// Merge CLI flag overrides
 		if v := viper.GetStringSlice("generate.exclude"); len(v) > 0 {
 			cfg.Generate.Exclude = append(cfg.Generate.Exclude, v...)
