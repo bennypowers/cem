@@ -84,8 +84,19 @@ Generates Vue single-file components (`.vue`) with typed props and `v-model` sup
 
 Generates standalone Angular components that wrap custom elements, binding inputs to properties/attributes and outputs to events. An optional NgModule re-exports all components for convenience. Use the `moduleName` option to customize the NgModule name.
 
+## Workspace Mode
+
+In a monorepo, `cem export` generates wrappers for each workspace package using
+that package's manifest and export configuration (inherited from the workspace
+root config if not set per-package).
+
+```bash
+cem export              # export all packages
+cem export -p pkg/a     # export one package
+```
+
 ## See Also
 
-- **[Configuration Reference][config]** — All configuration options including `export`
+- **[Configuration Reference][config]** -- All configuration options including `export`
 
 [config]: /docs/reference/configuration/

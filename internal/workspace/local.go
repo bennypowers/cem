@@ -51,22 +51,13 @@ type FileSystemWorkspaceContext struct {
 }
 
 func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
-	cfgPath := c.ConfigFile()
-
-	var cfg *C.CemConfig
-	if cfgPath == "" {
-		pterm.Debug.Println("no config file found")
-		cfg = &C.CemConfig{}
-	} else {
-		loaded, err := IC.LoadConfig(cfgPath)
-		if err != nil {
-			return nil, err
-		}
-		cfg = loaded
+	cfg, err := LoadPackageConfigWithWorkspaceDefaults(c.Root())
+	if err != nil {
+		return nil, err
 	}
 
 	cfg.ProjectDir = c.Root()
-	cfg.ConfigFile = cfgPath
+	cfg.ConfigFile = c.ConfigFile()
 
 	// Make output path package-root-relative if needed
 	if cfg.Generate.Output != "" && !filepath.IsAbs(cfg.Generate.Output) {

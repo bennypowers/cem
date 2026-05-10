@@ -1,0 +1,4 @@
+{
+  "name": "@example/button",
+  "customElements": "custom-elements.json"
+}

@@ -51,6 +51,30 @@ func requireFormat(cmd *cobra.Command, supportedFormats []string) (string, error
 	return "", errors.New("unknown format: " + format)
 }
 
+// listFromWorkspaceManifests loads manifests from all workspace packages and
+// calls fn for each. Used by list/search commands that aggregate across packages.
+func listFromWorkspaceManifests(cmd *cobra.Command, fn func(pkg W.PackageInfo, manifest *M.Package) error) error {
+	ctx, err := W.GetWorkspaceContext(cmd)
+	if err != nil {
+		return err
+	}
+	results := W.ForEachPackage(ctx.Root(), func(pkg W.PackageInfo) error {
+		pkgCtx := W.NewFileSystemWorkspaceContext(pkg.Path)
+		if err := pkgCtx.Init(); err != nil {
+			return err
+		}
+		manifest, err := pkgCtx.Manifest()
+		if err != nil {
+			return err
+		}
+		if manifest == nil {
+			return nil
+		}
+		return fn(pkg, manifest)
+	})
+	return W.ReportResults("Listed from manifests", results)
+}
+
 // Helper to generate list subcommands for custom elements by section
 func makeListSectionCmd(use, short, long string, includeSection string, aliases ...string) *cobra.Command {
 	return &cobra.Command{
@@ -59,13 +83,44 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 		Short:   short,
 		Long:    long,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
-				return fmt.Errorf("project context not initialized: %w", err)
-			} else {
-				tagName, err := requireTagName(cmd)
+			tagName, err := requireTagName(cmd)
+			if err != nil {
+				return err
+			}
+
+			if W.ShouldUseWorkspaceMode(cmd) {
+				format, err := requireFormat(cmd, []string{"table"})
 				if err != nil {
 					return err
 				}
+				columns, err := cmd.Flags().GetStringArray("columns")
+				if err != nil {
+					return err
+				}
+				return listFromWorkspaceManifests(cmd, func(pkg W.PackageInfo, manifest *M.Package) error {
+					ced, _, mod, findErr := manifest.FindCustomElementContext(tagName)
+					if findErr != nil {
+						return nil
+					}
+					opts := list.RenderOptions{
+						Columns:         columns,
+						IncludeSections: []string{includeSection},
+					}
+					renderable := M.NewRenderableCustomElementDeclaration(ced, mod, manifest)
+					if format == "table" {
+						if s, err := list.Render(renderable, opts, M.True); err != nil {
+							return err
+						} else {
+							fmt.Printf("\n%s:\n%s\n", pkg.Name, s)
+						}
+					}
+					return nil
+				})
+			}
+
+			if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
+				return fmt.Errorf("project context not initialized: %w", err)
+			} else {
 				manifest, err := ctx.Manifest()
 				if err != nil {
 					return err
@@ -251,6 +306,22 @@ Example:
   cem list tags --format table --columns Class --columns Module --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if W.ShouldUseWorkspaceMode(cmd) {
+			columns, err := cmd.Flags().GetStringArray("columns")
+			if err != nil {
+				return err
+			}
+			return listFromWorkspaceManifests(cmd, func(pkg W.PackageInfo, manifest *M.Package) error {
+				opts := list.RenderOptions{Columns: columns}
+				if s, err := list.RenderTagsTable(manifest, opts); err != nil {
+					return err
+				} else {
+					fmt.Printf("\n%s:\n%s\n", pkg.Name, s)
+				}
+				return nil
+			})
+		}
+
 		if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
 		} else {
@@ -295,6 +366,22 @@ Example:
   cem list modules --format table --columns Name
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if W.ShouldUseWorkspaceMode(cmd) {
+			columns, err := cmd.Flags().GetStringArray("columns")
+			if err != nil {
+				return err
+			}
+			return listFromWorkspaceManifests(cmd, func(pkg W.PackageInfo, manifest *M.Package) error {
+				opts := list.RenderOptions{Columns: columns}
+				if s, err := list.RenderModulesTable(manifest, opts); err != nil {
+					return err
+				} else {
+					fmt.Printf("\n%s:\n%s\n", pkg.Name, s)
+				}
+				return nil
+			})
+		}
+
 		if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
 		} else {
@@ -349,6 +436,39 @@ Examples:
   cem list methods --tag-name my-button
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if W.ShouldUseWorkspaceMode(cmd) {
+			return listFromWorkspaceManifests(cmd, func(pkg W.PackageInfo, manifest *M.Package) error {
+				format, err := requireFormat(cmd, []string{"table", "tree"})
+				if err != nil {
+					return err
+				}
+				deprecated, _ := cmd.Flags().GetBool("deprecated")
+				switch format {
+				case "tree":
+					pred := M.True
+					title := pkg.Name
+					if deprecated {
+						title = pkg.Name + " (Deprecations)"
+						pred = M.IsDeprecated
+					}
+					if s, err := list.RenderTree(title, M.NewRenderablePackage(manifest), pred); err != nil {
+						return err
+					} else {
+						fmt.Println(s)
+					}
+				case "table":
+					fmt.Printf("\n%s:\n", pkg.Name)
+					opts := list.RenderOptions{}
+					if s, err := list.Render(M.NewRenderablePackage(manifest), opts, M.True); err != nil {
+						return err
+					} else {
+						fmt.Println(s)
+					}
+				}
+				return nil
+			})
+		}
+
 		if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
 			pterm.Warning.Println(err)
 			return fmt.Errorf("project context not initialized: %w", err)

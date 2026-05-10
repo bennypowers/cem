@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/button.js",
+      "declarations": [
+        {
+          "name": "ExampleButton",
+          "summary": "A button for clicking",
+          "description": "A simple button component",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "label",
+              "description": "The button label",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Click me'",
+              "kind": "field"
+            },
+            {
+              "name": "disabled",
+              "description": "Whether the button is disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "cssParts": [
+            {
+              "name": "button",
+              "description": "The button element"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "ExampleButton",
+            "module": "src/button.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ExampleButton",
+          "declaration": {
+            "name": "ExampleButton",
+            "module": "src/button.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -121,6 +121,16 @@ cem validate --format json --disable lifecycle
 
 The `--disable` flag can be used multiple times and will be merged with any disabled rules from your configuration file.
 
+### Workspace Mode
+
+In a monorepo, `cem validate` validates the manifest for each workspace package
+that has a `customElements` field. Results are reported per-package.
+
+```bash
+cem validate           # validate all packages
+cem validate -p pkg/a  # validate one package
+```
+
 ### Available Warning Categories
 
 - `lifecycle` - All lifecycle method warnings

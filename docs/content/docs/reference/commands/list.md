@@ -25,6 +25,16 @@ cem list --deprecated --format tree
 cem list --package npm:@vaadin/button@24.3.5
 ```
 
+## Workspace Mode
+
+In a monorepo, `cem list` and its subcommands display results grouped by
+package name.
+
+```bash
+cem list tags              # list tags from all packages
+cem list tags -p pkg/a     # list tags from one package
+```
+
 ## Subcommands
 
 ### `tags`

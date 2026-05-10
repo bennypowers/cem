@@ -178,6 +178,55 @@ serve:
         - '**/*.min.css'
 ```
 
+## Monorepo / Workspace Mode
+
+When you run `cem` from a directory whose `package.json` has a `workspaces` field
+(npm, yarn, or pnpm), commands automatically operate on all workspace packages
+that have a `customElements` field in their `package.json`.
+
+### Opting packages in
+
+Add a `customElements` field to each package that should participate:
+
+```json
+{
+  "name": "@myorg/button",
+  "customElements": "custom-elements.json"
+}
+```
+
+Packages without this field are skipped.
+
+### Config cascade
+
+When a workspace package has no `.config/cem.yaml` of its own, it inherits
+settings from the workspace root config. If a package does have its own config,
+its values take precedence, and any unset fields fall back to the root config.
+
+Cascaded fields include `generate.files`, `generate.exclude`,
+`generate.designTokens`, `generate.demoDiscovery`, `health.failBelow`,
+`health.disable`, and `export.*`.
+
+### Single-package override
+
+To target a single package instead of the whole workspace, use `-p`:
+
+```shell
+cem generate -p packages/button
+```
+
+### Restrictions
+
+The `--output` flag is not compatible with workspace mode. Each package writes
+its manifest to the path specified in its `customElements` field. Combining
+`--output` with workspace mode produces an error.
+
+### Supported commands
+
+All one-shot commands support workspace mode: `generate`, `validate`, `health`,
+`export`, `search`, and `list`. The `serve`, `lsp`, and `mcp` servers already
+discover workspace packages automatically.
+
 ## Import Map Overrides
 
 The dev server automatically generates import maps from `package.json`, but you can customize or override these mappings.

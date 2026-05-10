@@ -54,6 +54,10 @@ Examples:
 			return errors.New("search pattern cannot be empty")
 		}
 
+		if W.ShouldUseWorkspaceMode(cmd) {
+			return searchWorkspace(cmd, pattern)
+		}
+
 		if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
 		} else {
@@ -75,6 +79,42 @@ Examples:
 			return nil
 		}
 	},
+}
+
+func searchWorkspace(cmd *cobra.Command, pattern string) error {
+	ctx, err := W.GetWorkspaceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	format, err := requireFormat(cmd, []string{"table", "tree"})
+	if err != nil {
+		return err
+	}
+
+	results := W.ForEachPackage(ctx.Root(), func(pkg W.PackageInfo) error {
+		pkgCtx := W.NewFileSystemWorkspaceContext(pkg.Path)
+		if err := pkgCtx.Init(); err != nil {
+			return err
+		}
+		manifest, err := pkgCtx.Manifest()
+		if err != nil {
+			return err
+		}
+		if manifest == nil {
+			return nil
+		}
+		s, err := search.RenderSearchResults(manifest, pattern, format)
+		if err != nil {
+			return err
+		}
+		if s != "" {
+			fmt.Printf("\n%s:\n%s\n", pkg.Name, s)
+		}
+		return nil
+	})
+
+	return W.ReportResults("Searched manifests", results)
 }
 
 func init() {

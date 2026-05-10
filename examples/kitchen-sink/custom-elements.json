@@ -570,6 +570,14 @@
       "exports": [
         {
           "kind": "custom-element-definition",
+          "name": "demo-spinner",
+          "declaration": {
+            "name": "DemoSpinner",
+            "module": "elements/demo-spinner/demo-spinner.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
           "name": "demo-button",
           "declaration": {
             "name": "DemoButton",

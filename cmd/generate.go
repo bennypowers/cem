@@ -41,6 +41,10 @@ var generateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) (errs error) {
 		start = time.Now()
 
+		if W.ShouldUseWorkspaceMode(cmd) {
+			return generateWorkspace(cmd)
+		}
+
 		// Create workspace context with design tokens loader for generate command
 		baseCtx, err := W.GetWorkspaceContext(cmd)
 		if err != nil {
@@ -53,8 +57,14 @@ var generateCmd = &cobra.Command{
 			return fmt.Errorf("failed to initialize workspace context with design tokens: %w", err)
 		}
 
-		// de-dupe globs
+		cfg, err := ctx.Config()
+		if err != nil {
+			return fmt.Errorf("loading config: %w", err)
+		}
+
+		// Merge file patterns from CLI args, viper config, and workspace-cascaded config
 		allGlobs := append(args, viper.GetStringSlice("generate.files")...)
+		allGlobs = append(allGlobs, cfg.Generate.Files...)
 		seen := make(map[string]bool)
 		uniqueGlobs := []string{}
 		for _, glob := range allGlobs {
@@ -73,15 +83,10 @@ var generateCmd = &cobra.Command{
 			return errors.New("pass at least one file to generate")
 		}
 
-		exclude, err := expand(ctx, viper.GetStringSlice("generate.exclude"))
+		excludeGlobs := append(viper.GetStringSlice("generate.exclude"), cfg.Generate.Exclude...)
+		exclude, err := expand(ctx, excludeGlobs)
 		if err != nil {
 			errs = errors.Join(errs, err)
-		}
-
-		cfg, err := ctx.Config()
-		if err != nil {
-			errs = errors.Join(errs, err)
-			return errs
 		}
 
 		// Validate demo discovery configuration at startup to fail fast
@@ -250,6 +255,48 @@ func init() {
 	_ = viper.BindPFlag("generate.demoDiscovery.fileGlob", generateCmd.Flags().Lookup("demo-discovery-file-glob"))
 	_ = viper.BindPFlag("generate.demoDiscovery.urlPattern", generateCmd.Flags().Lookup("demo-discovery-url-pattern"))
 	_ = viper.BindPFlag("generate.demoDiscovery.urlTemplate", generateCmd.Flags().Lookup("demo-discovery-url-template"))
+}
+
+func generateWorkspace(cmd *cobra.Command) error {
+	if cmd.Flags().Changed("output") {
+		return fmt.Errorf("cannot use --output in workspace mode\n" +
+			"Each package writes to its customElements path from package.json.\n" +
+			"To target a single package, use: cem generate -p packages/foo -o custom-path.json")
+	}
+
+	baseCtx, err := W.GetWorkspaceContext(cmd)
+	if err != nil {
+		return fmt.Errorf("project context not initialized: %w", err)
+	}
+
+	results := W.ForEachPackage(baseCtx.Root(), func(pkg W.PackageInfo) error {
+		ctx := W.NewFileSystemWorkspaceContext(pkg.Path)
+		if err := ctx.Init(); err != nil {
+			return fmt.Errorf("initializing context: %w", err)
+		}
+
+		manifestStr, err := G.Generate(ctx)
+		if err != nil {
+			return err
+		}
+		if manifestStr == nil {
+			return fmt.Errorf("no manifest produced")
+		}
+
+		outputPath := filepath.Join(pkg.Path, pkg.CustomElementsRef)
+		writer, err := ctx.OutputWriter(outputPath)
+		if err != nil {
+			return fmt.Errorf("opening output: %w", err)
+		}
+		defer func() { _ = writer.Close() }()
+
+		if _, err := writer.Write([]byte(*manifestStr + "\n")); err != nil {
+			return fmt.Errorf("writing manifest: %w", err)
+		}
+		return nil
+	})
+
+	return W.ReportResults("Generated manifests", results)
 }
 
 // runWatchMode starts the file watching mode - delegates to generate package

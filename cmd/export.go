@@ -26,6 +26,80 @@ import (
 	"github.com/spf13/viper"
 )
 
+func exportWorkspace(cmd *cobra.Command) error {
+	ctx, err := workspace.GetWorkspaceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	results := workspace.ForEachPackage(ctx.Root(), func(pkg workspace.PackageInfo) error {
+		pkgCtx := workspace.NewFileSystemWorkspaceContext(pkg.Path)
+		if err := pkgCtx.Init(); err != nil {
+			return err
+		}
+
+		manifest, err := pkgCtx.Manifest()
+		if err != nil {
+			return fmt.Errorf("reading manifest: %w", err)
+		}
+		if manifest == nil {
+			return fmt.Errorf("could not find custom-elements.json")
+		}
+
+		pkgJSON, _ := pkgCtx.PackageJSON()
+		packageName := ""
+		if pkgJSON != nil {
+			packageName = pkgJSON.Name
+		}
+
+		cfg, err := pkgCtx.Config()
+		if err != nil {
+			return err
+		}
+
+		frameworks := make(map[string]export.FrameworkExportConfig)
+		for name, fwCfg := range cfg.Export {
+			frameworks[name] = export.FrameworkExportConfig{
+				Output:      fwCfg.Output,
+				StripPrefix: fwCfg.StripPrefix,
+				PackageName: fwCfg.PackageName,
+				ModuleName:  fwCfg.ModuleName,
+			}
+		}
+
+		// Apply CLI flag overrides
+		format, _ := cmd.Flags().GetString("format")
+		output, _ := cmd.Flags().GetString("output")
+		stripPrefix, _ := cmd.Flags().GetString("strip-prefix")
+
+		if format != "" {
+			cfg, exists := frameworks[format]
+			if !exists {
+				cfg = export.FrameworkExportConfig{}
+			}
+			if output != "" {
+				cfg.Output = output
+			}
+			if stripPrefix != "" {
+				cfg.StripPrefix = stripPrefix
+			}
+			frameworks = map[string]export.FrameworkExportConfig{format: cfg}
+		}
+
+		if len(frameworks) == 0 {
+			return fmt.Errorf("no frameworks configured")
+		}
+
+		return export.Export(export.Options{
+			Manifest:    manifest,
+			PackageName: packageName,
+			Frameworks:  frameworks,
+		})
+	})
+
+	return workspace.ReportResults("Exported wrappers", results)
+}
+
 func init() {
 	exportCmd.Flags().String("format", "", "Framework to export: react, vue, or angular (exports all configured frameworks if omitted)")
 	exportCmd.Flags().StringP("output", "o", "", "Output directory for generated files")
@@ -43,6 +117,10 @@ with compile-time type checking and IDE autocomplete.
 Frameworks can be configured in .config/cem.yaml under the 'export' key, or
 selected via the --format flag for one-off usage.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if workspace.ShouldUseWorkspaceMode(cmd) {
+			return exportWorkspace(cmd)
+		}
+
 		ctx, err := workspace.GetWorkspaceContext(cmd)
 		if err != nil {
 			return fmt.Errorf("getting workspace context: %w", err)

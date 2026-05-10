@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/card.js",
+      "declarations": [
+        {
+          "name": "ExampleCard",
+          "summary": "A content card",
+          "description": "A card component",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "heading",
+              "description": "Card heading text",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "slots": [
+            {
+              "name": "",
+              "description": "Card content"
+            },
+            {
+              "name": "header",
+              "description": "Card header content"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "",
+          "declaration": {
+            "name": "ExampleCard",
+            "module": "src/card.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ExampleCard",
+          "declaration": {
+            "name": "ExampleCard",
+            "module": "src/card.js"
+          }
+        }
+      ]
+    }
+  ]
+}

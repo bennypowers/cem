@@ -247,16 +247,53 @@ func LoadPackageConfigWithWorkspaceDefaults(packageDir string) (*C.CemConfig, er
 		return packageConfig, nil
 	}
 
-	// Merge: package config overrides workspace defaults
-	// For serve config: use workspace defaults but allow package to override
-	if packageConfig.Serve.Port == 0 && workspaceConfig.Serve.Port != 0 {
-		packageConfig.Serve.Port = workspaceConfig.Serve.Port
-	}
-	if !packageConfig.Serve.OpenBrowser && workspaceConfig.Serve.OpenBrowser {
-		packageConfig.Serve.OpenBrowser = workspaceConfig.Serve.OpenBrowser
-	}
+	// Merge: package config overrides workspace defaults.
+	// For each field, use workspace value only when package has zero value.
+	mergeConfigDefaults(packageConfig, workspaceConfig)
 
 	return packageConfig, nil
+}
+
+// mergeConfigDefaults fills zero-value fields in pkg from ws.
+// Package config always wins when explicitly set.
+func mergeConfigDefaults(pkg, ws *C.CemConfig) {
+	// Serve
+	if pkg.Serve.Port == 0 && ws.Serve.Port != 0 {
+		pkg.Serve.Port = ws.Serve.Port
+	}
+	if !pkg.Serve.OpenBrowser && ws.Serve.OpenBrowser {
+		pkg.Serve.OpenBrowser = ws.Serve.OpenBrowser
+	}
+
+	// Generate
+	if len(pkg.Generate.Files) == 0 && len(ws.Generate.Files) > 0 {
+		pkg.Generate.Files = ws.Generate.Files
+	}
+	if len(pkg.Generate.Exclude) == 0 && len(ws.Generate.Exclude) > 0 {
+		pkg.Generate.Exclude = ws.Generate.Exclude
+	}
+	if !pkg.Generate.NoDefaultExcludes && ws.Generate.NoDefaultExcludes {
+		pkg.Generate.NoDefaultExcludes = ws.Generate.NoDefaultExcludes
+	}
+	if pkg.Generate.DesignTokens.Spec == "" && ws.Generate.DesignTokens.Spec != "" {
+		pkg.Generate.DesignTokens = ws.Generate.DesignTokens
+	}
+	if pkg.Generate.DemoDiscovery.FileGlob == "" && ws.Generate.DemoDiscovery.FileGlob != "" {
+		pkg.Generate.DemoDiscovery = ws.Generate.DemoDiscovery
+	}
+
+	// Health
+	if pkg.Health.FailBelow == 0 && ws.Health.FailBelow != 0 {
+		pkg.Health.FailBelow = ws.Health.FailBelow
+	}
+	if len(pkg.Health.Disable) == 0 && len(ws.Health.Disable) > 0 {
+		pkg.Health.Disable = ws.Health.Disable
+	}
+
+	// Export
+	if len(pkg.Export) == 0 && len(ws.Export) > 0 {
+		pkg.Export = ws.Export
+	}
 }
 
 // findWorkspaceRootWithWorkspaces finds workspace root by looking for package.json with workspaces field

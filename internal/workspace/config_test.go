@@ -232,3 +232,93 @@ func TestLoadPackageConfigWithWorkspaceDefaults_InvalidWorkspaceConfig(t *testin
 	assert.Error(t, err)
 }
 
+func TestLoadPackageConfigWithWorkspaceDefaults_CascadesGenerateFiles(t *testing.T) {
+	// Package has no config; should inherit workspace root's generate.files
+	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"src/**/*.ts"}, cfg.Generate.Files)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_CascadesGenerateExclude(t *testing.T) {
+	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"src/**/*.test.ts"}, cfg.Generate.Exclude)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_CascadesDesignTokens(t *testing.T) {
+	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Equal(t, "tokens.json", cfg.Generate.DesignTokens.Spec)
+	assert.Equal(t, "rh", cfg.Generate.DesignTokens.Prefix)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_CascadesDemoDiscovery(t *testing.T) {
+	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Equal(t, "demo/**/*.html", cfg.Generate.DemoDiscovery.FileGlob)
+	assert.Equal(t, "^/demo/(?P<element>[^/]+)", cfg.Generate.DemoDiscovery.URLPattern)
+	assert.Equal(t, "/demo/{{.element}}", cfg.Generate.DemoDiscovery.URLTemplate)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_CascadesHealthConfig(t *testing.T) {
+	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Equal(t, 80, cfg.Health.FailBelow)
+	assert.Equal(t, []string{"no-description"}, cfg.Health.Disable)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_CascadesExportConfig(t *testing.T) {
+	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	require.NotNil(t, cfg.Export)
+	react, ok := cfg.Export["react"]
+	require.True(t, ok)
+	assert.Equal(t, "react", react.Output)
+	assert.Equal(t, "rh-", react.StripPrefix)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_PackageOverridesGenerateFiles(t *testing.T) {
+	// elements package has generate.files: ["src/**/*.ts"] in its own config
+	// workspace also has generate.files - package should win
+	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"src/**/*.ts"}, cfg.Generate.Files)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_PartialOverride(t *testing.T) {
+	// elements package has generate.files but not generate.exclude
+	// Should keep its own files but inherit workspace exclude
+	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	// Package's own files
+	assert.Equal(t, []string{"src/**/*.ts"}, cfg.Generate.Files)
+	// Inherited from workspace
+	assert.Equal(t, []string{"src/**/*.test.ts"}, cfg.Generate.Exclude)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_PartialOverrideHealth(t *testing.T) {
+	// elements package has no health config - inherits workspace health
+	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Equal(t, 80, cfg.Health.FailBelow)
+	assert.Equal(t, []string{"no-description"}, cfg.Health.Disable)
+}
+
+func TestLoadPackageConfigWithWorkspaceDefaults_PartialOverrideDesignTokens(t *testing.T) {
+	// elements package has no design tokens config - inherits workspace
+	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	require.NoError(t, err)
+	assert.Equal(t, "tokens.json", cfg.Generate.DesignTokens.Spec)
+	assert.Equal(t, "rh", cfg.Generate.DesignTokens.Prefix)
+}
+

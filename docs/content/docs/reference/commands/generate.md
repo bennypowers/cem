@@ -163,6 +163,27 @@ generate:
     urlTemplate: "https://example.com/{{.tag}}/{{.demo}}/"
 ```
 
+## Workspace Mode
+
+In a monorepo with `workspaces` in `package.json`, running `cem generate` at the
+workspace root generates a manifest for each package that has a `customElements`
+field. Each manifest is written to the path specified in that package's
+`customElements` field.
+
+```bash
+# Generate manifests for all workspace packages
+cem generate
+
+# Target a single package
+cem generate -p packages/button
+```
+
+The `--output` flag is not available in workspace mode. See
+[Configuration: Workspace Mode][workspace-mode] for details on config cascade
+and package selection.
+
+[workspace-mode]: {{< relref "/docs/reference/configuration#monorepo--workspace-mode" >}}
+
 ## Output Format
 
 Generates JSON conforming to the [Custom Elements Manifest][cem] schema. HTML-sensitive characters are escaped using standard JSON unicode sequences (e.g., `<` becomes `\u003c`) for security.
