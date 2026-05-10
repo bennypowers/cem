@@ -24,10 +24,11 @@ import (
 	"time"
 
 	G "bennypowers.dev/cem/generate"
+	C "bennypowers.dev/cem/internal/config"
+	W "bennypowers.dev/cem/internal/workspace"
 	"bennypowers.dev/cem/serve/middleware"
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
 	"bennypowers.dev/cem/serve/middleware/routes"
-	W "bennypowers.dev/cem/internal/workspace"
 )
 
 // contextWithShutdown creates a context that is cancelled when either:
@@ -155,55 +156,62 @@ func (s *Server) InitializeWorkspaceMode() error {
 	return nil
 }
 
-// generateManifestForPackage generates a manifest for a single workspace package
-// Returns nil and an error if generation fails at any step.
-func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo) (*middleware.WorkspacePackage, error) {
+// loadWorkspaceRootConfig loads and caches the root workspace config.
+// Returns nil if watchDir is empty or config cannot be loaded.
+func (s *Server) loadWorkspaceRootConfig() *C.CemConfig {
+	if s.watchDir == "" {
+		return nil
+	}
+	rootCtx := W.NewFileSystemWorkspaceContext(s.watchDir)
+	if err := rootCtx.Init(); err != nil {
+		s.logger.Debug("Root context init failed: %v", err)
+		return nil
+	}
+	cfg, err := rootCtx.Config()
+	if err != nil {
+		s.logger.Debug("Root config load failed: %v", err)
+		return nil
+	}
+	return cfg
+}
+
+// generateManifestForPackage generates a manifest for a single workspace package.
+// rootCfg is the workspace root config (may be nil if unavailable).
+func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo, rootCfg *C.CemConfig) (*middleware.WorkspacePackage, error) {
 	s.logger.Debug("Generating manifest for workspace package %s", pkgInfo.Name)
-	// Create workspace context for this package
 	workspace := W.NewFileSystemWorkspaceContext(pkgInfo.Path)
 	if err := workspace.Init(); err != nil {
 		return nil, fmt.Errorf("initializing workspace for %s: %w", pkgInfo.Name, err)
 	}
 
-	// Resolve root-level file patterns for this package
-	if s.watchDir != "" {
-		rootCtx := W.NewFileSystemWorkspaceContext(s.watchDir)
-		if err := rootCtx.Init(); err != nil {
-			s.logger.Debug("Root context init failed for %s: %v", pkgInfo.Name, err)
-		} else {
-			rootCfg, err := rootCtx.Config()
+	if rootCfg != nil {
+		pkgCfg, err := workspace.Config()
+		if err != nil {
+			return nil, fmt.Errorf("loading config for %s: %w", pkgInfo.Name, err)
+		}
+		if len(rootCfg.Generate.Files) > 0 {
+			resolved, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Files, pkgInfo.Path)
 			if err != nil {
-				s.logger.Debug("Root config load failed: %v", err)
+				s.logger.Debug("ResolveWorkspaceFiles failed for %s: %v", pkgInfo.Name, err)
 			} else {
-				pkgCfg, _ := workspace.Config()
-				if len(rootCfg.Generate.Files) > 0 {
-					resolved, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Files, pkgInfo.Path)
-					if err != nil {
-						s.logger.Debug("ResolveWorkspaceFiles failed for %s: %v", pkgInfo.Name, err)
-					} else {
-						s.logger.Debug("Resolved %d files for %s", len(resolved), pkgInfo.Name)
-						pkgCfg.Generate.Files = append(pkgCfg.Generate.Files, resolved...)
-					}
-				}
-				if len(rootCfg.Generate.Exclude) > 0 {
-					resolvedExclude, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Exclude, pkgInfo.Path)
-					if err == nil {
-						pkgCfg.Generate.Exclude = append(pkgCfg.Generate.Exclude, resolvedExclude...)
-					}
-				}
-				if rootCfg.Generate.DemoDiscovery.FileGlob != "" && pkgCfg.Generate.DemoDiscovery.FileGlob == "" {
-					demoFiles, err := W.ResolveWorkspaceFiles(s.watchDir, []string{rootCfg.Generate.DemoDiscovery.FileGlob}, pkgInfo.Path)
-					if err == nil && len(demoFiles) > 0 {
-						pkgCfg.Generate.DemoDiscovery = rootCfg.Generate.DemoDiscovery
-						pkgCfg.Generate.DemoDiscovery.FileGlob = W.DerivePackageGlob(demoFiles)
-					}
-				}
+				s.logger.Debug("Resolved %d files for %s", len(resolved), pkgInfo.Name)
+				pkgCfg.Generate.Files = append(pkgCfg.Generate.Files, resolved...)
+			}
+		}
+		if len(rootCfg.Generate.Exclude) > 0 {
+			resolvedExclude, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Exclude, pkgInfo.Path)
+			if err == nil {
+				pkgCfg.Generate.Exclude = append(pkgCfg.Generate.Exclude, resolvedExclude...)
+			}
+		}
+		if rootCfg.Generate.DemoDiscovery.FileGlob != "" && pkgCfg.Generate.DemoDiscovery.FileGlob == "" {
+			demoFiles, err := W.ResolveWorkspaceFiles(s.watchDir, []string{rootCfg.Generate.DemoDiscovery.FileGlob}, pkgInfo.Path)
+			if err == nil && len(demoFiles) > 0 {
+				pkgCfg.Generate.DemoDiscovery = rootCfg.Generate.DemoDiscovery
+				pkgCfg.Generate.DemoDiscovery.FileGlob = W.DerivePackageGlob(demoFiles)
 			}
 		}
 	}
-
-	pkgCfgCheck, _ := workspace.Config()
-	s.logger.Debug("Package %s: %d file patterns, config=%q", pkgInfo.Name, len(pkgCfgCheck.Generate.Files), workspace.ConfigFile())
 
 	// Create generate session
 	session, err := G.NewGenerateSession(workspace)
@@ -247,11 +255,12 @@ func (s *Server) generateInitialWorkspaceManifests(watchDir string) ([]middlewar
 		return nil, nil // Return empty list, not error
 	}
 
-	// Generate fresh manifests for each package
+	rootCfg := s.loadWorkspaceRootConfig()
+
 	packages := make([]middleware.WorkspacePackage, 0, len(packageDirs))
 
 	for _, pkgInfo := range packageDirs {
-		pkg, err := s.generateManifestForPackage(pkgInfo)
+		pkg, err := s.generateManifestForPackage(pkgInfo, rootCfg)
 		if err != nil {
 			s.logger.Warning("Failed to generate manifest for package %s: %v", pkgInfo.Name, err)
 			continue
@@ -326,9 +335,10 @@ func (s *Server) regenerateAffectedWorkspacePackages(changedFiles []string) (int
 		}
 	}
 
-	// Regenerate affected packages
+	rootCfg := s.loadWorkspaceRootConfig()
+
 	for _, pkgInfo := range affectedPkgInfos {
-		pkg, err := s.generateManifestForPackage(pkgInfo)
+		pkg, err := s.generateManifestForPackage(pkgInfo, rootCfg)
 		if err != nil {
 			s.logger.Warning("Failed to regenerate manifest for package %s: %v", pkgInfo.Name, err)
 			// Try to preserve the old manifest if regeneration fails
