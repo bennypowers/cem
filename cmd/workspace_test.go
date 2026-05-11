@@ -174,20 +174,32 @@ func TestWorkspaceExport_OutputPerPackage(t *testing.T) {
 }
 
 func TestWorkspaceGenerate_DemoDiscovery(t *testing.T) {
-	// Root config has demoDiscovery.fileGlob: "packages/*/demo/*.html".
-	// The glob should be resolved per-package so each package discovers its own demos.
+	// Root config has demoDiscovery with fileGlob, urlPattern, and urlTemplate.
+	// In workspace mode, demo files are package-relative but the urlPattern
+	// is root-level. The workspace fallback should prepend the package dir name
+	// so the urlPattern matches and URLs are generated.
 	projectDir := generateWorkspaceFixture(t)
 
-	// Check that demo discovery ran for each package by examining stderr warnings.
-	// Demo files are found but may not produce URLs without urlPattern config.
-	// The key invariant: each package only discovers ITS OWN demo files.
-	for _, pkg := range []string{"packages/button", "packages/card"} {
-		manifestPath := filepath.Join(projectDir, pkg, "custom-elements.json")
+	for _, pkg := range []struct {
+		dir     string
+		wantURL string
+	}{
+		{"packages/button", "https://test.example.com/components/button/demo/basic/"},
+		{"packages/card", "https://test.example.com/components/card/demo/basic/"},
+	} {
+		manifestPath := filepath.Join(projectDir, pkg.dir, "custom-elements.json")
 		data, err := os.ReadFile(manifestPath)
 		require.NoError(t, err)
-		// Manifest should exist with modules (demo discovery doesn't affect module count)
-		assert.Contains(t, string(data), `"kind": "javascript-module"`,
-			"%s manifest should have modules", pkg)
+		content := string(data)
+
+		assert.Contains(t, content, `"kind": "javascript-module"`,
+			"%s manifest should have modules", pkg.dir)
+
+		assert.Contains(t, content, `"demos"`,
+			"%s manifest should have demos attached to declarations", pkg.dir)
+
+		assert.Contains(t, content, pkg.wantURL,
+			"%s manifest should contain generated demo URL", pkg.dir)
 	}
 }
 

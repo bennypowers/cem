@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -34,10 +36,11 @@ import (
 )
 
 type frontmatterTestContext struct {
-	manifest   []byte
-	watchDir   string
-	demoRoutes map[string]*middleware.DemoRouteEntry
-	fs         platform.FileSystem
+	manifest      []byte
+	watchDir      string
+	demoRoutes    map[string]*middleware.DemoRouteEntry
+	fs            platform.FileSystem
+	renderingMode string
 }
 
 func (c *frontmatterTestContext) WatchDir() string                                  { return c.watchDir }
@@ -51,14 +54,32 @@ func (c *frontmatterTestContext) Logger() logger.Logger                         
 func (c *frontmatterTestContext) FileSystem() platform.FileSystem                   { return c.fs }
 func (c *frontmatterTestContext) PackageJSON() (*middleware.PackageJSON, error)      { return nil, nil }
 func (c *frontmatterTestContext) BroadcastError(title, message, file string) error   { return nil }
-func (c *frontmatterTestContext) DemoRenderingMode() string                         { return "light" }
+func (c *frontmatterTestContext) DemoRenderingMode() string                         { return c.renderingMode }
 func (c *frontmatterTestContext) URLRewrites() []config.URLRewrite                  { return nil }
 func (c *frontmatterTestContext) PathResolver() middleware.PathResolver              { return nil }
 func (c *frontmatterTestContext) HealthResult() (*health.HealthResult, error)        { return nil, nil }
 func (c *frontmatterTestContext) IsStaticBuild() bool                               { return false }
 
-func TestFrontmatterStrippedFromDemoHTTPResponse(t *testing.T) {
-	demoContent := []byte("---\ndescription: Visible frontmatter bug\n---\n<test-el>content</test-el>\n")
+type frontmatterTestFixture struct {
+	handler   http.Handler
+	demoRoute string
+}
+
+func loadFixture(t *testing.T, name string) []byte {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("testdata", "frontmatter", name))
+	if err != nil {
+		t.Fatalf("read fixture %s: %v", name, err)
+	}
+	return data
+}
+
+func setupFrontmatterTest(t *testing.T, fixtureName, renderingMode string) frontmatterTestFixture {
+	t.Helper()
+
+	demoContent := loadFixture(t, fixtureName)
+	demoRoute := "/demo/" + fixtureName
+	demoURL := "./demo/" + fixtureName
 
 	manifest := map[string]any{
 		"schemaVersion": "1.0.0",
@@ -71,8 +92,8 @@ func TestFrontmatterStrippedFromDemoHTTPResponse(t *testing.T) {
 				"name":          "TestEl",
 				"tagName":       "test-el",
 				"demos": []map[string]any{{
-					"description": "Frontmatter demo",
-					"url":         "./demo/frontmatter.html",
+					"description": fixtureName,
+					"url":         demoURL,
 				}},
 			}},
 		}},
@@ -88,47 +109,112 @@ func TestFrontmatterStrippedFromDemoHTTPResponse(t *testing.T) {
 	if err := fs.MkdirAll(demoDir, 0755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
-	if err := fs.WriteFile(demoDir+"/frontmatter.html", demoContent, 0644); err != nil {
+	if err := fs.WriteFile(demoDir+"/"+fixtureName, demoContent, 0644); err != nil {
 		t.Fatalf("write demo: %v", err)
 	}
 
 	ctx := &frontmatterTestContext{
-		manifest: manifestBytes,
-		watchDir: watchDir,
-		fs:       fs,
+		manifest:      manifestBytes,
+		watchDir:      watchDir,
+		fs:            fs,
+		renderingMode: renderingMode,
 		demoRoutes: map[string]*middleware.DemoRouteEntry{
-			"/demo/frontmatter.html": {
-				TagName:  "test-el",
-				FilePath: "demo/frontmatter.html",
-				Demo: &M.Demo{
-					Description: "Frontmatter demo",
-					URL:         "./demo/frontmatter.html",
-				},
-				LocalRoute: "/demo/frontmatter.html",
+			demoRoute: {
+				TagName:    "test-el",
+				FilePath:   "demo/" + fixtureName,
+				Demo:       &M.Demo{Description: fixtureName, URL: demoURL},
+				LocalRoute: demoRoute,
 			},
 		},
 	}
 
 	mw := routes.New(routes.Config{Context: ctx})
-	handler := mw(http.NotFoundHandler())
-
-	req := httptest.NewRequest("GET", "/demo/frontmatter.html", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", rec.Code)
+	return frontmatterTestFixture{
+		handler:   mw(http.NotFoundHandler()),
+		demoRoute: demoRoute,
 	}
+}
 
-	body := rec.Body.String()
+func TestFrontmatterStrippedFromDemoHTTPResponse(t *testing.T) {
+	modes := []string{"light", "shadow", "iframe", "chromeless"}
 
-	// Frontmatter must not appear in rendered output
-	if strings.Contains(body, "Visible frontmatter bug") {
-		t.Error("frontmatter description leaked into HTTP response body")
+	for _, mode := range modes {
+		t.Run(mode, func(t *testing.T) {
+			fix := setupFrontmatterTest(t, "with-frontmatter.html", mode)
+
+			req := httptest.NewRequest("GET", fix.demoRoute, nil)
+			rec := httptest.NewRecorder()
+			fix.handler.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d", rec.Code)
+			}
+
+			body := rec.Body.String()
+
+			if strings.Contains(body, "Visible frontmatter bug") {
+				t.Error("frontmatter description leaked into HTTP response body")
+			}
+
+			if !strings.Contains(body, "<test-el>content</test-el>") {
+				t.Error("demo element content missing from HTTP response")
+			}
+		})
 	}
+}
 
-	// Demo content must be present
-	if !strings.Contains(body, "<test-el>content</test-el>") {
-		t.Error("demo element content missing from HTTP response")
+func TestEmptyFrontmatterStrippedFromDemoHTTPResponse(t *testing.T) {
+	modes := []string{"light", "shadow", "iframe", "chromeless"}
+
+	for _, mode := range modes {
+		t.Run(mode, func(t *testing.T) {
+			fix := setupFrontmatterTest(t, "empty-frontmatter.html", mode)
+
+			req := httptest.NewRequest("GET", fix.demoRoute, nil)
+			rec := httptest.NewRecorder()
+			fix.handler.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d", rec.Code)
+			}
+
+			body := rec.Body.String()
+
+			if strings.Contains(body, "\n---\n") || strings.Contains(body, ">---<") || strings.Contains(body, ">---\n") {
+				t.Error("empty frontmatter delimiter leaked into HTTP response body")
+			}
+
+			if !strings.Contains(body, "<test-el>content</test-el>") {
+				t.Error("demo element content missing from HTTP response")
+			}
+		})
+	}
+}
+
+func TestFrontmatterStrippedViaQueryParamOverride(t *testing.T) {
+	modes := []string{"light", "shadow", "iframe", "chromeless"}
+
+	for _, mode := range modes {
+		t.Run(mode, func(t *testing.T) {
+			fix := setupFrontmatterTest(t, "query-param-override.html", "light")
+
+			req := httptest.NewRequest("GET", fix.demoRoute+"?rendering="+mode, nil)
+			rec := httptest.NewRecorder()
+			fix.handler.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d", rec.Code)
+			}
+
+			body := rec.Body.String()
+
+			if strings.Contains(body, "Should not appear") {
+				t.Errorf("frontmatter leaked when overriding to %s via ?rendering query param", mode)
+			}
+
+			if !strings.Contains(body, "<test-el>visible</test-el>") {
+				t.Error("demo element content missing from HTTP response")
+			}
+		})
 	}
 }

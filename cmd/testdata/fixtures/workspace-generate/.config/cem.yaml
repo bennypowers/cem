@@ -3,6 +3,8 @@ generate:
     - "packages/*/src/**/*.ts"
   demoDiscovery:
     fileGlob: "packages/*/demo/*.html"
+    urlPattern: ":pkg/demo/:demo.html"
+    urlTemplate: "https://test.example.com/components/{{.pkg}}/demo/{{.demo}}/"
 export:
   react:
     output: react

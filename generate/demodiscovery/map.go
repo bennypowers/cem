@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	htmllang "bennypowers.dev/cem/internal/languages/html"
+	"bennypowers.dev/cem/internal/logging"
 	S "bennypowers.dev/cem/internal/set"
 	"bennypowers.dev/cem/types"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -128,6 +129,14 @@ func extractDemoTagsWithPattern(
 		if len(parameterTags) > 0 {
 			return parameterTags, nil
 		}
+		if prefix := workspacePackagePrefix(ctx); prefix != "" {
+			retryTags, retryErr := extractTagsFromURLPatternParameters(filepath.Join(prefix, path), urlPattern)
+			if retryErr != nil {
+				logging.Debug("workspace fallback URLPattern extraction failed for %q with pattern %q: %v", path, urlPattern, retryErr)
+			} else if len(retryTags) > 0 {
+				return retryTags, nil
+			}
+		}
 	}
 
 	// Priority 3: Content-based discovery
@@ -212,6 +221,17 @@ func extractParameterValues(demoPath, urlPattern string) ([]string, error) {
 	}
 
 	return paramValues, nil
+}
+
+// workspacePackagePrefix returns the package directory name from a workspace
+// context, or "" if not applicable. Used as a fallback prefix when root-level
+// URLPatterns don't match package-relative demo paths.
+func workspacePackagePrefix(ctx types.WorkspaceContext) string {
+	pkgDir := filepath.Base(ctx.Root())
+	if pkgDir == "" || pkgDir == "." {
+		return ""
+	}
+	return pkgDir
 }
 
 var customElementTagNameRe = regexp.MustCompile(`^[a-z][.0-9_a-z]*-[\-.0-9_a-z]*$`)
