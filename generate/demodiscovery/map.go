@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	htmllang "bennypowers.dev/cem/internal/languages/html"
+	"bennypowers.dev/cem/internal/logging"
 	S "bennypowers.dev/cem/internal/set"
 	"bennypowers.dev/cem/types"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -129,8 +130,10 @@ func extractDemoTagsWithPattern(
 			return parameterTags, nil
 		}
 		if prefix := workspacePackagePrefix(ctx); prefix != "" {
-			retryTags, _ := extractTagsFromURLPatternParameters(filepath.Join(prefix, path), urlPattern)
-			if len(retryTags) > 0 {
+			retryTags, retryErr := extractTagsFromURLPatternParameters(filepath.Join(prefix, path), urlPattern)
+			if retryErr != nil {
+				logging.Debug("workspace fallback URLPattern extraction failed for %q with pattern %q: %v", path, urlPattern, retryErr)
+			} else if len(retryTags) > 0 {
 				return retryTags, nil
 			}
 		}

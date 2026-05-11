@@ -58,69 +58,83 @@ func (c *frontmatterTestContext) PathResolver() middleware.PathResolver         
 func (c *frontmatterTestContext) HealthResult() (*health.HealthResult, error)        { return nil, nil }
 func (c *frontmatterTestContext) IsStaticBuild() bool                               { return false }
 
+type frontmatterTestFixture struct {
+	handler   http.Handler
+	demoRoute string
+}
+
+func setupFrontmatterTest(t *testing.T, demoContent []byte, demoFilename, renderingMode string) frontmatterTestFixture {
+	t.Helper()
+
+	demoRoute := "/demo/" + demoFilename
+	demoURL := "./demo/" + demoFilename
+
+	manifest := map[string]any{
+		"schemaVersion": "1.0.0",
+		"modules": []map[string]any{{
+			"kind": "javascript-module",
+			"path": "src/test-el.ts",
+			"declarations": []map[string]any{{
+				"kind":          "class",
+				"customElement": true,
+				"name":          "TestEl",
+				"tagName":       "test-el",
+				"demos": []map[string]any{{
+					"description": demoFilename,
+					"url":         demoURL,
+				}},
+			}},
+		}},
+	}
+	manifestBytes, err := json.Marshal(manifest)
+	if err != nil {
+		t.Fatalf("marshal manifest: %v", err)
+	}
+
+	watchDir := t.TempDir()
+	fs := platform.NewOSFileSystem()
+	demoDir := watchDir + "/demo"
+	if err := fs.MkdirAll(demoDir, 0755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := fs.WriteFile(demoDir+"/"+demoFilename, demoContent, 0644); err != nil {
+		t.Fatalf("write demo: %v", err)
+	}
+
+	ctx := &frontmatterTestContext{
+		manifest:      manifestBytes,
+		watchDir:      watchDir,
+		fs:            fs,
+		renderingMode: renderingMode,
+		demoRoutes: map[string]*middleware.DemoRouteEntry{
+			demoRoute: {
+				TagName:    "test-el",
+				FilePath:   "demo/" + demoFilename,
+				Demo:       &M.Demo{Description: demoFilename, URL: demoURL},
+				LocalRoute: demoRoute,
+			},
+		},
+	}
+
+	mw := routes.New(routes.Config{Context: ctx})
+	return frontmatterTestFixture{
+		handler:   mw(http.NotFoundHandler()),
+		demoRoute: demoRoute,
+	}
+}
+
 func TestFrontmatterStrippedFromDemoHTTPResponse(t *testing.T) {
 	modes := []string{"light", "shadow", "iframe", "chromeless"}
 
 	for _, mode := range modes {
 		t.Run(mode, func(t *testing.T) {
-			demoContent := []byte("---\ndescription: Visible frontmatter bug\n---\n<test-el>content</test-el>\n")
+			fix := setupFrontmatterTest(t,
+				[]byte("---\ndescription: Visible frontmatter bug\n---\n<test-el>content</test-el>\n"),
+				"frontmatter.html", mode)
 
-			manifest := map[string]any{
-				"schemaVersion": "1.0.0",
-				"modules": []map[string]any{{
-					"kind": "javascript-module",
-					"path": "src/test-el.ts",
-					"declarations": []map[string]any{{
-						"kind":          "class",
-						"customElement": true,
-						"name":          "TestEl",
-						"tagName":       "test-el",
-						"demos": []map[string]any{{
-							"description": "Frontmatter demo",
-							"url":         "./demo/frontmatter.html",
-						}},
-					}},
-				}},
-			}
-			manifestBytes, err := json.Marshal(manifest)
-			if err != nil {
-				t.Fatalf("marshal manifest: %v", err)
-			}
-
-			watchDir := t.TempDir()
-			fs := platform.NewOSFileSystem()
-			demoDir := watchDir + "/demo"
-			if err := fs.MkdirAll(demoDir, 0755); err != nil {
-				t.Fatalf("mkdir: %v", err)
-			}
-			if err := fs.WriteFile(demoDir+"/frontmatter.html", demoContent, 0644); err != nil {
-				t.Fatalf("write demo: %v", err)
-			}
-
-			ctx := &frontmatterTestContext{
-				manifest:      manifestBytes,
-				watchDir:      watchDir,
-				fs:            fs,
-				renderingMode: mode,
-				demoRoutes: map[string]*middleware.DemoRouteEntry{
-					"/demo/frontmatter.html": {
-						TagName:  "test-el",
-						FilePath: "demo/frontmatter.html",
-						Demo: &M.Demo{
-							Description: "Frontmatter demo",
-							URL:         "./demo/frontmatter.html",
-						},
-						LocalRoute: "/demo/frontmatter.html",
-					},
-				},
-			}
-
-			mw := routes.New(routes.Config{Context: ctx})
-			handler := mw(http.NotFoundHandler())
-
-			req := httptest.NewRequest("GET", "/demo/frontmatter.html", nil)
+			req := httptest.NewRequest("GET", fix.demoRoute, nil)
 			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, req)
+			fix.handler.ServeHTTP(rec, req)
 
 			if rec.Code != http.StatusOK {
 				t.Fatalf("expected 200, got %d", rec.Code)
@@ -144,64 +158,13 @@ func TestEmptyFrontmatterStrippedFromDemoHTTPResponse(t *testing.T) {
 
 	for _, mode := range modes {
 		t.Run(mode, func(t *testing.T) {
-			demoContent := []byte("---\n<section>\n  <test-el>content</test-el>\n</section>\n")
+			fix := setupFrontmatterTest(t,
+				[]byte("---\n<section>\n  <test-el>content</test-el>\n</section>\n"),
+				"empty-fm.html", mode)
 
-			manifest := map[string]any{
-				"schemaVersion": "1.0.0",
-				"modules": []map[string]any{{
-					"kind": "javascript-module",
-					"path": "src/test-el.ts",
-					"declarations": []map[string]any{{
-						"kind":          "class",
-						"customElement": true,
-						"name":          "TestEl",
-						"tagName":       "test-el",
-						"demos": []map[string]any{{
-							"description": "Empty frontmatter demo",
-							"url":         "./demo/empty-fm.html",
-						}},
-					}},
-				}},
-			}
-			manifestBytes, err := json.Marshal(manifest)
-			if err != nil {
-				t.Fatalf("marshal manifest: %v", err)
-			}
-
-			watchDir := t.TempDir()
-			fs := platform.NewOSFileSystem()
-			demoDir := watchDir + "/demo"
-			if err := fs.MkdirAll(demoDir, 0755); err != nil {
-				t.Fatalf("mkdir: %v", err)
-			}
-			if err := fs.WriteFile(demoDir+"/empty-fm.html", demoContent, 0644); err != nil {
-				t.Fatalf("write demo: %v", err)
-			}
-
-			ctx := &frontmatterTestContext{
-				manifest:      manifestBytes,
-				watchDir:      watchDir,
-				fs:            fs,
-				renderingMode: mode,
-				demoRoutes: map[string]*middleware.DemoRouteEntry{
-					"/demo/empty-fm.html": {
-						TagName:  "test-el",
-						FilePath: "demo/empty-fm.html",
-						Demo: &M.Demo{
-							Description: "Empty frontmatter demo",
-							URL:         "./demo/empty-fm.html",
-						},
-						LocalRoute: "/demo/empty-fm.html",
-					},
-				},
-			}
-
-			mw := routes.New(routes.Config{Context: ctx})
-			handler := mw(http.NotFoundHandler())
-
-			req := httptest.NewRequest("GET", "/demo/empty-fm.html", nil)
+			req := httptest.NewRequest("GET", fix.demoRoute, nil)
 			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, req)
+			fix.handler.ServeHTTP(rec, req)
 
 			if rec.Code != http.StatusOK {
 				t.Fatalf("expected 200, got %d", rec.Code)
@@ -225,64 +188,13 @@ func TestFrontmatterStrippedViaQueryParamOverride(t *testing.T) {
 
 	for _, mode := range modes {
 		t.Run(mode, func(t *testing.T) {
-			demoContent := []byte("---\ndescription: Should not appear\nfor: test-el\n---\n<test-el>visible</test-el>\n")
+			fix := setupFrontmatterTest(t,
+				[]byte("---\ndescription: Should not appear\nfor: test-el\n---\n<test-el>visible</test-el>\n"),
+				"qp.html", "light")
 
-			manifest := map[string]any{
-				"schemaVersion": "1.0.0",
-				"modules": []map[string]any{{
-					"kind": "javascript-module",
-					"path": "src/test-el.ts",
-					"declarations": []map[string]any{{
-						"kind":          "class",
-						"customElement": true,
-						"name":          "TestEl",
-						"tagName":       "test-el",
-						"demos": []map[string]any{{
-							"description": "Query param demo",
-							"url":         "./demo/qp.html",
-						}},
-					}},
-				}},
-			}
-			manifestBytes, err := json.Marshal(manifest)
-			if err != nil {
-				t.Fatalf("marshal manifest: %v", err)
-			}
-
-			watchDir := t.TempDir()
-			fs := platform.NewOSFileSystem()
-			demoDir := watchDir + "/demo"
-			if err := fs.MkdirAll(demoDir, 0755); err != nil {
-				t.Fatalf("mkdir: %v", err)
-			}
-			if err := fs.WriteFile(demoDir+"/qp.html", demoContent, 0644); err != nil {
-				t.Fatalf("write demo: %v", err)
-			}
-
-			ctx := &frontmatterTestContext{
-				manifest:      manifestBytes,
-				watchDir:      watchDir,
-				fs:            fs,
-				renderingMode: "light",
-				demoRoutes: map[string]*middleware.DemoRouteEntry{
-					"/demo/qp.html": {
-						TagName:  "test-el",
-						FilePath: "demo/qp.html",
-						Demo: &M.Demo{
-							Description: "Query param demo",
-							URL:         "./demo/qp.html",
-						},
-						LocalRoute: "/demo/qp.html",
-					},
-				},
-			}
-
-			mw := routes.New(routes.Config{Context: ctx})
-			handler := mw(http.NotFoundHandler())
-
-			req := httptest.NewRequest("GET", "/demo/qp.html?rendering="+mode, nil)
+			req := httptest.NewRequest("GET", fix.demoRoute+"?rendering="+mode, nil)
 			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, req)
+			fix.handler.ServeHTTP(rec, req)
 
 			if rec.Code != http.StatusOK {
 				t.Fatalf("expected 200, got %d", rec.Code)
