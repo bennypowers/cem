@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -63,11 +65,21 @@ type frontmatterTestFixture struct {
 	demoRoute string
 }
 
-func setupFrontmatterTest(t *testing.T, demoContent []byte, demoFilename, renderingMode string) frontmatterTestFixture {
+func loadFixture(t *testing.T, name string) []byte {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("testdata", "frontmatter", name))
+	if err != nil {
+		t.Fatalf("read fixture %s: %v", name, err)
+	}
+	return data
+}
+
+func setupFrontmatterTest(t *testing.T, fixtureName, renderingMode string) frontmatterTestFixture {
 	t.Helper()
 
-	demoRoute := "/demo/" + demoFilename
-	demoURL := "./demo/" + demoFilename
+	demoContent := loadFixture(t, fixtureName)
+	demoRoute := "/demo/" + fixtureName
+	demoURL := "./demo/" + fixtureName
 
 	manifest := map[string]any{
 		"schemaVersion": "1.0.0",
@@ -80,7 +92,7 @@ func setupFrontmatterTest(t *testing.T, demoContent []byte, demoFilename, render
 				"name":          "TestEl",
 				"tagName":       "test-el",
 				"demos": []map[string]any{{
-					"description": demoFilename,
+					"description": fixtureName,
 					"url":         demoURL,
 				}},
 			}},
@@ -97,7 +109,7 @@ func setupFrontmatterTest(t *testing.T, demoContent []byte, demoFilename, render
 	if err := fs.MkdirAll(demoDir, 0755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
-	if err := fs.WriteFile(demoDir+"/"+demoFilename, demoContent, 0644); err != nil {
+	if err := fs.WriteFile(demoDir+"/"+fixtureName, demoContent, 0644); err != nil {
 		t.Fatalf("write demo: %v", err)
 	}
 
@@ -109,8 +121,8 @@ func setupFrontmatterTest(t *testing.T, demoContent []byte, demoFilename, render
 		demoRoutes: map[string]*middleware.DemoRouteEntry{
 			demoRoute: {
 				TagName:    "test-el",
-				FilePath:   "demo/" + demoFilename,
-				Demo:       &M.Demo{Description: demoFilename, URL: demoURL},
+				FilePath:   "demo/" + fixtureName,
+				Demo:       &M.Demo{Description: fixtureName, URL: demoURL},
 				LocalRoute: demoRoute,
 			},
 		},
@@ -128,9 +140,7 @@ func TestFrontmatterStrippedFromDemoHTTPResponse(t *testing.T) {
 
 	for _, mode := range modes {
 		t.Run(mode, func(t *testing.T) {
-			fix := setupFrontmatterTest(t,
-				[]byte("---\ndescription: Visible frontmatter bug\n---\n<test-el>content</test-el>\n"),
-				"frontmatter.html", mode)
+			fix := setupFrontmatterTest(t, "with-frontmatter.html", mode)
 
 			req := httptest.NewRequest("GET", fix.demoRoute, nil)
 			rec := httptest.NewRecorder()
@@ -158,9 +168,7 @@ func TestEmptyFrontmatterStrippedFromDemoHTTPResponse(t *testing.T) {
 
 	for _, mode := range modes {
 		t.Run(mode, func(t *testing.T) {
-			fix := setupFrontmatterTest(t,
-				[]byte("---\n<section>\n  <test-el>content</test-el>\n</section>\n"),
-				"empty-fm.html", mode)
+			fix := setupFrontmatterTest(t, "empty-frontmatter.html", mode)
 
 			req := httptest.NewRequest("GET", fix.demoRoute, nil)
 			rec := httptest.NewRecorder()
@@ -188,9 +196,7 @@ func TestFrontmatterStrippedViaQueryParamOverride(t *testing.T) {
 
 	for _, mode := range modes {
 		t.Run(mode, func(t *testing.T) {
-			fix := setupFrontmatterTest(t,
-				[]byte("---\ndescription: Should not appear\nfor: test-el\n---\n<test-el>visible</test-el>\n"),
-				"qp.html", "light")
+			fix := setupFrontmatterTest(t, "query-param-override.html", "light")
 
 			req := httptest.NewRequest("GET", fix.demoRoute+"?rendering="+mode, nil)
 			rec := httptest.NewRecorder()
