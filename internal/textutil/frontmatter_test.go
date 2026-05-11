@@ -106,6 +106,31 @@ func TestStripFrontmatter(t *testing.T) {
 			input: "---\ndescription: A demo\r\n---\r\n",
 			want:  "",
 		},
+		{
+			name:  "empty frontmatter no closing delimiter",
+			input: "---\n<section>\n  <my-element>content</my-element>\n</section>\n",
+			want:  "<section>\n  <my-element>content</my-element>\n</section>\n",
+		},
+		{
+			name:  "empty frontmatter no closing delimiter CRLF",
+			input: "---\r\n<section>\r\n  <my-element>content</my-element>\r\n</section>\r\n",
+			want:  "<section>\r\n  <my-element>content</my-element>\r\n</section>\r\n",
+		},
+		{
+			name:  "empty frontmatter with closing delimiter",
+			input: "---\n---\n<my-element>content</my-element>\n",
+			want:  "<my-element>content</my-element>\n",
+		},
+		{
+			name:  "empty frontmatter no closing delimiter with leading whitespace",
+			input: "---\n  <my-element>content</my-element>\n",
+			want:  "  <my-element>content</my-element>\n",
+		},
+		{
+			name:  "stray delimiter before non-HTML is not frontmatter",
+			input: "---\nsome plain text without tags\n",
+			want:  "---\nsome plain text without tags\n",
+		},
 	}
 
 	for _, tt := range tests {

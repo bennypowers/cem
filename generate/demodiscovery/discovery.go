@@ -388,8 +388,15 @@ func generateFallbackURL(
 	// Create a test URL for matching using the same base URL
 	testURL := urlPatternBaseURL + urlPath
 	result := pattern.Exec(testURL, "")
+
 	if result == nil {
-		return "", nil // No match
+		if prefix := workspacePackagePrefix(ctx); prefix != "" {
+			result = pattern.Exec(urlPatternBaseURL+"/"+prefix+urlPath, "")
+		}
+	}
+
+	if result == nil {
+		return "", nil
 	}
 
 	// Get cached template

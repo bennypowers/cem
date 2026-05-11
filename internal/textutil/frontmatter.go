@@ -36,6 +36,19 @@ func StripFrontmatter(content []byte) []byte {
 
 	rest := trimmed[openLen:]
 
+	// Check if rest itself starts with closing delimiter (empty frontmatter)
+	if bytes.HasPrefix(rest, []byte("---")) {
+		after := rest[3:]
+		switch {
+		case len(after) == 0:
+			return after
+		case after[0] == '\n':
+			return after[1:]
+		case after[0] == '\r' && len(after) > 1 && after[1] == '\n':
+			return after[2:]
+		}
+	}
+
 	for i := range len(rest) {
 		if rest[i] != '\n' {
 			continue
@@ -55,6 +68,13 @@ func StripFrontmatter(content []byte) []byte {
 		default:
 			continue
 		}
+	}
+
+	// No closing delimiter found: stray "---" line before HTML content.
+	// Strip it so raw delimiters don't appear in rendered output.
+	trimmedRest := bytes.TrimLeft(rest, " \t")
+	if len(trimmedRest) > 0 && trimmedRest[0] == '<' {
+		return rest
 	}
 
 	return content

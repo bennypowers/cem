@@ -105,10 +105,11 @@ func TestExtractDemoMetadata(t *testing.T) {
 }
 
 func TestGenerateFallbackURL(t *testing.T) {
-	ctx := W.NewFileSystemWorkspaceContext(t.TempDir())
+	defaultCtx := W.NewFileSystemWorkspaceContext(t.TempDir())
 
 	tests := []struct {
 		name        string
+		ctx         *W.FileSystemWorkspaceContext
 		config      *C.CemConfig
 		demoPath    string
 		tagAliases  map[string]string
@@ -273,6 +274,36 @@ func TestGenerateFallbackURL(t *testing.T) {
 			expected: "https://site.com/elements/textarea/demo/",
 		},
 		{
+			name: "workspace fallback: package-relative path with root-level pattern",
+			ctx:  W.NewFileSystemWorkspaceContext(filepath.Join(t.TempDir(), "pf-v5-button")),
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{
+						URLPattern:  ":tag/demo/:demo.html",
+						URLTemplate: "https://site.com/components/{{.tag | alias | slug}}/demo/{{.demo | slug}}/",
+					},
+				},
+			},
+			demoPath:   "demo/primary.html",
+			tagAliases: map[string]string{"pf-v5-button": "button"},
+			expected:   "https://site.com/components/button/demo/primary/",
+		},
+		{
+			name: "workspace fallback: index.html gets SSG routing",
+			ctx:  W.NewFileSystemWorkspaceContext(filepath.Join(t.TempDir(), "pf-v5-alert")),
+			config: &C.CemConfig{
+				Generate: C.GenerateConfig{
+					DemoDiscovery: C.DemoDiscoveryConfig{
+						URLPattern:  ":tag/demo/:demo.html",
+						URLTemplate: "https://site.com/elements/{{.tag | alias | slug}}/demo/{{.demo}}/",
+					},
+				},
+			},
+			demoPath:   "demo/index.html",
+			tagAliases: map[string]string{"pf-v5-alert": "alert"},
+			expected:   "https://site.com/elements/alert/demo/",
+		},
+		{
 			name: "auto-derived alias respects explicit override",
 			config: &C.CemConfig{
 				Generate: C.GenerateConfig{
@@ -293,6 +324,10 @@ func TestGenerateFallbackURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := tt.ctx
+			if ctx == nil {
+				ctx = defaultCtx
+			}
 			result, err := generateFallbackURL(ctx, tt.config, tt.demoPath, tt.tagAliases)
 
 			if tt.expectError {
@@ -366,6 +401,35 @@ func TestExtractDemoTags(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestExtractDemoTagsWithPattern_WorkspaceFallback(t *testing.T) {
+	// Simulate workspace mode: demo file contains multiple elements but the
+	// URLPattern should precisely select only the package element (pf-v5-button).
+	// Without the workspace fallback, content-based discovery returns ALL tags.
+	pkgDir := filepath.Join(t.TempDir(), "pf-v5-button")
+	demoDir := filepath.Join(pkgDir, "demo")
+	if err := os.MkdirAll(demoDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	// Demo contains both pf-v5-button and pf-v5-icon
+	html := "<pf-v5-button><pf-v5-icon></pf-v5-icon>Click</pf-v5-button>"
+	demoFile := filepath.Join(demoDir, "basic.html")
+	if err := os.WriteFile(demoFile, []byte(html), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := W.NewFileSystemWorkspaceContext(pkgDir)
+	tags, err := extractDemoTagsWithPattern(ctx, "demo/basic.html", ":tag/demo/:demo.html", nil)
+	if err != nil {
+		t.Fatalf("extractDemoTagsWithPattern failed: %v", err)
+	}
+
+	// URLPattern matching should precisely return only pf-v5-button (from dir name),
+	// not both pf-v5-button and pf-v5-icon from content scanning.
+	if len(tags) != 1 || tags[0] != "pf-v5-button" {
+		t.Errorf("expected [pf-v5-button], got %v", tags)
+	}
 }
 
 func TestExtractParameterValues(t *testing.T) {
