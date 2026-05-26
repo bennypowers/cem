@@ -19,10 +19,12 @@ package testutil
 
 import (
 	"encoding/json"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform"
 )
 
 // LSPFixture represents a single LSP test scenario loaded from fixtures
@@ -42,15 +44,14 @@ type LSPFixture struct {
 //   - manifest.json (optional): Manifest data for custom elements
 //   - expected.json or expected-*.json (optional): Expected results for assertions
 //
-// Example usage:
-//
-//	RunLSPFixtures(t, "testdata/attribute-diagnostics", func(t *testing.T, fixture *LSPFixture) {
-//	    // Your test logic here using fixture.InputContent, fixture.Manifest, etc.
-//	})
+// All fixture files are preloaded into MapFS at the start — no disk I/O
+// during individual test execution.
 func RunLSPFixtures(t *testing.T, testdataDir string, testFunc func(*testing.T, *LSPFixture)) {
 	t.Helper()
 
-	entries, err := os.ReadDir(testdataDir)
+	mfs := LoadTestdataFS(t, testdataDir, "/")
+
+	entries, err := fs.ReadDir(mfs.GetMapFS(), ".")
 	if err != nil {
 		t.Fatalf("Failed to read testdata directory %s: %v", testdataDir, err)
 	}
@@ -61,17 +62,16 @@ func RunLSPFixtures(t *testing.T, testdataDir string, testFunc func(*testing.T, 
 		}
 
 		scenarioName := entry.Name()
-		scenarioDir := filepath.Join(testdataDir, scenarioName)
 
 		t.Run(scenarioName, func(t *testing.T) {
-			fixture := loadLSPFixture(t, scenarioDir, scenarioName)
+			fixture := loadLSPFixtureFromMapFS(t, mfs, scenarioName)
 			testFunc(t, fixture)
 		})
 	}
 }
 
-// loadLSPFixture loads a single LSP test fixture from a scenario directory
-func loadLSPFixture(t *testing.T, scenarioDir, scenarioName string) *LSPFixture {
+// loadLSPFixtureFromMapFS loads a single LSP test fixture from MapFS
+func loadLSPFixtureFromMapFS(t *testing.T, mfs *platform.MapFileSystem, scenarioName string) *LSPFixture {
 	t.Helper()
 
 	fixture := &LSPFixture{
@@ -81,85 +81,80 @@ func loadLSPFixture(t *testing.T, scenarioDir, scenarioName string) *LSPFixture 
 	}
 
 	// Try input.html first, then input.ts, then input.css
-	inputPath := filepath.Join(scenarioDir, "input.html")
-	inputBytes, err := os.ReadFile(inputPath)
-	if err != nil {
-		inputPath = filepath.Join(scenarioDir, "input.ts")
-		inputBytes, err = os.ReadFile(inputPath)
-		if err != nil {
-			inputPath = filepath.Join(scenarioDir, "input.css")
-			inputBytes, err = os.ReadFile(inputPath)
-			if err != nil {
-				t.Fatalf("Failed to read input.html, input.ts, or input.css for scenario %s: %v", scenarioName, err)
-			}
-			fixture.InputType = "css"
-		} else {
-			fixture.InputType = "ts"
+	found := false
+	for _, candidate := range []struct {
+		name     string
+		fileType string
+	}{
+		{"input.html", "html"},
+		{"input.ts", "ts"},
+		{"input.css", "css"},
+	} {
+		path := filepath.Join(scenarioName, candidate.name)
+		data, err := mfs.ReadFile(path)
+		if err == nil {
+			fixture.InputContent = string(data)
+			fixture.InputHTML = string(data)
+			fixture.InputType = candidate.fileType
+			found = true
+			break
 		}
-	} else {
-		fixture.InputType = "html"
 	}
 
-	fixture.InputContent = string(inputBytes)
-	fixture.InputHTML = string(inputBytes) // Backward compatibility
+	if !found {
+		t.Fatalf("No input.html, input.ts, or input.css found for scenario %s", scenarioName)
+	}
 
 	// Load manifest.json (optional)
-	manifestPath := filepath.Join(scenarioDir, "manifest.json")
-	if manifestBytes, err := os.ReadFile(manifestPath); err == nil {
-		fixture.Manifest = json.RawMessage(manifestBytes)
+	manifestPath := filepath.Join(scenarioName, "manifest.json")
+	if data, err := mfs.ReadFile(manifestPath); err == nil {
+		fixture.Manifest = json.RawMessage(data)
 	}
 
-	// Load all expected-*.json files and additional source files (optional)
-	entries, err := os.ReadDir(scenarioDir)
-	if err == nil {
-		// Determine the primary input filename to exclude from additional files
-		primaryInput := "input.html"
-		switch fixture.InputType {
-		case "ts":
-			primaryInput = "input.ts"
-		case "css":
-			primaryInput = "input.css"
-		}
+	// Load expected-*.json and additional source files
+	scenarioEntries, err := fs.ReadDir(mfs.GetMapFS(), scenarioName)
+	if err != nil {
+		return fixture
+	}
 
-		for _, entry := range entries {
-			if entry.IsDir() {
+	primaryInput := "input." + fixture.InputType
+
+	for _, entry := range scenarioEntries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		ext := filepath.Ext(name)
+		filePath := filepath.Join(scenarioName, name)
+
+		switch {
+		case ext == ".json" && name != "manifest.json" && name != "package.json":
+			data, err := mfs.ReadFile(filePath)
+			if err != nil {
 				continue
 			}
-			name := entry.Name()
-			ext := filepath.Ext(name)
-			fullPath := filepath.Join(scenarioDir, name)
-
-			switch {
-			// JSON files: expected-*.json and expected.json
-			case ext == ".json" && name != "manifest.json" && name != "package.json":
-				data, err := os.ReadFile(fullPath)
-				if err != nil {
-					continue
-				}
-				var expectedData any
-				if err := json.Unmarshal(data, &expectedData); err != nil {
-					t.Logf("Warning: failed to parse %s: %v", name, err)
-					continue
-				}
-				var key string
-				if name == "expected.json" {
-					key = "expected"
-				} else if strings.HasPrefix(name, "expected-") {
-					key = name[len("expected-") : len(name)-len(".json")]
-				} else {
-					key = name[:len(name)-len(".json")]
-				}
-				fixture.ExpectedMap[key] = expectedData
-
-			// Source files: .ts, .js, .html, .css (excluding primary input)
-			case (ext == ".ts" || ext == ".js" || ext == ".html" || ext == ".css") && name != primaryInput:
-				data, err := os.ReadFile(fullPath)
-				if err != nil {
-					t.Logf("Warning: failed to read additional file %s: %v", name, err)
-					continue
-				}
-				fixture.AdditionalFiles[name] = string(data)
+			var expectedData any
+			if err := json.Unmarshal(data, &expectedData); err != nil {
+				t.Logf("Warning: failed to parse %s: %v", name, err)
+				continue
 			}
+			var key string
+			if name == "expected.json" {
+				key = "expected"
+			} else if strings.HasPrefix(name, "expected-") {
+				key = name[len("expected-") : len(name)-len(".json")]
+			} else {
+				key = name[:len(name)-len(".json")]
+			}
+			fixture.ExpectedMap[key] = expectedData
+
+		case (ext == ".ts" || ext == ".js" || ext == ".html" || ext == ".css") && name != primaryInput:
+			data, err := mfs.ReadFile(filePath)
+			if err != nil {
+				t.Logf("Warning: failed to read additional file %s: %v", name, err)
+				continue
+			}
+			fixture.AdditionalFiles[name] = string(data)
 		}
 	}
 
