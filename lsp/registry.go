@@ -739,6 +739,11 @@ func (r *Registry) readPackageJSON(path string, workspace types.WorkspaceContext
 		return nil, err
 	}
 
+	// Track package.json for file watching so customElements field changes trigger reload.
+	// NOTE: ManifestPaths is also iterated by ReloadManifestsDirectly, which parses each
+	// entry as a CEM manifest. package.json entries fail to parse and are skipped (logged
+	// as warnings). Separating watch paths from manifest paths would fix this, but requires
+	// splitting ManifestPaths into two collections.
 	if pkg.CustomElements != "" {
 		r.addManifestPath(path)
 	}

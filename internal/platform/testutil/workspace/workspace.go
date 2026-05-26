@@ -25,6 +25,7 @@ import (
 	"io"
 	"io/fs"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -184,6 +185,7 @@ func (c *MapWorkspaceContext) Glob(pattern string) ([]string, error) {
 			}
 		}
 	}
+	sort.Strings(matches)
 	return matches, nil
 }
 
