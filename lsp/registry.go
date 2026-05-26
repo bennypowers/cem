@@ -1106,14 +1106,12 @@ func (r *Registry) handleFileChange(event platform.FileWatchEvent) {
 		return
 	}
 
-	// Check if this is a manifest file we care about
-	isManifestFile := slices.Contains(r.WatchPaths, event.Name)
-
-	if !isManifestFile {
+	isWatchedPath := slices.Contains(r.WatchPaths, event.Name)
+	if !isWatchedPath {
 		return
 	}
 
-	helpers.SafeDebugLog("Manifest file changed: %s", event.Name)
+	helpers.SafeDebugLog("Watched file changed: %s", event.Name)
 
 	// Trigger reload callback if available (with proper synchronization)
 	r.watcherMu.RLock()
