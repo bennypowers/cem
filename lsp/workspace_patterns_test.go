@@ -17,11 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package lsp_test
 
 import (
-	"path/filepath"
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
-	"bennypowers.dev/cem/internal/workspace"
+	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,10 +32,7 @@ import (
 // TestWorkspacePatterns_NestedDoublestar tests that "**" doublestar patterns
 // find deeply nested workspace packages
 func TestWorkspacePatterns_NestedDoublestar(t *testing.T) {
-	fixturePath := filepath.Join("testdata", "integration", "workspace-nested")
-
-	// Create workspace context
-	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
+	wsCtx := testworkspace.NewMapWorkspaceContext(t, "testdata/integration/workspace-nested")
 
 	// Create registry and load from workspace
 	registry, err := lsp.NewRegistryWithDefaults()
@@ -86,10 +82,7 @@ func TestWorkspacePatterns_NestedDoublestar(t *testing.T) {
 // TestWorkspacePatterns_Negation tests that "!" negation patterns
 // exclude matching packages from being loaded
 func TestWorkspacePatterns_Negation(t *testing.T) {
-	fixturePath := filepath.Join("testdata", "integration", "workspace-negation")
-
-	// Create workspace context
-	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
+	wsCtx := testworkspace.NewMapWorkspaceContext(t, "testdata/integration/workspace-negation")
 
 	// Create registry and load from workspace
 	registry, err := lsp.NewRegistryWithDefaults()
@@ -134,9 +127,7 @@ func TestWorkspacePatterns_Negation(t *testing.T) {
 func TestWorkspacePatterns_EdgeCases(t *testing.T) {
 	t.Run("empty workspace patterns", func(t *testing.T) {
 		// Create a temporary fixture without workspaces
-		fixturePath := filepath.Join("testdata", "integration", "workspace-npm")
-
-		wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
+		wsCtx := testworkspace.NewMapWorkspaceContext(t, "testdata/integration/workspace-npm")
 		registry, err := lsp.NewRegistryWithDefaults()
 		require.NoError(t, err, "Failed to create registry")
 

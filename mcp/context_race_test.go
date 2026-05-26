@@ -22,11 +22,11 @@ import (
 	"testing"
 	"time"
 
-	W "bennypowers.dev/cem/internal/workspace"
+	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 )
 
 func TestMCPContext_ConcurrentCacheAccess(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
@@ -85,7 +85,7 @@ func TestMCPContext_ConcurrentCacheAccess(t *testing.T) {
 }
 
 func TestMCPContext_ConcurrentLoadManifestsAndCacheAccess(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
@@ -161,7 +161,7 @@ func TestMCPContext_ConcurrentLoadManifestsAndCacheAccess(t *testing.T) {
 }
 
 func TestMCPContext_SnapshotConsistency(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)
@@ -209,7 +209,7 @@ func TestMCPContext_SnapshotConsistency(t *testing.T) {
 }
 
 func TestMCPContext_CacheInvalidationRace(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	if err != nil {
 		t.Fatalf("Failed to initialize workspace: %v", err)

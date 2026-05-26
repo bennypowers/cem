@@ -24,7 +24,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform/testutil"
-	W "bennypowers.dev/cem/internal/workspace"
+	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/tools"
 	mcpSDK "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -150,7 +150,7 @@ func TestValidateHtmlArgs_Parsing(t *testing.T) {
 }
 
 func TestValidationTemplateData_WithFixtures(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -183,7 +183,7 @@ func TestValidationTemplateData_WithFixtures(t *testing.T) {
 }
 
 func TestValidateHtml_UnknownAttributeDetection(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -238,7 +238,7 @@ func TestValidateHtml_UnknownAttributeDetection(t *testing.T) {
 }
 
 func TestValidateHtml_ValidAttributes(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -280,7 +280,7 @@ func TestValidateHtml_ValidAttributes(t *testing.T) {
 }
 
 func TestValidateHtml_InvalidAttributeValue(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -326,7 +326,7 @@ func TestValidateHtml_InvalidAttributeValue(t *testing.T) {
 func TestValidateHtml_AttributeValueParsing_Regression(t *testing.T) {
 	// Regression test for attribute value parsing bug where boolean attributes
 	// cause misaligned indices between attr.name and attr.value arrays
-	workspace := W.NewFileSystemWorkspaceContext("../testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -386,7 +386,7 @@ func TestValidateHtml_AttributeValueParsing_Regression(t *testing.T) {
 }
 
 func TestValidateHtml_UnknownElement(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -428,7 +428,7 @@ func TestValidateHtml_UnknownElement(t *testing.T) {
 }
 
 func TestValidateHtml_MultipleIssues(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -473,7 +473,7 @@ func TestValidateHtml_MultipleIssues(t *testing.T) {
 }
 
 func TestValidateHtml_GlobalAttributesAllowed(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -551,7 +551,7 @@ func TestValidateHtml_GlobalAttributesAllowed(t *testing.T) {
 }
 
 func TestValidateHtml_GlobalAttributesWithUnknownCustomAttribute(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -606,7 +606,7 @@ func TestValidateHtml_GlobalAttributesWithUnknownCustomAttribute(t *testing.T) {
 func testValidateHtmlWithGolden(t *testing.T, fixtureFile, contextStr, goldenFile string) {
 	t.Helper()
 
-	workspace := W.NewFileSystemWorkspaceContext("../testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 

@@ -20,10 +20,10 @@ import (
 	"context"
 	"testing"
 
+	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"bennypowers.dev/cem/internal/version"
 	"bennypowers.dev/cem/mcp/resources"
 	"bennypowers.dev/cem/mcp/types"
-	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,7 +32,7 @@ import (
 // Inline: integration test, scalar assertions
 
 func TestNewServer(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/basic-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/basic-integration")
 
 	server, err := NewServer(workspace)
 	require.NoError(t, err)
@@ -44,7 +44,7 @@ func TestNewServer(t *testing.T) {
 }
 
 func TestServer_GetInfo(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/basic-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/basic-integration")
 	server, err := NewServer(workspace)
 	require.NoError(t, err)
 
@@ -56,7 +56,7 @@ func TestServer_GetInfo(t *testing.T) {
 }
 
 func TestServer_VersionConsistency(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/basic-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/basic-integration")
 	server, err := NewServer(workspace)
 	require.NoError(t, err)
 
@@ -67,7 +67,7 @@ func TestServer_VersionConsistency(t *testing.T) {
 }
 
 func TestDynamicSchemaVersionDetection(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/basic-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/basic-integration")
 
 	// Initialize workspace
 	err := workspace.Init()

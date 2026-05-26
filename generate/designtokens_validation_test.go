@@ -19,6 +19,7 @@ package generate
 import (
 	"errors"
 	"io"
+	"io/fs"
 	"strings"
 	"testing"
 
@@ -71,6 +72,8 @@ func (m *mockWorkspaceContext) PackageJSON() (*M.PackageJSON, error)        { re
 func (m *mockWorkspaceContext) Manifest() (*M.Package, error)               { return nil, nil }
 func (m *mockWorkspaceContext) CustomElementsManifestPath() string          { return "" }
 func (m *mockWorkspaceContext) ReadFile(string) (io.ReadCloser, error)      { return nil, nil }
+func (m *mockWorkspaceContext) Stat(string) (fs.FileInfo, error)            { return nil, nil }
+func (m *mockWorkspaceContext) ReadDir(string) ([]fs.DirEntry, error)       { return nil, nil }
 func (m *mockWorkspaceContext) OutputWriter(string) (io.WriteCloser, error) { return nil, nil }
 func (m *mockWorkspaceContext) ModulePathToFS(string) string                { return "" }
 func (m *mockWorkspaceContext) FSPathToModule(string) (string, error)       { return "", nil }

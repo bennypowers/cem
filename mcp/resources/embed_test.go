@@ -19,9 +19,9 @@ package resources_test
 import (
 	"testing"
 
+	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/resources"
-	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,7 +34,7 @@ import (
 // find .md files on disk, which failed for distributed binaries.
 // See: https://github.com/anthropics/cem/issues/XXX
 func TestResourceDefinitions_Embedded(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("../testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 

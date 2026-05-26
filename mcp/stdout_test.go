@@ -26,8 +26,8 @@ import (
 	"time"
 
 	"bennypowers.dev/cem/internal/logging"
+	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"bennypowers.dev/cem/mcp"
-	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -126,7 +126,7 @@ func TestMCPServerStdoutCleanWithQuietMode(t *testing.T) {
 	}()
 
 	// Create workspace and MCP server
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 	err = workspace.Init()
 	require.NoError(t, err)
 
@@ -184,7 +184,7 @@ func TestMCPServerStderrAllowed(t *testing.T) {
 	}()
 
 	// Create workspace with basic integration
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/basic-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/basic-integration")
 	err = workspace.Init()
 	require.NoError(t, err)
 

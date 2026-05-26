@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyElement",
+          "tagName": "my-element",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "label",
+              "type": { "text": "string" },
+              "description": "The label text"
+            }
+          ],
+          "slots": [
+            {
+              "name": "",
+              "description": "Default slot"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

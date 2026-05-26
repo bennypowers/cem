@@ -20,6 +20,7 @@ package workspace_test
 import (
 	"errors"
 	"io"
+	"io/fs"
 	"strings"
 	"testing"
 
@@ -64,6 +65,8 @@ func (m *mockWorkspaceContext) PackageJSON() (*M.PackageJSON, error)            
 func (m *mockWorkspaceContext) Manifest() (*M.Package, error)                    { return nil, nil }
 func (m *mockWorkspaceContext) CustomElementsManifestPath() string               { return "" }
 func (m *mockWorkspaceContext) ReadFile(path string) (io.ReadCloser, error)      { return nil, nil }
+func (m *mockWorkspaceContext) Stat(_ string) (fs.FileInfo, error)               { return nil, nil }
+func (m *mockWorkspaceContext) ReadDir(_ string) ([]fs.DirEntry, error)          { return nil, nil }
 func (m *mockWorkspaceContext) Glob(pattern string) ([]string, error)            { return nil, nil }
 func (m *mockWorkspaceContext) OutputWriter(path string) (io.WriteCloser, error) { return nil, nil }
 func (m *mockWorkspaceContext) Root() string                                     { return "" }

@@ -19,6 +19,7 @@ package types
 
 import (
 	"io"
+	"io/fs"
 
 	C "bennypowers.dev/cem/cmd/config"
 	M "bennypowers.dev/cem/manifest"
@@ -40,6 +41,10 @@ type WorkspaceContext interface {
 	CustomElementsManifestPath() string
 	// ReadFile returns an io.ReadCloser for a file within the package.
 	ReadFile(path string) (io.ReadCloser, error)
+	// Stat returns file info for the given path.
+	Stat(path string) (fs.FileInfo, error)
+	// ReadDir returns directory entries for the given path.
+	ReadDir(path string) ([]fs.DirEntry, error)
 	// Glob returns a list of file paths matching the given pattern (e.g., *.ts).
 	Glob(pattern string) ([]string, error)
 	// Writes outputs to paths

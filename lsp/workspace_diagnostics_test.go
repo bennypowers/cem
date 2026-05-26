@@ -17,15 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package lsp_test
 
 import (
-	"os"
-	"path/filepath"
+	"io"
 	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
-	"bennypowers.dev/cem/internal/workspace"
+	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,32 +36,27 @@ import (
 // TestWorkspaceDiagnostics_NoFalsePositives_npm tests that workspace sibling elements
 // do NOT produce "unknown element" diagnostics when properly imported
 func TestWorkspaceDiagnostics_NoFalsePositives_npm(t *testing.T) {
-	fixturePath, err := filepath.Abs(filepath.Join("testdata", "integration", "workspace-npm"))
-	require.NoError(t, err, "Failed to get absolute path")
+	wsCtx := testworkspace.NewMapWorkspaceContext(t, "testdata/integration/workspace-npm")
 
-	// Create workspace context
-	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
-
-	// Create LSP server
 	server, err := lsp.NewServer(wsCtx, lsp.TransportStdio)
 	require.NoError(t, err, "Failed to create server")
 	defer func() {
 		_ = server.Close()
 	}()
 
-	// Initialize server (this loads manifests)
 	err = server.InitializeForTesting()
 	require.NoError(t, err, "Failed to initialize server")
 
-	// Create DocumentManager
 	dm, err := document.NewDocumentManager()
 	require.NoError(t, err, "Failed to create DocumentManager")
 	defer dm.Close()
 
-	// Read the test HTML file
-	htmlPath := filepath.Join(fixturePath, "packages", "component-b", "test.html")
-	content, err := os.ReadFile(htmlPath)
+	htmlRC, err := wsCtx.ReadFile("/packages/component-b/test.html")
 	require.NoError(t, err, "Failed to read test HTML file")
+	content, err := io.ReadAll(htmlRC)
+	_ = htmlRC.Close()
+	require.NoError(t, err)
+	htmlPath := "/packages/component-b/test.html"
 
 	// Open document
 	doc := dm.OpenDocument("file://"+htmlPath, string(content), 1)
@@ -92,32 +86,27 @@ func TestWorkspaceDiagnostics_NoFalsePositives_npm(t *testing.T) {
 
 // TestWorkspaceDiagnostics_NoFalsePositives_yarn tests yarn workspace sibling elements
 func TestWorkspaceDiagnostics_NoFalsePositives_yarn(t *testing.T) {
-	fixturePath, err := filepath.Abs(filepath.Join("testdata", "integration", "workspace-yarn"))
-	require.NoError(t, err, "Failed to get absolute path")
+	wsCtx := testworkspace.NewMapWorkspaceContext(t, "testdata/integration/workspace-yarn")
 
-	// Create workspace context
-	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
-
-	// Create LSP server
 	server, err := lsp.NewServer(wsCtx, lsp.TransportStdio)
 	require.NoError(t, err, "Failed to create server")
 	defer func() {
 		_ = server.Close()
 	}()
 
-	// Initialize server
 	err = server.InitializeForTesting()
 	require.NoError(t, err, "Failed to initialize server")
 
-	// Create DocumentManager
 	dm, err := document.NewDocumentManager()
 	require.NoError(t, err, "Failed to create DocumentManager")
 	defer dm.Close()
 
-	// Read the test HTML file
-	htmlPath := filepath.Join(fixturePath, "packages", "component-b", "test.html")
-	content, err := os.ReadFile(htmlPath)
+	htmlRC, err := wsCtx.ReadFile("/packages/component-b/test.html")
 	require.NoError(t, err, "Failed to read test HTML file")
+	content, err := io.ReadAll(htmlRC)
+	_ = htmlRC.Close()
+	require.NoError(t, err)
+	htmlPath := "/packages/component-b/test.html"
 
 	// Open document
 	doc := dm.OpenDocument("file://"+htmlPath, string(content), 1)
@@ -146,32 +135,27 @@ func TestWorkspaceDiagnostics_NoFalsePositives_yarn(t *testing.T) {
 
 // TestWorkspaceDiagnostics_NoFalsePositives_pnpm tests pnpm workspace sibling elements
 func TestWorkspaceDiagnostics_NoFalsePositives_pnpm(t *testing.T) {
-	fixturePath, err := filepath.Abs(filepath.Join("testdata", "integration", "workspace-pnpm"))
-	require.NoError(t, err, "Failed to get absolute path")
+	wsCtx := testworkspace.NewMapWorkspaceContext(t, "testdata/integration/workspace-pnpm")
 
-	// Create workspace context
-	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
-
-	// Create LSP server
 	server, err := lsp.NewServer(wsCtx, lsp.TransportStdio)
 	require.NoError(t, err, "Failed to create server")
 	defer func() {
 		_ = server.Close()
 	}()
 
-	// Initialize server
 	err = server.InitializeForTesting()
 	require.NoError(t, err, "Failed to initialize server")
 
-	// Create DocumentManager
 	dm, err := document.NewDocumentManager()
 	require.NoError(t, err, "Failed to create DocumentManager")
 	defer dm.Close()
 
-	// Read the test HTML file
-	htmlPath := filepath.Join(fixturePath, "packages", "component-b", "test.html")
-	content, err := os.ReadFile(htmlPath)
+	htmlRC, err := wsCtx.ReadFile("/packages/component-b/test.html")
 	require.NoError(t, err, "Failed to read test HTML file")
+	content, err := io.ReadAll(htmlRC)
+	_ = htmlRC.Close()
+	require.NoError(t, err)
+	htmlPath := "/packages/component-b/test.html"
 
 	// Open document
 	doc := dm.OpenDocument("file://"+htmlPath, string(content), 1)
