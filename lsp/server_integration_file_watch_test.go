@@ -288,16 +288,16 @@ func TestPackageJSONWatching(t *testing.T) {
 			t.Fatalf("Failed to load from workspace: %v", err)
 		}
 
-		// Verify package.json is tracked for watching
+		// Verify package.json is tracked in WatchPaths (not ManifestPaths)
 		found := false
-		for _, path := range registry.ManifestPaths {
+		for _, path := range registry.WatchPaths {
 			if filepath.Base(path) == "package.json" {
 				found = true
 				break
 			}
 		}
 		if !found {
-			t.Error("Expected package.json to be tracked for watching")
+			t.Error("Expected package.json to be tracked in WatchPaths")
 		}
 	})
 
@@ -372,6 +372,81 @@ func TestPackageJSONWatching(t *testing.T) {
 			t.Fatal("package.json change should have triggered reload")
 		}
 	})
+}
+
+func TestManifestPaths_NoPackageJSON(t *testing.T) {
+	// Inline: regression test for #336 — ManifestPaths must not contain package.json
+	tempDir := t.TempDir()
+
+	// Create node_modules/test-pkg with package.json pointing to custom-elements.json
+	pkgDir := filepath.Join(tempDir, "node_modules", "test-pkg")
+	err := os.MkdirAll(pkgDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create node_modules: %v", err)
+	}
+
+	packageJSON := map[string]string{
+		"name":           "test-pkg",
+		"version":        "1.0.0",
+		"customElements": "custom-elements.json",
+	}
+	packageData, _ := json.MarshalIndent(packageJSON, "", "  ")
+	err = os.WriteFile(filepath.Join(pkgDir, "package.json"), packageData, 0644)
+	if err != nil {
+		t.Fatalf("Failed to write package.json: %v", err)
+	}
+
+	manifest := map[string]any{
+		"schemaVersion": "2.1.0",
+		"modules":       []any{},
+	}
+	manifestData, _ := json.MarshalIndent(manifest, "", "  ")
+	err = os.WriteFile(filepath.Join(pkgDir, "custom-elements.json"), manifestData, 0644)
+	if err != nil {
+		t.Fatalf("Failed to write manifest: %v", err)
+	}
+
+	// Root package.json (no customElements — just a container)
+	rootPkg := map[string]string{"name": "root", "version": "1.0.0"}
+	rootData, _ := json.MarshalIndent(rootPkg, "", "  ")
+	err = os.WriteFile(filepath.Join(tempDir, "package.json"), rootData, 0644)
+	if err != nil {
+		t.Fatalf("Failed to write root package.json: %v", err)
+	}
+
+	registry, err := lsp.NewRegistryWithDefaults()
+	if err != nil {
+		t.Fatalf("Failed to create registry: %v", err)
+	}
+
+	workspace := W.NewFileSystemWorkspaceContext(tempDir)
+	err = workspace.Init()
+	if err != nil {
+		t.Fatalf("Failed to init workspace: %v", err)
+	}
+
+	err = registry.LoadFromWorkspace(workspace)
+	if err != nil {
+		t.Fatalf("Failed to load from workspace: %v", err)
+	}
+
+	for _, path := range registry.ManifestPaths {
+		if filepath.Base(path) == "package.json" {
+			t.Errorf("ManifestPaths should not contain package.json, got: %s", path)
+		}
+	}
+
+	// package.json should be in WatchPaths for file watching
+	found := false
+	for _, path := range registry.WatchPaths {
+		if filepath.Base(path) == "package.json" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("Expected package.json in WatchPaths for file watching")
+	}
 }
 
 func TestFileWatchingErrorHandling(t *testing.T) {
