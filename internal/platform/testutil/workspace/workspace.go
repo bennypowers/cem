@@ -152,7 +152,7 @@ func (c *MapWorkspaceContext) Stat(path string) (fs.FileInfo, error) {
 
 func (c *MapWorkspaceContext) ReadDir(path string) ([]fs.DirEntry, error) {
 	clean := c.cleanPath(path)
-	return fs.ReadDir(c.mfs.GetMapFS(), clean)
+	return c.mfs.ReadDir(clean)
 }
 
 func (c *MapWorkspaceContext) Glob(pattern string) ([]string, error) {

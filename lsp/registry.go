@@ -323,7 +323,8 @@ func (r *Registry) loadWorkspacePackageManifests(workspace types.WorkspaceContex
 	helpers.SafeDebugLog("Found %d workspace packages", len(workspacePackages))
 
 	for _, pkgPath := range workspacePackages {
-		r.loadWorkspacePackage(pkgPath, workspace)
+		helpers.SafeDebugLog("Loading workspace package from: %s", pkgPath)
+		r.loadPackageManifest(pkgPath, workspace)
 	}
 
 	return nil
@@ -539,12 +540,6 @@ func (r *Registry) filterNegatedPackages(workspace types.WorkspaceContext, packa
 	return filtered
 }
 
-// loadWorkspacePackage loads a manifest from a single workspace package directory
-func (r *Registry) loadWorkspacePackage(pkgPath string, workspace types.WorkspaceContext) {
-	helpers.SafeDebugLog("Loading workspace package from: %s", pkgPath)
-	r.loadPackageManifest(pkgPath, workspace)
-}
-
 // loadNodeModulesManifests loads manifests from node_modules packages
 func (r *Registry) loadNodeModulesManifests(workspace types.WorkspaceContext) error {
 	nodeModulesPath := filepath.Join(workspace.Root(), "node_modules")
@@ -600,15 +595,8 @@ func (r *Registry) loadPackageManifest(packagePath string, workspace types.Works
 		return
 	}
 
-	// Check whether the manifest file exists to decide between generation and parse error
-	var exists bool
-	if workspace != nil {
-		_, statErr := workspace.Stat(manifestPath)
-		exists = statErr == nil
-	} else {
-		_, statErr := os.Stat(manifestPath)
-		exists = statErr == nil
-	}
+	_, statErr := workspace.Stat(manifestPath)
+	exists := statErr == nil
 
 	if !exists {
 		helpers.SafeDebugLog("Manifest file %s doesn't exist, generating in-memory for %s", manifestPath, packageJSON.Name)
@@ -726,23 +714,22 @@ func (r *Registry) loadAdditionalPackage(spec string) error {
 	return nil
 }
 
-// readPackageJSON reads and parses a package.json file.
-// When workspace is non-nil, reads through the workspace interface;
-// otherwise falls back to os.ReadFile for absolute paths (e.g. node_modules).
-func (r *Registry) readPackageJSON(path string, workspace types.WorkspaceContext) (*M.PackageJSON, error) {
-	var data []byte
-	var err error
-
+// readFileViaWorkspace reads a file through the workspace interface when available,
+// falling back to os.ReadFile for absolute paths (e.g. ReloadManifestsDirectly).
+func readFileViaWorkspace(path string, workspace types.WorkspaceContext) ([]byte, error) {
 	if workspace != nil {
-		rc, readErr := workspace.ReadFile(path)
-		if readErr != nil {
-			return nil, readErr
+		rc, err := workspace.ReadFile(path)
+		if err != nil {
+			return nil, err
 		}
 		defer func() { _ = rc.Close() }()
-		data, err = io.ReadAll(rc)
-	} else {
-		data, err = os.ReadFile(path)
+		return io.ReadAll(rc)
 	}
+	return os.ReadFile(path)
+}
+
+func (r *Registry) readPackageJSON(path string, workspace types.WorkspaceContext) (*M.PackageJSON, error) {
+	data, err := readFileViaWorkspace(path, workspace)
 	if err != nil {
 		return nil, err
 	}
@@ -759,22 +746,8 @@ func (r *Registry) readPackageJSON(path string, workspace types.WorkspaceContext
 	return &pkg, nil
 }
 
-// loadManifestFileWithPackageName loads a custom elements manifest from a file with package name.
-// When workspace is non-nil, reads through the workspace interface.
 func (r *Registry) loadManifestFileWithPackageName(path string, packageName string, workspace types.WorkspaceContext) (*M.Package, error) {
-	var data []byte
-	var err error
-
-	if workspace != nil {
-		rc, readErr := workspace.ReadFile(path)
-		if readErr != nil {
-			return nil, readErr
-		}
-		defer func() { _ = rc.Close() }()
-		data, err = io.ReadAll(rc)
-	} else {
-		data, err = os.ReadFile(path)
-	}
+	data, err := readFileViaWorkspace(path, workspace)
 	if err != nil {
 		return nil, err
 	}

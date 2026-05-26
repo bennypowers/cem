@@ -105,6 +105,61 @@ func TestMapWorkspaceContext_Glob(t *testing.T) {
 	assert.Contains(t, matches, "custom-elements.json")
 }
 
+func TestMapWorkspaceContext_Stat(t *testing.T) {
+	ctx := workspace.NewMapWorkspaceContext(t, "testdata/workspace-context")
+	err := ctx.Init()
+	require.NoError(t, err)
+
+	t.Run("existing file", func(t *testing.T) {
+		info, err := ctx.Stat("/package.json")
+		require.NoError(t, err)
+		assert.False(t, info.IsDir())
+		assert.Greater(t, info.Size(), int64(0))
+	})
+
+	t.Run("missing file", func(t *testing.T) {
+		_, err := ctx.Stat("/nonexistent.json")
+		assert.Error(t, err)
+	})
+
+	t.Run("directory", func(t *testing.T) {
+		info, err := ctx.Stat("/src")
+		require.NoError(t, err)
+		assert.True(t, info.IsDir())
+	})
+}
+
+func TestMapWorkspaceContext_ReadDir(t *testing.T) {
+	ctx := workspace.NewMapWorkspaceContext(t, "testdata/workspace-context")
+	err := ctx.Init()
+	require.NoError(t, err)
+
+	t.Run("root directory", func(t *testing.T) {
+		entries, err := ctx.ReadDir("/")
+		require.NoError(t, err)
+		assert.NotEmpty(t, entries)
+
+		names := make([]string, len(entries))
+		for i, e := range entries {
+			names[i] = e.Name()
+		}
+		assert.Contains(t, names, "package.json")
+		assert.Contains(t, names, "src")
+	})
+
+	t.Run("subdirectory", func(t *testing.T) {
+		entries, err := ctx.ReadDir("/src")
+		require.NoError(t, err)
+		assert.Len(t, entries, 1)
+		assert.Equal(t, "my-element.js", entries[0].Name())
+	})
+
+	t.Run("missing directory", func(t *testing.T) {
+		_, err := ctx.ReadDir("/nonexistent")
+		assert.Error(t, err)
+	})
+}
+
 func TestMapWorkspaceContext_PathResolution(t *testing.T) {
 	ctx := workspace.NewMapWorkspaceContext(t, "testdata/workspace-context")
 	err := ctx.Init()
