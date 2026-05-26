@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path"
@@ -275,6 +276,22 @@ func (c *RemoteWorkspaceContext) ReadFile(path string) (io.ReadCloser, error) {
 		absPath = filepath.Join(c.cacheDir, path)
 	}
 	return os.Open(absPath)
+}
+
+func (c *RemoteWorkspaceContext) Stat(path string) (fs.FileInfo, error) {
+	absPath := path
+	if !filepath.IsAbs(path) {
+		absPath = filepath.Join(c.cacheDir, path)
+	}
+	return os.Stat(absPath)
+}
+
+func (c *RemoteWorkspaceContext) ReadDir(path string) ([]fs.DirEntry, error) {
+	absPath := path
+	if !filepath.IsAbs(path) {
+		absPath = filepath.Join(c.cacheDir, path)
+	}
+	return os.ReadDir(absPath)
 }
 
 func (c *RemoteWorkspaceContext) Glob(pattern string) ([]string, error) {

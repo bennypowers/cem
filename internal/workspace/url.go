@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/url"
 	"path"
 	"strings"
@@ -138,6 +139,14 @@ func (c *URLWorkspaceContext) ReadFile(filePath string) (io.ReadCloser, error) {
 		return nil, err
 	}
 	return io.NopCloser(bytes.NewReader(content)), nil
+}
+
+func (c *URLWorkspaceContext) Stat(_ string) (fs.FileInfo, error) {
+	return nil, ErrRemoteUnsupported
+}
+
+func (c *URLWorkspaceContext) ReadDir(_ string) ([]fs.DirEntry, error) {
+	return nil, ErrRemoteUnsupported
 }
 
 func (c *URLWorkspaceContext) Glob(pattern string) ([]string, error) {

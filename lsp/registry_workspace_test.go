@@ -17,11 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package lsp_test
 
 import (
-	"path/filepath"
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
-	"bennypowers.dev/cem/internal/workspace"
+	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,10 +31,7 @@ import (
 
 // TestWorkspaceManifestLoading_npm tests that npm workspace packages are loaded into the registry
 func TestWorkspaceManifestLoading_npm(t *testing.T) {
-	fixturePath := filepath.Join("testdata", "integration", "workspace-npm")
-
-	// Create workspace context
-	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
+	wsCtx := testworkspace.NewMapWorkspaceContext(t, "testdata/integration/workspace-npm")
 
 	// Create registry and load from workspace
 	registry, err := lsp.NewRegistryWithDefaults()
@@ -74,10 +70,7 @@ func TestWorkspaceManifestLoading_npm(t *testing.T) {
 
 // TestWorkspaceManifestLoading_yarn tests that yarn workspace packages are loaded into the registry
 func TestWorkspaceManifestLoading_yarn(t *testing.T) {
-	fixturePath := filepath.Join("testdata", "integration", "workspace-yarn")
-
-	// Create workspace context
-	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
+	wsCtx := testworkspace.NewMapWorkspaceContext(t, "testdata/integration/workspace-yarn")
 
 	// Create registry and load from workspace
 	registry, err := lsp.NewRegistryWithDefaults()
@@ -112,10 +105,7 @@ func TestWorkspaceManifestLoading_yarn(t *testing.T) {
 
 // TestWorkspaceManifestLoading_pnpm tests that pnpm workspace packages are loaded into the registry
 func TestWorkspaceManifestLoading_pnpm(t *testing.T) {
-	fixturePath := filepath.Join("testdata", "integration", "workspace-pnpm")
-
-	// Create workspace context
-	wsCtx := workspace.NewFileSystemWorkspaceContext(fixturePath)
+	wsCtx := testworkspace.NewMapWorkspaceContext(t, "testdata/integration/workspace-pnpm")
 
 	// Create registry and load from workspace
 	registry, err := lsp.NewRegistryWithDefaults()

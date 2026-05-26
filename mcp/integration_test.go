@@ -23,18 +23,17 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
+	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/resources"
-	"bennypowers.dev/cem/internal/platform/testutil"
-	W "bennypowers.dev/cem/internal/workspace"
 	mcpSDK "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// getTestRegistry creates a registry using the test fixtures following the existing pattern
 func getTestRegistry(t *testing.T) *mcp.MCPContext {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 

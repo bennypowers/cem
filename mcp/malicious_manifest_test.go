@@ -20,11 +20,11 @@ import (
 	"strings"
 	"testing"
 
+	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/security"
 	"bennypowers.dev/cem/mcp/templates"
 	"bennypowers.dev/cem/mcp/tools"
-	"bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +33,7 @@ import (
 
 func TestMaliciousManifestMitigation(t *testing.T) {
 	// Use the malicious manifest fixture
-	wctx := workspace.NewFileSystemWorkspaceContext("testdata/fixtures/malicious-manifest-security")
+	wctx := testworkspace.NewMapWorkspaceContext(t, "testdata/fixtures/malicious-manifest-security")
 	require.NoError(t, wctx.Init())
 
 	registry, err := mcp.NewMCPContext(wctx)
@@ -135,7 +135,7 @@ func TestTemplateRenderingWithMaliciousData(t *testing.T) {
 	// by using the malicious manifest fixture
 
 	// Use the malicious manifest fixture
-	wctx := workspace.NewFileSystemWorkspaceContext("testdata/fixtures/malicious-manifest-security")
+	wctx := testworkspace.NewMapWorkspaceContext(t, "testdata/fixtures/malicious-manifest-security")
 	require.NoError(t, wctx.Init())
 
 	registry, err := mcp.NewMCPContext(wctx)

@@ -20,16 +20,16 @@ import (
 	"strings"
 	"testing"
 
+	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/types"
-	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMCPContext_NewRegistry(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 
 	registry, err := mcp.NewMCPContext(workspace)
 	require.NoError(t, err, "Failed to create registry")
@@ -37,7 +37,7 @@ func TestMCPContext_NewRegistry(t *testing.T) {
 }
 
 func TestMCPContext_LoadManifests(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -49,7 +49,7 @@ func TestMCPContext_LoadManifests(t *testing.T) {
 }
 
 func TestMCPContext_GetElementInfo(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -208,7 +208,7 @@ func TestMCPContext_GetElementInfo(t *testing.T) {
 }
 
 func TestMCPContext_GetAllElements(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -235,7 +235,7 @@ func TestMCPContext_GetAllElements(t *testing.T) {
 }
 
 func TestMCPContext_GetManifestSchema(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -295,7 +295,7 @@ func TestMCPContext_GetManifestSchema(t *testing.T) {
 // Table-driven tests for detailed data conversion testing
 
 func TestMCPContext_AttributeConversion(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -384,7 +384,7 @@ func TestMCPContext_AttributeConversion(t *testing.T) {
 }
 
 func TestMCPContext_SlotConversion(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -453,7 +453,7 @@ func TestMCPContext_SlotConversion(t *testing.T) {
 }
 
 func TestMCPContext_CssPropertyConversion(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 
@@ -523,7 +523,7 @@ func TestMCPContext_CssPropertyConversion(t *testing.T) {
 }
 
 func TestMCPContext_CssPartConversion(t *testing.T) {
-	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/multiple-elements-integration")
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
 

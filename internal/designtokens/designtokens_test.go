@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -43,6 +44,8 @@ func (s *stubWorkspaceContext) CustomElementsManifestPath() string   { return ""
 func (s *stubWorkspaceContext) ReadFile(path string) (io.ReadCloser, error) {
 	return nil, fmt.Errorf("stubWorkspaceContext.ReadFile(%q): not implemented", path)
 }
+func (s *stubWorkspaceContext) Stat(string) (fs.FileInfo, error)            { return nil, nil }
+func (s *stubWorkspaceContext) ReadDir(string) ([]fs.DirEntry, error)       { return nil, nil }
 func (s *stubWorkspaceContext) Glob(string) ([]string, error)               { return nil, nil }
 func (s *stubWorkspaceContext) OutputWriter(string) (io.WriteCloser, error) { return nil, nil }
 func (s *stubWorkspaceContext) Cleanup() error                              { return nil }

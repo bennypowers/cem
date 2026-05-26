@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -321,9 +322,8 @@ func (r *Registry) loadWorkspacePackageManifests(workspace types.WorkspaceContex
 
 	helpers.SafeDebugLog("Found %d workspace packages", len(workspacePackages))
 
-	// Load manifest from each workspace package
 	for _, pkgPath := range workspacePackages {
-		r.loadWorkspacePackage(pkgPath)
+		r.loadWorkspacePackage(pkgPath, workspace)
 	}
 
 	return nil
@@ -334,28 +334,22 @@ func (r *Registry) discoverWorkspacePackages(workspace types.WorkspaceContext) (
 	root := workspace.Root()
 	var workspacePatterns []string
 
-	// Detect package manager and get workspace patterns
-	// 1. Try pnpm (pnpm-workspace.yaml)
-	// pnpm uses a separate YAML file for workspace configuration instead of package.json
 	pnpmWorkspaceFile := filepath.Join(root, "pnpm-workspace.yaml")
-	if _, err := os.Stat(pnpmWorkspaceFile); err == nil {
-		patterns, err := r.parsePnpmWorkspace(pnpmWorkspaceFile)
+	if _, err := workspace.Stat(pnpmWorkspaceFile); err == nil {
+		patterns, err := r.parsePnpmWorkspace(pnpmWorkspaceFile, workspace)
 		if err == nil {
 			workspacePatterns = patterns
 			helpers.SafeDebugLog("Detected pnpm workspace with %d patterns", len(patterns))
 		}
 	}
 
-	// 2. Try npm/yarn (package.json workspaces field)
-	// Only check package.json if we haven't found patterns yet (pnpm takes precedence)
 	if len(workspacePatterns) == 0 {
 		packageJSONPath := filepath.Join(root, "package.json")
-		if _, err := os.Stat(packageJSONPath); err == nil {
-			patterns, err := r.parseNpmYarnWorkspaces(packageJSONPath)
+		if _, err := workspace.Stat(packageJSONPath); err == nil {
+			patterns, err := r.parseNpmYarnWorkspaces(packageJSONPath, workspace)
 			if err == nil && len(patterns) > 0 {
 				workspacePatterns = patterns
-				// Determine if npm or yarn based on lock file (for debug logging only)
-				if _, err := os.Stat(filepath.Join(root, "yarn.lock")); err == nil {
+				if _, err := workspace.Stat(filepath.Join(root, "yarn.lock")); err == nil {
 					helpers.SafeDebugLog("Detected yarn workspace with %d patterns", len(patterns))
 				} else {
 					helpers.SafeDebugLog("Detected npm workspace with %d patterns", len(patterns))
@@ -401,8 +395,14 @@ func (r *Registry) discoverWorkspacePackages(workspace types.WorkspaceContext) (
 }
 
 // parsePnpmWorkspace parses pnpm-workspace.yaml and returns workspace patterns
-func (r *Registry) parsePnpmWorkspace(path string) ([]string, error) {
-	data, err := os.ReadFile(path)
+func (r *Registry) parsePnpmWorkspace(path string, workspace types.WorkspaceContext) ([]string, error) {
+	rc, err := workspace.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read pnpm-workspace.yaml: %w", err)
+	}
+	defer func() { _ = rc.Close() }()
+
+	data, err := io.ReadAll(rc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read pnpm-workspace.yaml: %w", err)
 	}
@@ -419,8 +419,14 @@ func (r *Registry) parsePnpmWorkspace(path string) ([]string, error) {
 }
 
 // parseNpmYarnWorkspaces parses package.json workspaces field
-func (r *Registry) parseNpmYarnWorkspaces(path string) ([]string, error) {
-	data, err := os.ReadFile(path)
+func (r *Registry) parseNpmYarnWorkspaces(path string, workspace types.WorkspaceContext) ([]string, error) {
+	rc, err := workspace.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read package.json: %w", err)
+	}
+	defer func() { _ = rc.Close() }()
+
+	data, err := io.ReadAll(rc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read package.json: %w", err)
 	}
@@ -474,18 +480,16 @@ func (r *Registry) expandWorkspacePattern(workspace types.WorkspaceContext, patt
 
 	root := workspace.Root()
 
-	// Filter to only directories that contain package.json
 	var packageDirs []string
 	for _, relPath := range matches {
 		absPath := filepath.Join(root, relPath)
-		info, err := os.Stat(absPath)
+		info, err := workspace.Stat(absPath)
 		if err != nil || !info.IsDir() {
 			continue
 		}
 
-		// Check if this directory has a package.json
 		packageJSONPath := filepath.Join(absPath, "package.json")
-		if _, err := os.Stat(packageJSONPath); err == nil {
+		if _, err := workspace.Stat(packageJSONPath); err == nil {
 			packageDirs = append(packageDirs, absPath)
 		}
 	}
@@ -536,16 +540,15 @@ func (r *Registry) filterNegatedPackages(workspace types.WorkspaceContext, packa
 }
 
 // loadWorkspacePackage loads a manifest from a single workspace package directory
-func (r *Registry) loadWorkspacePackage(pkgPath string) {
+func (r *Registry) loadWorkspacePackage(pkgPath string, workspace types.WorkspaceContext) {
 	helpers.SafeDebugLog("Loading workspace package from: %s", pkgPath)
-	r.loadPackageManifest(pkgPath)
+	r.loadPackageManifest(pkgPath, workspace)
 }
 
 // loadNodeModulesManifests loads manifests from node_modules packages
 func (r *Registry) loadNodeModulesManifests(workspace types.WorkspaceContext) error {
-	// Look for node_modules directory
 	nodeModulesPath := filepath.Join(workspace.Root(), "node_modules")
-	entries, err := os.ReadDir(nodeModulesPath)
+	entries, err := workspace.ReadDir(nodeModulesPath)
 	if err != nil {
 		return fmt.Errorf("could not read node_modules: %w", err)
 	}
@@ -557,32 +560,30 @@ func (r *Registry) loadNodeModulesManifests(workspace types.WorkspaceContext) er
 
 		pkgPath := filepath.Join(nodeModulesPath, entry.Name())
 
-		// Handle scoped packages (@scope/package)
 		if strings.HasPrefix(entry.Name(), "@") {
-			scopedEntries, err := os.ReadDir(pkgPath)
+			scopedEntries, err := workspace.ReadDir(pkgPath)
 			if err != nil {
 				continue
 			}
 			for _, scopedEntry := range scopedEntries {
 				if scopedEntry.IsDir() {
 					scopedPkgPath := filepath.Join(pkgPath, scopedEntry.Name())
-					r.loadPackageManifest(scopedPkgPath)
+					r.loadPackageManifest(scopedPkgPath, workspace)
 				}
 			}
 		} else {
-			r.loadPackageManifest(pkgPath)
+			r.loadPackageManifest(pkgPath, workspace)
 		}
 	}
 
 	return nil
 }
 
-// loadPackageManifest loads a manifest from a specific package directory
-// If the manifest file doesn't exist, it generates it in-memory
-func (r *Registry) loadPackageManifest(packagePath string) {
-	// Read package.json to find customElements field
+// loadPackageManifest loads a manifest from a specific package directory.
+// When workspace is non-nil, reads through the workspace interface.
+func (r *Registry) loadPackageManifest(packagePath string, workspace types.WorkspaceContext) {
 	packageJSONPath := filepath.Join(packagePath, "package.json")
-	packageJSON, err := r.readPackageJSON(packageJSONPath)
+	packageJSON, err := r.readPackageJSON(packageJSONPath, workspace)
 	if err != nil {
 		return
 	}
@@ -591,21 +592,25 @@ func (r *Registry) loadPackageManifest(packagePath string) {
 		return
 	}
 
-	// Resolve the manifest path
 	manifestPath := filepath.Join(packagePath, packageJSON.CustomElements)
-	if !filepath.IsAbs(manifestPath) {
-		manifestPath = filepath.Join(packagePath, packageJSON.CustomElements)
-	}
 
-	// Try to load the manifest file
-	if pkg, err := r.loadManifestFileWithPackageName(manifestPath, packageJSON.Name); err == nil {
+	if pkg, err := r.loadManifestFileWithPackageName(manifestPath, packageJSON.Name, workspace); err == nil {
 		r.addManifest(pkg, packageJSON.Name)
 		helpers.SafeDebugLog("Loaded manifest from %s (%s)", packageJSON.Name, manifestPath)
 		return
 	}
 
-	// If manifest file doesn't exist, generate it in-memory
-	if _, statErr := os.Stat(manifestPath); os.IsNotExist(statErr) {
+	// Check whether the manifest file exists to decide between generation and parse error
+	var exists bool
+	if workspace != nil {
+		_, statErr := workspace.Stat(manifestPath)
+		exists = statErr == nil
+	} else {
+		_, statErr := os.Stat(manifestPath)
+		exists = statErr == nil
+	}
+
+	if !exists {
 		helpers.SafeDebugLog("Manifest file %s doesn't exist, generating in-memory for %s", manifestPath, packageJSON.Name)
 		if pkg := r.generateInMemoryManifest(packagePath, packageJSON.Name); pkg != nil {
 			r.addManifest(pkg, packageJSON.Name)
@@ -721,9 +726,23 @@ func (r *Registry) loadAdditionalPackage(spec string) error {
 	return nil
 }
 
-// readPackageJSON reads and parses a package.json file
-func (r *Registry) readPackageJSON(path string) (*M.PackageJSON, error) {
-	data, err := os.ReadFile(path)
+// readPackageJSON reads and parses a package.json file.
+// When workspace is non-nil, reads through the workspace interface;
+// otherwise falls back to os.ReadFile for absolute paths (e.g. node_modules).
+func (r *Registry) readPackageJSON(path string, workspace types.WorkspaceContext) (*M.PackageJSON, error) {
+	var data []byte
+	var err error
+
+	if workspace != nil {
+		rc, readErr := workspace.ReadFile(path)
+		if readErr != nil {
+			return nil, readErr
+		}
+		defer func() { _ = rc.Close() }()
+		data, err = io.ReadAll(rc)
+	} else {
+		data, err = os.ReadFile(path)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -733,7 +752,6 @@ func (r *Registry) readPackageJSON(path string) (*M.PackageJSON, error) {
 		return nil, err
 	}
 
-	// If this package.json references a custom elements manifest, track it for watching
 	if pkg.CustomElements != "" {
 		r.addManifestPath(path)
 	}
@@ -741,9 +759,22 @@ func (r *Registry) readPackageJSON(path string) (*M.PackageJSON, error) {
 	return &pkg, nil
 }
 
-// loadManifestFileWithPackageName loads a custom elements manifest from a file with package name
-func (r *Registry) loadManifestFileWithPackageName(path string, packageName string) (*M.Package, error) {
-	data, err := os.ReadFile(path)
+// loadManifestFileWithPackageName loads a custom elements manifest from a file with package name.
+// When workspace is non-nil, reads through the workspace interface.
+func (r *Registry) loadManifestFileWithPackageName(path string, packageName string, workspace types.WorkspaceContext) (*M.Package, error) {
+	var data []byte
+	var err error
+
+	if workspace != nil {
+		rc, readErr := workspace.ReadFile(path)
+		if readErr != nil {
+			return nil, readErr
+		}
+		defer func() { _ = rc.Close() }()
+		data, err = io.ReadAll(rc)
+	} else {
+		data, err = os.ReadFile(path)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -753,7 +784,6 @@ func (r *Registry) loadManifestFileWithPackageName(path string, packageName stri
 		return nil, err
 	}
 
-	// Track this file path for watching with package name
 	r.addManifestPathWithPackageName(path, packageName)
 
 	return &pkg, nil

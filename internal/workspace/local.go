@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -201,6 +202,14 @@ func (c *FileSystemWorkspaceContext) ReadFile(path string) (io.ReadCloser, error
 		return nil, fmt.Errorf("FileSystemWorkspaceContext could not open: %w", err)
 	}
 	return rc, nil
+}
+
+func (c *FileSystemWorkspaceContext) Stat(path string) (fs.FileInfo, error) {
+	return os.Stat(path)
+}
+
+func (c *FileSystemWorkspaceContext) ReadDir(path string) ([]fs.DirEntry, error) {
+	return os.ReadDir(path)
 }
 
 func (c *FileSystemWorkspaceContext) Glob(pattern string) ([]string, error) {
