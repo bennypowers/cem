@@ -5,6 +5,7 @@ package cmd_test
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -26,40 +27,18 @@ func generateWorkspaceFixture(t *testing.T) string {
 func TestWorkspaceGenerate_PartitionsFilesByPackage(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 
-	for _, pkg := range []struct {
-		dir       string
-		wantClass string
-		wantPath  string
-		excludes  string
-	}{
-		{"packages/button", "test-button", "src/button.js", "test-card"},
-		{"packages/card", "test-card", "src/card.js", "test-button"},
-	} {
-		manifestPath := filepath.Join(projectDir, pkg.dir, "custom-elements.json")
+	for _, pkg := range []string{"button", "card"} {
+		manifestPath := filepath.Join(projectDir, "packages", pkg, "custom-elements.json")
 		data, err := os.ReadFile(manifestPath)
-		require.NoError(t, err, "manifest should exist for %s", pkg.dir)
-
-		content := string(data)
-
-		assert.Contains(t, content, `"path": "`+pkg.wantPath+`"`,
-			"module path in %s should be package-relative", pkg.dir)
-
-		assert.NotContains(t, content, `"path": "packages/`,
-			"module path in %s must not have workspace-root prefix", pkg.dir)
-
-		assert.True(t, strings.Contains(content, pkg.wantClass),
-			"%s manifest should contain %s", pkg.dir, pkg.wantClass)
-
-		assert.False(t, strings.Contains(content, pkg.excludes),
-			"%s manifest must not contain %s", pkg.dir, pkg.excludes)
+		require.NoError(t, err, "manifest should exist for packages/%s", pkg)
+		compareGolden(t, workspaceGolden("generate-"+pkg, true), string(data), true)
 	}
 }
 
 func TestWorkspaceGenerate_OutputFlagErrors(t *testing.T) {
 	projectDir := setupTest(t, "workspace-generate")
-	stdout, stderr := runCemCommand(t, projectDir, "generate", "-o", "out.json")
-	combined := stdout + stderr
-	assert.Contains(t, combined, "cannot use --output in workspace mode")
+	_, stderr := runCemCommand(t, projectDir, "generate", "-o", "out.json")
+	compareGolden(t, workspaceGolden("generate-output-flag-error", false), stderr, false)
 }
 
 func TestWorkspaceGenerate_SinglePackageOverride(t *testing.T) {
@@ -69,7 +48,7 @@ func TestWorkspaceGenerate_SinglePackageOverride(t *testing.T) {
 	buttonManifest := filepath.Join(projectDir, "packages", "button", "custom-elements.json")
 	data, err := os.ReadFile(buttonManifest)
 	require.NoError(t, err)
-	assert.Contains(t, string(data), "TestButton")
+	compareGolden(t, workspaceGolden("generate-single-package-button", true), string(data), true)
 
 	cardManifest := filepath.Join(projectDir, "packages", "card", "custom-elements.json")
 	_, err = os.ReadFile(cardManifest)
@@ -78,34 +57,36 @@ func TestWorkspaceGenerate_SinglePackageOverride(t *testing.T) {
 
 func TestWorkspaceValidate_ValidatesAllPackages(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
-	stdout, stderr := runCemCommand(t, projectDir, "validate")
-	combined := stdout + stderr
-
-	assert.Contains(t, combined, "@test/button")
-	assert.Contains(t, combined, "@test/card")
-	assert.Contains(t, combined, "Validated manifests")
+	stdout, _ := runCemCommand(t, projectDir, "validate")
+	cleaned := pterm.RemoveColorFromString(stdout)
+	compareGolden(t, workspaceGolden("validate", false), cleaned, false)
 }
+
+var (
+	reSpaces = regexp.MustCompile(`  +`)
+	reTmpDir = regexp.MustCompile(`/tmp/cem-test-\d+/workspace-generate`)
+)
 
 func normalizeTextOutput(s string) string {
 	var lines []string
-	for _, line := range strings.Split(s, "\n") {
-		lines = append(lines, strings.TrimRight(line, " \t"))
+	for line := range strings.SplitSeq(s, "\n") {
+		line = strings.TrimRight(line, " \t")
+		line = reSpaces.ReplaceAllString(line, " ")
+		lines = append(lines, line)
 	}
-	return strings.Join(lines, "\n")
+	result := strings.Join(lines, "\n")
+	result = reTmpDir.ReplaceAllString(result, "$TMPDIR")
+	return result
 }
 
-func compareHealthGolden(t *testing.T, name, stdout string, isJSON bool) {
+func compareGolden(t *testing.T, goldenPath, actual string, isJSON bool) {
 	t.Helper()
-	goldenPath := filepath.Join("testdata", "goldens", "health."+name+".golden")
-	if isJSON {
-		goldenPath += ".json"
-	}
 
 	if *update {
 		if err := os.MkdirAll(filepath.Dir(goldenPath), 0755); err != nil {
 			t.Fatalf("failed to create golden dir: %v", err)
 		}
-		content := stdout
+		content := actual
 		if !isJSON {
 			content = normalizeTextOutput(content)
 		}
@@ -122,12 +103,12 @@ func compareHealthGolden(t *testing.T, name, stdout string, isJSON bool) {
 
 	if isJSON {
 		opts := jsondiff.DefaultConsoleOptions()
-		diff, report := jsondiff.Compare(expected, []byte(stdout), &opts)
+		diff, report := jsondiff.Compare(expected, []byte(actual), &opts)
 		if diff != jsondiff.FullMatch {
 			t.Errorf("JSON diff:\n%s", report)
 		}
 	} else {
-		got := normalizeTextOutput(stdout)
+		got := normalizeTextOutput(actual)
 		want := string(expected)
 		if got != want {
 			t.Errorf("output mismatch vs %s\n--- expected ---\n%s\n--- got ---\n%s", goldenPath, want, got)
@@ -135,158 +116,136 @@ func compareHealthGolden(t *testing.T, name, stdout string, isJSON bool) {
 	}
 }
 
+func workspaceGolden(name string, isJSON bool) string {
+	ext := ".golden"
+	if isJSON {
+		ext = ".golden.json"
+	}
+	return filepath.Join("testdata", "goldens", "workspace."+name+ext)
+}
+
 func TestWorkspaceHealth_ScoresAllPackages(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "health")
 	cleaned := pterm.RemoveColorFromString(stdout)
-	compareHealthGolden(t, "all-packages", cleaned, false)
+	compareGolden(t, workspaceGolden("health-all", false), cleaned, false)
 }
 
 func TestWorkspaceHealth_TagNameFilter(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "health", "-t", "test-button")
 	cleaned := pterm.RemoveColorFromString(stdout)
-	compareHealthGolden(t, "tag-name-filter", cleaned, false)
+	compareGolden(t, workspaceGolden("health-tag-filter", false), cleaned, false)
 }
 
 func TestWorkspaceHealth_FormatJSON(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "health", "--format", "json")
-	compareHealthGolden(t, "json", stdout, true)
+	compareGolden(t, workspaceGolden("health-json", true), stdout, true)
 }
 
 func TestWorkspaceHealth_FormatJSON_WithTagFilter(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "health", "--format", "json", "-t", "test-button")
-	compareHealthGolden(t, "json-tag-filter", stdout, true)
+	compareGolden(t, workspaceGolden("health-json-tag-filter", true), stdout, true)
 }
 
 func TestWorkspaceHealth_FormatJSON_NoMatch(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "health", "--format", "json", "-t", "nonexistent-element")
-	compareHealthGolden(t, "json-no-match", stdout, true)
+	compareGolden(t, workspaceGolden("health-json-no-match", true), stdout, true)
 }
 
 func TestWorkspaceHealth_DeprecatedComponentFlag(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, stderr := runCemCommand(t, projectDir, "health", "--component", "test-button")
 	cleaned := pterm.RemoveColorFromString(stdout)
-	compareHealthGolden(t, "deprecated-component", cleaned, false)
+	compareGolden(t, workspaceGolden("health-deprecated-component", false), cleaned, false)
+	// Justification for inline assertion: deprecation warning is cobra-generated
+	// stderr whose exact format is cobra's concern, not ours. Golden-matching
+	// would couple tests to cobra internals.
 	assert.Contains(t, stderr, "deprecated", "stderr should warn that --component is deprecated")
 }
 
 func TestWorkspaceListTags_ShowsAllPackages(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "list", "tags")
-
-	assert.Contains(t, stdout, "@test/button")
-	assert.Contains(t, stdout, "@test/card")
-	assert.Contains(t, stdout, "TestButton")
-	assert.Contains(t, stdout, "TestCard")
+	cleaned := pterm.RemoveColorFromString(stdout)
+	compareGolden(t, workspaceGolden("list-tags", false), cleaned, false)
 }
 
 func TestWorkspaceListModules_ShowsAllPackages(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "list", "modules")
-
-	assert.Contains(t, stdout, "@test/button")
-	assert.Contains(t, stdout, "@test/card")
-	assert.Contains(t, stdout, "src/button.js")
-	assert.Contains(t, stdout, "src/card.js")
+	cleaned := pterm.RemoveColorFromString(stdout)
+	compareGolden(t, workspaceGolden("list-modules", false), cleaned, false)
 }
 
 func TestWorkspaceList_ShowsAllPackages(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "list")
-
-	assert.Contains(t, stdout, "@test/button")
-	assert.Contains(t, stdout, "@test/card")
+	cleaned := pterm.RemoveColorFromString(stdout)
+	compareGolden(t, workspaceGolden("list-all", false), cleaned, false)
 }
 
 func TestWorkspaceSearch_FindsAcrossPackages(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "search", "button")
-
-	assert.Contains(t, stdout, "@test/button")
-	assert.Contains(t, stdout, "src/button.js")
+	cleaned := pterm.RemoveColorFromString(stdout)
+	compareGolden(t, workspaceGolden("search-button", false), cleaned, false)
 }
 
 func TestWorkspaceSearch_NoResults(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "search", "zzz-nonexistent-zzz")
-
-	assert.Contains(t, stdout, "Searched manifests")
-	assert.NotContains(t, stdout, "TestButton")
+	cleaned := pterm.RemoveColorFromString(stdout)
+	compareGolden(t, workspaceGolden("search-no-results", false), cleaned, false)
 }
 
 func TestWorkspaceExport_SucceedsWithConfig(t *testing.T) {
-	// Root config has export.react.output, which cascades to packages
 	projectDir := generateWorkspaceFixture(t)
-	stdout, stderr := runCemCommand(t, projectDir, "export")
-	combined := stdout + stderr
-
-	assert.Contains(t, combined, "Exported wrappers")
+	stdout, _ := runCemCommand(t, projectDir, "export")
+	cleaned := pterm.RemoveColorFromString(stdout)
+	compareGolden(t, workspaceGolden("export", false), cleaned, false)
 }
 
 func TestWorkspaceExport_WithFormat(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
-	stdout, stderr := runCemCommand(t, projectDir, "export", "--format", "react")
-	combined := stdout + stderr
-
-	// Export runs per-package and reports results
-	assert.Contains(t, combined, "Exported wrappers")
+	stdout, _ := runCemCommand(t, projectDir, "export", "--format", "react")
+	cleaned := pterm.RemoveColorFromString(stdout)
+	compareGolden(t, workspaceGolden("export-react", false), cleaned, false)
 }
 
 func TestWorkspaceExport_OutputPerPackage(t *testing.T) {
-	// Root config has export.react.output: "react".
-	// Each package should get its own react/ dir, not a shared one at the root.
 	projectDir := generateWorkspaceFixture(t)
 	runCemCommand(t, projectDir, "export", "--format", "react")
 
-	// Verify each package has its own react output (not at workspace root)
+	// Justification for inline assertions: these verify filesystem side effects
+	// (directory existence), not command output. Golden files compare text/JSON
+	// output; filesystem structure checks have no output to golden-match.
 	for _, pkg := range []string{"packages/button", "packages/card"} {
 		reactDir := filepath.Join(projectDir, pkg, "react")
 		_, err := os.Stat(reactDir)
 		assert.NoError(t, err, "react export dir should exist for %s", pkg)
 	}
-	// Workspace root should NOT have a react/ dir
 	_, err := os.Stat(filepath.Join(projectDir, "react"))
 	assert.True(t, os.IsNotExist(err), "react dir should not exist at workspace root")
 }
 
 func TestWorkspaceGenerate_DemoDiscovery(t *testing.T) {
-	// Root config has demoDiscovery with fileGlob, urlPattern, and urlTemplate.
-	// In workspace mode, demo files are package-relative but the urlPattern
-	// is root-level. The workspace fallback should prepend the package dir name
-	// so the urlPattern matches and URLs are generated.
 	projectDir := generateWorkspaceFixture(t)
 
-	for _, pkg := range []struct {
-		dir     string
-		wantURL string
-	}{
-		{"packages/button", "https://test.example.com/components/button/demo/basic/"},
-		{"packages/card", "https://test.example.com/components/card/demo/basic/"},
-	} {
-		manifestPath := filepath.Join(projectDir, pkg.dir, "custom-elements.json")
+	for _, pkg := range []string{"button", "card"} {
+		manifestPath := filepath.Join(projectDir, "packages", pkg, "custom-elements.json")
 		data, err := os.ReadFile(manifestPath)
 		require.NoError(t, err)
-		content := string(data)
-
-		assert.Contains(t, content, `"kind": "javascript-module"`,
-			"%s manifest should have modules", pkg.dir)
-
-		assert.Contains(t, content, `"demos"`,
-			"%s manifest should have demos attached to declarations", pkg.dir)
-
-		assert.Contains(t, content, pkg.wantURL,
-			"%s manifest should contain generated demo URL", pkg.dir)
+		compareGolden(t, workspaceGolden("generate-demo-"+pkg, true), string(data), true)
 	}
 }
 
 func TestWorkspaceListAttributes_FindsInCorrectPackage(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "list", "attributes", "-t", "test-button")
-
-	assert.Contains(t, stdout, "Listed from manifests")
+	cleaned := pterm.RemoveColorFromString(stdout)
+	compareGolden(t, workspaceGolden("list-attributes-button", false), cleaned, false)
 }

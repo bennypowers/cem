@@ -1,0 +1,5 @@
+ SUCCESS ✓ Manifest is valid (/packages/button/custom-elements.json)
+ SUCCESS ✓ Manifest is valid (/packages/card/custom-elements.json)
+ SUCCESS Validated manifests for 2 packages:
+ @test/button: custom-elements.json
+ @test/card: custom-elements.json

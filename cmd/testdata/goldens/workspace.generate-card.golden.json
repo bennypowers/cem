@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/card.js",
+      "declarations": [
+        {
+          "name": "TestCard",
+          "summary": "Test card",
+          "description": "A card",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "heading",
+              "description": "Heading",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "tagName": "test-card",
+          "slots": [
+            {
+              "name": "",
+              "description": "Card content"
+            }
+          ],
+          "demos": [
+            {
+              "url": "https://test.example.com/components/card/demo/basic/",
+              "source": {
+                "href": "/demo/basic.html"
+              }
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "test-card",
+          "declaration": {
+            "name": "TestCard",
+            "module": "src/card.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "TestCard",
+          "declaration": {
+            "name": "TestCard",
+            "module": "src/card.js"
+          }
+        }
+      ]
+    }
+  ]
+}

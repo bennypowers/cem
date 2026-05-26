@@ -1,0 +1,9 @@
+ INFO Found 1 custom element(s)
+ INFO Exporting react wrappers to /packages/button/react
+ SUCCESS Exported 1 react wrapper(s)
+ INFO Found 1 custom element(s)
+ INFO Exporting react wrappers to /packages/card/react
+ SUCCESS Exported 1 react wrapper(s)
+ SUCCESS Exported wrappers for 2 packages:
+ @test/button: custom-elements.json
+ @test/card: custom-elements.json

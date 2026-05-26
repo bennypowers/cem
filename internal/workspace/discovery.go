@@ -18,10 +18,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package workspace
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	C "bennypowers.dev/cem/cmd/config"
@@ -172,6 +174,10 @@ func FindPackagesWithManifests(rootDir string) ([]PackageInfo, error) {
 			})
 		}
 	}
+
+	slices.SortFunc(result, func(a, b PackageInfo) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
 
 	return result, nil
 }

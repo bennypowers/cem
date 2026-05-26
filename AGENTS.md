@@ -33,7 +33,7 @@ To print debug logs to the console, pass `-vvv`
 
 Practice TDD. See new tests fail first, before implementing the fix/feature.
 
-IMPORTANT: When writing tests, **always** use fixture/golden pattern. We **always** prefer goldens, STRONG justification needed to permit inline assertions
+IMPORTANT: When writing tests, **always** use fixture/golden pattern. We **always** prefer goldens, STRONG justification needed to permit inline assertions. If using inline assertions, comment why in test func.
 
 - **Fixtures**: Input test data - the content directories/files your code operates on (e.g., `serve/testdata/transforms/http-typescript/simple-greeting.ts`). Use `NewFixtureFS()` helper from `internal/platform/testutil` instead of `os.ReadFile()` to load fixtures into in-memory file systems.
 - **Goldens**: Expected output files to compare against (e.g., `serve/middleware/routes/testdata/chrome-rendering/expected-basic.html`). Tests should support `--update` flag to regenerate golden files when intentional changes occur.

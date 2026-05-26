@@ -1,0 +1,55 @@
+
+@test/button:
+# <root>
+
+# module src/button.js
+
+# `<test-button>`
+
+Test button
+A button
+## Demos
+
+URL | Source
+-------------------------------------------------------- | ----------------
+`https://test.example.com/components/button/demo/basic/` | /demo/basic.html
+
+## Fields
+
+Name | Type
+------- | --------
+`label` | `string`
+
+
+
+@test/card:
+# <root>
+
+# module src/card.js
+
+# `<test-card>`
+
+Test card
+A card
+## Slots
+
+Name
+-----------
+`<default>`
+
+## Demos
+
+URL | Source
+------------------------------------------------------ | ----------------
+`https://test.example.com/components/card/demo/basic/` | /demo/basic.html
+
+## Fields
+
+Name | Type
+--------- | --------
+`heading` | `string`
+
+
+ SUCCESS Listed from manifests for 2 packages:
+ @test/button: custom-elements.json
+ @test/card: custom-elements.json

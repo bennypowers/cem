@@ -1,8 +1,8 @@
 
-     @test/button
+ @test/button
 
 
-                            Component Health Report
+ Component Health Report
 
 
 
@@ -11,12 +11,12 @@
 
 ## test-button ███████████████░░░░░ 75/100
 
-  ✗ Element description — description is too short; provide at least 20 characters (5/25)
-  ✓ Attribute documentation (20/20)
-  ✓ Slot documentation (15/15)
-  ✓ CSS documentation (15/15)
-  ✓ Event documentation (15/15)
-  ⚠ Demos — add descriptions to demos (5/10)
+ ✗ Element description — description is too short; provide at least 20 characters (5/25)
+ ✓ Attribute documentation (20/20)
+ ✓ Slot documentation (15/15)
+ ✓ CSS documentation (15/15)
+ ✓ Event documentation (15/15)
+ ⚠ Demos — add descriptions to demos (5/10)
 
 
 Overall: ██████████████████████████████░░░░░░░░░░ 75/100
@@ -31,10 +31,10 @@ Overall: ███████████████████████�
 • test-button: description is too short; provide at least 20 characters (Element description, +3 pts)
 
 
-     @test/card
+ @test/card
 
 
-                            Component Health Report
+ Component Health Report
 
 
 
@@ -43,12 +43,12 @@ Overall: ███████████████████████�
 
 ## test-card ██████████████░░░░░░ 70/100
 
-  ✗ Element description — description is too short; provide at least 20 characters (5/25)
-  ✓ Attribute documentation (20/20)
-  ⚠ Slot documentation — mention accessibility considerations for slot content (10/15)
-  ✓ CSS documentation (15/15)
-  ✓ Event documentation (15/15)
-  ⚠ Demos — add descriptions to demos (5/10)
+ ✗ Element description — description is too short; provide at least 20 characters (5/25)
+ ✓ Attribute documentation (20/20)
+ ⚠ Slot documentation — mention accessibility considerations for slot content (10/15)
+ ✓ CSS documentation (15/15)
+ ✓ Event documentation (15/15)
+ ⚠ Demos — add descriptions to demos (5/10)
 
 
 Overall: ████████████████████████████░░░░░░░░░░░░ 70/100
@@ -62,6 +62,6 @@ Overall: ███████████████████████�
 • test-card: add descriptions to demos (Demos, +5 pts)
 • test-card: mention accessibility considerations (ARIA, screen reader, WCAG) (Element description, +4 pts)
 
- SUCCESS  Checked health for 2 packages:
-            @test/button: custom-elements.json
-            @test/card: custom-elements.json
+ SUCCESS Checked health for 2 packages:
+ @test/button: custom-elements.json
+ @test/card: custom-elements.json
