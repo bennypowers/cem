@@ -1,0 +1,25 @@
+
+@test/button:
+# <root>
+
+# module src/button.js
+
+# `<test-button>`
+
+Test button
+A button
+## Demos
+
+URL | Source
+-------------------------------------------------------- | ----------------
+`https://test.example.com/components/button/demo/basic/` | /demo/basic.html
+
+
+
+@test/card:
+# <root>
+
+
+ SUCCESS Searched manifests for 2 packages:
+ @test/button: custom-elements.json
+ @test/card: custom-elements.json

@@ -1,0 +1,15 @@
+
+@test/button:
+Tag Name | Class | Module | Summary
+--------------- | ---------- | ------------- | -----------
+`<test-button>` | TestButton | src/button.js | Test button
+
+
+@test/card:
+Tag Name | Class | Module | Summary
+------------- | -------- | ----------- | ---------
+`<test-card>` | TestCard | src/card.js | Test card
+
+ SUCCESS Listed from manifests for 2 packages:
+ @test/button: custom-elements.json
+ @test/card: custom-elements.json

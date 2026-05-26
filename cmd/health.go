@@ -32,15 +32,27 @@ import (
 	"github.com/spf13/viper"
 )
 
-func healthWorkspace(cmd *cobra.Command) error {
+func healthWorkspace(cmd *cobra.Command, args []string) error {
 	ctx, err := workspace.GetWorkspaceContext(cmd)
 	if err != nil {
 		return err
 	}
 
+	component, _ := cmd.Flags().GetString("tag-name")
+	if component == "" {
+		component, _ = cmd.Flags().GetString("component")
+	}
+	moduleFlags, _ := cmd.Flags().GetStringArray("module")
 	format, _ := cmd.Flags().GetString("format")
+	switch format {
+	case "text", "json", "markdown":
+	default:
+		return fmt.Errorf("invalid format %q: must be text, json, or markdown", format)
+	}
 	cliFailBelow, _ := cmd.Flags().GetInt("fail-below")
 	disableFlags, _ := cmd.Flags().GetStringArray("disable")
+
+	collected := make([]health.PackageHealthResult, 0)
 
 	results := workspace.ForEachPackage(ctx.Root(), func(pkg workspace.PackageInfo) error {
 		pkgCtx := workspace.NewFileSystemWorkspaceContext(pkg.Path)
@@ -56,6 +68,28 @@ func healthWorkspace(cmd *cobra.Command) error {
 		allDisabled = append(allDisabled, cfg.Health.Disable...)
 		allDisabled = append(allDisabled, disableFlags...)
 
+		allModules := make([]string, 0, len(moduleFlags)+len(args))
+		allModules = append(allModules, moduleFlags...)
+
+		if len(args) > 0 {
+			pkgJSON, _ := pkgCtx.PackageJSON()
+			pkgRel, _ := filepath.Rel(ctx.Root(), pkg.Path)
+			pkgPrefix := filepath.ToSlash(pkgRel) + "/"
+			for _, file := range args {
+				rel := filepath.ToSlash(file)
+				rel = strings.TrimPrefix(rel, pkgPrefix)
+				normalized := M.NormalizeSourcePath(rel)
+				resolved, err := M.ResolveExportPath(pkgJSON, normalized)
+				if err != nil {
+					if errors.Is(err, M.ErrNotExported) {
+						allModules = append(allModules, normalized)
+					}
+					continue
+				}
+				allModules = append(allModules, resolved)
+			}
+		}
+
 		failBelow := cliFailBelow
 		if failBelow == 0 && cfg.Health.FailBelow > 0 {
 			failBelow = cfg.Health.FailBelow
@@ -63,17 +97,32 @@ func healthWorkspace(cmd *cobra.Command) error {
 
 		manifestPath := filepath.Join(pkg.Path, pkg.CustomElementsRef)
 		options := health.Options{
-			Disable: allDisabled,
+			Component: component,
+			Modules:   allModules,
+			Disable:   allDisabled,
 		}
 		result, err := health.Analyze(manifestPath, options)
 		if err != nil {
 			return err
 		}
-		pterm.DefaultHeader.WithFullWidth(false).Println(pkg.Name)
-		displayOptions := health.DisplayOptions{Format: format}
-		if err := health.PrintHealthResult(result, displayOptions); err != nil {
-			return err
+
+		if len(result.Modules) == 0 && (component != "" || len(allModules) > 0) {
+			return nil
 		}
+
+		if format == "text" {
+			pterm.DefaultHeader.WithFullWidth(false).Println(pkg.Name)
+			displayOptions := health.DisplayOptions{Format: format}
+			if err := health.PrintHealthResult(result, displayOptions); err != nil {
+				return err
+			}
+		} else {
+			collected = append(collected, health.PackageHealthResult{
+				Package: pkg.Name,
+				Result:  result,
+			})
+		}
+
 		if failBelow > 0 && result.OverallMax > 0 {
 			pct := int(math.Round(float64(result.OverallScore) * 100 / float64(result.OverallMax)))
 			if pct < failBelow {
@@ -83,11 +132,26 @@ func healthWorkspace(cmd *cobra.Command) error {
 		return nil
 	})
 
+	if format != "text" {
+		displayOptions := health.DisplayOptions{Format: format}
+		if err := health.PrintWorkspaceHealthResults(collected, displayOptions); err != nil {
+			return err
+		}
+		var errs []error
+		for _, r := range results {
+			if r.Err != nil {
+				errs = append(errs, fmt.Errorf("%s: %w", r.Package.Name, r.Err))
+			}
+		}
+		return errors.Join(errs...)
+	}
 	return workspace.ReportResults("Checked health", results)
 }
 
 func init() {
-	healthCmd.Flags().String("component", "", "Filter to a specific component by tag name or class name")
+	healthCmd.Flags().StringP("tag-name", "t", "", "Filter to a specific component by tag name or class name")
+	healthCmd.Flags().String("component", "", "Deprecated: use --tag-name/-t instead")
+	_ = healthCmd.Flags().MarkDeprecated("component", "use --tag-name/-t instead")
 	healthCmd.Flags().StringArray("module", []string{}, "Filter to specific modules by path (can be repeated)")
 	healthCmd.Flags().String("format", "text", "Output format: text, json, or markdown")
 	healthCmd.Flags().Int("fail-below", 0, "Exit 1 if overall percentage is below this threshold (0-100)")
@@ -107,7 +171,8 @@ package.json exports map, replicating the same logic used by cem generate.`,
 	Args: cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if workspace.ShouldUseWorkspaceMode(cmd) {
-			if err := healthWorkspace(cmd); err != nil {
+			if err := healthWorkspace(cmd, args); err != nil {
+				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
 			return
@@ -125,8 +190,11 @@ package.json exports map, replicating the same logic used by cem generate.`,
 			os.Exit(1)
 		}
 
-		// Get flags
-		component, _ := cmd.Flags().GetString("component")
+		// Get flags — prefer --tag-name, fall back to deprecated --component
+		component, _ := cmd.Flags().GetString("tag-name")
+		if component == "" {
+			component, _ = cmd.Flags().GetString("component")
+		}
 		moduleFlags, _ := cmd.Flags().GetStringArray("module")
 		format, _ := cmd.Flags().GetString("format")
 		switch format {

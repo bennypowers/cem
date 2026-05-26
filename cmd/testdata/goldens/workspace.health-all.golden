@@ -1,0 +1,67 @@
+
+ @test/button
+
+
+ Component Health Report
+
+
+
+# src/button.js ███████████████░░░░░ 75/100
+
+
+## test-button ███████████████░░░░░ 75/100
+
+ ✗ Element description — description is too short; provide at least 20 characters (5/25)
+ ✓ Attribute documentation (20/20)
+ ✓ Slot documentation (15/15)
+ ✓ CSS documentation (15/15)
+ ✓ Event documentation (15/15)
+ ⚠ Demos — add descriptions to demos (5/10)
+
+
+Overall: ██████████████████████████████░░░░░░░░░░ 75/100
+
+
+# Recommendations
+
+• test-button: describe purpose and context using words like 'for', 'when', 'provides', 'allows' (Element description, +5 pts)
+• test-button: use RFC 2119 keywords (MUST, SHOULD, AVOID) to clarify requirements (Element description, +5 pts)
+• test-button: add descriptions to demos (Demos, +5 pts)
+• test-button: mention accessibility considerations (ARIA, screen reader, WCAG) (Element description, +4 pts)
+• test-button: description is too short; provide at least 20 characters (Element description, +3 pts)
+
+
+ @test/card
+
+
+ Component Health Report
+
+
+
+# src/card.js ██████████████░░░░░░ 70/100
+
+
+## test-card ██████████████░░░░░░ 70/100
+
+ ✗ Element description — description is too short; provide at least 20 characters (5/25)
+ ✓ Attribute documentation (20/20)
+ ⚠ Slot documentation — mention accessibility considerations for slot content (10/15)
+ ✓ CSS documentation (15/15)
+ ✓ Event documentation (15/15)
+ ⚠ Demos — add descriptions to demos (5/10)
+
+
+Overall: ████████████████████████████░░░░░░░░░░░░ 70/100
+
+
+# Recommendations
+
+• test-card: describe purpose and context using words like 'for', 'when', 'provides', 'allows' (Element description, +5 pts)
+• test-card: use RFC 2119 keywords (MUST, SHOULD, AVOID) to clarify requirements (Element description, +5 pts)
+• test-card: mention accessibility considerations for slot content (Slot documentation, +5 pts)
+• test-card: add descriptions to demos (Demos, +5 pts)
+• test-card: mention accessibility considerations (ARIA, screen reader, WCAG) (Element description, +4 pts)
+
+ SUCCESS Checked health for 2 packages:
+ @test/button: custom-elements.json
+ @test/card: custom-elements.json

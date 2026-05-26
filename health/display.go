@@ -51,6 +51,31 @@ func PrintHealthResult(result *HealthResult, options DisplayOptions) error {
 	}
 }
 
+// PrintWorkspaceHealthResults prints collected workspace health results as a single output.
+func PrintWorkspaceHealthResults(results []PackageHealthResult, options DisplayOptions) error {
+	switch options.Format {
+	case "json":
+		encoder := json.NewEncoder(os.Stdout)
+		encoder.SetIndent("", "  ")
+		return encoder.Encode(results)
+	case "markdown":
+		for _, r := range results {
+			if _, err := fmt.Fprintf(os.Stdout, "# %s\n\n", r.Package); err != nil {
+				return err
+			}
+			if err := writeMarkdownReport(os.Stdout, r.Result); err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintln(os.Stdout); err != nil {
+				return err
+			}
+		}
+		return nil
+	default:
+		return fmt.Errorf("invalid format: %s", options.Format)
+	}
+}
+
 func printHealthResultJSON(w io.Writer, result *HealthResult) error {
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")

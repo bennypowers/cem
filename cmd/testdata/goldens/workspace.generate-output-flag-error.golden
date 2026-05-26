@@ -1,0 +1,25 @@
+Error: cannot use --output in workspace mode
+Each package writes to its customElements path from package.json.
+To target a single package, use: cem generate -p packages/foo -o custom-path.json
+Usage:
+ cem generate [files or glob patterns] [flags]
+
+Flags:
+ --demo-discovery-file-glob string Glob pattern for discovering demo files
+ --demo-discovery-url-pattern string Go Regexp pattern with named capture groups for generating canonical demo urls
+ --demo-discovery-url-template string URL pattern string using {groupName} syntax to interpolate named captures from the URL pattern
+ --design-tokens string specifiers (relative paths or npm:@scope/package/path/file.json) to DTCG-format module design tokens
+ --design-tokens-prefix string css custom property prefix for design tokens
+ -e, --exclude stringArray files or glob patterns to exclude
+ -h, --help help for generate
+ --no-default-excludes do not exclude files by default (e.g. .d.ts files are included unless excluded explicitly)
+ -o, --output string write custom elements manifest to this file
+ -w, --watch watch files for changes and regenerate
+
+Global Flags:
+ --config string config file (searches .config/cem.{yaml,yml,json,jsonc} then .cem.{yaml,yml,json,jsonc})
+ -p, --package string package specifier: npm:@scope/package, URL (https://cdn.example.com/pkg/), or local path
+ -q, --quiet quiet output (only warnings and errors)
+ --source-control-root-url string Canonical public source control URL corresponding to project root on primary branch. e.g. https://github.com/bennypowers/cem/tree/main/
+ -v, --verbose verbose logging output
+

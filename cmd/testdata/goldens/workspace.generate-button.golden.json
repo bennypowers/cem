@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/button.js",
+      "declarations": [
+        {
+          "name": "TestButton",
+          "summary": "Test button",
+          "description": "A button",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "label",
+              "description": "Button label",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Click'",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "tagName": "test-button",
+          "demos": [
+            {
+              "url": "https://test.example.com/components/button/demo/basic/",
+              "source": {
+                "href": "/demo/basic.html"
+              }
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "test-button",
+          "declaration": {
+            "name": "TestButton",
+            "module": "src/button.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "TestButton",
+          "declaration": {
+            "name": "TestButton",
+            "module": "src/button.js"
+          }
+        }
+      ]
+    }
+  ]
+}
