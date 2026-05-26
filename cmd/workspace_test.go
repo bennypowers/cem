@@ -3,6 +3,7 @@
 package cmd_test
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -92,6 +93,56 @@ func TestWorkspaceHealth_ScoresAllPackages(t *testing.T) {
 	assert.Contains(t, combined, "@test/button")
 	assert.Contains(t, combined, "@test/card")
 	assert.Contains(t, combined, "Checked health")
+}
+
+func TestWorkspaceHealth_TagNameFilter(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	stdout, stderr := runCemCommand(t, projectDir, "health", "-t", "test-button")
+	combined := stdout + stderr
+
+	assert.Contains(t, combined, "@test/button")
+	assert.NotContains(t, combined, "TestCard", "tag-name filter should exclude card package results")
+}
+
+func TestWorkspaceHealth_FormatJSON(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	stdout, _ := runCemCommand(t, projectDir, "health", "--format", "json")
+
+	var results []map[string]any
+	err := json.Unmarshal([]byte(stdout), &results)
+	require.NoError(t, err, "JSON output should be a valid JSON array, got: %s", stdout[:min(len(stdout), 200)])
+	assert.Len(t, results, 2, "should have results for both packages")
+	for _, r := range results {
+		assert.Contains(t, r, "package")
+		assert.Contains(t, r, "result")
+	}
+}
+
+func TestWorkspaceHealth_FormatJSON_WithTagFilter(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	stdout, _ := runCemCommand(t, projectDir, "health", "--format", "json", "-t", "test-button")
+
+	var results []map[string]any
+	err := json.Unmarshal([]byte(stdout), &results)
+	require.NoError(t, err, "JSON output should be valid JSON array")
+	assert.Len(t, results, 1, "should only include package containing test-button")
+	assert.Equal(t, "@test/button", results[0]["package"])
+}
+
+func TestWorkspaceHealth_FormatJSON_NoMatch(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	stdout, _ := runCemCommand(t, projectDir, "health", "--format", "json", "-t", "nonexistent-element")
+
+	assert.Equal(t, "[]\n", stdout, "zero-match filter should produce empty JSON array, not null")
+}
+
+func TestWorkspaceHealth_DeprecatedComponentFlag(t *testing.T) {
+	projectDir := generateWorkspaceFixture(t)
+	stdout, stderr := runCemCommand(t, projectDir, "health", "--component", "test-button")
+	combined := stdout + stderr
+
+	assert.Contains(t, combined, "@test/button")
+	assert.Contains(t, combined, "deprecated", "should warn that --component is deprecated")
 }
 
 func TestWorkspaceListTags_ShowsAllPackages(t *testing.T) {

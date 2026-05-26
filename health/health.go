@@ -51,6 +51,12 @@ type ComponentReport struct {
 	Categories []CategoryScore `json:"categories"`
 }
 
+// PackageHealthResult pairs a package name with its health result for workspace output.
+type PackageHealthResult struct {
+	Package string        `json:"package"`
+	Result  *HealthResult `json:"result"`
+}
+
 // Options configures the health analysis.
 type Options struct {
 	Component string   // filter to a single component by tag name or class name
