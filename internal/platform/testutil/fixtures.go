@@ -28,62 +28,26 @@ import (
 
 // NewFixtureFS loads fixture files from testdata and returns a MapFileSystem
 // with files mapped to the specified root path (usually "/test").
-// The fixtureDir should be relative to serve/testdata/ (e.g., "transforms/config-test").
-// Go tests run from the module root, so we check both possible locations.
+// The fixtureDir should be relative to testdata/ (e.g., "transforms/config-test").
+// Resolves the testdata path across multiple possible locations to handle
+// tests running from different package depths (serve/, serve/middleware/*, etc.).
 func NewFixtureFS(t testing.TB, fixtureDir string, rootPath string) *platform.MapFileSystem {
 	t.Helper()
 
-	mfs := platform.NewMapFileSystem(nil)
-
-	// Go test changes working directory based on which package is being tested.
-	// Try multiple possible paths:
-	// 1. testdata/ - for tests in current package
-	// 2. ../../testdata/ - for tests in serve/middleware/* packages
-	// 3. serve/testdata/ - fallback if running from module root
 	possiblePaths := []string{
 		filepath.Join("testdata", fixtureDir),
 		filepath.Join("..", "..", "testdata", fixtureDir),
 		filepath.Join("serve", "testdata", fixtureDir),
 	}
 
-	var fixturePath string
-	var statErr error
 	for _, path := range possiblePaths {
-		if _, statErr = os.Stat(path); statErr == nil {
-			fixturePath = path
-			break
+		if _, err := os.Stat(path); err == nil {
+			return LoadTestdataFS(t, path, rootPath)
 		}
 	}
-	if fixturePath == "" {
-		t.Fatalf("Could not find fixtures at %s (tried all paths)", fixtureDir)
-	}
 
-	// Walk fixture directory and load all files into memory
-	// Callback returns errors immediately to terminate on first failure
-	err := platform.WalkDir(os.DirFS(fixturePath), ".", nil, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			return nil
-		}
-
-		content, err := os.ReadFile(filepath.Join(fixturePath, path))
-		if err != nil {
-			return err
-		}
-
-		virtualPath := filepath.Join(rootPath, path)
-		mfs.AddFile(virtualPath, string(content), 0644)
-
-		return nil
-	})
-
-	if err != nil {
-		t.Fatalf("Failed to load fixtures from %s: %v", fixtureDir, err)
-	}
-
-	return mfs
+	t.Fatalf("Could not find fixtures at %s (tried all paths)", fixtureDir)
+	return nil
 }
 
 // LoadTestdataFS loads all files under dir into a MapFileSystem rooted at rootPath.

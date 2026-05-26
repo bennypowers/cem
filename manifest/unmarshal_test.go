@@ -21,7 +21,6 @@ import (
 	"os"
 	"reflect"
 	"regexp"
-	"sync"
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform"
@@ -45,16 +44,13 @@ func mustRunFixture(t *testing.T) {
 	}
 }
 
-var (
-	manifestTestdataFS   *platform.MapFileSystem
-	manifestTestdataOnce sync.Once
-)
+var manifestTestdataFS *platform.MapFileSystem
 
 func manifestFixtures(t testing.TB) *platform.MapFileSystem {
 	t.Helper()
-	manifestTestdataOnce.Do(func() {
+	if manifestTestdataFS == nil {
 		manifestTestdataFS = testutil.LoadTestdataFS(t, "testdata", "/")
-	})
+	}
 	return manifestTestdataFS
 }
 

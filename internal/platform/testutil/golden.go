@@ -163,9 +163,8 @@ func CheckGolden(t *testing.T, name string, actual []byte, opts ...GoldenOptions
 	}
 }
 
-// LoadFixture loads a single fixture file from a MapFileSystem.
-// Deprecated: Use ReadFixture instead, which takes an explicit MapFileSystem.
-// This function is kept for backward compatibility during migration.
+// LoadFixture loads a single fixture file from disk, trying multiple common directories.
+// Prefer ReadFixture with an explicit MapFileSystem for new tests.
 func LoadFixture(t *testing.T, path string) []byte {
 	t.Helper()
 

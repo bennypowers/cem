@@ -157,6 +157,7 @@ func TestGenerate(t *testing.T) {
 						if err := os.WriteFile(golden, []byte(*actual), 0644); err != nil {
 							t.Fatalf("failed to write golden file: %v", err)
 						}
+						return
 					}
 					goldenKey := filepath.Join("/fixtures", projectEntry.Name(), projectGoldenDir, tc.name+".json")
 					expected := testutil.ReadFixture(t, testdataFS, goldenKey)
