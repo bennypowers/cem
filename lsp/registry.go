@@ -1325,7 +1325,7 @@ func (r *Registry) addManifestPathWithPackageName(path string, packageName strin
 	r.ManifestPackageNames[absPath] = packageName
 	helpers.SafeDebugLog("Tracking manifest file: %s with package: %s", absPath, packageName)
 
-	r.addWatchPath(path)
+	r.addWatchPath(absPath)
 }
 
 // addManifestPath tracks a CEM manifest path for reload and watching.
@@ -1343,7 +1343,7 @@ func (r *Registry) addManifestPath(path string) {
 	r.ManifestPaths = append(r.ManifestPaths, absPath)
 	helpers.SafeDebugLog("Tracking manifest file: %s", absPath)
 
-	r.addWatchPath(path)
+	r.addWatchPath(absPath)
 }
 
 // GetModuleGraph returns the module graph for re-export analysis
