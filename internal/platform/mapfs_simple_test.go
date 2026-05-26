@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: pure function, scalar assertions
 func TestNewMapFS(t *testing.T) {
 	fs := platform.NewMapFS(map[string]string{
 		"a.js":     "console.log('a')",

@@ -25,6 +25,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, table-driven
+
 // mockRenderable implements manifest.Renderable for testing
 type mockRenderable struct {
 	name        string

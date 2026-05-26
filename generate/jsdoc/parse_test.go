@@ -12,6 +12,8 @@ import (
 	_ "bennypowers.dev/cem/internal/languages/jsdoc"
 )
 
+// Inline: pure function, table-driven
+
 // newTestQueryManager creates a QueryManager with the jsdoc query loaded.
 // Callers must defer qm.Close().
 func newTestQueryManager(t *testing.T) *Q.QueryManager {

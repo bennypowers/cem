@@ -18,11 +18,10 @@ package manifest_test
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/manifest"
 )
 
@@ -55,11 +54,8 @@ func clearBackreferences(pkg *manifest.Package) {
 // using a comprehensive manifest that includes all possible types and structures.
 func TestPackage(t *testing.T) {
 	// Load the comprehensive test manifest
-	manifestPath := filepath.Join("testdata", "comprehensive-clone-test.json")
-	manifestData, err := os.ReadFile(manifestPath)
-	if err != nil {
-		t.Fatalf("Failed to read test manifest: %v", err)
-	}
+	fs := testutil.LoadTestdataFS(t, "testdata", "/")
+	manifestData := testutil.ReadFixture(t, fs, "/comprehensive-clone-test.json")
 
 	// Unmarshal the manifest
 	var original manifest.Package

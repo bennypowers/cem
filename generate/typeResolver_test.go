@@ -23,6 +23,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, table-driven
+
 func TestFindModuleBySpec(t *testing.T) {
 	pkg := &M.Package{
 		Modules: []M.Module{

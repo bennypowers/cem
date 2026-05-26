@@ -21,14 +21,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/health"
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/platform/testutil"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware"
@@ -65,13 +64,14 @@ type frontmatterTestFixture struct {
 	demoRoute string
 }
 
+var frontmatterFixtures *platform.MapFileSystem
+
 func loadFixture(t *testing.T, name string) []byte {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join("testdata", "frontmatter", name))
-	if err != nil {
-		t.Fatalf("read fixture %s: %v", name, err)
+	if frontmatterFixtures == nil {
+		frontmatterFixtures = testutil.LoadTestdataFS(t, "testdata/frontmatter", "/")
 	}
-	return data
+	return testutil.ReadFixture(t, frontmatterFixtures, "/"+name)
 }
 
 func setupFrontmatterTest(t *testing.T, fixtureName, renderingMode string) frontmatterTestFixture {

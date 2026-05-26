@@ -27,6 +27,10 @@ import (
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
+// Inline: integration test, scalar assertions
+// Verifies incremental parsing round-trips through DocumentManager for
+// HTML, TypeScript, and TSX documents.
+
 func TestIncrementalParsingIntegration(t *testing.T) {
 	fixtureDir := filepath.Join("testdata", "integration", "incremental-parsing-test")
 

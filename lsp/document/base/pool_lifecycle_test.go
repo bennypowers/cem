@@ -7,6 +7,9 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
+// Inline: lifecycle state transitions
+// Parser pool callback behavior during Close, SetParser, and cross-pool assignment.
+
 func TestPoolLifecycle_CloseReturnsParserViaCallback(t *testing.T) {
 	var returned *ts.Parser
 	callback := func(p *ts.Parser) { returned = p }

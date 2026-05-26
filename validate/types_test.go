@@ -23,6 +23,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, scalar assertions (type accessor methods on thin wrappers)
+
 func TestRawManifest_Modules(t *testing.T) {
 	t.Run("valid modules", func(t *testing.T) {
 		m := validate.RawManifest{"modules": []any{map[string]any{"path": "a.js"}}}

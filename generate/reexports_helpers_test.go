@@ -23,6 +23,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, table-driven
+
 func TestExportKeySet(t *testing.T) {
 	t.Run("empty exports", func(t *testing.T) {
 		result := exportKeySet(nil)

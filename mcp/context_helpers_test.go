@@ -27,6 +27,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, scalar assertions
+
 func TestGenerateCacheKey(t *testing.T) {
 	assert.Equal(t, "my-element", generateCacheKey("my-element", nil))
 	assert.Equal(t, "x-foo", generateCacheKey("x-foo", &M.CustomElement{}))

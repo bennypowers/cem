@@ -23,6 +23,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: pure function, table-driven
+
 func TestSubResourceFiltering_FilterArrayByName(t *testing.T) {
 	engine := NewPathTraversalEngine()
 

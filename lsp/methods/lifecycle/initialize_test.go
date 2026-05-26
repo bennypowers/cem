@@ -9,6 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+// TestInitializeDiagnosticIdentifier validates LSP capability negotiation.
+// TestParseStringSlice is a pure function, table-driven.
+
 func TestInitializeDiagnosticIdentifier(t *testing.T) {
 	t.Run("pull diagnostics identifier is set", func(t *testing.T) {
 		ctx := testhelpers.NewMockServerContext()

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/mcp/templates"
 	"bennypowers.dev/cem/mcp/types"
 	V "bennypowers.dev/cem/validate"
@@ -33,14 +34,15 @@ func TestMultipleSchemaVersions_FixtureGolden(t *testing.T) {
 
 // loadManifestFromFixture loads a manifest from a fixture file and creates a ManifestContext
 func loadManifestFromFixture(t *testing.T, version string) ManifestContext {
+	t.Helper()
+
 	// Load manifest fixture file
-	manifestPath := filepath.Join("..", "testdata", "fixtures", "multiple-schemas", version, "custom-elements.json")
-	manifestData, err := os.ReadFile(manifestPath)
-	require.NoError(t, err, "Should be able to read manifest fixture for version %s", version)
+	fs := testutil.LoadTestdataFS(t, filepath.Join("..", "testdata", "fixtures", "multiple-schemas", version), "/")
+	manifestData := testutil.ReadFixture(t, fs, "/custom-elements.json")
 
 	// Parse manifest to extract basic information for the overview
 	var manifestJSON map[string]any
-	err = json.Unmarshal(manifestData, &manifestJSON)
+	err := json.Unmarshal(manifestData, &manifestJSON)
 	require.NoError(t, err, "Should be able to parse manifest JSON for version %s", version)
 
 	// Extract basic info from manifest for context
@@ -99,21 +101,21 @@ func testSchemaVersionWithGolden(t *testing.T, version string) {
 }
 
 func testWithGoldenFile(t *testing.T, actual, goldenFileName string) {
-	goldenPath := filepath.Join("..", "testdata", "fixtures", "multiple-schemas", goldenFileName)
+	t.Helper()
 
-	// Check for update mode via environment variable (internal test pattern)
-	if updateGolden := os.Getenv("UPDATE_GOLDEN"); updateGolden != "" {
+	goldenDir := filepath.Join("..", "testdata", "fixtures", "multiple-schemas")
+	goldenPath := filepath.Join(goldenDir, goldenFileName)
+
+	// Check for update mode via environment variable or --update flag
+	if *testutil.Update || os.Getenv("UPDATE_GOLDEN") != "" {
 		err := os.WriteFile(goldenPath, []byte(actual), 0644)
 		require.NoError(t, err, "Failed to update golden file %s", goldenPath)
 		t.Logf("Updated golden file: %s", goldenPath)
 		return
 	}
 
-	expected, err := os.ReadFile(goldenPath)
-	if os.IsNotExist(err) {
-		t.Fatalf("Golden file %s does not exist. Run with UPDATE_GOLDEN=1 to create it.", goldenPath)
-	}
-	require.NoError(t, err, "Failed to read golden file %s", goldenPath)
+	fs := testutil.LoadTestdataFS(t, goldenDir, "/")
+	expected := testutil.ReadFixture(t, fs, "/"+goldenFileName)
 
 	assert.Equal(t, string(expected), actual, "Content should match golden file %s", goldenFileName)
 }
@@ -146,21 +148,21 @@ func testBackwardsCompatibilityWithGolden(t *testing.T, version string) {
 }
 
 func testBackwardsCompatibilityWithGoldenFile(t *testing.T, actual, goldenFileName string) {
-	goldenPath := filepath.Join("..", "testdata", "fixtures", "schema-backwards-compatibility", goldenFileName)
+	t.Helper()
 
-	// Check for update mode via environment variable (internal test pattern)
-	if updateGolden := os.Getenv("UPDATE_GOLDEN"); updateGolden != "" {
+	goldenDir := filepath.Join("..", "testdata", "fixtures", "schema-backwards-compatibility")
+	goldenPath := filepath.Join(goldenDir, goldenFileName)
+
+	// Check for update mode via environment variable or --update flag
+	if *testutil.Update || os.Getenv("UPDATE_GOLDEN") != "" {
 		err := os.WriteFile(goldenPath, []byte(actual), 0644)
 		require.NoError(t, err, "Failed to update golden file %s", goldenPath)
 		t.Logf("Updated golden file: %s", goldenPath)
 		return
 	}
 
-	expected, err := os.ReadFile(goldenPath)
-	if os.IsNotExist(err) {
-		t.Fatalf("Golden file %s does not exist. Run with UPDATE_GOLDEN=1 to create it.", goldenPath)
-	}
-	require.NoError(t, err, "Failed to read golden file %s", goldenPath)
+	fs := testutil.LoadTestdataFS(t, goldenDir, "/")
+	expected := testutil.ReadFixture(t, fs, "/"+goldenFileName)
 
 	assert.Equal(t, string(expected), actual, "Content should match golden file %s", goldenFileName)
 }

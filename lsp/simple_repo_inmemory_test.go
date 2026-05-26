@@ -30,6 +30,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+// In-memory manifest generation for simple repos without a custom-elements.json.
+// Assertions check element existence, package names, and absence of false-positive diagnostics.
+
 // TestSimpleRepoInMemoryGeneration tests the RHDS case:
 // - Simple repo (no workspaces)
 // - package.json exists with name but NO customElements field

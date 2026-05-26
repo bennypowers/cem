@@ -18,7 +18,6 @@ package mcp_test
 
 import (
 	"context"
-	"flag"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,13 +25,12 @@ import (
 
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/resources"
+	"bennypowers.dev/cem/internal/platform/testutil"
 	W "bennypowers.dev/cem/internal/workspace"
 	mcpSDK "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-var update = flag.Bool("update", false, "update golden files")
 
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
 func getTestRegistry(t *testing.T) *mcp.MCPContext {
@@ -137,7 +135,7 @@ func TestSchemaResilientTemplateIntegration(t *testing.T) {
 	// Golden file comparison (update mode)
 	goldenPath := filepath.Join("fixtures", "template-rendering", "schema_resilient_template.golden.md")
 
-	if *update {
+	if *testutil.Update {
 		// Update golden file
 		err := os.MkdirAll(filepath.Dir(goldenPath), 0755)
 		require.NoError(t, err)
@@ -148,29 +146,16 @@ func TestSchemaResilientTemplateIntegration(t *testing.T) {
 		t.Logf("Golden file content length: %d characters", len(content))
 	} else {
 		// Compare with golden file if it exists
-		if goldenData, err := os.ReadFile(goldenPath); err == nil {
-			goldenContent := string(goldenData)
-			if content != goldenContent {
-				t.Logf("Content differs from golden file. Run with --update to update.")
-				t.Logf("Golden length: %d, Actual length: %d", len(goldenContent), len(content))
-
-				// Show a snippet of the differences for debugging
-				lines := strings.Split(content, "\n")
-				if len(lines) > 10 {
-					t.Logf("First 10 lines of output:\n%s", strings.Join(lines[:10], "\n"))
-				}
-			} else {
-				t.Log("✅ Content matches golden file exactly")
-			}
-		} else {
-			t.Logf("Golden file doesn't exist: %s", goldenPath)
-			t.Log("Run with --update to create it")
-
-			// Show sample output for verification
+		goldenFS := testutil.LoadTestdataFS(t, "fixtures/template-rendering", "/")
+		goldenData := testutil.ReadFixture(t, goldenFS, "/schema_resilient_template.golden.md")
+		goldenContent := string(goldenData)
+		if content != goldenContent {
 			lines := strings.Split(content, "\n")
-			if len(lines) > 10 {
-				t.Logf("Sample output (first 10 lines):\n%s", strings.Join(lines[:10], "\n"))
-			}
+			snippet := strings.Join(lines[:min(10, len(lines))], "\n")
+			t.Fatalf("Content differs from golden file (run with --update to update).\nGolden length: %d, Actual length: %d\nFirst lines of output:\n%s",
+				len(goldenContent), len(content), snippet)
+		} else {
+			t.Log("Content matches golden file exactly")
 		}
 	}
 

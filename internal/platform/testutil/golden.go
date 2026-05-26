@@ -26,6 +26,7 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform"
 	"github.com/nsf/jsondiff"
 )
 
@@ -48,6 +49,9 @@ type GoldenOptions struct {
 	UseJSONDiff bool
 	// AutoName uses t.Name() for the golden filename (ignores name parameter)
 	AutoName bool
+	// FS is a preloaded MapFileSystem to read golden files from instead of disk.
+	// When set, golden reads come from memory. Writes (--update) still go to disk.
+	FS *platform.MapFileSystem
 }
 
 // CheckGolden compares actual output against a golden file.
@@ -99,10 +103,18 @@ func CheckGolden(t *testing.T, name string, actual []byte, opts ...GoldenOptions
 		return
 	}
 
-	// Read golden file
-	expected, err := os.ReadFile(goldenPath)
-	if err != nil {
-		t.Fatalf("golden file missing: %s (run with -update)\nerror: %v", goldenPath, err)
+	// Read golden file from MapFS if available, otherwise from disk
+	var (
+		expected []byte
+		readErr  error
+	)
+	if opt.FS != nil {
+		expected, readErr = opt.FS.ReadFile(goldenPath)
+	} else {
+		expected, readErr = os.ReadFile(goldenPath)
+	}
+	if readErr != nil {
+		t.Fatalf("golden file missing: %s (run with -update)\nerror: %v", goldenPath, readErr)
 	}
 
 	// Apply transformations
@@ -151,16 +163,11 @@ func CheckGolden(t *testing.T, name string, actual []byte, opts ...GoldenOptions
 	}
 }
 
-// LoadFixture loads a single fixture file, trying multiple common directories.
-// Returns the file contents or fails the test if not found.
-//
-// Example:
-//
-//	data := LoadFixture(t, "chrome-rendering/basic-demo.html")
+// LoadFixture loads a single fixture file from disk, trying multiple common directories.
+// Prefer ReadFixture with an explicit MapFileSystem for new tests.
 func LoadFixture(t *testing.T, path string) []byte {
 	t.Helper()
 
-	// Try multiple common fixture directories
 	possibleDirs := []string{
 		"fixtures",
 		"testdata",

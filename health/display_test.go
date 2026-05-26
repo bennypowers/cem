@@ -18,14 +18,15 @@ package health
 
 import (
 	"bytes"
-	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
+	"bennypowers.dev/cem/internal/platform/testutil"
 )
 
 func TestWriteMarkdownReport(t *testing.T) {
+	mfs := testutil.LoadTestdataFS(t, "testdata", "/")
+
 	tests := []struct {
 		name    string
 		fixture string
@@ -39,7 +40,6 @@ func TestWriteMarkdownReport(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fixturePath := filepath.Join("testdata", "fixtures", tt.fixture, "custom-elements.json")
-			goldenPath := filepath.Join("testdata", "goldens", "markdown-"+tt.fixture+".md")
 
 			result, err := Analyze(fixturePath, Options{})
 			if err != nil {
@@ -52,24 +52,10 @@ func TestWriteMarkdownReport(t *testing.T) {
 			}
 			got := buf.Bytes()
 
-			if *update {
-				if err := os.MkdirAll(filepath.Dir(goldenPath), 0755); err != nil {
-					t.Fatalf("os.MkdirAll() error = %v", err)
-				}
-				if err := os.WriteFile(goldenPath, got, 0644); err != nil {
-					t.Fatalf("os.WriteFile() error = %v", err)
-				}
-				return
-			}
-
-			want, err := os.ReadFile(goldenPath)
-			if err != nil {
-				t.Fatalf("os.ReadFile(%s) error = %v\nRun tests with --update to generate golden files", goldenPath, err)
-			}
-
-			if diff := cmp.Diff(string(want), string(got)); diff != "" {
-				t.Errorf("writeMarkdownReport() mismatch (-want +got):\n%s", diff)
-			}
+			testutil.CheckGolden(t, "markdown-"+tt.fixture+".md", got, testutil.GoldenOptions{
+				Dir: "goldens",
+				FS:  mfs,
+			})
 		})
 	}
 }

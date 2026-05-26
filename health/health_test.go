@@ -18,17 +18,15 @@ package health
 
 import (
 	"encoding/json"
-	"flag"
-	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
+	"bennypowers.dev/cem/internal/platform/testutil"
 )
 
-var update = flag.Bool("update", false, "update golden files")
-
 func TestAnalyze(t *testing.T) {
+	mfs := testutil.LoadTestdataFS(t, "testdata", "/")
+
 	tests := []struct {
 		name    string
 		fixture string
@@ -43,7 +41,6 @@ func TestAnalyze(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fixturePath := filepath.Join("testdata", "fixtures", tt.fixture, "custom-elements.json")
-			goldenPath := filepath.Join("testdata", "goldens", tt.fixture+".json")
 
 			result, err := Analyze(fixturePath, Options{})
 			if err != nil {
@@ -56,24 +53,11 @@ func TestAnalyze(t *testing.T) {
 			}
 			got = append(got, '\n')
 
-			if *update {
-				if err := os.MkdirAll(filepath.Dir(goldenPath), 0755); err != nil {
-					t.Fatalf("os.MkdirAll() error = %v", err)
-				}
-				if err := os.WriteFile(goldenPath, got, 0644); err != nil {
-					t.Fatalf("os.WriteFile() error = %v", err)
-				}
-				return
-			}
-
-			want, err := os.ReadFile(goldenPath)
-			if err != nil {
-				t.Fatalf("os.ReadFile(%s) error = %v\nRun tests with --update to generate golden files", goldenPath, err)
-			}
-
-			if diff := cmp.Diff(string(want), string(got)); diff != "" {
-				t.Errorf("Analyze() mismatch (-want +got):\n%s", diff)
-			}
+			testutil.CheckGolden(t, tt.fixture+".json", got, testutil.GoldenOptions{
+				Dir:         "goldens",
+				UseJSONDiff: true,
+				FS:          mfs,
+			})
 		})
 	}
 }

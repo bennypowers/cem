@@ -23,6 +23,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: pure function, table-driven
+
 func TestConvertMapAccessToGjsonPath(t *testing.T) {
 	tests := []struct {
 		name     string

@@ -28,6 +28,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+// Tests DocumentDiagnostic handler with nil doc, valid doc, and known-bad attributes.
+
 func TestDocumentDiagnostic_NilDocument(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 

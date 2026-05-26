@@ -26,6 +26,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+
 // TestFindWorkspaceRoot tests the workspace root detection logic
 func TestFindWorkspaceRoot(t *testing.T) {
 	// Create a temporary directory structure for testing

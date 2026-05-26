@@ -21,12 +21,11 @@ package serve_test
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	platformtestutil "bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/serve"
 	"bennypowers.dev/cem/serve/internal/urlutil"
 	"bennypowers.dev/cem/serve/testutil"
@@ -97,11 +96,8 @@ func TestWebSocketEndpoint_Broadcast(t *testing.T) {
 	}
 
 	// Verify message structure matches golden file
-	goldenPath := filepath.Join("testdata", "websocket-reload", "expected-reload-message.json")
-	expectedBytes, err := os.ReadFile(goldenPath)
-	if err != nil {
-		t.Fatalf("Failed to read golden file: %v", err)
-	}
+	mfsFixtures := platformtestutil.LoadTestdataFS(t, "testdata/websocket-reload", "/")
+	expectedBytes := platformtestutil.ReadFixture(t, mfsFixtures, "/expected-reload-message.json")
 
 	var expected map[string]any
 	if err := json.Unmarshal(expectedBytes, &expected); err != nil {

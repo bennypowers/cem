@@ -22,6 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, table-driven
+
 func TestIsSemverLessThan(t *testing.T) {
 	tests := []struct {
 		v1, v2 string

@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: regression test, verifying specific fix
+
 // TestGenerateWithNilManifest tests the regression fix for nil pointer dereference
 // when the Generate function returns a nil manifest pointer due to file processing errors.
 // This was causing a panic in cmd/generate.go:131 when attempting to dereference *manifestStr

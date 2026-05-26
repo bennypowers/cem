@@ -19,14 +19,24 @@ package routes
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/platform/testutil"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/google/go-cmp/cmp"
 )
+
+var knobsFixtures *platform.MapFileSystem
+
+func loadKnobsFixture(t *testing.T, name string) []byte {
+	t.Helper()
+	if knobsFixtures == nil {
+		knobsFixtures = testutil.LoadTestdataFS(t, "testdata/knobs", "/")
+	}
+	return testutil.ReadFixture(t, knobsFixtures, "/"+name)
+}
 
 // testTemplatesForKnobs creates a template registry for testing (with nil context)
 func testTemplatesForKnobs() *TemplateRegistry {
@@ -35,15 +45,10 @@ func testTemplatesForKnobs() *TemplateRegistry {
 
 func TestGenerateKnobs_SimpleButton(t *testing.T) {
 	// Load manifest fixture
-	manifestPath := filepath.Join("testdata", "knobs", "simple-button-manifest.json")
-	manifestBytes, err := os.ReadFile(manifestPath)
-	if err != nil {
-		t.Fatalf("Failed to read manifest fixture: %v", err)
-	}
+	manifestBytes := loadKnobsFixture(t, "simple-button-manifest.json")
 
 	var pkg M.Package
-	err = json.Unmarshal(manifestBytes, &pkg)
-	if err != nil {
+	if err := json.Unmarshal(manifestBytes, &pkg); err != nil {
 		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
@@ -66,11 +71,7 @@ func TestGenerateKnobs_SimpleButton(t *testing.T) {
 	}
 
 	// Load demo HTML
-	demoPath := filepath.Join("testdata", "knobs", "simple-button-demo.html")
-	demoHTML, err := os.ReadFile(demoPath)
-	if err != nil {
-		t.Fatalf("Failed to read demo HTML: %v", err)
-	}
+	demoHTML := loadKnobsFixture(t, "simple-button-demo.html")
 
 	// Generate knobs with all categories enabled
 	knobs, err := GenerateKnobs(declaration, demoHTML, "attributes properties css-properties")
@@ -400,11 +401,7 @@ func TestDiscoverElementInstances(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Load demo HTML
-			demoPath := filepath.Join("testdata", "knobs", tt.demoFile)
-			demoHTML, err := os.ReadFile(demoPath)
-			if err != nil {
-				t.Fatalf("Failed to read demo HTML: %v", err)
-			}
+			demoHTML := loadKnobsFixture(t, tt.demoFile)
 
 			// Discover instances
 			instances, err := discoverElementInstances("my-card", demoHTML)
@@ -491,11 +488,7 @@ func TestGenerateElementLabel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Load demo HTML
-			demoPath := filepath.Join("testdata", "knobs", tt.demoFile)
-			demoHTML, err := os.ReadFile(demoPath)
-			if err != nil {
-				t.Fatalf("Failed to read demo HTML: %v", err)
-			}
+			demoHTML := loadKnobsFixture(t, tt.demoFile)
 
 			// Discover instances
 			instances, err := discoverElementInstances("my-card", demoHTML)
@@ -520,15 +513,10 @@ func TestGenerateElementLabel(t *testing.T) {
 // TestGenerateMultiInstanceKnobs tests knob generation for multiple element instances
 func TestGenerateMultiInstanceKnobs(t *testing.T) {
 	// Load manifest fixture
-	manifestPath := filepath.Join("testdata", "knobs", "multi-element-manifest.json")
-	manifestBytes, err := os.ReadFile(manifestPath)
-	if err != nil {
-		t.Fatalf("Failed to read manifest fixture: %v", err)
-	}
+	manifestBytes := loadKnobsFixture(t, "multi-element-manifest.json")
 
 	var pkg M.Package
-	err = json.Unmarshal(manifestBytes, &pkg)
-	if err != nil {
+	if err := json.Unmarshal(manifestBytes, &pkg); err != nil {
 		t.Fatalf("Failed to parse manifest: %v", err)
 	}
 
@@ -551,11 +539,7 @@ func TestGenerateMultiInstanceKnobs(t *testing.T) {
 	}
 
 	// Load demo HTML with multiple instances
-	demoPath := filepath.Join("testdata", "knobs", "multi-element-with-ids-demo.html")
-	demoHTML, err := os.ReadFile(demoPath)
-	if err != nil {
-		t.Fatalf("Failed to read demo HTML: %v", err)
-	}
+	demoHTML := loadKnobsFixture(t, "multi-element-with-ids-demo.html")
 
 	// Generate knobs for all instances
 	knobGroups, err := GenerateMultiInstanceKnobs(declaration, demoHTML, "attributes properties css-properties")

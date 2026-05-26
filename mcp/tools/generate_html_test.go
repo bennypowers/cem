@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/mcp/tools"
 	mcpSDK "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
@@ -34,6 +35,8 @@ func TestGenerateHTML_WithFixtures(t *testing.T) {
 
 	// Find all test fixture directories
 	fixturesDir := "../testdata/fixtures/generate-html"
+	fs := testutil.LoadTestdataFS(t, fixturesDir, "/")
+
 	fixtures, err := os.ReadDir(fixturesDir)
 	require.NoError(t, err, "Should be able to read fixtures directory")
 
@@ -45,12 +48,10 @@ func TestGenerateHTML_WithFixtures(t *testing.T) {
 		fixtureName := fixture.Name()
 		t.Run(fixtureName, func(t *testing.T) {
 			// Load input
-			inputPath := filepath.Join(fixturesDir, fixtureName, "input.json")
-			inputData, err := os.ReadFile(inputPath)
-			require.NoError(t, err, "Should be able to read input fixture")
+			inputData := testutil.ReadFixture(t, fs, "/"+fixtureName+"/input.json")
 
 			var args tools.GenerateHtmlArgs
-			err = json.Unmarshal(inputData, &args)
+			err := json.Unmarshal(inputData, &args)
 			require.NoError(t, err, "Should be able to parse input JSON")
 
 			// Create MCP request
@@ -78,9 +79,7 @@ func TestGenerateHTML_WithFixtures(t *testing.T) {
 				require.True(t, ok, "Content should be text")
 
 				// Check against expected error response
-				expectedPath := filepath.Join(fixturesDir, fixtureName, "expected-response.md")
-				expectedData, err := os.ReadFile(expectedPath)
-				require.NoError(t, err, "Should be able to read expected response")
+				expectedData := testutil.ReadFixture(t, fs, "/"+fixtureName+"/expected-response.md")
 
 				assert.Contains(t, textContent.Text, string(expectedData), "Should contain expected error message")
 				return
@@ -97,11 +96,10 @@ func TestGenerateHTML_WithFixtures(t *testing.T) {
 			output := textContent.Text
 			assert.NotEmpty(t, output, "Tool output should not be empty")
 
-			// Check that output contains expected HTML (if expected-html.html exists)
-			expectedHTMLPath := filepath.Join(fixturesDir, fixtureName, "expected-html.html")
-			if _, err := os.Stat(expectedHTMLPath); err == nil {
-				expectedHTML, err := os.ReadFile(expectedHTMLPath)
-				require.NoError(t, err, "Should be able to read expected HTML")
+			// Check that output contains expected HTML (if expected-html.html exists in MapFS)
+			expectedHTMLKey := "/" + fixtureName + "/expected-html.html"
+			if _, statErr := fs.Stat(expectedHTMLKey); statErr == nil {
+				expectedHTML := testutil.ReadFixture(t, fs, expectedHTMLKey)
 
 				assert.Contains(t, output, string(expectedHTML), "Output should contain expected HTML structure")
 			}
@@ -229,7 +227,10 @@ func TestGenerateHTMLRegression_TagNameAccess_Legacy(t *testing.T) {
 
 // Helper function for testing generate HTML with golden files
 func testGenerateHtmlWithGolden(t *testing.T, args tools.GenerateHtmlArgs, goldenFile string) {
+	t.Helper()
+
 	registry := getTestRegistry(t)
+	fs := testutil.LoadTestdataFS(t, "../testdata/fixtures/generate-html-integration", "/")
 
 	argsJSON, err := json.Marshal(args)
 	require.NoError(t, err)
@@ -254,7 +255,7 @@ func testGenerateHtmlWithGolden(t *testing.T, args tools.GenerateHtmlArgs, golde
 
 	// Handle -update flag
 	goldenPath := filepath.Join("../testdata/fixtures/generate-html-integration", goldenFile)
-	if *update {
+	if *testutil.Update {
 		err := os.MkdirAll(filepath.Dir(goldenPath), 0755)
 		require.NoError(t, err, "Failed to create golden file directory")
 
@@ -265,11 +266,7 @@ func testGenerateHtmlWithGolden(t *testing.T, args tools.GenerateHtmlArgs, golde
 	}
 
 	// Compare with golden file
-	expectedData, err := os.ReadFile(goldenPath)
-	if os.IsNotExist(err) {
-		t.Fatalf("Golden file %s does not exist. Run with -update to create it.", goldenPath)
-	}
-	require.NoError(t, err, "Should be able to read golden file: %s", goldenPath)
+	expectedData := testutil.ReadFixture(t, fs, "/"+goldenFile)
 
 	assert.Equal(t, string(expectedData), output, "Generated HTML should match golden file")
 }

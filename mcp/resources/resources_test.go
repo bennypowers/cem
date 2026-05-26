@@ -19,7 +19,6 @@ package resources_test
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,14 +27,13 @@ import (
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/resources"
 	"bennypowers.dev/cem/mcp/types"
+	"bennypowers.dev/cem/internal/platform/testutil"
 	V "bennypowers.dev/cem/validate"
 	W "bennypowers.dev/cem/internal/workspace"
 	mcpSDK "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-var update = flag.Bool("update", false, "update golden files")
 
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
 func getTestRegistry(t *testing.T) *mcp.MCPContext {
@@ -534,8 +532,12 @@ func TestAllResourcesWithFixtures(t *testing.T) {
 
 // Helper function for testing resource output with golden files
 func testResourceWithGolden(t *testing.T, uri string, goldenFile string) {
+	t.Helper()
+
 	registry := getTestRegistry(t)
 	registryAdapter := mcp.NewMCPContextAdapter(registry)
+
+	fs := testutil.LoadTestdataFS(t, "../testdata/fixtures/resource-integration", "/")
 
 	resourceDefs, err := resources.Resources(registryAdapter)
 	require.NoError(t, err)
@@ -566,7 +568,7 @@ func testResourceWithGolden(t *testing.T, uri string, goldenFile string) {
 
 	// Handle --update flag
 	goldenPath := filepath.Join("../testdata/fixtures/resource-integration", goldenFile)
-	if *update {
+	if *testutil.Update {
 		err := os.MkdirAll(filepath.Dir(goldenPath), 0755)
 		require.NoError(t, err, "Failed to create golden file directory")
 
@@ -577,11 +579,7 @@ func testResourceWithGolden(t *testing.T, uri string, goldenFile string) {
 	}
 
 	// Compare with golden file
-	expectedData, err := os.ReadFile(goldenPath)
-	if os.IsNotExist(err) {
-		t.Fatalf("Golden file %s does not exist. Run with --update to create it.", goldenPath)
-	}
-	require.NoError(t, err, "Should be able to read golden file: %s", goldenPath)
+	expectedData := testutil.ReadFixture(t, fs, "/"+goldenFile)
 
 	assert.Equal(t, string(expectedData), output, "Resource output should match golden file")
 	assert.Equal(t, uri, content.URI, "Resource should preserve URI")

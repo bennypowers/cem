@@ -29,6 +29,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: security boundary, scalar assertions
+
 func TestMaliciousManifestMitigation(t *testing.T) {
 	// Use the malicious manifest fixture
 	wctx := workspace.NewFileSystemWorkspaceContext("testdata/fixtures/malicious-manifest-security")

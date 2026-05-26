@@ -28,39 +28,44 @@ import (
 
 // NewFixtureFS loads fixture files from testdata and returns a MapFileSystem
 // with files mapped to the specified root path (usually "/test").
-// The fixtureDir should be relative to serve/testdata/ (e.g., "transforms/config-test").
-// Go tests run from the module root, so we check both possible locations.
-func NewFixtureFS(t *testing.T, fixtureDir string, rootPath string) *platform.MapFileSystem {
+// The fixtureDir should be relative to testdata/ (e.g., "transforms/config-test").
+// Resolves the testdata path across multiple possible locations to handle
+// tests running from different package depths (serve/, serve/middleware/*, etc.).
+func NewFixtureFS(t testing.TB, fixtureDir string, rootPath string) *platform.MapFileSystem {
 	t.Helper()
 
-	mfs := platform.NewMapFileSystem(nil)
-
-	// Go test changes working directory based on which package is being tested.
-	// Try multiple possible paths:
-	// 1. testdata/ - for tests in current package
-	// 2. ../../testdata/ - for tests in serve/middleware/* packages
-	// 3. serve/testdata/ - fallback if running from module root
 	possiblePaths := []string{
 		filepath.Join("testdata", fixtureDir),
 		filepath.Join("..", "..", "testdata", fixtureDir),
 		filepath.Join("serve", "testdata", fixtureDir),
 	}
 
-	var fixturePath string
-	var statErr error
 	for _, path := range possiblePaths {
-		if _, statErr = os.Stat(path); statErr == nil {
-			fixturePath = path
-			break
+		if _, err := os.Stat(path); err == nil {
+			return LoadTestdataFS(t, path, rootPath)
 		}
 	}
-	if fixturePath == "" {
-		t.Fatalf("Could not find fixtures at %s (tried all paths)", fixtureDir)
+
+	t.Fatalf("Could not find fixtures at %s (tried all paths)", fixtureDir)
+	return nil
+}
+
+// LoadTestdataFS loads all files under dir into a MapFileSystem rooted at rootPath.
+// dir is relative to the test's working directory (typically "testdata" or "testdata/subdir").
+func LoadTestdataFS(t testing.TB, dir string, rootPath string) *platform.MapFileSystem {
+	t.Helper()
+
+	mfs := platform.NewMapFileSystem(nil)
+
+	info, err := os.Stat(dir)
+	if err != nil {
+		t.Fatalf("testdata directory %s not found: %v", dir, err)
+	}
+	if !info.IsDir() {
+		t.Fatalf("testdata path %s is not a directory", dir)
 	}
 
-	// Walk fixture directory and load all files into memory
-	// Callback returns errors immediately to terminate on first failure
-	err := platform.WalkDir(os.DirFS(fixturePath), ".", nil, func(path string, d fs.DirEntry, err error) error {
+	err = platform.WalkDir(os.DirFS(dir), ".", nil, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -68,7 +73,7 @@ func NewFixtureFS(t *testing.T, fixtureDir string, rootPath string) *platform.Ma
 			return nil
 		}
 
-		content, err := os.ReadFile(filepath.Join(fixturePath, path))
+		content, err := os.ReadFile(filepath.Join(dir, path))
 		if err != nil {
 			return err
 		}
@@ -80,16 +85,29 @@ func NewFixtureFS(t *testing.T, fixtureDir string, rootPath string) *platform.Ma
 	})
 
 	if err != nil {
-		t.Fatalf("Failed to load fixtures from %s: %v", fixtureDir, err)
+		t.Fatalf("Failed to load testdata from %s: %v", dir, err)
 	}
 
 	return mfs
 }
 
+// ReadFixture reads a single file from a MapFileSystem, failing the test on error.
+func ReadFixture(t testing.TB, mfs *platform.MapFileSystem, path string) []byte {
+	t.Helper()
+	if mfs == nil {
+		t.Fatalf("nil MapFileSystem passed to ReadFixture")
+	}
+	data, err := mfs.ReadFile(path)
+	if err != nil {
+		t.Fatalf("fixture %s not found in MapFS: %v", path, err)
+	}
+	return data
+}
+
 // LoadFixtureFile reads a single fixture file and returns its content.
 // The fixturePath should be relative to serve/testdata/ (e.g., "demo-routing/manifest.json").
 // Go tests run from the module root, so we check both possible locations.
-func LoadFixtureFile(t *testing.T, fixturePath string) []byte {
+func LoadFixtureFile(t testing.TB, fixturePath string) []byte {
 	t.Helper()
 
 	// Go test changes working directory based on which package is being tested.

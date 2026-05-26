@@ -18,23 +18,19 @@ package export
 
 import (
 	"encoding/json"
-	"flag"
 	"os"
 	"path/filepath"
 	"testing"
 
-	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/platform/testutil"
+	M "bennypowers.dev/cem/manifest"
 )
-
-var update = flag.Bool("update", false, "update golden files")
 
 func loadTestManifest(t *testing.T) *M.Package {
 	t.Helper()
-	data, err := os.ReadFile("testdata/input/custom-elements.json")
-	if err != nil {
-		t.Fatalf("reading test manifest: %v", err)
-	}
+	mfs := testutil.LoadTestdataFS(t, "testdata/input", "/")
+	data := testutil.ReadFixture(t, mfs, "/custom-elements.json")
 	var pkg M.Package
 	if err := json.Unmarshal(data, &pkg); err != nil {
 		t.Fatalf("parsing test manifest: %v", err)
@@ -253,6 +249,7 @@ func testExporter(t *testing.T, exporter FrameworkExporter, framework string) {
 	}
 
 	goldenDir := filepath.Join("testdata", "golden", framework)
+	goldenFS := testutil.LoadTestdataFS(t, goldenDir, "/")
 
 	for _, elem := range elements {
 		files, err := exporter.ExportElement(elem, cfg)
@@ -261,8 +258,8 @@ func testExporter(t *testing.T, exporter FrameworkExporter, framework string) {
 		}
 
 		for filename, content := range files {
-			goldenPath := filepath.Join(goldenDir, filename)
-			if *update {
+			if *testutil.Update {
+				goldenPath := filepath.Join(goldenDir, filename)
 				if err := os.MkdirAll(goldenDir, 0o755); err != nil {
 					t.Fatal(err)
 				}
@@ -272,10 +269,7 @@ func testExporter(t *testing.T, exporter FrameworkExporter, framework string) {
 				continue
 			}
 
-			expected, err := os.ReadFile(goldenPath)
-			if err != nil {
-				t.Fatalf("reading golden file %s: %v (run with --update to create)", goldenPath, err)
-			}
+			expected := testutil.ReadFixture(t, goldenFS, "/"+filename)
 			if string(expected) != content {
 				t.Errorf("%s mismatch.\nExpected:\n%s\nGot:\n%s", filename, string(expected), content)
 			}
@@ -289,18 +283,15 @@ func testExporter(t *testing.T, exporter FrameworkExporter, framework string) {
 	}
 
 	for filename, content := range indexFiles {
-		goldenPath := filepath.Join(goldenDir, filename)
-		if *update {
+		if *testutil.Update {
+			goldenPath := filepath.Join(goldenDir, filename)
 			if err := os.WriteFile(goldenPath, []byte(content), 0o644); err != nil {
 				t.Fatal(err)
 			}
 			continue
 		}
 
-		expected, err := os.ReadFile(goldenPath)
-		if err != nil {
-			t.Fatalf("reading golden file %s: %v (run with --update to create)", goldenPath, err)
-		}
+		expected := testutil.ReadFixture(t, goldenFS, "/"+filename)
 		if string(expected) != content {
 			t.Errorf("%s mismatch.\nExpected:\n%s\nGot:\n%s", filename, string(expected), content)
 		}

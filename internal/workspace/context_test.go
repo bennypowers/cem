@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
 func TestFileSystemWorkspaceContext_Manifest(t *testing.T) {
 	root := absFixture(t, "project-with-manifest")
 	ctx := workspace.NewFileSystemWorkspaceContext(root)

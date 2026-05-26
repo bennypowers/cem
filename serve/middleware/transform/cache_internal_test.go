@@ -18,12 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package transform
 
 import (
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 	"time"
+
+	"bennypowers.dev/cem/internal/platform/testutil"
 )
 
 // This file contains white-box tests that access unexported functions/types.
@@ -64,10 +65,8 @@ func (m *mockLogger) Debug(msg string, args ...any) {
 func TestExtractDependencies_CSSImports(t *testing.T) {
 	// Read fixture file with CSS import
 	inputPath := filepath.Join("..", "..", "testdata", "transforms", "css-import", "input.ts")
-	source, err := os.ReadFile(inputPath)
-	if err != nil {
-		t.Fatalf("Failed to read test fixture: %v", err)
-	}
+	mfs := testutil.LoadTestdataFS(t, filepath.Join("..", "..", "testdata", "transforms", "css-import"), "/")
+	source := testutil.ReadFixture(t, mfs, "/input.ts")
 
 	// Extract dependencies from the source
 	absPath, _ := filepath.Abs(inputPath)
@@ -97,10 +96,8 @@ func TestCache_CSSImportDependenciesExtracted(t *testing.T) {
 
 	// Read fixture file with CSS import
 	inputPath := filepath.Join("..", "..", "testdata", "transforms", "css-import", "input.ts")
-	source, err := os.ReadFile(inputPath)
-	if err != nil {
-		t.Fatalf("Failed to read test fixture: %v", err)
-	}
+	mfs := testutil.LoadTestdataFS(t, filepath.Join("..", "..", "testdata", "transforms", "css-import"), "/")
+	source := testutil.ReadFixture(t, mfs, "/input.ts")
 
 	absPath, _ := filepath.Abs(inputPath)
 	cssPath, _ := filepath.Abs(filepath.Join(filepath.Dir(inputPath), "component.css"))

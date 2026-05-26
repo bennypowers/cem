@@ -1,15 +1,19 @@
 package tsx
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// Inline: pure function, table-driven
+// extractCustomElementFromText, extractAttributeNameFromText, and scoreMatch
+// are pure functions. FindCustomElements tests use fixtures but validate
+// structured output with scalar assertions (tag names, counts).
 
 func TestExtractCustomElementFromText(t *testing.T) {
 	tests := []struct {
@@ -269,6 +273,7 @@ func newTSXHandler(t *testing.T) *Handler {
 
 func TestFindCustomElements_TSX(t *testing.T) {
 	handler := newTSXHandler(t)
+	mfs := testutil.LoadTestdataFS(t, "testdata", "/")
 
 	tests := []struct {
 		name     string
@@ -277,7 +282,7 @@ func TestFindCustomElements_TSX(t *testing.T) {
 	}{
 		{
 			name:    "tsx with custom elements",
-			fixture: filepath.Join("testdata", "with-custom-elements.tsx"),
+			fixture: "/with-custom-elements.tsx",
 			validate: func(t *testing.T, elements []types.CustomElementMatch) {
 				require.GreaterOrEqual(t, len(elements), 2)
 				tagNames := make([]string, len(elements))
@@ -290,7 +295,7 @@ func TestFindCustomElements_TSX(t *testing.T) {
 		},
 		{
 			name:    "tsx no custom elements",
-			fixture: filepath.Join("testdata", "no-custom-elements.tsx"),
+			fixture: "/no-custom-elements.tsx",
 			validate: func(t *testing.T, elements []types.CustomElementMatch) {
 				assert.Empty(t, elements)
 			},
@@ -299,8 +304,7 @@ func TestFindCustomElements_TSX(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			content, err := os.ReadFile(tt.fixture)
-			require.NoError(t, err)
+			content := testutil.ReadFixture(t, mfs, tt.fixture)
 			doc := handler.CreateDocument("file:///test.tsx", string(content), 1)
 			defer doc.Close()
 			elements, err := handler.FindCustomElements(doc)

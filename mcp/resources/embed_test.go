@@ -26,6 +26,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: regression test, verifying specific fix (embedded resources load without filesystem)
+
 // TestResourceDefinitions_Embedded is a smoke test to verify resource definitions
 // are properly embedded in the binary and can be loaded without filesystem access.
 // This is a regression test for the issue where runtime.Caller(0) was used to

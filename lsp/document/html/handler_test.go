@@ -1,15 +1,20 @@
 package html
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	treesitter "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// Inline: pure function, table-driven
+// extractImportPath, extractDynamicImportPath, and parseImportStatements are
+// pure string parsers. ParseScriptTags, ParseImportMap, and FindCustomElements
+// use fixtures but validate structured output with scalar assertions that
+// would be awkward as goldens (nested struct fields, map lookups).
 
 func TestExtractImportPath(t *testing.T) {
 	tests := []struct {
@@ -230,6 +235,8 @@ func TestParseScriptTags(t *testing.T) {
 	require.NoError(t, err)
 	defer handler.Close()
 
+	mfs := testutil.LoadTestdataFS(t, "testdata", "/")
+
 	tests := []struct {
 		name     string
 		fixture  string
@@ -237,7 +244,7 @@ func TestParseScriptTags(t *testing.T) {
 	}{
 		{
 			name:    "module script with src",
-			fixture: filepath.Join("testdata", "script-tags", "module-script.html"),
+			fixture: "/script-tags/module-script.html",
 			validate: func(t *testing.T, tags []types.ScriptTag) {
 				require.Len(t, tags, 1)
 				tag := tags[0]
@@ -249,7 +256,7 @@ func TestParseScriptTags(t *testing.T) {
 		},
 		{
 			name:    "inline script with imports",
-			fixture: filepath.Join("testdata", "script-tags", "inline-script.html"),
+			fixture: "/script-tags/inline-script.html",
 			validate: func(t *testing.T, tags []types.ScriptTag) {
 				require.Len(t, tags, 1)
 				tag := tags[0]
@@ -265,7 +272,7 @@ func TestParseScriptTags(t *testing.T) {
 		},
 		{
 			name:    "no scripts",
-			fixture: filepath.Join("testdata", "script-tags", "no-scripts.html"),
+			fixture: "/script-tags/no-scripts.html",
 			validate: func(t *testing.T, tags []types.ScriptTag) {
 				assert.Empty(t, tags)
 			},
@@ -274,8 +281,7 @@ func TestParseScriptTags(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			content, err := os.ReadFile(tt.fixture)
-			require.NoError(t, err)
+			content := testutil.ReadFixture(t, mfs, tt.fixture)
 			doc := handler.CreateDocument("file:///test.html", string(content), 1)
 			defer doc.Close()
 			tags, err := handler.ParseScriptTags(doc)
@@ -294,6 +300,8 @@ func TestParseImportMap(t *testing.T) {
 	require.NoError(t, err)
 	defer handler.Close()
 
+	mfs := testutil.LoadTestdataFS(t, "testdata", "/")
+
 	tests := []struct {
 		name     string
 		fixture  string
@@ -301,7 +309,7 @@ func TestParseImportMap(t *testing.T) {
 	}{
 		{
 			name:    "valid importmap",
-			fixture: filepath.Join("testdata", "import-map", "valid-importmap.html"),
+			fixture: "/import-map/valid-importmap.html",
 			validate: func(t *testing.T, importMap map[string]string, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, importMap)
@@ -312,7 +320,7 @@ func TestParseImportMap(t *testing.T) {
 		},
 		{
 			name:    "no importmap",
-			fixture: filepath.Join("testdata", "import-map", "no-importmap.html"),
+			fixture: "/import-map/no-importmap.html",
 			validate: func(t *testing.T, importMap map[string]string, err error) {
 				require.NoError(t, err)
 				assert.Nil(t, importMap)
@@ -322,8 +330,7 @@ func TestParseImportMap(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			content, err := os.ReadFile(tt.fixture)
-			require.NoError(t, err)
+			content := testutil.ReadFixture(t, mfs, tt.fixture)
 			doc := handler.CreateDocument("file:///test.html", string(content), 1)
 			defer doc.Close()
 			importMap, err := handler.ParseImportMap(doc)
@@ -341,6 +348,8 @@ func TestFindCustomElements(t *testing.T) {
 	require.NoError(t, err)
 	defer handler.Close()
 
+	mfs := testutil.LoadTestdataFS(t, "testdata", "/")
+
 	tests := []struct {
 		name     string
 		fixture  string
@@ -348,7 +357,7 @@ func TestFindCustomElements(t *testing.T) {
 	}{
 		{
 			name:    "with attributes",
-			fixture: filepath.Join("testdata", "custom-elements", "with-attributes.html"),
+			fixture: "/custom-elements/with-attributes.html",
 			validate: func(t *testing.T, elements []types.CustomElementMatch) {
 				require.Len(t, elements, 2)
 				myEl := elements[0]
@@ -364,7 +373,7 @@ func TestFindCustomElements(t *testing.T) {
 		},
 		{
 			name:    "no custom elements",
-			fixture: filepath.Join("testdata", "custom-elements", "no-custom-elements.html"),
+			fixture: "/custom-elements/no-custom-elements.html",
 			validate: func(t *testing.T, elements []types.CustomElementMatch) {
 				assert.Empty(t, elements)
 			},
@@ -373,8 +382,7 @@ func TestFindCustomElements(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			content, err := os.ReadFile(tt.fixture)
-			require.NoError(t, err)
+			content := testutil.ReadFixture(t, mfs, tt.fixture)
 			doc := handler.CreateDocument("file:///test.html", string(content), 1)
 			defer doc.Close()
 			elements, err := handler.FindCustomElements(doc)

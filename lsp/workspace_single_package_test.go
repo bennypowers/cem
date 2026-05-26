@@ -30,6 +30,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+// Single-package workspace loading and absence of false-positive diagnostics.
+
 // TestWorkspaceSinglePackage tests a workspace with a single package directly (like PatternFly Elements)
 // Pattern: workspaces: ["./elements"] where ./elements is the package itself
 func TestWorkspaceSinglePackage(t *testing.T) {

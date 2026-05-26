@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
 func absFixture(t *testing.T, rel string) string {
 	t.Helper()
 	abs, err := filepath.Abs(filepath.Join("testdata", rel))

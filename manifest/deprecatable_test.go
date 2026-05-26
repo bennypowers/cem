@@ -22,6 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, table-driven (boolean return across all Deprecatable implementations)
+
 func TestIsDeprecated_AllTypes(t *testing.T) {
 	type deprecatableCase struct {
 		name         string

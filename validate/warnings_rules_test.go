@@ -23,6 +23,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, scalar assertions (rule Check methods return warning slices)
+
 func makeCtx(members []map[string]any) *WarningContext {
 	memberSlice := make([]any, len(members))
 	for i, m := range members {

@@ -7,6 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, table-driven
+// Markdown formatting output is compared as strings. These could be goldens
+// but each case is a single-line expected string, making table-driven clearer.
+
 func TestFormatAttributes(t *testing.T) {
 	tests := []struct {
 		name     string

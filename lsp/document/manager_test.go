@@ -27,6 +27,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: lifecycle state transitions
+// DocumentManager open/close/update lifecycle and incremental editing.
+
 func getContent(t *testing.T, doc types.Document) string {
 	t.Helper()
 	content, err := doc.Content()

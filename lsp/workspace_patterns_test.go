@@ -26,6 +26,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+// Workspace glob pattern matching (nested doublestar, negation, edge cases).
+// Assertions check element existence and tag name lists after loading.
+
 // TestWorkspacePatterns_NestedDoublestar tests that "**" doublestar patterns
 // find deeply nested workspace packages
 func TestWorkspacePatterns_NestedDoublestar(t *testing.T) {

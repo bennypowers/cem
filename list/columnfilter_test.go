@@ -22,6 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, scalar assertions
+
 func TestRemoveEmptyColumns(t *testing.T) {
 	headers := []string{"Name", "Type", "Summary"}
 	rows := [][]string{

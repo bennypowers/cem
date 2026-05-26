@@ -7,6 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, table-driven
+// applyIncrementalChange, extractChangeParameters, applySingleLineChange,
+// applyMultiLineChange, etc. are pure text transformation functions.
+
 func ptrRange(startLine, startChar, endLine, endChar uint32) *protocol.Range {
 	return &protocol.Range{
 		Start: protocol.Position{Line: startLine, Character: startChar},

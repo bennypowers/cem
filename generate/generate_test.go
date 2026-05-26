@@ -18,7 +18,6 @@ package generate_test
 
 import (
 	"encoding/json"
-	"flag"
 	"log"
 	"os"
 	"path/filepath"
@@ -27,11 +26,10 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/platform/testutil"
 	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/nsf/jsondiff"
 )
-
-var update = flag.Bool("update", false, "update golden files")
 
 type testcase struct {
 	name string
@@ -49,6 +47,8 @@ func TestGenerate(t *testing.T) {
 			t.Fatalf("failed to compile FIXTURE_PATTERN %q: %v", fixturePattern, err)
 		}
 	}
+
+	testdataFS := testutil.LoadTestdataFS(t, "testdata", "/")
 
 	projects, err := os.ReadDir("testdata/fixtures")
 	if err != nil {
@@ -124,7 +124,7 @@ func TestGenerate(t *testing.T) {
 				})
 			}
 
-			if *update {
+			if *testutil.Update {
 				if manifestPath := ctx.CustomElementsManifestPath(); manifestPath != "" {
 					cfg.Generate.Files = originalFiles
 					actual, err := generate.Generate(ctx)
@@ -153,15 +153,14 @@ func TestGenerate(t *testing.T) {
 						t.Fatal(err)
 					}
 					golden := filepath.Join(projectDir, projectGoldenDir, tc.name+".json")
-					if *update {
+					if *testutil.Update {
 						if err := os.WriteFile(golden, []byte(*actual), 0644); err != nil {
 							t.Fatalf("failed to write golden file: %v", err)
 						}
+						return
 					}
-					expected, err := os.ReadFile(golden)
-					if err != nil {
-						t.Fatalf("golden file missing: %s (have you run with -update?)\nerror: %v", golden, err)
-					}
+					goldenKey := filepath.Join("/fixtures", projectEntry.Name(), projectGoldenDir, tc.name+".json")
+					expected := testutil.ReadFixture(t, testdataFS, goldenKey)
 					// Validate JSON
 					var jsExpected, jsActual any
 					if err := json.Unmarshal(expected, &jsExpected); err != nil {
