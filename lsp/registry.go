@@ -102,8 +102,10 @@ type Registry struct {
 	attributes map[string]map[string]*M.Attribute
 	// Manifests stores all loaded manifest packages
 	Manifests []*M.Package
-	// ManifestPaths tracks the file paths of loaded manifests for file watching
+	// ManifestPaths tracks the file paths of loaded CEM manifests for reload
 	ManifestPaths []string
+	// WatchPaths tracks all file paths watched for changes (manifests + package.json)
+	WatchPaths []string
 	// ManifestPackageNames tracks the package name for each manifest path
 	ManifestPackageNames map[string]string
 	// File watching
@@ -139,6 +141,7 @@ func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
 		attributes:           make(map[string]map[string]*M.Attribute),
 		Manifests:            make([]*M.Package, 0),
 		ManifestPaths:        make([]string, 0),
+		WatchPaths:           make([]string, 0),
 		ManifestPackageNames: make(map[string]string),
 		fileWatcher:          fileWatcher,
 		moduleGraph:          moduleGraph,
@@ -200,6 +203,7 @@ func (r *Registry) clear() {
 	r.attributes = make(map[string]map[string]*M.Attribute)
 	r.Manifests = r.Manifests[:0]
 	r.ManifestPaths = r.ManifestPaths[:0]
+	r.WatchPaths = r.WatchPaths[:0]
 	r.ManifestPackageNames = make(map[string]string)
 	// Get QueryManager for dependency injection
 	queryManager, err := treesitter.GetGlobalQueryManager()
@@ -739,13 +743,8 @@ func (r *Registry) readPackageJSON(path string, workspace types.WorkspaceContext
 		return nil, err
 	}
 
-	// Track package.json for file watching so customElements field changes trigger reload.
-	// NOTE: ManifestPaths is also iterated by ReloadManifestsDirectly, which parses each
-	// entry as a CEM manifest. package.json entries fail to parse and are skipped (logged
-	// as warnings). Separating watch paths from manifest paths would fix this, but requires
-	// splitting ManifestPaths into two collections.
 	if pkg.CustomElements != "" {
-		r.addManifestPath(path)
+		r.addWatchPath(path)
 	}
 
 	return &pkg, nil
@@ -1011,8 +1010,7 @@ func (r *Registry) StartFileWatching(onReload func()) error {
 	// PROTECTED BY LOCK: Channel initialization is thread-safe with StopFileWatching
 	r.watcherDone = make(chan struct{})
 
-	// Add all known manifest paths to the watcher
-	for _, path := range r.ManifestPaths {
+	for _, path := range r.WatchPaths {
 		if err := r.fileWatcher.Add(path); err != nil {
 			helpers.SafeDebugLog("Warning: Could not watch manifest file %s: %v", path, err)
 		} else {
@@ -1108,14 +1106,12 @@ func (r *Registry) handleFileChange(event platform.FileWatchEvent) {
 		return
 	}
 
-	// Check if this is a manifest file we care about
-	isManifestFile := slices.Contains(r.ManifestPaths, event.Name)
-
-	if !isManifestFile {
+	isWatchedPath := slices.Contains(r.WatchPaths, event.Name)
+	if !isWatchedPath {
 		return
 	}
 
-	helpers.SafeDebugLog("Manifest file changed: %s", event.Name)
+	helpers.SafeDebugLog("Watched file changed: %s", event.Name)
 
 	// Trigger reload callback if available (with proper synchronization)
 	r.watcherMu.RLock()
@@ -1285,18 +1281,40 @@ func (r *Registry) StopGenerateWatcher() error {
 	return nil
 }
 
-// addManifestPathWithPackageName tracks a manifest file path with its package name for watching
+// addWatchPath tracks a file path for watching without adding it to ManifestPaths.
+// Used for package.json files that should trigger reload but aren't CEM manifests.
+func (r *Registry) addWatchPath(path string) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		helpers.SafeDebugLog("Warning: Could not resolve watch path %s: %v", path, err)
+		return
+	}
+
+	if slices.Contains(r.WatchPaths, absPath) {
+		return
+	}
+
+	r.WatchPaths = append(r.WatchPaths, absPath)
+	helpers.SafeDebugLog("Watching file: %s", absPath)
+
+	r.watcherMu.RLock()
+	if r.fileWatcher != nil {
+		if err := r.fileWatcher.Add(absPath); err != nil {
+			helpers.SafeDebugLog("Warning: Could not watch file %s: %v", absPath, err)
+		}
+	}
+	r.watcherMu.RUnlock()
+}
+
+// addManifestPathWithPackageName tracks a CEM manifest path with its package name.
 func (r *Registry) addManifestPathWithPackageName(path string, packageName string) {
-	// Resolve to absolute path
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		helpers.SafeDebugLog("Warning: Could not resolve manifest path %s: %v", path, err)
 		return
 	}
 
-	// Check if already tracked
 	if slices.Contains(r.ManifestPaths, absPath) {
-		// Update package name if already exists
 		r.ManifestPackageNames[absPath] = packageName
 		return
 	}
@@ -1305,28 +1323,17 @@ func (r *Registry) addManifestPathWithPackageName(path string, packageName strin
 	r.ManifestPackageNames[absPath] = packageName
 	helpers.SafeDebugLog("Tracking manifest file: %s with package: %s", absPath, packageName)
 
-	// If watcher is active, add this path
-	r.watcherMu.RLock()
-	if r.fileWatcher != nil {
-		if err := r.fileWatcher.Add(absPath); err != nil {
-			helpers.SafeDebugLog("Warning: Could not watch manifest file %s: %v", absPath, err)
-		} else {
-			helpers.SafeDebugLog("Now watching manifest file: %s", absPath)
-		}
-	}
-	r.watcherMu.RUnlock()
+	r.addWatchPath(absPath)
 }
 
-// addManifestPath tracks a manifest file path for watching
+// addManifestPath tracks a CEM manifest path for reload and watching.
 func (r *Registry) addManifestPath(path string) {
-	// Resolve to absolute path
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		helpers.SafeDebugLog("Warning: Could not resolve manifest path %s: %v", path, err)
 		return
 	}
 
-	// Check if already tracked
 	if slices.Contains(r.ManifestPaths, absPath) {
 		return
 	}
@@ -1334,16 +1341,7 @@ func (r *Registry) addManifestPath(path string) {
 	r.ManifestPaths = append(r.ManifestPaths, absPath)
 	helpers.SafeDebugLog("Tracking manifest file: %s", absPath)
 
-	// If watcher is active, add this path
-	r.watcherMu.RLock()
-	if r.fileWatcher != nil {
-		if err := r.fileWatcher.Add(absPath); err != nil {
-			helpers.SafeDebugLog("Warning: Could not watch manifest file %s: %v", absPath, err)
-		} else {
-			helpers.SafeDebugLog("Now watching manifest file: %s", absPath)
-		}
-	}
-	r.watcherMu.RUnlock()
+	r.addWatchPath(absPath)
 }
 
 // GetModuleGraph returns the module graph for re-export analysis
