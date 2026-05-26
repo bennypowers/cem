@@ -1,19 +1,20 @@
 package integration_test
 
 import (
-	"os"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
+
+// Inline: integration test, scalar assertions
 
 // TestZedBinaryNamingConsistency verifies that the Zed extension references
 // the correct binary names that match the go-release-workflows output.
 func TestZedBinaryNamingConsistency(t *testing.T) {
 	// Read Zed extension source
-	zedSource, err := os.ReadFile("../../extensions/zed/src/lib.rs")
-	require.NoError(t, err)
+	mfs := testutil.LoadTestdataFS(t, "../../extensions/zed/src", "/")
+	zedSource := testutil.ReadFixture(t, mfs, "/lib.rs")
 
 	sourceStr := string(zedSource)
 

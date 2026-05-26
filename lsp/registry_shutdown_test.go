@@ -29,6 +29,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: lifecycle state transitions
+// Goroutine shutdown, timeout, and double-start behavior for file watchers
+// and generate watchers. Assertions are on lifecycle events (callback called,
+// no hang, error on double-start) which are inherently scalar.
+
 // TestRegistryFileWatcherShutdown verifies that the file watcher goroutine
 // exits properly when StopFileWatching is called.
 // This test prevents the bug where LSP server hangs at 100% CPU after client disconnects.

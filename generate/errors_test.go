@@ -22,6 +22,8 @@ import (
 	"testing"
 )
 
+// Inline: pure function, table-driven
+
 func TestErrorStandardization(t *testing.T) {
 	baseErr := errors.New("base error")
 

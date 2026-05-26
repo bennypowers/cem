@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
 func TestURLWorkspaceContext_Init(t *testing.T) {
 	// Create a mock server with package.json and manifest
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

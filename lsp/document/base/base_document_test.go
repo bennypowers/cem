@@ -11,6 +11,10 @@ import (
 	tsHtml "github.com/tree-sitter/tree-sitter-html/bindings/go"
 )
 
+// Inline: lifecycle state transitions
+// Tests ref-counted tree acquire/release, parser callbacks, and Close semantics.
+// ByteOffset/Position round-trip tests are pure function, table-driven.
+
 func parseHTML(t *testing.T, content string) *ts.Tree {
 	t.Helper()
 	parser := ts.NewParser()

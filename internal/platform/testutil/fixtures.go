@@ -30,7 +30,7 @@ import (
 // with files mapped to the specified root path (usually "/test").
 // The fixtureDir should be relative to serve/testdata/ (e.g., "transforms/config-test").
 // Go tests run from the module root, so we check both possible locations.
-func NewFixtureFS(t *testing.T, fixtureDir string, rootPath string) *platform.MapFileSystem {
+func NewFixtureFS(t testing.TB, fixtureDir string, rootPath string) *platform.MapFileSystem {
 	t.Helper()
 
 	mfs := platform.NewMapFileSystem(nil)
@@ -86,10 +86,61 @@ func NewFixtureFS(t *testing.T, fixtureDir string, rootPath string) *platform.Ma
 	return mfs
 }
 
+// LoadTestdataFS loads all files under dir into a MapFileSystem rooted at rootPath.
+// dir is relative to the test's working directory (typically "testdata" or "testdata/subdir").
+func LoadTestdataFS(t testing.TB, dir string, rootPath string) *platform.MapFileSystem {
+	t.Helper()
+
+	mfs := platform.NewMapFileSystem(nil)
+
+	info, err := os.Stat(dir)
+	if err != nil {
+		t.Fatalf("testdata directory %s not found: %v", dir, err)
+	}
+	if !info.IsDir() {
+		t.Fatalf("testdata path %s is not a directory", dir)
+	}
+
+	err = platform.WalkDir(os.DirFS(dir), ".", nil, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+
+		content, err := os.ReadFile(filepath.Join(dir, path))
+		if err != nil {
+			return err
+		}
+
+		virtualPath := filepath.Join(rootPath, path)
+		mfs.AddFile(virtualPath, string(content), 0644)
+
+		return nil
+	})
+
+	if err != nil {
+		t.Fatalf("Failed to load testdata from %s: %v", dir, err)
+	}
+
+	return mfs
+}
+
+// ReadFixture reads a single file from a MapFileSystem, failing the test on error.
+func ReadFixture(t testing.TB, mfs *platform.MapFileSystem, path string) []byte {
+	t.Helper()
+	data, err := mfs.ReadFile(path)
+	if err != nil {
+		t.Fatalf("fixture %s not found in MapFS: %v", path, err)
+	}
+	return data
+}
+
 // LoadFixtureFile reads a single fixture file and returns its content.
 // The fixturePath should be relative to serve/testdata/ (e.g., "demo-routing/manifest.json").
 // Go tests run from the module root, so we check both possible locations.
-func LoadFixtureFile(t *testing.T, fixturePath string) []byte {
+func LoadFixtureFile(t testing.TB, fixturePath string) []byte {
 	t.Helper()
 
 	// Go test changes working directory based on which package is being tested.

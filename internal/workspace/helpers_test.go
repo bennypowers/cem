@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: pure function, table-driven
 func TestParseNpmSpecifier(t *testing.T) {
 	tests := []struct {
 		spec        string

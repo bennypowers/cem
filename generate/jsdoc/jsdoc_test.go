@@ -12,6 +12,8 @@ import (
 	_ "bennypowers.dev/cem/internal/languages/jsdoc"
 )
 
+// Inline: pure function, scalar assertions
+
 func TestEnrichClassWithJSDoc(t *testing.T) {
 	qm := newTestQueryManager(t)
 

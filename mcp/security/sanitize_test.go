@@ -23,6 +23,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: security boundary, scalar assertions
+
 func TestSanitizeDescription(t *testing.T) {
 	tests := []struct {
 		name        string

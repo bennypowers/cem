@@ -28,6 +28,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+// Tests LSP lifecycle handlers (DidOpen, DidChange, DidClose) and completion
+// context analysis with nil DocumentManager (regression test).
+
 func TestDocumentChangeHandling(t *testing.T) {
 	dm, err := document.NewDocumentManager()
 	if err != nil {

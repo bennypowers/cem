@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
 func TestForEachPackage_RunsAllPackages(t *testing.T) {
 	root := absFixture(t, "multi-package-workspace")
 	var count int

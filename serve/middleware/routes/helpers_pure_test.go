@@ -25,6 +25,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, scalar assertions
+
 func TestFilterHealthByComponent(t *testing.T) {
 	result := &health.HealthResult{
 		Modules: []health.ModuleReport{

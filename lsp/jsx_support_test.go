@@ -14,6 +14,10 @@ import (
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
+// Inline: integration test, scalar assertions
+// Tests JSX/TSX language detection, custom element detection, attribute
+// parsing, and completion context analysis through the full document stack.
+
 func TestJSXDocumentSupport(t *testing.T) {
 	tests := []struct {
 		name     string

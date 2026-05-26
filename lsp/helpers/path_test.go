@@ -20,6 +20,8 @@ import (
 	"testing"
 )
 
+// Inline: pure function, table-driven
+
 func TestPathsMatch(t *testing.T) {
 	tests := []struct {
 		name          string

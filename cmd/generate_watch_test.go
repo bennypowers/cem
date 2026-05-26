@@ -27,6 +27,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+
 func TestRunWatchMode(t *testing.T) {
 	tests := []struct {
 		name        string

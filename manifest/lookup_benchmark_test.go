@@ -3,10 +3,9 @@ package manifest_test
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/manifest"
 )
 
@@ -245,10 +244,8 @@ func benchmarkExportLookupMap(b *testing.B, numExports int) {
 // This benchmark exercises the full rendering pipeline including attribute field
 // lookups and export lookups using the optimized map-based implementation.
 func BenchmarkRenderableCreation(b *testing.B) {
-	manifestJSON, err := os.ReadFile(filepath.Join("testdata", "custom-element-member-grouping.json"))
-	if err != nil {
-		b.Fatalf("Failed to load fixture: %v", err)
-	}
+	fs := testutil.LoadTestdataFS(b, "testdata", "/")
+	manifestJSON := testutil.ReadFixture(b, fs, "/custom-element-member-grouping.json")
 
 	var pkg manifest.Package
 	if err := json.Unmarshal([]byte(manifestJSON), &pkg); err != nil {

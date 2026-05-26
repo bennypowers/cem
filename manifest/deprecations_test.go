@@ -18,8 +18,6 @@ package manifest
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -27,14 +25,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: integration test, scalar assertions (tree output verification)
+
 func TestDeprecated(t *testing.T) {
 	t.Run("deprecated-module", func(t *testing.T) {
-
-		manifestPath := filepath.Join("testdata", "deprecated-module.json")
-		raw, err := os.ReadFile(manifestPath)
-		if err != nil {
-			t.Fatalf("failed to read manifest fixture: %v", err)
-		}
+		raw := loadFixture(t, "deprecated-module.json")
 
 		var pkg Package
 		if err := json.Unmarshal(raw, &pkg); err != nil {
@@ -46,11 +41,7 @@ func TestDeprecated(t *testing.T) {
 	})
 
 	t.Run("deprecations", func(t *testing.T) {
-		manifestPath := filepath.Join("testdata", "deprecations.json")
-		raw, err := os.ReadFile(manifestPath)
-		if err != nil {
-			t.Fatalf("failed to read manifest fixture: %v", err)
-		}
+		raw := loadFixture(t, "deprecations.json")
 
 		var pkg Package
 		if err := json.Unmarshal(raw, &pkg); err != nil {
@@ -162,11 +153,7 @@ func TestDeprecated(t *testing.T) {
 	})
 
 	t.Run("VisualTreeOutput", func(t *testing.T) {
-		manifestPath := filepath.Join("testdata", "deprecations.json")
-		raw, err := os.ReadFile(manifestPath)
-		if err != nil {
-			t.Fatalf("failed to read manifest fixture: %v", err)
-		}
+		raw := loadFixture(t, "deprecations.json")
 
 		var pkg Package
 		if err := json.Unmarshal(raw, &pkg); err != nil {

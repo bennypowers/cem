@@ -26,6 +26,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: pure function, scalar assertions
+// Getters, setters, and nil-safety checks on BaseDocument public API.
+
 func newTestDoc(content string) *base.BaseDocument {
 	return base.NewBaseDocument("file:///test.html", content, 1, "html", nil, nil)
 }

@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, scalar assertions
 func TestDefaultMetricsCollector_Counters(t *testing.T) {
 	m := modulegraph.NewDefaultMetricsCollector()
 

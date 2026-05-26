@@ -30,6 +30,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+// Verifies no false-positive "unknown element" diagnostics for workspace sibling
+// elements across npm, yarn, and pnpm workspace managers.
+
 // TestWorkspaceDiagnostics_NoFalsePositives_npm tests that workspace sibling elements
 // do NOT produce "unknown element" diagnostics when properly imported
 func TestWorkspaceDiagnostics_NoFalsePositives_npm(t *testing.T) {

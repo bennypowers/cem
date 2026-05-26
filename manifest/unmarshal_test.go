@@ -19,10 +19,13 @@ package manifest
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"reflect"
 	"regexp"
+	"sync"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/platform/testutil"
 )
 
 // DRY Test Helpers
@@ -42,13 +45,22 @@ func mustRunFixture(t *testing.T) {
 	}
 }
 
-func loadFixture(t *testing.T, name string) []byte {
+var (
+	manifestTestdataFS   *platform.MapFileSystem
+	manifestTestdataOnce sync.Once
+)
+
+func manifestFixtures(t testing.TB) *platform.MapFileSystem {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join("testdata", name))
-	if err != nil {
-		t.Fatalf("failed to load fixture %s: %v", name, err)
-	}
-	return data
+	manifestTestdataOnce.Do(func() {
+		manifestTestdataFS = testutil.LoadTestdataFS(t, "testdata", "/")
+	})
+	return manifestTestdataFS
+}
+
+func loadFixture(t testing.TB, name string) []byte {
+	t.Helper()
+	return testutil.ReadFixture(t, manifestFixtures(t), "/"+name)
 }
 
 func mustUnmarshalPackage(t *testing.T, data []byte) *Package {

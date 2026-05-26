@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, scalar assertions
 func TestExportTracker_AddElementSource(t *testing.T) {
 	et := &ExportTracker{
 		ElementSources: make(map[string][]string),

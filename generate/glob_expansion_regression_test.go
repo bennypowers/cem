@@ -26,6 +26,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: regression test, verifying specific fix
+
 // TestGlobPatternExpansion tests the regression fix for glob pattern expansion
 // using in-memory operations for instant testing without disk I/O overhead.
 func TestGlobPatternExpansion(t *testing.T) {

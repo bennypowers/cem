@@ -22,6 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: verifying deep-copy independence
+
 func TestFullyQualifiedClone(t *testing.T) {
 	orig := FullyQualified{Name: "x", Summary: "s", Description: "d"}
 	cloned := orig.Clone()

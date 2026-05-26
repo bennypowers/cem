@@ -24,6 +24,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, table-driven
+
 func TestColorizeDuration(t *testing.T) {
 	tests := []struct {
 		name  string

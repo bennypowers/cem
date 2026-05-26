@@ -20,12 +20,11 @@ package serve_test
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/serve"
 )
 
@@ -40,10 +39,8 @@ func newListingTestFS() platform.FileSystem {
 // TestRootListing_ShowsAllElements verifies GET / shows element listing
 func TestRootListing_ShowsAllElements(t *testing.T) {
 	// Load manifest fixture
-	manifestBytes, err := os.ReadFile(filepath.Join("testdata", "listing", "multiple-elements.json"))
-	if err != nil {
-		t.Fatalf("Failed to read manifest fixture: %v", err)
-	}
+	mfsFixtures := testutil.LoadTestdataFS(t, "testdata/listing", "/")
+	manifestBytes := testutil.ReadFixture(t, mfsFixtures, "/multiple-elements.json")
 
 	mfs := newListingTestFS()
 	server, err := serve.NewServerWithConfig(serve.Config{
@@ -122,10 +119,8 @@ func TestRootListing_ShowsAllElements(t *testing.T) {
 // TestRootListing_EmptyManifest verifies listing with no elements
 func TestRootListing_EmptyManifest(t *testing.T) {
 	// Load empty manifest fixture
-	manifestBytes, err := os.ReadFile(filepath.Join("testdata", "listing", "empty-manifest.json"))
-	if err != nil {
-		t.Fatalf("Failed to read manifest fixture: %v", err)
-	}
+	mfsFixtures := testutil.LoadTestdataFS(t, "testdata/listing", "/")
+	manifestBytes := testutil.ReadFixture(t, mfsFixtures, "/empty-manifest.json")
 
 	mfs := newListingTestFS()
 	server, err := serve.NewServerWithConfig(serve.Config{
@@ -172,10 +167,8 @@ func TestRootListing_EmptyManifest(t *testing.T) {
 // TestRootListing_SortedByElement verifies alphabetical sorting
 func TestRootListing_SortedByElement(t *testing.T) {
 	// Load sorting test fixture
-	manifestBytes, err := os.ReadFile(filepath.Join("testdata", "listing", "sorting-test.json"))
-	if err != nil {
-		t.Fatalf("Failed to read manifest fixture: %v", err)
-	}
+	mfsFixtures := testutil.LoadTestdataFS(t, "testdata/listing", "/")
+	manifestBytes := testutil.ReadFixture(t, mfsFixtures, "/sorting-test.json")
 
 	mfs := newListingTestFS()
 	server, err := serve.NewServerWithConfig(serve.Config{

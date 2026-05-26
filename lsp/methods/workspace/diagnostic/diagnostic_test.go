@@ -27,6 +27,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+// Tests WorkspaceDiagnostic handler with zero and multiple open documents.
+
 func TestWorkspaceDiagnostic_Empty(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 

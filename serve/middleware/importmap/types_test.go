@@ -22,6 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, scalar assertions
+
 func TestImportMap_IsImportMap(t *testing.T) {
 	im := &ImportMap{}
 	im.IsImportMap()

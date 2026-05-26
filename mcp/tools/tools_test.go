@@ -18,7 +18,6 @@ package tools_test
 
 import (
 	"encoding/json"
-	"flag"
 	"os"
 	"path/filepath"
 	"testing"
@@ -26,13 +25,12 @@ import (
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/templates"
 	"bennypowers.dev/cem/mcp/tools"
+	"bennypowers.dev/cem/internal/platform/testutil"
 	W "bennypowers.dev/cem/internal/workspace"
 	mcpSDK "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-var update = flag.Bool("update", false, "update golden files")
 
 // getTestRegistry creates a registry using the test fixtures following the existing pattern
 func getTestRegistry(t *testing.T) *mcp.MCPContextAdapter {
@@ -226,13 +224,15 @@ func TestTemplateRenderer_Basic(t *testing.T) {
 
 // Helper function to test templates with fixture/golden pattern
 func testTemplateWithGolden(t *testing.T, templateName, contextName, fixtureFile, goldenFile string) {
+	t.Helper()
+
+	fs := testutil.LoadTestdataFS(t, "../testdata/fixtures/"+contextName, "/")
+
 	// Read template data from fixture file
-	fixturePath := filepath.Join("../testdata/fixtures", contextName, fixtureFile)
-	fixtureData, err := os.ReadFile(fixturePath)
-	require.NoError(t, err, "Should be able to read fixture file: %s", fixturePath)
+	fixtureData := testutil.ReadFixture(t, fs, "/"+fixtureFile)
 
 	var templateData any
-	err = json.Unmarshal(fixtureData, &templateData)
+	err := json.Unmarshal(fixtureData, &templateData)
 	require.NoError(t, err, "Should be able to parse fixture JSON")
 
 	// Render template
@@ -241,7 +241,7 @@ func testTemplateWithGolden(t *testing.T, templateName, contextName, fixtureFile
 
 	// Handle -update flag
 	goldenPath := filepath.Join("../testdata/fixtures", contextName, goldenFile)
-	if *update {
+	if *testutil.Update {
 		err := os.WriteFile(goldenPath, []byte(output), 0644)
 		require.NoError(t, err, "Failed to update golden file %s", goldenPath)
 		t.Logf("Updated golden file: %s", goldenPath)
@@ -249,11 +249,7 @@ func testTemplateWithGolden(t *testing.T, templateName, contextName, fixtureFile
 	}
 
 	// Compare with golden file
-	expectedData, err := os.ReadFile(goldenPath)
-	if os.IsNotExist(err) {
-		t.Fatalf("Golden file %s does not exist. Run with -update to create it.", goldenPath)
-	}
-	require.NoError(t, err, "Should be able to read golden file: %s", goldenPath)
+	expectedData := testutil.ReadFixture(t, fs, "/"+goldenFile)
 
 	assert.Equal(t, string(expectedData), output, "Template output should match golden file")
 }

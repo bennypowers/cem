@@ -32,6 +32,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/serve"
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
 	"bennypowers.dev/cem/serve/middleware/transform"
@@ -63,11 +64,8 @@ func newTestFS(t *testing.T) platform.FileSystem {
 // TestReloadMessageFormat verifies reload message structure matches expected format
 func TestReloadMessageFormat(t *testing.T) {
 	// Read expected golden file
-	goldenPath := filepath.Join("testdata", "websocket-reload", "expected-reload-message.json")
-	expectedBytes, err := os.ReadFile(goldenPath)
-	if err != nil {
-		t.Fatalf("Failed to read golden file: %v", err)
-	}
+	mfsFixtures := testutil.LoadTestdataFS(t, "testdata/websocket-reload", "/")
+	expectedBytes := testutil.ReadFixture(t, mfsFixtures, "/expected-reload-message.json")
 
 	// Parse expected message
 	var expected map[string]any

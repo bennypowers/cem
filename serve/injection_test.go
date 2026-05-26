@@ -28,6 +28,7 @@ import (
 	"testing"
 	"time"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/serve"
 )
 
@@ -36,13 +37,11 @@ func TestHTMLInjection_WebSocketClient(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Copy test fixture HTML
-	inputHTML, err := os.ReadFile(filepath.Join("testdata", "html-injection", "input.html"))
-	if err != nil {
-		t.Fatalf("Failed to read input HTML: %v", err)
-	}
+	mfsFixtures := testutil.LoadTestdataFS(t, "testdata/html-injection", "/")
+	inputHTML := testutil.ReadFixture(t, mfsFixtures, "/input.html")
 
 	htmlFile := filepath.Join(tmpDir, "index.html")
-	err = os.WriteFile(htmlFile, inputHTML, 0644)
+	err := os.WriteFile(htmlFile, inputHTML, 0644)
 	if err != nil {
 		t.Fatalf("Failed to write HTML file: %v", err)
 	}
@@ -102,13 +101,11 @@ func TestHTMLInjection_WebSocketClient(t *testing.T) {
 func TestHTMLInjection_NoInjectionWhenDisabled(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	inputHTML, err := os.ReadFile(filepath.Join("testdata", "html-injection", "input.html"))
-	if err != nil {
-		t.Fatalf("Failed to read input HTML: %v", err)
-	}
+	mfsFixtures := testutil.LoadTestdataFS(t, "testdata/html-injection", "/")
+	inputHTML := testutil.ReadFixture(t, mfsFixtures, "/input.html")
 
 	htmlFile := filepath.Join(tmpDir, "index.html")
-	err = os.WriteFile(htmlFile, inputHTML, 0644)
+	err := os.WriteFile(htmlFile, inputHTML, 0644)
 	if err != nil {
 		t.Fatalf("Failed to write HTML file: %v", err)
 	}

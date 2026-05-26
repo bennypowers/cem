@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: pure function, table-driven
+
 func TestAppendWithSeparator(t *testing.T) {
 	tests := []struct {
 		name      string

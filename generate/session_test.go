@@ -32,6 +32,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+
 // setupTestContext creates a test workspace context
 func setupTestContext(t *testing.T, fixture string) types.WorkspaceContext {
 	ctx := W.NewFileSystemWorkspaceContext(fixture)

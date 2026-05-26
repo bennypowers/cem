@@ -23,6 +23,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, table-driven
+
 func TestStatus(t *testing.T) {
 	tests := []struct {
 		points, max int

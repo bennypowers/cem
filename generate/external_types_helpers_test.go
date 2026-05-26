@@ -22,6 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Inline: pure function, table-driven
+
 func TestIsQuoted(t *testing.T) {
 	tests := []struct {
 		in   string

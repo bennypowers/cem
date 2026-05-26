@@ -20,14 +20,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
+	W "bennypowers.dev/cem/internal/workspace"
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/tools"
-	W "bennypowers.dev/cem/internal/workspace"
 	mcpSDK "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -605,6 +604,8 @@ func TestValidateHtml_GlobalAttributesWithUnknownCustomAttribute(t *testing.T) {
 
 // Helper function to test validate_html tool with fixture/golden pattern
 func testValidateHtmlWithGolden(t *testing.T, fixtureFile, contextStr, goldenFile string) {
+	t.Helper()
+
 	workspace := W.NewFileSystemWorkspaceContext("../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
@@ -617,10 +618,10 @@ func testValidateHtmlWithGolden(t *testing.T, fixtureFile, contextStr, goldenFil
 
 	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
 
+	fs := testutil.LoadTestdataFS(t, "../testdata/fixtures/validate-html", "/")
+
 	// Read HTML from fixture file
-	fixturePath := filepath.Join("../testdata/fixtures/validate-html", fixtureFile)
-	htmlData, err := os.ReadFile(fixturePath)
-	require.NoError(t, err, "Should be able to read fixture file: %s", fixturePath)
+	htmlData := testutil.ReadFixture(t, fs, "/"+fixtureFile)
 
 	argsJSON, err := json.Marshal(map[string]any{
 		"html":    string(htmlData),
@@ -644,9 +645,7 @@ func testValidateHtmlWithGolden(t *testing.T, fixtureFile, contextStr, goldenFil
 	require.True(t, ok)
 
 	// Compare with golden file
-	goldenPath := filepath.Join("../testdata/fixtures/validate-html", goldenFile)
-	expectedData, err := os.ReadFile(goldenPath)
-	require.NoError(t, err, "Should be able to read golden file: %s", goldenPath)
+	expectedData := testutil.ReadFixture(t, fs, "/"+goldenFile)
 
 	assert.Equal(t, string(expectedData), textContent.Text, "Output should match golden file")
 }

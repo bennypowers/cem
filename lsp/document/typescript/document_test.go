@@ -1,16 +1,19 @@
 package typescript
 
 import (
-	"os"
-	"path/filepath"
 	"sort"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// Inline: pure function, table-driven
+// getCaptureMapKeys is a pure function. FindCustomElements tests use fixtures
+// but validate structured output with scalar assertions (tag names).
 
 func TestGetCaptureMapKeys(t *testing.T) {
 	tests := []struct {
@@ -66,6 +69,7 @@ func newTSHandler(t *testing.T) *Handler {
 
 func TestFindCustomElements_TypeScript(t *testing.T) {
 	handler := newTSHandler(t)
+	mfs := testutil.LoadTestdataFS(t, "testdata", "/")
 
 	tests := []struct {
 		name     string
@@ -74,7 +78,7 @@ func TestFindCustomElements_TypeScript(t *testing.T) {
 	}{
 		{
 			name:    "lit element with html template",
-			fixture: filepath.Join("testdata", "lit-element.ts"),
+			fixture: "/lit-element.ts",
 			validate: func(t *testing.T, elements []types.CustomElementMatch) {
 				require.GreaterOrEqual(t, len(elements), 2)
 				tagNames := make([]string, len(elements))
@@ -87,7 +91,7 @@ func TestFindCustomElements_TypeScript(t *testing.T) {
 		},
 		{
 			name:    "typescript with no html templates",
-			fixture: filepath.Join("testdata", "no-templates.ts"),
+			fixture: "/no-templates.ts",
 			validate: func(t *testing.T, elements []types.CustomElementMatch) {
 				assert.Empty(t, elements)
 			},
@@ -96,8 +100,7 @@ func TestFindCustomElements_TypeScript(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			content, err := os.ReadFile(tt.fixture)
-			require.NoError(t, err)
+			content := testutil.ReadFixture(t, mfs, tt.fixture)
 			doc := handler.CreateDocument("file:///test.ts", string(content), 1)
 			defer doc.Close()
 			elements, err := handler.FindCustomElements(doc)

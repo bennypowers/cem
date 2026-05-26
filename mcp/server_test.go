@@ -29,6 +29,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+
 func TestNewServer(t *testing.T) {
 	workspace := W.NewFileSystemWorkspaceContext("./testdata/fixtures/basic-integration")
 

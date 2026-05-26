@@ -33,6 +33,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: regression test, verifying specific fix (stdout cleanliness for JSON-RPC, issue #129)
+
 // TestMCPCommandStdoutClean is an E2E test that verifies the actual `cem mcp`
 // command produces no stdout contamination. This is the definitive test for #129.
 //

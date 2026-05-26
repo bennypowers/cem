@@ -22,6 +22,8 @@ import (
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
+// Inline: pure function, table-driven
+
 func pos(line, char uint32) protocol.Position {
 	return protocol.Position{Line: line, Character: char}
 }

@@ -26,6 +26,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+// Tests DidChangeConfiguration handler with various settings payloads.
+
 func TestDidChangeConfiguration_NilSettings(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	err := configuration.DidChangeConfiguration(ctx, nil, &protocol.DidChangeConfigurationParams{

@@ -18,8 +18,6 @@ package manifest
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -27,6 +25,8 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/assert"
 )
+
+// Inline: integration test, scalar assertions (tree structure verification against fixture)
 
 // Helper to strip ANSI color codes
 var ansiRegexp = regexp.MustCompile(`\x1b\[[0-9;]*m`)
@@ -44,10 +44,7 @@ func dumpTree(t *testing.T, node pterm.TreeNode, depth int) {
 
 func TestRenderableClassDeclaration(t *testing.T) {
 	t.Run("ToTreeNode", func(t *testing.T) {
-		manifestJSON, err := os.ReadFile(filepath.Join("testdata", "class-member-grouping.json"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		manifestJSON := loadFixture(t, "class-member-grouping.json")
 
 		var pkg Package
 		if err := json.Unmarshal([]byte(manifestJSON), &pkg); err != nil {

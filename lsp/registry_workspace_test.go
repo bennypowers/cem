@@ -26,6 +26,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+// Workspace manifest loading for npm, yarn, and pnpm. Assertions check
+// element existence and tag names after loading from fixture workspaces.
+
 // TestWorkspaceManifestLoading_npm tests that npm workspace packages are loaded into the registry
 func TestWorkspaceManifestLoading_npm(t *testing.T) {
 	fixturePath := filepath.Join("testdata", "integration", "workspace-npm")

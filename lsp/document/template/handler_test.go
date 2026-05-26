@@ -1,16 +1,19 @@
 package template
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	treesitter "bennypowers.dev/cem/internal/treesitter"
 	htmldoc "bennypowers.dev/cem/lsp/document/html"
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// Inline: pure function, table-driven
+// templateFamily is a pure function. FindCustomElements tests use fixtures but
+// validate structured output with scalar assertions (tag names, attribute maps).
 
 func TestTemplateFamily(t *testing.T) {
 	tests := []struct {
@@ -107,6 +110,7 @@ func newTemplateHandler(t *testing.T) *Handler {
 
 func TestFindCustomElements_Nunjucks(t *testing.T) {
 	handler := newTemplateHandler(t)
+	mfs := testutil.LoadTestdataFS(t, "testdata", "/")
 
 	tests := []struct {
 		name     string
@@ -115,7 +119,7 @@ func TestFindCustomElements_Nunjucks(t *testing.T) {
 	}{
 		{
 			name:    "nunjucks with custom elements",
-			fixture: filepath.Join("testdata", "with-custom-elements.njk"),
+			fixture: "/with-custom-elements.njk",
 			validate: func(t *testing.T, elements []types.CustomElementMatch) {
 				require.Len(t, elements, 2)
 				assert.Equal(t, "my-element", elements[0].TagName)
@@ -127,7 +131,7 @@ func TestFindCustomElements_Nunjucks(t *testing.T) {
 		},
 		{
 			name:    "nunjucks no custom elements",
-			fixture: filepath.Join("testdata", "no-custom-elements.njk"),
+			fixture: "/no-custom-elements.njk",
 			validate: func(t *testing.T, elements []types.CustomElementMatch) {
 				assert.Empty(t, elements)
 			},
@@ -136,8 +140,7 @@ func TestFindCustomElements_Nunjucks(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			content, err := os.ReadFile(tt.fixture)
-			require.NoError(t, err)
+			content := testutil.ReadFixture(t, mfs, tt.fixture)
 			doc := handler.CreateDocument("file:///test.njk", string(content), 1)
 			defer doc.Close()
 			elements, err := handler.FindCustomElements(doc)
@@ -149,9 +152,9 @@ func TestFindCustomElements_Nunjucks(t *testing.T) {
 
 func TestFindCustomElements_Handlebars(t *testing.T) {
 	handler := newTemplateHandler(t)
+	mfs := testutil.LoadTestdataFS(t, "testdata", "/")
 
-	content, err := os.ReadFile(filepath.Join("testdata", "with-custom-elements.hbs"))
-	require.NoError(t, err)
+	content := testutil.ReadFixture(t, mfs, "/with-custom-elements.hbs")
 	doc := handler.CreateDocument("file:///test.hbs", string(content), 1)
 	defer doc.Close()
 	elements, err := handler.FindCustomElements(doc)

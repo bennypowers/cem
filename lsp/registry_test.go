@@ -18,27 +18,30 @@ package lsp_test
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// loadTestManifest is a helper function to load manifests from test fixtures
+// Inline: integration test, scalar assertions
+// Registry element/attribute/slot lookup, multiple manifests, empty manifests,
+// and nil-type attribute handling (regression). Assertions check map keys,
+// counts, and field values that are awkward as golden files.
+
+// loadTestManifest is a helper function to load manifests from test fixtures.
+// fixturePath is relative to the MapFS root (e.g. "/integration/registry-basic/manifest.json").
 func loadTestManifest(t *testing.T, fixturePath string) *M.Package {
 	t.Helper()
 
-	manifestBytes, err := os.ReadFile(fixturePath)
-	if err != nil {
-		t.Fatalf("Failed to read manifest: %v", err)
-	}
+	mfs := testutil.LoadTestdataFS(t, "testdata", "/")
+	manifestBytes := testutil.ReadFixture(t, mfs, fixturePath)
 
 	var manifest M.Package
-	err = json.Unmarshal(manifestBytes, &manifest)
+	err := json.Unmarshal(manifestBytes, &manifest)
 	if err != nil {
 		t.Fatalf("Failed to parse manifest: %v", err)
 	}
@@ -51,7 +54,7 @@ func TestRegistryElementLookup(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 
 	// Load the basic test manifest
-	manifest := loadTestManifest(t, filepath.Join("testdata", "integration", "registry-basic", "manifest.json"))
+	manifest := loadTestManifest(t, "/integration/registry-basic/manifest.json")
 	ctx.AddManifest(manifest)
 
 	t.Run("Get existing element", func(t *testing.T) {
@@ -165,8 +168,8 @@ func TestRegistryMultipleManifests(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 
 	// Load two different manifests
-	manifest1 := loadTestManifest(t, filepath.Join("testdata", "integration", "registry-multiple", "manifest-1.json"))
-	manifest2 := loadTestManifest(t, filepath.Join("testdata", "integration", "registry-multiple", "manifest-2.json"))
+	manifest1 := loadTestManifest(t, "/integration/registry-multiple/manifest-1.json")
+	manifest2 := loadTestManifest(t, "/integration/registry-multiple/manifest-2.json")
 
 	// Add both manifests
 	ctx.AddManifest(manifest1)

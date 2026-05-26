@@ -30,6 +30,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Inline: integration test, scalar assertions
+// In-memory manifest generation for workspace packages with missing or absent
+// manifest files. Assertions check element existence, package names, and
+// absence of false-positive diagnostics.
+
 // TestWorkspaceInMemoryGeneration_MissingManifest tests that when a workspace package
 // declares customElements but the manifest file doesn't exist, the LSP generates it in-memory
 func TestWorkspaceInMemoryGeneration_MissingManifest(t *testing.T) {

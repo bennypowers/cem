@@ -19,11 +19,22 @@ package routes
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/platform/testutil"
 )
+
+var templatesFS *platform.MapFileSystem
+
+func loadTemplatesFS(t *testing.T) *platform.MapFileSystem {
+	t.Helper()
+	if templatesFS == nil {
+		templatesFS = testutil.LoadTestdataFS(t, "templates", "/templates")
+	}
+	return templatesFS
+}
 
 // TestTreeViewComponentFiles verifies tree view component files exist and have required content
 func TestTreeViewComponentFiles(t *testing.T) {
@@ -93,13 +104,11 @@ func TestTreeViewComponentFiles(t *testing.T) {
 		},
 	}
 
+	mfs := loadTemplatesFS(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fullPath := filepath.Join(".", tt.path)
-			content, err := os.ReadFile(fullPath)
-			if err != nil {
-				t.Fatalf("Failed to read %s (%s): %v", tt.description, fullPath, err)
-			}
+			content := testutil.ReadFixture(t, mfs, "/"+tt.path)
 
 			contentStr := string(content)
 			for _, mustContain := range tt.mustContain {
@@ -184,11 +193,8 @@ func TestManifestTreeBuilder_Structure(t *testing.T) {
 
 // TestTreeViewEventClasses verifies custom event classes follow the pattern
 func TestTreeViewEventClasses(t *testing.T) {
-	jsPath := filepath.Join(".", "templates/elements/cem-pf-v6-tree-item/cem-pf-v6-tree-item.js")
-	content, err := os.ReadFile(jsPath)
-	if err != nil {
-		t.Fatalf("Failed to read tree item JS: %v", err)
-	}
+	mfs := loadTemplatesFS(t)
+	content := testutil.ReadFixture(t, mfs, "/templates/elements/cem-pf-v6-tree-item/cem-pf-v6-tree-item.js")
 
 	contentStr := string(content)
 
@@ -218,11 +224,8 @@ func TestTreeViewEventClasses(t *testing.T) {
 
 // TestTreeViewAccessibility verifies ARIA attributes are present in the Lit component JS
 func TestTreeViewAccessibility(t *testing.T) {
-	jsPath := filepath.Join(".", "templates/elements/cem-pf-v6-tree-view/cem-pf-v6-tree-view.js")
-	content, err := os.ReadFile(jsPath)
-	if err != nil {
-		t.Fatalf("Failed to read tree view JS: %v", err)
-	}
+	mfs := loadTemplatesFS(t)
+	content := testutil.ReadFixture(t, mfs, "/templates/elements/cem-pf-v6-tree-view/cem-pf-v6-tree-view.js")
 
 	contentStr := string(content)
 
@@ -241,11 +244,8 @@ func TestTreeViewAccessibility(t *testing.T) {
 
 // TestTreeItemCSS_Structure verifies tree item CSS file has required structure
 func TestTreeItemCSS_Structure(t *testing.T) {
-	cssPath := filepath.Join(".", "templates/elements/cem-pf-v6-tree-item/cem-pf-v6-tree-item.css")
-	content, err := os.ReadFile(cssPath)
-	if err != nil {
-		t.Fatalf("Failed to read tree item CSS: %v", err)
-	}
+	mfs := loadTemplatesFS(t)
+	content := testutil.ReadFixture(t, mfs, "/templates/elements/cem-pf-v6-tree-item/cem-pf-v6-tree-item.css")
 
 	contentStr := string(content)
 
@@ -268,11 +268,8 @@ func TestTreeItemCSS_Structure(t *testing.T) {
 
 // TestManifestIcons_Coverage verifies all expected icon types are available
 func TestManifestIcons_Coverage(t *testing.T) {
-	jsPath := filepath.Join(".", "templates/js/manifest-icons.js")
-	content, err := os.ReadFile(jsPath)
-	if err != nil {
-		t.Fatalf("Failed to read manifest-icons.js: %v", err)
-	}
+	mfs := loadTemplatesFS(t)
+	content := testutil.ReadFixture(t, mfs, "/templates/js/manifest-icons.js")
 
 	contentStr := string(content)
 
@@ -335,13 +332,11 @@ func TestVirtualTreeComponent(t *testing.T) {
 		},
 	}
 
+	mfs := loadTemplatesFS(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fullPath := filepath.Join(".", tt.path)
-			content, err := os.ReadFile(fullPath)
-			if err != nil {
-				t.Fatalf("Failed to read %s (%s): %v", tt.description, fullPath, err)
-			}
+			content := testutil.ReadFixture(t, mfs, "/"+tt.path)
 
 			contentStr := string(content)
 			for _, mustContain := range tt.mustContain {
@@ -378,13 +373,11 @@ func TestDetailPanelComponent(t *testing.T) {
 		},
 	}
 
+	mfs := loadTemplatesFS(t)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fullPath := filepath.Join(".", tt.path)
-			content, err := os.ReadFile(fullPath)
-			if err != nil {
-				t.Fatalf("Failed to read %s (%s): %v", tt.description, fullPath, err)
-			}
+			content := testutil.ReadFixture(t, mfs, "/"+tt.path)
 
 			contentStr := string(content)
 			for _, mustContain := range tt.mustContain {
@@ -400,11 +393,8 @@ func TestDetailPanelComponent(t *testing.T) {
 
 // TestManifestBrowserIntegration verifies manifest browser uses new components
 func TestManifestBrowserIntegration(t *testing.T) {
-	jsPath := filepath.Join(".", "templates/elements/cem-manifest-browser/cem-manifest-browser.js")
-	content, err := os.ReadFile(jsPath)
-	if err != nil {
-		t.Fatalf("Failed to read manifest browser JS: %v", err)
-	}
+	mfs := loadTemplatesFS(t)
+	content := testutil.ReadFixture(t, mfs, "/templates/elements/cem-manifest-browser/cem-manifest-browser.js")
 
 	contentStr := string(content)
 
@@ -439,11 +429,8 @@ func TestManifestBrowserIntegration(t *testing.T) {
 
 // TestDemoChromeNoSSR verifies demo chrome template no longer has SSR tree
 func TestDemoChromeNoSSR(t *testing.T) {
-	htmlPath := filepath.Join(".", "templates/demo-chrome.html")
-	content, err := os.ReadFile(htmlPath)
-	if err != nil {
-		t.Fatalf("Failed to read demo-chrome.html: %v", err)
-	}
+	mfs := loadTemplatesFS(t)
+	content := testutil.ReadFixture(t, mfs, "/templates/demo-chrome.html")
 
 	contentStr := string(content)
 
