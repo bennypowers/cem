@@ -1,0 +1,193 @@
+[
+  {
+    "package": "@test/button",
+    "result": {
+      "modules": [
+        {
+          "path": "src/button.js",
+          "score": 75,
+          "maxScore": 100,
+          "declarations": [
+            {
+              "tagName": "test-button",
+              "name": "TestButton",
+              "score": 75,
+              "maxScore": 100,
+              "categories": [
+                {
+                  "id": "description",
+                  "category": "Element description",
+                  "points": 5,
+                  "maxPoints": 25,
+                  "status": "fail",
+                  "findings": [
+                    {
+                      "check": "Has description",
+                      "points": 5,
+                      "max": 5
+                    },
+                    {
+                      "check": "Optimal length",
+                      "points": 0,
+                      "max": 3,
+                      "message": "description is too short; provide at least 20 characters"
+                    },
+                    {
+                      "check": "Explains purpose/context",
+                      "points": 0,
+                      "max": 5,
+                      "message": "describe purpose and context using words like 'for', 'when', 'provides', 'allows'"
+                    },
+                    {
+                      "check": "RFC 2119 keywords",
+                      "points": 0,
+                      "max": 5,
+                      "message": "use RFC 2119 keywords (MUST, SHOULD, AVOID) to clarify requirements"
+                    },
+                    {
+                      "check": "Accessibility notes",
+                      "points": 0,
+                      "max": 4,
+                      "message": "mention accessibility considerations (ARIA, screen reader, WCAG)"
+                    },
+                    {
+                      "check": "Keyboard interaction",
+                      "points": 0,
+                      "max": 3,
+                      "message": "document keyboard interaction (Enter, Space, Tab, focus)"
+                    }
+                  ]
+                },
+                {
+                  "id": "attributes",
+                  "category": "Attribute documentation",
+                  "points": 20,
+                  "maxPoints": 20,
+                  "status": "pass",
+                  "findings": [
+                    {
+                      "check": "All have descriptions",
+                      "points": 10,
+                      "max": 10
+                    },
+                    {
+                      "check": "Descriptions explain purpose",
+                      "points": 5,
+                      "max": 5
+                    },
+                    {
+                      "check": "Constraints documented",
+                      "points": 5,
+                      "max": 5
+                    }
+                  ]
+                },
+                {
+                  "id": "slots",
+                  "category": "Slot documentation",
+                  "points": 15,
+                  "maxPoints": 15,
+                  "status": "pass",
+                  "findings": [
+                    {
+                      "check": "All have descriptions",
+                      "points": 5,
+                      "max": 5
+                    },
+                    {
+                      "check": "Content type guidelines",
+                      "points": 5,
+                      "max": 5
+                    },
+                    {
+                      "check": "Accessibility considerations",
+                      "points": 5,
+                      "max": 5
+                    }
+                  ]
+                },
+                {
+                  "id": "css",
+                  "category": "CSS documentation",
+                  "points": 15,
+                  "maxPoints": 15,
+                  "status": "pass",
+                  "findings": [
+                    {
+                      "check": "CSS properties documented",
+                      "points": 5,
+                      "max": 5
+                    },
+                    {
+                      "check": "CSS parts documented",
+                      "points": 5,
+                      "max": 5
+                    },
+                    {
+                      "check": "Design system notes",
+                      "points": 5,
+                      "max": 5
+                    }
+                  ]
+                },
+                {
+                  "id": "events",
+                  "category": "Event documentation",
+                  "points": 15,
+                  "maxPoints": 15,
+                  "status": "pass",
+                  "findings": [
+                    {
+                      "check": "All have descriptions",
+                      "points": 5,
+                      "max": 5
+                    },
+                    {
+                      "check": "Trigger conditions",
+                      "points": 5,
+                      "max": 5
+                    },
+                    {
+                      "check": "Event detail described",
+                      "points": 5,
+                      "max": 5
+                    }
+                  ]
+                },
+                {
+                  "id": "demos",
+                  "category": "Demos",
+                  "points": 5,
+                  "maxPoints": 10,
+                  "status": "warn",
+                  "findings": [
+                    {
+                      "check": "Has demo",
+                      "points": 5,
+                      "max": 5
+                    },
+                    {
+                      "check": "Demo has description",
+                      "points": 0,
+                      "max": 5,
+                      "message": "add descriptions to demos"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "overallScore": 75,
+      "overallMax": 100,
+      "recommendations": [
+        "test-button: describe purpose and context using words like 'for', 'when', 'provides', 'allows' (Element description, +5 pts)",
+        "test-button: use RFC 2119 keywords (MUST, SHOULD, AVOID) to clarify requirements (Element description, +5 pts)",
+        "test-button: add descriptions to demos (Demos, +5 pts)",
+        "test-button: mention accessibility considerations (ARIA, screen reader, WCAG) (Element description, +4 pts)",
+        "test-button: description is too short; provide at least 20 characters (Element description, +3 pts)"
+      ]
+    }
+  }
+]

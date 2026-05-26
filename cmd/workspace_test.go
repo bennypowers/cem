@@ -3,12 +3,13 @@
 package cmd_test
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/nsf/jsondiff"
+	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -85,64 +86,93 @@ func TestWorkspaceValidate_ValidatesAllPackages(t *testing.T) {
 	assert.Contains(t, combined, "Validated manifests")
 }
 
+func normalizeTextOutput(s string) string {
+	var lines []string
+	for _, line := range strings.Split(s, "\n") {
+		lines = append(lines, strings.TrimRight(line, " \t"))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func compareHealthGolden(t *testing.T, name, stdout string, isJSON bool) {
+	t.Helper()
+	goldenPath := filepath.Join("testdata", "goldens", "health."+name+".golden")
+	if isJSON {
+		goldenPath += ".json"
+	}
+
+	if *update {
+		if err := os.MkdirAll(filepath.Dir(goldenPath), 0755); err != nil {
+			t.Fatalf("failed to create golden dir: %v", err)
+		}
+		content := stdout
+		if !isJSON {
+			content = normalizeTextOutput(content)
+		}
+		if err := os.WriteFile(goldenPath, []byte(content), 0644); err != nil {
+			t.Fatalf("failed to write golden file: %v", err)
+		}
+		return
+	}
+
+	expected, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatalf("golden file missing: %s (run with -update to generate)", goldenPath)
+	}
+
+	if isJSON {
+		opts := jsondiff.DefaultConsoleOptions()
+		diff, report := jsondiff.Compare(expected, []byte(stdout), &opts)
+		if diff != jsondiff.FullMatch {
+			t.Errorf("JSON diff:\n%s", report)
+		}
+	} else {
+		got := normalizeTextOutput(stdout)
+		want := string(expected)
+		if got != want {
+			t.Errorf("output mismatch vs %s\n--- expected ---\n%s\n--- got ---\n%s", goldenPath, want, got)
+		}
+	}
+}
+
 func TestWorkspaceHealth_ScoresAllPackages(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
-	stdout, stderr := runCemCommand(t, projectDir, "health")
-	combined := stdout + stderr
-
-	assert.Contains(t, combined, "@test/button")
-	assert.Contains(t, combined, "@test/card")
-	assert.Contains(t, combined, "Checked health")
+	stdout, _ := runCemCommand(t, projectDir, "health")
+	cleaned := pterm.RemoveColorFromString(stdout)
+	compareHealthGolden(t, "all-packages", cleaned, false)
 }
 
 func TestWorkspaceHealth_TagNameFilter(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
-	stdout, stderr := runCemCommand(t, projectDir, "health", "-t", "test-button")
-	combined := stdout + stderr
-
-	assert.Contains(t, combined, "@test/button")
-	assert.NotContains(t, combined, "TestCard", "tag-name filter should exclude card package results")
+	stdout, _ := runCemCommand(t, projectDir, "health", "-t", "test-button")
+	cleaned := pterm.RemoveColorFromString(stdout)
+	compareHealthGolden(t, "tag-name-filter", cleaned, false)
 }
 
 func TestWorkspaceHealth_FormatJSON(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "health", "--format", "json")
-
-	var results []map[string]any
-	err := json.Unmarshal([]byte(stdout), &results)
-	require.NoError(t, err, "JSON output should be a valid JSON array, got: %s", stdout[:min(len(stdout), 200)])
-	assert.Len(t, results, 2, "should have results for both packages")
-	for _, r := range results {
-		assert.Contains(t, r, "package")
-		assert.Contains(t, r, "result")
-	}
+	compareHealthGolden(t, "json", stdout, true)
 }
 
 func TestWorkspaceHealth_FormatJSON_WithTagFilter(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "health", "--format", "json", "-t", "test-button")
-
-	var results []map[string]any
-	err := json.Unmarshal([]byte(stdout), &results)
-	require.NoError(t, err, "JSON output should be valid JSON array")
-	assert.Len(t, results, 1, "should only include package containing test-button")
-	assert.Equal(t, "@test/button", results[0]["package"])
+	compareHealthGolden(t, "json-tag-filter", stdout, true)
 }
 
 func TestWorkspaceHealth_FormatJSON_NoMatch(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "health", "--format", "json", "-t", "nonexistent-element")
-
-	assert.Equal(t, "[]\n", stdout, "zero-match filter should produce empty JSON array, not null")
+	compareHealthGolden(t, "json-no-match", stdout, true)
 }
 
 func TestWorkspaceHealth_DeprecatedComponentFlag(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, stderr := runCemCommand(t, projectDir, "health", "--component", "test-button")
-	combined := stdout + stderr
-
-	assert.Contains(t, combined, "@test/button")
-	assert.Contains(t, combined, "deprecated", "should warn that --component is deprecated")
+	cleaned := pterm.RemoveColorFromString(stdout)
+	compareHealthGolden(t, "deprecated-component", cleaned, false)
+	assert.Contains(t, stderr, "deprecated", "stderr should warn that --component is deprecated")
 }
 
 func TestWorkspaceListTags_ShowsAllPackages(t *testing.T) {
