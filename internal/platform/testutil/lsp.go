@@ -81,6 +81,7 @@ func loadLSPFixtureFromMapFS(t *testing.T, mfs *platform.MapFileSystem, scenario
 	}
 
 	// Try input.html first, then input.ts, then input.css
+	found := false
 	for _, candidate := range []struct {
 		name     string
 		fileType string
@@ -95,11 +96,12 @@ func loadLSPFixtureFromMapFS(t *testing.T, mfs *platform.MapFileSystem, scenario
 			fixture.InputContent = string(data)
 			fixture.InputHTML = string(data)
 			fixture.InputType = candidate.fileType
+			found = true
 			break
 		}
 	}
 
-	if fixture.InputContent == "" {
+	if !found {
 		t.Fatalf("No input.html, input.ts, or input.css found for scenario %s", scenarioName)
 	}
 
