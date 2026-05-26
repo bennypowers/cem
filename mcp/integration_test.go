@@ -150,14 +150,10 @@ func TestSchemaResilientTemplateIntegration(t *testing.T) {
 		goldenData := testutil.ReadFixture(t, goldenFS, "/schema_resilient_template.golden.md")
 		goldenContent := string(goldenData)
 		if content != goldenContent {
-			t.Logf("Content differs from golden file. Run with --update to update.")
-			t.Logf("Golden length: %d, Actual length: %d", len(goldenContent), len(content))
-
-			// Show a snippet of the differences for debugging
 			lines := strings.Split(content, "\n")
-			if len(lines) > 10 {
-				t.Logf("First 10 lines of output:\n%s", strings.Join(lines[:10], "\n"))
-			}
+			snippet := strings.Join(lines[:min(10, len(lines))], "\n")
+			t.Fatalf("Content differs from golden file (run with --update to update).\nGolden length: %d, Actual length: %d\nFirst lines of output:\n%s",
+				len(goldenContent), len(content), snippet)
 		} else {
 			t.Log("Content matches golden file exactly")
 		}

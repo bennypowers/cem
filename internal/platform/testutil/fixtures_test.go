@@ -104,14 +104,15 @@ func TestCheckGolden_WithFS_Mismatch(t *testing.T) {
 
 	mfs := LoadTestdataFS(t, dir, "/")
 
-	mockT := &testing.T{}
-	CheckGolden(mockT, "output", []byte("different"), GoldenOptions{
-		Dir:       "goldens",
-		Extension: ".txt",
-		FS:        mfs,
+	ok := t.Run("mismatch", func(t *testing.T) {
+		CheckGolden(t, "output", []byte("different"), GoldenOptions{
+			Dir:       "goldens",
+			Extension: ".txt",
+			FS:        mfs,
+		})
 	})
 
-	if !mockT.Failed() {
+	if ok {
 		t.Error("expected CheckGolden to fail on mismatch")
 	}
 }

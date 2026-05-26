@@ -96,10 +96,10 @@ func TestGenerateHTML_WithFixtures(t *testing.T) {
 			output := textContent.Text
 			assert.NotEmpty(t, output, "Tool output should not be empty")
 
-			// Check that output contains expected HTML (if expected-html.html exists)
-			expectedHTMLPath := filepath.Join(fixturesDir, fixtureName, "expected-html.html")
-			if _, statErr := os.Stat(expectedHTMLPath); statErr == nil {
-				expectedHTML := testutil.ReadFixture(t, fs, "/"+fixtureName+"/expected-html.html")
+			// Check that output contains expected HTML (if expected-html.html exists in MapFS)
+			expectedHTMLKey := "/" + fixtureName + "/expected-html.html"
+			if _, statErr := fs.Stat(expectedHTMLKey); statErr == nil {
+				expectedHTML := testutil.ReadFixture(t, fs, expectedHTMLKey)
 
 				assert.Contains(t, output, string(expectedHTML), "Output should contain expected HTML structure")
 			}

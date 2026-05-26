@@ -94,6 +94,9 @@ func LoadTestdataFS(t testing.TB, dir string, rootPath string) *platform.MapFile
 // ReadFixture reads a single file from a MapFileSystem, failing the test on error.
 func ReadFixture(t testing.TB, mfs *platform.MapFileSystem, path string) []byte {
 	t.Helper()
+	if mfs == nil {
+		t.Fatalf("nil MapFileSystem passed to ReadFixture")
+	}
 	data, err := mfs.ReadFile(path)
 	if err != nil {
 		t.Fatalf("fixture %s not found in MapFS: %v", path, err)
