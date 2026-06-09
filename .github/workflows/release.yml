@@ -113,7 +113,8 @@ jobs:
       - name: Get extension version
         id: version
         run: |
-          VERSION=$(grep '^version = ' extensions/zed/extension.toml | cut -d'"' -f2)
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Extension version: $VERSION"
 
@@ -161,8 +162,8 @@ jobs:
           GH_TOKEN: ${{ secrets.ZED_COMMITTER_TOKEN }}
         run: |
           BRANCH="update-cem-${{ steps.version.outputs.version }}"
-          # Check if PR already exists
-          existing_pr=$(gh pr list --repo zed-industries/extensions --head "bennypowers:$BRANCH" --json number --jq '.[0].number')
+          # Check if PR already exists (open or merged)
+          existing_pr=$(gh pr list --repo zed-industries/extensions --head "bennypowers:$BRANCH" --state all --json number --jq '.[0].number')
           if [ -n "$existing_pr" ]; then
             echo "PR #$existing_pr already exists for branch $BRANCH"
             exit 0
