@@ -25,7 +25,7 @@ import (
 )
 
 func TestValidate_ValidRenderingModes(t *testing.T) {
-	validModes := []string{"", "light", "shadow"}
+	validModes := []string{"", "light", "shadow", "iframe", "chromeless"}
 
 	for _, mode := range validModes {
 		t.Run(mode, func(t *testing.T) {
@@ -75,25 +75,6 @@ func TestValidate_InvalidRenderingMode(t *testing.T) {
 	}
 }
 
-func TestValidate_IframeRenderingMode(t *testing.T) {
-	cfg := &CemConfig{
-		Serve: ServeConfig{
-			Demos: DemosConfig{
-				Rendering: "iframe",
-			},
-		},
-	}
-
-	err := Validate(cfg)
-	if err == nil {
-		t.Error("Expected 'iframe' mode to be rejected, but validation passed")
-	}
-
-	// Check error mentions it's not implemented
-	if !strings.Contains(err.Error(), "not") || !strings.Contains(err.Error(), "implemented") {
-		t.Errorf("Error should mention iframe is not implemented, got: %v", err)
-	}
-}
 
 func TestValidate_EmptyConfigValid(t *testing.T) {
 	cfg := &CemConfig{}

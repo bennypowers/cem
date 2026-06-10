@@ -22,13 +22,14 @@ import (
 	"os/exec"
 	"os/signal"
 	"runtime"
-	"slices"
+	"strings"
 	"syscall"
 	"time"
 
 	"atomicgo.dev/keyboard"
 	"atomicgo.dev/keyboard/keys"
 	"bennypowers.dev/cem/cmd/config"
+	IC "bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/serve"
 	"bennypowers.dev/cem/serve/logger"
@@ -119,11 +120,10 @@ var serveCmd = &cobra.Command{
 			targetStr = configTarget
 		}
 
-		// Validate and parse target (default to ES2022)
 		var target transform.Target
 		if targetStr != "" {
-			if !transform.IsValidTarget(targetStr) {
-				return fmt.Errorf("invalid target '%s': must be one of es2015, es2016, es2017, es2018, es2019, es2020, es2021, es2022, es2023, or esnext", targetStr)
+			if !IC.IsValidTarget(targetStr) {
+				return fmt.Errorf("invalid target %q: must be one of %s", targetStr, strings.Join(IC.ValidTargets(), ", "))
 			}
 			target = transform.Target(targetStr)
 		} else {
@@ -144,10 +144,8 @@ var serveCmd = &cobra.Command{
 		if demoRendering == "" {
 			demoRendering = "light"
 		}
-		// Validate rendering mode
-		validModes := []string{"light", "shadow", "iframe", "chromeless"}
-		if !slices.Contains(validModes, demoRendering) {
-			return fmt.Errorf("invalid demo rendering mode '%s': must be 'light', 'shadow', 'iframe', or 'chromeless'", demoRendering)
+		if !IC.IsValidRenderingMode(demoRendering) {
+			return fmt.Errorf("invalid demo rendering mode %q: must be one of %s", demoRendering, strings.Join(IC.ValidRenderingModes(), ", "))
 		}
 		// Create server config
 		config := serve.Config{
