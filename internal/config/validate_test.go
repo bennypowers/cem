@@ -7,6 +7,9 @@ import (
 	"bennypowers.dev/cem/serve/middleware/types"
 )
 
+// Tier 1 pure function tests: all validation depends on formal parameters,
+// no I/O or side effects. Inline assertions are appropriate.
+
 func TestValidate_NilConfig(t *testing.T) {
 	errs := Validate(nil, ValidateOptions{})
 	if errs != nil {
@@ -58,9 +61,8 @@ func TestValidate_ESTarget(t *testing.T) {
 	valid := []string{
 		"", "es2015", "es2016", "es2017", "es2018", "es2019",
 		"es2020", "es2021", "es2022", "es2023", "esnext",
-		"ES2022", "ESNext", "ESNEXT",
 	}
-	invalid := []string{"es2014", "es2024", "es5", "es6", "latest"}
+	invalid := []string{"es2014", "es2024", "es5", "es6", "latest", "ES2022", "ESNext", "ESNEXT"}
 
 	for _, target := range valid {
 		t.Run("valid_"+target, func(t *testing.T) {
@@ -207,6 +209,22 @@ func TestValidate_DelegatedURLRewrites(t *testing.T) {
 			t.Errorf("expected nil, got %v", errs)
 		}
 	})
+
+	t.Run("empty_rewrites_skips_validator", func(t *testing.T) {
+		called := false
+		errs := Validate(&CemConfig{}, ValidateOptions{
+			ValidateURLRewrites: func(rewrites []URLRewrite) error {
+				called = true
+				return errors.New("should not be called")
+			},
+		})
+		if called {
+			t.Error("validator should not be called for empty rewrites")
+		}
+		if errs != nil {
+			t.Errorf("expected nil, got %v", errs)
+		}
+	})
 }
 
 func TestValidate_DelegatedDemoDiscovery(t *testing.T) {
@@ -332,6 +350,38 @@ func TestValidate_FilesystemChecks(t *testing.T) {
 		errs := Validate(cfg, ValidateOptions{CheckFilesystem: true, Root: "/root", FS: fs})
 		if errs != nil {
 			t.Errorf("expected nil for https specifier, got %v", errs)
+		}
+	})
+
+	t.Run("http_specifier_skips_filesystem", func(t *testing.T) {
+		cfg := &CemConfig{Generate: GenerateConfig{
+			DesignTokens: DesignTokensConfig{Spec: "http://cdn.example.com/tokens.json"},
+		}}
+		errs := Validate(cfg, ValidateOptions{CheckFilesystem: true, Root: "/root", FS: fs})
+		if errs != nil {
+			t.Errorf("expected nil for http specifier, got %v", errs)
+		}
+	})
+
+	t.Run("absolute_importmap_path", func(t *testing.T) {
+		absFS := &mockFS{files: map[string]bool{"/abs/override.json": true}}
+		cfg := &CemConfig{Serve: ServeConfig{
+			ImportMap: types.ImportMapConfig{OverrideFile: "/abs/override.json"},
+		}}
+		errs := Validate(cfg, ValidateOptions{CheckFilesystem: true, Root: "/root", FS: absFS})
+		if errs != nil {
+			t.Errorf("expected nil for absolute path, got %v", errs)
+		}
+	})
+
+	t.Run("absolute_tokens_path", func(t *testing.T) {
+		absFS := &mockFS{files: map[string]bool{"/abs/tokens.json": true}}
+		cfg := &CemConfig{Generate: GenerateConfig{
+			DesignTokens: DesignTokensConfig{Spec: "/abs/tokens.json"},
+		}}
+		errs := Validate(cfg, ValidateOptions{CheckFilesystem: true, Root: "/root", FS: absFS})
+		if errs != nil {
+			t.Errorf("expected nil for absolute path, got %v", errs)
 		}
 	})
 }

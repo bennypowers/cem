@@ -56,7 +56,7 @@ var validTargets = []string{
 }
 
 func IsValidTarget(target string) bool {
-	return slices.Contains(validTargets, strings.ToLower(target))
+	return slices.Contains(validTargets, target)
 }
 
 // Validate checks a CemConfig for invalid values and returns all errors found.
@@ -177,12 +177,12 @@ func ValidationErrors(errs []ValidationError) error {
 
 // ValidRenderingModes returns valid rendering mode values.
 func ValidRenderingModes() []string {
-	return validRenderingModes
+	return slices.Clone(validRenderingModes)
 }
 
 // ValidTargets returns valid ES target values.
 func ValidTargets() []string {
-	return validTargets
+	return slices.Clone(validTargets)
 }
 
 var _ error = ValidationError{}
