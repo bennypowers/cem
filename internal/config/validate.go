@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -145,7 +146,7 @@ func validateFilesystem(cfg *CemConfig, opts ValidateOptions) []ValidationError 
 	}
 
 	if f := cfg.Generate.DesignTokens.Spec; f != "" {
-		if !strings.HasPrefix(f, "npm:") && !strings.HasPrefix(f, "jsr:") && !strings.HasPrefix(f, "http://") && !strings.HasPrefix(f, "https://") {
+		if u, err := url.Parse(f); err != nil || u.Scheme == "" {
 			path := f
 			if !filepath.IsAbs(path) && opts.Root != "" {
 				path = filepath.Join(opts.Root, path)
