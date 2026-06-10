@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package config
 
 import (
-	"fmt"
 	"maps"
 
 	IC "bennypowers.dev/cem/internal/config"
@@ -38,26 +37,14 @@ type URLRewrite = IC.URLRewrite
 type FrameworkExportConfig = IC.FrameworkExportConfig
 type HealthConfig = IC.HealthConfig
 
-// Validate validates the configuration and returns an error if invalid
+// Validate validates the configuration and returns an error if invalid.
 func Validate(c *CemConfig) error {
-	if c == nil {
-		return nil
-	}
+	return IC.ValidationErrors(IC.Validate(c, IC.ValidateOptions{}))
+}
 
-	// Validate demo rendering mode
-	rendering := c.Serve.Demos.Rendering
-	if rendering != "" {
-		switch rendering {
-		case "light", "shadow":
-			// Valid modes
-		case "iframe":
-			return fmt.Errorf("serve.demos.rendering: 'iframe' mode is not yet implemented - use 'light' or 'shadow'")
-		default:
-			return fmt.Errorf("serve.demos.rendering: invalid value '%s' - must be 'light', 'shadow', or 'iframe'", rendering)
-		}
-	}
-
-	return nil
+// ValidateWithOptions validates the configuration with the given options.
+func ValidateWithOptions(c *CemConfig, opts IC.ValidateOptions) error {
+	return IC.ValidationErrors(IC.Validate(c, opts))
 }
 
 func Clone(c *CemConfig) *CemConfig {
