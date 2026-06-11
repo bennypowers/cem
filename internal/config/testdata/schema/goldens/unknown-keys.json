@@ -4,12 +4,12 @@
     {
       "field": "generate",
       "message": "additional properties 'typoField' not allowed",
-      "severity": 0
+      "severity": "error"
     },
     {
       "field": "serve.demos",
       "message": "additional properties 'renderring' not allowed",
-      "severity": 0
+      "severity": "error"
     }
   ]
 }

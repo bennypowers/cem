@@ -144,8 +144,9 @@ func walkSchemaErrors(err *jsonschema.ValidationError, results *[]ValidationErro
 			field := instanceLocationToField(cause.InstanceLocation)
 			msg := cause.ErrorKind.LocalizedString(englishPrinter)
 			*results = append(*results, ValidationError{
-				Field:   field,
-				Message: msg,
+				Field:    field,
+				Message:  msg,
+				Severity: SeverityError,
 			})
 		} else {
 			walkSchemaErrors(cause, results)

@@ -4,7 +4,7 @@
     {
       "field": "generate.files.0",
       "message": "'[invalid' is not valid x-glob-pattern: invalid glob pattern",
-      "severity": 0
+      "severity": "error"
     }
   ]
 }

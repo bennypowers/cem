@@ -4,7 +4,7 @@
     {
       "field": "serve.urlRewrites.0.urlPattern",
       "message": "'/api/{invalid}' is not valid x-url-pattern: invalid URL pattern: contains disallowed characters",
-      "severity": 0
+      "severity": "error"
     }
   ]
 }

@@ -584,6 +584,20 @@ func TestValidate_OutputMismatch(t *testing.T) {
 		}
 	})
 
+	t.Run("absolute_output_normalized", func(t *testing.T) {
+		cfg := &CemConfig{Generate: GenerateConfig{Output: "/root/custom-elements.json"}}
+		fs := &mockFS{
+			files:    map[string]bool{"/root/package.json": true},
+			contents: map[string][]byte{"/root/package.json": []byte(`{"customElements": "custom-elements.json"}`)},
+		}
+		errs := Validate(cfg, ValidateOptions{CheckIO: true, Root: "/root", IO: fs})
+		for _, e := range errs {
+			if e.Field == "generate.output" {
+				t.Errorf("unexpected output error after normalization: %v", e)
+			}
+		}
+	})
+
 	t.Run("no_customElements_field_ok", func(t *testing.T) {
 		cfg := &CemConfig{Generate: GenerateConfig{Output: "custom-elements.json"}}
 		fs := &mockFS{

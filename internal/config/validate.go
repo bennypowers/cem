@@ -13,12 +13,19 @@ import (
 )
 
 // ValidationSeverity indicates how serious a validation finding is.
-type ValidationSeverity int
+type ValidationSeverity string
 
 const (
-	SeverityError   ValidationSeverity = iota
-	SeverityWarning
+	SeverityError   ValidationSeverity = "error"
+	SeverityWarning ValidationSeverity = "warning"
 )
+
+func (s ValidationSeverity) MarshalJSON() ([]byte, error) {
+	if s == "" {
+		return []byte(`"error"`), nil
+	}
+	return []byte(`"` + string(s) + `"`), nil
+}
 
 // ValidationError describes a single config validation failure.
 type ValidationError struct {
@@ -240,9 +247,10 @@ func validateDemoDiscoveryParams(cfg *CemConfig) []ValidationError {
 	for _, p := range templateParams {
 		if !slices.Contains(patternParams, p) {
 			errs = append(errs, ValidationError{
-				Field:   "generate.demoDiscovery.urlTemplate",
-				Message: fmt.Sprintf("references param %q not defined in urlPattern", p),
-				Value:   dd.URLTemplate,
+				Field:    "generate.demoDiscovery.urlTemplate",
+				Message:  fmt.Sprintf("references param %q not defined in urlPattern", p),
+				Value:    dd.URLTemplate,
+				Severity: SeverityError,
 			})
 		}
 	}
@@ -278,11 +286,18 @@ func extractURLPatternParams(pattern string) []string {
 	return params
 }
 
-var templateStubFuncs = template.FuncMap{
-	"alias": func(s string) string { return s },
-	"slug":  func(s string) string { return s },
-	"lower": func(s string) string { return s },
-	"upper": func(s string) string { return s },
+// TemplateFuncNames lists the template functions allowed in urlTemplate fields.
+// demodiscovery registers real implementations; validation uses no-op stubs.
+var TemplateFuncNames = []string{"alias", "slug", "lower", "upper"}
+
+var templateStubFuncs = makeStubFuncMap(TemplateFuncNames)
+
+func makeStubFuncMap(names []string) template.FuncMap {
+	m := make(template.FuncMap, len(names))
+	for _, name := range names {
+		m[name] = func(s string) string { return s }
+	}
+	return m
 }
 
 func extractTemplateParams(tmplStr string) []string {

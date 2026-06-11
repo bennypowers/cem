@@ -35,6 +35,7 @@ var configValidateCmd = &cobra.Command{
 	Long:  "Check the config file for invalid values, unreachable patterns, and missing files.",
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SetOut(os.Stdout)
 		ctx, err := W.GetWorkspaceContext(cmd)
 		if err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)

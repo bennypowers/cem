@@ -4,7 +4,7 @@
     {
       "field": "(document)",
       "message": "failed to parse config: yaml: line 2: did not find expected node content",
-      "severity": 0
+      "severity": "error"
     }
   ]
 }
