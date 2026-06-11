@@ -23,6 +23,10 @@ Run `go vet` to surface gopls suggestions. Common examples:
 - replace `m[k]=v` loop with `maps.Copy` [mapsloop]
 - Loop can be simplified using slices.Contains [slicescontains]
 
+### CLI commands
+
+In cobra command `RunE` handlers, use `cmd.Println` / `cmd.PrintErrln` instead of `fmt.Println` / `fmt.Fprintln(os.Stderr, ...)`. This respects cobra's configured output streams and makes commands testable.
+
 ## Debugging
 
 When debugging Go code, always use the logger `logger.Debug`, etc. Don't use `fmt.Printf`, which pollutes stdio, breaking the LSP and MCP commands.
