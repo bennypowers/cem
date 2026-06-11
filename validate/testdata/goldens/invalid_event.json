@@ -7,7 +7,7 @@
       "module": "invalid-event.js",
       "declaration": "class InvalidEvent",
       "property": "event[0]",
-      "message": "missing properties: 'name', 'type'",
+      "message": "missing properties 'name', 'type'",
       "location": "/modules/0/declarations/0/events/0"
     }
   ],

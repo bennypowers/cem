@@ -6,7 +6,7 @@
       "id": "schema-validation-error",
       "module": "invalid-variable.js",
       "declaration": "variable[0]",
-      "message": "missing properties: 'name'",
+      "message": "missing property 'name'",
       "location": "/modules/0/declarations/0",
       "index": -1
     }

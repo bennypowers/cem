@@ -7,7 +7,7 @@
       "module": "invalid-slot.js",
       "declaration": "class InvalidSlot",
       "property": "slot[0]",
-      "message": "missing properties: 'name'",
+      "message": "missing property 'name'",
       "location": "/modules/0/declarations/0/slots/0"
     }
   ],
