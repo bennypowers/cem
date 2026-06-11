@@ -1,0 +1,6 @@
+{
+  "context_servers": {
+    "other": {"command": "foo"}
+    /* more servers here */
+  }
+}

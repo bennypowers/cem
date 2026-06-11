@@ -1,0 +1,12 @@
+{
+  "context_servers": {
+    "other": {"command": "foo"},
+    "cem": {
+      "args": [
+        "mcp"
+      ],
+      "command": "cem"
+    }
+  
+  }
+}

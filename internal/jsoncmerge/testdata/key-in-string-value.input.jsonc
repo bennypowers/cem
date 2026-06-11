@@ -1,0 +1,6 @@
+{
+  "note": "context_servers was removed",
+  "context_servers": {
+    "other": {"command": "foo"}
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "context_servers": {
+    "cem": {"command": "old", "args": ["old"]}
+  }
+}

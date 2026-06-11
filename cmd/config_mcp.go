@@ -27,11 +27,11 @@ import (
 
 	"atomicgo.dev/keyboard/keys"
 
+	"bennypowers.dev/cem/internal/jsoncmerge"
 	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/adrg/xdg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	"github.com/tailscale/hujson" // JSONC validation only
 	"golang.org/x/term"
 )
 
@@ -382,15 +382,13 @@ func vscodeAction(cemPath string, args []string) mcpAction {
 
 func zedAction(_ string, _ []string) mcpAction {
 	targetPath := filepath.Join(".zed", "settings.json")
-	snippet := `    "auto_install_extensions": {
-      "cem": true
-    }`
-	var b strings.Builder
-	fmt.Fprintf(&b, "Zed\n\n  Add to %s:\n\n%s\n\n", targetPath, snippet)
-	b.WriteString("  The cem extension provides both LSP and MCP support.\n")
 	return mcpAction{
-		tool:    toolZed,
-		preview: b.String(),
+		tool: toolZed,
+		preview: "Zed\n\n  Add to " + targetPath + ":\n\n" +
+			"    \"auto_install_extensions\": {\n" +
+			"      \"cem\": true\n" +
+			"    }\n\n" +
+			"  The cem extension provides both LSP and MCP support.\n",
 		apply: func() error {
 			return mergeJSONConfig(targetPath, "auto_install_extensions", "cem", true)
 		},
@@ -421,7 +419,7 @@ func mergeJSONConfig(path, topKey, subKey string, value any) error {
 		data = []byte("{}\n")
 	}
 
-	result, err := mergeJSONCBytes(data, topKey, subKey, value)
+	result, err := jsoncmerge.Merge(data, topKey, subKey, value)
 	if err != nil {
 		return fmt.Errorf("failed to merge into %s: %w", path, err)
 	}
@@ -449,111 +447,6 @@ func mergeJSONConfig(path, topKey, subKey string, value any) error {
 		return fmt.Errorf("failed to rename temp file: %w", err)
 	}
 	return nil
-}
-
-// mergeJSONCBytes inserts or replaces topKey.subKey in raw JSONC bytes,
-// preserving comments and formatting via byte-level splicing.
-// Uses hujson AST for key location to avoid matching inside comments/strings.
-func mergeJSONCBytes(data []byte, topKey, subKey string, value any) ([]byte, error) {
-	v, err := hujson.Parse(data)
-	if err != nil {
-		return nil, fmt.Errorf("invalid JSONC: %w", err)
-	}
-	v.UpdateOffsets()
-
-	topNode := v.Find("/" + topKey)
-
-	if topNode == nil {
-		rootObj, ok := v.Value.(*hujson.Object)
-		if !ok {
-			return nil, fmt.Errorf("root is not an object")
-		}
-		closeBrace := rootCloseOffset(&v, rootObj)
-		topKeyStr := fmt.Sprintf("%q", topKey)
-		innerJSON, _ := json.MarshalIndent(map[string]any{subKey: value}, "  ", "  ")
-		newBlock := fmt.Sprintf("  %s: %s", topKeyStr, string(innerJSON))
-		return insertBeforeClose(data, closeBrace, newBlock, "")
-	}
-
-	subNode := v.Find("/" + topKey + "/" + subKey)
-
-	if subNode != nil {
-		valueJSON, _ := json.MarshalIndent(value, "    ", "  ")
-		return spliceBytes(data, subNode.StartOffset, subNode.EndOffset, valueJSON), nil
-	}
-
-	topObj, ok := topNode.Value.(*hujson.Object)
-	if !ok {
-		return nil, fmt.Errorf("%q is not an object", topKey)
-	}
-	closeBrace := objCloseOffset(topNode, topObj)
-	valueJSON, _ := json.MarshalIndent(value, "    ", "  ")
-	newMember := fmt.Sprintf("    %q: %s", subKey, string(valueJSON))
-	return insertBeforeClose(data, closeBrace, newMember, "  ")
-}
-
-func rootCloseOffset(v *hujson.Value, obj *hujson.Object) int {
-	return v.EndOffset - len("}") - len(obj.AfterExtra) - len(v.AfterExtra)
-}
-
-func objCloseOffset(v *hujson.Value, obj *hujson.Object) int {
-	return v.EndOffset - len("}") - len(obj.AfterExtra)
-}
-
-// insertBeforeClose inserts content before a closing brace, handling commas.
-// Skips trailing whitespace, line comments (//), and block comments (/* */).
-func insertBeforeClose(data []byte, closeBrace int, content, closeIndent string) ([]byte, error) {
-	lastSig := closeBrace - 1
-	for lastSig >= 0 {
-		ch := data[lastSig]
-		if ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' {
-			lastSig--
-			continue
-		}
-		if ch == '/' && lastSig > 0 && data[lastSig-1] == '/' {
-			for lastSig > 0 && data[lastSig-1] != '\n' {
-				lastSig--
-			}
-			lastSig--
-			continue
-		}
-		if ch == '/' && lastSig >= 2 && data[lastSig-1] == '*' {
-			j := lastSig - 2
-			for j >= 1 {
-				if data[j] == '/' && data[j+1] == '*' {
-					lastSig = j - 1
-					break
-				}
-				j--
-			}
-			if j < 1 {
-				break
-			}
-			continue
-		}
-		break
-	}
-
-	if lastSig < 0 || data[lastSig] == '{' || data[lastSig] == '[' {
-		inserted := "\n" + content + "\n" + closeIndent
-		return spliceBytes(data, closeBrace, closeBrace, []byte(inserted)), nil
-	}
-
-	if data[lastSig] == ',' {
-		inserted := "\n" + content + "\n" + closeIndent
-		return spliceBytes(data, lastSig+1, closeBrace, []byte(inserted)), nil
-	}
-
-	inserted := ",\n" + content + "\n" + closeIndent
-	return spliceBytes(data, lastSig+1, closeBrace, []byte(inserted)), nil
-}
-
-func spliceBytes(data []byte, start, end int, insert []byte) []byte {
-	var buf []byte
-	buf = append(buf, data[:start]...)
-	buf = append(buf, insert...)
-	buf = append(buf, data[end:]...)
-	return buf
 }
 
 func backupFile(path string, data []byte) error {

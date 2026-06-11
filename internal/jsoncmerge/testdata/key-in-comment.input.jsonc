@@ -1,0 +1,7 @@
+{
+  // "context_servers" was removed
+  "theme": "dark",
+  "context_servers": {
+    "other": {"command": "foo"}
+  }
+}

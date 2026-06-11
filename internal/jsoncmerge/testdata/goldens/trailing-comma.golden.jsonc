@@ -1,0 +1,13 @@
+// config
+{
+  "theme": "dark",
+  "context_servers": {
+    "cem": {
+      "args": [
+        "mcp"
+      ],
+      "command": "cem"
+    }
+  }
+
+}

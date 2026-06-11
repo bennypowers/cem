@@ -1,0 +1,28 @@
+// it's jsonc
+{
+  "use_system_path_prompts": true,
+  "icon_theme": "Catppuccin Macchiato",
+  "minimap": {
+    "show": "auto",
+  },
+  "telemetry": {
+    "diagnostics": true,
+    "metrics": false,
+  },
+  "base_keymap": "Atom",
+  "vim_mode": true,
+  "ui_font_size": 18,
+  "buffer_font_size": 18,
+  "theme": {
+    "mode": "system",
+    "light": "Noctalia Light",
+    "dark": "Noctalia Dark",
+  },
+  "lsp": {
+    "qmljs": {
+      "binary": {
+        "path": "/usr/bin/qmlls",
+      },
+    },
+  },
+}
