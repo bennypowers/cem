@@ -28,10 +28,14 @@ import (
 	"strings"
 
 	"github.com/adrg/xdg"
-	"github.com/santhosh-tekuri/jsonschema/v5"
+	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/spf13/viper"
 	"golang.org/x/mod/semver"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
+
+var englishPrinter = message.NewPrinter(language.English)
 
 // Embedded schemas for all custom-elements-manifest versions
 // Includes a speculative 2.1.1 schema to work around issues in 2.1.0
@@ -175,8 +179,13 @@ func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
 		return fmt.Errorf("error getting schema: %w", err)
 	}
 
+	schemaDoc, err := jsonschema.UnmarshalJSON(bytes.NewReader(schemaData))
+	if err != nil {
+		return fmt.Errorf("error parsing schema: %w", err)
+	}
+
 	compiler := jsonschema.NewCompiler()
-	if err := compiler.AddResource("schema.json", bytes.NewReader(schemaData)); err != nil {
+	if err := compiler.AddResource("schema.json", schemaDoc); err != nil {
 		return fmt.Errorf("error adding schema resource: %w", err)
 	}
 
@@ -185,8 +194,8 @@ func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
 		return fmt.Errorf("error compiling schema: %w", err)
 	}
 
-	var v any
-	if err := json.Unmarshal(p.manifestData, &v); err != nil {
+	v, err := jsonschema.UnmarshalJSON(bytes.NewReader(p.manifestData))
+	if err != nil {
 		return fmt.Errorf("error unmarshaling manifest for validation: %w", err)
 	}
 
@@ -211,7 +220,9 @@ func (p *ValidationPipeline) extractValidationErrors(err *jsonschema.ValidationE
 func (p *ValidationPipeline) collectErrors(err *jsonschema.ValidationError, issues *[]ValidationError) {
 	for _, cause := range err.Causes {
 		if len(cause.Causes) == 0 {
-			issue := p.errorProcessor.ProcessValidationError(cause, cause.InstanceLocation)
+			location := "/" + strings.Join(cause.InstanceLocation, "/")
+			message := cause.ErrorKind.LocalizedString(englishPrinter)
+			issue := p.errorProcessor.ProcessValidationError(location, message)
 			if issue.Message != "" {
 				*issues = append(*issues, issue)
 			}
@@ -229,7 +240,7 @@ func (p *ValidationPipeline) deduplicateErrors(issues []ValidationError) []Valid
 
 	for _, issue := range issues {
 		// Track contexts that have missing property errors
-		if strings.Contains(issue.Message, "missing properties") {
+		if strings.Contains(issue.Message, "missing propert") {
 			contextKey := fmt.Sprintf("%s::%s::%s::%s",
 				issue.Module, issue.Declaration, issue.Member, issue.Property)
 			missingPropertyContexts[contextKey] = true

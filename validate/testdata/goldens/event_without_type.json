@@ -7,7 +7,7 @@
       "module": "event-without-type.js",
       "declaration": "class EventWithoutType",
       "property": "event input",
-      "message": "missing properties: 'type'",
+      "message": "missing property 'type'",
       "location": "/modules/0/declarations/0/events/0"
     },
     {
@@ -15,7 +15,7 @@
       "module": "event-without-type.js",
       "declaration": "class EventWithoutType",
       "property": "event change",
-      "message": "missing properties: 'type'",
+      "message": "missing property 'type'",
       "location": "/modules/0/declarations/0/events/1",
       "index": 1
     }

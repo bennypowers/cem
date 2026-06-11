@@ -10,7 +10,7 @@ generate:
 serve:
   importMap:
     generate: true
-    overrides:
+    override:
       imports:
         "@components/ts-button.js": "/src/components/ts-button.ts"
         "@utils/format.js": "/src/utils/format.ts"

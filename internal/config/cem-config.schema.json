@@ -1,0 +1,297 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bennypowers.dev/cem/config/schema",
+  "title": "CEM Configuration",
+  "description": "Schema for CEM (Custom Elements Manifest) configuration files",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "projectDir": {
+      "type": "string",
+      "description": "Root directory of the project"
+    },
+    "configFile": {
+      "type": "string",
+      "description": "Path to the config file"
+    },
+    "packageName": {
+      "type": "string",
+      "description": "Package name override"
+    },
+    "sourceControlRootUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Root URL for source control links"
+    },
+    "verbose": {
+      "type": "boolean",
+      "description": "Enable verbose output"
+    },
+    "additionalPackages": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Additional packages to analyze"
+    },
+    "generate": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Manifest generation settings",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "x-glob-pattern"
+          },
+          "description": "Glob patterns for source files to analyze"
+        },
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "x-glob-pattern"
+          },
+          "description": "Glob patterns for files to exclude"
+        },
+        "noDefaultExcludes": {
+          "type": "boolean",
+          "description": "Disable default exclusion patterns"
+        },
+        "output": {
+          "type": "string",
+          "description": "Output file path for the manifest"
+        },
+        "designTokens": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Design tokens configuration",
+          "properties": {
+            "spec": {
+              "type": "string",
+              "description": "Path or URL to design tokens specification"
+            },
+            "prefix": {
+              "type": "string",
+              "description": "Prefix for generated CSS custom properties"
+            }
+          }
+        },
+        "demoDiscovery": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Demo file discovery settings",
+          "properties": {
+            "fileGlob": {
+              "type": "string",
+              "format": "x-glob-pattern",
+              "description": "Glob pattern for demo files"
+            },
+            "urlPattern": {
+              "type": "string",
+              "format": "x-url-pattern",
+              "description": "URL pattern for matching demo URLs"
+            },
+            "urlTemplate": {
+              "type": "string",
+              "format": "x-go-template",
+              "description": "Go template for generating demo URLs"
+            }
+          }
+        }
+      }
+    },
+    "serve": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Dev server settings",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535,
+          "description": "Server port number"
+        },
+        "openBrowser": {
+          "type": "boolean",
+          "description": "Open browser on startup"
+        },
+        "importMap": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Import map configuration",
+          "properties": {
+            "generate": {
+              "type": "boolean",
+              "description": "Auto-generate import map"
+            },
+            "overrideFile": {
+              "type": "string",
+              "description": "Path to import map override file"
+            },
+            "override": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Inline import map overrides",
+              "properties": {
+                "imports": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" },
+                  "description": "Import specifier mappings"
+                },
+                "scopes": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" }
+                  },
+                  "description": "Scoped import specifier mappings"
+                }
+              }
+            }
+          }
+        },
+        "transforms": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Source transform settings",
+          "properties": {
+            "typescript": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "TypeScript transform settings",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Enable TypeScript transformation"
+                },
+                "target": {
+                  "type": "string",
+                  "enum": [
+                    "es2015", "es2016", "es2017", "es2018", "es2019",
+                    "es2020", "es2021", "es2022", "es2023", "esnext"
+                  ],
+                  "description": "ES target version"
+                }
+              }
+            },
+            "css": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "CSS transform settings",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Enable CSS transformation"
+                },
+                "include": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "x-glob-pattern"
+                  },
+                  "description": "Glob patterns for CSS files to include"
+                },
+                "exclude": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "x-glob-pattern"
+                  },
+                  "description": "Glob patterns for CSS files to exclude"
+                }
+              }
+            }
+          }
+        },
+        "urlRewrites": {
+          "type": "array",
+          "description": "URL rewrite rules for the dev server",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "urlPattern": {
+                "type": "string",
+                "format": "x-url-pattern",
+                "description": "URL pattern to match"
+              },
+              "urlTemplate": {
+                "type": "string",
+                "format": "x-go-template",
+                "description": "Go template for the rewritten URL"
+              }
+            }
+          }
+        },
+        "demos": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Demo rendering configuration",
+          "properties": {
+            "rendering": {
+              "type": "string",
+              "enum": ["light", "shadow", "iframe", "chromeless"],
+              "description": "Demo rendering mode"
+            }
+          }
+        }
+      }
+    },
+    "mcp": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "MCP server settings",
+      "properties": {
+        "maxDescriptionLength": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum description length for MCP resources"
+        }
+      }
+    },
+    "health": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Health check settings",
+      "properties": {
+        "failBelow": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Health score threshold (percentage)"
+        },
+        "disable": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of health checks to disable"
+        }
+      }
+    },
+    "export": {
+      "type": "object",
+      "description": "Framework export configurations",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "output": {
+            "type": "string",
+            "description": "Output directory"
+          },
+          "stripPrefix": {
+            "type": "string",
+            "description": "Prefix to strip from paths"
+          },
+          "packageName": {
+            "type": "string",
+            "description": "Package name for the export"
+          },
+          "moduleName": {
+            "type": "string",
+            "description": "Module name for the export"
+          }
+        }
+      }
+    }
+  }
+}

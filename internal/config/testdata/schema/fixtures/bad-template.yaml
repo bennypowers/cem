@@ -1,0 +1,3 @@
+generate:
+  demoDiscovery:
+    urlTemplate: "{{.tag"

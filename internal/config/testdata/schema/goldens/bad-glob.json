@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "errors": [
+    {
+      "field": "generate.files.0",
+      "message": "'[invalid' is not valid x-glob-pattern: invalid glob pattern",
+      "severity": "error"
+    }
+  ]
+}

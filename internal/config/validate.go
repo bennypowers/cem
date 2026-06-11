@@ -1,18 +1,38 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strings"
+	"text/template"
+	"text/template/parse"
 )
+
+// ValidationSeverity indicates how serious a validation finding is.
+type ValidationSeverity string
+
+const (
+	SeverityError   ValidationSeverity = "error"
+	SeverityWarning ValidationSeverity = "warning"
+)
+
+func (s ValidationSeverity) MarshalJSON() ([]byte, error) {
+	if s == "" {
+		return []byte(`"error"`), nil
+	}
+	return []byte(`"` + string(s) + `"`), nil
+}
 
 // ValidationError describes a single config validation failure.
 type ValidationError struct {
-	Field   string
-	Message string
-	Value   string
+	Field    string             `json:"field"`
+	Message  string             `json:"message"`
+	Value    string             `json:"value,omitempty"`
+	Severity ValidationSeverity `json:"severity"`
 }
 
 func (e ValidationError) Error() string {
@@ -22,13 +42,17 @@ func (e ValidationError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Field, e.Message)
 }
 
+// IOChecker abstracts filesystem and future fetch-based I/O for validation.
+type IOChecker interface {
+	Exists(string) bool
+	ReadFile(string) ([]byte, error)
+}
+
 // ValidateOptions controls which categories of validation run.
 type ValidateOptions struct {
-	CheckFilesystem bool
-	Root            string
-	FS              interface {
-		Exists(string) bool
-	}
+	CheckIO bool
+	Root    string
+	IO      IOChecker
 	ValidateURLRewrites   func([]URLRewrite) error
 	ValidateDemoDiscovery func(*CemConfig) error
 }
@@ -118,8 +142,10 @@ func Validate(cfg *CemConfig, opts ValidateOptions) []ValidationError {
 		}
 	}
 
-	if opts.CheckFilesystem && opts.FS != nil {
-		errs = append(errs, validateFilesystem(cfg, opts)...)
+	errs = append(errs, validateDemoDiscoveryParams(cfg)...)
+
+	if opts.CheckIO && opts.IO != nil {
+		errs = append(errs, validateIO(cfg, opts)...)
 	}
 
 	if len(errs) == 0 {
@@ -128,7 +154,7 @@ func Validate(cfg *CemConfig, opts ValidateOptions) []ValidationError {
 	return errs
 }
 
-func validateFilesystem(cfg *CemConfig, opts ValidateOptions) []ValidationError {
+func validateIO(cfg *CemConfig, opts ValidateOptions) []ValidationError {
 	var errs []ValidationError
 
 	if f := cfg.Serve.ImportMap.OverrideFile; f != "" {
@@ -136,7 +162,7 @@ func validateFilesystem(cfg *CemConfig, opts ValidateOptions) []ValidationError 
 		if !filepath.IsAbs(path) && opts.Root != "" {
 			path = filepath.Join(opts.Root, path)
 		}
-		if !opts.FS.Exists(path) {
+		if !opts.IO.Exists(path) {
 			errs = append(errs, ValidationError{
 				Field:   "serve.importMap.overrideFile",
 				Message: "file not found",
@@ -151,7 +177,7 @@ func validateFilesystem(cfg *CemConfig, opts ValidateOptions) []ValidationError 
 			if !filepath.IsAbs(path) && opts.Root != "" {
 				path = filepath.Join(opts.Root, path)
 			}
-			if !opts.FS.Exists(path) {
+			if !opts.IO.Exists(path) {
 				errs = append(errs, ValidationError{
 					Field:   "generate.designTokens.spec",
 					Message: "file not found",
@@ -160,6 +186,8 @@ func validateFilesystem(cfg *CemConfig, opts ValidateOptions) []ValidationError 
 			}
 		}
 	}
+
+	errs = append(errs, validateOutputMismatch(cfg, opts)...)
 
 	return errs
 }
@@ -184,6 +212,200 @@ func ValidRenderingModes() []string {
 // ValidTargets returns valid ES target values.
 func ValidTargets() []string {
 	return slices.Clone(validTargets)
+}
+
+func validateDemoDiscoveryParams(cfg *CemConfig) []ValidationError {
+	var errs []ValidationError
+	dd := cfg.Generate.DemoDiscovery
+
+	hasPattern := dd.URLPattern != ""
+	hasTemplate := dd.URLTemplate != ""
+
+	if hasPattern && !hasTemplate {
+		errs = append(errs, ValidationError{
+			Field:    "generate.demoDiscovery",
+			Message:  "urlPattern is set without urlTemplate",
+			Severity: SeverityWarning,
+		})
+		return errs
+	}
+	if hasTemplate && !hasPattern {
+		errs = append(errs, ValidationError{
+			Field:    "generate.demoDiscovery",
+			Message:  "urlTemplate is set without urlPattern",
+			Severity: SeverityWarning,
+		})
+		return errs
+	}
+	if !hasPattern || !hasTemplate {
+		return nil
+	}
+
+	patternParams := extractURLPatternParams(dd.URLPattern)
+	templateParams := extractTemplateParams(dd.URLTemplate)
+
+	for _, p := range templateParams {
+		if !slices.Contains(patternParams, p) {
+			errs = append(errs, ValidationError{
+				Field:    "generate.demoDiscovery.urlTemplate",
+				Message:  fmt.Sprintf("references param %q not defined in urlPattern", p),
+				Value:    dd.URLTemplate,
+				Severity: SeverityError,
+			})
+		}
+	}
+
+	for _, p := range patternParams {
+		if !slices.Contains(templateParams, p) {
+			errs = append(errs, ValidationError{
+				Field:    "generate.demoDiscovery.urlPattern",
+				Message:  fmt.Sprintf("defines param %q not referenced in urlTemplate", p),
+				Value:    dd.URLPattern,
+				Severity: SeverityWarning,
+			})
+		}
+	}
+
+	return errs
+}
+
+func extractURLPatternParams(pattern string) []string {
+	var params []string
+	for part := range strings.SplitSeq(pattern, "/") {
+		if name, ok := strings.CutPrefix(part, ":"); ok {
+			name = strings.TrimRight(name, "?*+")
+			if idx := strings.Index(name, "."); idx >= 0 {
+				name = name[:idx]
+			}
+			if name != "" {
+				params = append(params, name)
+			}
+		}
+	}
+	sort.Strings(params)
+	return params
+}
+
+// TemplateFuncNames lists the template functions allowed in urlTemplate fields.
+// demodiscovery registers real implementations; validation uses no-op stubs.
+var TemplateFuncNames = []string{"alias", "slug", "lower", "upper"}
+
+var templateStubFuncs = makeStubFuncMap(TemplateFuncNames)
+
+func makeStubFuncMap(names []string) template.FuncMap {
+	m := make(template.FuncMap, len(names))
+	for _, name := range names {
+		m[name] = func(s string) string { return s }
+	}
+	return m
+}
+
+func extractTemplateParams(tmplStr string) []string {
+	t, err := template.New("").Funcs(templateStubFuncs).Parse(tmplStr)
+	if err != nil {
+		return nil
+	}
+	var params []string
+	for _, node := range t.Root.Nodes {
+		collectFieldNames(node, &params)
+	}
+	sort.Strings(params)
+	return slices.Compact(params)
+}
+
+func collectFieldNames(node parse.Node, params *[]string) {
+	switch n := node.(type) {
+	case *parse.ActionNode:
+		if n.Pipe != nil {
+			for _, cmd := range n.Pipe.Cmds {
+				for _, arg := range cmd.Args {
+					collectFieldNames(arg, params)
+				}
+			}
+		}
+	case *parse.FieldNode:
+		if len(n.Ident) > 0 {
+			*params = append(*params, n.Ident[0])
+		}
+	case *parse.PipeNode:
+		for _, cmd := range n.Cmds {
+			for _, arg := range cmd.Args {
+				collectFieldNames(arg, params)
+			}
+		}
+	case *parse.ListNode:
+		for _, child := range n.Nodes {
+			collectFieldNames(child, params)
+		}
+	case *parse.IfNode:
+		collectBranchFields(&n.BranchNode, params)
+	case *parse.RangeNode:
+		collectBranchFields(&n.BranchNode, params)
+	case *parse.WithNode:
+		collectBranchFields(&n.BranchNode, params)
+	}
+}
+
+func collectBranchFields(n *parse.BranchNode, params *[]string) {
+	if n.Pipe != nil {
+		collectFieldNames(n.Pipe, params)
+	}
+	if n.List != nil {
+		collectFieldNames(n.List, params)
+	}
+	if n.ElseList != nil {
+		collectFieldNames(n.ElseList, params)
+	}
+}
+
+func validateOutputMismatch(cfg *CemConfig, opts ValidateOptions) []ValidationError {
+	output := cfg.Generate.Output
+	if output == "" {
+		return nil
+	}
+
+	pkgJSONPath := "package.json"
+	if opts.Root != "" {
+		pkgJSONPath = filepath.Join(opts.Root, pkgJSONPath)
+	}
+
+	if !opts.IO.Exists(pkgJSONPath) {
+		return nil
+	}
+
+	data, err := opts.IO.ReadFile(pkgJSONPath)
+	if err != nil {
+		return nil
+	}
+
+	var pkg struct {
+		CustomElements string `json:"customElements"`
+	}
+	if err := json.Unmarshal(data, &pkg); err != nil {
+		return nil
+	}
+
+	if pkg.CustomElements == "" {
+		return nil
+	}
+
+	relOutput := output
+	if opts.Root != "" {
+		if rel, err := filepath.Rel(opts.Root, output); err == nil {
+			relOutput = rel
+		}
+	}
+	normalizedOutput := filepath.Clean(relOutput)
+	normalizedPkg := filepath.Clean(pkg.CustomElements)
+	if normalizedOutput != normalizedPkg {
+		return []ValidationError{{
+			Field:    "generate.output",
+			Message:  fmt.Sprintf("does not match package.json customElements field (%q vs %q)", relOutput, pkg.CustomElements),
+			Severity: SeverityWarning,
+		}}
+	}
+
+	return nil
 }
 
 var _ error = ValidationError{}

@@ -7,7 +7,7 @@
       "module": "invalid-attribute.js",
       "declaration": "class InvalidAttribute",
       "property": "attribute[0]",
-      "message": "missing properties: 'name'",
+      "message": "missing property 'name'",
       "location": "/modules/0/declarations/0/attributes/0"
     }
   ],

@@ -1,0 +1,8 @@
+generate:
+  files:
+    - "src/**/*.ts"
+  output: custom-elements.json
+  typoField: oops
+serve:
+  demos:
+    renderring: shadow

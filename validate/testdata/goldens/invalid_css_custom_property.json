@@ -7,7 +7,7 @@
       "module": "invalid-css-custom-property.js",
       "declaration": "class InvalidCssCustomProperty",
       "property": "CSS property[0]",
-      "message": "missing properties: 'name'",
+      "message": "missing property 'name'",
       "location": "/modules/0/declarations/0/cssProperties/0"
     }
   ],

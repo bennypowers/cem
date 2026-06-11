@@ -19,8 +19,6 @@ package validate
 import (
 	"regexp"
 	"strings"
-
-	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
 type ValidationError struct {
@@ -100,17 +98,17 @@ func NewErrorProcessor(navigator *ManifestNavigator) *ErrorProcessor {
 }
 
 // ProcessValidationError processes a JSON schema validation error into structured errors
-func (p *ErrorProcessor) ProcessValidationError(cause *jsonschema.ValidationError, location string) ValidationError {
+func (p *ErrorProcessor) ProcessValidationError(location, message string) ValidationError {
 	ctx := ParseContext(location)
 	module, declaration, member, property := p.navigator.BuildContextualNames(ctx)
 
 	error := ValidationError{
-		ID:          p.registry.AssignID(cause.Message, location),
+		ID:          p.registry.AssignID(message, location),
 		Module:      module,
 		Declaration: declaration,
 		Member:      member,
 		Property:    property,
-		Message:     cause.Message,
+		Message:     message,
 		Location:    location,
 		Index:       -1,
 	}

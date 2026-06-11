@@ -1,0 +1,6 @@
+serve:
+  demos:
+    rendering: dark
+  transforms:
+    typescript:
+      target: es2099

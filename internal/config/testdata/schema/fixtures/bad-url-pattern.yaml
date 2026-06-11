@@ -1,0 +1,4 @@
+serve:
+  urlRewrites:
+    - urlPattern: "/api/{invalid}"
+      urlTemplate: "/backend/{{.path}}"

@@ -7,7 +7,7 @@
       "module": "invalid-css-part.js",
       "declaration": "class InvalidCssPart",
       "property": "CSS part[0]",
-      "message": "missing properties: 'name'",
+      "message": "missing property 'name'",
       "location": "/modules/0/declarations/0/cssParts/0"
     }
   ],
