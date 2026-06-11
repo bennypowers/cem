@@ -85,6 +85,7 @@ func TestConfigMCP_ShortNames(t *testing.T) {
 	}
 }
 
+// Inline assertion: checking stderr error substring, no meaningful output to golden.
 func TestConfigMCP_NoTTYNoFlags(t *testing.T) {
 	root := projectRoot(t)
 	_, stderr := runCemCommand(t, root, "config", "mcp")
@@ -93,6 +94,7 @@ func TestConfigMCP_NoTTYNoFlags(t *testing.T) {
 	}
 }
 
+// Inline assertion: checking stderr error substring, no meaningful output to golden.
 func TestConfigMCP_InvalidTool(t *testing.T) {
 	root := projectRoot(t)
 	_, stderr := runCemCommand(t, root, "config", "mcp", "--tool", "invalid-tool")

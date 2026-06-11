@@ -72,6 +72,7 @@ func TestMerge(t *testing.T) {
 	}
 }
 
+// Inline assertion: testing error return only, no output to golden.
 func TestMerge_InvalidInput(t *testing.T) {
 	_, err := jsoncmerge.Merge([]byte("not json"), "key", "sub", "val")
 	if err == nil {
@@ -79,6 +80,7 @@ func TestMerge_InvalidInput(t *testing.T) {
 	}
 }
 
+// Inline assertion: testing error return only, no output to golden.
 func TestMerge_NonObjectRoot(t *testing.T) {
 	_, err := jsoncmerge.Merge([]byte(`["array"]`), "key", "sub", "val")
 	if err == nil {
@@ -86,6 +88,7 @@ func TestMerge_NonObjectRoot(t *testing.T) {
 	}
 }
 
+// Inline assertion: comparing two merge outputs for equality, not a single golden shape.
 func TestMerge_Idempotent(t *testing.T) {
 	input := []byte(`{
   "context_servers": {
