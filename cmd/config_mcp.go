@@ -315,7 +315,7 @@ func claudeDesktopAction(cemPath string, args []string) mcpAction {
 		fmt.Fprintf(&b, "    %s\n\n", p.path)
 	}
 	b.WriteString(indentJSON(snippet, "    "))
-	b.WriteString("\n")
+	b.WriteString("  Restart Claude Desktop after applying.\n\n")
 
 	var targetPath string
 	for _, p := range paths {
@@ -388,7 +388,8 @@ func zedAction(_ string, _ []string) mcpAction {
 			"    \"auto_install_extensions\": {\n" +
 			"      \"cem\": true\n" +
 			"    }\n\n" +
-			"  The cem extension provides both LSP and MCP support.\n",
+			"  The cem extension provides both LSP and MCP support.\n" +
+			"  Restart Zed after applying.\n",
 		apply: func() error {
 			return mergeJSONConfig(targetPath, "auto_install_extensions", "cem", true)
 		},

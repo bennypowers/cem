@@ -7,3 +7,4 @@ Zed
  }
 
  The cem extension provides both LSP and MCP support.
+ Restart Zed after applying.

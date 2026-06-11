@@ -16,4 +16,5 @@ Claude Desktop
  }
  }
  }
+ Restart Claude Desktop after applying.
 
