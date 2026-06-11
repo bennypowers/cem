@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -31,6 +32,7 @@ import (
 	"github.com/adrg/xdg"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+	"github.com/tailscale/hujson" // JSONC validation only
 	"golang.org/x/term"
 )
 
@@ -401,52 +403,180 @@ func genericSnippet(cemPath string, args []string) string {
 	return fmt.Sprintf("Other (generic stdio)\n\n  Configure your MCP client with:\n\n%s\n", indentJSON(string(snippet), "    "))
 }
 
-// mergeJSONConfig reads a JSON file, sets obj[topKey][subKey] = value, and writes it back.
+// mergeJSONConfig inserts topKey.subKey = value into a JSON/JSONC file.
+// Preserves all existing comments, formatting, and content via byte-level splicing.
+// Uses hujson only for JSONC validation.
 // Creates the file and parent directories if they don't exist.
-// If the file exists, backs it up to a temp file before writing.
+// Backs up existing files before writing.
 func mergeJSONConfig(path, topKey, subKey string, value any) error {
-	var obj map[string]any
-
 	data, err := os.ReadFile(path)
-	if err == nil {
-		if err := json.Unmarshal(data, &obj); err != nil {
-			return fmt.Errorf("failed to parse %s: %w", path, err)
-		}
-		backup, backupErr := os.CreateTemp("", filepath.Base(path)+".backup-*")
-		if backupErr != nil {
-			return fmt.Errorf("failed to create backup: %w", backupErr)
-		}
-		if _, writeErr := backup.Write(data); writeErr != nil {
-			_ = backup.Close()
-			return fmt.Errorf("failed to write backup: %w", writeErr)
-		}
-		if err := backup.Close(); err != nil {
-			return fmt.Errorf("failed to close backup file: %w", err)
-		}
-		pterm.Info.Printfln("Backed up %s to %s", path, backup.Name())
-	} else if os.IsNotExist(err) {
-		obj = make(map[string]any)
-	} else {
+	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to read %s: %w", path, err)
 	}
-
-	top, ok := obj[topKey].(map[string]any)
-	if !ok {
-		top = make(map[string]any)
+	if err == nil {
+		if err := backupFile(path, data); err != nil {
+			return err
+		}
+	} else {
+		data = []byte("{}\n")
 	}
-	top[subKey] = value
-	obj[topKey] = top
 
-	out, err := json.MarshalIndent(obj, "", "  ")
+	result, err := mergeJSONCBytes(data, topKey, subKey, value)
 	if err != nil {
-		return fmt.Errorf("failed to marshal config: %w", err)
+		return fmt.Errorf("failed to merge into %s: %w", path, err)
 	}
-	out = append(out, '\n')
 
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
-	return os.WriteFile(path, out, 0o644)
+	return os.WriteFile(path, result, 0o644)
+}
+
+// mergeJSONCBytes inserts topKey.subKey into raw JSONC bytes,
+// preserving comments and formatting via byte-level splicing.
+func mergeJSONCBytes(data []byte, topKey, subKey string, value any) ([]byte, error) {
+	if _, err := hujson.Parse(data); err != nil {
+		return nil, fmt.Errorf("invalid JSONC: %w", err)
+	}
+
+	topKeyStr := fmt.Sprintf("%q", topKey)
+	keyPos := bytes.Index(data, []byte(topKeyStr))
+
+	if keyPos < 0 {
+		rootClose := bytes.LastIndexByte(data, '}')
+		if rootClose < 0 {
+			return nil, fmt.Errorf("malformed JSON: no closing brace")
+		}
+		innerJSON, _ := json.MarshalIndent(map[string]any{subKey: value}, "  ", "  ")
+		newBlock := fmt.Sprintf("  %s: %s", topKeyStr, string(innerJSON))
+		return insertBeforeClose(data, rootClose, newBlock, "")
+	}
+
+	openBrace := bytes.IndexByte(data[keyPos+len(topKeyStr):], '{')
+	if openBrace < 0 {
+		return nil, fmt.Errorf("cannot find opening brace for %q", topKey)
+	}
+	openBrace += keyPos + len(topKeyStr)
+
+	closeBrace := findMatchingBrace(data, openBrace)
+	if closeBrace < 0 {
+		return nil, fmt.Errorf("cannot find closing brace for %q", topKey)
+	}
+
+	valueJSON, _ := json.MarshalIndent(value, "    ", "  ")
+	newMember := fmt.Sprintf("    %q: %s", subKey, string(valueJSON))
+	return insertBeforeClose(data, closeBrace, newMember, "  ")
+}
+
+// insertBeforeClose inserts content before a closing brace, handling commas.
+func insertBeforeClose(data []byte, closeBrace int, content, closeIndent string) ([]byte, error) {
+	lastSig := closeBrace - 1
+	for lastSig >= 0 {
+		ch := data[lastSig]
+		if ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' {
+			lastSig--
+			continue
+		}
+		if ch == '/' && lastSig > 0 && data[lastSig-1] == '/' {
+			for lastSig > 0 && data[lastSig-1] != '\n' {
+				lastSig--
+			}
+			lastSig--
+			continue
+		}
+		break
+	}
+
+	if lastSig < 0 || data[lastSig] == '{' || data[lastSig] == '[' {
+		inserted := "\n" + content + "\n" + closeIndent
+		return spliceBytes(data, closeBrace, closeBrace, []byte(inserted)), nil
+	}
+
+	if data[lastSig] == ',' {
+		inserted := "\n" + content + "\n" + closeIndent
+		return spliceBytes(data, lastSig+1, closeBrace, []byte(inserted)), nil
+	}
+
+	inserted := ",\n" + content + "\n" + closeIndent
+	return spliceBytes(data, lastSig+1, closeBrace, []byte(inserted)), nil
+}
+
+func findMatchingBrace(data []byte, openPos int) int {
+	depth := 0
+	inString := false
+	inLineComment := false
+	inBlockComment := false
+	for i := openPos; i < len(data); i++ {
+		if inLineComment {
+			if data[i] == '\n' {
+				inLineComment = false
+			}
+			continue
+		}
+		if inBlockComment {
+			if i+1 < len(data) && data[i] == '*' && data[i+1] == '/' {
+				inBlockComment = false
+				i++
+			}
+			continue
+		}
+		if inString {
+			if data[i] == '\\' {
+				i++
+				continue
+			}
+			if data[i] == '"' {
+				inString = false
+			}
+			continue
+		}
+		if i+1 < len(data) && data[i] == '/' && data[i+1] == '/' {
+			inLineComment = true
+			i++
+			continue
+		}
+		if i+1 < len(data) && data[i] == '/' && data[i+1] == '*' {
+			inBlockComment = true
+			i++
+			continue
+		}
+		switch data[i] {
+		case '"':
+			inString = true
+		case '{', '[':
+			depth++
+		case '}', ']':
+			depth--
+			if depth == 0 {
+				return i
+			}
+		}
+	}
+	return -1
+}
+
+func spliceBytes(data []byte, start, end int, insert []byte) []byte {
+	var buf []byte
+	buf = append(buf, data[:start]...)
+	buf = append(buf, insert...)
+	buf = append(buf, data[end:]...)
+	return buf
+}
+
+func backupFile(path string, data []byte) error {
+	backup, err := os.CreateTemp("", filepath.Base(path)+".backup-*")
+	if err != nil {
+		return fmt.Errorf("failed to create backup: %w", err)
+	}
+	if _, err := backup.Write(data); err != nil {
+		_ = backup.Close()
+		return fmt.Errorf("failed to write backup: %w", err)
+	}
+	if err := backup.Close(); err != nil {
+		return fmt.Errorf("failed to close backup file: %w", err)
+	}
+	pterm.Info.Printfln("Backed up %s to %s", path, backup.Name())
+	return nil
 }
 
 type mcpServerEntry struct {
