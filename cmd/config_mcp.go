@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -432,43 +431,57 @@ func mergeJSONConfig(path, topKey, subKey string, value any) error {
 	return os.WriteFile(path, result, 0o644)
 }
 
-// mergeJSONCBytes inserts topKey.subKey into raw JSONC bytes,
+// mergeJSONCBytes inserts or replaces topKey.subKey in raw JSONC bytes,
 // preserving comments and formatting via byte-level splicing.
+// Uses hujson AST for key location to avoid matching inside comments/strings.
 func mergeJSONCBytes(data []byte, topKey, subKey string, value any) ([]byte, error) {
-	if _, err := hujson.Parse(data); err != nil {
+	v, err := hujson.Parse(data)
+	if err != nil {
 		return nil, fmt.Errorf("invalid JSONC: %w", err)
 	}
+	v.UpdateOffsets()
 
-	topKeyStr := fmt.Sprintf("%q", topKey)
-	keyPos := bytes.Index(data, []byte(topKeyStr))
+	topNode := v.Find("/" + topKey)
 
-	if keyPos < 0 {
-		rootClose := bytes.LastIndexByte(data, '}')
-		if rootClose < 0 {
-			return nil, fmt.Errorf("malformed JSON: no closing brace")
+	if topNode == nil {
+		rootObj, ok := v.Value.(*hujson.Object)
+		if !ok {
+			return nil, fmt.Errorf("root is not an object")
 		}
+		closeBrace := rootCloseOffset(&v, rootObj)
+		topKeyStr := fmt.Sprintf("%q", topKey)
 		innerJSON, _ := json.MarshalIndent(map[string]any{subKey: value}, "  ", "  ")
 		newBlock := fmt.Sprintf("  %s: %s", topKeyStr, string(innerJSON))
-		return insertBeforeClose(data, rootClose, newBlock, "")
+		return insertBeforeClose(data, closeBrace, newBlock, "")
 	}
 
-	openBrace := bytes.IndexByte(data[keyPos+len(topKeyStr):], '{')
-	if openBrace < 0 {
-		return nil, fmt.Errorf("cannot find opening brace for %q", topKey)
-	}
-	openBrace += keyPos + len(topKeyStr)
+	subNode := v.Find("/" + topKey + "/" + subKey)
 
-	closeBrace := findMatchingBrace(data, openBrace)
-	if closeBrace < 0 {
-		return nil, fmt.Errorf("cannot find closing brace for %q", topKey)
+	if subNode != nil {
+		valueJSON, _ := json.MarshalIndent(value, "    ", "  ")
+		return spliceBytes(data, subNode.StartOffset, subNode.EndOffset, valueJSON), nil
 	}
 
+	topObj, ok := topNode.Value.(*hujson.Object)
+	if !ok {
+		return nil, fmt.Errorf("%q is not an object", topKey)
+	}
+	closeBrace := objCloseOffset(topNode, topObj)
 	valueJSON, _ := json.MarshalIndent(value, "    ", "  ")
 	newMember := fmt.Sprintf("    %q: %s", subKey, string(valueJSON))
 	return insertBeforeClose(data, closeBrace, newMember, "  ")
 }
 
+func rootCloseOffset(v *hujson.Value, obj *hujson.Object) int {
+	return v.EndOffset - len("}") - len(obj.AfterExtra) - len(v.AfterExtra)
+}
+
+func objCloseOffset(v *hujson.Value, obj *hujson.Object) int {
+	return v.EndOffset - len("}") - len(obj.AfterExtra)
+}
+
 // insertBeforeClose inserts content before a closing brace, handling commas.
+// Skips trailing whitespace, line comments (//), and block comments (/* */).
 func insertBeforeClose(data []byte, closeBrace int, content, closeIndent string) ([]byte, error) {
 	lastSig := closeBrace - 1
 	for lastSig >= 0 {
@@ -482,6 +495,20 @@ func insertBeforeClose(data []byte, closeBrace int, content, closeIndent string)
 				lastSig--
 			}
 			lastSig--
+			continue
+		}
+		if ch == '/' && lastSig >= 2 && data[lastSig-1] == '*' {
+			j := lastSig - 2
+			for j >= 1 {
+				if data[j] == '/' && data[j+1] == '*' {
+					lastSig = j - 1
+					break
+				}
+				j--
+			}
+			if j < 1 {
+				break
+			}
 			continue
 		}
 		break
@@ -499,60 +526,6 @@ func insertBeforeClose(data []byte, closeBrace int, content, closeIndent string)
 
 	inserted := ",\n" + content + "\n" + closeIndent
 	return spliceBytes(data, lastSig+1, closeBrace, []byte(inserted)), nil
-}
-
-func findMatchingBrace(data []byte, openPos int) int {
-	depth := 0
-	inString := false
-	inLineComment := false
-	inBlockComment := false
-	for i := openPos; i < len(data); i++ {
-		if inLineComment {
-			if data[i] == '\n' {
-				inLineComment = false
-			}
-			continue
-		}
-		if inBlockComment {
-			if i+1 < len(data) && data[i] == '*' && data[i+1] == '/' {
-				inBlockComment = false
-				i++
-			}
-			continue
-		}
-		if inString {
-			if data[i] == '\\' {
-				i++
-				continue
-			}
-			if data[i] == '"' {
-				inString = false
-			}
-			continue
-		}
-		if i+1 < len(data) && data[i] == '/' && data[i+1] == '/' {
-			inLineComment = true
-			i++
-			continue
-		}
-		if i+1 < len(data) && data[i] == '/' && data[i+1] == '*' {
-			inBlockComment = true
-			i++
-			continue
-		}
-		switch data[i] {
-		case '"':
-			inString = true
-		case '{', '[':
-			depth++
-		case '}', ']':
-			depth--
-			if depth == 0 {
-				return i
-			}
-		}
-	}
-	return -1
 }
 
 func spliceBytes(data []byte, start, end int, insert []byte) []byte {
