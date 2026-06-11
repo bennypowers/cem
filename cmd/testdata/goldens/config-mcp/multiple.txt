@@ -2,7 +2,6 @@ Claude Code
 
  Run: claude mcp add cem -- cem mcp
 
-
 Cursor
 
  Write to .cursor/mcp.json:

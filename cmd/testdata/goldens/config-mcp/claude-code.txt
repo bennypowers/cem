@@ -1,4 +1,3 @@
 Claude Code
 
  Run: claude mcp add cem -- cem mcp
-

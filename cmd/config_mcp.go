@@ -287,12 +287,13 @@ func buildAction(tool aiTool, cemPath string, args []string) mcpAction {
 func claudeCodeAction(cemPath string, args []string) mcpAction {
 	cmdArgs := append([]string{"mcp", "add", "cem", "--"}, cemPath)
 	cmdArgs = append(cmdArgs, args...)
-	var b strings.Builder
-	b.WriteString("Claude Code\n\n")
-	fmt.Fprintf(&b, "  Run: claude %s\n\n", strings.Join(cmdArgs, " "))
+	preview := fmt.Sprintf(`Claude Code
+
+  Run: claude %s
+`, strings.Join(cmdArgs, " "))
 	return mcpAction{
 		tool:    toolClaudeCode,
-		preview: b.String(),
+		preview: preview,
 		apply: func() error {
 			cmd := exec.Command("claude", cmdArgs...)
 			cmd.Stdout = os.Stdout
@@ -311,8 +312,7 @@ func claudeDesktopAction(cemPath string, args []string) mcpAction {
 	var b strings.Builder
 	b.WriteString("Claude Desktop\n\n")
 	for _, p := range paths {
-		fmt.Fprintf(&b, "  %s:\n", p.label)
-		fmt.Fprintf(&b, "    %s\n\n", p.path)
+		fmt.Fprintf(&b, "  %s:\n    %s\n\n", p.label, p.path)
 	}
 	b.WriteString(indentJSON(snippet, "    "))
 	b.WriteString("  Restart Claude Desktop after applying.\n\n")
@@ -340,11 +340,10 @@ func claudeDesktopAction(cemPath string, args []string) mcpAction {
 func cursorAction(cemPath string, args []string) mcpAction {
 	snippet := mcpServersJSON(cemPath, args)
 	targetPath := filepath.Join(".cursor", "mcp.json")
-	var b strings.Builder
-	fmt.Fprintf(&b, "Cursor\n\n  Write to %s:\n\n%s\n", targetPath, indentJSON(snippet, "    "))
+	preview := fmt.Sprintf("Cursor\n\n  Write to %s:\n\n%s\n", targetPath, indentJSON(snippet, "    "))
 	return mcpAction{
 		tool:    toolCursor,
-		preview: b.String(),
+		preview: preview,
 		apply: func() error {
 			return mergeJSONConfig(targetPath, "mcpServers", "cem", mcpServerEntry{
 				Command: cemPath,
@@ -360,14 +359,18 @@ func vscodeAction(cemPath string, args []string) mcpAction {
 		Servers: map[string]vscodeServerEntry{"cem": entry},
 	}
 	snippet, _ := json.MarshalIndent(config, "", "  ")
-	cmdArgs := fmt.Sprintf("--add-mcp '%s'", string(snippet))
 	targetPath := filepath.Join(".vscode", "mcp.json")
-	var b strings.Builder
-	fmt.Fprintf(&b, "VS Code (Copilot)\n\n  Run: code %s\n\n", cmdArgs)
-	fmt.Fprintf(&b, "  Or write to %s:\n\n%s\n", targetPath, indentJSON(string(snippet), "    "))
+	preview := fmt.Sprintf(`VS Code (Copilot)
+
+  Run: code --add-mcp '%s'
+
+  Or write to %s:
+
+%s
+`, string(snippet), targetPath, indentJSON(string(snippet), "    "))
 	return mcpAction{
 		tool:    toolVSCode,
-		preview: b.String(),
+		preview: preview,
 		apply: func() error {
 			cmd := exec.Command("code", "--add-mcp", string(snippet))
 			cmd.Stdout = os.Stdout
@@ -382,14 +385,20 @@ func vscodeAction(cemPath string, args []string) mcpAction {
 
 func zedAction(_ string, _ []string) mcpAction {
 	targetPath := filepath.Join(".zed", "settings.json")
+	preview := fmt.Sprintf(`Zed
+
+  Add to %s:
+
+    "auto_install_extensions": {
+      "cem": true
+    }
+
+  The cem extension provides both LSP and MCP support.
+  Restart Zed after applying.
+`, targetPath)
 	return mcpAction{
-		tool: toolZed,
-		preview: "Zed\n\n  Add to " + targetPath + ":\n\n" +
-			"    \"auto_install_extensions\": {\n" +
-			"      \"cem\": true\n" +
-			"    }\n\n" +
-			"  The cem extension provides both LSP and MCP support.\n" +
-			"  Restart Zed after applying.\n",
+		tool:    toolZed,
+		preview: preview,
 		apply: func() error {
 			return mergeJSONConfig(targetPath, "auto_install_extensions", "cem", true)
 		},
@@ -399,7 +408,12 @@ func zedAction(_ string, _ []string) mcpAction {
 func genericSnippet(cemPath string, args []string) string {
 	config := mcpServerEntry{Command: cemPath, Args: args}
 	snippet, _ := json.MarshalIndent(config, "", "  ")
-	return fmt.Sprintf("Other (generic stdio)\n\n  Configure your MCP client with:\n\n%s\n", indentJSON(string(snippet), "    "))
+	return fmt.Sprintf(`Other (generic stdio)
+
+  Configure your MCP client with:
+
+%s
+`, indentJSON(string(snippet), "    "))
 }
 
 // mergeJSONConfig inserts topKey.subKey = value into a JSON/JSONC file.
