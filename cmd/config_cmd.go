@@ -33,6 +33,7 @@ var configValidateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "Validate the configuration file",
 	Long:  "Check the config file for invalid values, unreachable patterns, and missing files.",
+	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, err := W.GetWorkspaceContext(cmd)
 		if err != nil {
@@ -79,8 +80,7 @@ var configValidateCmd = &cobra.Command{
 	},
 }
 
-func printConfigValidationJSON(cmd *cobra.Command, cfgFile string, errs []IC.ValidationError) error {
-	var errors, warnings []IC.ValidationError
+func splitBySeverity(errs []IC.ValidationError) (errors, warnings []IC.ValidationError) {
 	for _, e := range errs {
 		if e.Severity == IC.SeverityWarning {
 			warnings = append(warnings, e)
@@ -88,6 +88,11 @@ func printConfigValidationJSON(cmd *cobra.Command, cfgFile string, errs []IC.Val
 			errors = append(errors, e)
 		}
 	}
+	return
+}
+
+func printConfigValidationJSON(cmd *cobra.Command, cfgFile string, errs []IC.ValidationError) error {
+	errors, warnings := splitBySeverity(errs)
 
 	result := struct {
 		ConfigFile string               `json:"configFile"`
@@ -120,14 +125,7 @@ func printConfigValidationJSON(cmd *cobra.Command, cfgFile string, errs []IC.Val
 }
 
 func printConfigValidationText(cmd *cobra.Command, cfgFile string, errs []IC.ValidationError) error {
-	var errors, warnings []IC.ValidationError
-	for _, e := range errs {
-		if e.Severity == IC.SeverityWarning {
-			warnings = append(warnings, e)
-		} else {
-			errors = append(errors, e)
-		}
-	}
+	errors, warnings := splitBySeverity(errs)
 
 	cmd.Printf("config: %s\n", cfgFile)
 
