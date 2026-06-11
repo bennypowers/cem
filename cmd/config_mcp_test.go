@@ -60,6 +60,8 @@ func TestConfigMCP_WithAdditionalPackages(t *testing.T) {
 	compareGolden(t, configMCPGolden("with-packages.txt"), stdout, false)
 }
 
+// Inline assertions: testing alias resolution across 7 short names;
+// a golden per alias would be redundant with the per-tool golden tests above.
 func TestConfigMCP_ShortNames(t *testing.T) {
 	root := projectRoot(t)
 	for _, tc := range []struct {

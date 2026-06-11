@@ -297,7 +297,10 @@ func claudeCodeAction(cemPath string, args []string) mcpAction {
 			cmd := exec.Command("claude", cmdArgs...)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
-			return cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("claude %s: %w", strings.Join(cmdArgs, " "), err)
+			}
+			return nil
 		},
 	}
 }
@@ -369,7 +372,10 @@ func vscodeAction(cemPath string, args []string) mcpAction {
 			cmd := exec.Command("code", "--add-mcp", string(snippet))
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
-			return cmd.Run()
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("code --add-mcp: %w", err)
+			}
+			return nil
 		},
 	}
 }
@@ -420,10 +426,29 @@ func mergeJSONConfig(path, topKey, subKey string, value any) error {
 		return fmt.Errorf("failed to merge into %s: %w", path, err)
 	}
 
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dir, err)
 	}
-	return os.WriteFile(path, result, 0o644)
+	tmp, err := os.CreateTemp(dir, ".cem-config-*.tmp")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpPath := tmp.Name()
+	if _, err := tmp.Write(result); err != nil {
+		_ = tmp.Close()
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to write config: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to close temp file: %w", err)
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to rename temp file: %w", err)
+	}
+	return nil
 }
 
 // mergeJSONCBytes inserts or replaces topKey.subKey in raw JSONC bytes,
