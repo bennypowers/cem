@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 
 	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 var configCmd = &cobra.Command{
@@ -36,7 +38,34 @@ var configShowCmd = &cobra.Command{
 	Short: "Print the resolved configuration",
 	Long:  "Print the fully resolved and merged config, showing workspace inheritance.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return fmt.Errorf("not yet implemented")
+		ctx, err := W.GetWorkspaceContext(cmd)
+		if err != nil {
+			return fmt.Errorf("project context not initialized: %w", err)
+		}
+		cfg, err := ctx.Config()
+		if err != nil {
+			return fmt.Errorf("failed to load config: %w", err)
+		}
+		if cfg == nil {
+			return fmt.Errorf("no configuration found")
+		}
+
+		format, _ := cmd.Flags().GetString("format")
+		switch format {
+		case "json":
+			data, err := json.MarshalIndent(cfg, "", "  ")
+			if err != nil {
+				return fmt.Errorf("failed to marshal config: %w", err)
+			}
+			cmd.Println(string(data))
+		default:
+			data, err := yaml.Marshal(cfg)
+			if err != nil {
+				return fmt.Errorf("failed to marshal config: %w", err)
+			}
+			cmd.Print(string(data))
+		}
+		return nil
 	},
 }
 
@@ -75,4 +104,6 @@ func init() {
 	configCmd.AddCommand(configShowCmd)
 	configCmd.AddCommand(configMCPCmd)
 	configCmd.AddCommand(configPathCmd)
+
+	configShowCmd.Flags().String("format", "yaml", "output format (yaml or json)")
 }
