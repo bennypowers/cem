@@ -113,7 +113,7 @@ In non-interactive mode, use --tool to specify tools directly.`,
 		cemPath := resolveCemPath(cmd)
 		mcpArgs := buildMCPArgs(additionalPackages)
 
-		actions := buildActions(selectedTools, cemPath, mcpArgs)
+		actions := buildActions(selectedTools, cemPath, mcpArgs, interactive)
 
 		for i, action := range actions {
 			if i > 0 {
@@ -259,26 +259,26 @@ func buildMCPArgs(additionalPackages []string) []string {
 	return args
 }
 
-func buildActions(tools []aiTool, cemPath string, args []string) []mcpAction {
+func buildActions(tools []aiTool, cemPath string, args []string, interactive bool) []mcpAction {
 	var actions []mcpAction
 	for _, tool := range tools {
-		actions = append(actions, buildAction(tool, cemPath, args))
+		actions = append(actions, buildAction(tool, cemPath, args, interactive))
 	}
 	return actions
 }
 
-func buildAction(tool aiTool, cemPath string, args []string) mcpAction {
+func buildAction(tool aiTool, cemPath string, args []string, interactive bool) mcpAction {
 	switch tool {
 	case toolClaudeCode:
 		return claudeCodeAction(cemPath, args)
 	case toolClaudeDesktop:
 		return claudeDesktopAction(cemPath, args)
 	case toolCursor:
-		return cursorAction(cemPath, args)
+		return cursorAction(cemPath, args, interactive)
 	case toolVSCode:
-		return vscodeAction(cemPath, args)
+		return vscodeAction(cemPath, args, interactive)
 	case toolZed:
-		return zedAction(cemPath, args)
+		return zedAction(interactive)
 	default:
 		return mcpAction{tool: tool, preview: genericSnippet(cemPath, args)}
 	}
@@ -337,9 +337,12 @@ func claudeDesktopAction(cemPath string, args []string) mcpAction {
 	return mcpAction{tool: toolClaudeDesktop, preview: b.String(), apply: applyFn}
 }
 
-func cursorAction(cemPath string, args []string) mcpAction {
+func cursorAction(cemPath string, args []string, interactive bool) mcpAction {
 	snippet := mcpServersJSON(cemPath, args)
-	targetPath := filepath.Join(".cursor", "mcp.json")
+	home, _ := os.UserHomeDir()
+	projectPath := filepath.Join(".cursor", "mcp.json")
+	globalPath := filepath.Join(home, ".cursor", "mcp.json")
+	targetPath := chooseScope(interactive, ".cursor", projectPath, globalPath)
 	preview := fmt.Sprintf("Cursor\n\n  Write to %s:\n\n%s\n", targetPath, indentJSON(snippet, "    "))
 	return mcpAction{
 		tool:    toolCursor,
@@ -353,13 +356,15 @@ func cursorAction(cemPath string, args []string) mcpAction {
 	}
 }
 
-func vscodeAction(cemPath string, args []string) mcpAction {
+func vscodeAction(cemPath string, args []string, interactive bool) mcpAction {
 	entry := vscodeServerEntry{Type: "stdio", Command: cemPath, Args: args}
 	config := vscodeServersWrapper{
 		Servers: map[string]vscodeServerEntry{"cem": entry},
 	}
 	snippet, _ := json.MarshalIndent(config, "", "  ")
-	targetPath := filepath.Join(".vscode", "mcp.json")
+	projectPath := filepath.Join(".vscode", "mcp.json")
+	globalPath := vscodeGlobalConfigPath()
+	targetPath := chooseScope(interactive, ".vscode", projectPath, globalPath)
 	preview := fmt.Sprintf(`VS Code (Copilot)
 
   Run: code --add-mcp '%s'
@@ -383,9 +388,12 @@ func vscodeAction(cemPath string, args []string) mcpAction {
 	}
 }
 
-func zedAction(_ string, _ []string) mcpAction {
-	targetPath := filepath.Join(".zed", "settings.json")
+func zedAction(interactive bool) mcpAction {
+	projectPath := filepath.Join(".zed", "settings.json")
+	globalPath := filepath.Join(xdg.ConfigHome, "zed", "settings.json")
+	targetPath := chooseScope(interactive, ".zed", projectPath, globalPath)
 	preview := fmt.Sprintf(`Zed
+  The cem extension provides both LSP and MCP support.
 
   Add to %s:
 
@@ -393,7 +401,6 @@ func zedAction(_ string, _ []string) mcpAction {
       "cem": true
     }
 
-  The cem extension provides both LSP and MCP support.
   Restart Zed after applying.
 `, targetPath)
 	return mcpAction{
@@ -403,6 +410,50 @@ func zedAction(_ string, _ []string) mcpAction {
 			return mergeJSONConfig(targetPath, "auto_install_extensions", "cem", true)
 		},
 	}
+}
+
+func vscodeGlobalConfigPath() string {
+	home, _ := os.UserHomeDir()
+	switch runtime.GOOS {
+	case "darwin":
+		return filepath.Join(home, "Library", "Application Support", "Code", "User", "mcp.json")
+	case "windows":
+		return filepath.Join(os.Getenv("APPDATA"), "Code", "User", "mcp.json")
+	default:
+		return filepath.Join(xdg.ConfigHome, "Code", "User", "mcp.json")
+	}
+}
+
+// chooseScope prompts for project vs global scope in interactive mode.
+// If the project dir exists, defaults to project. Otherwise defaults to global.
+// Non-interactive mode always uses project path.
+func chooseScope(interactive bool, projectDir, projectPath, globalPath string) string {
+	if !interactive {
+		return projectPath
+	}
+	_, projectExists := os.Stat(projectDir)
+	projectLabel := "Project (" + projectPath + ")"
+	globalLabel := "Global (" + globalPath + ")"
+	var options []string
+	if projectExists == nil {
+		options = []string{projectLabel, globalLabel}
+	} else {
+		options = []string{globalLabel, projectLabel}
+	}
+	result, err := pterm.DefaultInteractiveSelect.
+		WithOptions(options).
+		WithDefaultText("Configure for this project or globally?").
+		Show()
+	if err != nil {
+		if projectExists == nil {
+			return projectPath
+		}
+		return globalPath
+	}
+	if strings.HasPrefix(result, "Global") {
+		return globalPath
+	}
+	return projectPath
 }
 
 func genericSnippet(cemPath string, args []string) string {
