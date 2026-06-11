@@ -374,12 +374,18 @@ func validateOutputMismatch(cfg *CemConfig, opts ValidateOptions) []ValidationEr
 		return nil
 	}
 
-	normalizedOutput := filepath.Clean(output)
+	relOutput := output
+	if opts.Root != "" {
+		if rel, err := filepath.Rel(opts.Root, output); err == nil {
+			relOutput = rel
+		}
+	}
+	normalizedOutput := filepath.Clean(relOutput)
 	normalizedPkg := filepath.Clean(pkg.CustomElements)
 	if normalizedOutput != normalizedPkg {
 		return []ValidationError{{
 			Field:    "generate.output",
-			Message:  fmt.Sprintf("does not match package.json customElements field (%q vs %q)", output, pkg.CustomElements),
+			Message:  fmt.Sprintf("does not match package.json customElements field (%q vs %q)", relOutput, pkg.CustomElements),
 			Severity: SeverityWarning,
 		}}
 	}
