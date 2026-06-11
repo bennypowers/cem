@@ -34,19 +34,20 @@ func TestValidateSchema_ExampleConfigs(t *testing.T) {
 }
 
 func TestValidateSchema(t *testing.T) {
-	fixtureDir := filepath.Join("testdata", "schema", "fixtures")
-	entries, err := os.ReadDir(fixtureDir)
+	mfs := testutil.LoadTestdataFS(t, filepath.Join("testdata", "schema"), "/")
+
+	fixtureEntries, err := mfs.ReadDir("/fixtures")
 	if err != nil {
 		t.Fatalf("failed to read fixture directory: %v", err)
 	}
 
-	for _, entry := range entries {
+	for _, entry := range fixtureEntries {
 		if entry.IsDir() {
 			continue
 		}
 		name := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
 		t.Run(name, func(t *testing.T) {
-			data, err := os.ReadFile(filepath.Join(fixtureDir, entry.Name()))
+			data, err := mfs.ReadFile(filepath.Join("/fixtures", entry.Name()))
 			if err != nil {
 				t.Fatalf("failed to read fixture: %v", err)
 			}

@@ -77,8 +77,9 @@ func ValidateSchema(configData []byte) []ValidationError {
 	schemaDoc, err := jsonschema.UnmarshalJSON(bytes.NewReader(configSchemaJSON))
 	if err != nil {
 		return []ValidationError{{
-			Field:   "(schema)",
-			Message: fmt.Sprintf("internal error: failed to parse config schema: %v", err),
+			Field:    "(schema)",
+			Message:  fmt.Sprintf("internal error: failed to parse config schema: %v", err),
+			Severity: SeverityError,
 		}}
 	}
 
@@ -90,24 +91,27 @@ func ValidateSchema(configData []byte) []ValidationError {
 
 	if err := compiler.AddResource("cem-config.schema.json", schemaDoc); err != nil {
 		return []ValidationError{{
-			Field:   "(schema)",
-			Message: fmt.Sprintf("internal error: failed to add schema resource: %v", err),
+			Field:    "(schema)",
+			Message:  fmt.Sprintf("internal error: failed to add schema resource: %v", err),
+			Severity: SeverityError,
 		}}
 	}
 
 	schema, err := compiler.Compile("cem-config.schema.json")
 	if err != nil {
 		return []ValidationError{{
-			Field:   "(schema)",
-			Message: fmt.Sprintf("internal error: failed to compile config schema: %v", err),
+			Field:    "(schema)",
+			Message:  fmt.Sprintf("internal error: failed to compile config schema: %v", err),
+			Severity: SeverityError,
 		}}
 	}
 
 	var doc any
 	if err := yaml.Unmarshal(configData, &doc); err != nil {
 		return []ValidationError{{
-			Field:   "(document)",
-			Message: fmt.Sprintf("failed to parse config: %v", err),
+			Field:    "(document)",
+			Message:  fmt.Sprintf("failed to parse config: %v", err),
+			Severity: SeverityError,
 		}}
 	}
 	if doc == nil {
@@ -119,8 +123,9 @@ func ValidateSchema(configData []byte) []ValidationError {
 		verr, ok := err.(*jsonschema.ValidationError)
 		if !ok {
 			return []ValidationError{{
-				Field:   "(schema)",
-				Message: fmt.Sprintf("unexpected validation error type: %v", err),
+				Field:    "(schema)",
+				Message:  fmt.Sprintf("unexpected validation error type: %v", err),
+				Severity: SeverityError,
 			}}
 		}
 		return collectSchemaErrors(verr)
