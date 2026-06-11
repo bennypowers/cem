@@ -63,7 +63,7 @@ var configPathCmd = &cobra.Command{
 			root := ctx.Root()
 			return fmt.Errorf("no config file found (searched %s)", root)
 		}
-		fmt.Println(cfgFile)
+		cmd.Println(cfgFile)
 		return nil
 	},
 }
