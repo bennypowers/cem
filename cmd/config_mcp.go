@@ -374,24 +374,19 @@ func vscodeAction(cemPath string, args []string) mcpAction {
 	}
 }
 
-func zedAction(cemPath string, args []string) mcpAction {
-	config := zedServersWrapper{
-		ContextServers: map[string]zedServerEntry{
-			"cem": {Command: cemPath, Args: args},
-		},
-	}
-	snippet, _ := json.MarshalIndent(config, "", "  ")
-	targetPath := zedConfigPath()
+func zedAction(_ string, _ []string) mcpAction {
+	targetPath := filepath.Join(".zed", "settings.json")
+	snippet := `    "auto_install_extensions": {
+      "cem": true
+    }`
 	var b strings.Builder
-	fmt.Fprintf(&b, "Zed\n\n  Merge into %s:\n\n%s\n", targetPath, indentJSON(string(snippet), "    "))
+	fmt.Fprintf(&b, "Zed\n\n  Add to %s:\n\n%s\n\n", targetPath, snippet)
+	b.WriteString("  The cem extension provides both LSP and MCP support.\n")
 	return mcpAction{
 		tool:    toolZed,
 		preview: b.String(),
 		apply: func() error {
-			return mergeJSONConfig(targetPath, "context_servers", "cem", zedServerEntry{
-				Command: cemPath,
-				Args:    args,
-			})
+			return mergeJSONConfig(targetPath, "auto_install_extensions", "cem", true)
 		},
 	}
 }
@@ -571,15 +566,6 @@ type vscodeServersWrapper struct {
 	Servers map[string]vscodeServerEntry `json:"servers"`
 }
 
-type zedServerEntry struct {
-	Command string   `json:"command"`
-	Args    []string `json:"args"`
-}
-
-type zedServersWrapper struct {
-	ContextServers map[string]zedServerEntry `json:"context_servers"`
-}
-
 func mcpServersJSON(cemPath string, args []string) string {
 	config := mcpServersWrapper{
 		MCPServers: map[string]mcpServerEntry{
@@ -612,10 +598,6 @@ func claudeDesktopConfigPaths() []configPathInfo {
 			{"Linux (Flatpak)", filepath.Join(home, ".var", "app", "com.anthropic.Claude", "config", "Claude", "claude_desktop_config.json")},
 		}
 	}
-}
-
-func zedConfigPath() string {
-	return filepath.Join(xdg.ConfigHome, "zed", "settings.json")
 }
 
 func indentJSON(jsonStr string, prefix string) string {

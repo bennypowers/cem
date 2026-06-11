@@ -1,15 +1,9 @@
 Zed
 
- Merge into /home/bennyp/.config/zed/settings.json:
+ Add to .zed/settings.json:
 
- {
- "context_servers": {
- "cem": {
- "command": "cem",
- "args": [
- "mcp"
- ]
- }
- }
+ "auto_install_extensions": {
+ "cem": true
  }
 
+ The cem extension provides both LSP and MCP support.
