@@ -191,15 +191,6 @@ var configShowCmd = &cobra.Command{
 	},
 }
 
-var configMCPCmd = &cobra.Command{
-	Use:   "mcp",
-	Short: "Generate MCP client configuration",
-	Long:  "Generate configuration snippets for AI tools (Claude Code, Claude Desktop, Cursor, etc.).",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return fmt.Errorf("not yet implemented")
-	},
-}
-
 var configPathCmd = &cobra.Command{
 	Use:   "path",
 	Short: "Print the config file path",
@@ -224,7 +215,6 @@ func init() {
 	configCmd.AddCommand(configInitCmd)
 	configCmd.AddCommand(configValidateCmd)
 	configCmd.AddCommand(configShowCmd)
-	configCmd.AddCommand(configMCPCmd)
 	configCmd.AddCommand(configPathCmd)
 
 	configShowCmd.Flags().String("format", "yaml", "output format (yaml or json)")

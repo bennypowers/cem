@@ -1,0 +1,21 @@
+Claude Code
+
+ Run this command:
+
+ claude mcp add cem -- cem mcp
+
+Cursor
+
+ Add to .cursor/mcp.json in your project root:
+
+ {
+ "mcpServers": {
+ "cem": {
+ "command": "cem",
+ "args": [
+ "mcp"
+ ]
+ }
+ }
+ }
+

@@ -1,0 +1,15 @@
+Zed
+
+ Add to /home/bennyp/.config/zed/settings.json:
+
+ {
+ "context_servers": {
+ "cem": {
+ "command": "cem",
+ "args": [
+ "mcp"
+ ]
+ }
+ }
+ }
+

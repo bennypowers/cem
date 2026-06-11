@@ -1,0 +1,11 @@
+Other (generic stdio)
+
+ Configure your MCP client with:
+
+ {
+ "command": "cem",
+ "args": [
+ "mcp"
+ ]
+ }
+

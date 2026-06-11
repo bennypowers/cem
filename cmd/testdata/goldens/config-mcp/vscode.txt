@@ -1,0 +1,30 @@
+VS Code (Copilot)
+
+ Run this command:
+
+ code --add-mcp '{
+ "servers": {
+ "cem": {
+ "type": "stdio",
+ "command": "cem",
+ "args": [
+ "mcp"
+ ]
+ }
+ }
+}'
+
+ Or add to .vscode/mcp.json in your project root:
+
+ {
+ "servers": {
+ "cem": {
+ "type": "stdio",
+ "command": "cem",
+ "args": [
+ "mcp"
+ ]
+ }
+ }
+ }
+

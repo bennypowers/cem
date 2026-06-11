@@ -1,0 +1,5 @@
+Claude Code
+
+ Run this command:
+
+ claude mcp add cem -- cem mcp
