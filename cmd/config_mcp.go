@@ -25,6 +25,8 @@ import (
 	"runtime"
 	"strings"
 
+	"atomicgo.dev/keyboard/keys"
+
 	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/adrg/xdg"
 	"github.com/pterm/pterm"
@@ -50,6 +52,12 @@ var knownTools = []aiTool{
 	toolVSCode,
 	toolZed,
 	toolOther,
+}
+
+type mcpAction struct {
+	tool    aiTool
+	preview string
+	apply   func() error
 }
 
 var configMCPCmd = &cobra.Command{
@@ -104,11 +112,30 @@ In non-interactive mode, use --tool to specify tools directly.`,
 		cemPath := resolveCemPath(cmd)
 		mcpArgs := buildMCPArgs(additionalPackages)
 
-		for i, tool := range selectedTools {
+		actions := buildActions(selectedTools, cemPath, mcpArgs)
+
+		for i, action := range actions {
 			if i > 0 {
 				cmd.Println()
 			}
-			cmd.Print(configSnippet(tool, cemPath, mcpArgs))
+			cmd.Print(action.preview)
+
+			if interactive && action.apply != nil {
+				confirmed, err := pterm.DefaultInteractiveConfirm.
+					WithDefaultValue(true).
+					WithDefaultText("Apply?").
+					Show()
+				if err != nil {
+					return err
+				}
+				if confirmed {
+					if err := action.apply(); err != nil {
+						pterm.Error.Printfln("%v", err)
+					} else {
+						pterm.Success.Println("Done")
+					}
+				}
+			}
 		}
 
 		return nil
@@ -128,7 +155,6 @@ func parseToolName(name string) (aiTool, error) {
 			return t, nil
 		}
 	}
-	// Allow short names
 	switch lower {
 	case "claude-code", "claudecode":
 		return toolClaudeCode, nil
@@ -157,7 +183,10 @@ func promptToolSelection() ([]aiTool, error) {
 	}
 	selected, err := pterm.DefaultInteractiveMultiselect.
 		WithOptions(options).
-		WithDefaultText("Which AI tools would you like to configure?").
+		WithDefaultText("Which AI tools would you like to configure?\n  space: select, enter: confirm, left/right: none/all").
+		WithKeySelect(keys.Space).
+		WithKeyConfirm(keys.Enter).
+		WithFilter(false).
 		Show()
 	if err != nil {
 		return nil, fmt.Errorf("tool selection cancelled: %w", err)
@@ -229,35 +258,195 @@ func buildMCPArgs(additionalPackages []string) []string {
 	return args
 }
 
-func configSnippet(tool aiTool, cemPath string, args []string) string {
+func buildActions(tools []aiTool, cemPath string, args []string) []mcpAction {
+	var actions []mcpAction
+	for _, tool := range tools {
+		actions = append(actions, buildAction(tool, cemPath, args))
+	}
+	return actions
+}
+
+func buildAction(tool aiTool, cemPath string, args []string) mcpAction {
 	switch tool {
 	case toolClaudeCode:
-		return claudeCodeSnippet(cemPath, args)
+		return claudeCodeAction(cemPath, args)
 	case toolClaudeDesktop:
-		return claudeDesktopSnippet(cemPath, args)
+		return claudeDesktopAction(cemPath, args)
 	case toolCursor:
-		return cursorSnippet(cemPath, args)
+		return cursorAction(cemPath, args)
 	case toolVSCode:
-		return vscodeSnippet(cemPath, args)
+		return vscodeAction(cemPath, args)
 	case toolZed:
-		return zedSnippet(cemPath, args)
-	case toolOther:
-		return genericSnippet(cemPath, args)
+		return zedAction(cemPath, args)
 	default:
-		return ""
+		return mcpAction{tool: tool, preview: genericSnippet(cemPath, args)}
 	}
 }
 
-func claudeCodeSnippet(cemPath string, args []string) string {
+func claudeCodeAction(cemPath string, args []string) mcpAction {
+	cmdArgs := append([]string{"mcp", "add", "cem", "--"}, cemPath)
+	cmdArgs = append(cmdArgs, args...)
 	var b strings.Builder
 	b.WriteString("Claude Code\n\n")
-	b.WriteString("  Run this command:\n\n")
-	fmt.Fprintf(&b, "    claude mcp add cem -- %s", cemPath)
-	for _, a := range args {
-		fmt.Fprintf(&b, " %s", a)
+	fmt.Fprintf(&b, "  Run: claude %s\n\n", strings.Join(cmdArgs, " "))
+	return mcpAction{
+		tool:    toolClaudeCode,
+		preview: b.String(),
+		apply: func() error {
+			cmd := exec.Command("claude", cmdArgs...)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			return cmd.Run()
+		},
 	}
+}
+
+func claudeDesktopAction(cemPath string, args []string) mcpAction {
+	paths := claudeDesktopConfigPaths()
+	snippet := mcpServersJSON(cemPath, args)
+	var b strings.Builder
+	b.WriteString("Claude Desktop\n\n")
+	for _, p := range paths {
+		fmt.Fprintf(&b, "  %s:\n", p.label)
+		fmt.Fprintf(&b, "    %s\n\n", p.path)
+	}
+	b.WriteString(indentJSON(snippet, "    "))
 	b.WriteString("\n")
-	return b.String()
+
+	var targetPath string
+	for _, p := range paths {
+		if _, err := os.Stat(filepath.Dir(p.path)); err == nil {
+			targetPath = p.path
+			break
+		}
+	}
+
+	var applyFn func() error
+	if targetPath != "" {
+		applyFn = func() error {
+			return mergeJSONConfig(targetPath, "mcpServers", "cem", mcpServerEntry{
+				Command: cemPath,
+				Args:    args,
+			})
+		}
+	}
+	return mcpAction{tool: toolClaudeDesktop, preview: b.String(), apply: applyFn}
+}
+
+func cursorAction(cemPath string, args []string) mcpAction {
+	snippet := mcpServersJSON(cemPath, args)
+	targetPath := filepath.Join(".cursor", "mcp.json")
+	var b strings.Builder
+	fmt.Fprintf(&b, "Cursor\n\n  Write to %s:\n\n%s\n", targetPath, indentJSON(snippet, "    "))
+	return mcpAction{
+		tool:    toolCursor,
+		preview: b.String(),
+		apply: func() error {
+			return mergeJSONConfig(targetPath, "mcpServers", "cem", mcpServerEntry{
+				Command: cemPath,
+				Args:    args,
+			})
+		},
+	}
+}
+
+func vscodeAction(cemPath string, args []string) mcpAction {
+	entry := vscodeServerEntry{Type: "stdio", Command: cemPath, Args: args}
+	config := vscodeServersWrapper{
+		Servers: map[string]vscodeServerEntry{"cem": entry},
+	}
+	snippet, _ := json.MarshalIndent(config, "", "  ")
+	cmdArgs := fmt.Sprintf("--add-mcp '%s'", string(snippet))
+	targetPath := filepath.Join(".vscode", "mcp.json")
+	var b strings.Builder
+	fmt.Fprintf(&b, "VS Code (Copilot)\n\n  Run: code %s\n\n", cmdArgs)
+	fmt.Fprintf(&b, "  Or write to %s:\n\n%s\n", targetPath, indentJSON(string(snippet), "    "))
+	return mcpAction{
+		tool:    toolVSCode,
+		preview: b.String(),
+		apply: func() error {
+			cmd := exec.Command("code", "--add-mcp", string(snippet))
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			return cmd.Run()
+		},
+	}
+}
+
+func zedAction(cemPath string, args []string) mcpAction {
+	config := zedServersWrapper{
+		ContextServers: map[string]zedServerEntry{
+			"cem": {Command: cemPath, Args: args},
+		},
+	}
+	snippet, _ := json.MarshalIndent(config, "", "  ")
+	targetPath := zedConfigPath()
+	var b strings.Builder
+	fmt.Fprintf(&b, "Zed\n\n  Merge into %s:\n\n%s\n", targetPath, indentJSON(string(snippet), "    "))
+	return mcpAction{
+		tool:    toolZed,
+		preview: b.String(),
+		apply: func() error {
+			return mergeJSONConfig(targetPath, "context_servers", "cem", zedServerEntry{
+				Command: cemPath,
+				Args:    args,
+			})
+		},
+	}
+}
+
+func genericSnippet(cemPath string, args []string) string {
+	config := mcpServerEntry{Command: cemPath, Args: args}
+	snippet, _ := json.MarshalIndent(config, "", "  ")
+	return fmt.Sprintf("Other (generic stdio)\n\n  Configure your MCP client with:\n\n%s\n", indentJSON(string(snippet), "    "))
+}
+
+// mergeJSONConfig reads a JSON file, sets obj[topKey][subKey] = value, and writes it back.
+// Creates the file and parent directories if they don't exist.
+// If the file exists, backs it up to a temp file before writing.
+func mergeJSONConfig(path, topKey, subKey string, value any) error {
+	var obj map[string]any
+
+	data, err := os.ReadFile(path)
+	if err == nil {
+		if err := json.Unmarshal(data, &obj); err != nil {
+			return fmt.Errorf("failed to parse %s: %w", path, err)
+		}
+		backup, backupErr := os.CreateTemp("", filepath.Base(path)+".backup-*")
+		if backupErr != nil {
+			return fmt.Errorf("failed to create backup: %w", backupErr)
+		}
+		if _, writeErr := backup.Write(data); writeErr != nil {
+			_ = backup.Close()
+			return fmt.Errorf("failed to write backup: %w", writeErr)
+		}
+		if err := backup.Close(); err != nil {
+			return fmt.Errorf("failed to close backup file: %w", err)
+		}
+		pterm.Info.Printfln("Backed up %s to %s", path, backup.Name())
+	} else if os.IsNotExist(err) {
+		obj = make(map[string]any)
+	} else {
+		return fmt.Errorf("failed to read %s: %w", path, err)
+	}
+
+	top, ok := obj[topKey].(map[string]any)
+	if !ok {
+		top = make(map[string]any)
+	}
+	top[subKey] = value
+	obj[topKey] = top
+
+	out, err := json.MarshalIndent(obj, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal config: %w", err)
+	}
+	out = append(out, '\n')
+
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+	return os.WriteFile(path, out, 0o644)
 }
 
 type mcpServerEntry struct {
@@ -267,24 +456,6 @@ type mcpServerEntry struct {
 
 type mcpServersWrapper struct {
 	MCPServers map[string]mcpServerEntry `json:"mcpServers"`
-}
-
-func claudeDesktopSnippet(cemPath string, args []string) string {
-	snippet := mcpServersJSON(cemPath, args)
-	var b strings.Builder
-	b.WriteString("Claude Desktop\n\n")
-	for _, p := range claudeDesktopConfigPaths() {
-		fmt.Fprintf(&b, "  %s:\n", p.label)
-		fmt.Fprintf(&b, "    %s\n\n", p.path)
-	}
-	b.WriteString(indentJSON(snippet, "    "))
-	b.WriteString("\n")
-	return b.String()
-}
-
-func cursorSnippet(cemPath string, args []string) string {
-	snippet := mcpServersJSON(cemPath, args)
-	return fmt.Sprintf("Cursor\n\n  Add to .cursor/mcp.json in your project root:\n\n%s\n", indentJSON(snippet, "    "))
 }
 
 type vscodeServerEntry struct {
@@ -297,22 +468,6 @@ type vscodeServersWrapper struct {
 	Servers map[string]vscodeServerEntry `json:"servers"`
 }
 
-func vscodeSnippet(cemPath string, args []string) string {
-	config := vscodeServersWrapper{
-		Servers: map[string]vscodeServerEntry{
-			"cem": {Type: "stdio", Command: cemPath, Args: args},
-		},
-	}
-	snippet, _ := json.MarshalIndent(config, "", "  ")
-	var b strings.Builder
-	b.WriteString("VS Code (Copilot)\n\n")
-	fmt.Fprintf(&b, "  Run this command:\n\n    code --add-mcp '%s'\n\n", string(snippet))
-	b.WriteString("  Or add to .vscode/mcp.json in your project root:\n\n")
-	b.WriteString(indentJSON(string(snippet), "    "))
-	b.WriteString("\n")
-	return b.String()
-}
-
 type zedServerEntry struct {
 	Command string   `json:"command"`
 	Args    []string `json:"args"`
@@ -320,22 +475,6 @@ type zedServerEntry struct {
 
 type zedServersWrapper struct {
 	ContextServers map[string]zedServerEntry `json:"context_servers"`
-}
-
-func zedSnippet(cemPath string, args []string) string {
-	config := zedServersWrapper{
-		ContextServers: map[string]zedServerEntry{
-			"cem": {Command: cemPath, Args: args},
-		},
-	}
-	snippet, _ := json.MarshalIndent(config, "", "  ")
-	return fmt.Sprintf("Zed\n\n  Add to %s:\n\n%s\n", zedConfigPath(), indentJSON(string(snippet), "    "))
-}
-
-func genericSnippet(cemPath string, args []string) string {
-	config := mcpServerEntry{Command: cemPath, Args: args}
-	snippet, _ := json.MarshalIndent(config, "", "  ")
-	return fmt.Sprintf("Other (generic stdio)\n\n  Configure your MCP client with:\n\n%s\n", indentJSON(string(snippet), "    "))
 }
 
 func mcpServersJSON(cemPath string, args []string) string {

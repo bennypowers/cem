@@ -1,6 +1,6 @@
 Cursor
 
- Add to .cursor/mcp.json in your project root:
+ Write to .cursor/mcp.json:
 
  {
  "mcpServers": {
