@@ -8,11 +8,20 @@ import (
 	"strings"
 )
 
+// ValidationSeverity indicates how serious a validation finding is.
+type ValidationSeverity int
+
+const (
+	SeverityError   ValidationSeverity = iota
+	SeverityWarning
+)
+
 // ValidationError describes a single config validation failure.
 type ValidationError struct {
-	Field   string
-	Message string
-	Value   string
+	Field    string             `json:"field"`
+	Message  string             `json:"message"`
+	Value    string             `json:"value,omitempty"`
+	Severity ValidationSeverity `json:"severity"`
 }
 
 func (e ValidationError) Error() string {

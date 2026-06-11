@@ -1,0 +1,60 @@
+projectDir: /home/user/project
+packageName: my-package
+sourceControlRootUrl: https://github.com/example/repo/tree/main/
+verbose: true
+additionalPackages:
+  - "@scope/other-package"
+generate:
+  files:
+    - "elements/**/*.ts"
+    - "base/**/*.ts"
+  exclude:
+    - "**/*.test.ts"
+  noDefaultExcludes: true
+  output: custom-elements.json
+  designTokens:
+    spec: tokens/tokens.json
+    prefix: demo
+  demoDiscovery:
+    fileGlob: "elements/**/demo/*.html"
+    urlPattern: "/elements/:tag/demo/:demo.html"
+    urlTemplate: "/elements/{{.tag}}/demo/{{.demo}}/"
+serve:
+  port: 3000
+  openBrowser: true
+  importMap:
+    generate: true
+    overrideFile: .config/importmap-override.json
+    override:
+      imports:
+        lit: ./node_modules/lit/index.js
+      scopes:
+        "/":
+          lit: ./node_modules/lit/index.js
+  transforms:
+    typescript:
+      enabled: true
+      target: es2022
+    css:
+      enabled: true
+      include:
+        - "src/**/*.css"
+      exclude:
+        - "vendor/**/*.css"
+  urlRewrites:
+    - urlPattern: "/api/:path*"
+      urlTemplate: "/backend/{{.path}}"
+  demos:
+    rendering: shadow
+mcp:
+  maxDescriptionLength: 1500
+health:
+  failBelow: 80
+  disable:
+    - demos
+export:
+  react:
+    output: dist/react
+    stripPrefix: elements/
+    packageName: "@my/react-elements"
+    moduleName: my-elements

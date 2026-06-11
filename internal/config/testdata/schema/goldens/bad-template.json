@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "errors": [
+    {
+      "field": "generate.demoDiscovery.urlTemplate",
+      "message": "'{{.tag' is not valid x-go-template: invalid Go template: template: :1: unclosed action",
+      "severity": 0
+    }
+  ]
+}

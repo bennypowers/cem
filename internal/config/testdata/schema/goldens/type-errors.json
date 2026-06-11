@@ -1,0 +1,30 @@
+{
+  "valid": false,
+  "errors": [
+    {
+      "field": "generate.files",
+      "message": "got string, want array",
+      "severity": 0
+    },
+    {
+      "field": "generate.output",
+      "message": "got number, want string",
+      "severity": 0
+    },
+    {
+      "field": "serve.openBrowser",
+      "message": "got string, want boolean",
+      "severity": 0
+    },
+    {
+      "field": "serve.port",
+      "message": "got string, want integer",
+      "severity": 0
+    },
+    {
+      "field": "verbose",
+      "message": "got number, want boolean",
+      "severity": 0
+    }
+  ]
+}

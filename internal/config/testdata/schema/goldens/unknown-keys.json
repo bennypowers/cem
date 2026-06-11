@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "errors": [
+    {
+      "field": "generate",
+      "message": "additional properties 'typoField' not allowed",
+      "severity": 0
+    },
+    {
+      "field": "serve.demos",
+      "message": "additional properties 'renderring' not allowed",
+      "severity": 0
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+generate:
+  files: not-an-array
+  output: 42
+serve:
+  port: "three thousand"
+  openBrowser: "yes"
+verbose: 1

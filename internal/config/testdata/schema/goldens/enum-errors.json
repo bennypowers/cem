@@ -1,0 +1,15 @@
+{
+  "valid": false,
+  "errors": [
+    {
+      "field": "serve.demos.rendering",
+      "message": "value must be one of 'light', 'shadow', 'iframe', 'chromeless'",
+      "severity": 0
+    },
+    {
+      "field": "serve.transforms.typescript.target",
+      "message": "value must be one of 'es2015', 'es2016', 'es2017', 'es2018', 'es2019', 'es2020', 'es2021', 'es2022', 'es2023', 'esnext'",
+      "severity": 0
+    }
+  ]
+}
