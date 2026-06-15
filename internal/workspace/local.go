@@ -242,19 +242,29 @@ func (c *FileSystemWorkspaceContext) Glob(pattern string) ([]string, error) {
 			return nil, fmt.Errorf("glob pattern %q failed: %w", pattern, err)
 		}
 
-		// Convert absolute paths back to relative paths within base directory
 		relativeResult := make([]string, 0, len(result))
+		skippedOutsideRoot := 0
 		for _, absPath := range result {
 			rel, err := filepath.Rel(baseDir, absPath)
 			if err != nil {
-				// Skip files that can't be made relative
 				continue
 			}
-			// Skip files outside base directory
 			if strings.HasPrefix(rel, ".."+string(filepath.Separator)) || rel == ".." {
+				skippedOutsideRoot++
 				continue
 			}
 			relativeResult = append(relativeResult, rel)
+		}
+		if skippedOutsideRoot > 0 && len(relativeResult) == 0 {
+			return relativeResult, fmt.Errorf("pattern %q matched %d files outside project root %q: %w",
+				pattern, skippedOutsideRoot, baseDir, ErrGlobAllOutsideRoot)
+		}
+		if skippedOutsideRoot > 0 {
+			return relativeResult, fmt.Errorf("pattern %q: %d of %d matched files are outside project root %q: %w",
+				pattern, skippedOutsideRoot, len(result), baseDir, ErrGlobSomeOutsideRoot)
+		}
+		if len(result) == 0 {
+			return relativeResult, fmt.Errorf("pattern %q: %w", pattern, ErrGlobNoneMatched)
 		}
 		return relativeResult, nil
 	}

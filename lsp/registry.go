@@ -477,9 +477,10 @@ func (r *Registry) parseNpmYarnWorkspaces(path string, workspace types.Workspace
 
 // expandWorkspacePattern expands a glob pattern to actual directories using workspace.Glob
 func (r *Registry) expandWorkspacePattern(workspace types.WorkspaceContext, pattern string) ([]string, error) {
-	// Use workspace.Glob which supports ** doublestar patterns
+	// Glob follows the io.Reader pattern: always use matches even when err != nil.
+	// ([], err) is fatal; (matches, err) means matches are valid and err is a warning.
 	matches, err := workspace.Glob(pattern)
-	if err != nil {
+	if len(matches) == 0 && err != nil {
 		return nil, fmt.Errorf("failed to expand pattern %s: %w", pattern, err)
 	}
 
@@ -517,13 +518,7 @@ func (r *Registry) filterNegatedPackages(workspace types.WorkspaceContext, packa
 
 		excluded := false
 		for _, negPattern := range negativePatterns {
-			// Try to match the negation pattern
-			matches, err := workspace.Glob(negPattern)
-			if err != nil {
-				continue
-			}
-
-			// Check if this package matches any negation pattern
+			matches, _ := workspace.Glob(negPattern)
 			for _, match := range matches {
 				if filepath.Clean(match) == filepath.Clean(relPath) {
 					excluded = true

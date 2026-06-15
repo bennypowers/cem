@@ -81,25 +81,18 @@ func preprocess(ctx types.WorkspaceContext) (r preprocessResult, errs error) {
 		}
 	}
 	if cfg.Generate.DemoDiscovery.FileGlob != "" {
-		demoFiles, err := ctx.Glob(cfg.Generate.DemoDiscovery.FileGlob)
+		demoFiles, _ := ctx.Glob(cfg.Generate.DemoDiscovery.FileGlob)
 		r.demoFiles = demoFiles
-		if err != nil {
-			errs = errors.Join(errs, err)
-		}
 	}
 	for _, filePattern := range cfg.Generate.Files {
-		// Expand glob patterns to actual file paths
 		expandedFiles, err := ctx.Glob(filePattern)
-		if err != nil {
-			errs = errors.Join(errs, fmt.Errorf("failed to expand glob pattern %s: %w", filePattern, err))
-			continue
-		}
-
-		// Add expanded files that don't match exclude patterns
 		for _, file := range expandedFiles {
 			if !matchesAnyPattern(file, r.excludePatterns) {
 				r.includedFiles = append(r.includedFiles, file)
 			}
+		}
+		if err != nil {
+			errs = errors.Join(errs, fmt.Errorf("expanding glob %s: %w", filePattern, err))
 		}
 	}
 	return r, errs
