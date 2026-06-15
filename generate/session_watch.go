@@ -145,7 +145,10 @@ func (ws *WatchSession) setupWatcher() (*fsnotify.Watcher, error) {
 	// Add demo discovery directories if configured
 	cfg, err := ws.ctx.Config()
 	if err == nil && cfg.Generate.DemoDiscovery.FileGlob != "" {
-		demoFiles, _ := ws.ctx.Glob(cfg.Generate.DemoDiscovery.FileGlob)
+		demoFiles, err := ws.ctx.Glob(cfg.Generate.DemoDiscovery.FileGlob)
+		if err != nil {
+			pterm.Debug.Printfln("demo discovery glob: %v", err)
+		}
 		for _, file := range demoFiles {
 			dir := filepath.Dir(file)
 			if !filepath.IsAbs(dir) {

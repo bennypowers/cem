@@ -31,6 +31,7 @@ import (
 	"bennypowers.dev/cem/types"
 
 	DS "github.com/bmatcuk/doublestar"
+	"github.com/pterm/pterm"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -81,8 +82,11 @@ func preprocess(ctx types.WorkspaceContext) (r preprocessResult, errs error) {
 		}
 	}
 	if cfg.Generate.DemoDiscovery.FileGlob != "" {
-		demoFiles, _ := ctx.Glob(cfg.Generate.DemoDiscovery.FileGlob)
+		demoFiles, err := ctx.Glob(cfg.Generate.DemoDiscovery.FileGlob)
 		r.demoFiles = demoFiles
+		if err != nil {
+			pterm.Debug.Printfln("demo discovery glob: %v", err)
+		}
 	}
 	for _, filePattern := range cfg.Generate.Files {
 		expandedFiles, err := ctx.Glob(filePattern)
