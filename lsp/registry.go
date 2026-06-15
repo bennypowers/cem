@@ -518,7 +518,11 @@ func (r *Registry) filterNegatedPackages(workspace types.WorkspaceContext, packa
 
 		excluded := false
 		for _, negPattern := range negativePatterns {
-			matches, _ := workspace.Glob(negPattern)
+			matches, err := workspace.Glob(negPattern)
+			if len(matches) == 0 && err != nil {
+				helpers.SafeDebugLog("Warning: negation pattern %s failed: %v", negPattern, err)
+				continue
+			}
 			for _, match := range matches {
 				if filepath.Clean(match) == filepath.Clean(relPath) {
 					excluded = true
