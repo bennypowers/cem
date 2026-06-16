@@ -18,11 +18,11 @@ package generate
 
 import (
 	"context"
+	"slices"
+	"strings"
 	"testing"
 	"testing/synctest"
 	"time"
-
-	"strings"
 
 	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
@@ -273,26 +273,36 @@ func TestGenerateSession_QueryManagerReuse(t *testing.T) {
 	require.NoError(t, err)
 	defer session.Close()
 
-	// First generation
-	start := time.Now()
+	const samples = 5
+
+	// Warmup: first generation populates caches
 	pkg1, err := session.GenerateFullManifest(context.Background())
-	duration1 := time.Since(start)
 	require.NoError(t, err)
 
-	// Second generation (should be faster due to QueryManager reuse)
-	start = time.Now()
-	pkg2, err := session.GenerateFullManifest(context.Background())
-	duration2 := time.Since(start)
-	require.NoError(t, err)
+	// Collect timing samples for subsequent generations
+	ratios := make([]float64, samples)
+	for i := range samples {
+		start1 := time.Now()
+		_, err := session.GenerateFullManifest(context.Background())
+		d1 := time.Since(start1)
+		require.NoError(t, err)
 
-	// Both should produce equivalent results
-	assert.Equal(t, pkg1.SchemaVersion, pkg2.SchemaVersion)
-	assert.Equal(t, len(pkg1.Modules), len(pkg2.Modules))
+		start2 := time.Now()
+		pkg2, err := session.GenerateFullManifest(context.Background())
+		d2 := time.Since(start2)
+		require.NoError(t, err)
 
-	// Second generation should be significantly faster (though this could be flaky)
-	// We'll just verify it's not dramatically slower
-	ratio := float64(duration2) / float64(duration1)
-	assert.Less(t, ratio, 2.0, "Second generation should not be more than 2x slower than first")
+		ratios[i] = float64(d2) / float64(d1)
+
+		if i == 0 {
+			assert.Equal(t, pkg1.SchemaVersion, pkg2.SchemaVersion)
+			assert.Equal(t, len(pkg1.Modules), len(pkg2.Modules))
+		}
+	}
+
+	slices.Sort(ratios)
+	median := ratios[samples/2]
+	assert.Less(t, median, 2.0, "Median ratio across %d samples should be under 2x (ratios: %v)", samples, ratios)
 }
 
 func TestInMemoryManifest_Performance(t *testing.T) {

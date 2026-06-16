@@ -65,7 +65,7 @@ jobs:
           GOEXPERIMENT: jsonv2
       - uses: actions/setup-node@v6
         with:
-          node-version: lts/*
+          node-version: 26
       - name: Install Go dependencies
         run: go get .
       - name: Build cem binary
