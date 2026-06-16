@@ -128,7 +128,18 @@ func TestDocumentManager_UpdateDocument(t *testing.T) {
 }
 
 func TestDocumentManager_UpdateCreatesIfMissing(t *testing.T) {
-	t.Skip("UpdateDocumentWithChanges has lock ordering bug when document doesn't exist (pre-existing)")
+	dm, err := document.NewDocumentManager()
+	require.NoError(t, err)
+	defer dm.Close()
+
+	doc := dm.UpdateDocument("file:///new.html", "<p>created</p>", 1)
+	require.NotNil(t, doc, "UpdateDocument on missing document should create it")
+	assert.Equal(t, "<p>created</p>", getContent(t, doc))
+	assert.Equal(t, int32(1), doc.Version())
+
+	retrieved := dm.Document("file:///new.html")
+	require.NotNil(t, retrieved, "created document should be retrievable")
+	assert.Equal(t, doc.URI(), retrieved.URI())
 }
 
 func TestDocumentManager_ReopenReplacesExisting(t *testing.T) {

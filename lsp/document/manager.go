@@ -142,20 +142,20 @@ func (dm *documentManager) UpdateDocumentWithChanges(uri, content string, versio
 	// Serialize all tree-sitter operations for this URI to prevent concurrent access
 	uriLock := dm.getURILock(uri)
 	uriLock.Lock()
-	defer uriLock.Unlock()
+
+	dm.mu.Lock()
+	doc, exists := dm.documents[uri]
+	dm.mu.Unlock()
+
+	if !exists {
+		uriLock.Unlock()
+		helpers.SafeDebugLog("[DOCUMENT] Document not found, creating new one: %s", uri)
+		return dm.OpenDocument(uri, content, version)
+	}
 
 	dm.mu.Lock()
 	defer dm.mu.Unlock()
-
-	doc, exists := dm.documents[uri]
-	if !exists {
-		helpers.SafeDebugLog("[DOCUMENT] Document not found, creating new one: %s", uri)
-		// Note: We already hold the URI lock, OpenDocument will try to acquire it again
-		// Need to unlock before calling OpenDocument to avoid deadlock
-		dm.mu.Unlock()
-		uriLock.Unlock()
-		return dm.OpenDocument(uri, content, version)
-	}
+	defer uriLock.Unlock()
 
 	// Get the language handler for this document
 	language := getLanguageFromURI(uri)
