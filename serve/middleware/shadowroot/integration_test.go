@@ -21,10 +21,12 @@ import (
 
 type testLogger struct{}
 
-func (testLogger) Debug(string, ...any) {}
-func (testLogger) Info(string, ...any)  {}
+func (testLogger) Debug(string, ...any)   {}
+func (testLogger) Info(string, ...any)    {}
 func (testLogger) Warning(string, ...any) {}
-func (testLogger) Error(string, ...any) {}
+func (testLogger) Error(string, ...any)   {}
+func (testLogger) Success(string, ...any) {}
+func (testLogger) Trace(string, ...any)   {}
 
 // mockSSR is a simple SSR renderer for testing that wraps custom elements
 // with a <template shadowrootmode="open"> tag.

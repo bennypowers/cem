@@ -331,6 +331,8 @@ func (l *testLogger) Info(format string, args ...any)    {}
 func (l *testLogger) Error(format string, args ...any)   {}
 func (l *testLogger) Warning(format string, args ...any) { l.warningFn(format, args...) }
 func (l *testLogger) Debug(format string, args ...any)   { l.debugFn(format, args...) }
+func (l *testLogger) Success(format string, args ...any) {}
+func (l *testLogger) Trace(format string, args ...any)   {}
 
 // testWSManager implements WebSocketManager for testing
 type testWSManager struct {

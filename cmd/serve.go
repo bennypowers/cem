@@ -59,7 +59,6 @@ var serveCmd = &cobra.Command{
 
 		port := viper.GetInt("serve.port")
 		reload := !viper.GetBool("serve.no-reload")
-		verbose := viper.GetBool("verbose")
 		targetStr := viper.GetString("serve.target")
 
 		// Load transform configuration
@@ -178,7 +177,7 @@ var serveCmd = &cobra.Command{
 		}
 
 		// Create pterm logger
-		log := logger.NewPtermLogger(verbose)
+		log := logger.NewPtermLogger()
 		defer func() {
 			if l, ok := log.(interface{ Stop() }); ok {
 				l.Stop()
@@ -302,7 +301,7 @@ var serveCmd = &cobra.Command{
 		}
 		// Use actual port (may differ from requested when --port 0)
 		actualPort := server.Port()
-		log.Info("Server started on http://localhost:%d%s", actualPort, reloadStatus)
+		log.Success("Server started on http://localhost:%d%s", actualPort, reloadStatus)
 
 		// Update status with running info (with colors)
 		reloadColor := pterm.FgRed.Sprint("false")
@@ -368,7 +367,7 @@ func openBrowser(url string) error {
 func showHelp(log logger.Logger) {
 	log.Info(`Keyboard Shortcuts
 	m - Force rebuild manifest
-	v - Cycle log levels (normal/verbose/debug/quiet)
+	v - Cycle log levels (quiet/normal/verbose/debug/trace)
 	o - Open in browser
 	c - Clear console
 	h - Show this help
@@ -376,34 +375,24 @@ func showHelp(log logger.Logger) {
 	Ctrl+C - Also quits server                      `)
 }
 
-// logLevel tracks the current log verbosity level
-type logLevel int
-
-const (
-	logLevelNormal logLevel = iota
-	logLevelVerbose
-	logLevelDebug
-	logLevelQuiet
-)
-
-func (l logLevel) String() string {
-	switch l {
-	case logLevelNormal:
-		return "normal"
-	case logLevelVerbose:
-		return "verbose"
-	case logLevelDebug:
-		return "debug"
-	case logLevelQuiet:
-		return "quiet"
-	default:
-		return "unknown"
-	}
+// verbosityOrder defines the cycle for the 'v' key in serve mode.
+var verbosityOrder = []logging.Verbosity{
+	logging.VerbosityQuiet,
+	logging.VerbosityNormal,
+	logging.VerbosityVerbose,
+	logging.VerbosityDebug,
+	logging.VerbosityTrace,
 }
 
 // handleKeyboardInput reads keyboard input and handles commands using atomicgo/keyboard
 func handleKeyboardInput(server *serve.Server, log logger.Logger, port int, quitChan chan struct{}) {
-	currentLogLevel := logLevelNormal
+	currentLogLevelIdx := 1 // matches VerbosityNormal default; synced if -v/-q passed
+	for i, v := range verbosityOrder {
+		if v == logging.CurrentVerbosity() {
+			currentLogLevelIdx = i
+			break
+		}
+	}
 
 	// Handle all keyboard input
 	err := keyboard.Listen(func(key keys.Key) (stop bool, err error) {
@@ -433,37 +422,10 @@ func handleKeyboardInput(server *serve.Server, log logger.Logger, port int, quit
 			}
 
 		case 'v', 'V':
-			// Cycle through log levels
-			currentLogLevel = (currentLogLevel + 1) % 4
-			internalLogger := logging.GetLogger()
-
-			switch currentLogLevel {
-			case logLevelNormal:
-				internalLogger.SetQuietEnabled(true) // Keep generation logs quiet
-				internalLogger.SetDebugEnabled(false)
-				if setter, ok := log.(interface{ SetVerbose(bool) }); ok {
-					setter.SetVerbose(false)
-				}
-			case logLevelVerbose:
-				internalLogger.SetQuietEnabled(false)
-				internalLogger.SetDebugEnabled(false)
-				if setter, ok := log.(interface{ SetVerbose(bool) }); ok {
-					setter.SetVerbose(true)
-				}
-			case logLevelDebug:
-				internalLogger.SetQuietEnabled(false)
-				internalLogger.SetDebugEnabled(true)
-				if setter, ok := log.(interface{ SetVerbose(bool) }); ok {
-					setter.SetVerbose(true)
-				}
-			case logLevelQuiet:
-				internalLogger.SetQuietEnabled(true)
-				internalLogger.SetDebugEnabled(false)
-				if setter, ok := log.(interface{ SetVerbose(bool) }); ok {
-					setter.SetVerbose(false)
-				}
-			}
-			log.Info("Log level: %s", currentLogLevel.String())
+			currentLogLevelIdx = (currentLogLevelIdx + 1) % len(verbosityOrder)
+			v := verbosityOrder[currentLogLevelIdx]
+			log.Info("Log level: %s", v)
+			logging.SetVerbosity(v)
 
 		case 'o', 'O':
 			url := fmt.Sprintf("http://localhost:%d", port)

@@ -1,0 +1,4 @@
+logLevel: debug
+generate:
+  files:
+    - "src/**/*.ts"

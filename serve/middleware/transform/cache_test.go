@@ -139,6 +139,10 @@ func (m *mockLogger) Debug(msg string, args ...any) {
 	}
 }
 
+func (m *mockLogger) Success(msg string, args ...any) {}
+func (m *mockLogger) Trace(msg string, args ...any)   {
+}
+
 func TestCache_CSSImportDependencies(t *testing.T) {
 	cache := transform.NewCache(10 * 1024 * 1024) // 10MB cache
 

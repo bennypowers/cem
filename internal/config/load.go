@@ -23,7 +23,8 @@ type CemConfig struct {
 	Serve        ServeConfig                   `mapstructure:"serve" yaml:"serve" json:"serve"`
 	Export       map[string]FrameworkExportConfig `mapstructure:"export" yaml:"export" json:"export"`
 	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl" yaml:"sourceControlRootUrl" json:"sourceControlRootUrl"`
-	Verbose            bool     `mapstructure:"verbose" yaml:"verbose" json:"verbose"`
+	Verbose            bool     `mapstructure:"verbose" yaml:"verbose" json:"verbose"` // Deprecated: use LogLevel instead
+	LogLevel           string   `mapstructure:"logLevel" yaml:"logLevel" json:"logLevel,omitempty"`
 	AdditionalPackages []string `mapstructure:"additionalPackages" yaml:"additionalPackages" json:"additionalPackages"`
 }
 

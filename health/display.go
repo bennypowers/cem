@@ -85,7 +85,7 @@ func printHealthResultJSON(w io.Writer, result *HealthResult) error {
 
 func printHealthResultText(result *HealthResult) {
 	if len(result.Modules) == 0 {
-		logging.Info("No declarations found in manifest")
+		logging.Warning("No declarations found in manifest")
 		return
 	}
 

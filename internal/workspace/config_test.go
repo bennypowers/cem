@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -214,12 +215,31 @@ func TestLoadPackageConfigWithWorkspaceDefaults_NoWorkspace(t *testing.T) {
 }
 
 func TestInit_VerboseConfig(t *testing.T) {
+	prev := logging.CurrentVerbosity()
+	t.Cleanup(func() { logging.SetVerbosity(prev) })
+	logging.SetVerbosity(logging.VerbosityNormal)
+
 	root := absFixture(t, "config-verbose")
 	ctx := workspace.NewFileSystemWorkspaceContext(root)
 	require.NoError(t, ctx.Init())
 	cfg, err := ctx.Config()
 	require.NoError(t, err)
 	assert.True(t, cfg.Verbose)
+	assert.Equal(t, logging.VerbosityVerbose, logging.CurrentVerbosity())
+}
+
+func TestInit_LogLevelConfig(t *testing.T) {
+	prev := logging.CurrentVerbosity()
+	t.Cleanup(func() { logging.SetVerbosity(prev) })
+	logging.SetVerbosity(logging.VerbosityNormal)
+
+	root := absFixture(t, "config-loglevel")
+	ctx := workspace.NewFileSystemWorkspaceContext(root)
+	require.NoError(t, ctx.Init())
+	cfg, err := ctx.Config()
+	require.NoError(t, err)
+	assert.Equal(t, "debug", cfg.LogLevel)
+	assert.Equal(t, logging.VerbosityDebug, logging.CurrentVerbosity())
 }
 
 func TestLoadPackageConfigWithWorkspaceDefaults_InvalidPackageConfig(t *testing.T) {

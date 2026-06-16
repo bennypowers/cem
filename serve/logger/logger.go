@@ -37,6 +37,8 @@ type Logger interface {
 	Warning(msg string, args ...any)
 	Error(msg string, args ...any)
 	Debug(msg string, args ...any)
+	Success(msg string, args ...any)
+	Trace(msg string, args ...any)
 }
 
 // Broadcaster defines the interface for broadcasting log messages to WebSocket clients
@@ -52,7 +54,7 @@ type LogMessage struct {
 
 // LogEntry represents a single structured log entry
 type LogEntry struct {
-	Type    string `json:"type"`    // "info", "warn", "error", "debug"
+	Type    string `json:"type"`    // "info", "warning", "error", "debug", "success", "trace"
 	Date    string `json:"date"`    // ISO8601 timestamp
 	Message string `json:"message"` // Log message content
 }
@@ -76,6 +78,14 @@ func (l *defaultLogger) Debug(msg string, args ...any) {
 	log.Printf("[DEBUG] "+msg, args...)
 }
 
+func (l *defaultLogger) Success(msg string, args ...any) {
+	log.Printf("[SUCCESS] "+msg, args...)
+}
+
+func (l *defaultLogger) Trace(msg string, args ...any) {
+	log.Printf("[TRACE] "+msg, args...)
+}
+
 // NewDefaultLogger creates a simple logger using the standard log package
 func NewDefaultLogger() Logger {
 	return &defaultLogger{}
@@ -83,7 +93,6 @@ func NewDefaultLogger() Logger {
 
 // ptermLogger implements Logger interface using pterm live rendering
 type ptermLogger struct {
-	verbose      bool
 	logs         []LogEntry   // Structured logs for web interface
 	terminalLogs []string     // Colored logs for terminal display
 	pendingLogs  []pendingLog // Logs buffered before area starts
@@ -105,12 +114,12 @@ type pendingLog struct {
 	timestamp string
 }
 
-// NewPtermLogger creates a new pterm-based logger with live rendering
-func NewPtermLogger(verbose bool) Logger {
+// NewPtermLogger creates a new pterm-based logger with live rendering.
+// Terminal display gating is controlled by the centralized logging.Verbosity.
+func NewPtermLogger() Logger {
 	interactive := term.IsTerminal(int(os.Stdout.Fd()))
 
 	logger := &ptermLogger{
-		verbose:      verbose,
 		logs:         make([]LogEntry, 0),
 		terminalLogs: make([]string, 0),
 		pendingLogs:  make([]pendingLog, 0),
@@ -238,8 +247,14 @@ func (l *ptermLogger) formatAndBufferLog(level, levelType, message, timestamp st
 	case "error":
 		prefix = pterm.FgRed.Sprint("ERROR")
 		coloredMsg = pterm.FgRed.Sprint(message)
+	case "success":
+		prefix = pterm.FgGreen.Sprint(" OK  ")
+		coloredMsg = message
 	case "debug":
 		prefix = pterm.FgGray.Sprint("DEBUG")
+		coloredMsg = pterm.FgGray.Sprint(message)
+	case "trace":
+		prefix = pterm.FgGray.Sprint("TRACE")
 		coloredMsg = pterm.FgGray.Sprint(message)
 	}
 
@@ -297,7 +312,7 @@ func (l *ptermLogger) log(level, levelType, msg string, args ...any) {
 	// Capture wsManager reference while holding lock to avoid race with SetWebSocketManager
 	ws := l.wsManager
 
-	shouldPrint := levelType != "debug" || l.verbose
+	shouldPrint := l.shouldPrint(levelType)
 
 	if shouldPrint {
 		if l.interactive {
@@ -326,8 +341,12 @@ func (l *ptermLogger) log(level, levelType, msg string, args ...any) {
 				logging.Warning("%s", formatted)
 			case "error":
 				logging.Error("%s", formatted)
+			case "success":
+				logging.Success("%s", formatted)
 			case "debug":
 				logging.Debug("%s", formatted)
+			case "trace":
+				logging.Trace("%s", formatted)
 			}
 		}
 	} else {
@@ -360,6 +379,25 @@ func (l *ptermLogger) Logs() []LogEntry {
 	return logsCopy
 }
 
+// shouldPrint checks centralized logging verbosity for terminal display gating.
+// WebSocket broadcast is unconditional -- the browser filter handles visibility.
+func (l *ptermLogger) shouldPrint(levelType string) bool {
+	switch levelType {
+	case "trace":
+		return logging.AtLevel(logging.LogLevelTrace)
+	case "debug":
+		return logging.AtLevel(logging.LogLevelDebug)
+	case "info":
+		return logging.AtLevel(logging.LogLevelInfo)
+	case "success":
+		return logging.CurrentVerbosity() >= logging.VerbosityNormal
+	case "warning", "error":
+		return true
+	default:
+		return false
+	}
+}
+
 func (l *ptermLogger) Info(msg string, args ...any) {
 	l.log("INFO", "info", msg, args...)
 }
@@ -374,6 +412,14 @@ func (l *ptermLogger) Error(msg string, args ...any) {
 
 func (l *ptermLogger) Debug(msg string, args ...any) {
 	l.log("DEBUG", "debug", msg, args...)
+}
+
+func (l *ptermLogger) Success(msg string, args ...any) {
+	l.log(" OK ", "success", msg, args...)
+}
+
+func (l *ptermLogger) Trace(msg string, args ...any) {
+	l.log("TRACE", "trace", msg, args...)
 }
 
 // Clear clears all logs from the buffer

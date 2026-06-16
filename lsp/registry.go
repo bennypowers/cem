@@ -617,7 +617,7 @@ func (r *Registry) loadPackageManifest(packagePath string, workspace types.Works
 // generateInMemoryManifest generates a custom elements manifest in-memory for a package directory
 // This is used when a workspace package declares customElements but the file doesn't exist yet
 func (r *Registry) generateInMemoryManifest(packagePath string, packageName string) *M.Package {
-	logging.Info("[IN-MEMORY] Starting in-memory generation for package '%s' at path: %s", packageName, packagePath)
+	logging.Debug("[IN-MEMORY] Starting in-memory generation for package '%s' at path: %s", packageName, packagePath)
 
 	// Create a workspace context for the package directory
 	wsCtx := workspace.NewFileSystemWorkspaceContext(packagePath)
@@ -628,7 +628,7 @@ func (r *Registry) generateInMemoryManifest(packagePath string, packageName stri
 		return nil
 	}
 
-	logging.Info("[IN-MEMORY] Successfully initialized workspace context for %s", packageName)
+	logging.Debug("[IN-MEMORY] Successfully initialized workspace context for %s", packageName)
 
 	// Create a generate session
 	session, err := generate.NewGenerateSession(wsCtx)
@@ -638,7 +638,7 @@ func (r *Registry) generateInMemoryManifest(packagePath string, packageName stri
 	}
 	defer session.Close()
 
-	logging.Info("[IN-MEMORY] Created generate session, starting generation for %s...", packageName)
+	logging.Debug("[IN-MEMORY] Created generate session, starting generation for %s...", packageName)
 
 	// Generate the manifest
 	pkg, err := session.GenerateFullManifest(context.Background())
@@ -647,7 +647,7 @@ func (r *Registry) generateInMemoryManifest(packagePath string, packageName stri
 		return nil
 	}
 
-	logging.Info("[IN-MEMORY] Successfully generated manifest for %s with %d modules", packageName, len(pkg.Modules))
+	logging.Success("[IN-MEMORY] Generated manifest for %s with %d modules", packageName, len(pkg.Modules))
 
 	return pkg
 }

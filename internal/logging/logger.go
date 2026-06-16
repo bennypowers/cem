@@ -71,11 +71,40 @@ func init() {
 	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
 }
 
+// Verbosity controls how much diagnostic output is produced.
+type Verbosity int
+
+const (
+	VerbosityQuiet   Verbosity = -1 // -q: warnings and errors only
+	VerbosityNormal  Verbosity = 0  // default: + success
+	VerbosityVerbose Verbosity = 1  // -v: + info
+	VerbosityDebug   Verbosity = 2  // -vv: + debug (timings, config, cache)
+	VerbosityTrace   Verbosity = 3  // -vvv: + trace (per-file, tree-sitter)
+)
+
+func (v Verbosity) String() string {
+	switch v {
+	case VerbosityQuiet:
+		return "quiet"
+	case VerbosityNormal:
+		return "normal"
+	case VerbosityVerbose:
+		return "verbose"
+	case VerbosityDebug:
+		return "debug"
+	case VerbosityTrace:
+		return "trace"
+	default:
+		return "unknown"
+	}
+}
+
 // LogLevel represents the severity level of a log message
 type LogLevel int
 
 const (
-	LogLevelDebug LogLevel = iota
+	LogLevelTrace LogLevel = iota
+	LogLevelDebug
 	LogLevelInfo
 	LogLevelWarning
 	LogLevelError
@@ -84,6 +113,8 @@ const (
 // String returns the string representation of the log level
 func (l LogLevel) String() string {
 	switch l {
+	case LogLevelTrace:
+		return "TRACE"
 	case LogLevelDebug:
 		return "DEBUG"
 	case LogLevelInfo:
@@ -99,11 +130,10 @@ func (l LogLevel) String() string {
 
 // Logger provides centralized logging that adapts to CLI vs LSP contexts
 type Logger struct {
-	mu           sync.RWMutex
-	mode         LoggerMode
-	lspContext   *glsp.Context
-	debugEnabled bool
-	quietEnabled bool
+	mu         sync.RWMutex
+	mode       LoggerMode
+	lspContext *glsp.Context
+	verbosity  Verbosity
 }
 
 // LoggerMode determines how logs are output
@@ -114,16 +144,15 @@ const (
 	ModeCLI LoggerMode = iota
 	// ModeLSP uses LSP protocol messages (window/showMessage, window/logMessage)
 	ModeLSP
-	// ModeServe suppresses debug-level noise but allows info/warning/error/success.
-	// Used by the dev server to prevent generation worker chatter from interfering
-	// with the interactive status line while preserving startup and lifecycle messages.
+	// ModeServe uses pterm for CLI output like ModeCLI. Verbosity gating is
+	// controlled by the shared Verbosity level, same as all other modes.
 	ModeServe
 )
 
 // Global logger instance
 var globalLogger = &Logger{
-	mode:         ModeCLI, // Default to CLI mode
-	debugEnabled: false,
+	mode:      ModeCLI,
+	verbosity: VerbosityNormal,
 }
 
 // GetLogger returns the global logger instance
@@ -146,35 +175,90 @@ func (l *Logger) SetLSPContext(context *glsp.Context) {
 	l.mode = ModeLSP
 }
 
-// SetDebugEnabled controls whether debug messages are shown
-func (l *Logger) SetDebugEnabled(enabled bool) {
+// SetVerbosity sets the verbosity level and syncs pterm debug state.
+func (l *Logger) SetVerbosity(v Verbosity) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.debugEnabled = enabled
+	l.verbosity = v
+	if v >= VerbosityDebug {
+		pterm.EnableDebugMessages()
+	} else {
+		pterm.DisableDebugMessages()
+	}
 }
 
-// IsDebugEnabled returns whether debug logging is enabled
-func (l *Logger) IsDebugEnabled() bool {
+// Verbosity returns the current verbosity level.
+func (l *Logger) Verbosity() Verbosity {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
-	return l.debugEnabled
+	return l.verbosity
 }
 
-// SetQuietEnabled controls whether quiet mode is active (suppresses INFO and DEBUG)
+// AtLevel reports whether a message at the given level would be logged.
+func (l *Logger) AtLevel(level LogLevel) bool {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	return l.shouldLog(level)
+}
+
+func (l *Logger) shouldLog(level LogLevel) bool {
+	switch level {
+	case LogLevelTrace:
+		return l.verbosity >= VerbosityTrace
+	case LogLevelDebug:
+		return l.verbosity >= VerbosityDebug
+	case LogLevelInfo:
+		return l.verbosity >= VerbosityVerbose
+	case LogLevelWarning, LogLevelError:
+		return true
+	}
+	return false
+}
+
+// SetDebugEnabled is a convenience shim: true sets VerbosityDebug, false
+// drops back to VerbosityNormal (unless already quieter).
+func (l *Logger) SetDebugEnabled(enabled bool) {
+	l.mu.Lock()
+	v := l.verbosity
+	l.mu.Unlock()
+	if enabled && v < VerbosityDebug {
+		l.SetVerbosity(VerbosityDebug)
+	} else if !enabled && v >= VerbosityDebug {
+		l.SetVerbosity(VerbosityNormal)
+	}
+}
+
+// IsDebugEnabled returns whether debug logging is enabled (verbosity >= Debug).
+func (l *Logger) IsDebugEnabled() bool {
+	return l.AtLevel(LogLevelDebug)
+}
+
+// SetQuietEnabled is a convenience shim: true sets VerbosityQuiet, false
+// restores VerbosityNormal (unless already more verbose).
 func (l *Logger) SetQuietEnabled(enabled bool) {
 	l.mu.Lock()
-	defer l.mu.Unlock()
-	l.quietEnabled = enabled
+	v := l.verbosity
+	l.mu.Unlock()
+	if enabled {
+		l.SetVerbosity(VerbosityQuiet)
+	} else if v == VerbosityQuiet {
+		l.SetVerbosity(VerbosityNormal)
+	}
 }
 
-// IsQuietEnabled returns whether quiet mode is active
+// IsQuietEnabled returns whether quiet mode is active (verbosity == Quiet).
 func (l *Logger) IsQuietEnabled() bool {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
-	return l.quietEnabled
+	return l.verbosity == VerbosityQuiet
 }
 
-// Debug logs a debug message (only shown if debug is enabled)
+// Trace logs a trace message (only shown at -vvv).
+func (l *Logger) Trace(format string, args ...any) {
+	l.log(LogLevelTrace, format, args...)
+}
+
+// Debug logs a debug message (only shown at -vv or higher).
 func (l *Logger) Debug(format string, args ...any) {
 	l.log(LogLevelDebug, format, args...)
 }
@@ -324,22 +408,26 @@ type MessageAction struct {
 	URL   string
 }
 
-// Success logs a success message (treated as Info in LSP mode)
+// Success logs a success message. In LSP mode, emits as Info-level
+// window/logMessage bypassing the normal verbosity gate so LSP clients
+// see success messages at default verbosity without polluting stdio.
 func (l *Logger) Success(format string, args ...any) {
 	l.mu.RLock()
 	mode := l.mode
-	quietEnabled := l.quietEnabled
+	verbosity := l.verbosity
+	lspContext := l.lspContext
 	l.mu.RUnlock()
 
-	// ModeServe always shows success; other modes respect quiet
-	if mode != ModeServe && quietEnabled {
+	if verbosity < VerbosityNormal {
 		return
 	}
 
-	if mode == ModeCLI || mode == ModeServe {
+	switch mode {
+	case ModeCLI, ModeServe:
 		pterm.Success.Printf(format+"\n", args...)
-	} else {
-		l.log(LogLevelInfo, format, args...)
+	case ModeLSP:
+		message := fmt.Sprintf(format, args...)
+		l.logLSP(LogLevelInfo, message, lspContext)
 	}
 }
 
@@ -348,22 +436,10 @@ func (l *Logger) log(level LogLevel, format string, args ...any) {
 	l.mu.RLock()
 	mode := l.mode
 	lspContext := l.lspContext
-	debugEnabled := l.debugEnabled
-	quietEnabled := l.quietEnabled
+	ok := l.shouldLog(level)
 	l.mu.RUnlock()
 
-	// Skip debug messages if debug is not enabled
-	if level == LogLevelDebug && !debugEnabled {
-		return
-	}
-
-	// ModeServe: suppress debug noise, allow everything else
-	if mode == ModeServe && level == LogLevelDebug {
-		return
-	}
-
-	// Skip INFO and DEBUG messages if quiet mode is enabled (CLI/LSP only)
-	if mode != ModeServe && quietEnabled && (level == LogLevelInfo || level == LogLevelDebug) {
+	if !ok {
 		return
 	}
 
@@ -380,7 +456,7 @@ func (l *Logger) log(level LogLevel, format string, args ...any) {
 // logCLI handles CLI-mode logging using pterm
 func (l *Logger) logCLI(level LogLevel, message string) {
 	switch level {
-	case LogLevelDebug:
+	case LogLevelTrace, LogLevelDebug:
 		pterm.Debug.Println(message)
 	case LogLevelInfo:
 		pterm.Info.Println(message)
@@ -402,7 +478,7 @@ func (l *Logger) logLSP(level LogLevel, message string, context *glsp.Context) {
 	// Map log levels to LSP message types
 	var messageType protocol.MessageType
 	switch level {
-	case LogLevelDebug:
+	case LogLevelTrace, LogLevelDebug:
 		messageType = protocol.MessageTypeLog
 	case LogLevelInfo:
 		messageType = protocol.MessageTypeInfo
@@ -423,6 +499,11 @@ func (l *Logger) logLSP(level LogLevel, message string, context *glsp.Context) {
 }
 
 // Convenience functions for global logger
+
+func Trace(format string, args ...any) {
+	globalLogger.Trace(format, args...)
+}
+
 func Debug(format string, args ...any) {
 	globalLogger.Debug(format, args...)
 }
@@ -461,6 +542,18 @@ func SetMode(mode LoggerMode) {
 
 func SetLSPContext(context *glsp.Context) {
 	globalLogger.SetLSPContext(context)
+}
+
+func SetVerbosity(v Verbosity) {
+	globalLogger.SetVerbosity(v)
+}
+
+func CurrentVerbosity() Verbosity {
+	return globalLogger.Verbosity()
+}
+
+func AtLevel(level LogLevel) bool {
+	return globalLogger.AtLevel(level)
 }
 
 func SetDebugEnabled(enabled bool) {

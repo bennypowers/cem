@@ -47,6 +47,14 @@ func (m *mockLogger) Debug(msg string, args ...any) {
 	m.logs = append(m.logs, fmt.Sprintf(msg, args...))
 }
 
+func (m *mockLogger) Success(msg string, args ...any) {
+	m.logs = append(m.logs, fmt.Sprintf(msg, args...))
+}
+
+func (m *mockLogger) Trace(msg string, args ...any) {
+	m.logs = append(m.logs, fmt.Sprintf(msg, args...))
+}
+
 // TestLogger_LogsRequest tests that requests are logged
 func TestLogger_LogsRequest(t *testing.T) {
 	mock := &mockLogger{}

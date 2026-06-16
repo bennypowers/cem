@@ -61,14 +61,14 @@ func newResolutionContext() *resolutionContext {
 // ResolveTypeAliases resolves all type aliases in the package.
 // externalResolver may be nil if cross-package resolution is not needed.
 func ResolveTypeAliases(pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, externalResolver *ExternalTypeResolver) error {
-	L.Debug("ResolveTypeAliases called with %d modules", len(pkg.Modules))
+	L.Debug("Resolving type aliases across %d modules", len(pkg.Modules))
 	for i := range pkg.Modules {
 		modulePath := pkg.Modules[i].Path
 		aliasCount := 0
 		if aliases, ok := typeAliases[modulePath]; ok {
 			aliasCount = len(aliases)
 		}
-		L.Debug("Resolving types in module: %s (has %d type aliases)", modulePath, aliasCount)
+		L.Trace("Resolving types in module: %s (has %d type aliases)", modulePath, aliasCount)
 		if err := resolveModuleTypes(&pkg.Modules[i], pkg, typeAliases, imports, externalResolver); err != nil {
 			return err
 		}
@@ -128,7 +128,7 @@ func resolveType(typ *M.Type, module *M.Module, pkg *M.Package, typeAliases modu
 	resolved, refs := resolveTypeText(typ.Text, module, pkg, typeAliases, imports, externalResolver, ctx)
 
 	if resolved != typ.Text {
-		L.Debug("Resolved type: %s -> %s", typ.Text, resolved)
+		L.Trace("%s: resolved type %s -> %s", module.Path, typ.Text, resolved)
 		typ.Text = resolved
 		typ.References = refs
 	}
@@ -213,12 +213,12 @@ func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAlia
 	// Check if the type is imported from another module
 	if moduleImports, hasImports := imports[module.Path]; hasImports {
 		if imp, found := moduleImports[typeText]; found {
-			L.Debug("Type '%s' is imported from '%s' (original name: '%s')", typeText, imp.spec, imp.name)
+			L.Trace("%s: type '%s' imported from '%s' (original: '%s')", module.Path, typeText, imp.spec, imp.name)
 
 			// Find the target module in the package
 			targetModule := findModuleBySpec(pkg, module.Path, imp.spec)
 			if targetModule != nil {
-				L.Debug("Found target module: %s", targetModule.Path)
+				L.Trace("%s: found target module %s for type '%s'", module.Path, targetModule.Path, typeText)
 
 				// Look up the type in the target module using the original name
 				if targetAliases, hasAliases := typeAliases[targetModule.Path]; hasAliases {
@@ -241,13 +241,13 @@ func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAlia
 
 				// Type exists in a local module but has no alias definition there;
 				// skip external resolution to avoid shadowing local types.
-				L.Debug("Type alias '%s' not found in target module %s", imp.name, targetModule.Path)
+				L.Trace("%s: type alias '%s' not found in target module %s", module.Path, imp.name, targetModule.Path)
 			}
 
 			// Target module not found in this package — try external resolution
 			if targetModule == nil && externalResolver != nil {
 				if definition, pkgName, ok := externalResolver.ResolveType(imp.spec, imp.name); ok {
-					L.Debug("Resolved external type '%s' from package '%s'", imp.name, pkgName)
+					L.Trace("%s: resolved external type '%s' from package '%s'", module.Path, imp.name, pkgName)
 					ref := M.TypeReference{
 						Reference: M.Reference{
 							Name:    imp.name,
@@ -258,12 +258,12 @@ func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAlia
 					refs := append([]M.TypeReference{ref}, nestedRefs...)
 					return resolved, refs
 				}
-				L.Debug("Target module not found for import spec: %s", imp.spec)
+				L.Trace("%s: target module not found for import spec '%s'", module.Path, imp.spec)
 			}
 		}
 	}
 
-	L.Debug("Type alias not found in module: %s", typeText)
+	L.Trace("%s: type alias not found: %s", module.Path, typeText)
 	return typeText, nil
 }
 
@@ -287,10 +287,9 @@ func findModuleBySpec(pkg *M.Package, currentModulePath string, importSpec strin
 			// "@rhds/elements/lib/types.js" -> "lib/types.js"
 			pathWithoutPackage := strings.Join(segments[2:], "/")
 			resolvedPath = pathWithoutPackage
-			L.Debug("Package-scoped import '%s' -> '%s'", importSpec, resolvedPath)
+			L.Trace("Package-scoped import '%s' -> '%s'", importSpec, resolvedPath)
 		} else {
-			// Invalid package path, skip
-			L.Debug("Invalid package-scoped import: %s", importSpec)
+			L.Trace("Invalid package-scoped import: %s", importSpec)
 			return nil
 		}
 	} else {
@@ -302,7 +301,7 @@ func findModuleBySpec(pkg *M.Package, currentModulePath string, importSpec strin
 	// Clean the path (remove . and .. segments)
 	resolvedPath = path.Clean(resolvedPath)
 
-	L.Debug("Resolving import spec '%s' from '%s' -> '%s'", importSpec, currentModulePath, resolvedPath)
+	L.Trace("Resolving import spec '%s' from '%s' -> '%s'", importSpec, currentModulePath, resolvedPath)
 
 	// Try to find a matching module
 	// The manifest uses .js extension, but the import might not have an extension
@@ -321,12 +320,12 @@ func findModuleBySpec(pkg *M.Package, currentModulePath string, importSpec strin
 	for _, modulePath := range possiblePaths {
 		for i := range pkg.Modules {
 			if pkg.Modules[i].Path == modulePath {
-				L.Debug("Matched module: %s", modulePath)
+				L.Trace("Matched module: %s", modulePath)
 				return &pkg.Modules[i]
 			}
 		}
 	}
 
-	L.Debug("No module found for paths: %v", possiblePaths)
+	L.Trace("No module found for paths: %v", possiblePaths)
 	return nil
 }

@@ -75,10 +75,6 @@ func NewModuleProcessor(
 	queryManager *Q.QueryManager,
 	cssCache CssCache,
 ) (*ModuleProcessor, error) {
-	cfg, err := ctx.Config()
-	if err != nil {
-		return nil, err
-	}
 	path := file
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(ctx.Root(), file)
@@ -88,7 +84,7 @@ func NewModuleProcessor(
 		return nil, fmt.Errorf("NewModuleProcessor: %w", err)
 	}
 	module := M.NewModule(file)
-	logger := NewLogCtx(file, cfg)
+	logger := NewLogCtx(file)
 
 	// Debug: log module creation/reuse
 	logger.Debug("Processing module: %s (address: %p)", file, module)

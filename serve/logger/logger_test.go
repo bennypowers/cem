@@ -3,6 +3,8 @@ package logger
 import (
 	"encoding/json"
 	"testing"
+
+	"bennypowers.dev/cem/internal/logging"
 )
 
 type mockBroadcaster struct {
@@ -15,8 +17,11 @@ func (m *mockBroadcaster) Broadcast(msg []byte) error {
 }
 
 func TestDebugLogging(t *testing.T) {
-	t.Run("Broadcasts when verbose=false", func(t *testing.T) {
-		l := NewPtermLogger(false) // verbose=false
+	t.Run("Broadcasts at any verbosity", func(t *testing.T) {
+		logging.SetVerbosity(logging.VerbosityNormal)
+		defer logging.SetVerbosity(logging.VerbosityNormal)
+
+		l := NewPtermLogger()
 		mockWS := &mockBroadcaster{}
 
 		if setter, ok := l.(interface{ SetWebSocketManager(Broadcaster) }); ok {
@@ -26,9 +31,8 @@ func TestDebugLogging(t *testing.T) {
 		msg := "test debug message"
 		l.Debug(msg)
 
-		// Check if broadcasted
 		if len(mockWS.messages) == 0 {
-			t.Fatal("Expected debug message to be broadcasted even when verbose=false, but it wasn't")
+			t.Fatal("Expected debug message to be broadcasted even at normal verbosity, but it wasn't")
 		}
 
 		var logMsg LogMessage
@@ -44,7 +48,6 @@ func TestDebugLogging(t *testing.T) {
 			t.Errorf("Expected message %q, got %q", msg, logMsg.Logs[0].Message)
 		}
 
-		// Check internal logs
 		if getter, ok := l.(interface{ Logs() []LogEntry }); ok {
 			logs := getter.Logs()
 			if len(logs) != 1 {
@@ -53,8 +56,11 @@ func TestDebugLogging(t *testing.T) {
 		}
 	})
 
-	t.Run("Broadcasts when verbose=true", func(t *testing.T) {
-		l := NewPtermLogger(true) // verbose=true
+	t.Run("Broadcasts at debug verbosity", func(t *testing.T) {
+		logging.SetVerbosity(logging.VerbosityDebug)
+		defer logging.SetVerbosity(logging.VerbosityNormal)
+
+		l := NewPtermLogger()
 		mockWS := &mockBroadcaster{}
 
 		if setter, ok := l.(interface{ SetWebSocketManager(Broadcaster) }); ok {
@@ -65,7 +71,7 @@ func TestDebugLogging(t *testing.T) {
 		l.Debug(msg)
 
 		if len(mockWS.messages) == 0 {
-			t.Fatal("Expected debug message to be broadcasted when verbose=true, but it wasn't")
+			t.Fatal("Expected debug message to be broadcasted at debug verbosity, but it wasn't")
 		}
 	})
 }

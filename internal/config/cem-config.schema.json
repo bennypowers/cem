@@ -25,7 +25,13 @@
     },
     "verbose": {
       "type": "boolean",
-      "description": "Enable verbose output"
+      "description": "Deprecated: use logLevel instead. Equivalent to logLevel: info.",
+      "deprecated": true
+    },
+    "logLevel": {
+      "type": "string",
+      "enum": ["error", "warn", "success", "info", "debug", "trace"],
+      "description": "Set the minimum log level. Overrides verbose if both are set."
     },
     "additionalPackages": {
       "type": "array",

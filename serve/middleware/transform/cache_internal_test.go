@@ -62,6 +62,10 @@ func (m *mockLogger) Debug(msg string, args ...any) {
 	}
 }
 
+func (m *mockLogger) Success(msg string, args ...any) {}
+func (m *mockLogger) Trace(msg string, args ...any)   {
+}
+
 func TestExtractDependencies_CSSImports(t *testing.T) {
 	// Read fixture file with CSS import
 	inputPath := filepath.Join("..", "..", "testdata", "transforms", "css-import", "input.ts")

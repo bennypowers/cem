@@ -33,7 +33,6 @@ func validateWorkspace(cmd *cobra.Command) error {
 		return err
 	}
 
-	verbose, _ := cmd.Flags().GetBool("verbose")
 	disableFlags, _ := cmd.Flags().GetStringArray("disable")
 	format, _ := cmd.Flags().GetString("format")
 	configDisabled := viper.GetStringSlice("warnings.disable")
@@ -52,8 +51,7 @@ func validateWorkspace(cmd *cobra.Command) error {
 			return err
 		}
 		displayOptions := V.DisplayOptions{
-			Verbose: verbose,
-			Format:  format,
+			Format: format,
 		}
 		fmt.Fprintf(os.Stderr, "\n%s:\n", pkg.Name)
 		if err := V.PrintValidationResult(manifestPath, result, displayOptions); err != nil {
@@ -69,7 +67,6 @@ func validateWorkspace(cmd *cobra.Command) error {
 }
 
 func init() {
-	validateCmd.Flags().BoolP("verbose", "v", false, "Show detailed information including schema version")
 	validateCmd.Flags().StringArray("disable", []string{}, "Disable specific warning rules or categories")
 	validateCmd.Flags().String("format", "text", "Output format: text or json")
 	rootCmd.AddCommand(validateCmd)
@@ -105,7 +102,6 @@ var validateCmd = &cobra.Command{
 		}
 
 		// Get flags
-		verbose, _ := cmd.Flags().GetBool("verbose")
 		disableFlags, _ := cmd.Flags().GetStringArray("disable")
 		format, _ := cmd.Flags().GetString("format")
 
@@ -128,8 +124,7 @@ var validateCmd = &cobra.Command{
 
 		// Print the results
 		displayOptions := V.DisplayOptions{
-			Verbose: verbose,
-			Format:  format,
+			Format: format,
 		}
 		if err := V.PrintValidationResult(manifestPath, result, displayOptions); err != nil {
 			fmt.Fprintf(os.Stderr, "Error displaying validation results: %v\n", err)

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"sync"
 
+	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
 )
@@ -130,8 +131,7 @@ func (gs *GenerateSession) GenerateFullManifest(ctx context.Context) (*M.Package
 	gs.rebuildModuleIndex()
 	gs.mu.Unlock()
 
-	cfg, _ := gs.setupCtx.Config()
-	if cfg != nil && cfg.Verbose {
+	if logging.AtLevel(logging.LogLevelDebug) {
 		RenderBarChart(logs)
 	}
 

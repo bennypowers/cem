@@ -34,7 +34,6 @@ import (
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
 	"github.com/bmatcuk/doublestar"
-	"github.com/pterm/pterm"
 )
 
 var _ types.WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
@@ -81,14 +80,32 @@ func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
 	if cfg.Generate.Exclude == nil {
 		cfg.Generate.Exclude = make([]string, 0)
 	}
-	// Set debug verbosity
-	if cfg.Verbose {
-		pterm.EnableDebugMessages()
-	} else {
-		pterm.DisableDebugMessages()
+	// Config file verbosity: logLevel takes precedence over deprecated verbose.
+	// CLI flags override config afterward in PersistentPreRunE.
+	if v, ok := parseLogLevel(cfg.LogLevel); ok {
+		logging.SetVerbosity(v)
+	} else if cfg.Verbose {
+		logging.SetVerbosity(logging.VerbosityVerbose)
 	}
 
 	return cfg, nil
+}
+
+func parseLogLevel(s string) (logging.Verbosity, bool) {
+	switch s {
+	case "error", "warn":
+		return logging.VerbosityQuiet, true
+	case "success":
+		return logging.VerbosityNormal, true
+	case "info":
+		return logging.VerbosityVerbose, true
+	case "debug":
+		return logging.VerbosityDebug, true
+	case "trace":
+		return logging.VerbosityTrace, true
+	default:
+		return logging.VerbosityNormal, false
+	}
 }
 
 // Option configures a FileSystemWorkspaceContext.
