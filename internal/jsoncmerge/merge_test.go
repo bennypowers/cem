@@ -12,7 +12,7 @@ import (
 var mergeValue = map[string]any{"command": "cem", "args": []string{"mcp"}}
 
 func TestMerge(t *testing.T) {
-	fs := testutil.LoadTestdataFS(t, "testdata", "/")
+	fs := testutil.LoadTestdataFS(t, "testdata", "/testdata")
 
 	tests := []struct {
 		name   string
@@ -32,7 +32,7 @@ func TestMerge(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			inputPath := filepath.Join(tc.name + ".input.jsonc")
+			inputPath := filepath.Join("testdata", tc.name+".input.jsonc")
 			input, err := fs.ReadFile(inputPath)
 			if err != nil {
 				t.Fatalf("failed to read input: %v", err)
@@ -50,6 +50,7 @@ func TestMerge(t *testing.T) {
 			testutil.CheckGolden(t, tc.name, result, testutil.GoldenOptions{
 				Dir:       filepath.Join("testdata", "goldens"),
 				Extension: ".golden.jsonc",
+				FS:        fs,
 			})
 		})
 	}

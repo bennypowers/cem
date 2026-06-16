@@ -1,10 +1,10 @@
 Claude Desktop
 
  Linux (native):
- /home/bennyp/.config/Claude/claude_desktop_config.json
+ $HOME/.config/Claude/claude_desktop_config.json
 
  Linux (Flatpak):
- /home/bennyp/.var/app/com.anthropic.Claude/config/Claude/claude_desktop_config.json
+ $HOME/.var/app/com.anthropic.Claude/config/Claude/claude_desktop_config.json
 
  {
  "mcpServers": {
