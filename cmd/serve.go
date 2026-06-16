@@ -301,7 +301,7 @@ var serveCmd = &cobra.Command{
 		}
 		// Use actual port (may differ from requested when --port 0)
 		actualPort := server.Port()
-		log.Info("Server started on http://localhost:%d%s", actualPort, reloadStatus)
+		log.Success("Server started on http://localhost:%d%s", actualPort, reloadStatus)
 
 		// Update status with running info (with colors)
 		reloadColor := pterm.FgRed.Sprint("false")

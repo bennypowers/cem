@@ -161,12 +161,19 @@ test-frontend: install-frontend build
 	(cd serve/testdata/demo-routing && exec ../../../dist/cem serve --port 0) > "$$LOGFILE" 2>&1 & \
 	echo $$! > "$$PIDFILE"; \
 	echo "Waiting for server to be ready..."; \
+	PID=$$(cat "$$PIDFILE"); \
 	TIMEOUT=30; \
 	ELAPSED=0; \
 	PORT=""; \
 	while [ $$ELAPSED -lt $$TIMEOUT ]; do \
+		if ! kill -0 "$$PID" 2>/dev/null; then \
+			echo "ERROR: cem serve process (PID $$PID) exited prematurely"; \
+			echo "Server log:"; \
+			cat "$$LOGFILE"; \
+			exit 1; \
+		fi; \
 		if [ -z "$$PORT" ]; then \
-			PORT=$$(grep -oP 'localhost:\K[0-9]+' "$$LOGFILE" 2>/dev/null | head -1); \
+			PORT=$$(ss -tlnp 2>/dev/null | awk "/pid=$$PID/"' {match($$4, /:([0-9]+)$$/, a); if (a[1]) print a[1]}' | head -1); \
 		fi; \
 		if [ -n "$$PORT" ] && \
 		   curl -sf "http://localhost:$$PORT/__cem/api/health" >/dev/null 2>&1; then \
