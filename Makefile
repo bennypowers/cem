@@ -173,14 +173,18 @@ test-frontend: install-frontend build
 			exit 1; \
 		fi; \
 		if [ -z "$$PORT" ]; then \
-			PORT=$$(ss -tlnp 2>/dev/null | awk "/pid=$$PID/"' {match($$4, /:([0-9]+)$$/, a); if (a[1]) print a[1]}' | head -1); \
+			if command -v ss >/dev/null 2>&1; then \
+				PORT=$$(ss -tlnp 2>/dev/null | awk "/pid=$$PID/"' {match($$4, /:([0-9]+)$$/, a); if (a[1]) print a[1]}' | head -1); \
+			elif command -v lsof >/dev/null 2>&1; then \
+				PORT=$$(lsof -iTCP -sTCP:LISTEN -nP -a -p "$$PID" 2>/dev/null | awk 'NR>1 {match($$9, /:([0-9]+)$$/, a); if (a[1]) print a[1]}' | head -1); \
+			fi; \
 		fi; \
 		if [ -n "$$PORT" ] && \
 		   curl -sf "http://localhost:$$PORT/__cem/api/health" >/dev/null 2>&1; then \
 			echo "Server is ready on port $$PORT."; \
 			break; \
 		fi; \
-		sleep 0.5; \
+		sleep 1; \
 		ELAPSED=$$((ELAPSED + 1)); \
 	done; \
 	if [ $$ELAPSED -ge $$TIMEOUT ]; then \
