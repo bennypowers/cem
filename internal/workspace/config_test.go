@@ -222,6 +222,15 @@ func TestInit_VerboseConfig(t *testing.T) {
 	assert.True(t, cfg.Verbose)
 }
 
+func TestInit_LogLevelConfig(t *testing.T) {
+	root := absFixture(t, "config-loglevel")
+	ctx := workspace.NewFileSystemWorkspaceContext(root)
+	require.NoError(t, ctx.Init())
+	cfg, err := ctx.Config()
+	require.NoError(t, err)
+	assert.Equal(t, "debug", cfg.LogLevel)
+}
+
 func TestLoadPackageConfigWithWorkspaceDefaults_InvalidPackageConfig(t *testing.T) {
 	pkgDir := absFixture(t, "workspace-with-config/packages/broken")
 	_, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)

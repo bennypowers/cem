@@ -80,12 +80,33 @@ func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
 	if cfg.Generate.Exclude == nil {
 		cfg.Generate.Exclude = make([]string, 0)
 	}
-	// If config file sets verbose and no flag override, enable verbose
-	if cfg.Verbose && logging.GetVerbosity() == logging.VerbosityNormal {
-		logging.SetVerbosity(logging.VerbosityVerbose)
+	// Config file verbosity: logLevel takes precedence over deprecated verbose
+	if logging.GetVerbosity() == logging.VerbosityNormal {
+		if v, ok := parseLogLevel(cfg.LogLevel); ok {
+			logging.SetVerbosity(v)
+		} else if cfg.Verbose {
+			logging.SetVerbosity(logging.VerbosityVerbose)
+		}
 	}
 
 	return cfg, nil
+}
+
+func parseLogLevel(s string) (logging.Verbosity, bool) {
+	switch s {
+	case "error", "warn":
+		return logging.VerbosityQuiet, true
+	case "success":
+		return logging.VerbosityNormal, true
+	case "info":
+		return logging.VerbosityVerbose, true
+	case "debug":
+		return logging.VerbosityDebug, true
+	case "trace":
+		return logging.VerbosityTrace, true
+	default:
+		return logging.VerbosityNormal, false
+	}
 }
 
 // Option configures a FileSystemWorkspaceContext.
