@@ -182,12 +182,21 @@ func (s *Server) setupResources() error {
 
 	// Register each resource with the MCP server
 	for _, resourceDef := range resourceDefs {
-		s.server.AddResource(&mcp.Resource{
-			URI:         resourceDef.URI,
-			Name:        resourceDef.Name,
-			MIMEType:    resourceDef.MimeType,
-			Description: resourceDef.Description,
-		}, resourceDef.Handler)
+		if resourceDef.URITemplate {
+			s.server.AddResourceTemplate(&mcp.ResourceTemplate{
+				URITemplate: resourceDef.URI,
+				Name:        resourceDef.Name,
+				MIMEType:    resourceDef.MimeType,
+				Description: resourceDef.Description,
+			}, resourceDef.Handler)
+		} else {
+			s.server.AddResource(&mcp.Resource{
+				URI:         resourceDef.URI,
+				Name:        resourceDef.Name,
+				MIMEType:    resourceDef.MimeType,
+				Description: resourceDef.Description,
+			}, resourceDef.Handler)
+		}
 	}
 
 	return nil
