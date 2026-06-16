@@ -18,12 +18,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package importmap
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"bennypowers.dev/cem/serve/middleware"
+	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 )
 
 // MiddlewareConfig holds configuration for the import map injection middleware
@@ -113,57 +115,121 @@ func New(config MiddlewareConfig) middleware.Middleware {
 	}
 }
 
-// injectImportMap injects or replaces an import map script in HTML
-// If an import map already exists, it replaces it; otherwise it injects a new one
+// injectImportMap injects or replaces an import map in HTML using DOM parsing.
+// The import map is placed before the first <script> in <head>, or as the last
+// child of <head> if no scripts exist. Any existing import map is removed first.
 func injectImportMap(htmlStr string, importMapJSON string) string {
-	// Regex pattern to match <script type="importmap">...</script>
-	// Handles both single and double quotes, and content with newlines
-	importMapPattern := regexp.MustCompile(`(?s)<script\s+type=["']importmap["'][^>]*>.*?</script>`)
-
-	// Check if an import map already exists
-	if importMapPattern.MatchString(htmlStr) {
-		// Replace existing import map with new content
-		replacement := `<script type="importmap">
-` + importMapJSON + `
-  </script>`
-		return importMapPattern.ReplaceAllString(htmlStr, replacement)
+	doc, err := html.Parse(strings.NewReader(htmlStr))
+	if err != nil {
+		return injectImportMapFallback(htmlStr, importMapJSON)
 	}
 
-	// No existing import map found, inject a new one before </head>
-	return injectImportMapFallback(htmlStr, importMapJSON)
+	head := findElement(doc, "head")
+	if head == nil {
+		return injectImportMapFallback(htmlStr, importMapJSON)
+	}
+
+	removeExistingImportMaps(doc)
+
+	scriptTag := `<script type="importmap">` + "\n" + importMapJSON + "\n</script>"
+	newNodes, err := html.ParseFragment(strings.NewReader(scriptTag), &html.Node{
+		Type:     html.ElementNode,
+		Data:     "head",
+		DataAtom: atom.Head,
+	})
+	if err != nil || len(newNodes) == 0 {
+		return injectImportMapFallback(htmlStr, importMapJSON)
+	}
+
+	firstScript := findFirstScript(head)
+	for _, node := range newNodes {
+		if firstScript != nil {
+			head.InsertBefore(node, firstScript)
+		} else {
+			head.AppendChild(node)
+		}
+	}
+
+	var buf bytes.Buffer
+	if err := html.Render(&buf, doc); err != nil {
+		return injectImportMapFallback(htmlStr, importMapJSON)
+	}
+	return buf.String()
 }
 
-// injectImportMapFallback uses string replacement to inject import map
-// Used when HTML parsing fails or when injecting (not replacing)
-func injectImportMapFallback(html string, importMapJSON string) string {
-	importMapScript := "<script type=\"importmap\">\n  " + importMapJSON + "\n  </script>"
+func findElement(n *html.Node, tag string) *html.Node {
+	if n.Type == html.ElementNode && n.Data == tag {
+		return n
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if result := findElement(c, tag); result != nil {
+			return result
+		}
+	}
+	return nil
+}
 
-	// Try to inject before </head>
-	if idx := strings.Index(html, "</head>"); idx != -1 {
-		return html[:idx] + importMapScript + "\n" + html[idx:]
+func isImportMapScript(n *html.Node) bool {
+	if n.Type != html.ElementNode || n.Data != "script" {
+		return false
+	}
+	for _, attr := range n.Attr {
+		if attr.Key == "type" && attr.Val == "importmap" {
+			return true
+		}
+	}
+	return false
+}
+
+func removeExistingImportMaps(root *html.Node) {
+	var toRemove []*html.Node
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			if isImportMapScript(c) {
+				toRemove = append(toRemove, c)
+			} else {
+				walk(c)
+			}
+		}
+	}
+	walk(root)
+	for _, n := range toRemove {
+		n.Parent.RemoveChild(n)
+	}
+}
+
+func findFirstScript(head *html.Node) *html.Node {
+	for c := head.FirstChild; c != nil; c = c.NextSibling {
+		if c.Type == html.ElementNode && c.Data == "script" {
+			return c
+		}
+	}
+	return nil
+}
+
+// injectImportMapFallback uses string replacement when DOM parsing fails.
+// Inserts before the first <script> in the document, or before </head>.
+func injectImportMapFallback(htmlStr string, importMapJSON string) string {
+	importMapScript := "<script type=\"importmap\">\n" + importMapJSON + "\n</script>"
+
+	if idx := strings.Index(htmlStr, "<script"); idx != -1 {
+		return htmlStr[:idx] + importMapScript + "\n" + htmlStr[idx:]
 	}
 
-	// Fall back to start of <body>
-	if idx := strings.Index(html, "<body"); idx != -1 {
-		// Find the end of the <body> tag
-		closeIdx := strings.Index(html[idx:], ">")
+	if idx := strings.Index(htmlStr, "</head>"); idx != -1 {
+		return htmlStr[:idx] + importMapScript + "\n" + htmlStr[idx:]
+	}
+
+	if idx := strings.Index(htmlStr, "<body"); idx != -1 {
+		closeIdx := strings.Index(htmlStr[idx:], ">")
 		if closeIdx != -1 {
 			insertPos := idx + closeIdx + 1
-			return html[:insertPos] + "\n" + importMapScript + html[insertPos:]
+			return htmlStr[:insertPos] + "\n" + importMapScript + htmlStr[insertPos:]
 		}
 	}
 
-	// Last resort: inject at start of HTML
-	if idx := strings.Index(html, "<html"); idx != -1 {
-		closeIdx := strings.Index(html[idx:], ">")
-		if closeIdx != -1 {
-			insertPos := idx + closeIdx + 1
-			return html[:insertPos] + "\n" + importMapScript + html[insertPos:]
-		}
-	}
-
-	// Can't find a good place, return unchanged
-	return html
+	return htmlStr
 }
 
 // writeResponse writes the recorded response to the ResponseWriter
