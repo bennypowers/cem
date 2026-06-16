@@ -248,8 +248,8 @@ func (l *ptermLogger) formatAndBufferLog(level, levelType, message, timestamp st
 		prefix = pterm.FgRed.Sprint("ERROR")
 		coloredMsg = pterm.FgRed.Sprint(message)
 	case "success":
-		prefix = pterm.FgGreen.Sprint("OK   ")
-		coloredMsg = pterm.FgGreen.Sprint(message)
+		prefix = pterm.FgGreen.Sprint(" OK  ")
+		coloredMsg = message
 	case "debug":
 		prefix = pterm.FgGray.Sprint("DEBUG")
 		coloredMsg = pterm.FgGray.Sprint(message)
@@ -415,7 +415,7 @@ func (l *ptermLogger) Debug(msg string, args ...any) {
 }
 
 func (l *ptermLogger) Success(msg string, args ...any) {
-	l.log("OK", "success", msg, args...)
+	l.log(" OK ", "success", msg, args...)
 }
 
 func (l *ptermLogger) Trace(msg string, args ...any) {
