@@ -39,21 +39,21 @@ func TestValidateE2E(t *testing.T) {
 			name:           "valid_complex_manifest",
 			fixture:        "valid-manifest",
 			args:           []string{"validate"},
-			expectedStdout: "✓ Manifest is valid",
+			expectedStdout: "Manifest is valid",
 			expectSuccess:  true,
 		},
 		{
 			name:           "valid_manifest_with_warnings",
 			fixture:        "warning-lifecycle-methods",
 			args:           []string{"validate"},
-			expectedStdout: "⚠ Manifest valid with",
+			expectedStdout: "Manifest valid with",
 			expectSuccess:  true,
 		},
 		{
 			name:           "invalid_manifest_multiple_errors",
 			fixture:        "multiple-modules-errors",
 			args:           []string{"validate"},
-			expectedStdout: "✗ Validation failed with",
+			expectedStdout: "Validation failed with",
 			expectSuccess:  false,
 		},
 		{
@@ -74,7 +74,7 @@ func TestValidateE2E(t *testing.T) {
 			name:           "manifest_with_disabled_warnings",
 			fixture:        "warning-lifecycle-methods",
 			args:           []string{"validate", "--disable=lifecycle"},
-			expectedStdout: "⚠ Manifest valid with", // Still has other warnings
+			expectedStdout: "Manifest valid with", // Still has other warnings
 			expectSuccess:  true,
 		},
 		{
