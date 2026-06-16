@@ -32,6 +32,7 @@ import (
 	"strings"
 
 	C "bennypowers.dev/cem/cmd/config"
+	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
 	"github.com/adrg/xdg"
@@ -77,7 +78,7 @@ func (c *RemoteWorkspaceContext) Init() error {
 		if err := c.readInPackageJSON(); err == nil {
 			c.customElementsPath = filepath.Join(c.cacheDir, c.packageJSON.CustomElements)
 			if fileExists(c.customElementsPath) {
-				pterm.Debug.Printf("Using cached remote package %s\n", c.spec)
+				logging.Debug("Using cached remote package %s", c.spec)
 				return nil // Fully cached
 			}
 		}
@@ -90,8 +91,7 @@ func (c *RemoteWorkspaceContext) Init() error {
 	c.spinner, _ = pterm.SpinnerPrinter.Start(*pterm.DefaultSpinner.WithRemoveWhenDone())
 	defer func() {
 		if err := c.spinner.Stop(); err != nil {
-			// Spinner stop errors are not critical, just log them
-			fmt.Printf("Warning: error stopping spinner: %v\n", err)
+			logging.Warning("error stopping spinner: %v", err)
 		}
 	}()
 
@@ -110,7 +110,7 @@ func (c *RemoteWorkspaceContext) Init() error {
 		}
 
 		if errors.Is(err, ErrPackageNotFound) {
-			pterm.Debug.Println("Package not found on CDN, stopping.")
+			logging.Debug("Package not found on CDN, stopping.")
 			return err // The package doesn't exist, no point in trying others.
 		}
 
@@ -119,16 +119,16 @@ func (c *RemoteWorkspaceContext) Init() error {
 		// If we successfully got package.json but failed to get the manifest,
 		// then the manifest is confirmed to be missing. No need to try other sources.
 		if c.packageJSON != nil && errors.Is(err, ErrManifestNotFound) {
-			pterm.Debug.Println("Found package.json but manifest is missing. Stopping.")
+			logging.Debug("Found package.json but manifest is missing. Stopping.")
 			return ErrManifestNotFound
 		}
 
-		pterm.Debug.Printf("CDN fetcher failed, trying next source: %v\n", err)
+		logging.Debug("CDN fetcher failed, trying next source: %v", err)
 	}
 
 	// If we're here, it means we couldn't even get package.json from any CDN.
 	// Fallback to the npm tarball.
-	pterm.Debug.Println("All CDN fetchers failed. Falling back to npm tarball.")
+	logging.Debug("All CDN fetchers failed. Falling back to npm tarball.")
 	if err := c.fetchFromNpm(name, version); err != nil {
 		// Join the npm error with the last CDN error for a more complete picture.
 		return errors.Join(lastCdnError, err)

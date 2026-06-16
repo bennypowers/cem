@@ -33,11 +33,7 @@ import (
 // the entire template. This is a regression test for the bug where
 // adjustRangeToTemplate returned the whole template range.
 func TestDiagnostics_NestedElementRanges(t *testing.T) {
-	testutil.RunLSPFixtures(t, "testdata-regression", func(t *testing.T, fixture *testutil.LSPFixture) {
-		if fixture.Name != "nested-element-diagnostics-typescript" {
-			t.Skip("not applicable to this test")
-		}
-
+	testutil.RunLSPFixture(t, "testdata-regression", "nested-element-diagnostics-typescript", func(t *testing.T, fixture *testutil.LSPFixture) {
 		ctx := testhelpers.NewMockServerContext()
 		if fixture.Manifest != nil {
 			var pkg M.Package

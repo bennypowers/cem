@@ -14,6 +14,19 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
+
+// Package logging provides centralized diagnostic output for cem.
+//
+// All diagnostic messages (debug, info, warning, error, success) should go
+// through this package rather than calling pterm or fmt directly. The logger
+// adapts output to the active mode: CLI mode uses pterm for styled terminal
+// output; LSP mode routes messages over the LSP protocol.
+//
+// Quiet (-q) suppresses info and debug. Verbose (-v) enables debug. These
+// flags are respected automatically by all log functions.
+//
+// This package does NOT own terminal UI primitives (spinners, live areas,
+// colored display formatting). Those stay with pterm at their callsites.
 package logging
 
 import (
@@ -101,6 +114,10 @@ const (
 	ModeCLI LoggerMode = iota
 	// ModeLSP uses LSP protocol messages (window/showMessage, window/logMessage)
 	ModeLSP
+	// ModeServe suppresses debug-level noise but allows info/warning/error/success.
+	// Used by the dev server to prevent generation worker chatter from interfering
+	// with the interactive status line while preserving startup and lifecycle messages.
+	ModeServe
 )
 
 // Global logger instance
@@ -314,16 +331,14 @@ func (l *Logger) Success(format string, args ...any) {
 	quietEnabled := l.quietEnabled
 	l.mu.RUnlock()
 
-	// Skip success messages if quiet mode is enabled (success is above warning)
-	if quietEnabled {
+	// ModeServe always shows success; other modes respect quiet
+	if mode != ModeServe && quietEnabled {
 		return
 	}
 
-	if mode == ModeCLI {
-		// Use pterm Success for CLI
+	if mode == ModeCLI || mode == ModeServe {
 		pterm.Success.Printf(format+"\n", args...)
 	} else {
-		// Treat as Info for LSP
 		l.log(LogLevelInfo, format, args...)
 	}
 }
@@ -342,15 +357,20 @@ func (l *Logger) log(level LogLevel, format string, args ...any) {
 		return
 	}
 
-	// Skip INFO and DEBUG messages if quiet mode is enabled
-	if quietEnabled && (level == LogLevelInfo || level == LogLevelDebug) {
+	// ModeServe: suppress debug noise, allow everything else
+	if mode == ModeServe && level == LogLevelDebug {
+		return
+	}
+
+	// Skip INFO and DEBUG messages if quiet mode is enabled (CLI/LSP only)
+	if mode != ModeServe && quietEnabled && (level == LogLevelInfo || level == LogLevelDebug) {
 		return
 	}
 
 	message := fmt.Sprintf(format, args...)
 
 	switch mode {
-	case ModeCLI:
+	case ModeCLI, ModeServe:
 		l.logCLI(level, message)
 	case ModeLSP:
 		l.logLSP(level, message, lspContext)

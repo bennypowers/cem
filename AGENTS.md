@@ -13,7 +13,7 @@ $ dist/cem -p examples/kitchen-sink validate
 
 Getter methods should be named `Foo()`, not `GetFoo()`.
 
-When adding debug logs in go code, always use `bennypowers.dev/cem/internal/logging`, to avoid polluting stdio.
+All diagnostic logging (debug, info, warning, error, success) must go through `bennypowers.dev/cem/internal/logging`. This ensures correct routing in CLI vs LSP modes and respects `-v`/`-q` flags. Never call `pterm.Warning`, `pterm.Info`, etc. directly for log messages. Direct pterm usage is reserved for terminal UI primitives only: spinners, live areas, colored/styled display formatting.
 
 Use `platform.WalkDir` for all directory traversals. It silently prunes `.git` directories and accepts additional dirs to skip via `set.Set[string]`. Never use `filepath.WalkDir` or `fs.WalkDir` directly -- those bypass `.git` pruning.
 

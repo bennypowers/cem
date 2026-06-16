@@ -27,7 +27,6 @@ import (
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/internal/workspace"
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -219,7 +218,7 @@ func printErrorsAsWarnings(err error) {
 	// Split the error into individual components for better display
 	errList := flattenErrors(err)
 	for _, e := range errList {
-		pterm.Warning.Printf("Warning: %v\n", e)
+		logging.Warning("%v", e)
 	}
 }
 

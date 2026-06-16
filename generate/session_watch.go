@@ -33,7 +33,6 @@ import (
 	"bennypowers.dev/cem/types"
 	DS "github.com/bmatcuk/doublestar"
 	"github.com/fsnotify/fsnotify"
-	"github.com/pterm/pterm"
 )
 
 // WatchSession manages the long-lived watch mode state
@@ -161,7 +160,7 @@ func (ws *WatchSession) setupWatcher() (*fsnotify.Watcher, error) {
 	// Watch all identified directories
 	for dir := range dirs {
 		if err := watcher.Add(dir); err != nil {
-			pterm.Warning.Printf("Failed to watch directory %s: %v\n", dir, err)
+			logging.Warning("Failed to watch directory %s: %v", dir, err)
 		}
 	}
 
@@ -177,7 +176,7 @@ func (ws *WatchSession) handleFileChange(event fsnotify.Event) {
 
 	// Ignore changes that we just made to prevent infinite loops
 	if ws.isOurWrite(event.Name) {
-		pterm.Debug.Printf("Ignoring our own write to: %s\n", event.Name)
+		logging.Debug("Ignoring our own write to: %s", event.Name)
 		return
 	}
 
@@ -187,16 +186,16 @@ func (ws *WatchSession) handleFileChange(event fsnotify.Event) {
 		ws.mu.Lock()
 		ws.demoFilesChanged = true
 		ws.mu.Unlock()
-		pterm.Debug.Printf("Demo file changed: %s\n", event.Name)
+		logging.Debug("Demo file changed: %s", event.Name)
 	}
 
 	// Only process files that match our input globs or are demo files
 	if !ws.matchesInputGlobs(event.Name) && !isDemoFile {
-		pterm.Debug.Printf("Ignoring file not matching input or demo globs: %s\n", event.Name)
+		logging.Debug("Ignoring file not matching input or demo globs: %s", event.Name)
 		return
 	}
 
-	pterm.Debug.Printf("File change detected: %s (op: %s)\n", event.Name, event.Op)
+	logging.Debug("File change detected: %s (op: %s)", event.Name, event.Op)
 
 	ws.mu.Lock()
 	defer ws.mu.Unlock()
@@ -342,25 +341,25 @@ func (ws *WatchSession) processChanges() {
 
 	ws.mu.Unlock()
 
-	pterm.Info.Println("File changes detected, regenerating...")
+	logging.Info("File changes detected, regenerating...")
 	start := time.Now()
 
 	// Try incremental processing first
 	if len(changedFiles) > 0 {
-		pterm.Debug.Printf("Changed files: %v\n", changedFiles)
+		logging.Debug("Changed files: %v", changedFiles)
 
 		// Check if we can skip demo discovery for this generation cycle
 		skipDemoDiscovery := ws.shouldSkipDemoDiscovery()
 		if skipDemoDiscovery {
-			pterm.Debug.Println("Skipping demo discovery - config and demo files unchanged")
+			logging.Debug("Skipping demo discovery - config and demo files unchanged")
 		}
 
 		pkg, err := ws.generateSession.ProcessChangedFilesWithSkip(ctx, changedFiles, skipDemoDiscovery)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
-				pterm.Warning.Println("Generation cancelled due to new file changes")
+				logging.Warning("Generation cancelled due to new file changes")
 			} else {
-				pterm.Error.Printf("Generation failed: %v\n", err)
+				logging.Error("Generation failed: %v", err)
 				// Also show individual warnings for dependency issues
 				ws.printGenerationWarnings(err)
 			}
@@ -370,12 +369,12 @@ func (ws *WatchSession) processChanges() {
 		// Write the manifest
 		manifestStr, err := M.SerializeToString(pkg)
 		if err != nil {
-			pterm.Error.Printf("Failed to serialize manifest: %v\n", err)
+			logging.Error("Failed to serialize manifest: %v", err)
 			return
 		}
 
 		if err := ws.writeManifest(manifestStr); err != nil {
-			pterm.Error.Printf("Failed to write manifest: %v\n", err)
+			logging.Error("Failed to write manifest: %v", err)
 			return
 		}
 
@@ -387,9 +386,9 @@ func (ws *WatchSession) processChanges() {
 		// Fallback to full rebuild if no specific files tracked
 		if err := ws.generateOnce(ctx); err != nil {
 			if errors.Is(err, context.Canceled) {
-				pterm.Warning.Println("Generation cancelled due to new file changes")
+				logging.Warning("Generation cancelled due to new file changes")
 			} else {
-				pterm.Error.Printf("Generation failed: %v\n", err)
+				logging.Error("Generation failed: %v", err)
 				// Also show individual warnings for dependency issues
 				ws.printGenerationWarnings(err)
 			}
@@ -400,7 +399,7 @@ func (ws *WatchSession) processChanges() {
 	}
 
 	duration := time.Since(start)
-	pterm.Success.Printf("Regenerated in %s\n", ColorizeDuration(duration).Sprint(duration))
+	logging.Success("Regenerated in %s", ColorizeDuration(duration).Sprint(duration))
 }
 
 // generateOnce performs a single generation cycle, respecting cancellation
@@ -538,7 +537,7 @@ func (ws *WatchSession) printGenerationWarnings(err error) {
 	// Split the error into individual components for better display
 	errList := ws.flattenErrors(err)
 	for _, e := range errList {
-		pterm.Warning.Printf("Warning: %v\n", e)
+		logging.Warning("%v", e)
 	}
 }
 

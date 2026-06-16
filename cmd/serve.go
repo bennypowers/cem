@@ -185,9 +185,8 @@ var serveCmd = &cobra.Command{
 			}
 		}()
 
-		// Enable quiet mode on internal logger to suppress generation progress messages
-		// These would otherwise appear below the status line
-		logging.GetLogger().SetQuietEnabled(true)
+		// ModeServe suppresses debug noise but keeps info/warning/error/success
+		logging.SetMode(logging.ModeServe)
 
 		// Create server
 		server, err := serve.NewServerWithConfig(config)
@@ -211,7 +210,7 @@ var serveCmd = &cobra.Command{
 		}
 
 		// Try workspace mode initialization first
-		pterm.Info.Println("Initializing server...")
+		logging.Info("Initializing server...")
 		err = server.InitializeWorkspaceMode()
 		if err != nil {
 			return fmt.Errorf("failed to initialize workspace mode: %w", err)
@@ -223,18 +222,18 @@ var serveCmd = &cobra.Command{
 			size, err := server.TryLoadExistingManifest()
 			if err != nil {
 				// Failed to load, generate fresh manifest
-				pterm.Warning.Printf("Could not load cached manifest: %v\n", err)
-				pterm.Info.Println("Generating initial manifest...")
+				logging.Warning("Could not load cached manifest: %v", err)
+				logging.Info("Generating initial manifest...")
 				_, err = server.RegenerateManifest()
 				if err != nil {
-					pterm.Error.Printf("Failed to generate initial manifest: %v\n", err)
-					pterm.Info.Println("Server will continue, but manifest may be unavailable")
+					logging.Error("Failed to generate initial manifest: %v", err)
+					logging.Info("Server will continue, but manifest may be unavailable")
 				} else {
-					pterm.Success.Println("Initial manifest generated")
+					logging.Success("Initial manifest generated")
 				}
 			} else if size > 0 {
 				// Successfully loaded existing manifest
-				pterm.Success.Printf("Loaded cached manifest from disk (%d bytes)\n", size)
+				logging.Success("Loaded cached manifest from disk (%d bytes)", size)
 
 				// Schedule background regeneration (skip in build mode - Build() is synchronous)
 				buildMode, _ := cmd.Flags().GetBool("build")
@@ -260,17 +259,17 @@ var serveCmd = &cobra.Command{
 				}
 			} else {
 				// No existing manifest found, generate fresh one
-				pterm.Info.Println("Generating initial manifest...")
+				logging.Info("Generating initial manifest...")
 				_, err = server.RegenerateManifest()
 				if err != nil {
-					pterm.Error.Printf("Failed to generate initial manifest: %v\n", err)
-					pterm.Info.Println("Server will continue, but manifest may be unavailable")
+					logging.Error("Failed to generate initial manifest: %v", err)
+					logging.Info("Server will continue, but manifest may be unavailable")
 				} else {
-					pterm.Success.Println("Initial manifest generated")
+					logging.Success("Initial manifest generated")
 				}
 			}
 		} else {
-			pterm.Success.Println("Workspace mode initialized")
+			logging.Success("Workspace mode initialized")
 		}
 
 		// Build mode: render all pages to disk and exit (before live rendering)

@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/lsp/document"
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
@@ -231,13 +232,28 @@ func TestIncrementalParseWithUTF16(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// These tests verify that the UTF-16 conversion happens correctly
-			// by checking that edit positions are computed properly
-			// The actual parsing is tested elsewhere, here we focus on UTF-16 handling
+			dm, err := document.NewDocumentManager()
+			if err != nil {
+				t.Fatalf("Failed to create DocumentManager: %v", err)
+			}
+			defer dm.Close()
 
-			// For now, we primarily test the helper functions directly
-			// Full integration would require setting up tree-sitter parsers
-			t.Skip("Integration test - requires full document setup")
+			uri := "file:///test.html"
+			dm.OpenDocument(uri, tt.initial, 1)
+
+			changes := []protocol.TextDocumentContentChangeEvent{tt.change}
+			updated := dm.UpdateDocumentWithChanges(uri, tt.expected, 2, changes)
+			if updated == nil {
+				t.Fatal("UpdateDocumentWithChanges returned nil")
+			}
+
+			content, err := updated.Content()
+			if err != nil {
+				t.Fatalf("Failed to get content: %v", err)
+			}
+			if content != tt.expected {
+				t.Errorf("%s:\n  got:  %q\n  want: %q", tt.description, content, tt.expected)
+			}
 		})
 	}
 }

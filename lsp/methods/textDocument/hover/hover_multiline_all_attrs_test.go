@@ -37,11 +37,7 @@ import (
 //
 // Root cause: Benchmark test positions were outdated, but this test validates the fix works.
 func TestHover_MultilineAllAttributes(t *testing.T) {
-	testutil.RunLSPFixtures(t, "testdata-regression", func(t *testing.T, fixture *testutil.LSPFixture) {
-		if fixture.Name != "multiline-all-attributes" {
-			t.Skip("not applicable to this test")
-		}
-
+	testutil.RunLSPFixture(t, "testdata-regression", "multiline-all-attributes", func(t *testing.T, fixture *testutil.LSPFixture) {
 		// Setup context
 		ctx := testhelpers.NewMockServerContext()
 		if fixture.Manifest != nil {

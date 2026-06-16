@@ -25,6 +25,7 @@ import (
 	"strings"
 	"text/template"
 
+	"bennypowers.dev/cem/internal/logging"
 	"github.com/pterm/pterm"
 )
 
@@ -84,7 +85,7 @@ func printHealthResultJSON(w io.Writer, result *HealthResult) error {
 
 func printHealthResultText(result *HealthResult) {
 	if len(result.Modules) == 0 {
-		pterm.Info.Println("No declarations found in manifest")
+		logging.Info("No declarations found in manifest")
 		return
 	}
 

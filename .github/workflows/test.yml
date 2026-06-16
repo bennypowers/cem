@@ -10,7 +10,7 @@ on:
       - reopened
 
 jobs:
-  test:
+  test-unit:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,13 +25,30 @@ jobs:
         run: |
           go get .
           go install gotest.tools/gotestsum@latest
-          go install github.com/mfridman/tparse@latest
+      - name: Generate code
+        run: make generate
+      - name: Run unit tests
+        run: make test-unit
+
+  test-e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+        env:
+          GOTOOLCHAIN: auto
+          GOEXPERIMENT: jsonv2
+      - name: Install Go dependencies and tools
+        run: |
+          go get .
+          go install gotest.tools/gotestsum@latest
       - name: Generate code
         run: make generate
       - name: Build
         run: go build -v ./...
-      - name: Run unit tests
-        run: make test-unit
       - name: Run E2E tests
         run: make test-e2e
 
@@ -48,7 +65,7 @@ jobs:
           GOEXPERIMENT: jsonv2
       - uses: actions/setup-node@v6
         with:
-          node-version: lts/*
+          node-version: 22
       - name: Install Go dependencies
         run: go get .
       - name: Build cem binary

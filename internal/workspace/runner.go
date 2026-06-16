@@ -23,8 +23,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"bennypowers.dev/cem/internal/logging"
 	"github.com/bmatcuk/doublestar"
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -156,8 +156,8 @@ func DerivePackageGlob(files []string) string {
 // verb describes the action, e.g. "Generated manifests", "Validated manifests".
 func ReportResults(verb string, results []PackageResult) error {
 	if len(results) == 0 {
-		pterm.Warning.Println("No workspace packages have a customElements field in package.json.")
-		pterm.Info.Println("Add \"customElements\": \"custom-elements.json\" to each package that should generate a manifest.")
+		logging.Warning("No workspace packages have a customElements field in package.json.")
+		logging.Info("Add \"customElements\": \"custom-elements.json\" to each package that should generate a manifest.")
 		return errors.New("no workspace packages found")
 	}
 
@@ -178,7 +178,7 @@ func ReportResults(verb string, results []PackageResult) error {
 		for _, r := range failed {
 			fmt.Fprintf(&b, "  %s: %s\n", r.Package.Name, r.Err)
 		}
-		pterm.Error.Print(b.String())
+		logging.Error("%s", b.String())
 
 		if len(succeeded) > 0 {
 			fmt.Fprintln(os.Stderr)
@@ -187,7 +187,7 @@ func ReportResults(verb string, results []PackageResult) error {
 			for _, r := range succeeded {
 				fmt.Fprintf(&s, "  %s: %s\n", r.Package.Name, r.Package.CustomElementsRef)
 			}
-			pterm.Success.Print(s.String())
+			logging.Success("%s", s.String())
 		}
 
 		return fmt.Errorf("%d of %d packages failed", len(failed), len(results))
@@ -198,6 +198,6 @@ func ReportResults(verb string, results []PackageResult) error {
 	for _, r := range results {
 		fmt.Fprintf(&b, "  %s: %s\n", r.Package.Name, r.Package.CustomElementsRef)
 	}
-	pterm.Success.Print(b.String())
+	logging.Success("%s", b.String())
 	return nil
 }

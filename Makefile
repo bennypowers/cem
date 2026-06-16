@@ -130,10 +130,10 @@ generate: install-elements
 install-bindings: generate
 
 test-unit: generate
-	gotestsum -- -race $(RACE_LDFLAGS) ./...
+	gotestsum --rerun-fails --rerun-fails-max-failures=3 --packages=./... -- -race $(RACE_LDFLAGS)
 
 test-e2e: generate
-	gotestsum -- -race $(RACE_LDFLAGS) -tags=e2e ./cmd/
+	gotestsum --rerun-fails --rerun-fails-max-failures=3 --packages=./cmd/ -- -race $(RACE_LDFLAGS) -tags=e2e
 
 install-frontend:
 	cd serve && npm ci

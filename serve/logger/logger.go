@@ -26,6 +26,7 @@ import (
 	"sync"
 	"time"
 
+	"bennypowers.dev/cem/internal/logging"
 	"github.com/pterm/pterm"
 	"golang.org/x/term"
 )
@@ -318,16 +319,15 @@ func (l *ptermLogger) log(level, levelType, msg string, args ...any) {
 			}
 		} else {
 			l.mu.Unlock()
-			// Non-interactive: standard pterm output
 			switch levelType {
 			case "info":
-				pterm.Info.Println(formatted)
+				logging.Info("%s", formatted)
 			case "warning":
-				pterm.Warning.Println(formatted)
+				logging.Warning("%s", formatted)
 			case "error":
-				pterm.Error.Println(formatted)
+				logging.Error("%s", formatted)
 			case "debug":
-				pterm.Debug.Println(formatted)
+				logging.Debug("%s", formatted)
 			}
 		}
 	} else {
