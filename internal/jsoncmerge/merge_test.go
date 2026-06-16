@@ -1,20 +1,19 @@
 package jsoncmerge_test
 
 import (
-	"flag"
-	"os"
 	"path/filepath"
 	"testing"
 
 	"bennypowers.dev/cem/internal/jsoncmerge"
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"github.com/tailscale/hujson"
 )
-
-var update = flag.Bool("update", false, "update golden files")
 
 var mergeValue = map[string]any{"command": "cem", "args": []string{"mcp"}}
 
 func TestMerge(t *testing.T) {
+	fs := testutil.LoadTestdataFS(t, "testdata", "/")
+
 	tests := []struct {
 		name   string
 		topKey string
@@ -33,10 +32,8 @@ func TestMerge(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			inputPath := filepath.Join("testdata", tc.name+".input.jsonc")
-			goldenPath := filepath.Join("testdata", "goldens", tc.name+".golden.jsonc")
-
-			input, err := os.ReadFile(inputPath)
+			inputPath := filepath.Join(tc.name + ".input.jsonc")
+			input, err := fs.ReadFile(inputPath)
 			if err != nil {
 				t.Fatalf("failed to read input: %v", err)
 			}
@@ -50,24 +47,10 @@ func TestMerge(t *testing.T) {
 				t.Errorf("result is not valid JSONC: %v\n%s", err, result)
 			}
 
-			if *update {
-				if err := os.MkdirAll(filepath.Dir(goldenPath), 0o755); err != nil {
-					t.Fatalf("failed to create golden dir: %v", err)
-				}
-				if err := os.WriteFile(goldenPath, result, 0o644); err != nil {
-					t.Fatalf("failed to write golden: %v", err)
-				}
-				return
-			}
-
-			expected, err := os.ReadFile(goldenPath)
-			if err != nil {
-				t.Fatalf("golden file missing: %s (run with -update to create)", goldenPath)
-			}
-
-			if string(expected) != string(result) {
-				t.Errorf("output mismatch\n--- expected ---\n%s\n--- actual ---\n%s", expected, result)
-			}
+			testutil.CheckGolden(t, tc.name, result, testutil.GoldenOptions{
+				Dir:       filepath.Join("testdata", "goldens"),
+				Extension: ".golden.jsonc",
+			})
 		})
 	}
 }
