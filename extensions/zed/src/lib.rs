@@ -60,12 +60,12 @@ impl CemExtension {
             &zed::LanguageServerInstallationStatus::CheckingForUpdate,
         );
 
-        let binary_path = self.download_cem_binary()?;
-
         zed::set_language_server_installation_status(
             language_server_id,
             &zed::LanguageServerInstallationStatus::Downloading,
         );
+
+        let binary_path = self.download_cem_binary()?;
 
         Ok(binary_path)
     }

@@ -28,6 +28,7 @@ import (
 	"atomicgo.dev/keyboard/keys"
 
 	"bennypowers.dev/cem/internal/jsoncmerge"
+	"bennypowers.dev/cem/internal/logging"
 	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/adrg/xdg"
 	"github.com/pterm/pterm"
@@ -131,9 +132,9 @@ In non-interactive mode, use --tool to specify tools directly.`,
 				}
 				if confirmed {
 					if err := action.apply(); err != nil {
-						pterm.Error.Printfln("%v", err)
+						logging.Error("%v", err)
 					} else {
-						pterm.Success.Println("Done")
+						logging.Success("Done")
 					}
 				}
 			}
@@ -200,9 +201,9 @@ func promptToolSelection() ([]aiTool, error) {
 }
 
 func promptAdditionalPackages() ([]string, error) {
-	pterm.Info.Println("No local custom-elements manifest detected.")
-	pterm.Info.Println("If your project consumes a design system, enter package specifiers to load.")
-	pterm.Info.Println("Examples: npm:@rhds/elements@2.0.0, jsr:@example/components, https://cdn.example.com/pkg/")
+	logging.Info("No local custom-elements manifest detected.")
+	logging.Info("If your project consumes a design system, enter package specifiers to load.")
+	logging.Info("Examples: npm:@rhds/elements@2.0.0, jsr:@example/components, https://cdn.example.com/pkg/")
 
 	input, err := pterm.DefaultInteractiveTextInput.
 		WithDefaultText("Additional packages (comma-separated, or press Enter to skip)").
@@ -516,7 +517,7 @@ func mergeJSONConfig(path, topKey, subKey string, value any) error {
 }
 
 func backupFile(path string, data []byte) error {
-	backup, err := os.CreateTemp("", filepath.Base(path)+".backup-*")
+	backup, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".backup-*")
 	if err != nil {
 		return fmt.Errorf("failed to create backup: %w", err)
 	}
@@ -527,7 +528,7 @@ func backupFile(path string, data []byte) error {
 	if err := backup.Close(); err != nil {
 		return fmt.Errorf("failed to close backup file: %w", err)
 	}
-	pterm.Info.Printfln("Backed up %s to %s", path, backup.Name())
+	logging.Info("Backed up %s to %s", path, backup.Name())
 	return nil
 }
 

@@ -26,7 +26,10 @@ func Merge(data []byte, topKey, subKey string, value any) ([]byte, error) {
 		}
 		closeBrace := closeOffset(&v, rootObj)
 		topKeyStr := fmt.Sprintf("%q", topKey)
-		innerJSON, _ := json.MarshalIndent(map[string]any{subKey: value}, "  ", "  ")
+		innerJSON, err := json.MarshalIndent(map[string]any{subKey: value}, "  ", "  ")
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal %q: %w", subKey, err)
+		}
 		newBlock := fmt.Sprintf("  %s: %s", topKeyStr, string(innerJSON))
 		return insertBeforeClose(data, closeBrace, newBlock, "")
 	}
@@ -34,7 +37,10 @@ func Merge(data []byte, topKey, subKey string, value any) ([]byte, error) {
 	subNode := v.Find("/" + topKey + "/" + subKey)
 
 	if subNode != nil {
-		valueJSON, _ := json.MarshalIndent(value, "    ", "  ")
+		valueJSON, err := json.MarshalIndent(value, "    ", "  ")
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal %q: %w", subKey, err)
+		}
 		return splice(data, subNode.StartOffset, subNode.EndOffset, valueJSON), nil
 	}
 
@@ -43,7 +49,10 @@ func Merge(data []byte, topKey, subKey string, value any) ([]byte, error) {
 		return nil, fmt.Errorf("%q is not an object", topKey)
 	}
 	closeBrace := closeOffset(topNode, topObj)
-	valueJSON, _ := json.MarshalIndent(value, "    ", "  ")
+	valueJSON, err := json.MarshalIndent(value, "    ", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal %q: %w", subKey, err)
+	}
 	newMember := fmt.Sprintf("    %q: %s", subKey, string(valueJSON))
 	return insertBeforeClose(data, closeBrace, newMember, "  ")
 }
