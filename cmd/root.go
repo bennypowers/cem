@@ -63,15 +63,20 @@ var rootCmd = &cobra.Command{
 			return fmt.Errorf("cannot use both --verbose and --quiet flags together")
 		}
 
-		switch {
-		case quiet:
+		// CLI flags override config: -q always wins, -v raises to at least that level
+		if quiet {
 			logging.SetVerbosity(logging.VerbosityQuiet)
-		case verboseCount >= 3:
-			logging.SetVerbosity(logging.VerbosityTrace)
-		case verboseCount == 2:
-			logging.SetVerbosity(logging.VerbosityDebug)
-		case verboseCount == 1:
-			logging.SetVerbosity(logging.VerbosityVerbose)
+		} else if verboseCount > 0 {
+			flagLevel := logging.VerbosityVerbose
+			switch {
+			case verboseCount >= 3:
+				flagLevel = logging.VerbosityTrace
+			case verboseCount == 2:
+				flagLevel = logging.VerbosityDebug
+			}
+			if flagLevel > logging.CurrentVerbosity() {
+				logging.SetVerbosity(flagLevel)
+			}
 		}
 
 		logging.Debug("Project directory: %q", rootDir)

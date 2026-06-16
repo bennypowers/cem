@@ -228,7 +228,7 @@ func (l *Logger) SetDebugEnabled(enabled bool) {
 	}
 }
 
-// IsDebugEnabled returns whether debug logging is enabled (verbosity >= Verbose).
+// IsDebugEnabled returns whether debug logging is enabled (verbosity >= Debug).
 func (l *Logger) IsDebugEnabled() bool {
 	return l.AtLevel(LogLevelDebug)
 }
@@ -548,7 +548,7 @@ func SetVerbosity(v Verbosity) {
 	globalLogger.SetVerbosity(v)
 }
 
-func GetVerbosity() Verbosity {
+func CurrentVerbosity() Verbosity {
 	return globalLogger.Verbosity()
 }
 

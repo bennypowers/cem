@@ -388,7 +388,7 @@ var verbosityOrder = []logging.Verbosity{
 func handleKeyboardInput(server *serve.Server, log logger.Logger, port int, quitChan chan struct{}) {
 	currentLogLevelIdx := 1 // matches VerbosityNormal default; synced if -v/-q passed
 	for i, v := range verbosityOrder {
-		if v == logging.GetVerbosity() {
+		if v == logging.CurrentVerbosity() {
 			currentLogLevelIdx = i
 			break
 		}
@@ -424,8 +424,8 @@ func handleKeyboardInput(server *serve.Server, log logger.Logger, port int, quit
 		case 'v', 'V':
 			currentLogLevelIdx = (currentLogLevelIdx + 1) % len(verbosityOrder)
 			v := verbosityOrder[currentLogLevelIdx]
-			logging.SetVerbosity(v)
 			log.Info("Log level: %s", v)
+			logging.SetVerbosity(v)
 
 		case 'o', 'O':
 			url := fmt.Sprintf("http://localhost:%d", port)

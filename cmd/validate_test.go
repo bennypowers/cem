@@ -28,12 +28,13 @@ import (
 
 func TestValidateE2E(t *testing.T) {
 	testCases := []struct {
-		name           string
-		fixture        string
-		args           []string
-		expectedStdout string
-		expectedStderr string
-		expectSuccess  bool
+		name              string
+		fixture           string
+		args              []string
+		expectedStdout    string
+		notExpectedStdout string
+		expectedStderr    string
+		expectSuccess     bool
 	}{
 		{
 			name:           "valid_complex_manifest",
@@ -78,11 +79,11 @@ func TestValidateE2E(t *testing.T) {
 			expectSuccess:  true,
 		},
 		{
-			name:           "quiet_suppresses_success",
-			fixture:        "valid-manifest",
-			args:           []string{"validate", "-q"},
-			expectedStdout: "",
-			expectSuccess:  true,
+			name:              "quiet_suppresses_success",
+			fixture:           "valid-manifest",
+			args:              []string{"validate", "-q"},
+			notExpectedStdout: "Manifest is valid",
+			expectSuccess:     true,
 		},
 		{
 			name:           "default_shows_success",
@@ -114,6 +115,10 @@ func TestValidateE2E(t *testing.T) {
 			// Check expected output
 			if tc.expectedStdout != "" && !strings.Contains(stdout, tc.expectedStdout) {
 				t.Errorf("stdout did not contain expected string.\nExpected: %q\nGot: %q", tc.expectedStdout, stdout)
+			}
+
+			if tc.notExpectedStdout != "" && strings.Contains(stdout, tc.notExpectedStdout) {
+				t.Errorf("stdout should not contain %q but did.\nGot: %q", tc.notExpectedStdout, stdout)
 			}
 
 			if tc.expectedStderr != "" && !strings.Contains(stderr, tc.expectedStderr) {

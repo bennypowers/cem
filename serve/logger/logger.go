@@ -389,8 +389,12 @@ func (l *ptermLogger) shouldPrint(levelType string) bool {
 		return logging.AtLevel(logging.LogLevelDebug)
 	case "info":
 		return logging.AtLevel(logging.LogLevelInfo)
-	default:
+	case "success":
+		return logging.CurrentVerbosity() >= logging.VerbosityNormal
+	case "warning", "error":
 		return true
+	default:
+		return false
 	}
 }
 

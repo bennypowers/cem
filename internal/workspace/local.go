@@ -80,13 +80,12 @@ func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
 	if cfg.Generate.Exclude == nil {
 		cfg.Generate.Exclude = make([]string, 0)
 	}
-	// Config file verbosity: logLevel takes precedence over deprecated verbose
-	if logging.GetVerbosity() == logging.VerbosityNormal {
-		if v, ok := parseLogLevel(cfg.LogLevel); ok {
-			logging.SetVerbosity(v)
-		} else if cfg.Verbose {
-			logging.SetVerbosity(logging.VerbosityVerbose)
-		}
+	// Config file verbosity: logLevel takes precedence over deprecated verbose.
+	// CLI flags override config afterward in PersistentPreRunE.
+	if v, ok := parseLogLevel(cfg.LogLevel); ok {
+		logging.SetVerbosity(v)
+	} else if cfg.Verbose {
+		logging.SetVerbosity(logging.VerbosityVerbose)
 	}
 
 	return cfg, nil

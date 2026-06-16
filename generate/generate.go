@@ -120,7 +120,7 @@ func processModule(
 		return nil, nil, nil, nil, nil, err
 	}
 	defer mp.Close()
-	if logging.AtLevel(logging.LogLevelDebug) {
+	if mp.logger.Verbose {
 		mp.logger.Section.Printf("Module: %s", mp.logger.File)
 	}
 	module, tagAliases, typeAliases, imports, err = mp.Collect()

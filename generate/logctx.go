@@ -40,7 +40,7 @@ type LogCtx struct {
 
 func NewLogCtx(file string) *LogCtx {
 	buf := &bytes.Buffer{}
-	verbose := logging.AtLevel(logging.LogLevelDebug)
+	verbose := logging.AtLevel(logging.LogLevelTrace)
 	var logger *pterm.Logger
 	var section *pterm.SectionPrinter
 	if verbose {
