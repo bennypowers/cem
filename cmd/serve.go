@@ -59,7 +59,7 @@ var serveCmd = &cobra.Command{
 
 		port := viper.GetInt("serve.port")
 		reload := !viper.GetBool("serve.no-reload")
-		verbose := viper.GetBool("verbose")
+		verbose := logging.GetVerbosity() >= logging.VerbosityDebug
 		targetStr := viper.GetString("serve.target")
 
 		// Load transform configuration
@@ -387,7 +387,13 @@ var verbosityOrder = []logging.Verbosity{
 
 // handleKeyboardInput reads keyboard input and handles commands using atomicgo/keyboard
 func handleKeyboardInput(server *serve.Server, log logger.Logger, port int, quitChan chan struct{}) {
-	currentLogLevelIdx := 0
+	currentLogLevelIdx := 1 // matches VerbosityNormal default; synced if -v/-q passed
+	for i, v := range verbosityOrder {
+		if v == logging.GetVerbosity() {
+			currentLogLevelIdx = i
+			break
+		}
+	}
 
 	// Handle all keyboard input
 	err := keyboard.Listen(func(key keys.Key) (stop bool, err error) {

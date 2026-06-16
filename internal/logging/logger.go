@@ -144,9 +144,8 @@ const (
 	ModeCLI LoggerMode = iota
 	// ModeLSP uses LSP protocol messages (window/showMessage, window/logMessage)
 	ModeLSP
-	// ModeServe suppresses debug-level noise but allows info/warning/error/success.
-	// Used by the dev server to prevent generation worker chatter from interfering
-	// with the interactive status line while preserving startup and lifecycle messages.
+	// ModeServe uses pterm for CLI output like ModeCLI. Verbosity gating is
+	// controlled by the shared Verbosity level, same as all other modes.
 	ModeServe
 )
 
@@ -254,12 +253,12 @@ func (l *Logger) IsQuietEnabled() bool {
 	return l.verbosity == VerbosityQuiet
 }
 
-// Trace logs a trace message (only shown at -vv).
+// Trace logs a trace message (only shown at -vvv).
 func (l *Logger) Trace(format string, args ...any) {
 	l.log(LogLevelTrace, format, args...)
 }
 
-// Debug logs a debug message (only shown at -v or higher).
+// Debug logs a debug message (only shown at -vv or higher).
 func (l *Logger) Debug(format string, args ...any) {
 	l.log(LogLevelDebug, format, args...)
 }
@@ -409,21 +408,26 @@ type MessageAction struct {
 	URL   string
 }
 
-// Success logs a success message (treated as Info in LSP mode).
+// Success logs a success message. In LSP mode, emits as Info-level
+// window/logMessage bypassing the normal verbosity gate so LSP clients
+// see success messages at default verbosity without polluting stdio.
 func (l *Logger) Success(format string, args ...any) {
 	l.mu.RLock()
 	mode := l.mode
 	verbosity := l.verbosity
+	lspContext := l.lspContext
 	l.mu.RUnlock()
 
 	if verbosity < VerbosityNormal {
 		return
 	}
 
-	if mode == ModeCLI || mode == ModeServe {
+	switch mode {
+	case ModeCLI, ModeServe:
 		pterm.Success.Printf(format+"\n", args...)
-	} else {
-		l.log(LogLevelInfo, format, args...)
+	case ModeLSP:
+		message := fmt.Sprintf(format, args...)
+		l.logLSP(LogLevelInfo, message, lspContext)
 	}
 }
 
