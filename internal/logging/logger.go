@@ -14,6 +14,19 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
+
+// Package logging provides centralized diagnostic output for cem.
+//
+// All diagnostic messages (debug, info, warning, error, success) should go
+// through this package rather than calling pterm or fmt directly. The logger
+// adapts output to the active mode: CLI mode uses pterm for styled terminal
+// output; LSP mode routes messages over the LSP protocol.
+//
+// Quiet (-q) suppresses info and debug. Verbose (-v) enables debug. These
+// flags are respected automatically by all log functions.
+//
+// This package does NOT own terminal UI primitives (spinners, live areas,
+// colored display formatting). Those stay with pterm at their callsites.
 package logging
 
 import (
