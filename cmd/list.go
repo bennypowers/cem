@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/list"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/internal/workspace"
@@ -473,7 +473,7 @@ Examples:
 		}
 
 		if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
-			pterm.Warning.Println(err)
+			logging.Warning("%v", err)
 			return fmt.Errorf("project context not initialized: %w", err)
 		} else {
 			manifest, err := ctx.Manifest()

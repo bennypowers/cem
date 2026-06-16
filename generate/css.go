@@ -25,9 +25,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/pterm/pterm"
-
 	"bennypowers.dev/cem/generate/jsdoc"
+	"bennypowers.dev/cem/internal/logging"
 	csslang "bennypowers.dev/cem/internal/languages/css"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
@@ -191,7 +190,7 @@ func amendStylesMapFromSource(
 			if len(properties) > 1 {
 				commentNode := Q.GetDescendantById(root, comment[0].NodeId)
 				line := lineOffset + int(commentNode.StartPosition().Row) + 1
-				pterm.Warning.Printf("%s:%d: Ambiguous comment ignored: more than one var() call in declaration.\n", path, line)
+				logging.Warning("%s:%d: Ambiguous comment ignored: more than one var() call in declaration.", path, line)
 			} else {
 				for _, comment := range comment {
 					err := jsdoc.EnrichCSSPropertyWithJSDoc(comment.Text, &p, queryManager)

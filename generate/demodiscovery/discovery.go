@@ -30,12 +30,12 @@ import (
 
 	C "bennypowers.dev/cem/cmd/config"
 	htmllang "bennypowers.dev/cem/internal/languages/html"
+	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
 	"github.com/dunglas/go-urlpattern"
 	"github.com/gosimple/slug"
-	"github.com/pterm/pterm"
 	ts "github.com/tree-sitter/go-tree-sitter"
 	"gopkg.in/yaml.v3"
 )
@@ -505,7 +505,7 @@ func DiscoverDemos(
 				}
 				if fallbackUrl == "" {
 					// No URL pattern configured, skip this demo
-					pterm.Warning.Printfln("No URL configured for demo %q and no URLPattern fallback available", demoPath)
+					logging.Warning("No URL configured for demo %q and no URLPattern fallback available", demoPath)
 					continue
 				}
 				demoUrl = fallbackUrl

@@ -24,7 +24,6 @@ import (
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
-	"github.com/pterm/pterm"
 )
 
 // FrameworkExportConfig holds per-framework export settings from config or flags.
@@ -145,11 +144,11 @@ func Export(opts Options) error {
 
 	elements := buildExportElements(opts.Manifest, opts.PackageName)
 	if len(elements) == 0 {
-		pterm.Warning.Println("No custom elements found in manifest")
+		logging.Warning("No custom elements found in manifest")
 		return nil
 	}
 
-	pterm.Info.Printfln("Found %d custom element(s)", len(elements))
+	logging.Info("Found %d custom element(s)", len(elements))
 
 	exporters := map[string]FrameworkExporter{
 		"react":   &ReactExporter{},
@@ -174,7 +173,7 @@ func Export(opts Options) error {
 			return fmt.Errorf("output directory is required for framework %q", name)
 		}
 
-		pterm.Info.Printfln("Exporting %s wrappers to %s", name, cfg.Output)
+		logging.Info("Exporting %s wrappers to %s", name, cfg.Output)
 
 		if err := fs.MkdirAll(cfg.Output, 0o755); err != nil {
 			return fmt.Errorf("creating output directory for %s: %w", name, err)
@@ -204,7 +203,7 @@ func Export(opts Options) error {
 			}
 		}
 
-		pterm.Success.Printfln("Exported %d %s wrapper(s)", len(elements), name)
+		logging.Success("Exported %d %s wrapper(s)", len(elements), name)
 	}
 
 	return nil

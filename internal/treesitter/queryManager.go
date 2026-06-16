@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"bennypowers.dev/cem/internal/languages"
-	"github.com/pterm/pterm"
+	"bennypowers.dev/cem/internal/logging"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -85,7 +85,7 @@ func NewQueryManager(selector QuerySelector) (*QueryManager, error) {
 		}
 	}
 
-	pterm.Debug.Println("Constructing selected queries took", time.Since(start))
+	logging.Debug("Constructing selected queries took %s", time.Since(start))
 	return qm, nil
 }
 

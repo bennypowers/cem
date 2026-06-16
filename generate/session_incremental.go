@@ -24,8 +24,8 @@ import (
 
 	DT "bennypowers.dev/cem/internal/designtokens"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
+	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
-	"github.com/pterm/pterm"
 )
 
 // ProcessChangedFiles performs incremental processing for a set of changed files
@@ -56,7 +56,7 @@ func (gs *GenerateSession) ProcessChangedFilesWithSkip(ctx context.Context, chan
 	if len(cssFiles) > 0 {
 		gs.setupCtx.CssCache().Invalidate(cssFiles)
 		if verbose {
-			pterm.Debug.Printf("Invalidated CSS cache for files: %v\n", cssFiles)
+			logging.Debug("Invalidated CSS cache for files: %v", cssFiles)
 		}
 	}
 
@@ -66,7 +66,7 @@ func (gs *GenerateSession) ProcessChangedFilesWithSkip(ctx context.Context, chan
 	if len(affectedModules) == 0 {
 		// No modules affected, return current manifest
 		if verbose {
-			pterm.Debug.Printf("No modules affected by changes: %v\n", changedFiles)
+			logging.Debug("No modules affected by changes: %v", changedFiles)
 		}
 		return gs.InMemoryManifest(), nil
 	}
@@ -78,14 +78,14 @@ func (gs *GenerateSession) ProcessChangedFilesWithSkip(ctx context.Context, chan
 	if currentManifest == nil || len(affectedModules) > maxAffectedModulesBeforeFullRebuild {
 		// No base manifest or too many affected modules - do full rebuild
 		if verbose {
-			pterm.Debug.Printf("Files changed: %v, affected modules: %v - performing full rebuild (no base or too many changes)\n", changedFiles, affectedModules)
+			logging.Debug("Files changed: %v, affected modules: %v - performing full rebuild (no base or too many changes)", changedFiles, affectedModules)
 		}
 		return gs.GenerateFullManifest(ctx)
 	}
 
 	// Try incremental processing
 	if verbose {
-		pterm.Debug.Printf("Files changed: %v, affected modules: %v - attempting incremental rebuild\n", changedFiles, affectedModules)
+		logging.Debug("Files changed: %v, affected modules: %v - attempting incremental rebuild", changedFiles, affectedModules)
 	}
 	return gs.ProcessModulesIncrementalWithSkip(ctx, affectedModules, skipDemoDiscovery)
 }
@@ -108,7 +108,7 @@ func (gs *GenerateSession) ProcessModulesIncrementalWithSkip(ctx context.Context
 	verbose := cfg != nil && cfg.Verbose
 
 	if verbose {
-		pterm.Debug.Printf("Processing %d modules incrementally: %v\n", len(modulePaths), modulePaths)
+		logging.Debug("Processing %d modules incrementally: %v", len(modulePaths), modulePaths)
 	}
 
 	// Get the preprocessing result (we need some global context)
@@ -137,13 +137,13 @@ func (gs *GenerateSession) ProcessModulesIncrementalWithSkip(ctx context.Context
 
 	// Apply demo discovery and design tokens to affected modules only
 	if err := gs.applyPostProcessingToModules(ctx, result, allTagAliases, updatedModules, skipDemoDiscovery); err != nil {
-		pterm.Warning.Printf("Incremental post-processing failed: %v\n", err)
+		logging.Warning("Incremental post-processing failed: %v", err)
 		// Don't fail the entire build for post-processing issues
 	}
 
 	// Log performance info
 	if verbose {
-		pterm.Debug.Printf("Processed %d modules incrementally\n", len(logs))
+		logging.Debug("Processed %d modules incrementally", len(logs))
 	}
 
 	return updatedManifest, nil
@@ -168,7 +168,7 @@ func (gs *GenerateSession) processSpecificModules(ctx context.Context, result pr
 			validJobs = append(validJobs, processJob{file: modulePath, ctx: gs.setupCtx.WorkspaceContext})
 		} else {
 			if verbose {
-				pterm.Debug.Printf("Skipping module not in included files: %s\n", modulePath)
+				logging.Debug("Skipping module not in included files: %s", modulePath)
 			}
 		}
 	}
@@ -182,7 +182,7 @@ func (gs *GenerateSession) processSpecificModules(ctx context.Context, result pr
 	processor.SetWorkerCount(len(validJobs)) // Optimize for small incremental builds
 
 	if verbose {
-		pterm.Debug.Printf("Starting incremental processing with optimized workers for %d modules\n", len(validJobs))
+		logging.Debug("Starting incremental processing with optimized workers for %d modules", len(validJobs))
 	}
 	processingResult := processor.ProcessModules(ctx, validJobs, ModuleProcessorFunc(processModule))
 

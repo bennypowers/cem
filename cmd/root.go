@@ -73,7 +73,7 @@ var rootCmd = &cobra.Command{
 			logging.SetQuietEnabled(true)
 		}
 
-		pterm.Debug.Printfln("Project directory: %q", rootDir)
+		logging.Debug("Project directory: %q", rootDir)
 
 		// Load config into viper using the discovered config file path.
 		// The workspace context already discovered the file via internal/config.FindConfigFile.
@@ -102,7 +102,7 @@ var rootCmd = &cobra.Command{
 				}
 			}
 			viper.Set("configFile", cfgFile)
-			pterm.Debug.Printfln("Config file: %q", cfgFile)
+			logging.Debug("Config file: %q", cfgFile)
 		}
 		viper.AutomaticEnv()
 		return nil

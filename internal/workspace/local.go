@@ -30,6 +30,7 @@ import (
 	C "bennypowers.dev/cem/cmd/config"
 	DT "bennypowers.dev/cem/internal/designtokens"
 	IC "bennypowers.dev/cem/internal/config"
+	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
 	"github.com/bmatcuk/doublestar"
@@ -320,7 +321,7 @@ func (c *FileSystemWorkspaceContext) OutputWriter(path string) (io.WriteCloser, 
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
-	pterm.Debug.Printfln("Output: %q", path)
+	logging.Debug("Output: %q", path)
 	return os.Create(path)
 }
 

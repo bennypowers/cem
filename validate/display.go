@@ -22,6 +22,7 @@ import (
 	"os"
 	"strings"
 
+	"bennypowers.dev/cem/internal/logging"
 	"github.com/pterm/pterm"
 )
 
@@ -79,9 +80,9 @@ func printValidationResultJSON(manifestPath string, result *ValidationResult) er
 }
 
 func printValidationSuccess(manifestPath, schemaVersion string, verbose bool) {
-	pterm.Success.Printf("✓ Manifest is valid (%s)\n", manifestPath)
+	logging.Success("Manifest is valid (%s)", manifestPath)
 	if verbose {
-		pterm.Info.Printf("  Schema version: %s\n", schemaVersion)
+		logging.Info("Schema version: %s", schemaVersion)
 	}
 }
 
@@ -89,7 +90,7 @@ func printValidationErrors(manifestPath, schemaVersion string, issues []Validati
 	groupedIssues := groupIssuesByContext(issues)
 
 	// Always use consistent format
-	pterm.Error.Printf("✗ Validation failed with %d issue%s (%s)\n", len(issues), func() string {
+	logging.Error("Validation failed with %d issue%s (%s)", len(issues), func() string {
 		if len(issues) == 1 {
 			return ""
 		}
@@ -100,14 +101,14 @@ func printValidationErrors(manifestPath, schemaVersion string, issues []Validati
 	printGroupedIssues(groupedIssues)
 
 	if verbose {
-		pterm.Info.Printf("Schema version: %s\n", schemaVersion)
+		logging.Info("Schema version: %s", schemaVersion)
 	}
 }
 
 func printValidationWarnings(manifestPath string, warnings []ValidationWarning, verbose bool) {
 	groupedWarnings := groupWarningsByContext(warnings)
 
-	pterm.Warning.Printf("⚠ Manifest valid with %d warning%s (%s)\n", len(warnings), func() string {
+	logging.Warning("Manifest valid with %d warning%s (%s)", len(warnings), func() string {
 		if len(warnings) == 1 {
 			return ""
 		}
@@ -118,7 +119,7 @@ func printValidationWarnings(manifestPath string, warnings []ValidationWarning, 
 	printGroupedWarnings(groupedWarnings)
 
 	if verbose {
-		pterm.Info.Println("Use --no-warnings to suppress warnings")
+		logging.Info("Use --no-warnings to suppress warnings")
 	}
 }
 
