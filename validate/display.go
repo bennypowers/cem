@@ -39,8 +39,7 @@ type GroupedWarnings struct {
 }
 
 type DisplayOptions struct {
-	Verbose bool
-	Format  string
+	Format string
 }
 
 // PrintValidationResult prints the validation result with appropriate formatting
@@ -50,11 +49,11 @@ func PrintValidationResult(manifestPath string, result *ValidationResult, option
 		return printValidationResultJSON(manifestPath, result)
 	case "text", "":
 		if result.IsValid && len(result.Warnings) == 0 {
-			printValidationSuccess(manifestPath, result.SchemaVersion, options.Verbose)
+			printValidationSuccess(manifestPath, result.SchemaVersion)
 		} else if result.IsValid && len(result.Warnings) > 0 {
-			printValidationWarnings(manifestPath, result.Warnings, options.Verbose)
+			printValidationWarnings(manifestPath, result.Warnings)
 		} else {
-			printValidationErrors(manifestPath, result.SchemaVersion, result.Errors, options.Verbose)
+			printValidationErrors(manifestPath, result.SchemaVersion, result.Errors)
 		}
 		return nil
 	default:
@@ -79,14 +78,12 @@ func printValidationResultJSON(manifestPath string, result *ValidationResult) er
 	return encoder.Encode(result)
 }
 
-func printValidationSuccess(manifestPath, schemaVersion string, verbose bool) {
+func printValidationSuccess(manifestPath, schemaVersion string) {
 	logging.Success("Manifest is valid (%s)", manifestPath)
-	if verbose {
-		logging.Info("Schema version: %s", schemaVersion)
-	}
+	logging.Debug("Schema version: %s", schemaVersion)
 }
 
-func printValidationErrors(manifestPath, schemaVersion string, issues []ValidationError, verbose bool) {
+func printValidationErrors(manifestPath, schemaVersion string, issues []ValidationError) {
 	groupedIssues := groupIssuesByContext(issues)
 
 	// Always use consistent format
@@ -100,12 +97,10 @@ func printValidationErrors(manifestPath, schemaVersion string, issues []Validati
 
 	printGroupedIssues(groupedIssues)
 
-	if verbose {
-		logging.Info("Schema version: %s", schemaVersion)
-	}
+	logging.Debug("Schema version: %s", schemaVersion)
 }
 
-func printValidationWarnings(manifestPath string, warnings []ValidationWarning, verbose bool) {
+func printValidationWarnings(manifestPath string, warnings []ValidationWarning) {
 	groupedWarnings := groupWarningsByContext(warnings)
 
 	logging.Warning("Manifest valid with %d warning%s (%s)", len(warnings), func() string {
@@ -118,9 +113,7 @@ func printValidationWarnings(manifestPath string, warnings []ValidationWarning, 
 
 	printGroupedWarnings(groupedWarnings)
 
-	if verbose {
-		logging.Info("Use --no-warnings to suppress warnings")
-	}
+	logging.Debug("Use --no-warnings to suppress warnings")
 }
 
 func groupIssuesByContext(issues []ValidationError) []GroupedIssues {

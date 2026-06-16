@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package lifecycle
 
 import (
-	"bennypowers.dev/cem/lsp/helpers"
+	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/bennypowers/glsp"
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
@@ -25,22 +25,17 @@ import (
 
 // SetTrace handles the $/setTrace notification
 func SetTrace(ctx types.ServerContext, context *glsp.Context, params *protocol.SetTraceParams) error {
-	// Use LSP standard trace levels to control debug logging
 	switch params.Value {
 	case protocol.TraceValueOff:
-		// Log before disabling to ensure message is emitted
 		ctx.DebugLog("Disabling debug logging via $/setTrace")
-		helpers.SetDebugLoggingEnabled(false)
+		logging.SetVerbosity(logging.VerbosityNormal)
 	case protocol.TraceValueMessage:
-		// Enable basic debug logging
-		helpers.SetDebugLoggingEnabled(true)
-		ctx.DebugLog("Basic debug logging enabled via $/setTrace")
+		logging.SetVerbosity(logging.VerbosityDebug)
+		ctx.DebugLog("Debug logging enabled via $/setTrace")
 	case protocol.TraceValueVerbose:
-		// Enable verbose debug logging (same as messages for now)
-		helpers.SetDebugLoggingEnabled(true)
-		ctx.DebugLog("Verbose debug logging enabled via $/setTrace")
+		logging.SetVerbosity(logging.VerbosityTrace)
+		ctx.DebugLog("Trace logging enabled via $/setTrace")
 	default:
-		// Unknown/unsupported value; ignore gracefully
 		ctx.DebugLog("Ignoring unknown $/setTrace value")
 	}
 

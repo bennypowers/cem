@@ -120,11 +120,7 @@ func processModule(
 		return nil, nil, nil, nil, nil, err
 	}
 	defer mp.Close()
-	cfg, err := job.ctx.Config()
-	if err != nil {
-		return nil, nil, nil, nil, nil, err
-	}
-	if cfg.Verbose {
+	if logging.AtLevel(logging.LogLevelDebug) {
 		mp.logger.Section.Printf("Module: %s", mp.logger.File)
 	}
 	module, tagAliases, typeAliases, imports, err = mp.Collect()

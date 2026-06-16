@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	C "bennypowers.dev/cem/cmd/config"
+	"bennypowers.dev/cem/internal/logging"
 	"github.com/pterm/pterm"
 )
 
@@ -38,17 +38,14 @@ type LogCtx struct {
 	Verbose  bool
 }
 
-func NewLogCtx(file string, cfg *C.CemConfig) *LogCtx {
+func NewLogCtx(file string) *LogCtx {
 	buf := &bytes.Buffer{}
-	verbose := cfg.Verbose
+	verbose := logging.AtLevel(logging.LogLevelDebug)
 	var logger *pterm.Logger
 	var section *pterm.SectionPrinter
 	if verbose {
 		logger = pterm.DefaultLogger.WithWriter(buf).WithTime(false).WithLevel(pterm.LogLevelTrace)
 		section = pterm.DefaultSection.WithWriter(buf)
-	} else {
-		logger = nil
-		section = nil
 	}
 	return &LogCtx{
 		File:    file,

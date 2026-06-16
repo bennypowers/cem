@@ -34,7 +34,6 @@ import (
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
 	"github.com/bmatcuk/doublestar"
-	"github.com/pterm/pterm"
 )
 
 var _ types.WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
@@ -81,11 +80,9 @@ func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
 	if cfg.Generate.Exclude == nil {
 		cfg.Generate.Exclude = make([]string, 0)
 	}
-	// Set debug verbosity
-	if cfg.Verbose {
-		pterm.EnableDebugMessages()
-	} else {
-		pterm.DisableDebugMessages()
+	// If config file sets verbose and no flag override, enable verbose
+	if cfg.Verbose && logging.GetVerbosity() == logging.VerbosityNormal {
+		logging.SetVerbosity(logging.VerbosityVerbose)
 	}
 
 	return cfg, nil

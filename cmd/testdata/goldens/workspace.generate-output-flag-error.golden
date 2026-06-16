@@ -21,5 +21,5 @@ Global Flags:
  -p, --package string package specifier: npm:@scope/package, URL (https://cdn.example.com/pkg/), or local path
  -q, --quiet quiet output (only warnings and errors)
  --source-control-root-url string Canonical public source control URL corresponding to project root on primary branch. e.g. https://github.com/bennypowers/cem/tree/main/
- -v, --verbose verbose logging output
+ -v, --verbose count increase verbosity (-v info, -vv debug, -vvv trace)
 

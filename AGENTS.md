@@ -13,7 +13,9 @@ $ dist/cem -p examples/kitchen-sink validate
 
 Getter methods should be named `Foo()`, not `GetFoo()`.
 
-All diagnostic logging (debug, info, warning, error, success) must go through `bennypowers.dev/cem/internal/logging`. This ensures correct routing in CLI vs LSP modes and respects `-v`/`-q` flags. Never call `pterm.Warning`, `pterm.Info`, etc. directly for log messages. Direct pterm usage is reserved for terminal UI primitives only: spinners, live areas, colored/styled display formatting.
+All diagnostic logging (debug, info, warning, error, success, trace) must go through `bennypowers.dev/cem/internal/logging`. This ensures correct routing in CLI vs LSP modes and respects `-v`/`-vv`/`-q` flags. Never call `pterm.Warning`, `pterm.Info`, etc. directly for log messages. Direct pterm usage is reserved for terminal UI primitives only: spinners, live areas, colored/styled display formatting.
+
+Verbosity levels: `-q` (quiet: warnings/errors only), default (+ success), `-v` (+ info), `-vv` (+ debug), `-vvv` (+ trace per-file detail). Use `logging.AtLevel(level)` as a guard before expensive debug computations.
 
 Use `platform.WalkDir` for all directory traversals. It silently prunes `.git` directories and accepts additional dirs to skip via `set.Set[string]`. Never use `filepath.WalkDir` or `fs.WalkDir` directly -- those bypass `.git` pruning.
 
@@ -31,7 +33,7 @@ In cobra command `RunE` handlers, use `cmd.Println` / `cmd.PrintErrln` instead o
 
 When debugging Go code, always use the logger `logger.Debug`, etc. Don't use `fmt.Printf`, which pollutes stdio, breaking the LSP and MCP commands.
 
-To print debug logs to the console, pass `-vvv`
+To print debug logs to the console, pass `-vv` (debug) or `-vvv` (trace)
 
 ## Testing
 

@@ -149,7 +149,7 @@ func (mbp *ModuleBatchProcessor) processModulesInternal(
 
 	// Optimize worker count for small job sets
 	numWorkers := min(len(jobs), mbp.numWorkers)
-	logging.Info("Starting generation with %d workers", numWorkers)
+	logging.Debug("Starting generation with %d workers", numWorkers)
 
 	// Initialize result collection
 	var wg sync.WaitGroup

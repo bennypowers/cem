@@ -27,7 +27,6 @@ import (
 	_ "bennypowers.dev/cem/internal/languages/registry"
 	"bennypowers.dev/cem/internal/logging"
 	W "bennypowers.dev/cem/internal/workspace"
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -57,20 +56,22 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Handle verbose and quiet flags (mutually exclusive)
-		verbose := viper.GetBool("verbose")
+		verboseCount, _ := cmd.Flags().GetCount("verbose")
 		quiet := viper.GetBool("quiet")
 
-		if verbose && quiet {
+		if verboseCount > 0 && quiet {
 			return fmt.Errorf("cannot use both --verbose and --quiet flags together")
 		}
 
-		if verbose {
-			pterm.EnableDebugMessages()
-		}
-
-		// Configure quiet mode to suppress INFO and DEBUG messages
-		if quiet {
-			logging.SetQuietEnabled(true)
+		switch {
+		case quiet:
+			logging.SetVerbosity(logging.VerbosityQuiet)
+		case verboseCount >= 3:
+			logging.SetVerbosity(logging.VerbosityTrace)
+		case verboseCount == 2:
+			logging.SetVerbosity(logging.VerbosityDebug)
+		case verboseCount == 1:
+			logging.SetVerbosity(logging.VerbosityVerbose)
 		}
 
 		logging.Debug("Project directory: %q", rootDir)
@@ -120,12 +121,11 @@ func init() {
 	rootCmd.PersistentFlags().String("source-control-root-url", "", "Canonical public source control URL corresponding to project root on primary branch. e.g. https://github.com/bennypowers/cem/tree/main/")
 	rootCmd.PersistentFlags().String("config", "", "config file (searches .config/cem.{yaml,yml,json,jsonc} then .cem.{yaml,yml,json,jsonc})")
 	rootCmd.PersistentFlags().StringP("package", "p", "", "package specifier: npm:@scope/package, URL (https://cdn.example.com/pkg/), or local path")
-	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose logging output")
+	rootCmd.PersistentFlags().CountP("verbose", "v", "increase verbosity (-v info, -vv debug, -vvv trace)")
 	rootCmd.PersistentFlags().BoolP("quiet", "q", false, "quiet output (only warnings and errors)")
 
 	_ = viper.BindPFlag("configFile", rootCmd.PersistentFlags().Lookup("config"))
 	_ = viper.BindPFlag("package", rootCmd.PersistentFlags().Lookup("package"))
-	_ = viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 	_ = viper.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet"))
 	_ = viper.BindPFlag("sourceControlRootUrl", rootCmd.PersistentFlags().Lookup("source-control-root-url"))
 

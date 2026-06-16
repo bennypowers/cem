@@ -376,34 +376,18 @@ func showHelp(log logger.Logger) {
 	Ctrl+C - Also quits server                      `)
 }
 
-// logLevel tracks the current log verbosity level
-type logLevel int
-
-const (
-	logLevelNormal logLevel = iota
-	logLevelVerbose
-	logLevelDebug
-	logLevelQuiet
-)
-
-func (l logLevel) String() string {
-	switch l {
-	case logLevelNormal:
-		return "normal"
-	case logLevelVerbose:
-		return "verbose"
-	case logLevelDebug:
-		return "debug"
-	case logLevelQuiet:
-		return "quiet"
-	default:
-		return "unknown"
-	}
+// verbosityOrder defines the cycle for the 'v' key in serve mode.
+var verbosityOrder = []logging.Verbosity{
+	logging.VerbosityQuiet,
+	logging.VerbosityNormal,
+	logging.VerbosityVerbose,
+	logging.VerbosityDebug,
+	logging.VerbosityTrace,
 }
 
 // handleKeyboardInput reads keyboard input and handles commands using atomicgo/keyboard
 func handleKeyboardInput(server *serve.Server, log logger.Logger, port int, quitChan chan struct{}) {
-	currentLogLevel := logLevelNormal
+	currentLogLevelIdx := 0
 
 	// Handle all keyboard input
 	err := keyboard.Listen(func(key keys.Key) (stop bool, err error) {
@@ -433,37 +417,13 @@ func handleKeyboardInput(server *serve.Server, log logger.Logger, port int, quit
 			}
 
 		case 'v', 'V':
-			// Cycle through log levels
-			currentLogLevel = (currentLogLevel + 1) % 4
-			internalLogger := logging.GetLogger()
-
-			switch currentLogLevel {
-			case logLevelNormal:
-				internalLogger.SetQuietEnabled(true) // Keep generation logs quiet
-				internalLogger.SetDebugEnabled(false)
-				if setter, ok := log.(interface{ SetVerbose(bool) }); ok {
-					setter.SetVerbose(false)
-				}
-			case logLevelVerbose:
-				internalLogger.SetQuietEnabled(false)
-				internalLogger.SetDebugEnabled(false)
-				if setter, ok := log.(interface{ SetVerbose(bool) }); ok {
-					setter.SetVerbose(true)
-				}
-			case logLevelDebug:
-				internalLogger.SetQuietEnabled(false)
-				internalLogger.SetDebugEnabled(true)
-				if setter, ok := log.(interface{ SetVerbose(bool) }); ok {
-					setter.SetVerbose(true)
-				}
-			case logLevelQuiet:
-				internalLogger.SetQuietEnabled(true)
-				internalLogger.SetDebugEnabled(false)
-				if setter, ok := log.(interface{ SetVerbose(bool) }); ok {
-					setter.SetVerbose(false)
-				}
+			currentLogLevelIdx = (currentLogLevelIdx + 1) % len(verbosityOrder)
+			v := verbosityOrder[currentLogLevelIdx]
+			logging.SetVerbosity(v)
+			if setter, ok := log.(interface{ SetVerbose(bool) }); ok {
+				setter.SetVerbose(v >= logging.VerbosityDebug)
 			}
-			log.Info("Log level: %s", currentLogLevel.String())
+			log.Info("Log level: %s", v)
 
 		case 'o', 'O':
 			url := fmt.Sprintf("http://localhost:%d", port)
