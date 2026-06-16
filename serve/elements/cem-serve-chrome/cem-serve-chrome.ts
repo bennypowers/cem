@@ -295,7 +295,7 @@ export class CemServeChrome extends LitElement {
   // Log filter state
   #logsFilterValue = '';
   #logsFilterDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-  #logLevelFilters = new Set(['info', 'warn', 'error', 'debug']);
+  #logLevelFilters = new Set(['info', 'warn', 'error', 'success', 'debug', 'trace']);
   #logLevelDropdown: Element | null = null;
 
   // Watch for dynamically added elements
@@ -487,10 +487,12 @@ export class CemServeChrome extends LitElement {
                           <cem-pf-v6-dropdown id="log-level-filter"
                                           label="Filter log levels">
                             <span slot="toggle-text">Log Levels</span>
-                            <cem-pf-v6-menu-item variant="checkbox" value="info" checked>Info</cem-pf-v6-menu-item>
-                            <cem-pf-v6-menu-item variant="checkbox" value="warn" checked>Warnings</cem-pf-v6-menu-item>
                             <cem-pf-v6-menu-item variant="checkbox" value="error" checked>Errors</cem-pf-v6-menu-item>
+                            <cem-pf-v6-menu-item variant="checkbox" value="warn" checked>Warnings</cem-pf-v6-menu-item>
+                            <cem-pf-v6-menu-item variant="checkbox" value="success" checked>Success</cem-pf-v6-menu-item>
+                            <cem-pf-v6-menu-item variant="checkbox" value="info" checked>Info</cem-pf-v6-menu-item>
                             <cem-pf-v6-menu-item variant="checkbox" value="debug" checked>Debug</cem-pf-v6-menu-item>
+                            <cem-pf-v6-menu-item variant="checkbox" value="trace" checked>Trace</cem-pf-v6-menu-item>
                           </cem-pf-v6-dropdown>
                         </cem-pf-v6-toolbar-item>
                       </cem-pf-v6-toolbar-group>
@@ -937,7 +939,7 @@ export class CemServeChrome extends LitElement {
 
   #getLogTypeFromEntry(entry: Element): string {
     for (const cls of entry.classList) {
-      if (['info', 'warning', 'error', 'debug'].includes(cls)) {
+      if (['info', 'warning', 'error', 'success', 'debug', 'trace'].includes(cls)) {
         return cls === 'warning' ? 'warn' : cls;
       }
     }
@@ -1211,7 +1213,9 @@ Generated: ${new Date().toISOString()}`;
       case 'info': return 'Info';
       case 'warning': return 'Warn';
       case 'error': return 'Error';
+      case 'success': return 'OK';
       case 'debug': return 'Debug';
+      case 'trace': return 'Trace';
       default: return type.toUpperCase();
     }
   }
@@ -1224,8 +1228,12 @@ Generated: ${new Date().toISOString()}`;
         return label.setAttribute('status', 'warning');
       case 'error':
         return label.setAttribute('status', 'danger');
+      case 'success':
+        return label.setAttribute('status', 'success');
       case 'debug':
         return label.setAttribute('color', 'purple');
+      case 'trace':
+        return label.setAttribute('color', 'grey');
       default:
         label.setAttribute('color', 'grey');
     }

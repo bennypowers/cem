@@ -7288,7 +7288,7 @@ var _CemServeChrome = class _CemServeChrome extends (_a53 = i3, _primaryTagName_
     // Log filter state
     __privateAdd(this, _logsFilterValue, "");
     __privateAdd(this, _logsFilterDebounceTimer, null);
-    __privateAdd(this, _logLevelFilters, /* @__PURE__ */ new Set(["info", "warn", "error", "debug"]));
+    __privateAdd(this, _logLevelFilters, /* @__PURE__ */ new Set(["info", "warn", "error", "success", "debug", "trace"]));
     __privateAdd(this, _logLevelDropdown, null);
     // Watch for dynamically added elements
     /* c8 ignore start - MutationObserver callback tested via integration */
@@ -7528,10 +7528,12 @@ var _CemServeChrome = class _CemServeChrome extends (_a53 = i3, _primaryTagName_
                           <cem-pf-v6-dropdown id="log-level-filter"
                                           label="Filter log levels">
                             <span slot="toggle-text">Log Levels</span>
-                            <cem-pf-v6-menu-item variant="checkbox" value="info" checked>Info</cem-pf-v6-menu-item>
-                            <cem-pf-v6-menu-item variant="checkbox" value="warn" checked>Warnings</cem-pf-v6-menu-item>
                             <cem-pf-v6-menu-item variant="checkbox" value="error" checked>Errors</cem-pf-v6-menu-item>
+                            <cem-pf-v6-menu-item variant="checkbox" value="warn" checked>Warnings</cem-pf-v6-menu-item>
+                            <cem-pf-v6-menu-item variant="checkbox" value="success" checked>Success</cem-pf-v6-menu-item>
+                            <cem-pf-v6-menu-item variant="checkbox" value="info" checked>Info</cem-pf-v6-menu-item>
                             <cem-pf-v6-menu-item variant="checkbox" value="debug" checked>Debug</cem-pf-v6-menu-item>
+                            <cem-pf-v6-menu-item variant="checkbox" value="trace" checked>Trace</cem-pf-v6-menu-item>
                           </cem-pf-v6-dropdown>
                         </cem-pf-v6-toolbar-item>
                       </cem-pf-v6-toolbar-group>
@@ -8051,7 +8053,7 @@ filterLogs_fn = function(query) {
 };
 getLogTypeFromEntry_fn = function(entry) {
   for (const cls of entry.classList) {
-    if (["info", "warning", "error", "debug"].includes(cls)) {
+    if (["info", "warning", "error", "success", "debug", "trace"].includes(cls)) {
       return cls === "warning" ? "warn" : cls;
     }
   }
@@ -8274,8 +8276,12 @@ getLogBadge_fn = function(type) {
       return "Warn";
     case "error":
       return "Error";
+    case "success":
+      return "OK";
     case "debug":
       return "Debug";
+    case "trace":
+      return "Trace";
     default:
       return type.toUpperCase();
   }
@@ -8288,8 +8294,12 @@ applyLogLabelAttrs_fn = function(label, type) {
       return label.setAttribute("status", "warning");
     case "error":
       return label.setAttribute("status", "danger");
+    case "success":
+      return label.setAttribute("status", "success");
     case "debug":
       return label.setAttribute("color", "purple");
+    case "trace":
+      return label.setAttribute("color", "grey");
     default:
       label.setAttribute("color", "grey");
   }

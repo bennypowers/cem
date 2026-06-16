@@ -59,7 +59,6 @@ var serveCmd = &cobra.Command{
 
 		port := viper.GetInt("serve.port")
 		reload := !viper.GetBool("serve.no-reload")
-		verbose := logging.GetVerbosity() >= logging.VerbosityDebug
 		targetStr := viper.GetString("serve.target")
 
 		// Load transform configuration
@@ -178,7 +177,7 @@ var serveCmd = &cobra.Command{
 		}
 
 		// Create pterm logger
-		log := logger.NewPtermLogger(verbose)
+		log := logger.NewPtermLogger()
 		defer func() {
 			if l, ok := log.(interface{ Stop() }); ok {
 				l.Stop()
@@ -368,7 +367,7 @@ func openBrowser(url string) error {
 func showHelp(log logger.Logger) {
 	log.Info(`Keyboard Shortcuts
 	m - Force rebuild manifest
-	v - Cycle log levels (normal/verbose/debug/quiet)
+	v - Cycle log levels (quiet/normal/verbose/debug/trace)
 	o - Open in browser
 	c - Clear console
 	h - Show this help
@@ -426,9 +425,6 @@ func handleKeyboardInput(server *serve.Server, log logger.Logger, port int, quit
 			currentLogLevelIdx = (currentLogLevelIdx + 1) % len(verbosityOrder)
 			v := verbosityOrder[currentLogLevelIdx]
 			logging.SetVerbosity(v)
-			if setter, ok := log.(interface{ SetVerbose(bool) }); ok {
-				setter.SetVerbose(v >= logging.VerbosityDebug)
-			}
 			log.Info("Log level: %s", v)
 
 		case 'o', 'O':

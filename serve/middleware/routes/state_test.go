@@ -32,6 +32,8 @@ func (m *mockLogger) Info(format string, args ...any)    {}
 func (m *mockLogger) Warning(format string, args ...any) {}
 func (m *mockLogger) Error(format string, args ...any)   {}
 func (m *mockLogger) Debug(format string, args ...any)   {}
+func (m *mockLogger) Success(format string, args ...any) {}
+func (m *mockLogger) Trace(format string, args ...any)   {}
 
 func TestDefaultState(t *testing.T) {
 	state := DefaultState()
