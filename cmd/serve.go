@@ -185,9 +185,8 @@ var serveCmd = &cobra.Command{
 			}
 		}()
 
-		// Enable quiet mode on internal logger to suppress generation progress messages
-		// These would otherwise appear below the status line
-		logging.GetLogger().SetQuietEnabled(true)
+		// ModeServe suppresses debug noise but keeps info/warning/error/success
+		logging.SetMode(logging.ModeServe)
 
 		// Create server
 		server, err := serve.NewServerWithConfig(config)
