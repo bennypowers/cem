@@ -176,7 +176,7 @@ func (ws *WatchSession) handleFileChange(event fsnotify.Event) {
 
 	// Ignore changes that we just made to prevent infinite loops
 	if ws.isOurWrite(event.Name) {
-		logging.Debug("Ignoring our own write to: %s", event.Name)
+		logging.Trace("Ignoring our own write to: %s", event.Name)
 		return
 	}
 
@@ -186,16 +186,16 @@ func (ws *WatchSession) handleFileChange(event fsnotify.Event) {
 		ws.mu.Lock()
 		ws.demoFilesChanged = true
 		ws.mu.Unlock()
-		logging.Debug("Demo file changed: %s", event.Name)
+		logging.Trace("Demo file changed: %s", event.Name)
 	}
 
 	// Only process files that match our input globs or are demo files
 	if !ws.matchesInputGlobs(event.Name) && !isDemoFile {
-		logging.Debug("Ignoring file not matching input or demo globs: %s", event.Name)
+		logging.Trace("Ignoring file not matching input or demo globs: %s", event.Name)
 		return
 	}
 
-	logging.Debug("File change detected: %s (op: %s)", event.Name, event.Op)
+	logging.Trace("File change detected: %s (op: %s)", event.Name, event.Op)
 
 	ws.mu.Lock()
 	defer ws.mu.Unlock()
