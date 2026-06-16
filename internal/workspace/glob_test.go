@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package workspace
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -179,6 +180,92 @@ func TestMakeRelativeToRoot_CrossPlatform(t *testing.T) {
 				t.Errorf("Expected %q, got %q", expected, actual)
 			}
 		})
+	}
+}
+
+// Inline assertions: testing error sentinel types via errors.Is; goldens cannot capture this.
+// Real filesystem: doublestar.Glob requires actual disk paths, not MapFS.
+
+func TestGlob_AllOutsideRoot(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	siblingFiles := []string{
+		"packages/components/button/src/button.ts",
+		"packages/components/card/src/card.ts",
+	}
+	for _, file := range siblingFiles {
+		fullPath := filepath.Join(tmpDir, file)
+		if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+			t.Fatalf("Failed to create directory: %v", err)
+		}
+		if err := os.WriteFile(fullPath, []byte("export class Foo {}"), 0644); err != nil {
+			t.Fatalf("Failed to create test file: %v", err)
+		}
+	}
+
+	projectRoot := filepath.Join(tmpDir, "website")
+	if err := os.MkdirAll(projectRoot, 0755); err != nil {
+		t.Fatalf("Failed to create project dir: %v", err)
+	}
+
+	ctx := NewFileSystemWorkspaceContext(projectRoot)
+
+	result, err := ctx.Glob("../packages/components/**/*.ts")
+
+	if len(result) != 0 {
+		t.Errorf("Expected empty result, got %v", result)
+	}
+	if !errors.Is(err, ErrGlobAllOutsideRoot) {
+		t.Errorf("Expected ErrGlobAllOutsideRoot, got %v", err)
+	}
+}
+
+func TestGlob_SomeOutsideRoot(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Files both inside and outside project root
+	allFiles := []string{
+		"packages/components/button/src/button.ts", // outside website/
+		"website/src/local.ts",                     // inside website/
+	}
+	for _, file := range allFiles {
+		fullPath := filepath.Join(tmpDir, file)
+		if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+			t.Fatalf("Failed to create directory: %v", err)
+		}
+		if err := os.WriteFile(fullPath, []byte("export class Foo {}"), 0644); err != nil {
+			t.Fatalf("Failed to create test file: %v", err)
+		}
+	}
+
+	projectRoot := filepath.Join(tmpDir, "website")
+	ctx := NewFileSystemWorkspaceContext(projectRoot)
+
+	// Pattern that matches both inside and outside root
+	result, err := ctx.Glob("../**/*.ts")
+
+	if len(result) != 1 {
+		t.Fatalf("Expected 1 result (local file only), got %d: %v", len(result), result)
+	}
+	if result[0] != filepath.Join("src", "local.ts") {
+		t.Errorf("Expected src/local.ts, got %s", result[0])
+	}
+	if !errors.Is(err, ErrGlobSomeOutsideRoot) {
+		t.Errorf("Expected ErrGlobSomeOutsideRoot, got %v", err)
+	}
+}
+
+func TestGlob_NoneMatched(t *testing.T) {
+	tmpDir := t.TempDir()
+	ctx := NewFileSystemWorkspaceContext(tmpDir)
+
+	result, err := ctx.Glob("nonexistent/**/*.ts")
+
+	if len(result) != 0 {
+		t.Errorf("Expected empty result, got %v", result)
+	}
+	if !errors.Is(err, ErrGlobNoneMatched) {
+		t.Errorf("Expected ErrGlobNoneMatched, got %v", err)
 	}
 }
 

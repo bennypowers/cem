@@ -75,18 +75,20 @@ var generateCmd = &cobra.Command{
 		}
 
 		files, err := expand(ctx, uniqueGlobs)
-		if err != nil {
-			errs = errors.Join(errs, err)
-		}
-
 		if len(files) == 0 {
+			if err != nil {
+				return err
+			}
 			return errors.New("pass at least one file to generate")
+		}
+		if err != nil {
+			logging.Warning("%v", err)
 		}
 
 		excludeGlobs := append(viper.GetStringSlice("generate.exclude"), cfg.Generate.Exclude...)
-		exclude, err := expand(ctx, excludeGlobs)
-		if err != nil {
-			errs = errors.Join(errs, err)
+		exclude, expandErr := expand(ctx, excludeGlobs)
+		if expandErr != nil {
+			logging.Warning("%v", expandErr)
 		}
 
 		// Validate demo discovery configuration at startup to fail fast
@@ -192,15 +194,18 @@ var generateCmd = &cobra.Command{
 	},
 }
 
-// Use WorkspaceContext to expand globs
+// expand resolves glob patterns via the workspace context.
+// Always use returned files even when err != nil (io.Reader pattern):
+//   - ([], err)      → fatal, no usable results
+//   - (files, err)   → files are valid, err is a warning
+//   - (files, nil)   → clean success
 func expand(ctx types.WorkspaceContext, globs []string) (files []string, errs error) {
 	for _, pattern := range globs {
 		matches, err := ctx.Glob(pattern)
+		files = append(files, matches...)
 		if err != nil {
 			errs = errors.Join(errs, err)
-			continue
 		}
-		files = append(files, matches...)
 	}
 	return files, errs
 }

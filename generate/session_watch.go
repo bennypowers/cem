@@ -132,10 +132,7 @@ func (ws *WatchSession) setupWatcher() (*fsnotify.Watcher, error) {
 
 	// Expand globs to get current files and their directories
 	for _, glob := range ws.globs {
-		files, err := ws.ctx.Glob(glob)
-		if err != nil {
-			continue
-		}
+		files, _ := ws.ctx.Glob(glob)
 		for _, file := range files {
 			dir := filepath.Dir(file)
 			if !filepath.IsAbs(dir) {
@@ -149,14 +146,15 @@ func (ws *WatchSession) setupWatcher() (*fsnotify.Watcher, error) {
 	cfg, err := ws.ctx.Config()
 	if err == nil && cfg.Generate.DemoDiscovery.FileGlob != "" {
 		demoFiles, err := ws.ctx.Glob(cfg.Generate.DemoDiscovery.FileGlob)
-		if err == nil {
-			for _, file := range demoFiles {
-				dir := filepath.Dir(file)
-				if !filepath.IsAbs(dir) {
-					dir = filepath.Join(ws.ctx.Root(), dir)
-				}
-				dirs[dir] = true
+		if err != nil {
+			logging.Debug("demo discovery glob: %v", err)
+		}
+		for _, file := range demoFiles {
+			dir := filepath.Dir(file)
+			if !filepath.IsAbs(dir) {
+				dir = filepath.Join(ws.ctx.Root(), dir)
 			}
+			dirs[dir] = true
 		}
 	}
 
