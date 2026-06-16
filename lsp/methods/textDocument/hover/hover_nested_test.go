@@ -34,11 +34,7 @@ import (
 // This is a regression test for the bug where hovering on <rh-icon> inside
 // <rh-surface> in rh-alert.ts showed docs for rh-surface.
 func TestHover_NestedElements(t *testing.T) {
-	testutil.RunLSPFixtures(t, "testdata-regression", func(t *testing.T, fixture *testutil.LSPFixture) {
-		if fixture.Name != "nested-element-hover-typescript" {
-			t.Skip("not applicable to this test")
-		}
-
+	testutil.RunLSPFixture(t, "testdata-regression", "nested-element-hover-typescript", func(t *testing.T, fixture *testutil.LSPFixture) {
 		ctx := testhelpers.NewMockServerContext()
 		if fixture.Manifest != nil {
 			var pkg M.Package

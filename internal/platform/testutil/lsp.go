@@ -70,6 +70,19 @@ func RunLSPFixtures(t *testing.T, testdataDir string, testFunc func(*testing.T, 
 	}
 }
 
+// RunLSPFixture loads a single named fixture from testdataDir and runs testFunc.
+// Use instead of RunLSPFixtures when a test targets exactly one fixture.
+func RunLSPFixture(t *testing.T, testdataDir, fixtureName string, testFunc func(*testing.T, *LSPFixture)) {
+	t.Helper()
+
+	mfs := LoadTestdataFS(t, testdataDir, "/")
+
+	t.Run(fixtureName, func(t *testing.T) {
+		fixture := loadLSPFixtureFromMapFS(t, mfs, fixtureName)
+		testFunc(t, fixture)
+	})
+}
+
 // loadLSPFixtureFromMapFS loads a single LSP test fixture from MapFS
 func loadLSPFixtureFromMapFS(t *testing.T, mfs *platform.MapFileSystem, scenarioName string) *LSPFixture {
 	t.Helper()
