@@ -1,5 +1,5 @@
 use std::fs;
-use zed_extension_api::{self as zed, LanguageServerId, Result};
+use zed_extension_api::{self as zed, ContextServerId, LanguageServerId, Result};
 
 struct CemExtension {
     cached_binary_path: Option<String>,
@@ -25,6 +25,24 @@ impl zed::Extension for CemExtension {
             env: Default::default(),
         })
     }
+
+    fn context_server_command(
+        &mut self,
+        _context_server_id: &ContextServerId,
+        project: &zed::Project,
+    ) -> Result<zed::Command> {
+        let worktree = project
+            .worktrees()
+            .first()
+            .ok_or_else(|| "no worktree found".to_string())?;
+        let binary_path = self.cem_binary(&worktree)?;
+
+        Ok(zed::Command {
+            command: binary_path,
+            args: vec!["mcp".to_string()],
+            env: Default::default(),
+        })
+    }
 }
 
 impl CemExtension {
@@ -33,24 +51,45 @@ impl CemExtension {
         language_server_id: &LanguageServerId,
         worktree: &zed::Worktree,
     ) -> Result<String> {
-        // Check if cem is available in PATH
-        if let Some(path) = worktree.which("cem") {
+        if let Some(path) = self.cem_binary_cached(worktree) {
             return Ok(path);
         }
 
-        // Check cached binary path
-        if let Some(path) = &self.cached_binary_path {
-            if fs::metadata(path).map_or(false, |stat| stat.is_file()) {
-                return Ok(path.clone());
-            }
-        }
-
-        // Download and install the language server
         zed::set_language_server_installation_status(
             language_server_id,
             &zed::LanguageServerInstallationStatus::CheckingForUpdate,
         );
 
+        zed::set_language_server_installation_status(
+            language_server_id,
+            &zed::LanguageServerInstallationStatus::Downloading,
+        );
+
+        let binary_path = self.download_cem_binary()?;
+
+        Ok(binary_path)
+    }
+
+    fn cem_binary(&mut self, worktree: &zed::Worktree) -> Result<String> {
+        if let Some(path) = self.cem_binary_cached(worktree) {
+            return Ok(path);
+        }
+        self.download_cem_binary()
+    }
+
+    fn cem_binary_cached(&self, worktree: &zed::Worktree) -> Option<String> {
+        if let Some(path) = worktree.which("cem") {
+            return Some(path);
+        }
+        if let Some(path) = &self.cached_binary_path {
+            if fs::metadata(path).map_or(false, |stat| stat.is_file()) {
+                return Some(path.clone());
+            }
+        }
+        None
+    }
+
+    fn download_cem_binary(&mut self) -> Result<String> {
         let release = zed::latest_github_release(
             "bennypowers/cem",
             zed::GithubReleaseOptions {
@@ -60,13 +99,6 @@ impl CemExtension {
         )?;
 
         let (platform, arch) = zed::current_platform();
-        // Binary names for the cem language server:
-        //  * - cem-darwin-arm64
-        //  * - cem-darwin-x64
-        //  * - cem-linux-arm64
-        //  * - cem-linux-x64
-        //  * - cem-win32-arm64.exe
-        //  * - cem-win32-x64.exe
         let arch_name = match arch {
             zed::Architecture::Aarch64 => "arm64",
             zed::Architecture::X8664 => "x64",
@@ -88,11 +120,6 @@ impl CemExtension {
             .ok_or_else(|| format!("no asset found matching {asset_name}"))?;
 
         let binary_path = format!("cem-{}", release.version);
-
-        zed::set_language_server_installation_status(
-            language_server_id,
-            &zed::LanguageServerInstallationStatus::Downloading,
-        );
 
         zed::download_file(
             &asset.download_url,

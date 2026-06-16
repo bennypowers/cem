@@ -13,3 +13,5 @@ languages = ["HTML","TypeScript","JavaScript"]
 [language_servers.cem-lsp.binary]
 command = "cem"
 args = ["lsp", "--stdio"]
+
+[context_servers.cem-mcp]

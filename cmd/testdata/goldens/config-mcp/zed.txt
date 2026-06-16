@@ -1,0 +1,10 @@
+Zed
+ The cem extension provides both LSP and MCP support.
+
+ Add to .zed/settings.json:
+
+ "auto_install_extensions": {
+ "cem": true
+ }
+
+ Restart Zed after applying.

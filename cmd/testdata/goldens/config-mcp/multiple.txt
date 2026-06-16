@@ -1,0 +1,19 @@
+Claude Code
+
+ Run: claude mcp add cem -- cem mcp
+
+Cursor
+
+ Write to .cursor/mcp.json:
+
+ {
+ "mcpServers": {
+ "cem": {
+ "command": "cem",
+ "args": [
+ "mcp"
+ ]
+ }
+ }
+ }
+

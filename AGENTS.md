@@ -41,7 +41,8 @@ IMPORTANT: When writing tests, **always** use fixture/golden pattern. We **alway
 
 - **Fixtures**: Input test data - the content directories/files your code operates on (e.g., `serve/testdata/transforms/http-typescript/simple-greeting.ts`).
 - **Goldens**: Expected output files to compare against (e.g., `serve/middleware/routes/testdata/chrome-rendering/expected-basic.html`). Tests should support `--update` flag to regenerate golden files when intentional changes occur.
-- **Always use MapFS for test data**: Load all fixture and golden files into `platform.MapFileSystem` via `testutil.NewFixtureFS()` or `testutil.LoadTestdataFS()`. Never call `os.ReadFile()` or `os.Open()` on test data in test code. Frontloading disk I/O into MapFS at setup time ensures consistency across packages and improves CI performance.
+- **Always use MapFS for test data** (unit/integration tests): Load all fixture and golden files into `platform.MapFileSystem` via `testutil.NewFixtureFS()` or `testutil.LoadTestdataFS()`. Never call `os.ReadFile()` or `os.Open()` on test data in test code. Frontloading disk I/O into MapFS at setup time ensures consistency across packages and improves CI performance.
+- **Exception: E2E tests** (`//go:build e2e` in `cmd/`): These run the built binary as a subprocess and compare stdout against golden files on disk. Direct `os.ReadFile`/`os.WriteFile` is expected for golden comparison and `--update` regeneration since MapFS cannot cross process boundaries.
 - Always use Makefile targets for running tests or builds, since they export the necessary env vars.
 - For LSP tests, ALWAYS use `testutil.RunLSPFixtures()` - NEVER use direct `os.ReadFile()` calls.
 - If frontend visual regression tests fail consistently, check if it's merely 

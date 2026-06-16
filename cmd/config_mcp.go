@@ -1,0 +1,596 @@
+/*
+Copyright © 2026 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+package cmd
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
+
+	"atomicgo.dev/keyboard/keys"
+
+	"bennypowers.dev/cem/internal/jsoncmerge"
+	"bennypowers.dev/cem/internal/logging"
+	W "bennypowers.dev/cem/internal/workspace"
+	"github.com/adrg/xdg"
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
+	"golang.org/x/term"
+)
+
+type aiTool string
+
+const (
+	toolClaudeCode    aiTool = "Claude Code"
+	toolClaudeDesktop aiTool = "Claude Desktop"
+	toolCursor        aiTool = "Cursor"
+	toolVSCode        aiTool = "VS Code (Copilot)"
+	toolZed           aiTool = "Zed"
+	toolOther         aiTool = "Other (generic stdio)"
+)
+
+var knownTools = []aiTool{
+	toolClaudeCode,
+	toolClaudeDesktop,
+	toolCursor,
+	toolVSCode,
+	toolZed,
+	toolOther,
+}
+
+type mcpAction struct {
+	tool    aiTool
+	preview string
+	apply   func() error
+}
+
+var configMCPCmd = &cobra.Command{
+	Use:   "mcp",
+	Short: "Generate MCP client configuration",
+	Long: `Generate configuration snippets for AI tools (Claude Code, Claude Desktop, Cursor, etc.).
+
+In interactive mode (TTY), presents a menu to select tools and configure options.
+In non-interactive mode, use --tool to specify tools directly.`,
+	SilenceUsage: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SetOut(os.Stdout)
+		toolFlags, _ := cmd.Flags().GetStringSlice("tool")
+		additionalPackages, _ := cmd.Flags().GetStringSlice("additional-packages")
+		interactive := term.IsTerminal(int(os.Stdin.Fd()))
+
+		var selectedTools []aiTool
+
+		if len(toolFlags) > 0 {
+			for _, name := range toolFlags {
+				t, err := parseToolName(name)
+				if err != nil {
+					return err
+				}
+				selectedTools = append(selectedTools, t)
+			}
+		} else if interactive {
+			tools, err := promptToolSelection()
+			if err != nil {
+				return err
+			}
+			selectedTools = tools
+		} else {
+			return fmt.Errorf("no TTY detected; use --tool to specify tools, e.g.:\n  cem config mcp --tool \"Claude Desktop\" --tool \"Cursor\"")
+		}
+
+		if len(selectedTools) == 0 {
+			return fmt.Errorf("no tools selected")
+		}
+
+		if interactive && len(additionalPackages) == 0 {
+			hasManifest := projectHasManifest(cmd)
+			if !hasManifest {
+				pkgs, err := promptAdditionalPackages()
+				if err != nil {
+					return err
+				}
+				additionalPackages = pkgs
+			}
+		}
+
+		cemPath := resolveCemPath(cmd)
+		mcpArgs := buildMCPArgs(additionalPackages)
+
+		actions := buildActions(selectedTools, cemPath, mcpArgs, interactive)
+
+		for i, action := range actions {
+			if i > 0 {
+				cmd.Println()
+			}
+			cmd.Print(action.preview)
+
+			if interactive && action.apply != nil {
+				confirmed, err := pterm.DefaultInteractiveConfirm.
+					WithDefaultValue(true).
+					WithDefaultText("Apply?").
+					Show()
+				if err != nil {
+					return err
+				}
+				if confirmed {
+					if err := action.apply(); err != nil {
+						logging.Error("%v", err)
+					} else {
+						logging.Success("Done")
+					}
+				}
+			}
+		}
+
+		return nil
+	},
+}
+
+func init() {
+	configMCPCmd.Flags().StringSlice("tool", nil, `AI tool(s) to configure (repeatable). Valid: "Claude Code", "Claude Desktop", "Cursor", "VS Code (Copilot)", "Zed", "Other"`)
+	configMCPCmd.Flags().StringSliceP("additional-packages", "a", nil, "Additional packages to include in MCP args (npm:, jsr:, or URL specifiers)")
+	configCmd.AddCommand(configMCPCmd)
+}
+
+func parseToolName(name string) (aiTool, error) {
+	lower := strings.ToLower(strings.TrimSpace(name))
+	for _, t := range knownTools {
+		if strings.ToLower(string(t)) == lower {
+			return t, nil
+		}
+	}
+	switch lower {
+	case "claude-code", "claudecode":
+		return toolClaudeCode, nil
+	case "claude-desktop", "claudedesktop", "desktop":
+		return toolClaudeDesktop, nil
+	case "cursor":
+		return toolCursor, nil
+	case "vscode", "vs-code", "copilot":
+		return toolVSCode, nil
+	case "zed":
+		return toolZed, nil
+	case "other", "generic", "stdio":
+		return toolOther, nil
+	}
+	validNames := make([]string, len(knownTools))
+	for i, t := range knownTools {
+		validNames[i] = string(t)
+	}
+	return "", fmt.Errorf("unknown tool %q; valid tools: %s", name, strings.Join(validNames, ", "))
+}
+
+func promptToolSelection() ([]aiTool, error) {
+	options := make([]string, len(knownTools))
+	for i, t := range knownTools {
+		options[i] = string(t)
+	}
+	selected, err := pterm.DefaultInteractiveMultiselect.
+		WithOptions(options).
+		WithDefaultText("Which AI tools would you like to configure?\n  space: select, enter: confirm, left/right: none/all").
+		WithKeySelect(keys.Space).
+		WithKeyConfirm(keys.Enter).
+		WithFilter(false).
+		Show()
+	if err != nil {
+		return nil, fmt.Errorf("tool selection cancelled: %w", err)
+	}
+	tools := make([]aiTool, len(selected))
+	for i, name := range selected {
+		tools[i] = aiTool(name)
+	}
+	return tools, nil
+}
+
+func promptAdditionalPackages() ([]string, error) {
+	logging.Info("No local custom-elements manifest detected.")
+	logging.Info("If your project consumes a design system, enter package specifiers to load.")
+	logging.Info("Examples: npm:@rhds/elements@2.0.0, jsr:@example/components, https://cdn.example.com/pkg/")
+
+	input, err := pterm.DefaultInteractiveTextInput.
+		WithDefaultText("Additional packages (comma-separated, or press Enter to skip)").
+		Show()
+	if err != nil {
+		return nil, err
+	}
+	input = strings.TrimSpace(input)
+	if input == "" {
+		return nil, nil
+	}
+	var packages []string
+	for pkg := range strings.SplitSeq(input, ",") {
+		pkg = strings.TrimSpace(pkg)
+		if pkg != "" {
+			packages = append(packages, pkg)
+		}
+	}
+	return packages, nil
+}
+
+func projectHasManifest(cmd *cobra.Command) bool {
+	ctx, err := W.GetWorkspaceContext(cmd)
+	if err != nil {
+		return false
+	}
+	manifestPath := ctx.CustomElementsManifestPath()
+	if manifestPath == "" {
+		return false
+	}
+	_, err = os.Stat(manifestPath)
+	return err == nil
+}
+
+func resolveCemPath(cmd *cobra.Command) string {
+	_, err := exec.LookPath("cem")
+	if err != nil {
+		absPath, exeErr := os.Executable()
+		if exeErr != nil {
+			return "cem"
+		}
+		cmd.PrintErrln("Warning: cem is not in your PATH. Using absolute path in config snippets.")
+		cmd.PrintErrf("  To fix, add the directory containing cem to your PATH, or use:\n    %s\n\n", absPath)
+		return absPath
+	}
+	return "cem"
+}
+
+func buildMCPArgs(additionalPackages []string) []string {
+	args := []string{"mcp"}
+	for _, pkg := range additionalPackages {
+		args = append(args, "-a", pkg)
+	}
+	return args
+}
+
+func buildActions(tools []aiTool, cemPath string, args []string, interactive bool) []mcpAction {
+	var actions []mcpAction
+	for _, tool := range tools {
+		actions = append(actions, buildAction(tool, cemPath, args, interactive))
+	}
+	return actions
+}
+
+func buildAction(tool aiTool, cemPath string, args []string, interactive bool) mcpAction {
+	switch tool {
+	case toolClaudeCode:
+		return claudeCodeAction(cemPath, args)
+	case toolClaudeDesktop:
+		return claudeDesktopAction(cemPath, args)
+	case toolCursor:
+		return cursorAction(cemPath, args, interactive)
+	case toolVSCode:
+		return vscodeAction(cemPath, args, interactive)
+	case toolZed:
+		return zedAction(interactive)
+	default:
+		return mcpAction{tool: tool, preview: genericSnippet(cemPath, args)}
+	}
+}
+
+func claudeCodeAction(cemPath string, args []string) mcpAction {
+	cmdArgs := append([]string{"mcp", "add", "cem", "--"}, cemPath)
+	cmdArgs = append(cmdArgs, args...)
+	preview := fmt.Sprintf(`Claude Code
+
+  Run: claude %s
+`, strings.Join(cmdArgs, " "))
+	return mcpAction{
+		tool:    toolClaudeCode,
+		preview: preview,
+		apply: func() error {
+			cmd := exec.Command("claude", cmdArgs...)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("claude %s: %w", strings.Join(cmdArgs, " "), err)
+			}
+			return nil
+		},
+	}
+}
+
+func claudeDesktopAction(cemPath string, args []string) mcpAction {
+	paths := claudeDesktopConfigPaths()
+	snippet := mcpServersJSON(cemPath, args)
+	var b strings.Builder
+	b.WriteString("Claude Desktop\n\n")
+	for _, p := range paths {
+		fmt.Fprintf(&b, "  %s:\n    %s\n\n", p.label, p.path)
+	}
+	b.WriteString(indentJSON(snippet, "    "))
+	b.WriteString("  Restart Claude Desktop after applying.\n\n")
+
+	var targetPath string
+	for _, p := range paths {
+		if _, err := os.Stat(filepath.Dir(p.path)); err == nil {
+			targetPath = p.path
+			break
+		}
+	}
+
+	var applyFn func() error
+	if targetPath != "" {
+		applyFn = func() error {
+			return mergeJSONConfig(targetPath, "mcpServers", "cem", mcpServerEntry{
+				Command: cemPath,
+				Args:    args,
+			})
+		}
+	}
+	return mcpAction{tool: toolClaudeDesktop, preview: b.String(), apply: applyFn}
+}
+
+func cursorAction(cemPath string, args []string, interactive bool) mcpAction {
+	snippet := mcpServersJSON(cemPath, args)
+	home, _ := os.UserHomeDir()
+	projectPath := filepath.Join(".cursor", "mcp.json")
+	globalPath := filepath.Join(home, ".cursor", "mcp.json")
+	targetPath := chooseScope(interactive, ".cursor", projectPath, globalPath)
+	preview := fmt.Sprintf("Cursor\n\n  Write to %s:\n\n%s\n", targetPath, indentJSON(snippet, "    "))
+	return mcpAction{
+		tool:    toolCursor,
+		preview: preview,
+		apply: func() error {
+			return mergeJSONConfig(targetPath, "mcpServers", "cem", mcpServerEntry{
+				Command: cemPath,
+				Args:    args,
+			})
+		},
+	}
+}
+
+func vscodeAction(cemPath string, args []string, interactive bool) mcpAction {
+	entry := vscodeServerEntry{Type: "stdio", Command: cemPath, Args: args}
+	config := vscodeServersWrapper{
+		Servers: map[string]vscodeServerEntry{"cem": entry},
+	}
+	snippet, _ := json.MarshalIndent(config, "", "  ")
+	projectPath := filepath.Join(".vscode", "mcp.json")
+	globalPath := vscodeGlobalConfigPath()
+	targetPath := chooseScope(interactive, ".vscode", projectPath, globalPath)
+	preview := fmt.Sprintf(`VS Code (Copilot)
+
+  Run: code --add-mcp '%s'
+
+  Or write to %s:
+
+%s
+`, string(snippet), targetPath, indentJSON(string(snippet), "    "))
+	return mcpAction{
+		tool:    toolVSCode,
+		preview: preview,
+		apply: func() error {
+			cmd := exec.Command("code", "--add-mcp", string(snippet))
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("code --add-mcp: %w", err)
+			}
+			return nil
+		},
+	}
+}
+
+func zedAction(interactive bool) mcpAction {
+	projectPath := filepath.Join(".zed", "settings.json")
+	globalPath := filepath.Join(xdg.ConfigHome, "zed", "settings.json")
+	targetPath := chooseScope(interactive, ".zed", projectPath, globalPath)
+	preview := fmt.Sprintf(`Zed
+  The cem extension provides both LSP and MCP support.
+
+  Add to %s:
+
+    "auto_install_extensions": {
+      "cem": true
+    }
+
+  Restart Zed after applying.
+`, targetPath)
+	return mcpAction{
+		tool:    toolZed,
+		preview: preview,
+		apply: func() error {
+			return mergeJSONConfig(targetPath, "auto_install_extensions", "cem", true)
+		},
+	}
+}
+
+func vscodeGlobalConfigPath() string {
+	home, _ := os.UserHomeDir()
+	switch runtime.GOOS {
+	case "darwin":
+		return filepath.Join(home, "Library", "Application Support", "Code", "User", "mcp.json")
+	case "windows":
+		return filepath.Join(os.Getenv("APPDATA"), "Code", "User", "mcp.json")
+	default:
+		return filepath.Join(xdg.ConfigHome, "Code", "User", "mcp.json")
+	}
+}
+
+// chooseScope prompts for project vs global scope in interactive mode.
+// If the project dir exists, defaults to project. Otherwise defaults to global.
+// Non-interactive mode always uses project path.
+func chooseScope(interactive bool, projectDir, projectPath, globalPath string) string {
+	if !interactive {
+		return projectPath
+	}
+	_, projectExists := os.Stat(projectDir)
+	projectLabel := "Project (" + projectPath + ")"
+	globalLabel := "Global (" + globalPath + ")"
+	var options []string
+	if projectExists == nil {
+		options = []string{projectLabel, globalLabel}
+	} else {
+		options = []string{globalLabel, projectLabel}
+	}
+	result, err := pterm.DefaultInteractiveSelect.
+		WithOptions(options).
+		WithDefaultText("Configure for this project or globally?").
+		Show()
+	if err != nil {
+		if projectExists == nil {
+			return projectPath
+		}
+		return globalPath
+	}
+	if strings.HasPrefix(result, "Global") {
+		return globalPath
+	}
+	return projectPath
+}
+
+func genericSnippet(cemPath string, args []string) string {
+	config := mcpServerEntry{Command: cemPath, Args: args}
+	snippet, _ := json.MarshalIndent(config, "", "  ")
+	return fmt.Sprintf(`Other (generic stdio)
+
+  Configure your MCP client with:
+
+%s
+`, indentJSON(string(snippet), "    "))
+}
+
+// mergeJSONConfig inserts topKey.subKey = value into a JSON/JSONC file.
+// Preserves all existing comments, formatting, and content via byte-level splicing.
+// Uses hujson only for JSONC validation.
+// Creates the file and parent directories if they don't exist.
+// Backs up existing files before writing.
+func mergeJSONConfig(path, topKey, subKey string, value any) error {
+	data, err := os.ReadFile(path)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to read %s: %w", path, err)
+	}
+	if err == nil {
+		if err := backupFile(path, data); err != nil {
+			return err
+		}
+	} else {
+		data = []byte("{}\n")
+	}
+
+	result, err := jsoncmerge.Merge(data, topKey, subKey, value)
+	if err != nil {
+		return fmt.Errorf("failed to merge into %s: %w", path, err)
+	}
+
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dir, err)
+	}
+	tmp, err := os.CreateTemp(dir, ".cem-config-*.tmp")
+	if err != nil {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpPath := tmp.Name()
+	if _, err := tmp.Write(result); err != nil {
+		_ = tmp.Close()
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to write config: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to close temp file: %w", err)
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		_ = os.Remove(tmpPath)
+		return fmt.Errorf("failed to rename temp file: %w", err)
+	}
+	return nil
+}
+
+func backupFile(path string, data []byte) error {
+	backup, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".backup-*")
+	if err != nil {
+		return fmt.Errorf("failed to create backup: %w", err)
+	}
+	if _, err := backup.Write(data); err != nil {
+		_ = backup.Close()
+		return fmt.Errorf("failed to write backup: %w", err)
+	}
+	if err := backup.Close(); err != nil {
+		return fmt.Errorf("failed to close backup file: %w", err)
+	}
+	logging.Info("Backed up %s to %s", path, backup.Name())
+	return nil
+}
+
+type mcpServerEntry struct {
+	Command string   `json:"command"`
+	Args    []string `json:"args"`
+}
+
+type mcpServersWrapper struct {
+	MCPServers map[string]mcpServerEntry `json:"mcpServers"`
+}
+
+type vscodeServerEntry struct {
+	Type    string   `json:"type"`
+	Command string   `json:"command"`
+	Args    []string `json:"args"`
+}
+
+type vscodeServersWrapper struct {
+	Servers map[string]vscodeServerEntry `json:"servers"`
+}
+
+func mcpServersJSON(cemPath string, args []string) string {
+	config := mcpServersWrapper{
+		MCPServers: map[string]mcpServerEntry{
+			"cem": {Command: cemPath, Args: args},
+		},
+	}
+	data, _ := json.MarshalIndent(config, "", "  ")
+	return string(data)
+}
+
+type configPathInfo struct {
+	label string
+	path  string
+}
+
+func claudeDesktopConfigPaths() []configPathInfo {
+	home, _ := os.UserHomeDir()
+	switch runtime.GOOS {
+	case "darwin":
+		return []configPathInfo{
+			{"macOS", filepath.Join(home, "Library", "Application Support", "Claude", "claude_desktop_config.json")},
+		}
+	case "windows":
+		return []configPathInfo{
+			{"Windows", filepath.Join(os.Getenv("APPDATA"), "Claude", "claude_desktop_config.json")},
+		}
+	default:
+		return []configPathInfo{
+			{"Linux (native)", filepath.Join(xdg.ConfigHome, "Claude", "claude_desktop_config.json")},
+			{"Linux (Flatpak)", filepath.Join(home, ".var", "app", "com.anthropic.Claude", "config", "Claude", "claude_desktop_config.json")},
+		}
+	}
+}
+
+func indentJSON(jsonStr string, prefix string) string {
+	var b strings.Builder
+	for line := range strings.SplitSeq(jsonStr, "\n") {
+		b.WriteString(prefix)
+		b.WriteString(line)
+		b.WriteString("\n")
+	}
+	return b.String()
+}

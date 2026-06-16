@@ -1,0 +1,15 @@
+Cursor
+
+ Write to .cursor/mcp.json:
+
+ {
+ "mcpServers": {
+ "cem": {
+ "command": "cem",
+ "args": [
+ "mcp"
+ ]
+ }
+ }
+ }
+
