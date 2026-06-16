@@ -26,12 +26,12 @@ import (
 
 	DT "bennypowers.dev/cem/internal/designtokens"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
+	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
 
 	DS "github.com/bmatcuk/doublestar"
-	"github.com/pterm/pterm"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -85,7 +85,7 @@ func preprocess(ctx types.WorkspaceContext) (r preprocessResult, errs error) {
 		demoFiles, err := ctx.Glob(cfg.Generate.DemoDiscovery.FileGlob)
 		r.demoFiles = demoFiles
 		if err != nil {
-			pterm.Debug.Printfln("demo discovery glob: %v", err)
+			logging.Debug("demo discovery glob: %v", err)
 		}
 	}
 	for _, filePattern := range cfg.Generate.Files {

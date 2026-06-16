@@ -147,7 +147,7 @@ func (ws *WatchSession) setupWatcher() (*fsnotify.Watcher, error) {
 	if err == nil && cfg.Generate.DemoDiscovery.FileGlob != "" {
 		demoFiles, err := ws.ctx.Glob(cfg.Generate.DemoDiscovery.FileGlob)
 		if err != nil {
-			pterm.Debug.Printfln("demo discovery glob: %v", err)
+			logging.Debug("demo discovery glob: %v", err)
 		}
 		for _, file := range demoFiles {
 			dir := filepath.Dir(file)
