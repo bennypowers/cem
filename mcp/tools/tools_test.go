@@ -111,7 +111,7 @@ func TestToolsLoading_Integration(t *testing.T) {
 	require.NotEmpty(t, toolDefs, "Should load tool definitions")
 
 	// Verify expected tools are present
-	expectedTools := []string{"validate_html", "generate_html"}
+	expectedTools := []string{"validate_html", "generate_html", "generate_config", "validate_config"}
 	toolNames := make(map[string]bool)
 	for _, def := range toolDefs {
 		toolNames[def.Name] = true

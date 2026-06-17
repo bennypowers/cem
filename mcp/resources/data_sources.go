@@ -63,6 +63,13 @@ func (p *DataSourceProvider) CreateDataSources(args map[string]any) (map[string]
 	}
 	sources["schema"] = schemaData
 
+	// Config data sources
+	if cfg, err := p.registry.Config(); err == nil && cfg != nil {
+		sources["config"] = cfg
+	}
+	sources["configFile"] = p.registry.ConfigFile()
+	sources["configSchema"] = p.registry.ConfigSchemaJSON()
+
 	// Add direct element access if tagName is provided
 	if tagName, ok := args["tagName"].(string); ok && tagName != "" {
 		elementInfo, err := p.registry.ElementInfo(tagName)

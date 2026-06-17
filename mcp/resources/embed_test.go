@@ -50,7 +50,7 @@ func TestResourceDefinitions_Embedded(t *testing.T) {
 	require.NoError(t, err, "Resources() should succeed with embedded definitions")
 
 	// Verify expected number of resources (14 total)
-	assert.Len(t, resourceDefs, 14, "Should have exactly 14 embedded resource definitions")
+	assert.Len(t, resourceDefs, 17, "Should have exactly 17 embedded resource definitions")
 
 	// Verify expected resource names are present
 	resourceNames := make(map[string]bool)

@@ -17,12 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package resources
 
 import (
+	"context"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 
+	IC "bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/mcp/types"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -104,7 +107,13 @@ func parseResourceDefinition(filename string, registry types.MCPContext) (types.
 
 // getResourceHandler returns the appropriate handler function for a resource
 func getResourceHandler(resourceDef types.ResourceDefinition, registry types.MCPContext) (mcp.ResourceHandler, error) {
-	// All resources are now declarative and must have data fetchers
+	switch resourceDef.Name {
+	case "config-schema":
+		return makeConfigSchemaOverviewHandler(registry), nil
+	case "config-schema-section":
+		return makeConfigSchemaSectionHandler(registry), nil
+	}
+
 	if len(resourceDef.DataFetchers) == 0 {
 		return nil, fmt.Errorf("resource %s is missing data fetchers configuration", resourceDef.Name)
 	}
@@ -119,4 +128,63 @@ func getResourceHandler(resourceDef types.ResourceDefinition, registry types.MCP
 		ResponseType: resourceDef.ResponseType,
 	}
 	return MakeDeclarativeResourceHandler(registry, config), nil
+}
+
+func makeConfigSchemaOverviewHandler(_ types.MCPContext) mcp.ResourceHandler {
+	var b strings.Builder
+	b.WriteString("# CEM Configuration Schema\n\n")
+	b.WriteString("## Fields\n\n")
+	for _, s := range IC.SchemaSections() {
+		fmt.Fprintf(&b, "- **%s** -- %s\n  `cem://config/schema/%s`\n", s.Key, s.Description, s.Key)
+	}
+
+	text := b.String()
+
+	return func(_ context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+		return &mcp.ReadResourceResult{
+			Contents: []*mcp.ResourceContents{{
+				URI:      req.Params.URI,
+				MIMEType: "text/markdown",
+				Text:     text,
+			}},
+		}, nil
+	}
+}
+
+func makeConfigSchemaSectionHandler(_ types.MCPContext) mcp.ResourceHandler {
+	schemaBytes := IC.SchemaJSON()
+	var schema map[string]any
+	if err := json.Unmarshal(schemaBytes, &schema); err != nil {
+		return func(_ context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+			return nil, fmt.Errorf("failed to parse config schema: %w", err)
+		}
+	}
+
+	props, _ := schema["properties"].(map[string]any)
+
+	return func(_ context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+		uri := req.Params.URI
+		section := strings.TrimPrefix(uri, "cem://config/schema/")
+		if !IC.IsSchemaSection(section) {
+			return nil, fmt.Errorf("unknown config section %q", section)
+		}
+
+		sectionSchema, ok := props[section]
+		if !ok {
+			return nil, fmt.Errorf("section %q not found in config schema", section)
+		}
+
+		data, err := json.MarshalIndent(sectionSchema, "", "  ")
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal section schema: %w", err)
+		}
+
+		return &mcp.ReadResourceResult{
+			Contents: []*mcp.ResourceContents{{
+				URI:      uri,
+				MIMEType: "application/json",
+				Text:     string(data),
+			}},
+		}, nil
+	}
 }

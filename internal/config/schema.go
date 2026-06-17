@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"cmp"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"slices"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -18,6 +20,43 @@ import (
 
 //go:embed cem-config.schema.json
 var configSchemaJSON []byte
+
+func SchemaJSON() []byte { return configSchemaJSON }
+
+// SchemaSection describes a top-level property in the config schema.
+type SchemaSection struct {
+	Key         string
+	Description string
+}
+
+var schemaSections []SchemaSection
+var schemaSectionSet map[string]bool
+
+func init() {
+	var schema struct {
+		Properties map[string]struct {
+			Description string `json:"description"`
+		} `json:"properties"`
+	}
+	if err := json.Unmarshal(configSchemaJSON, &schema); err != nil {
+		return
+	}
+	keys := make([]string, 0, len(schema.Properties))
+	for k := range schema.Properties {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	schemaSections = make([]SchemaSection, len(keys))
+	schemaSectionSet = make(map[string]bool, len(keys))
+	for i, k := range keys {
+		schemaSections[i] = SchemaSection{Key: k, Description: schema.Properties[k].Description}
+		schemaSectionSet[k] = true
+	}
+}
+
+func SchemaSections() []SchemaSection { return schemaSections }
+
+func IsSchemaSection(name string) bool { return schemaSectionSet[name] }
 
 var englishPrinter = message.NewPrinter(language.English)
 

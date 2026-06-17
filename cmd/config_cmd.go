@@ -72,7 +72,7 @@ var configValidateCmd = &cobra.Command{
 			},
 		})
 
-		allErrs := deduplicateErrors(schemaErrs, semanticErrs)
+		allErrs := IC.DeduplicateErrors(schemaErrs, semanticErrs)
 
 		if len(allErrs) > 0 {
 			enrichPositions(allErrs, rawData, cfgFormat)
@@ -86,35 +86,6 @@ var configValidateCmd = &cobra.Command{
 			return printConfigValidationText(cmd, cfgFile, rawData, allErrs)
 		}
 	},
-}
-
-// deduplicateErrors removes redundant schema errors when a semantic error
-// covers the same field with the same severity. Multiple errors on the same
-// field are preserved when they differ in severity or message substance.
-// Schema errors (first half of the slice) are identified by lacking a Value
-// field; semantic errors (second half) provide richer context.
-func deduplicateErrors(schemaErrs, semanticErrs []IC.ValidationError) []IC.ValidationError {
-	type key struct {
-		field    string
-		severity IC.ValidationSeverity
-	}
-	normalize := func(s IC.ValidationSeverity) IC.ValidationSeverity {
-		if s == "" {
-			return IC.SeverityError
-		}
-		return s
-	}
-	semanticFields := make(map[key]bool, len(semanticErrs))
-	for _, e := range semanticErrs {
-		semanticFields[key{e.Field, normalize(e.Severity)}] = true
-	}
-	var result []IC.ValidationError
-	for _, e := range schemaErrs {
-		if !semanticFields[key{e.Field, normalize(e.Severity)}] {
-			result = append(result, e)
-		}
-	}
-	return append(result, semanticErrs...)
 }
 
 func splitBySeverity(errs []IC.ValidationError) (errors, warnings []IC.ValidationError) {

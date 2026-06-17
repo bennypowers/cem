@@ -22,6 +22,7 @@ import (
 	"strings"
 	"sync"
 
+	IC "bennypowers.dev/cem/internal/config"
 	LSP "bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/helpers"
@@ -138,6 +139,10 @@ func (ctx *MCPContext) LoadManifests() error {
 
 	if err := ctx.lspRegistry.LoadFromWorkspace(ctx.workspace); err != nil {
 		return fmt.Errorf("failed to load manifests from workspace %q: %w", ctx.workspace.Root(), err)
+	}
+
+	if cfgFile := ctx.workspace.ConfigFile(); cfgFile != "" {
+		ctx.lspRegistry.AddWatchPath(cfgFile)
 	}
 
 	// Build relationship detector with all elements
@@ -367,6 +372,31 @@ func (ctx *MCPContext) LSPRegistry() *LSP.Registry {
 	return ctx.lspRegistry
 }
 
+func (ctx *MCPContext) Config() (*IC.CemConfig, error) {
+	return ctx.workspace.Config()
+}
+
+func (ctx *MCPContext) ConfigFile() string {
+	return ctx.workspace.ConfigFile()
+}
+
+func (ctx *MCPContext) ConfigSchemaJSON() []byte {
+	return IC.SchemaJSON()
+}
+
+func (ctx *MCPContext) Root() string {
+	return ctx.workspace.Root()
+}
+
+func (ctx *MCPContext) InvalidateConfig() {
+	type invalidatable interface {
+		InvalidateConfig()
+	}
+	if ws, ok := ctx.workspace.(invalidatable); ok {
+		ws.InvalidateConfig()
+	}
+}
+
 // GetElementInfo returns enhanced element information for MCP context
 func (ctx *MCPContext) GetElementInfo(tagName string) (MCPTypes.ElementInfo, error) {
 	ctx.mu.RLock()
@@ -578,6 +608,22 @@ func (ctx *MCPContextAdapter) GetManifestSchemaVersions() []string {
 // DocumentManager implements MCPTypes.MCPContext interface
 func (ctx *MCPContextAdapter) DocumentManager() lspTypes.DocumentManager {
 	return ctx.MCPContext.DocumentManager()
+}
+
+func (ctx *MCPContextAdapter) Config() (*IC.CemConfig, error) {
+	return ctx.MCPContext.Config()
+}
+
+func (ctx *MCPContextAdapter) ConfigFile() string {
+	return ctx.MCPContext.ConfigFile()
+}
+
+func (ctx *MCPContextAdapter) ConfigSchemaJSON() []byte {
+	return ctx.MCPContext.ConfigSchemaJSON()
+}
+
+func (ctx *MCPContextAdapter) Root() string {
+	return ctx.MCPContext.Root()
 }
 
 // ElementInfoAdapter implements MCPTypes.ElementInfo interface
