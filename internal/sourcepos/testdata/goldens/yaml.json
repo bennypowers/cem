@@ -1,0 +1,38 @@
+{
+  "/generate": {
+    "line": 6,
+    "column": 3
+  },
+  "/generate/files": {
+    "line": 7,
+    "column": 5
+  },
+  "/generate/files/0": {
+    "line": 7,
+    "column": 7
+  },
+  "/generate/files/1": {
+    "line": 8,
+    "column": 7
+  },
+  "/generate/output": {
+    "line": 9,
+    "column": 11
+  },
+  "/serve": {
+    "line": 2,
+    "column": 3
+  },
+  "/serve/demos": {
+    "line": 4,
+    "column": 5
+  },
+  "/serve/demos/rendering": {
+    "line": 4,
+    "column": 16
+  },
+  "/serve/port": {
+    "line": 2,
+    "column": 9
+  }
+}

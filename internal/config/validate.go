@@ -33,6 +33,8 @@ type ValidationError struct {
 	Message  string             `json:"message"`
 	Value    string             `json:"value,omitempty"`
 	Severity ValidationSeverity `json:"severity"`
+	Line     int                `json:"line,omitempty"`
+	Column   int                `json:"column,omitempty"`
 }
 
 func (e ValidationError) Error() string {

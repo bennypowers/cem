@@ -73,7 +73,12 @@ var goTemplateFormat = &jsonschema.Format{
 // ValidateSchema validates raw config data against the CemConfig JSON Schema.
 // It returns schema-level errors (type mismatches, unknown keys, enum violations)
 // but not semantic cross-field checks -- those live in [Validate].
-func ValidateSchema(configData []byte) []ValidationError {
+// The format parameter ("yaml", "json", "jsonc") controls preprocessing;
+// JSONC comments are stripped before parsing.
+func ValidateSchema(configData []byte, format string) []ValidationError {
+	if format == "jsonc" {
+		configData = StripComments(configData)
+	}
 	schemaDoc, err := jsonschema.UnmarshalJSON(bytes.NewReader(configSchemaJSON))
 	if err != nil {
 		return []ValidationError{{

@@ -1,0 +1,9 @@
+[33;1m[33;1mWarning:[0m[0m [1m[1mgenerate.designTokens.prefix[0m[0m
+  should not start with dashes (use "bad" instead) (got "--bad")
+  [36m[36m ╭─[[0m[0m[36m[36m.config/cem.yaml:9:13][0m[0m
+  [36m[36m8[0m[0m [36m[36m│[0m[0m   designTokens:
+  [36m[36m9[0m[0m [36m[36m│[0m[0m     prefix: --bad
+    [36m[36m·[0m[0m [33m[33m            ──┬──[0m[0m
+    [36m[36m·[0m[0m [33m[33m              ╰── generate.designTokens.prefix[0m[0m
+  [36m[36m ╰────[0m[0m
+
