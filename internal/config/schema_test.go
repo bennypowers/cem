@@ -25,7 +25,7 @@ func TestValidateSchema_ExampleConfigs(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to read %s: %v", path, err)
 			}
-			errs := ValidateSchema(data)
+			errs := ValidateSchema(data, "yaml")
 			for _, e := range errs {
 				t.Errorf("%s", e.Error())
 			}
@@ -52,7 +52,8 @@ func TestValidateSchema(t *testing.T) {
 				t.Fatalf("failed to read fixture: %v", err)
 			}
 
-			errs := ValidateSchema(data)
+			format := FormatFromPath(entry.Name())
+			errs := ValidateSchema(data, format)
 
 			type result struct {
 				Valid  bool              `json:"valid"`

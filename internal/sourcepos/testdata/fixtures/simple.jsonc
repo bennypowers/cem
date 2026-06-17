@@ -1,0 +1,17 @@
+{
+  // Server configuration
+  "serve": {
+    "port": 3000,
+    /* Demo settings */
+    "demos": {
+      "rendering": "shadow"
+    }
+  },
+  "generate": {
+    "files": [
+      "src/**/*.ts",
+      "src/**/*.js"
+    ],
+    "output": "custom-elements.json"
+  }
+}

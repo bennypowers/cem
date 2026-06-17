@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"os"
 
-	IC "bennypowers.dev/cem/internal/config"
-	"bennypowers.dev/cem/internal/platform"
-	W "bennypowers.dev/cem/internal/workspace"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
+	IC "bennypowers.dev/cem/internal/config"
+	"bennypowers.dev/cem/internal/diagnostic"
+	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/sourcepos"
+	W "bennypowers.dev/cem/internal/workspace"
 	"bennypowers.dev/cem/serve/middleware/transform"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -50,7 +52,8 @@ var configValidateCmd = &cobra.Command{
 			return fmt.Errorf("failed to read config file: %w", err)
 		}
 
-		schemaErrs := IC.ValidateSchema(rawData)
+		cfgFormat := IC.FormatFromPath(cfgFile)
+		schemaErrs := IC.ValidateSchema(rawData, cfgFormat)
 
 		cfg, err := ctx.Config()
 		if err != nil {
@@ -69,16 +72,49 @@ var configValidateCmd = &cobra.Command{
 			},
 		})
 
-		allErrs := append(schemaErrs, semanticErrs...)
+		allErrs := deduplicateErrors(schemaErrs, semanticErrs)
+
+		if len(allErrs) > 0 {
+			enrichPositions(allErrs, rawData, cfgFormat)
+		}
 
 		format, _ := cmd.Flags().GetString("format")
 		switch format {
 		case "json":
 			return printConfigValidationJSON(cmd, cfgFile, allErrs)
 		default:
-			return printConfigValidationText(cmd, cfgFile, allErrs)
+			return printConfigValidationText(cmd, cfgFile, rawData, allErrs)
 		}
 	},
+}
+
+// deduplicateErrors removes redundant schema errors when a semantic error
+// covers the same field with the same severity. Multiple errors on the same
+// field are preserved when they differ in severity or message substance.
+// Schema errors (first half of the slice) are identified by lacking a Value
+// field; semantic errors (second half) provide richer context.
+func deduplicateErrors(schemaErrs, semanticErrs []IC.ValidationError) []IC.ValidationError {
+	type key struct {
+		field    string
+		severity IC.ValidationSeverity
+	}
+	normalize := func(s IC.ValidationSeverity) IC.ValidationSeverity {
+		if s == "" {
+			return IC.SeverityError
+		}
+		return s
+	}
+	semanticFields := make(map[key]bool, len(semanticErrs))
+	for _, e := range semanticErrs {
+		semanticFields[key{e.Field, normalize(e.Severity)}] = true
+	}
+	var result []IC.ValidationError
+	for _, e := range schemaErrs {
+		if !semanticFields[key{e.Field, normalize(e.Severity)}] {
+			result = append(result, e)
+		}
+	}
+	return append(result, semanticErrs...)
 }
 
 func splitBySeverity(errs []IC.ValidationError) (errors, warnings []IC.ValidationError) {
@@ -125,29 +161,39 @@ func printConfigValidationJSON(cmd *cobra.Command, cfgFile string, errs []IC.Val
 	return nil
 }
 
-func printConfigValidationText(cmd *cobra.Command, cfgFile string, errs []IC.ValidationError) error {
+func enrichPositions(errs []IC.ValidationError, rawData []byte, format string) {
+	posMap := sourcepos.BuildPositionMap(rawData, format)
+	for i := range errs {
+		pointer := sourcepos.FieldToJSONPointer(errs[i].Field)
+		if pos, ok := sourcepos.Resolve(posMap, pointer); ok {
+			errs[i].Line = pos.Line
+			errs[i].Column = pos.Column
+		}
+	}
+}
+
+func printConfigValidationText(cmd *cobra.Command, cfgFile string, source []byte, errs []IC.ValidationError) error {
 	errors, warnings := splitBySeverity(errs)
 
-	cmd.Printf("config: %s\n", cfgFile)
-
 	if len(errors) == 0 && len(warnings) == 0 {
-		cmd.Println("\nvalid")
+		cmd.Printf("config: %s\n\nvalid\n", cfgFile)
 		return nil
 	}
 
-	if len(errors) > 0 {
-		cmd.Println("\nerrors:")
-		for _, e := range errors {
-			cmd.Printf("  %s\n", e.Error())
-		}
+	w := cmd.OutOrStdout()
+	diags := make([]diagnostic.Diagnostic, 0, len(errs))
+	for _, e := range errs {
+		diags = append(diags, diagnostic.Diagnostic{
+			File:     cfgFile,
+			Pos:      sourcepos.Position{Line: e.Line, Column: e.Column},
+			Severity: e.Severity,
+			Field:    e.Field,
+			Message:  e.Message,
+			Value:    e.Value,
+			Source:   source,
+		})
 	}
-
-	if len(warnings) > 0 {
-		cmd.Println("\nwarnings:")
-		for _, e := range warnings {
-			cmd.Printf("  %s\n", e.Error())
-		}
-	}
+	diagnostic.RenderAll(w, diags)
 
 	if len(errors) > 0 {
 		return fmt.Errorf("config validation failed")

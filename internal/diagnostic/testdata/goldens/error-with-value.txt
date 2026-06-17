@@ -1,0 +1,10 @@
+[31;1m[31;1mError:[0m[0m [1m[1mserve.port[0m[0m
+  must be between 0 and 65535 (got "99999")
+  [36m[36m ╭─[[0m[0m[36m[36m.config/cem.yaml:2:9][0m[0m
+  [36m[36m1[0m[0m [36m[36m│[0m[0m serve:
+  [36m[36m2[0m[0m [36m[36m│[0m[0m   port: 99999
+    [36m[36m·[0m[0m [31m[31m        ──┬──[0m[0m
+    [36m[36m·[0m[0m [31m[31m          ╰── serve.port[0m[0m
+  [36m[36m3[0m[0m [36m[36m│[0m[0m   demos:
+  [36m[36m ╰────[0m[0m
+
