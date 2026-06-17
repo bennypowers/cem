@@ -160,7 +160,12 @@ func makeConfigSchemaSectionHandler(_ types.MCPContext) mcp.ResourceHandler {
 		}
 	}
 
-	props, _ := schema["properties"].(map[string]any)
+	props, ok := schema["properties"].(map[string]any)
+	if !ok {
+		return func(_ context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+			return nil, fmt.Errorf("config schema has no properties object")
+		}
+	}
 
 	return func(_ context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 		uri := req.Params.URI

@@ -37,24 +37,34 @@ func handleGenerateConfig(
 	if err != nil || cfg == nil {
 		b.WriteString("## Current config\n\nNo config file found.\n\n")
 	} else {
-		cfgJSON, _ := json.MarshalIndent(cfg, "", "  ")
+		cfgJSON, err := json.MarshalIndent(cfg, "", "  ")
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal config: %w", err)
+		}
 		fmt.Fprintf(&b, "## Current config\n\nFile: `%s`\n\n```json\n%s\n```\n\n", registry.ConfigFile(), string(cfgJSON))
 	}
 
 	schemaBytes := registry.ConfigSchemaJSON()
 	var schema map[string]any
-	if err := json.Unmarshal(schemaBytes, &schema); err == nil {
-		if args.Focus != "" {
-			if props, ok := schema["properties"].(map[string]any); ok {
-				if section, ok := props[args.Focus]; ok {
-					sectionJSON, _ := json.MarshalIndent(section, "", "  ")
-					fmt.Fprintf(&b, "## Schema: %s\n\n```json\n%s\n```\n\n", args.Focus, string(sectionJSON))
+	if err := json.Unmarshal(schemaBytes, &schema); err != nil {
+		return nil, fmt.Errorf("failed to parse config schema: %w", err)
+	}
+	if args.Focus != "" {
+		if props, ok := schema["properties"].(map[string]any); ok {
+			if section, ok := props[args.Focus]; ok {
+				sectionJSON, err := json.MarshalIndent(section, "", "  ")
+				if err != nil {
+					return nil, fmt.Errorf("failed to marshal schema section: %w", err)
 				}
+				fmt.Fprintf(&b, "## Schema: %s\n\n```json\n%s\n```\n\n", args.Focus, string(sectionJSON))
 			}
-		} else {
-			schemaJSON, _ := json.MarshalIndent(schema, "", "  ")
-			fmt.Fprintf(&b, "## Schema\n\n```json\n%s\n```\n\n", string(schemaJSON))
 		}
+	} else {
+		schemaJSON, err := json.MarshalIndent(schema, "", "  ")
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal schema: %w", err)
+		}
+		fmt.Fprintf(&b, "## Schema\n\n```json\n%s\n```\n\n", string(schemaJSON))
 	}
 
 	b.WriteString("## Guidance\n\n")

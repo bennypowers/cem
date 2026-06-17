@@ -39,7 +39,7 @@ func init() {
 		} `json:"properties"`
 	}
 	if err := json.Unmarshal(configSchemaJSON, &schema); err != nil {
-		return
+		panic(fmt.Sprintf("embedded config schema is invalid JSON: %v", err))
 	}
 	keys := make([]string, 0, len(schema.Properties))
 	for k := range schema.Properties {
