@@ -50,7 +50,7 @@ func TestToolDefinitions_Embedded(t *testing.T) {
 	require.NoError(t, err, "Tools() should succeed with embedded definitions")
 
 	// Verify expected number of tools
-	assert.Len(t, toolDefs, 2, "Should have exactly 2 embedded tool definitions")
+	assert.Len(t, toolDefs, 4, "Should have exactly 4 embedded tool definitions")
 
 	// Verify expected tool names are present
 	toolNames := make(map[string]bool)

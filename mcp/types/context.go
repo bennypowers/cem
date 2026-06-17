@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package types
 
 import (
+	"bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/mcp/relationships"
@@ -34,6 +35,12 @@ type MCPContext interface {
 	// Lazy-computed cached methods for performance
 	CommonPrefixes() []string
 	AllCSSProperties() []string
+
+	// Config access
+	Config() (*config.CemConfig, error)
+	ConfigFile() string
+	ConfigSchemaJSON() []byte
+	Root() string
 }
 
 // ElementInfo represents element information using manifest types directly

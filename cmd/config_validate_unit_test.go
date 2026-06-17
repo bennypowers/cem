@@ -10,7 +10,7 @@ import (
 // pure logic with no I/O dependencies.
 
 func TestDeduplicateErrors_BothEmpty(t *testing.T) {
-	result := deduplicateErrors(nil, nil)
+	result := IC.DeduplicateErrors(nil, nil)
 	if len(result) != 0 {
 		t.Errorf("expected empty, got %v", result)
 	}
@@ -21,7 +21,7 @@ func TestDeduplicateErrors_SchemaOnly(t *testing.T) {
 		{Field: "a", Message: "type error"},
 		{Field: "b", Message: "enum error"},
 	}
-	result := deduplicateErrors(schema, nil)
+	result := IC.DeduplicateErrors(schema, nil)
 	if len(result) != 2 {
 		t.Fatalf("expected 2, got %d", len(result))
 	}
@@ -34,7 +34,7 @@ func TestDeduplicateErrors_SemanticReplacesSchema(t *testing.T) {
 	semantic := []IC.ValidationError{
 		{Field: "serve.port", Message: "must be between 0 and 65535", Value: "99999", Severity: IC.SeverityError},
 	}
-	result := deduplicateErrors(schema, semantic)
+	result := IC.DeduplicateErrors(schema, semantic)
 	if len(result) != 1 {
 		t.Fatalf("expected 1 after dedup, got %d", len(result))
 	}
@@ -48,7 +48,7 @@ func TestDeduplicateErrors_PreservesMultipleSchemaOnSameField(t *testing.T) {
 		{Field: "serve.port", Message: "type error", Severity: IC.SeverityError},
 		{Field: "serve.port", Message: "range warning", Severity: IC.SeverityWarning},
 	}
-	result := deduplicateErrors(schema, nil)
+	result := IC.DeduplicateErrors(schema, nil)
 	if len(result) != 2 {
 		t.Fatalf("expected 2 (different severities preserved), got %d", len(result))
 	}
@@ -61,7 +61,7 @@ func TestDeduplicateErrors_PreservesDifferentSeverities(t *testing.T) {
 	semantic := []IC.ValidationError{
 		{Field: "serve.port", Message: "semantic warning", Severity: IC.SeverityWarning},
 	}
-	result := deduplicateErrors(schema, semantic)
+	result := IC.DeduplicateErrors(schema, semantic)
 	if len(result) != 2 {
 		t.Fatalf("expected 2 (error + warning preserved), got %d", len(result))
 	}
@@ -74,7 +74,7 @@ func TestDeduplicateErrors_PreservesRootErrors(t *testing.T) {
 	semantic := []IC.ValidationError{
 		{Field: "(root)", Message: "another root error"},
 	}
-	result := deduplicateErrors(schema, semantic)
+	result := IC.DeduplicateErrors(schema, semantic)
 	if len(result) != 1 {
 		t.Fatalf("expected 1 (same field+severity deduped), got %d", len(result))
 	}
@@ -87,7 +87,7 @@ func TestDeduplicateErrors_NormalizesEmptySeverity(t *testing.T) {
 	semantic := []IC.ValidationError{
 		{Field: "serve.port", Message: "must be between 0 and 65535", Value: "99999"},
 	}
-	result := deduplicateErrors(schema, semantic)
+	result := IC.DeduplicateErrors(schema, semantic)
 	if len(result) != 1 {
 		t.Fatalf("expected 1 after dedup with empty severity, got %d", len(result))
 	}

@@ -107,6 +107,10 @@ func getToolHandler(toolDef types.ToolDefinition, registry types.MCPContext) (mc
 		return makeValidateHtmlHandler(registry), nil
 	case "generate_html":
 		return makeGenerateHtmlHandler(registry), nil
+	case "generate_config":
+		return makeGenerateConfigHandler(registry), nil
+	case "validate_config":
+		return makeValidateConfigHandler(registry), nil
 	default:
 		return nil, fmt.Errorf("unknown tool: %s", toolDef.Name)
 	}

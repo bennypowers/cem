@@ -26,6 +26,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	C "bennypowers.dev/cem/cmd/config"
 	DT "bennypowers.dev/cem/internal/designtokens"
@@ -44,11 +45,12 @@ type FileSystemWorkspaceContext struct {
 	root                       string
 	configFilePath             string
 	config                     *C.CemConfig
+	configErr                  error
+	configMu                   sync.RWMutex
 	customElementsManifestPath string
-	// Cache parsed results if desired
-	manifest          *M.Package
-	packageJSON       *M.PackageJSON
-	designTokensCache types.DesignTokensCache
+	manifest                   *M.Package
+	packageJSON                *M.PackageJSON
+	designTokensCache          types.DesignTokensCache
 }
 
 func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
@@ -155,7 +157,33 @@ func (c *FileSystemWorkspaceContext) PackageJSON() (*M.PackageJSON, error) {
 }
 
 func (c *FileSystemWorkspaceContext) Config() (*C.CemConfig, error) {
-	return c.config, nil
+	c.configMu.RLock()
+	if c.config != nil || c.configErr != nil {
+		cfg, err := c.config, c.configErr
+		c.configMu.RUnlock()
+		return cfg, err
+	}
+	c.configMu.RUnlock()
+
+	c.configMu.Lock()
+	defer c.configMu.Unlock()
+	if c.config != nil || c.configErr != nil {
+		return c.config, c.configErr
+	}
+	cfg, err := c.initConfig()
+	if err != nil {
+		c.configErr = err
+		return nil, err
+	}
+	c.config = cfg
+	return cfg, nil
+}
+
+func (c *FileSystemWorkspaceContext) InvalidateConfig() {
+	c.configMu.Lock()
+	c.config = nil
+	c.configErr = nil
+	c.configMu.Unlock()
 }
 
 func (c *FileSystemWorkspaceContext) CustomElementsManifestPath() string {

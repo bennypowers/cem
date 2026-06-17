@@ -8,20 +8,20 @@
   "properties": {
     "projectDir": {
       "type": "string",
-      "description": "Root directory of the project"
+      "description": "Root directory of the project. Resolved automatically from the config file location when not set."
     },
     "configFile": {
       "type": "string",
-      "description": "Path to the config file"
+      "description": "Path to the config file. Normally resolved automatically; set only when overriding via CLI."
     },
     "packageName": {
       "type": "string",
-      "description": "Package name override"
+      "description": "Override the package name used in the generated manifest. Defaults to the name field in package.json."
     },
     "sourceControlRootUrl": {
       "type": "string",
       "format": "uri",
-      "description": "Root URL for source control links"
+      "description": "Base URL for linking manifest entries to source code (e.g. https://github.com/org/repo/blob/main)."
     },
     "verbose": {
       "type": "boolean",
@@ -31,17 +31,17 @@
     "logLevel": {
       "type": "string",
       "enum": ["error", "warn", "success", "info", "debug", "trace"],
-      "description": "Set the minimum log level. Overrides verbose if both are set."
+      "description": "Minimum log level. Overrides verbose if both are set."
     },
     "additionalPackages": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "Additional packages to analyze"
+      "description": "Extra packages to load manifests from (npm:, jsr:, or URL specifiers). Useful for consuming design system elements without local source."
     },
     "generate": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Manifest generation settings",
+      "description": "Controls how cem generates custom-elements.json manifests from source files.",
       "properties": {
         "files": {
           "type": "array",
@@ -49,7 +49,7 @@
             "type": "string",
             "format": "x-glob-pattern"
           },
-          "description": "Glob patterns for source files to analyze"
+          "description": "Glob patterns for source files cem scans for custom element definitions. At least one pattern is required for generation."
         },
         "exclude": {
           "type": "array",
@@ -57,50 +57,50 @@
             "type": "string",
             "format": "x-glob-pattern"
           },
-          "description": "Glob patterns for files to exclude"
+          "description": "Glob patterns for files to skip during generation. By default, **/*.d.ts files are excluded."
         },
         "noDefaultExcludes": {
           "type": "boolean",
-          "description": "Disable default exclusion patterns"
+          "description": "When true, disables the default **/*.d.ts exclusion pattern, so declaration files are also scanned."
         },
         "output": {
           "type": "string",
-          "description": "Output file path for the manifest"
+          "description": "Output path for the generated manifest. Falls back to the customElements field in package.json, or stdout if neither is set."
         },
         "designTokens": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Design tokens configuration",
+          "description": "Merges DTCG design token metadata (descriptions, syntax, defaults) into matching CSS custom properties in the manifest.",
           "properties": {
             "spec": {
               "type": "string",
-              "description": "Path or URL to design tokens specification"
+              "description": "Path or specifier (npm:, jsr:, URL) to a DTCG design tokens JSON file. Token names are matched to CSS custom property names in the manifest."
             },
             "prefix": {
               "type": "string",
-              "description": "Prefix for generated CSS custom properties"
+              "description": "Prefix prepended to token names when matching against CSS custom properties (e.g. 'rh' matches token 'color-brand' to '--rh-color-brand')."
             }
           }
         },
         "demoDiscovery": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Demo file discovery settings",
+          "description": "Discovers demo HTML files and associates them with elements in the manifest. Demos can declare associations via frontmatter, URL pattern matching, or content-based tag detection.",
           "properties": {
             "fileGlob": {
               "type": "string",
               "format": "x-glob-pattern",
-              "description": "Glob pattern for demo files"
+              "description": "Glob pattern for finding demo HTML files. When empty, demo discovery is skipped entirely."
             },
             "urlPattern": {
               "type": "string",
               "format": "x-url-pattern",
-              "description": "URL pattern for matching demo URLs"
+              "description": "WHATWG URLPattern for extracting parameters from demo file paths. Parameter values are matched against element tag names to infer associations."
             },
             "urlTemplate": {
               "type": "string",
               "format": "x-go-template",
-              "description": "Go template for generating demo URLs"
+              "description": "Go template for generating demo URLs from matched parameters (e.g. '/demos/{{.tagName}}/')."
             }
           }
         }
@@ -109,40 +109,40 @@
     "serve": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Dev server settings",
+      "description": "Configures the cem dev server for previewing components with live reload, import maps, and source transforms.",
       "properties": {
         "port": {
           "type": "integer",
           "minimum": 0,
           "maximum": 65535,
-          "description": "Server port number"
+          "description": "Port the dev server listens on. Use 0 for automatic port assignment."
         },
         "openBrowser": {
           "type": "boolean",
-          "description": "Open browser on startup"
+          "description": "Automatically open a browser tab when the dev server starts."
         },
         "importMap": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Import map configuration",
+          "description": "Controls the import map injected into served HTML pages, enabling bare specifier resolution (e.g. import 'lit').",
           "properties": {
             "generate": {
               "type": "boolean",
-              "description": "Auto-generate import map"
+              "description": "When true, auto-generates an import map from node_modules package.json exports. Generated entries are merged with overrides, where overrides take precedence."
             },
             "overrideFile": {
               "type": "string",
-              "description": "Path to import map override file"
+              "description": "Path to a JSON file with manual import map overrides (standard { imports: {}, scopes: {} } format). Merged with auto-generated map."
             },
             "override": {
               "type": "object",
               "additionalProperties": false,
-              "description": "Inline import map overrides",
+              "description": "Inline import map overrides. Same format and merge behavior as overrideFile, but specified directly in config.",
               "properties": {
                 "imports": {
                   "type": "object",
                   "additionalProperties": { "type": "string" },
-                  "description": "Import specifier mappings"
+                  "description": "Bare specifier to URL mappings (e.g. { \"lit\": \"/node_modules/lit/index.js\" })."
                 },
                 "scopes": {
                   "type": "object",
@@ -150,7 +150,7 @@
                     "type": "object",
                     "additionalProperties": { "type": "string" }
                   },
-                  "description": "Scoped import specifier mappings"
+                  "description": "Scope-specific import overrides, keyed by URL prefix."
                 }
               }
             }
@@ -159,16 +159,16 @@
         "transforms": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Source transform settings",
+          "description": "On-the-fly source transforms applied when the dev server serves files.",
           "properties": {
             "typescript": {
               "type": "object",
               "additionalProperties": false,
-              "description": "TypeScript transform settings",
+              "description": "Transforms .ts files to JavaScript on-the-fly. Uses tsconfig.json for compiler options when available.",
               "properties": {
                 "enabled": {
                   "type": "boolean",
-                  "description": "Enable TypeScript transformation"
+                  "description": "Enable TypeScript-to-JavaScript transformation for served .ts files."
                 },
                 "target": {
                   "type": "string",
@@ -176,18 +176,18 @@
                     "es2015", "es2016", "es2017", "es2018", "es2019",
                     "es2020", "es2021", "es2022", "es2023", "esnext"
                   ],
-                  "description": "ES target version"
+                  "description": "ECMAScript target version for TypeScript output. Defaults to es2022."
                 }
               }
             },
             "css": {
               "type": "object",
               "additionalProperties": false,
-              "description": "CSS transform settings",
+              "description": "Transforms CSS files into JavaScript modules for import with import attributes. Only files matching include patterns are transformed.",
               "properties": {
                 "enabled": {
                   "type": "boolean",
-                  "description": "Enable CSS transformation"
+                  "description": "Enable CSS-to-JS module transformation. Files must also match include patterns to be transformed."
                 },
                 "include": {
                   "type": "array",
@@ -195,7 +195,7 @@
                     "type": "string",
                     "format": "x-glob-pattern"
                   },
-                  "description": "Glob patterns for CSS files to include"
+                  "description": "Glob patterns for CSS files to transform. No files are transformed unless at least one include pattern is specified."
                 },
                 "exclude": {
                   "type": "array",
@@ -203,7 +203,7 @@
                     "type": "string",
                     "format": "x-glob-pattern"
                   },
-                  "description": "Glob patterns for CSS files to exclude"
+                  "description": "Glob patterns for CSS files to skip. Excludes take precedence over includes."
                 }
               }
             }
@@ -211,7 +211,7 @@
         },
         "urlRewrites": {
           "type": "array",
-          "description": "URL rewrite rules for the dev server",
+          "description": "Maps request URLs to different file paths. Uses WHATWG URLPattern for matching and Go templates for rewriting. First match wins.",
           "items": {
             "type": "object",
             "additionalProperties": false,
@@ -219,12 +219,12 @@
               "urlPattern": {
                 "type": "string",
                 "format": "x-url-pattern",
-                "description": "URL pattern to match"
+                "description": "WHATWG URLPattern with named parameters (e.g. '/dist/:path*')."
               },
               "urlTemplate": {
                 "type": "string",
                 "format": "x-go-template",
-                "description": "Go template for the rewritten URL"
+                "description": "Go template producing the rewritten path (e.g. '/src/{{.path}}')."
               }
             }
           }
@@ -232,12 +232,12 @@
         "demos": {
           "type": "object",
           "additionalProperties": false,
-          "description": "Demo rendering configuration",
+          "description": "Controls how component demos are rendered in the dev server UI.",
           "properties": {
             "rendering": {
               "type": "string",
               "enum": ["light", "shadow", "iframe", "chromeless"],
-              "description": "Demo rendering mode"
+              "description": "Demo rendering mode: light (default, no encapsulation), shadow (Shadow DOM boundary), iframe (full isolation), chromeless (no dev server chrome)."
             }
           }
         }
@@ -246,55 +246,55 @@
     "mcp": {
       "type": "object",
       "additionalProperties": false,
-      "description": "MCP server settings",
+      "description": "Settings for the MCP (Model Context Protocol) server that provides custom element context to AI tools.",
       "properties": {
         "maxDescriptionLength": {
           "type": "integer",
           "minimum": 0,
-          "description": "Maximum description length for MCP resources"
+          "description": "Truncate element descriptions to this many characters in MCP responses. Defaults to 2000."
         }
       }
     },
     "health": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Health check settings",
+      "description": "Configures cem health checks that score manifest completeness and documentation quality.",
       "properties": {
         "failBelow": {
           "type": "integer",
           "minimum": 0,
           "maximum": 100,
-          "description": "Health score threshold (percentage)"
+          "description": "Minimum health score percentage. The health command exits with an error if the score falls below this threshold."
         },
         "disable": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "List of health checks to disable"
+          "description": "Health check rule IDs to skip. Available rules: description, attributes, slots, css, events, demos."
         }
       }
     },
     "export": {
       "type": "object",
-      "description": "Framework export configurations",
+      "description": "Named framework export configurations. Each key is an export name, and its value defines how to generate framework-specific wrappers from the manifest.",
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
           "output": {
             "type": "string",
-            "description": "Output directory"
+            "description": "Directory where generated framework wrapper files are written."
           },
           "stripPrefix": {
             "type": "string",
-            "description": "Prefix to strip from paths"
+            "description": "Prefix to remove from element tag names when generating wrapper names."
           },
           "packageName": {
             "type": "string",
-            "description": "Package name for the export"
+            "description": "Package name used in generated import statements."
           },
           "moduleName": {
             "type": "string",
-            "description": "Module name for the export"
+            "description": "Module name used in generated wrapper code."
           }
         }
       }

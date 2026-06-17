@@ -71,7 +71,7 @@ func NewServerWithConfig(workspace types.WorkspaceContext, config ServerConfig) 
 	// Create MCP server
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    "cem",
-		Version: "1.0.0",
+		Version: version.GetVersion(),
 	}, nil)
 
 	cemServer := &Server{
@@ -125,6 +125,17 @@ func (s *Server) Run(ctx context.Context) error {
 		if err := s.registry.LSPRegistry().LoadAdditionalPackages(s.config.AdditionalPackages); err != nil {
 			helpers.SafeDebugLog("Warning: Error loading additional packages: %v", err)
 		}
+	}
+
+	// Start file watching for manifest and config changes
+	if err := s.registry.LSPRegistry().StartFileWatching(func() {
+		helpers.SafeDebugLog("File change detected, reloading manifests and config")
+		s.registry.InvalidateConfig()
+		if err := s.registry.LoadManifests(); err != nil {
+			helpers.SafeDebugLog("Warning: Failed to reload manifests: %v", err)
+		}
+	}); err != nil {
+		helpers.SafeDebugLog("Warning: Could not start file watching: %v", err)
 	}
 
 	// Run the MCP server

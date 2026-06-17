@@ -1128,6 +1128,11 @@ func (r *Registry) AddManifestPath(path string) {
 	r.addManifestPath(path)
 }
 
+// AddWatchPath adds a file path to the watch list without treating it as a manifest.
+func (r *Registry) AddWatchPath(path string) {
+	r.addWatchPath(path)
+}
+
 // ReloadManifestsDirectly bypasses workspace caching by directly reading manifest files from disk
 // This is used when manifest files change and we need to force a fresh read
 func (r *Registry) ReloadManifestsDirectly() error {

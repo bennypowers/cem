@@ -411,3 +411,29 @@ func validateOutputMismatch(cfg *CemConfig, opts ValidateOptions) []ValidationEr
 }
 
 var _ error = ValidationError{}
+
+// DeduplicateErrors removes redundant schema errors when a semantic error
+// covers the same field with the same severity.
+func DeduplicateErrors(schemaErrs, semanticErrs []ValidationError) []ValidationError {
+	type key struct {
+		field    string
+		severity ValidationSeverity
+	}
+	normalize := func(s ValidationSeverity) ValidationSeverity {
+		if s == "" {
+			return SeverityError
+		}
+		return s
+	}
+	semanticFields := make(map[key]bool, len(semanticErrs))
+	for _, e := range semanticErrs {
+		semanticFields[key{e.Field, normalize(e.Severity)}] = true
+	}
+	var result []ValidationError
+	for _, e := range schemaErrs {
+		if !semanticFields[key{e.Field, normalize(e.Severity)}] {
+			result = append(result, e)
+		}
+	}
+	return append(result, semanticErrs...)
+}

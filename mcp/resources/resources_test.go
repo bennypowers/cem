@@ -58,7 +58,7 @@ func TestResources_LoadingAndParsing(t *testing.T) {
 	require.NotEmpty(t, resourceDefs, "Should load resource definitions")
 
 	// Verify all expected resources are loaded
-	expectedResources := []string{"schema", "packages", "elements", "element", "guidelines", "accessibility"}
+	expectedResources := []string{"schema", "packages", "elements", "element", "guidelines", "accessibility", "config", "config-schema", "config-schema-section"}
 	resourceNames := make(map[string]bool)
 	for _, def := range resourceDefs {
 		resourceNames[def.Name] = true
@@ -503,8 +503,9 @@ func TestAllResourcesWithFixtures(t *testing.T) {
 			if resource.Name == "element" {
 				testURI = "cem://element/button-element" // Use known fixture element
 			} else if strings.Contains(resource.URI, "{tagName}") {
-				// For all declarative resources that require tagName, use button-element
 				testURI = strings.Replace(resource.URI, "{tagName}", "button-element", 1)
+			} else if strings.Contains(resource.URI, "{section}") {
+				testURI = strings.Replace(resource.URI, "{section}", "generate", 1)
 			}
 
 			req := &mcpSDK.ReadResourceRequest{
