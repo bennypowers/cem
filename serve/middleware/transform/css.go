@@ -158,7 +158,7 @@ func NewCSS(config CSSConfig) middleware.Middleware {
 			if !hasImportAttrs && r.Header.Get("Sec-Fetch-Dest") == "empty" {
 				cssPathNorm := strings.TrimPrefix(requestPath, "/")
 				if !shouldTransformCSS(cssPathNorm, config.Include, config.Exclude, nil, nil, "") {
-					if _, alreadyWarned := warnedPaths.LoadOrStore(requestPath, true); !alreadyWarned && config.Logger != nil {
+					if _, alreadyWarned := warnedPaths.LoadOrStore(cssPathNorm, true); !alreadyWarned && config.Logger != nil {
 						config.Logger.Warning("%s: CSS imported without `with { type: 'css' }` import attribute", requestPath)
 					}
 				}

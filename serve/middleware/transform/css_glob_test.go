@@ -318,6 +318,7 @@ func TestCSSGlobFiltering_E2E(t *testing.T) {
 	}
 }
 
+// Inline: testing middleware warning side effects (logger callback counts), not output content
 func TestCSS_WarnsWithoutImportAttributes(t *testing.T) {
 	mfs := platform.NewMapFileSystem(nil)
 	mfs.AddFile("/test-root/elements/button.css", ":host { color: red; }", 0644)
