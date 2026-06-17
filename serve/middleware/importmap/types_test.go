@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package importmap
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -64,42 +65,66 @@ func TestDependencyGraph_Dependents(t *testing.T) {
 
 func TestInjectImportMap(t *testing.T) {
 	t.Run("replaces existing import map", func(t *testing.T) {
-		html := `<head><script type="importmap">{"imports":{}}</script></head>`
-		result := injectImportMap(html, `{"imports":{"lit":"/lit.js"}}`)
+		input := `<html><head><script type="importmap">{"imports":{}}</script></head><body></body></html>`
+		result := injectImportMap(input, `{"imports":{"lit":"/lit.js"}}`)
 		assert.Contains(t, result, `{"imports":{"lit":"/lit.js"}}`)
 		assert.NotContains(t, result, `{"imports":{}}`)
 	})
 
-	t.Run("injects before head close", func(t *testing.T) {
-		html := `<html><head><title>Test</title></head><body></body></html>`
-		result := injectImportMap(html, `{"imports":{}}`)
+	t.Run("injects before existing scripts", func(t *testing.T) {
+		input := `<html><head><title>Test</title><script type="module" src="/app.js"></script></head><body></body></html>`
+		result := injectImportMap(input, `{"imports":{}}`)
+		importMapIdx := strings.Index(result, `<script type="importmap">`)
+		scriptIdx := strings.Index(result, `<script type="module"`)
+		assert.Greater(t, importMapIdx, -1, "import map should be present")
+		assert.Greater(t, scriptIdx, -1, "module script should be present")
+		assert.Less(t, importMapIdx, scriptIdx, "import map must appear before module script")
+	})
+
+	t.Run("appends to head when no scripts", func(t *testing.T) {
+		input := `<html><head><title>Test</title><link rel="stylesheet" href="/style.css"></head><body></body></html>`
+		result := injectImportMap(input, `{"imports":{}}`)
 		assert.Contains(t, result, `<script type="importmap">`)
-		assert.Contains(t, result, `</head>`)
+		importMapIdx := strings.Index(result, `<script type="importmap">`)
+		headCloseIdx := strings.Index(result, `</head>`)
+		assert.Less(t, importMapIdx, headCloseIdx, "import map should be inside head")
+	})
+
+	t.Run("replaces existing and keeps before scripts", func(t *testing.T) {
+		input := `<html><head><script type="module" src="/a.js"></script><script type="importmap">{"old":true}</script></head><body></body></html>`
+		result := injectImportMap(input, `{"imports":{"new":"/new.js"}}`)
+		importMapIdx := strings.Index(result, `<script type="importmap">`)
+		scriptIdx := strings.Index(result, `<script type="module"`)
+		assert.Less(t, importMapIdx, scriptIdx, "import map must appear before module script even after replacement")
+		assert.NotContains(t, result, `"old"`)
 	})
 }
 
 func TestInjectImportMapFallback(t *testing.T) {
-	t.Run("injects before head close", func(t *testing.T) {
-		html := `<html><head></head><body></body></html>`
-		result := injectImportMapFallback(html, `{}`)
+	t.Run("injects before first script in head", func(t *testing.T) {
+		input := `<html><head><script src="/app.js"></script></head><body></body></html>`
+		result := injectImportMapFallback(input, `{}`)
+		importMapIdx := strings.Index(result, `<script type="importmap">`)
+		scriptIdx := strings.Index(result, `<script src="/app.js">`)
+		assert.Greater(t, importMapIdx, -1)
+		assert.Less(t, importMapIdx, scriptIdx)
+	})
+
+	t.Run("injects before head close when no scripts", func(t *testing.T) {
+		input := `<html><head><title>T</title></head><body></body></html>`
+		result := injectImportMapFallback(input, `{}`)
 		assert.Contains(t, result, `<script type="importmap">`)
 	})
 
 	t.Run("falls back to body", func(t *testing.T) {
-		html := `<html><body>content</body></html>`
-		result := injectImportMapFallback(html, `{}`)
-		assert.Contains(t, result, `<script type="importmap">`)
-	})
-
-	t.Run("falls back to html tag", func(t *testing.T) {
-		html := `<html>content</html>`
-		result := injectImportMapFallback(html, `{}`)
+		input := `<html><body>content</body></html>`
+		result := injectImportMapFallback(input, `{}`)
 		assert.Contains(t, result, `<script type="importmap">`)
 	})
 
 	t.Run("no suitable location returns unchanged", func(t *testing.T) {
-		html := `just text`
-		result := injectImportMapFallback(html, `{}`)
-		assert.Equal(t, html, result)
+		input := `just text`
+		result := injectImportMapFallback(input, `{}`)
+		assert.Equal(t, input, result)
 	})
 }
