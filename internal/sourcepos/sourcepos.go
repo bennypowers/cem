@@ -46,6 +46,13 @@ func BuildPositionMap(data []byte, format string) map[string]Position {
 	return posMap
 }
 
+// escapeJSONPointerToken escapes ~ and / per RFC 6901.
+func escapeJSONPointerToken(s string) string {
+	s = strings.ReplaceAll(s, "~", "~0")
+	s = strings.ReplaceAll(s, "/", "~1")
+	return s
+}
+
 func walkNode(n *yaml.Node, path string, posMap map[string]Position) {
 	if n == nil {
 		return
@@ -56,7 +63,7 @@ func walkNode(n *yaml.Node, path string, posMap map[string]Position) {
 		for i := 0; i+1 < len(n.Content); i += 2 {
 			key := n.Content[i]
 			val := n.Content[i+1]
-			p := path + "/" + key.Value
+			p := path + "/" + escapeJSONPointerToken(key.Value)
 			posMap[p] = Position{Line: val.Line, Column: val.Column}
 			walkNode(val, p, posMap)
 		}
@@ -90,10 +97,15 @@ func parentPointer(p string) string {
 
 // FieldToJSONPointer converts a dotted field path to a JSON Pointer.
 // e.g. "serve.demos.rendering" → "/serve/demos/rendering"
+// Segments are escaped per RFC 6901.
 func FieldToJSONPointer(field string) string {
 	if field == "(root)" || field == "" {
 		return ""
 	}
-	return "/" + strings.ReplaceAll(field, ".", "/")
+	parts := strings.Split(field, ".")
+	for i, p := range parts {
+		parts[i] = escapeJSONPointerToken(p)
+	}
+	return "/" + strings.Join(parts, "/")
 }
 

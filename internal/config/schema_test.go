@@ -52,7 +52,8 @@ func TestValidateSchema(t *testing.T) {
 				t.Fatalf("failed to read fixture: %v", err)
 			}
 
-			errs := ValidateSchema(data, "yaml")
+			format := FormatFromPath(entry.Name())
+			errs := ValidateSchema(data, format)
 
 			type result struct {
 				Valid  bool              `json:"valid"`

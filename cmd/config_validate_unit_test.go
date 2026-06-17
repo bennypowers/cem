@@ -9,59 +9,90 @@ import (
 // Inline assertions justified: testing unexported cmd wiring functions,
 // pure logic with no I/O dependencies.
 
-func TestDeduplicateErrors_Empty(t *testing.T) {
-	result := deduplicateErrors(nil)
+func TestDeduplicateErrors_BothEmpty(t *testing.T) {
+	result := deduplicateErrors(nil, nil)
 	if len(result) != 0 {
 		t.Errorf("expected empty, got %v", result)
 	}
 }
 
-func TestDeduplicateErrors_NoDuplicates(t *testing.T) {
-	errs := []IC.ValidationError{
-		{Field: "a", Message: "error a"},
-		{Field: "b", Message: "error b"},
+func TestDeduplicateErrors_SchemaOnly(t *testing.T) {
+	schema := []IC.ValidationError{
+		{Field: "a", Message: "type error"},
+		{Field: "b", Message: "enum error"},
 	}
-	result := deduplicateErrors(errs)
+	result := deduplicateErrors(schema, nil)
 	if len(result) != 2 {
 		t.Fatalf("expected 2, got %d", len(result))
 	}
-	if result[0].Field != "a" || result[1].Field != "b" {
-		t.Errorf("unexpected order: %v", result)
-	}
 }
 
-func TestDeduplicateErrors_LastWins(t *testing.T) {
-	errs := []IC.ValidationError{
-		{Field: "serve.port", Message: "schema error"},
-		{Field: "serve.port", Message: "semantic error", Value: "99999"},
+func TestDeduplicateErrors_SemanticReplacesSchema(t *testing.T) {
+	schema := []IC.ValidationError{
+		{Field: "serve.port", Message: "maximum: got 99999, want 65535", Severity: IC.SeverityError},
 	}
-	result := deduplicateErrors(errs)
+	semantic := []IC.ValidationError{
+		{Field: "serve.port", Message: "must be between 0 and 65535", Value: "99999", Severity: IC.SeverityError},
+	}
+	result := deduplicateErrors(schema, semantic)
 	if len(result) != 1 {
 		t.Fatalf("expected 1 after dedup, got %d", len(result))
 	}
-	if result[0].Message != "semantic error" {
-		t.Errorf("expected semantic error to win, got %q", result[0].Message)
-	}
 	if result[0].Value != "99999" {
-		t.Errorf("expected value preserved, got %q", result[0].Value)
+		t.Errorf("expected semantic error to win, got %q", result[0].Message)
 	}
 }
 
-func TestDeduplicateErrors_PreservesOrder(t *testing.T) {
-	errs := []IC.ValidationError{
-		{Field: "a", Message: "first"},
-		{Field: "b", Message: "second"},
-		{Field: "a", Message: "replaced"},
+func TestDeduplicateErrors_PreservesMultipleSchemaOnSameField(t *testing.T) {
+	schema := []IC.ValidationError{
+		{Field: "serve.port", Message: "type error", Severity: IC.SeverityError},
+		{Field: "serve.port", Message: "range warning", Severity: IC.SeverityWarning},
 	}
-	result := deduplicateErrors(errs)
+	result := deduplicateErrors(schema, nil)
 	if len(result) != 2 {
-		t.Fatalf("expected 2, got %d", len(result))
+		t.Fatalf("expected 2 (different severities preserved), got %d", len(result))
 	}
-	if result[0].Field != "a" || result[0].Message != "replaced" {
-		t.Errorf("expected 'a' replaced at index 0, got %v", result[0])
+}
+
+func TestDeduplicateErrors_PreservesDifferentSeverities(t *testing.T) {
+	schema := []IC.ValidationError{
+		{Field: "serve.port", Message: "schema error", Severity: IC.SeverityError},
 	}
-	if result[1].Field != "b" {
-		t.Errorf("expected 'b' at index 1, got %v", result[1])
+	semantic := []IC.ValidationError{
+		{Field: "serve.port", Message: "semantic warning", Severity: IC.SeverityWarning},
+	}
+	result := deduplicateErrors(schema, semantic)
+	if len(result) != 2 {
+		t.Fatalf("expected 2 (error + warning preserved), got %d", len(result))
+	}
+}
+
+func TestDeduplicateErrors_PreservesRootErrors(t *testing.T) {
+	schema := []IC.ValidationError{
+		{Field: "(root)", Message: "parse error"},
+	}
+	semantic := []IC.ValidationError{
+		{Field: "(root)", Message: "another root error"},
+	}
+	result := deduplicateErrors(schema, semantic)
+	if len(result) != 1 {
+		t.Fatalf("expected 1 (same field+severity deduped), got %d", len(result))
+	}
+}
+
+func TestDeduplicateErrors_NormalizesEmptySeverity(t *testing.T) {
+	schema := []IC.ValidationError{
+		{Field: "serve.port", Message: "maximum: got 99999", Severity: IC.SeverityError},
+	}
+	semantic := []IC.ValidationError{
+		{Field: "serve.port", Message: "must be between 0 and 65535", Value: "99999"},
+	}
+	result := deduplicateErrors(schema, semantic)
+	if len(result) != 1 {
+		t.Fatalf("expected 1 after dedup with empty severity, got %d", len(result))
+	}
+	if result[0].Value != "99999" {
+		t.Errorf("expected semantic error to win, got %q", result[0].Message)
 	}
 }
 

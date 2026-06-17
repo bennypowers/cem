@@ -60,13 +60,10 @@ func Render(w io.Writer, d Diagnostic) {
 	p.println()
 }
 
-// RenderAll writes multiple diagnostics to w, separated by blank lines.
+// RenderAll writes multiple diagnostics to w.
+// Each Render call already appends a trailing blank line.
 func RenderAll(w io.Writer, diags []Diagnostic) {
-	p := printer{w}
-	for i, d := range diags {
-		if i > 0 {
-			p.println()
-		}
+	for _, d := range diags {
 		Render(w, d)
 	}
 }

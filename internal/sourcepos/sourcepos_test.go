@@ -45,6 +45,7 @@ func TestBuildPositionMap(t *testing.T) {
 	}
 }
 
+// Inline: trivial boundary check, golden overhead unjustified.
 func TestBuildPositionMap_Empty(t *testing.T) {
 	posMap := sourcepos.BuildPositionMap([]byte{}, "yaml")
 	if len(posMap) != 0 {
@@ -52,6 +53,7 @@ func TestBuildPositionMap_Empty(t *testing.T) {
 	}
 }
 
+// Inline: trivial boundary check, golden overhead unjustified.
 func TestBuildPositionMap_UnknownFormat(t *testing.T) {
 	posMap := sourcepos.BuildPositionMap([]byte("foo: bar"), "toml")
 	if len(posMap) != 0 {
@@ -59,6 +61,7 @@ func TestBuildPositionMap_UnknownFormat(t *testing.T) {
 	}
 }
 
+// Inline: pure function with synthetic map input, golden adds no value.
 func TestResolve_ExactMatch(t *testing.T) {
 	posMap := map[string]sourcepos.Position{
 		"/serve/port": {Line: 3, Column: 9},
@@ -72,6 +75,7 @@ func TestResolve_ExactMatch(t *testing.T) {
 	}
 }
 
+// Inline: pure function with synthetic map input, golden adds no value.
 func TestResolve_ParentFallback(t *testing.T) {
 	posMap := map[string]sourcepos.Position{
 		"/serve":       {Line: 1, Column: 1},
@@ -86,6 +90,7 @@ func TestResolve_ParentFallback(t *testing.T) {
 	}
 }
 
+// Inline: pure function with synthetic map input, golden adds no value.
 func TestResolve_NoMatch(t *testing.T) {
 	posMap := map[string]sourcepos.Position{}
 	_, ok := sourcepos.Resolve(posMap, "/nonexistent")
@@ -94,6 +99,7 @@ func TestResolve_NoMatch(t *testing.T) {
 	}
 }
 
+// Inline: table-driven pure function test, golden overhead unjustified.
 func TestFieldToJSONPointer(t *testing.T) {
 	tests := []struct {
 		field string
@@ -114,6 +120,16 @@ func TestFieldToJSONPointer(t *testing.T) {
 	}
 }
 
+// Inline: testing RFC 6901 escaping edge case, no fixture needed.
+func TestFieldToJSONPointer_RFC6901Escaping(t *testing.T) {
+	got := sourcepos.FieldToJSONPointer("a~b.c/d")
+	want := "/a~0b/c~1d"
+	if got != want {
+		t.Errorf("FieldToJSONPointer(\"a~b.c/d\") = %q, want %q", got, want)
+	}
+}
+
+// Inline: roundtrip check with synthetic map, golden adds no value.
 func TestFieldToJSONPointer_Roundtrip(t *testing.T) {
 	posMap := map[string]sourcepos.Position{
 		"/serve/port": {Line: 2, Column: 9},
@@ -128,6 +144,7 @@ func TestFieldToJSONPointer_Roundtrip(t *testing.T) {
 	}
 }
 
+// Inline: pure function with synthetic map input, golden adds no value.
 func TestResolve_DeepParentFallback(t *testing.T) {
 	posMap := map[string]sourcepos.Position{
 		"/generate": {Line: 5, Column: 1},
@@ -141,6 +158,7 @@ func TestResolve_DeepParentFallback(t *testing.T) {
 	}
 }
 
+// Inline: verifying specific line numbers from synthetic YAML, golden adds no value.
 func TestBuildPositionMap_ArrayElements(t *testing.T) {
 	yaml := strings.Join([]string{
 		"generate:",

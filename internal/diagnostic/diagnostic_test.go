@@ -22,6 +22,16 @@ generate:
     prefix: --bad
 `)
 
+func goldenOpts(t *testing.T) testutil.GoldenOptions {
+	t.Helper()
+	return testutil.GoldenOptions{
+		Dir:       "goldens",
+		Extension: ".txt",
+		StripANSI: true,
+		FS:        testutil.LoadTestdataFS(t, filepath.Join("testdata"), "/"),
+	}
+}
+
 func TestRender_ErrorWithPosition(t *testing.T) {
 	d := diagnostic.Diagnostic{
 		File:     ".config/cem.yaml",
@@ -36,11 +46,7 @@ func TestRender_ErrorWithPosition(t *testing.T) {
 	var buf bytes.Buffer
 	diagnostic.Render(&buf, d)
 
-	testutil.CheckGolden(t, "error-with-position", buf.Bytes(), testutil.GoldenOptions{
-		Dir:       filepath.Join("testdata", "goldens"),
-		Extension: ".txt",
-		StripANSI: true,
-	})
+	testutil.CheckGolden(t, "error-with-position", buf.Bytes(), goldenOpts(t))
 }
 
 func TestRender_WarningWithPosition(t *testing.T) {
@@ -57,11 +63,7 @@ func TestRender_WarningWithPosition(t *testing.T) {
 	var buf bytes.Buffer
 	diagnostic.Render(&buf, d)
 
-	testutil.CheckGolden(t, "warning-with-position", buf.Bytes(), testutil.GoldenOptions{
-		Dir:       filepath.Join("testdata", "goldens"),
-		Extension: ".txt",
-		StripANSI: true,
-	})
+	testutil.CheckGolden(t, "warning-with-position", buf.Bytes(), goldenOpts(t))
 }
 
 func TestRender_NoPosition(t *testing.T) {
@@ -75,11 +77,7 @@ func TestRender_NoPosition(t *testing.T) {
 	var buf bytes.Buffer
 	diagnostic.Render(&buf, d)
 
-	testutil.CheckGolden(t, "no-position", buf.Bytes(), testutil.GoldenOptions{
-		Dir:       filepath.Join("testdata", "goldens"),
-		Extension: ".txt",
-		StripANSI: true,
-	})
+	testutil.CheckGolden(t, "no-position", buf.Bytes(), goldenOpts(t))
 }
 
 func TestRender_ErrorWithValue(t *testing.T) {
@@ -96,11 +94,7 @@ func TestRender_ErrorWithValue(t *testing.T) {
 	var buf bytes.Buffer
 	diagnostic.Render(&buf, d)
 
-	testutil.CheckGolden(t, "error-with-value", buf.Bytes(), testutil.GoldenOptions{
-		Dir:       filepath.Join("testdata", "goldens"),
-		Extension: ".txt",
-		StripANSI: true,
-	})
+	testutil.CheckGolden(t, "error-with-value", buf.Bytes(), goldenOpts(t))
 }
 
 func TestRender_FirstLine(t *testing.T) {
@@ -118,11 +112,7 @@ func TestRender_FirstLine(t *testing.T) {
 	var buf bytes.Buffer
 	diagnostic.Render(&buf, d)
 
-	testutil.CheckGolden(t, "first-line", buf.Bytes(), testutil.GoldenOptions{
-		Dir:       filepath.Join("testdata", "goldens"),
-		Extension: ".txt",
-		StripANSI: true,
-	})
+	testutil.CheckGolden(t, "first-line", buf.Bytes(), goldenOpts(t))
 }
 
 func TestRender_LastLine(t *testing.T) {
@@ -140,11 +130,7 @@ func TestRender_LastLine(t *testing.T) {
 	var buf bytes.Buffer
 	diagnostic.Render(&buf, d)
 
-	testutil.CheckGolden(t, "last-line", buf.Bytes(), testutil.GoldenOptions{
-		Dir:       filepath.Join("testdata", "goldens"),
-		Extension: ".txt",
-		StripANSI: true,
-	})
+	testutil.CheckGolden(t, "last-line", buf.Bytes(), goldenOpts(t))
 }
 
 func TestRenderAll(t *testing.T) {
@@ -172,9 +158,5 @@ func TestRenderAll(t *testing.T) {
 	var buf bytes.Buffer
 	diagnostic.RenderAll(&buf, diags)
 
-	testutil.CheckGolden(t, "render-all", buf.Bytes(), testutil.GoldenOptions{
-		Dir:       filepath.Join("testdata", "goldens"),
-		Extension: ".txt",
-		StripANSI: true,
-	})
+	testutil.CheckGolden(t, "render-all", buf.Bytes(), goldenOpts(t))
 }
