@@ -317,3 +317,134 @@ func TestCSSGlobFiltering_E2E(t *testing.T) {
 		})
 	}
 }
+
+func TestCSS_WarnsWithoutImportAttributes(t *testing.T) {
+	mfs := platform.NewMapFileSystem(nil)
+	mfs.AddFile("/test-root/elements/button.css", ":host { color: red; }", 0644)
+
+	var warnings []string
+	logger := &mockLogger{
+		warningFunc: func(msg string, args ...any) {
+			warnings = append(warnings, msg)
+		},
+	}
+
+	mw := transform.NewCSS(transform.CSSConfig{
+		WatchDirFunc:     func() string { return "/test-root" },
+		Logger:           logger,
+		ErrorBroadcaster: &mockErrorBroadcaster{},
+		Enabled:          true,
+		Include:          nil,
+		FS:               mfs,
+	})
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/css")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(":host { color: red; }"))
+	})
+
+	handler := mw(next)
+
+	t.Run("warns on JS module import without import attributes", func(t *testing.T) {
+		warnings = nil
+		req := httptest.NewRequest("GET", "/elements/button.css", nil)
+		req.Header.Set("Sec-Fetch-Dest", "empty")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		if len(warnings) == 0 {
+			t.Error("Expected warning for CSS import without import attributes")
+		}
+	})
+
+	t.Run("no warning on stylesheet request", func(t *testing.T) {
+		warnings = nil
+		req := httptest.NewRequest("GET", "/elements/button.css", nil)
+		req.Header.Set("Sec-Fetch-Dest", "style")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		if len(warnings) > 0 {
+			t.Errorf("Should not warn on <link> stylesheet request, got: %v", warnings)
+		}
+	})
+
+	t.Run("no warning when import attributes present", func(t *testing.T) {
+		warnings = nil
+		req := httptest.NewRequest("GET", "/elements/button.css?__cem-import-attrs%5Btype%5D=css", nil)
+		req.Header.Set("Sec-Fetch-Dest", "empty")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		if len(warnings) > 0 {
+			t.Errorf("Should not warn when import attributes present, got: %v", warnings)
+		}
+	})
+
+	t.Run("no warning when covered by CSS transform include patterns", func(t *testing.T) {
+		mfs2 := platform.NewMapFileSystem(nil)
+		mfs2.AddFile("/test-root/elements/button.css", ":host { color: red; }", 0644)
+
+		var warnings2 []string
+		logger2 := &mockLogger{
+			warningFunc: func(msg string, args ...any) {
+				warnings2 = append(warnings2, msg)
+			},
+		}
+
+		mw2 := transform.NewCSS(transform.CSSConfig{
+			WatchDirFunc:     func() string { return "/test-root" },
+			Logger:           logger2,
+			ErrorBroadcaster: &mockErrorBroadcaster{},
+			Enabled:          true,
+			Include:          []string{"elements/**/*.css"},
+			FS:               mfs2,
+		})
+
+		handler2 := mw2(next)
+
+		req := httptest.NewRequest("GET", "/elements/button.css", nil)
+		req.Header.Set("Sec-Fetch-Dest", "empty")
+		rec := httptest.NewRecorder()
+		handler2.ServeHTTP(rec, req)
+
+		if len(warnings2) > 0 {
+			t.Errorf("Should not warn when file covered by CSS transform include, got: %v", warnings2)
+		}
+	})
+
+	t.Run("warns only once per file", func(t *testing.T) {
+		mfs3 := platform.NewMapFileSystem(nil)
+		mfs3.AddFile("/test-root/elements/card.css", ":host { display: block; }", 0644)
+
+		var warnings3 []string
+		logger3 := &mockLogger{
+			warningFunc: func(msg string, args ...any) {
+				warnings3 = append(warnings3, msg)
+			},
+		}
+
+		mw3 := transform.NewCSS(transform.CSSConfig{
+			WatchDirFunc:     func() string { return "/test-root" },
+			Logger:           logger3,
+			ErrorBroadcaster: &mockErrorBroadcaster{},
+			Enabled:          true,
+			Include:          nil,
+			FS:               mfs3,
+		})
+
+		handler3 := mw3(next)
+
+		for range 3 {
+			req := httptest.NewRequest("GET", "/elements/card.css", nil)
+			req.Header.Set("Sec-Fetch-Dest", "empty")
+			rec := httptest.NewRecorder()
+			handler3.ServeHTTP(rec, req)
+		}
+
+		if len(warnings3) != 1 {
+			t.Errorf("Expected exactly 1 warning (deduped), got %d", len(warnings3))
+		}
+	})
+}
