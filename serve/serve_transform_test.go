@@ -260,13 +260,6 @@ func TestServeCSS_TransformsToModule(t *testing.T) {
 	}
 }
 
-// TestServeCSS_WarnsWithoutImportAttribute tests warning for CSS imports without 'with { type: "css" }'
-func TestServeCSS_WarnsWithoutImportAttribute(t *testing.T) {
-	t.Skip("Warning implementation TBD - need to detect import context")
-	// This test verifies that when CSS is imported without `with { type: 'css' }`,
-	// the server logs a warning. Implementation requires examining the referrer
-	// to detect how the CSS is being imported.
-}
 
 // TestServeCSS_RejectsPathTraversal tests that path traversal attacks are blocked
 func TestServeCSS_RejectsPathTraversal(t *testing.T) {

@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
@@ -128,6 +129,8 @@ func NewCSS(config CSSConfig) middleware.Middleware {
 		fs = platform.NewOSFileSystem()
 	}
 
+	var warnedPaths sync.Map
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requestPath := r.URL.Path
@@ -146,6 +149,18 @@ func NewCSS(config CSSConfig) middleware.Middleware {
 				if strings.HasPrefix(key, "__cem-import-attrs[") {
 					hasImportAttrs = true
 					break
+				}
+			}
+
+			// Warn when CSS is imported from JS without import attributes
+			// and not covered by serve.transforms.css include patterns.
+			// Sec-Fetch-Dest: "empty" indicates a JS module import (not <link> or @import).
+			if !hasImportAttrs && r.Header.Get("Sec-Fetch-Dest") == "empty" {
+				cssPathNorm := strings.TrimPrefix(requestPath, "/")
+				if !shouldTransformCSS(cssPathNorm, config.Include, config.Exclude, nil, nil, "") {
+					if _, alreadyWarned := warnedPaths.LoadOrStore(cssPathNorm, true); !alreadyWarned && config.Logger != nil {
+						config.Logger.Warning("%s: CSS imported without `with { type: 'css' }` import attribute", requestPath)
+					}
 				}
 			}
 
