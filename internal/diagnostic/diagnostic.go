@@ -5,9 +5,9 @@ import (
 	"io"
 	"strings"
 
+	lipgloss "charm.land/lipgloss/v2"
 	"bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/internal/sourcepos"
-	"github.com/pterm/pterm"
 )
 
 // Diagnostic holds all data needed to render a single config validation finding
@@ -22,18 +22,14 @@ type Diagnostic struct {
 	Source   []byte
 }
 
-// what-if: a bubbletea/lipgloss migration could replace pterm styles here
-// with lipgloss.NewStyle() and custom Border definitions for the diagnostic
-// frame, gaining better layout composition and adaptive terminal sizing.
-
 var (
-	errorStyle   = pterm.NewStyle(pterm.FgRed, pterm.Bold)
-	warningStyle = pterm.NewStyle(pterm.FgYellow, pterm.Bold)
-	gutterStyle  = pterm.NewStyle(pterm.FgCyan)
-	lineNumStyle = pterm.NewStyle(pterm.FgCyan)
-	labelStyle   = pterm.NewStyle(pterm.FgRed)
-	warnLabel    = pterm.NewStyle(pterm.FgYellow)
-	fieldStyle   = pterm.NewStyle(pterm.Bold)
+	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Red).Bold(true)
+	warningStyle = lipgloss.NewStyle().Foreground(lipgloss.Yellow).Bold(true)
+	gutterStyle  = lipgloss.NewStyle().Foreground(lipgloss.Cyan)
+	lineNumStyle = lipgloss.NewStyle().Foreground(lipgloss.Cyan)
+	labelStyle   = lipgloss.NewStyle().Foreground(lipgloss.Red)
+	warnLabel    = lipgloss.NewStyle().Foreground(lipgloss.Yellow)
+	fieldStyle   = lipgloss.NewStyle().Bold(true)
 )
 
 // Render writes a single diagnostic to w with miette-style source snippets.
@@ -41,7 +37,7 @@ func Render(w io.Writer, d Diagnostic) {
 	p := printer{w}
 	severityStr, sevStyle, markStyle := severityInfo(d.Severity)
 
-	p.printf("%s %s\n", sevStyle.Sprint(severityStr+":"), fieldStyle.Sprint(d.Field))
+	p.printf("%s %s\n", sevStyle.Render(severityStr+":"), fieldStyle.Render(d.Field))
 
 	msg := d.Message
 	if d.Value != "" {
@@ -53,7 +49,7 @@ func Render(w io.Writer, d Diagnostic) {
 		renderSnippet(p, d, markStyle)
 	} else if d.Pos.Line > 0 {
 		p.printf("  %s %s\n",
-			gutterStyle.Sprint("-->"),
+			gutterStyle.Render("-->"),
 			fmt.Sprintf("%s:%d:%d", d.File, d.Pos.Line, d.Pos.Column))
 	}
 
@@ -68,21 +64,19 @@ func RenderAll(w io.Writer, diags []Diagnostic) {
 	}
 }
 
-// what-if: a bubbletea migration would replace this with lipgloss rendering
-// to a string, then writing the final composed output in one call.
 type printer struct{ w io.Writer }
 
-func (p printer) printf(format string, a ...any) { fmt.Fprintf(p.w, format, a...) } //nolint:errcheck
-func (p printer) println()                       { fmt.Fprintln(p.w) }              //nolint:errcheck
+func (p printer) printf(format string, a ...any) { lipgloss.Fprintf(p.w, format, a...) } //nolint:errcheck
+func (p printer) println()                       { fmt.Fprintln(p.w) }               //nolint:errcheck
 
-func severityInfo(s config.ValidationSeverity) (string, *pterm.Style, *pterm.Style) {
+func severityInfo(s config.ValidationSeverity) (string, lipgloss.Style, lipgloss.Style) {
 	if s == config.SeverityWarning {
 		return "Warning", warningStyle, warnLabel
 	}
 	return "Error", errorStyle, labelStyle
 }
 
-func renderSnippet(p printer, d Diagnostic, markStyle *pterm.Style) {
+func renderSnippet(p printer, d Diagnostic, markStyle lipgloss.Style) {
 	lines := splitLines(d.Source)
 	targetIdx := d.Pos.Line - 1
 
@@ -96,16 +90,16 @@ func renderSnippet(p printer, d Diagnostic, markStyle *pterm.Style) {
 
 	header := fmt.Sprintf("%s:%d:%d", d.File, d.Pos.Line, d.Pos.Column)
 	p.printf("  %s%s\n",
-		gutterStyle.Sprintf("%*s╭─[", gutterWidth, ""),
-		gutterStyle.Sprintf("%s]", header))
+		gutterStyle.Render(fmt.Sprintf("%*s╭─[", gutterWidth, "")),
+		gutterStyle.Render(fmt.Sprintf("%s]", header)))
 
 	for i := startIdx; i < endIdx; i++ {
 		lineNum := i + 1
 		line := lines[i]
 
 		p.printf("  %s %s %s\n",
-			lineNumStyle.Sprintf("%*d", gutterWidth, lineNum),
-			gutterStyle.Sprint("│"),
+			lineNumStyle.Render(fmt.Sprintf("%*d", gutterWidth, lineNum)),
+			gutterStyle.Render("│"),
 			line)
 
 		if i == targetIdx {
@@ -114,10 +108,10 @@ func renderSnippet(p printer, d Diagnostic, markStyle *pterm.Style) {
 	}
 
 	p.printf("  %s\n",
-		gutterStyle.Sprintf("%*s╰────", gutterWidth, ""))
+		gutterStyle.Render(fmt.Sprintf("%*s╰────", gutterWidth, "")))
 }
 
-func renderUnderline(p printer, d Diagnostic, line string, gutterWidth int, markStyle *pterm.Style) {
+func renderUnderline(p printer, d Diagnostic, line string, gutterWidth int, markStyle lipgloss.Style) {
 	col := max(0, d.Pos.Column-1)
 	underlineLen := valueLength(line, col, d.Value)
 
@@ -132,14 +126,14 @@ func renderUnderline(p printer, d Diagnostic, line string, gutterWidth int, mark
 
 	p.printf("  %s %s %s\n",
 		strings.Repeat(" ", gutterWidth),
-		gutterStyle.Sprint("·"),
-		markStyle.Sprintf("%s%s", padding, underline))
+		gutterStyle.Render("·"),
+		markStyle.Render(fmt.Sprintf("%s%s", padding, underline)))
 
 	labelPad := strings.Repeat(" ", col+mid)
 	p.printf("  %s %s %s\n",
 		strings.Repeat(" ", gutterWidth),
-		gutterStyle.Sprint("·"),
-		markStyle.Sprintf("%s╰── %s", labelPad, d.Field))
+		gutterStyle.Render("·"),
+		markStyle.Render(fmt.Sprintf("%s╰── %s", labelPad, d.Field)))
 }
 
 func valueLength(line string, col int, value string) int {
