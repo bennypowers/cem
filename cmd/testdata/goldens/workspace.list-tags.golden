@@ -10,6 +10,3 @@ Tag Name | Class | Module | Summary
 ------------- | -------- | ----------- | ---------
 `<test-card>` | TestCard | src/card.js | Test card
 
- SUCCESS Listed from manifests for 2 packages:
- @test/button: custom-elements.json
- @test/card: custom-elements.json

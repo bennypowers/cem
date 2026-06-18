@@ -259,7 +259,7 @@ func (l *Logger) Critical(format string, args ...any) {
 	message := fmt.Sprintf(format, args...)
 
 	switch mode {
-	case ModeCLI:
+	case ModeCLI, ModeServe:
 		lipgloss.Fprintf(os.Stderr, "%s %s\n", errorPrefix, message) //nolint:errcheck
 	case ModeLSP:
 		if lspContext != nil {
@@ -288,7 +288,7 @@ func (l *Logger) Notify(format string, args ...any) {
 	message := fmt.Sprintf(format, args...)
 
 	switch mode {
-	case ModeCLI:
+	case ModeCLI, ModeServe:
 		lipgloss.Fprintf(os.Stderr, "%s %s\n", infoPrefix, message) //nolint:errcheck
 	case ModeLSP:
 		if lspContext != nil {
@@ -314,7 +314,7 @@ func (l *Logger) NotifyWithActions(message string, actions []MessageAction) {
 	l.mu.RUnlock()
 
 	switch mode {
-	case ModeCLI:
+	case ModeCLI, ModeServe:
 		lipgloss.Fprintf(os.Stderr, "%s %s\n", infoPrefix, message) //nolint:errcheck
 		for _, action := range actions {
 			if action.URL != "" {

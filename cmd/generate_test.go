@@ -91,7 +91,7 @@ func TestGenerateE2E(t *testing.T) {
 				workDir = tc.workDir
 			}
 
-			stdout, _ := runCemCommand(t, workDir, command...)
+			_, stderr := runCemCommand(t, workDir, command...)
 
 			if _, err := os.Stat(outputFilePath); os.IsNotExist(err) {
 				t.Fatalf("output file was not created: %s", outputFilePath)
@@ -132,8 +132,8 @@ func TestGenerateE2E(t *testing.T) {
 				expectedLog = fmt.Sprintf(expectedLog, tc.outputFile)
 			}
 
-			if !strings.Contains(pterm.RemoveColorFromString(stdout), expectedLog) {
-				t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, stdout)
+			if !strings.Contains(pterm.RemoveColorFromString(stderr), expectedLog) {
+				t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, stderr)
 			}
 		})
 	}

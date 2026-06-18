@@ -14,6 +14,3 @@ Module path | Custom Elements
 ------------- | ---------------
 `src/card.js` | `<test-card>`
 
- SUCCESS Listed from manifests for 2 packages:
- @test/button: custom-elements.json
- @test/card: custom-elements.json

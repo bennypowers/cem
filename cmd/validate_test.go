@@ -34,27 +34,28 @@ func TestValidateE2E(t *testing.T) {
 		expectedStdout    string
 		notExpectedStdout string
 		expectedStderr    string
+		notExpectedStderr string
 		expectSuccess     bool
 	}{
 		{
 			name:           "valid_complex_manifest",
 			fixture:        "valid-manifest",
 			args:           []string{"validate"},
-			expectedStdout: "Manifest is valid",
+			expectedStderr: "Manifest is valid",
 			expectSuccess:  true,
 		},
 		{
 			name:           "valid_manifest_with_warnings",
 			fixture:        "warning-lifecycle-methods",
 			args:           []string{"validate"},
-			expectedStdout: "Manifest valid with",
+			expectedStderr: "Manifest valid with",
 			expectSuccess:  true,
 		},
 		{
 			name:           "invalid_manifest_multiple_errors",
 			fixture:        "multiple-modules-errors",
 			args:           []string{"validate"},
-			expectedStdout: "Validation failed with",
+			expectedStderr: "Validation failed with",
 			expectSuccess:  false,
 		},
 		{
@@ -75,28 +76,28 @@ func TestValidateE2E(t *testing.T) {
 			name:           "manifest_with_disabled_warnings",
 			fixture:        "warning-lifecycle-methods",
 			args:           []string{"validate", "--disable=lifecycle"},
-			expectedStdout: "Manifest valid with", // Still has other warnings
+			expectedStderr: "Manifest valid with",
 			expectSuccess:  true,
 		},
 		{
 			name:              "quiet_suppresses_success",
 			fixture:           "valid-manifest",
 			args:              []string{"validate", "-q"},
-			notExpectedStdout: "Manifest is valid",
+			notExpectedStderr: "Manifest is valid",
 			expectSuccess:     true,
 		},
 		{
 			name:           "default_shows_success",
 			fixture:        "valid-manifest",
 			args:           []string{"validate"},
-			expectedStdout: "Manifest is valid",
+			expectedStderr: "Manifest is valid",
 			expectSuccess:  true,
 		},
 		{
 			name:           "debug_shows_schema_version",
 			fixture:        "valid-manifest",
 			args:           []string{"validate", "-vv"},
-			expectedStdout: "Schema version: 2.1.1",
+			expectedStderr: "Schema version: 2.1.1",
 			expectSuccess:  true,
 		},
 	}
@@ -123,6 +124,10 @@ func TestValidateE2E(t *testing.T) {
 
 			if tc.expectedStderr != "" && !strings.Contains(stderr, tc.expectedStderr) {
 				t.Errorf("stderr did not contain expected string.\nExpected: %q\nGot: %q", tc.expectedStderr, stderr)
+			}
+
+			if tc.notExpectedStderr != "" && strings.Contains(stderr, tc.notExpectedStderr) {
+				t.Errorf("stderr should not contain %q but did.\nGot: %q", tc.notExpectedStderr, stderr)
 			}
 		})
 	}
