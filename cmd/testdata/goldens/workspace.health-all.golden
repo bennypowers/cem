@@ -62,6 +62,3 @@ Overall: ███████████████████████�
 • test-card: add descriptions to demos (Demos, +5 pts)
 • test-card: mention accessibility considerations (ARIA, screen reader, WCAG) (Element description, +4 pts)
 
- SUCCESS Checked health for 2 packages:
- @test/button: custom-elements.json
- @test/card: custom-elements.json

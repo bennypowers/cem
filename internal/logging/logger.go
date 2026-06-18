@@ -18,15 +18,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 // Package logging provides centralized diagnostic output for cem.
 //
 // All diagnostic messages (debug, info, warning, error, success) should go
-// through this package rather than calling pterm or fmt directly. The logger
-// adapts output to the active mode: CLI mode uses pterm for styled terminal
+// through this package rather than calling fmt directly. The logger adapts
+// output to the active mode: CLI mode uses lipgloss for styled terminal
 // output; LSP mode routes messages over the LSP protocol.
 //
 // Quiet (-q) suppresses info and debug. Verbose (-v) enables debug. These
 // flags are respected automatically by all log functions.
 //
 // This package does NOT own terminal UI primitives (spinners, live areas,
-// colored display formatting). Those stay with pterm at their callsites.
+// colored display formatting). Those stay at their callsites.
 package logging
 
 import (
@@ -34,42 +34,18 @@ import (
 	"os"
 	"sync"
 
-	"github.com/pterm/pterm"
+	lipgloss "charm.land/lipgloss/v2"
 	"github.com/bennypowers/glsp"
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
-// init configures pterm styles to use foreground colors only (no backgrounds)
-// This creates cleaner, more readable output similar to pterm logger examples
-func init() {
-	// Modify existing printers to use foreground colors only, no backgrounds
-	// Preserve original functionality while changing styling
-
-	pterm.Info = *pterm.Info.WithPrefix(pterm.Prefix{
-		Text:  "INFO",
-		Style: pterm.NewStyle(pterm.FgBlue),
-	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
-
-	pterm.Success = *pterm.Success.WithPrefix(pterm.Prefix{
-		Text:  "SUCCESS",
-		Style: pterm.NewStyle(pterm.FgGreen),
-	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
-
-	pterm.Warning = *pterm.Warning.WithPrefix(pterm.Prefix{
-		Text:  "WARNING",
-		Style: pterm.NewStyle(pterm.FgYellow),
-	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
-
-	pterm.Error = *pterm.Error.WithPrefix(pterm.Prefix{
-		Text:  "ERROR",
-		Style: pterm.NewStyle(pterm.FgRed),
-	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
-
-	pterm.Debug = *pterm.Debug.WithPrefix(pterm.Prefix{
-		Text:  "DEBUG",
-		Style: pterm.NewStyle(pterm.FgCyan),
-	}).WithMessageStyle(&pterm.ThemeDefault.DefaultText)
-}
+var (
+	infoPrefix    = lipgloss.NewStyle().Foreground(lipgloss.Blue).Render(" INFO ")
+	successPrefix = lipgloss.NewStyle().Foreground(lipgloss.Green).Render(" SUCCESS ")
+	warningPrefix = lipgloss.NewStyle().Foreground(lipgloss.Yellow).Render(" WARNING ")
+	errorPrefix   = lipgloss.NewStyle().Foreground(lipgloss.Red).Render(" ERROR ")
+	debugPrefix   = lipgloss.NewStyle().Foreground(lipgloss.Cyan).Render(" DEBUG ")
+)
 
 // Verbosity controls how much diagnostic output is produced.
 type Verbosity int
@@ -140,11 +116,11 @@ type Logger struct {
 type LoggerMode int
 
 const (
-	// ModeCLI uses pterm for colorized CLI output
+	// ModeCLI uses lipgloss-styled output to stderr
 	ModeCLI LoggerMode = iota
 	// ModeLSP uses LSP protocol messages (window/showMessage, window/logMessage)
 	ModeLSP
-	// ModeServe uses pterm for CLI output like ModeCLI. Verbosity gating is
+	// ModeServe uses lipgloss-styled output like ModeCLI. Verbosity gating is
 	// controlled by the shared Verbosity level, same as all other modes.
 	ModeServe
 )
@@ -175,16 +151,11 @@ func (l *Logger) SetLSPContext(context *glsp.Context) {
 	l.mode = ModeLSP
 }
 
-// SetVerbosity sets the verbosity level and syncs pterm debug state.
+// SetVerbosity sets the verbosity level.
 func (l *Logger) SetVerbosity(v Verbosity) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.verbosity = v
-	if v >= VerbosityDebug {
-		pterm.EnableDebugMessages()
-	} else {
-		pterm.DisableDebugMessages()
-	}
 }
 
 // Verbosity returns the current verbosity level.
@@ -288,9 +259,8 @@ func (l *Logger) Critical(format string, args ...any) {
 	message := fmt.Sprintf(format, args...)
 
 	switch mode {
-	case ModeCLI:
-		// Use pterm Error for CLI (same as Error)
-		pterm.Error.Println(message)
+	case ModeCLI, ModeServe:
+		lipgloss.Fprintf(os.Stderr, "%s %s\n", errorPrefix, message) //nolint:errcheck
 	case ModeLSP:
 		if lspContext != nil {
 			// Always use window/showMessage for critical errors (popup)
@@ -318,12 +288,10 @@ func (l *Logger) Notify(format string, args ...any) {
 	message := fmt.Sprintf(format, args...)
 
 	switch mode {
-	case ModeCLI:
-		// Use pterm Info for CLI
-		pterm.Info.Println(message)
+	case ModeCLI, ModeServe:
+		lipgloss.Fprintf(os.Stderr, "%s %s\n", infoPrefix, message) //nolint:errcheck
 	case ModeLSP:
 		if lspContext != nil {
-			// Use window/showMessage for Info-level popup notifications
 			go func() {
 				lspContext.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
 					Type:    protocol.MessageTypeInfo,
@@ -346,12 +314,11 @@ func (l *Logger) NotifyWithActions(message string, actions []MessageAction) {
 	l.mu.RUnlock()
 
 	switch mode {
-	case ModeCLI:
-		// For CLI, just show the message and URLs
-		pterm.Info.Println(message)
+	case ModeCLI, ModeServe:
+		lipgloss.Fprintf(os.Stderr, "%s %s\n", infoPrefix, message) //nolint:errcheck
 		for _, action := range actions {
 			if action.URL != "" {
-				pterm.Info.Printf("  %s: %s\n", action.Title, action.URL)
+				lipgloss.Fprintf(os.Stderr, "%s   %s: %s\n", infoPrefix, action.Title, action.URL) //nolint:errcheck
 			}
 		}
 	case ModeLSP:
@@ -424,7 +391,7 @@ func (l *Logger) Success(format string, args ...any) {
 
 	switch mode {
 	case ModeCLI, ModeServe:
-		pterm.Success.Printf(format+"\n", args...)
+		lipgloss.Fprintf(os.Stderr, "%s %s\n", successPrefix, fmt.Sprintf(format, args...)) //nolint:errcheck
 	case ModeLSP:
 		message := fmt.Sprintf(format, args...)
 		l.logLSP(LogLevelInfo, message, lspContext)
@@ -453,18 +420,19 @@ func (l *Logger) log(level LogLevel, format string, args ...any) {
 	}
 }
 
-// logCLI handles CLI-mode logging using pterm
 func (l *Logger) logCLI(level LogLevel, message string) {
+	var prefix string
 	switch level {
 	case LogLevelTrace, LogLevelDebug:
-		pterm.Debug.Println(message)
+		prefix = debugPrefix
 	case LogLevelInfo:
-		pterm.Info.Println(message)
+		prefix = infoPrefix
 	case LogLevelWarning:
-		pterm.Warning.Println(message)
+		prefix = warningPrefix
 	case LogLevelError:
-		pterm.Error.Println(message)
+		prefix = errorPrefix
 	}
+	lipgloss.Fprintf(os.Stderr, "%s %s\n", prefix, message) //nolint:errcheck
 }
 
 // logLSP handles LSP-mode logging using LSP protocol messages
