@@ -19,6 +19,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 	"slices"
 
 	lipgloss "charm.land/lipgloss/v2"
@@ -119,9 +120,7 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 						return err
 					}
 					if format == "markdown" {
-						if _, err := fmt.Fprintf(cmd.OutOrStdout(), "\n## %s\n\n%s\n", pkg.Name, s); err != nil {
-								return err
-							}
+						cmd.Printf("\n## %s\n\n%s\n", pkg.Name, s)
 					} else {
 						if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n%s\n", pkg.Name, s); err != nil {
 							return err
@@ -166,9 +165,7 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 					return err
 				}
 				if format == "markdown" {
-					if _, err := fmt.Fprintln(cmd.OutOrStdout(), s); err != nil {
-						return err
-					}
+					cmd.Println(s)
 				} else {
 					if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 						return err
@@ -346,9 +343,7 @@ Example:
 					return err
 				}
 				if format == "markdown" {
-					if _, err := fmt.Fprintf(cmd.OutOrStdout(), "\n## %s\n\n%s\n", pkg.Name, s); err != nil {
-								return err
-							}
+					cmd.Printf("\n## %s\n\n%s\n", pkg.Name, s)
 				} else {
 					if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n%s\n", pkg.Name, s); err != nil {
 						return err
@@ -380,9 +375,7 @@ Example:
 			}
 			switch format {
 			case "markdown":
-				if _, err := fmt.Fprintln(cmd.OutOrStdout(), s); err != nil {
-						return err
-					}
+				cmd.Println(s)
 			default:
 				if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 					return err
@@ -424,9 +417,7 @@ Example:
 					return err
 				}
 				if format == "markdown" {
-					if _, err := fmt.Fprintf(cmd.OutOrStdout(), "\n## %s\n\n%s\n", pkg.Name, s); err != nil {
-								return err
-							}
+					cmd.Printf("\n## %s\n\n%s\n", pkg.Name, s)
 				} else {
 					if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n%s\n", pkg.Name, s); err != nil {
 						return err
@@ -458,9 +449,7 @@ Example:
 			}
 			switch format {
 			case "markdown":
-				if _, err := fmt.Fprintln(cmd.OutOrStdout(), s); err != nil {
-						return err
-					}
+				cmd.Println(s)
 			default:
 				if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 					return err
@@ -522,17 +511,13 @@ Examples:
 						return err
 					}
 				case "markdown":
-					if _, err := fmt.Fprintf(cmd.OutOrStdout(), "\n# %s\n\n", pkg.Name); err != nil {
-						return err
-					}
+					cmd.Printf("\n# %s\n\n", pkg.Name)
 					opts := list.RenderOptions{}
 					s, err := list.RenderMarkdown(M.NewRenderablePackage(manifest), opts, M.True)
 					if err != nil {
 						return err
 					}
-					if _, err := fmt.Fprint(cmd.OutOrStdout(), s); err != nil {
-					return err
-				}
+					cmd.Print(s)
 				default:
 					if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n", pkg.Name); err != nil {
 						return err
@@ -590,9 +575,7 @@ Examples:
 				if err != nil {
 					return err
 				}
-				if _, err := fmt.Fprint(cmd.OutOrStdout(), s); err != nil {
-					return err
-				}
+				cmd.Print(s)
 			default:
 				opts := list.RenderOptions{}
 				s, err := list.Render(M.NewRenderablePackage(manifest), opts, M.True)
@@ -609,6 +592,13 @@ Examples:
 }
 
 func init() {
+	listCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		if err := rootCmd.PersistentPreRunE(cmd, args); err != nil {
+			return err
+		}
+		cmd.SetOut(os.Stdout)
+		return nil
+	}
 	listCmd.AddCommand(listTagsCmd)
 	listCmd.AddCommand(listModulesCmd)
 	listCmd.PersistentFlags().StringP("format", "f", "table", "Output format")
