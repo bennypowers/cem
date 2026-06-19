@@ -17,12 +17,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package list
 
 import (
+	"context"
 	"reflect"
 	"strings"
 
+	lipgloss "charm.land/lipgloss/v2"
 	M "bennypowers.dev/cem/manifest"
-	"github.com/pterm/pterm"
+	treeview "github.com/Digital-Shane/treeview/v2"
 )
+
+var sectionStyle = lipgloss.NewStyle().Bold(true)
 
 func RenderTree(title string, renderable M.Renderable, pred M.PredicateFunc) (string, error) {
 	if renderable == nil || isTypedNil(renderable) {
@@ -30,16 +34,22 @@ func RenderTree(title string, renderable M.Renderable, pred M.PredicateFunc) (st
 	}
 	root := renderable.ToTreeNode(pred)
 
-	if root.Children == nil {
+	if !root.HasChildren() {
 		return "", nil
 	}
 
-	var builder strings.Builder
-	builder.WriteString(pterm.DefaultSection.Sprintf("%s", title))
-	s, err := pterm.DefaultTree.WithRoot(root).Srender()
+	tree := treeview.NewTree([]*treeview.Node[M.DisplayNode]{root},
+		treeview.WithExpandFunc[M.DisplayNode](func(_ *treeview.Node[M.DisplayNode]) bool { return true }),
+	)
+
+	s, err := tree.Render(context.Background())
 	if err != nil {
 		return "", err
 	}
+
+	var builder strings.Builder
+	builder.WriteString(sectionStyle.Render(title))
+	builder.WriteString("\n")
 	builder.WriteString(s)
 	return builder.String(), nil
 }

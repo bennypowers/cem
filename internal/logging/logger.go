@@ -260,7 +260,7 @@ func (l *Logger) Critical(format string, args ...any) {
 
 	switch mode {
 	case ModeCLI, ModeServe:
-		lipgloss.Fprintf(os.Stderr, "%s %s\n", errorPrefix, message) //nolint:errcheck
+		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", errorPrefix, message)
 	case ModeLSP:
 		if lspContext != nil {
 			// Always use window/showMessage for critical errors (popup)
@@ -289,7 +289,7 @@ func (l *Logger) Notify(format string, args ...any) {
 
 	switch mode {
 	case ModeCLI, ModeServe:
-		lipgloss.Fprintf(os.Stderr, "%s %s\n", infoPrefix, message) //nolint:errcheck
+		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", infoPrefix, message)
 	case ModeLSP:
 		if lspContext != nil {
 			go func() {
@@ -315,10 +315,10 @@ func (l *Logger) NotifyWithActions(message string, actions []MessageAction) {
 
 	switch mode {
 	case ModeCLI, ModeServe:
-		lipgloss.Fprintf(os.Stderr, "%s %s\n", infoPrefix, message) //nolint:errcheck
+		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", infoPrefix, message)
 		for _, action := range actions {
 			if action.URL != "" {
-				lipgloss.Fprintf(os.Stderr, "%s   %s: %s\n", infoPrefix, action.Title, action.URL) //nolint:errcheck
+				_, _ = lipgloss.Fprintf(os.Stderr, "%s   %s: %s\n", infoPrefix, action.Title, action.URL)
 			}
 		}
 	case ModeLSP:
@@ -391,7 +391,7 @@ func (l *Logger) Success(format string, args ...any) {
 
 	switch mode {
 	case ModeCLI, ModeServe:
-		lipgloss.Fprintf(os.Stderr, "%s %s\n", successPrefix, fmt.Sprintf(format, args...)) //nolint:errcheck
+		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", successPrefix, fmt.Sprintf(format, args...))
 	case ModeLSP:
 		message := fmt.Sprintf(format, args...)
 		l.logLSP(LogLevelInfo, message, lspContext)
@@ -432,7 +432,7 @@ func (l *Logger) logCLI(level LogLevel, message string) {
 	case LogLevelError:
 		prefix = errorPrefix
 	}
-	lipgloss.Fprintf(os.Stderr, "%s %s\n", prefix, message) //nolint:errcheck
+	_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", prefix, message)
 }
 
 // logLSP handles LSP-mode logging using LSP protocol messages

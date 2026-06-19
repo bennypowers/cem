@@ -16,10 +16,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package manifest
 
-import (
-	"github.com/pterm/pterm"
-)
-
 var _ Renderable = (*RenderableDemo)(nil)
 
 // Demo for custom elements.
@@ -91,7 +87,7 @@ func (x *RenderableDemo) Children() []Renderable {
 	return nil
 }
 
-func (x *RenderableDemo) GroupedChildren(p PredicateFunc) []pterm.TreeNode {
+func (x *RenderableDemo) GroupedChildren(p PredicateFunc) []TreeNode {
 	return nil
 }
 
@@ -120,8 +116,8 @@ func (x *RenderableDemo) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableDemo) ToTreeNode(p PredicateFunc) pterm.TreeNode {
-	return tn(x.Label(), x.GroupedChildren(p)...)
+func (x *RenderableDemo) ToTreeNode(p PredicateFunc) TreeNode {
+	return tn("demo", x.Label(), x.GroupedChildren(p)...)
 }
 
 func (x *RenderableDemo) Sections() []Section {

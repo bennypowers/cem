@@ -19,8 +19,6 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*Slot)(nil)
@@ -154,6 +152,6 @@ func (x *RenderableSlot) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableSlot) ToTreeNode(p PredicateFunc) pterm.TreeNode {
-	return tn(x.Label())
+func (x *RenderableSlot) ToTreeNode(p PredicateFunc) TreeNode {
+	return tn("slot", x.Label())
 }

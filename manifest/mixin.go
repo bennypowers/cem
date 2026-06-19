@@ -19,8 +19,6 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*MixinDeclaration)(nil)
@@ -197,7 +195,7 @@ func (x *RenderableMixinDeclaration) Name() string {
 }
 
 func (x *RenderableMixinDeclaration) Label() string {
-	return pterm.LightBlue("mixin") + " " + highlightIfDeprecated(x)
+	return kindStyle.Render("mixin") + " " + highlightIfDeprecated(x)
 }
 
 func (x *RenderableMixinDeclaration) IsDeprecated() bool {
@@ -224,9 +222,9 @@ func (x *RenderableMixinDeclaration) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableMixinDeclaration) ToTreeNode(p PredicateFunc) pterm.TreeNode {
+func (x *RenderableMixinDeclaration) ToTreeNode(p PredicateFunc) TreeNode {
 	// TODO: grouped params, return, class stuff as children
-	return tn(x.Label(), toTreeChildren(x.Children(), p)...)
+	return tn("mixin", x.Label(), toTreeChildren(x.Children(), p)...)
 }
 
 func (x *CustomElementMixinDeclaration) IsDeprecated() bool {
@@ -320,7 +318,7 @@ func (x *RenderableCustomElementMixinDeclaration) Name() string {
 }
 
 func (x *RenderableCustomElementMixinDeclaration) Label() string {
-	return pterm.LightBlue("custom element mixin") + " " + highlightIfDeprecated(x)
+	return kindStyle.Render("custom element mixin") + " " + highlightIfDeprecated(x)
 }
 
 func (x *RenderableCustomElementMixinDeclaration) ColumnHeadings() []string {
@@ -335,7 +333,7 @@ func (x *RenderableCustomElementMixinDeclaration) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableCustomElementMixinDeclaration) ToTreeNode(p PredicateFunc) pterm.TreeNode {
+func (x *RenderableCustomElementMixinDeclaration) ToTreeNode(p PredicateFunc) TreeNode {
 	// TODO: group children in constructor
-	return tn(x.Label(), toTreeChildren(x.Children(), p)...)
+	return tn("custom-element-mixin", x.Label(), toTreeChildren(x.Children(), p)...)
 }

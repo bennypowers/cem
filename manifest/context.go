@@ -18,13 +18,21 @@ package manifest
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
+	"sync/atomic"
 
-	"github.com/pterm/pterm"
+	treeview "github.com/Digital-Shane/treeview/v2"
 )
 
 type PredicateFunc func(Renderable) bool
+
+type DisplayNode struct {
+	Label string
+}
+
+type TreeNode = *treeview.Node[DisplayNode]
 
 type Renderable interface {
 	Deprecatable
@@ -33,12 +41,12 @@ type Renderable interface {
 	Deprecation() Deprecated
 	ColumnHeadings() []string
 	ToTableRow() []string
-	ToTreeNode(pred PredicateFunc) pterm.TreeNode
+	ToTreeNode(pred PredicateFunc) TreeNode
 	Children() []Renderable
 }
 
 type GroupedRenderable interface {
-	GroupedChildren(p PredicateFunc) []pterm.TreeNode
+	GroupedChildren(p PredicateFunc) []TreeNode
 }
 
 type Section struct {
@@ -61,9 +69,9 @@ func formatDeprecated(deprecated any) (label string) {
 	}
 	switch v := deprecated.(type) {
 	case DeprecatedReason:
-		return "(" + pterm.Red("DEPRECATED") + ": " + pterm.LightRed(v) + ")"
+		return "(" + deprecatedStyle.Render("DEPRECATED") + ": " + deprecatedReasonStyle.Render(string(v)) + ")"
 	default:
-		return "(" + pterm.Red("DEPRECATED") + ")"
+		return "(" + deprecatedStyle.Render("DEPRECATED") + ")"
 	}
 }
 
@@ -353,26 +361,33 @@ func (x *Package) TagRenderableDemos(tagName string) (demos []*RenderableDemo, e
 	return demos, nil
 }
 
-func toTreeChildren(xs []Renderable, p PredicateFunc) (nodes []pterm.TreeNode) {
+var nodeCounter atomic.Int64
+
+func nextNodeID(kind string) string {
+	return fmt.Sprintf("%s-%d", kind, nodeCounter.Add(1))
+}
+
+func toTreeChildren(xs []Renderable, p PredicateFunc) (nodes []TreeNode) {
 	for _, n := range xs {
-		var children []pterm.TreeNode
-		// If this Renderable knows how to group its children, use that
+		var children []TreeNode
 		if gr, ok := n.(GroupedRenderable); ok {
 			children = append(children, gr.GroupedChildren(p)...)
 		} else {
-			// Otherwise, use the default recursion+filtering
 			children = toTreeChildren(n.Children(), p)
 		}
 
 		if p(n) || len(children) > 0 {
 			node := n.ToTreeNode(p)
-			node.Children = children
+			node.SetChildren(children)
 			nodes = append(nodes, node)
 		}
 	}
 	return nodes
 }
 
-func tn(text string, children ...pterm.TreeNode) pterm.TreeNode {
-	return pterm.TreeNode{Text: text, Children: children}
+func tn(kind, text string, children ...TreeNode) TreeNode {
+	node := treeview.NewNode(nextNodeID(kind), text, DisplayNode{Label: text})
+	node.SetChildren(children)
+	node.Expand()
+	return node
 }

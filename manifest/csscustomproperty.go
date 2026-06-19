@@ -19,8 +19,6 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*CssCustomProperty)(nil)
@@ -107,7 +105,7 @@ func (x *RenderableCssCustomProperty) Name() string {
 }
 
 func (x *RenderableCssCustomProperty) Label() string {
-	return highlightIfDeprecated(x) + " " + pterm.Gray(x.CssCustomProperty.Summary)
+	return highlightIfDeprecated(x) + " " + summaryStyle.Render(x.CssCustomProperty.Summary)
 }
 
 func (x *RenderableCssCustomProperty) IsDeprecated() bool {
@@ -141,8 +139,8 @@ func (x *RenderableCssCustomProperty) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableCssCustomProperty) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	return pterm.TreeNode{Text: x.Label()}
+func (x *RenderableCssCustomProperty) ToTreeNode(pred PredicateFunc) TreeNode {
+	return tn("css-property", x.Label())
 }
 
 func NewRenderableCssCustomProperty(

@@ -19,8 +19,6 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*VariableDeclaration)(nil)
@@ -162,6 +160,6 @@ func (x *RenderableVariableDeclaration) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableVariableDeclaration) ToTreeNode(p PredicateFunc) pterm.TreeNode {
-	return tn(x.Label())
+func (x *RenderableVariableDeclaration) ToTreeNode(p PredicateFunc) TreeNode {
+	return tn("variable", x.Label())
 }

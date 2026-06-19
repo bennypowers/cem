@@ -26,7 +26,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pterm/pterm"
+	"github.com/charmbracelet/x/ansi"
 )
 
 func TestListE2E(t *testing.T) {
@@ -114,7 +114,7 @@ func TestListE2E(t *testing.T) {
 					t.Fatalf("failed to read golden file: %v", err)
 				}
 
-				cleanedStdout := pterm.RemoveColorFromString(stdout)
+				cleanedStdout := ansi.Strip(stdout)
 				cleanedExpected := strings.TrimSpace(string(expected))
 
 				if !strings.Contains(cleanedStdout, cleanedExpected) {

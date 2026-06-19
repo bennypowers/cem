@@ -21,8 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-
-	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*CustomElementDeclaration)(nil)
@@ -474,32 +472,32 @@ func (x *RenderableCustomElementDeclaration) Children() []Renderable {
 	return x.ChildNodes
 }
 
-func (x *RenderableCustomElementDeclaration) GroupedChildren(p PredicateFunc) []pterm.TreeNode {
-	var cs []pterm.TreeNode
+func (x *RenderableCustomElementDeclaration) GroupedChildren(p PredicateFunc) []TreeNode {
+	var cs []TreeNode
 
 	if attrs := toTreeChildren(x.attributes, p); len(attrs) > 0 {
-		cs = append(cs, tn(pterm.Blue("Attributes"), attrs...))
+		cs = append(cs, tn("section", categoryStyle.Render("Attributes"), attrs...))
 	}
 	if slots := toTreeChildren(x.slots, p); len(slots) > 0 {
-		cs = append(cs, tn(pterm.Blue("Slots"), slots...))
+		cs = append(cs, tn("section", categoryStyle.Render("Slots"), slots...))
 	}
 	if events := toTreeChildren(x.events, p); len(events) > 0 {
-		cs = append(cs, tn(pterm.Blue("Events"), events...))
+		cs = append(cs, tn("section", categoryStyle.Render("Events"), events...))
 	}
 	if fields := toTreeChildren(x.fields, p); len(fields) > 0 {
-		cs = append(cs, tn(pterm.Blue("Fields"), fields...))
+		cs = append(cs, tn("section", categoryStyle.Render("Fields"), fields...))
 	}
 	if methods := toTreeChildren(x.methods, p); len(methods) > 0 {
-		cs = append(cs, tn(pterm.Blue("Methods"), methods...))
+		cs = append(cs, tn("section", categoryStyle.Render("Methods"), methods...))
 	}
 	if cssprops := toTreeChildren(x.cssprops, p); len(cssprops) > 0 {
-		cs = append(cs, tn(pterm.Blue("CSS Properties"), cssprops...))
+		cs = append(cs, tn("section", categoryStyle.Render("CSS Properties"), cssprops...))
 	}
 	if cssparts := toTreeChildren(x.cssparts, p); len(cssparts) > 0 {
-		cs = append(cs, tn(pterm.Blue("Parts"), cssparts...))
+		cs = append(cs, tn("section", categoryStyle.Render("Parts"), cssparts...))
 	}
 	if cssstates := toTreeChildren(x.cssstates, p); len(cssstates) > 0 {
-		cs = append(cs, tn(pterm.Blue("States"), cssstates...))
+		cs = append(cs, tn("section", categoryStyle.Render("States"), cssstates...))
 	}
 
 	return cs
@@ -529,8 +527,8 @@ func (x *RenderableCustomElementDeclaration) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableCustomElementDeclaration) ToTreeNode(p PredicateFunc) pterm.TreeNode {
-	return tn(x.Label(), x.GroupedChildren(p)...)
+func (x *RenderableCustomElementDeclaration) ToTreeNode(p PredicateFunc) TreeNode {
+	return tn("element", x.Label(), x.GroupedChildren(p)...)
 }
 
 func (x *RenderableCustomElementDeclaration) Sections() []Section {

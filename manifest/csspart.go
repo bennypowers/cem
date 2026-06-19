@@ -19,8 +19,6 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*CssPart)(nil)
@@ -130,7 +128,7 @@ func (x *RenderableCssPart) Name() string {
 }
 
 func (x *RenderableCssPart) Label() string {
-	return highlightIfDeprecated(x) + " " + pterm.Gray(x.CssPart.Summary)
+	return highlightIfDeprecated(x) + " " + summaryStyle.Render(x.CssPart.Summary)
 }
 
 func (x *RenderableCssPart) IsDeprecated() bool {
@@ -166,6 +164,6 @@ func (x *RenderableCssPart) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableCssPart) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	return pterm.TreeNode{Text: x.Label()}
+func (x *RenderableCssPart) ToTreeNode(pred PredicateFunc) TreeNode {
+	return tn("css-part", x.Label())
 }

@@ -19,8 +19,6 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*ClassDeclaration)(nil)
@@ -206,7 +204,7 @@ func (x *RenderableClassDeclaration) Name() string {
 }
 
 func (x *RenderableClassDeclaration) Label() string {
-	return pterm.LightBlue("class") +
+	return kindStyle.Render("class") +
 		" " +
 		highlightIfDeprecated(x)
 }
@@ -223,15 +221,15 @@ func (x *RenderableClassDeclaration) Children() []Renderable {
 	return x.ChildNodes
 }
 
-func (x *RenderableClassDeclaration) GroupedChildren(p PredicateFunc) []pterm.TreeNode {
-	var nodes []pterm.TreeNode
+func (x *RenderableClassDeclaration) GroupedChildren(p PredicateFunc) []TreeNode {
+	var nodes []TreeNode
 	fs := toTreeChildren(x.fields, p)
 	ms := toTreeChildren(x.methods, p)
 	if len(fs) > 0 {
-		nodes = append(nodes, tn(pterm.Blue("Fields"), fs...))
+		nodes = append(nodes, tn("section", categoryStyle.Render("Fields"), fs...))
 	}
 	if len(ms) > 0 {
-		nodes = append(nodes, tn(pterm.Blue("Methods"), ms...))
+		nodes = append(nodes, tn("section", categoryStyle.Render("Methods"), ms...))
 	}
 	return nodes
 }
@@ -252,8 +250,8 @@ func (x *RenderableClassDeclaration) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableClassDeclaration) ToTreeNode(p PredicateFunc) pterm.TreeNode {
-	return tn(x.Label(), x.GroupedChildren(p)...)
+func (x *RenderableClassDeclaration) ToTreeNode(p PredicateFunc) TreeNode {
+	return tn("class", x.Label(), x.GroupedChildren(p)...)
 }
 
 func (x *RenderableClassDeclaration) Sections() []Section {
