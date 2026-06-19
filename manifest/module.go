@@ -20,8 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"github.com/pterm/pterm"
 )
 
 // Module may expand in future; currently only JavaScriptModule.
@@ -236,7 +234,7 @@ func (x *RenderableModule) Name() string {
 }
 
 func (x *RenderableModule) Label() string {
-	return pterm.LightBlue("module") + " " + highlightIfDeprecated(x)
+	return kindStyle.Render("module") + " " + highlightIfDeprecated(x)
 }
 
 func (x *RenderableModule) IsDeprecated() bool {
@@ -266,6 +264,6 @@ func (x *RenderableModule) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableModule) ToTreeNode(p PredicateFunc) pterm.TreeNode {
-	return tn(x.Label(), toTreeChildren(x.Children(), p)...)
+func (x *RenderableModule) ToTreeNode(p PredicateFunc) TreeNode {
+	return tn("module", x.Label(), toTreeChildren(x.Children(), p)...)
 }

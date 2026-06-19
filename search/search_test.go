@@ -21,7 +21,7 @@ import (
 
 	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/search"
-	"github.com/pterm/pterm"
+	treeview "github.com/Digital-Shane/treeview/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,8 +43,8 @@ func (m *mockRenderable) IsDeprecated() bool               { return false }
 func (m *mockRenderable) Deprecation() manifest.Deprecated { return nil }
 func (m *mockRenderable) ColumnHeadings() []string         { return []string{"Name"} }
 func (m *mockRenderable) ToTableRow() []string             { return []string{m.name} }
-func (m *mockRenderable) ToTreeNode(pred manifest.PredicateFunc) pterm.TreeNode {
-	return pterm.TreeNode{Text: m.name}
+func (m *mockRenderable) ToTreeNode(pred manifest.PredicateFunc) manifest.TreeNode {
+	return treeview.NewNodeSimple(m.name, manifest.DisplayNode{Label: m.name})
 }
 func (m *mockRenderable) Children() []manifest.Renderable { return nil }
 

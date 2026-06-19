@@ -19,8 +19,6 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*FunctionDeclaration)(nil)
@@ -212,7 +210,7 @@ func (x *RenderableFunctionDeclaration) Name() string {
 }
 
 func (x *RenderableFunctionDeclaration) Label() string {
-	return pterm.LightBlue("function") + " " + highlightIfDeprecated(x)
+	return kindStyle.Render("function") + " " + highlightIfDeprecated(x)
 }
 
 func (x *RenderableFunctionDeclaration) IsDeprecated() bool {
@@ -243,6 +241,6 @@ func (x *RenderableFunctionDeclaration) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableFunctionDeclaration) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	return tn(x.Label(), toTreeChildren(x.Children(), pred)...)
+func (x *RenderableFunctionDeclaration) ToTreeNode(pred PredicateFunc) TreeNode {
+	return tn("function", x.Label(), toTreeChildren(x.Children(), pred)...)
 }

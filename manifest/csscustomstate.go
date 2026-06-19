@@ -19,8 +19,6 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*CssCustomState)(nil)
@@ -112,7 +110,7 @@ func (x *RenderableCssCustomState) Name() string {
 }
 
 func (x *RenderableCssCustomState) Label() string {
-	return highlightIfDeprecated(x) + " " + pterm.Gray(x.CssCustomState.Summary)
+	return highlightIfDeprecated(x) + " " + summaryStyle.Render(x.CssCustomState.Summary)
 }
 
 func (x *RenderableCssCustomState) IsDeprecated() bool {
@@ -148,6 +146,6 @@ func (x *RenderableCssCustomState) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableCssCustomState) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	return pterm.TreeNode{Text: x.Label()}
+func (x *RenderableCssCustomState) ToTreeNode(pred PredicateFunc) TreeNode {
+	return tn("css-state", x.Label())
 }

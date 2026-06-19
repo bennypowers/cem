@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*ClassMethod)(nil)
@@ -138,7 +136,7 @@ func (x *RenderableClassMethod) Name() string {
 func (x *RenderableClassMethod) Label() string {
 	sum := ""
 	if x.Method.Summary != "" {
-		sum = pterm.Gray(x.Method.Summary)
+		sum = summaryStyle.Render(x.Method.Summary)
 	}
 	return strings.TrimSpace(highlightIfDeprecated(x) + " " + sum)
 }
@@ -178,8 +176,8 @@ func (x *RenderableClassMethod) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableClassMethod) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	return pterm.TreeNode{Text: x.Label()}
+func (x *RenderableClassMethod) ToTreeNode(pred PredicateFunc) TreeNode {
+	return tn("method", x.Label())
 }
 
 func NewRenderableClassMethod(

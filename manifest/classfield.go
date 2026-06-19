@@ -20,8 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*ClassField)(nil)
@@ -149,7 +147,7 @@ func (x *RenderableClassField) Name() string {
 func (x *RenderableClassField) Label() string {
 	sum := ""
 	if x.ClassField.Summary != "" {
-		sum = pterm.Gray(x.ClassField.Summary)
+		sum = summaryStyle.Render(x.ClassField.Summary)
 	}
 	return strings.TrimSpace(highlightIfDeprecated(x) + " " + sum)
 }
@@ -182,8 +180,8 @@ func (x *RenderableClassField) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableClassField) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	return pterm.TreeNode{Text: x.Label()}
+func (x *RenderableClassField) ToTreeNode(pred PredicateFunc) TreeNode {
+	return tn("field", x.Label())
 }
 
 // CustomElementField extends ClassField with attribute/reflects.
@@ -285,7 +283,7 @@ func (x *RenderableCustomElementField) Name() string {
 }
 
 func (x *RenderableCustomElementField) Label() string {
-	return highlightIfDeprecated(x) + " " + pterm.Gray(x.CustomElementField.Summary)
+	return highlightIfDeprecated(x) + " " + summaryStyle.Render(x.CustomElementField.Summary)
 }
 
 func (x *RenderableCustomElementField) IsDeprecated() bool {
@@ -316,6 +314,6 @@ func (x *RenderableCustomElementField) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableCustomElementField) ToTreeNode(pred PredicateFunc) pterm.TreeNode {
-	return pterm.TreeNode{Text: x.Label()}
+func (x *RenderableCustomElementField) ToTreeNode(pred PredicateFunc) TreeNode {
+	return tn("field", x.Label())
 }

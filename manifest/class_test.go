@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pterm/pterm"
+	treeview "github.com/Digital-Shane/treeview/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,9 +35,9 @@ func stripANSI(s string) string {
 	return ansiRegexp.ReplaceAllString(s, "")
 }
 
-func dumpTree(t *testing.T, node pterm.TreeNode, depth int) {
-	t.Logf("%s%q\n", strings.Repeat("  ", depth), stripANSI(node.Text))
-	for _, child := range node.Children {
+func dumpTree(t *testing.T, node TreeNode, depth int) {
+	t.Logf("%s%q\n", strings.Repeat("  ", depth), stripANSI(node.Name()))
+	for _, child := range node.Children() {
 		dumpTree(t, child, depth+1)
 	}
 }
@@ -55,42 +55,42 @@ func TestRenderableClassDeclaration(t *testing.T) {
 		node := renderable.ToTreeNode(True)
 
 		// Find the module node by partial match if necessary
-		var moduleNode *pterm.TreeNode
-		for _, child := range node.Children {
-			if stripANSI(child.Text) == "src/my-module.js" || strings.Contains(stripANSI(child.Text), "my-module") {
-				moduleNode = &child
+		var moduleNode TreeNode
+		for _, child := range node.Children() {
+			if stripANSI(child.Name()) == "src/my-module.js" || strings.Contains(stripANSI(child.Name()), "my-module") {
+				moduleNode = child
 				break
 			}
 		}
 		if !assert.NotNil(t, moduleNode, "Module node should exist") {
-			t.Logf("Available root children: %#v", node.Children)
+			t.Logf("Available root children: %#v", node.Children())
 			t.FailNow()
 		}
 
 		// Find the class node, ignoring ANSI color codes
-		var classNode *pterm.TreeNode
-		for _, child := range moduleNode.Children {
-			text := stripANSI(child.Text)
+		var classNode TreeNode
+		for _, child := range moduleNode.Children() {
+			text := stripANSI(child.Name())
 			if strings.Contains(text, "MyClass") && strings.Contains(text, "class") {
-				classNode = &child
+				classNode = child
 				break
 			}
 		}
 		if !assert.NotNil(t, classNode, "Class node should exist") {
-			t.Logf("Available module children: %#v", moduleNode.Children)
+			t.Logf("Available module children: %#v", moduleNode.Children())
 			t.FailNow()
 		}
 
 		t.Run("RootNodeIsClass", func(t *testing.T) {
-			assert.Contains(t, stripANSI(classNode.Text), "class")
-			assert.Contains(t, stripANSI(classNode.Text), "MyClass")
+			assert.Contains(t, stripANSI(classNode.Name()), "class")
+			assert.Contains(t, stripANSI(classNode.Name()), "MyClass")
 		})
 
 		t.Run("ChildrenAreGroupedByKind", func(t *testing.T) {
 			kinds := []string{"Fields", "Methods"}
 			groupLabels := make([]string, 0)
-			for _, child := range classNode.Children {
-				groupLabels = append(groupLabels, stripANSI(child.Text))
+			for _, child := range classNode.Children() {
+				groupLabels = append(groupLabels, stripANSI(child.Name()))
 			}
 			for _, kind := range kinds {
 				assert.Containsf(t, groupLabels, kind, "expected group %q in class node children", kind)
@@ -98,17 +98,17 @@ func TestRenderableClassDeclaration(t *testing.T) {
 		})
 
 		t.Run("FieldsGroupedTogether", func(t *testing.T) {
-			var fieldsGroup *pterm.TreeNode
-			for _, child := range classNode.Children {
-				if stripANSI(child.Text) == "Fields" {
-					fieldsGroup = &child
+			var fieldsGroup TreeNode
+			for _, child := range classNode.Children() {
+				if stripANSI(child.Name()) == "Fields" {
+					fieldsGroup = child
 					break
 				}
 			}
 			if assert.NotNil(t, fieldsGroup, "Fields group should exist") {
 				fieldNames := []string{}
-				for _, f := range fieldsGroup.Children {
-					fieldNames = append(fieldNames, stripANSI(f.Text))
+				for _, f := range fieldsGroup.Children() {
+					fieldNames = append(fieldNames, stripANSI(f.Name()))
 				}
 				dumpTree(t, node, 0)
 				assert.Subset(t, fieldNames, []string{"myField1", "myField2", "anotherField"})
@@ -116,25 +116,31 @@ func TestRenderableClassDeclaration(t *testing.T) {
 		})
 
 		t.Run("MethodsGroupedTogether", func(t *testing.T) {
-			var methodsGroup *pterm.TreeNode
-			for _, child := range classNode.Children {
-				if stripANSI(child.Text) == "Methods" {
-					methodsGroup = &child
+			var methodsGroup TreeNode
+			for _, child := range classNode.Children() {
+				if stripANSI(child.Name()) == "Methods" {
+					methodsGroup = child
 					break
 				}
 			}
 			if assert.NotNil(t, methodsGroup, "Methods group should exist") {
 				methodNames := []string{}
-				for _, m := range methodsGroup.Children {
-					methodNames = append(methodNames, stripANSI(m.Text))
+				for _, m := range methodsGroup.Children() {
+					methodNames = append(methodNames, stripANSI(m.Name()))
 				}
 				assert.Subset(t, methodNames, []string{"myMethod1", "myMethod2"})
 			}
 		})
 
 		t.Run("VisualTreeOutput", func(t *testing.T) {
-			_, err := pterm.DefaultTree.WithRoot(node).Srender()
-			assert.NoError(t, err)
+			tree := treeview.NewTree([]TreeNode{node},
+				treeview.WithExpandFunc[DisplayNode](func(_ TreeNode) bool { return true }),
+			)
+			model := treeview.NewTuiTreeModel(tree,
+				treeview.WithTuiDisableNavBar[DisplayNode](true),
+			)
+			s := model.View().Content
+			assert.NotEmpty(t, s)
 		})
 	})
 }

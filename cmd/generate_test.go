@@ -29,8 +29,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/charmbracelet/x/ansi"
 	"github.com/nsf/jsondiff"
-	"github.com/pterm/pterm"
 )
 
 var update = flag.Bool("update", false, "update golden files")
@@ -132,7 +132,7 @@ func TestGenerateE2E(t *testing.T) {
 				expectedLog = fmt.Sprintf(expectedLog, tc.outputFile)
 			}
 
-			if !strings.Contains(pterm.RemoveColorFromString(stderr), expectedLog) {
+			if !strings.Contains(ansi.Strip(stderr), expectedLog) {
 				t.Fatalf("log output does not contain expected string.\nExpected: %s\nGot: %s", expectedLog, stderr)
 			}
 		})

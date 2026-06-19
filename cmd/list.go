@@ -19,8 +19,10 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 	"slices"
 
+	lipgloss "charm.land/lipgloss/v2"
 	"github.com/spf13/cobra"
 
 	"bennypowers.dev/cem/internal/logging"
@@ -111,7 +113,9 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 						if s, err := list.Render(renderable, opts, M.True); err != nil {
 							return err
 						} else {
-							fmt.Printf("\n%s:\n%s\n", pkg.Name, s)
+							if _, err := lipgloss.Fprintf(os.Stdout, "\n%s:\n%s\n", pkg.Name, s); err != nil {
+								return err
+							}
 						}
 					}
 					return nil
@@ -147,7 +151,9 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 					if s, err := list.Render(renderable, opts, M.True); err != nil {
 						return err
 					} else {
-						fmt.Println(s)
+						if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+							return err
+						}
 					}
 				}
 				return nil
@@ -316,7 +322,9 @@ Example:
 				if s, err := list.RenderTagsTable(manifest, opts); err != nil {
 					return err
 				} else {
-					fmt.Printf("\n%s:\n%s\n", pkg.Name, s)
+					if _, err := lipgloss.Fprintf(os.Stdout, "\n%s:\n%s\n", pkg.Name, s); err != nil {
+								return err
+							}
 				}
 				return nil
 			})
@@ -343,7 +351,9 @@ Example:
 				if s, err := list.RenderTagsTable(manifest, opts); err != nil {
 					return err
 				} else {
-					fmt.Println(s)
+					if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+							return err
+						}
 				}
 			}
 			return nil
@@ -376,7 +386,9 @@ Example:
 				if s, err := list.RenderModulesTable(manifest, opts); err != nil {
 					return err
 				} else {
-					fmt.Printf("\n%s:\n%s\n", pkg.Name, s)
+					if _, err := lipgloss.Fprintf(os.Stdout, "\n%s:\n%s\n", pkg.Name, s); err != nil {
+								return err
+							}
 				}
 				return nil
 			})
@@ -403,7 +415,9 @@ Example:
 				if s, err := list.RenderModulesTable(manifest, opts); err != nil {
 					return err
 				} else {
-					fmt.Println(s)
+					if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+							return err
+						}
 				}
 			}
 			return nil
@@ -457,15 +471,21 @@ Examples:
 					if s, err := list.RenderTree(title, M.NewRenderablePackage(manifest), pred); err != nil {
 						return err
 					} else {
-						fmt.Println(s)
+						if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+							return err
+						}
 					}
 				case "table":
-					fmt.Printf("\n%s:\n", pkg.Name)
+					if _, err := lipgloss.Fprintf(os.Stdout, "\n%s:\n", pkg.Name); err != nil {
+							return err
+						}
 					opts := list.RenderOptions{}
 					if s, err := list.Render(M.NewRenderablePackage(manifest), opts, M.True); err != nil {
 						return err
 					} else {
-						fmt.Println(s)
+						if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+							return err
+						}
 					}
 				}
 				return nil
@@ -502,14 +522,18 @@ Examples:
 				if s, err := list.RenderTree(title, M.NewRenderablePackage(manifest), pred); err != nil {
 					return err
 				} else {
-					fmt.Println(s)
+					if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+							return err
+						}
 				}
 			case "table":
 				opts := list.RenderOptions{}
 				if s, err := list.Render(M.NewRenderablePackage(manifest), opts, M.True); err != nil {
 					return err
 				} else {
-					fmt.Println(s)
+					if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+							return err
+						}
 				}
 			}
 			return nil

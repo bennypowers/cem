@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pterm/pterm"
+	treeview "github.com/Digital-Shane/treeview/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -121,14 +121,14 @@ func TestDeprecated(t *testing.T) {
 
 			// We'll flatten the tree to a list of text labels for easier searching.
 			var flat []string
-			var flatten func(node *pterm.TreeNode)
-			flatten = func(node *pterm.TreeNode) {
-				flat = append(flat, stripANSI(node.Text))
-				for i := range node.Children {
-					flatten(&node.Children[i])
+			var flatten func(node TreeNode)
+			flatten = func(node TreeNode) {
+				flat = append(flat, stripANSI(node.Name()))
+				for _, child := range node.Children() {
+					flatten(child)
 				}
 			}
-			flatten(&rootNode)
+			flatten(rootNode)
 
 			for _, check := range checks {
 				var found bool
@@ -164,8 +164,14 @@ func TestDeprecated(t *testing.T) {
 
 		// To visually inspect output for debugging
 		rootNode := renderable.ToTreeNode(IsDeprecated)
-		s, err := pterm.DefaultTree.WithRoot(rootNode).Srender()
+		tree := treeview.NewTree([]TreeNode{rootNode},
+			treeview.WithExpandFunc[DisplayNode](func(_ TreeNode) bool { return true }),
+		)
+		model := treeview.NewTuiTreeModel(tree,
+			treeview.WithTuiDisableNavBar[DisplayNode](true),
+		)
+		s := model.View().Content
 		t.Log(s)
-		assert.NoError(t, err)
+		assert.NotEmpty(t, s)
 	})
 }

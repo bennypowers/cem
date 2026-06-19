@@ -20,8 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"github.com/pterm/pterm"
 )
 
 var _ Deprecatable = (*Attribute)(nil)
@@ -198,7 +196,7 @@ func (x *RenderableAttribute) Label() string {
 	if x.CustomElementField != nil && x.CustomElementField.Reflects {
 		label += " (reflects)"
 	}
-	label += pterm.Gray(" " + x.Attribute.Summary)
+	label += summaryStyle.Render(" " + x.Attribute.Summary)
 	return label
 }
 
@@ -255,6 +253,6 @@ func (x *RenderableAttribute) ToTableRow() []string {
 	}
 }
 
-func (x *RenderableAttribute) ToTreeNode(p PredicateFunc) pterm.TreeNode {
-	return tn(x.Label())
+func (x *RenderableAttribute) ToTreeNode(p PredicateFunc) TreeNode {
+	return tn("attribute", x.Label())
 }

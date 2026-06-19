@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/charmbracelet/x/ansi"
 	"github.com/nsf/jsondiff"
-	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -58,7 +58,7 @@ func TestWorkspaceGenerate_SinglePackageOverride(t *testing.T) {
 func TestWorkspaceValidate_ValidatesAllPackages(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "validate")
-	cleaned := pterm.RemoveColorFromString(stdout)
+	cleaned := ansi.Strip(stdout)
 	compareGolden(t, workspaceGolden("validate", false), cleaned, false)
 }
 
@@ -127,14 +127,14 @@ func workspaceGolden(name string, isJSON bool) string {
 func TestWorkspaceHealth_ScoresAllPackages(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "health")
-	cleaned := pterm.RemoveColorFromString(stdout)
+	cleaned := ansi.Strip(stdout)
 	compareGolden(t, workspaceGolden("health-all", false), cleaned, false)
 }
 
 func TestWorkspaceHealth_TagNameFilter(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "health", "-t", "test-button")
-	cleaned := pterm.RemoveColorFromString(stdout)
+	cleaned := ansi.Strip(stdout)
 	compareGolden(t, workspaceGolden("health-tag-filter", false), cleaned, false)
 }
 
@@ -159,7 +159,7 @@ func TestWorkspaceHealth_FormatJSON_NoMatch(t *testing.T) {
 func TestWorkspaceHealth_DeprecatedComponentFlag(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, stderr := runCemCommand(t, projectDir, "health", "--component", "test-button")
-	cleaned := pterm.RemoveColorFromString(stdout)
+	cleaned := ansi.Strip(stdout)
 	compareGolden(t, workspaceGolden("health-deprecated-component", false), cleaned, false)
 	// Justification for inline assertion: deprecation warning is cobra-generated
 	// stderr whose exact format is cobra's concern, not ours. Golden-matching
@@ -170,49 +170,49 @@ func TestWorkspaceHealth_DeprecatedComponentFlag(t *testing.T) {
 func TestWorkspaceListTags_ShowsAllPackages(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "list", "tags")
-	cleaned := pterm.RemoveColorFromString(stdout)
+	cleaned := ansi.Strip(stdout)
 	compareGolden(t, workspaceGolden("list-tags", false), cleaned, false)
 }
 
 func TestWorkspaceListModules_ShowsAllPackages(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "list", "modules")
-	cleaned := pterm.RemoveColorFromString(stdout)
+	cleaned := ansi.Strip(stdout)
 	compareGolden(t, workspaceGolden("list-modules", false), cleaned, false)
 }
 
 func TestWorkspaceList_ShowsAllPackages(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "list")
-	cleaned := pterm.RemoveColorFromString(stdout)
+	cleaned := ansi.Strip(stdout)
 	compareGolden(t, workspaceGolden("list-all", false), cleaned, false)
 }
 
 func TestWorkspaceSearch_FindsAcrossPackages(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "search", "button")
-	cleaned := pterm.RemoveColorFromString(stdout)
+	cleaned := ansi.Strip(stdout)
 	compareGolden(t, workspaceGolden("search-button", false), cleaned, false)
 }
 
 func TestWorkspaceSearch_NoResults(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "search", "zzz-nonexistent-zzz")
-	cleaned := pterm.RemoveColorFromString(stdout)
+	cleaned := ansi.Strip(stdout)
 	compareGolden(t, workspaceGolden("search-no-results", false), cleaned, false)
 }
 
 func TestWorkspaceExport_SucceedsWithConfig(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "export")
-	cleaned := pterm.RemoveColorFromString(stdout)
+	cleaned := ansi.Strip(stdout)
 	compareGolden(t, workspaceGolden("export", false), cleaned, false)
 }
 
 func TestWorkspaceExport_WithFormat(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "export", "--format", "react")
-	cleaned := pterm.RemoveColorFromString(stdout)
+	cleaned := ansi.Strip(stdout)
 	compareGolden(t, workspaceGolden("export-react", false), cleaned, false)
 }
 
@@ -246,6 +246,6 @@ func TestWorkspaceGenerate_DemoDiscovery(t *testing.T) {
 func TestWorkspaceListAttributes_FindsInCorrectPackage(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "list", "attributes", "-t", "test-button")
-	cleaned := pterm.RemoveColorFromString(stdout)
+	cleaned := ansi.Strip(stdout)
 	compareGolden(t, workspaceGolden("list-attributes-button", false), cleaned, false)
 }

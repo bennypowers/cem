@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform/testutil"
-	"github.com/pterm/pterm"
+	treeview "github.com/Digital-Shane/treeview/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,10 +44,10 @@ func TestRenderableCustomElementDeclaration(t *testing.T) {
 		node := renderable.ToTreeNode(True)
 
 		// Find the module node
-		var moduleNode *pterm.TreeNode
-		for _, child := range node.Children {
-			if stripANSI(child.Text) == "module src/my-module.js" {
-				moduleNode = &child
+		var moduleNode TreeNode
+		for _, child := range node.Children() {
+			if stripANSI(child.Name()) == "module src/my-module.js" {
+				moduleNode = child
 				break
 			}
 		}
@@ -56,11 +56,11 @@ func TestRenderableCustomElementDeclaration(t *testing.T) {
 		}
 
 		// Find the custom element class node
-		var elemNode *pterm.TreeNode
-		for _, child := range moduleNode.Children {
-			text := stripANSI(child.Text)
+		var elemNode TreeNode
+		for _, child := range moduleNode.Children() {
+			text := stripANSI(child.Name())
 			if strings.Contains(text, "<my-element>") {
-				elemNode = &child
+				elemNode = child
 				break
 			}
 		}
@@ -70,7 +70,7 @@ func TestRenderableCustomElementDeclaration(t *testing.T) {
 		}
 
 		t.Run("RootNodeIsElement", func(t *testing.T) {
-			assert.Contains(t, stripANSI(elemNode.Text), "my-element")
+			assert.Contains(t, stripANSI(elemNode.Name()), "my-element")
 		})
 
 		t.Run("ChildrenAreGroupedByKind", func(t *testing.T) {
@@ -79,8 +79,8 @@ func TestRenderableCustomElementDeclaration(t *testing.T) {
 				"CSS Properties", "Parts", "States",
 			}
 			groupLabels := make([]string, 0)
-			for _, child := range elemNode.Children {
-				groupLabels = append(groupLabels, stripANSI(child.Text))
+			for _, child := range elemNode.Children() {
+				groupLabels = append(groupLabels, stripANSI(child.Name()))
 			}
 			for _, kind := range kinds {
 				assert.Containsf(t, groupLabels, kind, "expected group %q in tree node children", kind)
@@ -88,8 +88,14 @@ func TestRenderableCustomElementDeclaration(t *testing.T) {
 		})
 
 		t.Run("VisualTreeOutput", func(t *testing.T) {
-			_, err := pterm.DefaultTree.WithRoot(node).Srender()
-			assert.NoError(t, err)
+			tree := treeview.NewTree([]TreeNode{node},
+				treeview.WithExpandFunc[DisplayNode](func(_ TreeNode) bool { return true }),
+			)
+			model := treeview.NewTuiTreeModel(tree,
+				treeview.WithTuiDisableNavBar[DisplayNode](true),
+			)
+			s := model.View().Content
+			assert.NotEmpty(t, s)
 		})
 	})
 }
