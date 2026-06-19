@@ -19,7 +19,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"os"
 	"slices"
 
 	lipgloss "charm.land/lipgloss/v2"
@@ -113,7 +112,7 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 						if s, err := list.Render(renderable, opts, M.True); err != nil {
 							return err
 						} else {
-							if _, err := lipgloss.Fprintf(os.Stdout, "\n%s:\n%s\n", pkg.Name, s); err != nil {
+							if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n%s\n", pkg.Name, s); err != nil {
 								return err
 							}
 						}
@@ -151,7 +150,7 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 					if s, err := list.Render(renderable, opts, M.True); err != nil {
 						return err
 					} else {
-						if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+						if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 							return err
 						}
 					}
@@ -322,7 +321,7 @@ Example:
 				if s, err := list.RenderTagsTable(manifest, opts); err != nil {
 					return err
 				} else {
-					if _, err := lipgloss.Fprintf(os.Stdout, "\n%s:\n%s\n", pkg.Name, s); err != nil {
+					if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n%s\n", pkg.Name, s); err != nil {
 								return err
 							}
 				}
@@ -351,7 +350,7 @@ Example:
 				if s, err := list.RenderTagsTable(manifest, opts); err != nil {
 					return err
 				} else {
-					if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+					if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 							return err
 						}
 				}
@@ -386,7 +385,7 @@ Example:
 				if s, err := list.RenderModulesTable(manifest, opts); err != nil {
 					return err
 				} else {
-					if _, err := lipgloss.Fprintf(os.Stdout, "\n%s:\n%s\n", pkg.Name, s); err != nil {
+					if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n%s\n", pkg.Name, s); err != nil {
 								return err
 							}
 				}
@@ -415,7 +414,7 @@ Example:
 				if s, err := list.RenderModulesTable(manifest, opts); err != nil {
 					return err
 				} else {
-					if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+					if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 							return err
 						}
 				}
@@ -471,19 +470,19 @@ Examples:
 					if s, err := list.RenderTree(title, M.NewRenderablePackage(manifest), pred); err != nil {
 						return err
 					} else {
-						if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+						if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 							return err
 						}
 					}
 				case "table":
-					if _, err := lipgloss.Fprintf(os.Stdout, "\n%s:\n", pkg.Name); err != nil {
+					if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n", pkg.Name); err != nil {
 							return err
 						}
 					opts := list.RenderOptions{}
 					if s, err := list.Render(M.NewRenderablePackage(manifest), opts, M.True); err != nil {
 						return err
 					} else {
-						if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+						if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 							return err
 						}
 					}
@@ -522,7 +521,7 @@ Examples:
 				if s, err := list.RenderTree(title, M.NewRenderablePackage(manifest), pred); err != nil {
 					return err
 				} else {
-					if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+					if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 							return err
 						}
 				}
@@ -531,7 +530,7 @@ Examples:
 				if s, err := list.Render(M.NewRenderablePackage(manifest), opts, M.True); err != nil {
 					return err
 				} else {
-					if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+					if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 							return err
 						}
 				}

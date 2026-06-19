@@ -19,7 +19,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	lipgloss "charm.land/lipgloss/v2"
 	"github.com/spf13/cobra"
@@ -76,7 +75,7 @@ Examples:
 			if s, err := search.RenderSearchResults(manifest, pattern, format); err != nil {
 				return err
 			} else {
-				if _, err := lipgloss.Fprintln(os.Stdout, s); err != nil {
+				if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 					return err
 				}
 			}
@@ -113,7 +112,7 @@ func searchWorkspace(cmd *cobra.Command, pattern string) error {
 			return err
 		}
 		if s != "" {
-			if _, err := lipgloss.Fprintf(os.Stdout, "\n%s:\n%s\n", pkg.Name, s); err != nil {
+			if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n%s\n", pkg.Name, s); err != nil {
 				return err
 			}
 		}

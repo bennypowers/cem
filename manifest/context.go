@@ -377,7 +377,7 @@ func toTreeChildren(xs []Renderable, p PredicateFunc) (nodes []TreeNode) {
 		}
 
 		if p(n) || len(children) > 0 {
-			node := tn("node", n.Label())
+			node := n.ToTreeNode(p)
 			node.SetChildren(children)
 			nodes = append(nodes, node)
 		}
