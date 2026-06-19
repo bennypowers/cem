@@ -90,7 +90,7 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 			}
 
 			if W.ShouldUseWorkspaceMode(cmd) {
-				format, err := requireFormat(cmd, []string{"table"})
+				format, err := requireFormat(cmd, []string{"table", "markdown"})
 				if err != nil {
 					return err
 				}
@@ -108,13 +108,23 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 						IncludeSections: []string{includeSection},
 					}
 					renderable := M.NewRenderableCustomElementDeclaration(ced, mod, manifest)
-					if format == "table" {
-						if s, err := list.Render(renderable, opts, M.True); err != nil {
+					var s string
+					switch format {
+					case "markdown":
+						s, err = list.RenderMarkdown(renderable, opts, M.True)
+					default:
+						s, err = list.Render(renderable, opts, M.True)
+					}
+					if err != nil {
+						return err
+					}
+					if format == "markdown" {
+						if _, err := fmt.Fprintf(cmd.OutOrStdout(), "\n## %s\n\n%s\n", pkg.Name, s); err != nil {
 							return err
-						} else {
-							if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n%s\n", pkg.Name, s); err != nil {
-								return err
-							}
+						}
+					} else {
+						if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n%s\n", pkg.Name, s); err != nil {
+							return err
 						}
 					}
 					return nil
@@ -128,7 +138,7 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 				if err != nil {
 					return err
 				}
-				format, err := requireFormat(cmd, []string{"table"})
+				format, err := requireFormat(cmd, []string{"table", "markdown"})
 				if err != nil {
 					return err
 				}
@@ -136,23 +146,32 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 				if err != nil {
 					return err
 				}
+				ced, _, mod, err := manifest.FindCustomElementContext(tagName)
+				if err != nil {
+					return err
+				}
+				opts := list.RenderOptions{
+					Columns:         columns,
+					IncludeSections: []string{includeSection},
+				}
+				renderable := M.NewRenderableCustomElementDeclaration(ced, mod, manifest)
+				var s string
 				switch format {
-				case "table":
-					ced, _, mod, err := manifest.FindCustomElementContext(tagName)
-					if err != nil {
+				case "markdown":
+					s, err = list.RenderMarkdown(renderable, opts, M.True)
+				default:
+					s, err = list.Render(renderable, opts, M.True)
+				}
+				if err != nil {
+					return err
+				}
+				if format == "markdown" {
+					if _, err := fmt.Fprintln(cmd.OutOrStdout(), s); err != nil {
 						return err
 					}
-					opts := list.RenderOptions{
-						Columns:         columns,
-						IncludeSections: []string{includeSection},
-					}
-					renderable := M.NewRenderableCustomElementDeclaration(ced, mod, manifest)
-					if s, err := list.Render(renderable, opts, M.True); err != nil {
+				} else {
+					if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 						return err
-					} else {
-						if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
-							return err
-						}
 					}
 				}
 				return nil
@@ -312,18 +331,28 @@ Example:
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if W.ShouldUseWorkspaceMode(cmd) {
+			format, err := requireFormat(cmd, []string{"table", "markdown"})
+			if err != nil {
+				return err
+			}
 			columns, err := cmd.Flags().GetStringArray("columns")
 			if err != nil {
 				return err
 			}
 			return listFromWorkspaceManifests(cmd, func(pkg W.PackageInfo, manifest *M.Package) error {
-				opts := list.RenderOptions{Columns: columns}
-				if s, err := list.RenderTagsTable(manifest, opts); err != nil {
+				opts := list.RenderOptions{Columns: columns, Markdown: format == "markdown"}
+				s, err := list.RenderTagsTable(manifest, opts)
+				if err != nil {
 					return err
+				}
+				if format == "markdown" {
+					if _, err := fmt.Fprintf(cmd.OutOrStdout(), "\n## %s\n\n%s\n", pkg.Name, s); err != nil {
+						return err
+					}
 				} else {
 					if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n%s\n", pkg.Name, s); err != nil {
-								return err
-							}
+						return err
+					}
 				}
 				return nil
 			})
@@ -336,7 +365,7 @@ Example:
 			if err != nil {
 				return err
 			}
-			format, err := requireFormat(cmd, []string{"table"})
+			format, err := requireFormat(cmd, []string{"table", "markdown"})
 			if err != nil {
 				return err
 			}
@@ -344,15 +373,19 @@ Example:
 			if err != nil {
 				return err
 			}
+			opts := list.RenderOptions{Columns: columns, Markdown: format == "markdown"}
+			s, err := list.RenderTagsTable(manifest, opts)
+			if err != nil {
+				return err
+			}
 			switch format {
-			case "table":
-				opts := list.RenderOptions{Columns: columns}
-				if s, err := list.RenderTagsTable(manifest, opts); err != nil {
+			case "markdown":
+				if _, err := fmt.Fprintln(cmd.OutOrStdout(), s); err != nil {
 					return err
-				} else {
-					if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
-							return err
-						}
+				}
+			default:
+				if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
+					return err
 				}
 			}
 			return nil
@@ -376,18 +409,28 @@ Example:
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if W.ShouldUseWorkspaceMode(cmd) {
+			format, err := requireFormat(cmd, []string{"table", "markdown"})
+			if err != nil {
+				return err
+			}
 			columns, err := cmd.Flags().GetStringArray("columns")
 			if err != nil {
 				return err
 			}
 			return listFromWorkspaceManifests(cmd, func(pkg W.PackageInfo, manifest *M.Package) error {
-				opts := list.RenderOptions{Columns: columns}
-				if s, err := list.RenderModulesTable(manifest, opts); err != nil {
+				opts := list.RenderOptions{Columns: columns, Markdown: format == "markdown"}
+				s, err := list.RenderModulesTable(manifest, opts)
+				if err != nil {
 					return err
+				}
+				if format == "markdown" {
+					if _, err := fmt.Fprintf(cmd.OutOrStdout(), "\n## %s\n\n%s\n", pkg.Name, s); err != nil {
+						return err
+					}
 				} else {
 					if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n%s\n", pkg.Name, s); err != nil {
-								return err
-							}
+						return err
+					}
 				}
 				return nil
 			})
@@ -400,7 +443,7 @@ Example:
 			if err != nil {
 				return err
 			}
-			format, err := requireFormat(cmd, []string{"table"})
+			format, err := requireFormat(cmd, []string{"table", "markdown"})
 			if err != nil {
 				return err
 			}
@@ -408,15 +451,19 @@ Example:
 			if err != nil {
 				return err
 			}
+			opts := list.RenderOptions{Columns: columns, Markdown: format == "markdown"}
+			s, err := list.RenderModulesTable(manifest, opts)
+			if err != nil {
+				return err
+			}
 			switch format {
-			case "table":
-				opts := list.RenderOptions{Columns: columns}
-				if s, err := list.RenderModulesTable(manifest, opts); err != nil {
+			case "markdown":
+				if _, err := fmt.Fprintln(cmd.OutOrStdout(), s); err != nil {
 					return err
-				} else {
-					if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
-							return err
-						}
+				}
+			default:
+				if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
+					return err
 				}
 			}
 			return nil
@@ -450,7 +497,7 @@ Examples:
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if W.ShouldUseWorkspaceMode(cmd) {
-			format, err := requireFormat(cmd, []string{"table", "tree"})
+			format, err := requireFormat(cmd, []string{"table", "tree", "markdown"})
 			if err != nil {
 				return err
 			}
@@ -467,24 +514,36 @@ Examples:
 						title = pkg.Name + " (Deprecations)"
 						pred = M.IsDeprecated
 					}
-					if s, err := list.RenderTree(title, M.NewRenderablePackage(manifest), pred); err != nil {
+					s, err := list.RenderTree(title, M.NewRenderablePackage(manifest), pred)
+					if err != nil {
 						return err
-					} else {
-						if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
-							return err
-						}
 					}
-				case "table":
-					if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n", pkg.Name); err != nil {
-							return err
-						}
-					opts := list.RenderOptions{}
-					if s, err := list.Render(M.NewRenderablePackage(manifest), opts, M.True); err != nil {
+					if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 						return err
-					} else {
-						if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
-							return err
-						}
+					}
+				case "markdown":
+					if _, err := fmt.Fprintf(cmd.OutOrStdout(), "\n# %s\n\n", pkg.Name); err != nil {
+						return err
+					}
+					opts := list.RenderOptions{}
+					s, err := list.RenderMarkdown(M.NewRenderablePackage(manifest), opts, M.True)
+					if err != nil {
+						return err
+					}
+					if _, err := fmt.Fprint(cmd.OutOrStdout(), s); err != nil {
+						return err
+					}
+				default:
+					if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n", pkg.Name); err != nil {
+						return err
+					}
+					opts := list.RenderOptions{}
+					s, err := list.Render(M.NewRenderablePackage(manifest), opts, M.True)
+					if err != nil {
+						return err
+					}
+					if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
+						return err
 					}
 				}
 				return nil
@@ -499,7 +558,7 @@ Examples:
 			if err != nil {
 				return err
 			}
-			format, err := requireFormat(cmd, []string{"table", "tree"})
+			format, err := requireFormat(cmd, []string{"table", "tree", "markdown"})
 			if err != nil {
 				return err
 			}
@@ -518,21 +577,30 @@ Examples:
 					title = "Deprecations"
 					pred = M.IsDeprecated
 				}
-				if s, err := list.RenderTree(title, M.NewRenderablePackage(manifest), pred); err != nil {
+				s, err := list.RenderTree(title, M.NewRenderablePackage(manifest), pred)
+				if err != nil {
 					return err
-				} else {
-					if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
-							return err
-						}
 				}
-			case "table":
-				opts := list.RenderOptions{}
-				if s, err := list.Render(M.NewRenderablePackage(manifest), opts, M.True); err != nil {
+				if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 					return err
-				} else {
-					if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
-							return err
-						}
+				}
+			case "markdown":
+				opts := list.RenderOptions{}
+				s, err := list.RenderMarkdown(M.NewRenderablePackage(manifest), opts, M.True)
+				if err != nil {
+					return err
+				}
+				if _, err := fmt.Fprint(cmd.OutOrStdout(), s); err != nil {
+					return err
+				}
+			default:
+				opts := list.RenderOptions{}
+				s, err := list.Render(M.NewRenderablePackage(manifest), opts, M.True)
+				if err != nil {
+					return err
+				}
+				if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
+					return err
 				}
 			}
 			return nil

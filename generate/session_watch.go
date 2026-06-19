@@ -90,7 +90,7 @@ func (ws *WatchSession) RunWatch() error {
 	ws.updateDemoDiscoveryState()
 
 	duration := time.Since(start)
-	logging.Success("Generated in %s", ColorizeDuration(duration).Sprint(duration))
+	logging.Success("Generated in %s", ColorizeDuration(duration).Render(fmt.Sprint(duration)))
 
 	// Set up file watcher
 	watcher, err := ws.setupWatcher()
@@ -399,7 +399,7 @@ func (ws *WatchSession) processChanges() {
 	}
 
 	duration := time.Since(start)
-	logging.Success("Regenerated in %s", ColorizeDuration(duration).Sprint(duration))
+	logging.Success("Regenerated in %s", ColorizeDuration(duration).Render(fmt.Sprint(duration)))
 }
 
 // generateOnce performs a single generation cycle, respecting cancellation

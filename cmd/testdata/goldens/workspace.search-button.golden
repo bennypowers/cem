@@ -1,22 +1,22 @@
 
 @test/button:
-# <root>
+<root>
 
-# module src/button.js
+module src/button.js
 
-# `<test-button>`
+<test-button>
 
 Test button
 A button
-## Demos
+Demos
 
-URL | Source
--------------------------------------------------------- | ----------------
-`https://test.example.com/components/button/demo/basic/` | /demo/basic.html
+ URL │ Source
+───────┼────────────
+ basic │ basic.html
 
 
 
 @test/card:
-# <root>
+<root>
 
 

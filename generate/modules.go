@@ -185,7 +185,7 @@ func (mp *ModuleProcessor) Collect() (
 	} else {
 		mp.logger.Info("Module processed successfully")
 	}
-	mp.logger.Info("Total time: %s", ColorizeDuration(mp.logger.Duration).Sprint(mp.logger.Duration))
+	mp.logger.Info("Total time: %s", ColorizeDuration(mp.logger.Duration).Render(fmt.Sprint(mp.logger.Duration)))
 	slices.SortStableFunc(mp.module.Declarations, func(a, b M.Declaration) int {
 		return int(a.GetStartByte() - b.GetStartByte())
 	})

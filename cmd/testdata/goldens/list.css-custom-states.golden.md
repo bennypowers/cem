@@ -1,6 +1,8 @@
-## CSS States
+CSS States
 
-Name         | Summary     
------------- | ------------
-`--active`   | Active state
-`--inactive` |             
+ Name       │ Summary      
+────────────┼──────────────
+ --active   │ Active state 
+ --inactive │              
+
+

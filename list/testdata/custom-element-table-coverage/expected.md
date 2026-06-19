@@ -1,101 +1,90 @@
-# [1;33m[1;33m<root>[0m[0m
+[1m<root>[m
 
-# [1;33m[1;33m[94mmodule[0m[1;33m src/base-elem.js[0m[0m
+[1m[94mmodule[m src/base-elem.js[m
 
-# [1;33m[1;33m`<base-elem>`[0m[0m
+[1m<base-elem>[m
 
-## [1;33m[1;33mAttributes[0m[0m
+[1mAttributes[m
 
-[96m[96mName            [90m[90m | [0m[96m[0m[96mSummary            [0m
-[96m[0m[0m----------------[90m[90m | [0m[0m-------------------
-`inherited-attr`[90m[90m | [0m[0mInherited attribute
+ [1mName[m           │ [1mSummary[m             
+────────────────┼─────────────────────
+ [36minherited-attr[m │ Inherited attribute 
+[1mSlots[m
 
-## [1;33m[1;33mSlots[0m[0m
+ [1mName[m           │ [1mSummary[m        
+────────────────┼────────────────
+ [36minherited-slot[m │ Inherited slot 
+[1mEvents[m
 
-[96m[96mName            [90m[90m | [0m[96m[0m[96mSummary       [0m
-[96m[0m[0m----------------[90m[90m | [0m[0m--------------
-`inherited-slot`[90m[90m | [0m[0mInherited slot
+ [1mName[m            │ [1mSummary[m         
+─────────────────┼─────────────────
+ [36minherited-event[m │ Inherited event 
+[1mCSS Properties[m
 
-## [1;33m[1;33mEvents[0m[0m
+ [1mName[m              │ [1mSyntax[m  │ [1mSummary[m         
+───────────────────┼─────────┼─────────────────
+ [36m--inherited-color[m │ [36m<color>[m │ Inherited color 
+[1mCSS Parts[m
 
-[96m[96mName             [90m[90m | [0m[96m[0m[96mSummary        [0m
-[96m[0m[0m-----------------[90m[90m | [0m[0m---------------
-`inherited-event`[90m[90m | [0m[0mInherited event
-
-## [1;33m[1;33mCSS Properties[0m[0m
-
-[96m[96mName               [90m[90m | [0m[96m[0m[96mSyntax   [90m[90m | [0m[96m[0m[96mSummary        [0m
-[96m[0m[0m-------------------[90m[90m | [0m[0m---------[90m[90m | [0m[0m---------------
-`--inherited-color`[90m[90m | [0m[0m`<color>`[90m[90m | [0m[0mInherited color
-
-## [1;33m[1;33mCSS Parts[0m[0m
-
-[96m[96mName            [90m[90m | [0m[96m[0m[96mSummary       [0m
-[96m[0m[0m----------------[90m[90m | [0m[0m--------------
-`inherited-part`[90m[90m | [0m[0mInherited part
+ [1mName[m           │ [1mSummary[m        
+────────────────┼────────────────
+ [36minherited-part[m │ Inherited part 
 
 
-# [1;33m[1;33m[94mmodule[0m[1;33m src/test-elem.js[0m[0m
+[1m[94mmodule[m src/test-elem.js[m
 
-# [1;33m[1;33m`<test-elem>`[0m[0m
+[1m<test-elem>[m
 
-## [1;33m[1;33mAttributes[0m[0m
+[1mAttributes[m
 
-[96m[96mName            [90m[90m | [0m[96m[0m[96mDOM Property[90m[90m | [0m[96m[0m[96mReflects[90m[90m | [0m[96m[0m[96mSummary            [90m[90m | [0m[96m[0m[96mDefault[90m[90m | [0m[96m[0m[96mType    [90m[90m | [0m[96m[0m[96mInherited From[0m
-[96m[0m[0m----------------[90m[90m | [0m[0m------------[90m[90m | [0m[0m--------[90m[90m | [0m[0m-------------------[90m[90m | [0m[0m-------[90m[90m | [0m[0m--------[90m[90m | [0m[0m--------------
-`inherited-attr`[90m[90m | [0m[0m            [90m[90m | [0m[0m        [90m[90m | [0m[0mInherited attribute[90m[90m | [0m[0m       [90m[90m | [0m[0m        [90m[90m | [0m[0mBaseElem      
-`foo`           [90m[90m | [0m[0m`foo`       [90m[90m | [0m[0m✅      [90m[90m | [0m[0mFoo summary        [90m[90m | [0m[0m`bar`  [90m[90m | [0m[0m`string`[90m[90m | [0m[0m              
-`bar`           [90m[90m | [0m[0m`bar`       [90m[90m | [0m[0m        [90m[90m | [0m[0m                   [90m[90m | [0m[0m       [90m[90m | [0m[0m        [90m[90m | [0m[0m              
+ [1mName[m           │ [1mDOM Property[m │ [1mReflects[m │ [1mSummary[m             │ [1mDefault[m │ [1mType[m   │ [1mInherited From[m 
+────────────────┼──────────────┼──────────┼─────────────────────┼─────────┼────────┼────────────────
+ [36minherited-attr[m │ [36m[m             │          │ Inherited attribute │ [36m[m        │ [36m[m       │ BaseElem       
+ [36mfoo[m            │ [36mfoo[m          │ ✅       │ Foo summary         │ [36mbar[m     │ [36mstring[m │                
+ [36mbar[m            │ [36mbar[m          │          │                     │ [36m[m        │ [36m[m       │                
+[1mSlots[m
 
-## [1;33m[1;33mSlots[0m[0m
+ [1mName[m           │ [1mSummary[m           │ [1mInherited From[m 
+────────────────┼───────────────────┼────────────────
+ [36minherited-slot[m │ Inherited slot    │ BaseElem       
+ [36m<default>[m      │ Default slot      │                
+ [36micon[m           │ Slot for the icon │                
+[1mEvents[m
 
-[96m[96mName            [90m[90m | [0m[96m[0m[96mSummary          [90m[90m | [0m[96m[0m[96mInherited From[0m
-[96m[0m[0m----------------[90m[90m | [0m[0m-----------------[90m[90m | [0m[0m--------------
-`inherited-slot`[90m[90m | [0m[0mInherited slot   [90m[90m | [0m[0mBaseElem      
-`<default>`     [90m[90m | [0m[0mDefault slot     [90m[90m | [0m[0m              
-`icon`          [90m[90m | [0m[0mSlot for the icon[90m[90m | [0m[0m              
+ [1mName[m            │ [1mType[m                     │ [1mSummary[m         │ [1mInherited From[m 
+─────────────────┼──────────────────────────┼─────────────────┼────────────────
+ [36minherited-event[m │ [36m[m                         │ Inherited event │ BaseElem       
+ [36msubmitted[m       │ [36mCustomEvent<'a'|'b'|'c'>[m │ Fires on submit │                
+ [36mreset[m           │ [36m[m                         │                 │                
+[1mFields[m
 
-## [1;33m[1;33mEvents[0m[0m
+ [1mName[m │ [1mSummary[m           
+──────┼───────────────────
+ [36mfoo[m  │ Foo field summary 
+ [36mbar[m  │                   
+[1mMethods[m
 
-[96m[96mName             [90m[90m | [0m[96m[0m[96mType                      [90m[90m | [0m[96m[0m[96mSummary        [90m[90m | [0m[96m[0m[96mInherited From[0m
-[96m[0m[0m-----------------[90m[90m | [0m[0m--------------------------[90m[90m | [0m[0m---------------[90m[90m | [0m[0m--------------
-`inherited-event`[90m[90m | [0m[0m                          [90m[90m | [0m[0mInherited event[90m[90m | [0m[0mBaseElem      
-`submitted`      [90m[90m | [0m[0m`CustomEvent<'a'|'b'|'c'>`[90m[90m | [0m[0mFires on submit[90m[90m | [0m[0m              
-`reset`          [90m[90m | [0m[0m                          [90m[90m | [0m[0m               [90m[90m | [0m[0m              
+ [1mName[m         │ [1mReturn Type[m          │ [1mPrivacy[m │ [1mStatic[m │ [1mSummary[m      
+──────────────┼──────────────────────┼─────────┼────────┼──────────────
+ [36mdoThing[m      │ [36mvoid | Promise<void>[m │ public  │ [36mfalse[m  │ Does a thing 
+ [36mprivateStuff[m │ [36mstring[m               │ private │ [36mtrue[m   │              
+[1mCSS Properties[m
 
-## [1;33m[1;33mFields[0m[0m
+ [1mName[m              │ [1mSyntax[m  │ [1mDefault[m │ [1mSummary[m         │ [1mInherited From[m 
+───────────────────┼─────────┼─────────┼─────────────────┼────────────────
+ [36m--inherited-color[m │ [36m<color>[m │ [36m[m        │ Inherited color │ BaseElem       
+ [36m--main-color[m      │ [36m<color>[m │ [36m#fff[m    │ Main color      │                
+ [36m--unused[m          │ [36m[m        │ [36m[m        │                 │                
+[1mCSS Parts[m
 
-[96m[96mName [90m[90m | [0m[96m[0m[96mSummary          [0m
-[96m[0m[0m-----[90m[90m | [0m[0m-----------------
-`foo`[90m[90m | [0m[0mFoo field summary
-`bar`[90m[90m | [0m[0m                 
+ [1mName[m           │ [1mSummary[m        │ [1mInherited From[m 
+────────────────┼────────────────┼────────────────
+ [36minherited-part[m │ Inherited part │ BaseElem       
+ [36mlabel[m          │ The label part │                
+[1mCSS States[m
 
-## [1;33m[1;33mMethods[0m[0m
-
-[96m[96mName          [90m[90m | [0m[96m[0m[96mReturn Type           [90m[90m | [0m[96m[0m[96mPrivacy[90m[90m | [0m[96m[0m[96mStatic [90m[90m | [0m[96m[0m[96mSummary     [0m
-[96m[0m[0m--------------[90m[90m | [0m[0m----------------------[90m[90m | [0m[0m-------[90m[90m | [0m[0m-------[90m[90m | [0m[0m------------
-`doThing`     [90m[90m | [0m[0m`void | Promise<void>`[90m[90m | [0m[0mpublic [90m[90m | [0m[0m`false`[90m[90m | [0m[0mDoes a thing
-`privateStuff`[90m[90m | [0m[0m`string`              [90m[90m | [0m[0mprivate[90m[90m | [0m[0m`true` [90m[90m | [0m[0m            
-
-## [1;33m[1;33mCSS Properties[0m[0m
-
-[96m[96mName               [90m[90m | [0m[96m[0m[96mSyntax   [90m[90m | [0m[96m[0m[96mDefault[90m[90m | [0m[96m[0m[96mSummary        [90m[90m | [0m[96m[0m[96mInherited From[0m
-[96m[0m[0m-------------------[90m[90m | [0m[0m---------[90m[90m | [0m[0m-------[90m[90m | [0m[0m---------------[90m[90m | [0m[0m--------------
-`--inherited-color`[90m[90m | [0m[0m`<color>`[90m[90m | [0m[0m       [90m[90m | [0m[0mInherited color[90m[90m | [0m[0mBaseElem      
-`--main-color`     [90m[90m | [0m[0m`<color>`[90m[90m | [0m[0m`#fff` [90m[90m | [0m[0mMain color     [90m[90m | [0m[0m              
-`--unused`         [90m[90m | [0m[0m         [90m[90m | [0m[0m       [90m[90m | [0m[0m               [90m[90m | [0m[0m              
-
-## [1;33m[1;33mCSS Parts[0m[0m
-
-[96m[96mName            [90m[90m | [0m[96m[0m[96mSummary       [90m[90m | [0m[96m[0m[96mInherited From[0m
-[96m[0m[0m----------------[90m[90m | [0m[0m--------------[90m[90m | [0m[0m--------------
-`inherited-part`[90m[90m | [0m[0mInherited part[90m[90m | [0m[0mBaseElem      
-`label`         [90m[90m | [0m[0mThe label part[90m[90m | [0m[0m              
-
-## [1;33m[1;33mCSS States[0m[0m
-
-[96m[96mName        [90m[90m | [0m[96m[0m[96mSummary     [0m
-[96m[0m[0m------------[90m[90m | [0m[0m------------
-`--active`  [90m[90m | [0m[0mActive state
-`--inactive`[90m[90m | [0m[0m            
+ [1mName[m       │ [1mSummary[m      
+────────────┼──────────────
+ [36m--active[m   │ Active state 
+ [36m--inactive[m │              
 

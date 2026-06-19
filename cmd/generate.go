@@ -178,7 +178,7 @@ var generateCmd = &cobra.Command{
 					if err != nil {
 						reloutputpath = outputPath
 					}
-					message := fmt.Sprintf("Wrote manifest to %s in %s", reloutputpath, G.ColorizeDuration(end).Sprint(end))
+					message := fmt.Sprintf("Wrote manifest to %s in %s", reloutputpath, G.ColorizeDuration(end).Render(fmt.Sprint(end)))
 					if errs != nil {
 						logging.Warning("%s", message)
 					} else {

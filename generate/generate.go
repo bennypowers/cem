@@ -121,7 +121,7 @@ func processModule(
 	}
 	defer mp.Close()
 	if mp.logger.Verbose {
-		mp.logger.Section.Printf("Module: %s", mp.logger.File)
+		fmt.Fprintf(mp.logger.Buffer, "\n== Module: %s ==\n\n", mp.logger.File)
 	}
 	module, tagAliases, typeAliases, imports, err = mp.Collect()
 

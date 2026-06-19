@@ -24,10 +24,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	lipgloss "charm.land/lipgloss/v2"
+
 	"bennypowers.dev/cem/health"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/internal/workspace"
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -111,9 +112,9 @@ func healthWorkspace(cmd *cobra.Command, args []string) error {
 		}
 
 		if format == "text" {
-			pterm.DefaultHeader.WithFullWidth(false).Println(pkg.Name)
+			_, _ = lipgloss.Fprintln(cmd.OutOrStdout(), lipgloss.NewStyle().Bold(true).Render(pkg.Name))
 			displayOptions := health.DisplayOptions{Format: format}
-			if err := health.PrintHealthResult(result, displayOptions); err != nil {
+			if err := health.PrintHealthResult(cmd.OutOrStdout(), result, displayOptions); err != nil {
 				return err
 			}
 		} else {
@@ -134,7 +135,7 @@ func healthWorkspace(cmd *cobra.Command, args []string) error {
 
 	if format != "text" {
 		displayOptions := health.DisplayOptions{Format: format}
-		if err := health.PrintWorkspaceHealthResults(collected, displayOptions); err != nil {
+		if err := health.PrintWorkspaceHealthResults(cmd.OutOrStdout(), collected, displayOptions); err != nil {
 			return err
 		}
 		var errs []error
@@ -266,7 +267,7 @@ package.json exports map, replicating the same logic used by cem generate.`,
 		displayOptions := health.DisplayOptions{
 			Format: format,
 		}
-		if err := health.PrintHealthResult(result, displayOptions); err != nil {
+		if err := health.PrintHealthResult(cmd.OutOrStdout(), result, displayOptions); err != nil {
 			fmt.Fprintf(os.Stderr, "Error displaying health results: %v\n", err)
 			os.Exit(1)
 		}

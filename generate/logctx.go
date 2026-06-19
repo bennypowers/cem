@@ -19,75 +19,83 @@ package generate
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	lipgloss "charm.land/lipgloss/v2"
+
 	"bennypowers.dev/cem/internal/logging"
-	"github.com/pterm/pterm"
+)
+
+var (
+	traceStyle = lipgloss.NewStyle().Foreground(lipgloss.Cyan)
+	debugStyle = lipgloss.NewStyle().Foreground(lipgloss.Blue)
+	infoStyle  = lipgloss.NewStyle().Foreground(lipgloss.Green)
+	warnStyle  = lipgloss.NewStyle().Foreground(lipgloss.Yellow)
+	errStyle   = lipgloss.NewStyle().Foreground(lipgloss.Red)
+
+	greenDuration  = lipgloss.NewStyle().Foreground(lipgloss.Green)
+	yellowDuration = lipgloss.NewStyle().Foreground(lipgloss.Yellow)
+	redDuration    = lipgloss.NewStyle().Foreground(lipgloss.Red)
 )
 
 // LogCtx manages per-module/file log context with streaming and buffered output.
 type LogCtx struct {
 	File     string
 	Buffer   *bytes.Buffer
-	Logger   *pterm.Logger
 	Start    time.Time
 	Duration time.Duration
-	Section  *pterm.SectionPrinter
 	Verbose  bool
 }
 
 func NewLogCtx(file string) *LogCtx {
 	buf := &bytes.Buffer{}
 	verbose := logging.AtLevel(logging.LogLevelTrace)
-	var logger *pterm.Logger
-	var section *pterm.SectionPrinter
-	if verbose {
-		logger = pterm.DefaultLogger.WithWriter(buf).WithTime(false).WithLevel(pterm.LogLevelTrace)
-		section = pterm.DefaultSection.WithWriter(buf)
-	}
 	return &LogCtx{
 		File:    file,
 		Buffer:  buf,
-		Logger:  logger,
 		Start:   time.Now(),
-		Section: section,
 		Verbose: verbose,
 	}
 }
 
-// Log helpers (for convenience)
 func (lc *LogCtx) Trace(msg string, args ...any) {
 	if !lc.Verbose {
 		return
 	}
-	lc.Logger.Trace(fmt.Sprintf(msg, args...))
+	fmt.Fprintf(lc.Buffer, "%s %s\n", traceStyle.Render("TRACE"), fmt.Sprintf(msg, args...))
 }
+
 func (lc *LogCtx) Debug(msg string, args ...any) {
 	if !lc.Verbose {
 		return
 	}
-	lc.Logger.Debug(fmt.Sprintf(msg, args...))
+	fmt.Fprintf(lc.Buffer, "%s %s\n", debugStyle.Render("DEBUG"), fmt.Sprintf(msg, args...))
 }
+
 func (lc *LogCtx) Info(msg string, args ...any) {
 	if !lc.Verbose {
 		return
 	}
-	lc.Logger.Info(fmt.Sprintf(msg, args...))
+	fmt.Fprintf(lc.Buffer, "%s %s\n", infoStyle.Render(" INFO"), fmt.Sprintf(msg, args...))
 }
+
 func (lc *LogCtx) Error(msg string, args ...any) {
 	if !lc.Verbose {
 		return
 	}
-	lc.Logger.Error(fmt.Sprintf(msg, args...))
+	fmt.Fprintf(lc.Buffer, "%s %s\n", errStyle.Render("ERROR"), fmt.Sprintf(msg, args...))
 }
+
 func (lc *LogCtx) Warn(msg string, args ...any) {
 	if !lc.Verbose {
 		return
 	}
-	lc.Logger.Warn(fmt.Sprintf(msg, args...))
+	fmt.Fprintf(lc.Buffer, "%s %s\n", warnStyle.Render(" WARN"), fmt.Sprintf(msg, args...))
 }
+
 func (lc *LogCtx) IndentedLog(indent int, label string, msg string, args ...any) {
 	if !lc.Verbose {
 		return
@@ -95,54 +103,65 @@ func (lc *LogCtx) IndentedLog(indent int, label string, msg string, args ...any)
 	prefix := strings.Repeat("  ", indent)
 	lc.Trace("%s%s: %s", prefix, label, fmt.Sprintf(msg, args...))
 }
+
 func (lc *LogCtx) TimedLog(indent int, label string, duration time.Duration) {
 	if !lc.Verbose {
 		return
 	}
-	lc.IndentedLog(indent, label, "finished in %s", ColorizeDuration(duration).Sprint(duration))
+	lc.IndentedLog(indent, label, "finished in %s", ColorizeDuration(duration).Render(fmt.Sprint(duration)))
 }
 
-// To be called at the end of processing
 func (lc *LogCtx) Finish() {
 	lc.Duration = time.Since(lc.Start)
 }
 
-// For bar chart rendering
-type ModuleBar struct {
-	Label    string
-	Value    int // duration in ms
-	Style    *pterm.Style
-	FullPath string
-}
-
-func ColorizeDuration(d time.Duration) *pterm.Style {
+// ColorizeDuration returns a lipgloss style colored by duration threshold.
+func ColorizeDuration(d time.Duration) lipgloss.Style {
 	switch {
 	case d < 100*time.Millisecond:
-		return pterm.NewStyle(pterm.FgGreen)
+		return greenDuration
 	case d < 500*time.Millisecond:
-		return pterm.NewStyle(pterm.FgYellow)
+		return yellowDuration
 	default:
-		return pterm.NewStyle(pterm.FgRed)
+		return redDuration
 	}
 }
 
 // RenderBarChart shows a summary bar chart for all modules.
 func RenderBarChart(logs []*LogCtx) {
-	bars := make([]pterm.Bar, 0, len(logs))
-	for _, lc := range logs {
-		bars = append(bars, pterm.Bar{
-			Label: filepath.Base(lc.File),
-			Value: int(lc.Duration.Milliseconds()),
-			Style: ColorizeDuration(lc.Duration),
-		})
+	if len(logs) == 0 {
+		return
 	}
-	if len(bars) > 0 {
-		pterm.DefaultSection.Println("Module Durations")
-		_ = pterm.DefaultBarChart.
-			WithHorizontal().
-			WithShowValue(true).
-			WithBars(bars).
-			WithWidth(60).
-			Render()
+
+	const barWidth = 40
+
+	var maxMs int64
+	maxLabel := 0
+	for _, lc := range logs {
+		ms := lc.Duration.Milliseconds()
+		if ms > maxMs {
+			maxMs = ms
+		}
+		name := filepath.Base(lc.File)
+		if len(name) > maxLabel {
+			maxLabel = len(name)
+		}
+	}
+	if maxMs == 0 {
+		maxMs = 1
+	}
+
+	_, _ = lipgloss.Fprintln(os.Stdout, lipgloss.NewStyle().Bold(true).Render("Module Durations"))
+	for _, lc := range logs {
+		name := filepath.Base(lc.File)
+		ms := lc.Duration.Milliseconds()
+		filled := int(ms * int64(barWidth) / maxMs)
+		empty := barWidth - filled
+		bar := strings.Repeat("█", filled) + strings.Repeat("░", empty)
+		style := ColorizeDuration(lc.Duration)
+		_, _ = lipgloss.Fprintf(os.Stdout, "  %-*s  %s  %s\n",
+			maxLabel, name,
+			style.Render(bar),
+			style.Render(fmt.Sprint(lc.Duration)))
 	}
 }

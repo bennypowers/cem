@@ -19,11 +19,21 @@ package validate
 import (
 	"encoding/json"
 	"fmt"
-	"os"
+	"io"
 	"strings"
 
+	lipgloss "charm.land/lipgloss/v2"
+
 	"bennypowers.dev/cem/internal/logging"
-	"github.com/pterm/pterm"
+)
+
+var (
+	folderStyle = lipgloss.NewStyle().Foreground(lipgloss.BrightCyan)
+	moduleStyle = lipgloss.NewStyle().Foreground(lipgloss.BrightBlue)
+	arrowStyle  = lipgloss.NewStyle().Foreground(lipgloss.BrightBlack)
+	declStyle   = lipgloss.NewStyle().Foreground(lipgloss.Yellow)
+	warnStyle   = lipgloss.NewStyle().Foreground(lipgloss.BrightYellow)
+	errStyle    = lipgloss.NewStyle().Foreground(lipgloss.BrightRed)
 )
 
 type GroupedIssues struct {
@@ -43,29 +53,26 @@ type DisplayOptions struct {
 }
 
 // PrintValidationResult prints the validation result with appropriate formatting
-func PrintValidationResult(manifestPath string, result *ValidationResult, options DisplayOptions) error {
+func PrintValidationResult(w io.Writer, manifestPath string, result *ValidationResult, options DisplayOptions) error {
 	switch options.Format {
 	case "json":
-		return printValidationResultJSON(manifestPath, result)
+		return printValidationResultJSON(w, manifestPath, result)
 	case "text", "":
 		if result.IsValid && len(result.Warnings) == 0 {
 			printValidationSuccess(manifestPath, result.SchemaVersion)
+			return nil
 		} else if result.IsValid && len(result.Warnings) > 0 {
-			printValidationWarnings(manifestPath, result.Warnings)
-		} else {
-			printValidationErrors(manifestPath, result.SchemaVersion, result.Errors)
+			return printValidationWarnings(w, manifestPath, result.Warnings)
 		}
-		return nil
+		return printValidationErrors(w, manifestPath, result.SchemaVersion, result.Errors)
 	default:
 		return fmt.Errorf("invalid format: %s. Use 'text' or 'json'", options.Format)
 	}
 }
 
-func printValidationResultJSON(manifestPath string, result *ValidationResult) error {
-	// Set the path for JSON output
+func printValidationResultJSON(w io.Writer, manifestPath string, result *ValidationResult) error {
 	result.Path = manifestPath
 
-	// Ensure arrays are never null in JSON
 	if result.Errors == nil {
 		result.Errors = []ValidationError{}
 	}
@@ -73,7 +80,7 @@ func printValidationResultJSON(manifestPath string, result *ValidationResult) er
 		result.Warnings = []ValidationWarning{}
 	}
 
-	encoder := json.NewEncoder(os.Stdout)
+	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(result)
 }
@@ -83,24 +90,28 @@ func printValidationSuccess(manifestPath, schemaVersion string) {
 	logging.Debug("Schema version: %s", schemaVersion)
 }
 
-func printValidationErrors(manifestPath, schemaVersion string, issues []ValidationError) {
+func printValidationErrors(w io.Writer, manifestPath, schemaVersion string, issues []ValidationError) error {
 	groupedIssues := groupIssuesByContext(issues)
 
-	// Always use consistent format
 	logging.Error("Validation failed with %d issue%s (%s)", len(issues), func() string {
 		if len(issues) == 1 {
 			return ""
 		}
 		return "s"
 	}(), manifestPath)
-	pterm.Println()
+	if _, err := lipgloss.Fprintln(w); err != nil {
+		return err
+	}
 
-	printGroupedIssues(groupedIssues)
+	if err := printGroupedIssues(w, groupedIssues); err != nil {
+		return err
+	}
 
 	logging.Debug("Schema version: %s", schemaVersion)
+	return nil
 }
 
-func printValidationWarnings(manifestPath string, warnings []ValidationWarning) {
+func printValidationWarnings(w io.Writer, manifestPath string, warnings []ValidationWarning) error {
 	groupedWarnings := groupWarningsByContext(warnings)
 
 	logging.Warning("Manifest valid with %d warning%s (%s)", len(warnings), func() string {
@@ -109,11 +120,16 @@ func printValidationWarnings(manifestPath string, warnings []ValidationWarning) 
 		}
 		return "s"
 	}(), manifestPath)
-	pterm.Println()
+	if _, err := lipgloss.Fprintln(w); err != nil {
+		return err
+	}
 
-	printGroupedWarnings(groupedWarnings)
+	if err := printGroupedWarnings(w, groupedWarnings); err != nil {
+		return err
+	}
 
 	logging.Debug("Use --no-warnings to suppress warnings")
+	return nil
 }
 
 func groupIssuesByContext(issues []ValidationError) []GroupedIssues {
@@ -160,92 +176,120 @@ func groupWarningsByContext(warnings []ValidationWarning) []GroupedWarnings {
 	return grouped
 }
 
-func printGroupedWarnings(groupedWarnings []GroupedWarnings) {
+func printGroupedWarnings(w io.Writer, groupedWarnings []GroupedWarnings) error {
 	for _, group := range groupedWarnings {
-		// Print group header
 		if group.Module != "" && group.Declaration != "" {
-			pterm.Printf("%s %s %s %s\n",
-				pterm.LightCyan("📁"),
-				pterm.FgLightBlue.Sprint(group.Module),
-				pterm.FgGray.Sprint("→"),
-				pterm.FgYellow.Sprint(group.Declaration))
+			if _, err := lipgloss.Fprintf(w, "%s %s %s %s\n",
+				folderStyle.Render("📁"),
+				moduleStyle.Render(group.Module),
+				arrowStyle.Render("→"),
+				declStyle.Render(group.Declaration)); err != nil {
+				return err
+			}
 		} else if group.Module != "" {
-			pterm.Printf("%s %s\n",
-				pterm.LightCyan("📁"),
-				pterm.FgLightBlue.Sprint(group.Module))
+			if _, err := lipgloss.Fprintf(w, "%s %s\n",
+				folderStyle.Render("📁"),
+				moduleStyle.Render(group.Module)); err != nil {
+				return err
+			}
 		}
 
-		// Print warnings in this group
 		for _, warning := range group.Warnings {
 			if warning.Member != "" && warning.Property != "" {
-				pterm.Printf("  %s %s → %s: %s\n",
-					pterm.LightYellow("⚠"),
+				if _, err := lipgloss.Fprintf(w, "  %s %s → %s: %s\n",
+					warnStyle.Render("⚠"),
 					warning.Member,
 					warning.Property,
-					warning.Message)
+					warning.Message); err != nil {
+					return err
+				}
 			} else if warning.Member != "" {
-				pterm.Printf("  %s %s: %s\n",
-					pterm.LightYellow("⚠"),
+				if _, err := lipgloss.Fprintf(w, "  %s %s: %s\n",
+					warnStyle.Render("⚠"),
 					warning.Member,
-					warning.Message)
+					warning.Message); err != nil {
+					return err
+				}
 			} else if warning.Property != "" {
-				pterm.Printf("  %s %s: %s\n",
-					pterm.LightYellow("⚠"),
+				if _, err := lipgloss.Fprintf(w, "  %s %s: %s\n",
+					warnStyle.Render("⚠"),
 					warning.Property,
-					warning.Message)
+					warning.Message); err != nil {
+					return err
+				}
 			} else {
-				pterm.Printf("  %s %s\n",
-					pterm.LightYellow("⚠"),
-					warning.Message)
+				if _, err := lipgloss.Fprintf(w, "  %s %s\n",
+					warnStyle.Render("⚠"),
+					warning.Message); err != nil {
+					return err
+				}
 			}
 		}
-		pterm.Println()
+		if _, err := lipgloss.Fprintln(w); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func printGroupedIssues(groupedIssues []GroupedIssues) {
+func printGroupedIssues(w io.Writer, groupedIssues []GroupedIssues) error {
 	for _, group := range groupedIssues {
-		// Print group header
 		if group.Module != "" && group.Declaration != "" {
-			pterm.Printf("%s %s %s %s\n",
-				pterm.LightCyan("📁"),
-				pterm.FgLightBlue.Sprint(group.Module),
-				pterm.FgGray.Sprint("→"),
-				pterm.FgYellow.Sprint(group.Declaration))
+			if _, err := lipgloss.Fprintf(w, "%s %s %s %s\n",
+				folderStyle.Render("📁"),
+				moduleStyle.Render(group.Module),
+				arrowStyle.Render("→"),
+				declStyle.Render(group.Declaration)); err != nil {
+				return err
+			}
 		} else if group.Module != "" {
-			pterm.Printf("%s %s\n",
-				pterm.LightCyan("📁"),
-				pterm.FgLightBlue.Sprint(group.Module))
+			if _, err := lipgloss.Fprintf(w, "%s %s\n",
+				folderStyle.Render("📁"),
+				moduleStyle.Render(group.Module)); err != nil {
+				return err
+			}
 		} else {
-			pterm.Printf("%s %s\n",
-				pterm.LightRed("⚠"),
-				pterm.FgYellow.Sprint("Root level issues"))
-		}
-
-		// Print issues in this group
-		for _, issue := range group.Issues {
-			if issue.Member != "" && issue.Property != "" {
-				pterm.Printf("  %s %s → %s: %s\n",
-					pterm.LightRed("●"),
-					issue.Member,
-					issue.Property,
-					issue.Message)
-			} else if issue.Member != "" {
-				pterm.Printf("  %s %s: %s\n",
-					pterm.LightRed("●"),
-					issue.Member,
-					issue.Message)
-			} else if issue.Property != "" {
-				pterm.Printf("  %s %s: %s\n",
-					pterm.LightRed("●"),
-					issue.Property,
-					issue.Message)
-			} else {
-				pterm.Printf("  %s %s\n",
-					pterm.LightRed("●"),
-					issue.Message)
+			if _, err := lipgloss.Fprintf(w, "%s %s\n",
+				errStyle.Render("⚠"),
+				declStyle.Render("Root level issues")); err != nil {
+				return err
 			}
 		}
-		pterm.Println()
+
+		for _, issue := range group.Issues {
+			if issue.Member != "" && issue.Property != "" {
+				if _, err := lipgloss.Fprintf(w, "  %s %s → %s: %s\n",
+					errStyle.Render("●"),
+					issue.Member,
+					issue.Property,
+					issue.Message); err != nil {
+					return err
+				}
+			} else if issue.Member != "" {
+				if _, err := lipgloss.Fprintf(w, "  %s %s: %s\n",
+					errStyle.Render("●"),
+					issue.Member,
+					issue.Message); err != nil {
+					return err
+				}
+			} else if issue.Property != "" {
+				if _, err := lipgloss.Fprintf(w, "  %s %s: %s\n",
+					errStyle.Render("●"),
+					issue.Property,
+					issue.Message); err != nil {
+					return err
+				}
+			} else {
+				if _, err := lipgloss.Fprintf(w, "  %s %s\n",
+					errStyle.Render("●"),
+					issue.Message); err != nil {
+					return err
+				}
+			}
+		}
+		if _, err := lipgloss.Fprintln(w); err != nil {
+			return err
+		}
 	}
+	return nil
 }

@@ -54,7 +54,7 @@ func validateWorkspace(cmd *cobra.Command) error {
 			Format: format,
 		}
 		fmt.Fprintf(os.Stderr, "\n%s:\n", pkg.Name)
-		if err := V.PrintValidationResult(manifestPath, result, displayOptions); err != nil {
+		if err := V.PrintValidationResult(cmd.OutOrStdout(), manifestPath, result, displayOptions); err != nil {
 			return err
 		}
 		if !result.IsValid {
@@ -126,7 +126,7 @@ var validateCmd = &cobra.Command{
 		displayOptions := V.DisplayOptions{
 			Format: format,
 		}
-		if err := V.PrintValidationResult(manifestPath, result, displayOptions); err != nil {
+		if err := V.PrintValidationResult(cmd.OutOrStdout(), manifestPath, result, displayOptions); err != nil {
 			fmt.Fprintf(os.Stderr, "Error displaying validation results: %v\n", err)
 			os.Exit(1)
 		}

@@ -20,8 +20,8 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform/testutil"
+	"bennypowers.dev/cem/list"
 	"bennypowers.dev/cem/manifest"
-	"github.com/pterm/pterm"
 )
 
 func TestAttributeToTableRowGolden(t *testing.T) {
@@ -35,11 +35,10 @@ func TestAttributeToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "attribute_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "attribute_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -54,11 +53,10 @@ func TestSlotToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "slot_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "slot_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -73,11 +71,10 @@ func TestEventToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "event_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "event_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -92,11 +89,10 @@ func TestCssPropertyToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "css_property_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "css_property_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -111,11 +107,10 @@ func TestCssPartToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "css_part_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "css_part_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -135,11 +130,10 @@ func TestClassMethodToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "class_method_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "class_method_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -154,11 +148,10 @@ func TestClassFieldToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "class_field_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "class_field_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -173,11 +166,10 @@ func TestCustomElementFieldToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "custom_element_field_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "custom_element_field_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -192,11 +184,10 @@ func TestCssCustomStateToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "css_state_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "css_state_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -210,11 +201,10 @@ func TestDemoToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "demo_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "demo_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -228,11 +218,10 @@ func TestFunctionDeclarationToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "function_declaration_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "function_declaration_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -246,11 +235,10 @@ func TestMixinDeclarationToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "mixin_declaration_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "mixin_declaration_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -264,11 +252,10 @@ func TestCustomElementMixinDeclarationToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "custom_element_mixin_declaration_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "custom_element_mixin_declaration_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -282,11 +269,10 @@ func TestVariableDeclarationToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "variable_declaration_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "variable_declaration_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -299,10 +285,9 @@ func TestModuleToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "module_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "module_row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }

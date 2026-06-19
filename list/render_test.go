@@ -44,3 +44,47 @@ func TestRender(t *testing.T) {
 		})
 	})
 }
+
+func TestRenderMarkdown(t *testing.T) {
+	t.Run("custom-element-table-coverage", func(t *testing.T) {
+		var pkg M.Package
+		testutil.LoadJSONFixture(t, "custom-element-table-coverage/input.json", &pkg)
+
+		renderable := M.NewRenderablePackage(&pkg)
+
+		opts := list.RenderOptions{}
+		output, err := list.RenderMarkdown(renderable, opts, M.True)
+		if err != nil {
+			t.Fatalf("RenderMarkdown failed: %v", err)
+		}
+
+		testutil.CheckGolden(t, "custom-element-table-coverage/expected-markdown.md", []byte(output), testutil.GoldenOptions{
+			Dir:          "testdata",
+			NormalizeEOL: true,
+		})
+	})
+}
+
+func TestFormatMarkdownTable(t *testing.T) {
+	t.Run("basic table", func(t *testing.T) {
+		headers := []string{"Name", "Type", "Summary"}
+		rows := [][]string{
+			{"foo", "string", "A foo"},
+			{"bar", "number", ""},
+		}
+		got := list.FormatMarkdownTable(headers, rows)
+		testutil.CheckGolden(t, "markdown-table-basic.md", []byte(got), testutil.GoldenOptions{
+			Dir:          "testdata",
+			NormalizeEOL: true,
+		})
+	})
+
+	t.Run("empty rows", func(t *testing.T) {
+		headers := []string{"Name", "Type"}
+		var rows [][]string
+		got := list.FormatMarkdownTable(headers, rows)
+		if got != "" {
+			t.Errorf("expected empty string for empty rows, got %q", got)
+		}
+	})
+}

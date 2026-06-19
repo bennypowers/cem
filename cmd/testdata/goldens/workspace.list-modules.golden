@@ -2,15 +2,13 @@
 @test/button:
 ## Modules
 
-Module path | Custom Elements
---------------- | ---------------
-`src/button.js` | `<test-button>`
-
+ Module path │ Custom Elements
+───────────────┼─────────────────
+ src/button.js │ <test-button>
 
 @test/card:
 ## Modules
 
-Module path | Custom Elements
-------------- | ---------------
-`src/card.js` | `<test-card>`
-
+ Module path │ Custom Elements
+─────────────┼─────────────────
+ src/card.js │ <test-card>
