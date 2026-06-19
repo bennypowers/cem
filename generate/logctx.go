@@ -19,7 +19,6 @@ package generate
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -151,7 +150,7 @@ func RenderBarChart(logs []*LogCtx) {
 		maxMs = 1
 	}
 
-	_, _ = lipgloss.Fprintln(os.Stdout, lipgloss.NewStyle().Bold(true).Render("Module Durations"))
+	logging.Debug("Module Durations")
 	for _, lc := range logs {
 		name := filepath.Base(lc.File)
 		ms := lc.Duration.Milliseconds()
@@ -159,7 +158,7 @@ func RenderBarChart(logs []*LogCtx) {
 		empty := barWidth - filled
 		bar := strings.Repeat("█", filled) + strings.Repeat("░", empty)
 		style := ColorizeDuration(lc.Duration)
-		_, _ = lipgloss.Fprintf(os.Stdout, "  %-*s  %s  %s\n",
+		logging.Debug("  %-*s  %s  %s",
 			maxLabel, name,
 			style.Render(bar),
 			style.Render(fmt.Sprint(lc.Duration)))

@@ -79,6 +79,19 @@ func TestFormatMarkdownTable(t *testing.T) {
 		})
 	})
 
+	t.Run("pipe in cell", func(t *testing.T) {
+		headers := []string{"Name", "Type"}
+		rows := [][]string{
+			{"variant", `"primary" | "secondary"`},
+		}
+		got := list.FormatMarkdownTable(headers, rows)
+		testutil.CheckGolden(t, "markdown-table-pipe.md", []byte(got), testutil.GoldenOptions{
+			Dir:          "testdata",
+			NormalizeEOL: true,
+		})
+	})
+
+	// inline: empty input is a zero-value identity check, no golden needed
 	t.Run("empty rows", func(t *testing.T) {
 		headers := []string{"Name", "Type"}
 		var rows [][]string

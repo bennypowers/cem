@@ -53,7 +53,7 @@ func validateWorkspace(cmd *cobra.Command) error {
 		displayOptions := V.DisplayOptions{
 			Format: format,
 		}
-		fmt.Fprintf(os.Stderr, "\n%s:\n", pkg.Name)
+		cmd.PrintErrln("\n" + pkg.Name + ":")
 		if err := V.PrintValidationResult(cmd.OutOrStdout(), manifestPath, result, displayOptions); err != nil {
 			return err
 		}

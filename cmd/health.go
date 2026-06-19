@@ -112,7 +112,9 @@ func healthWorkspace(cmd *cobra.Command, args []string) error {
 		}
 
 		if format == "text" {
-			_, _ = lipgloss.Fprintln(cmd.OutOrStdout(), lipgloss.NewStyle().Bold(true).Render(pkg.Name))
+			if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), lipgloss.NewStyle().Bold(true).Render(pkg.Name)); err != nil {
+				return err
+			}
 			displayOptions := health.DisplayOptions{Format: format}
 			if err := health.PrintHealthResult(cmd.OutOrStdout(), result, displayOptions); err != nil {
 				return err

@@ -556,17 +556,34 @@ func RenderMarkdown(r M.Renderable, opts RenderOptions, pred M.PredicateFunc) (s
 	return strings.TrimRight(builder.String(), "\n") + "\n\n", nil
 }
 
+func escapeMarkdownPipe(s string) string {
+	return strings.ReplaceAll(s, "|", `\|`)
+}
+
 // FormatMarkdownTable renders headers and rows as a valid markdown table.
 func FormatMarkdownTable(headers []string, rows [][]string) string {
 	if len(rows) == 0 {
 		return ""
 	}
 
-	widths := make([]int, len(headers))
+	escapedHeaders := make([]string, len(headers))
 	for i, h := range headers {
+		escapedHeaders[i] = escapeMarkdownPipe(h)
+	}
+	escapedRows := make([][]string, len(rows))
+	for i, row := range rows {
+		escaped := make([]string, len(row))
+		for j, cell := range row {
+			escaped[j] = escapeMarkdownPipe(cell)
+		}
+		escapedRows[i] = escaped
+	}
+
+	widths := make([]int, len(escapedHeaders))
+	for i, h := range escapedHeaders {
 		widths[i] = len(h)
 	}
-	for _, row := range rows {
+	for _, row := range escapedRows {
 		for i, cell := range row {
 			if i < len(widths) {
 				widths[i] = max(widths[i], len(cell))
@@ -576,8 +593,7 @@ func FormatMarkdownTable(headers []string, rows [][]string) string {
 
 	var builder strings.Builder
 
-	// Header row
-	for i, h := range headers {
+	for i, h := range escapedHeaders {
 		if i > 0 {
 			builder.WriteString(" | ")
 		}
@@ -585,7 +601,6 @@ func FormatMarkdownTable(headers []string, rows [][]string) string {
 	}
 	builder.WriteString("\n")
 
-	// Separator row
 	for i, w := range widths {
 		if i > 0 {
 			builder.WriteString(" | ")
@@ -594,9 +609,8 @@ func FormatMarkdownTable(headers []string, rows [][]string) string {
 	}
 	builder.WriteString("\n")
 
-	// Data rows
-	for _, row := range rows {
-		for i := range headers {
+	for _, row := range escapedRows {
+		for i := range escapedHeaders {
 			if i > 0 {
 				builder.WriteString(" | ")
 			}

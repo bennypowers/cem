@@ -120,8 +120,8 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 					}
 					if format == "markdown" {
 						if _, err := fmt.Fprintf(cmd.OutOrStdout(), "\n## %s\n\n%s\n", pkg.Name, s); err != nil {
-							return err
-						}
+								return err
+							}
 					} else {
 						if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n%s\n", pkg.Name, s); err != nil {
 							return err
@@ -347,8 +347,8 @@ Example:
 				}
 				if format == "markdown" {
 					if _, err := fmt.Fprintf(cmd.OutOrStdout(), "\n## %s\n\n%s\n", pkg.Name, s); err != nil {
-						return err
-					}
+								return err
+							}
 				} else {
 					if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n%s\n", pkg.Name, s); err != nil {
 						return err
@@ -381,8 +381,8 @@ Example:
 			switch format {
 			case "markdown":
 				if _, err := fmt.Fprintln(cmd.OutOrStdout(), s); err != nil {
-					return err
-				}
+						return err
+					}
 			default:
 				if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 					return err
@@ -425,8 +425,8 @@ Example:
 				}
 				if format == "markdown" {
 					if _, err := fmt.Fprintf(cmd.OutOrStdout(), "\n## %s\n\n%s\n", pkg.Name, s); err != nil {
-						return err
-					}
+								return err
+							}
 				} else {
 					if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n%s\n", pkg.Name, s); err != nil {
 						return err
@@ -459,8 +459,8 @@ Example:
 			switch format {
 			case "markdown":
 				if _, err := fmt.Fprintln(cmd.OutOrStdout(), s); err != nil {
-					return err
-				}
+						return err
+					}
 			default:
 				if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
 					return err
@@ -531,8 +531,8 @@ Examples:
 						return err
 					}
 					if _, err := fmt.Fprint(cmd.OutOrStdout(), s); err != nil {
-						return err
-					}
+					return err
+				}
 				default:
 					if _, err := lipgloss.Fprintf(cmd.OutOrStdout(), "\n%s:\n", pkg.Name); err != nil {
 						return err

@@ -57,11 +57,11 @@ Name             | Summary           | Inherited From
 
 ## Events
 
-Name              | Type                       | Summary         | Inherited From
------------------ | -------------------------- | --------------- | --------------
-`inherited-event` |                            | Inherited event | BaseElem      
-`submitted`       | `CustomEvent<'a'|'b'|'c'>` | Fires on submit |               
-`reset`           |                            |                 |               
+Name              | Type                         | Summary         | Inherited From
+----------------- | ---------------------------- | --------------- | --------------
+`inherited-event` |                              | Inherited event | BaseElem      
+`submitted`       | `CustomEvent<'a'\|'b'\|'c'>` | Fires on submit |               
+`reset`           |                              |                 |               
 
 ## Fields
 
@@ -72,10 +72,10 @@ Name  | Summary
 
 ## Methods
 
-Name           | Return Type            | Privacy | Static  | Summary     
--------------- | ---------------------- | ------- | ------- | ------------
-`doThing`      | `void | Promise<void>` | public  | `false` | Does a thing
-`privateStuff` | `string`               | private | `true`  |             
+Name           | Return Type             | Privacy | Static  | Summary     
+-------------- | ----------------------- | ------- | ------- | ------------
+`doThing`      | `void \| Promise<void>` | public  | `false` | Does a thing
+`privateStuff` | `string`                | private | `true`  |             
 
 ## CSS Properties
 
