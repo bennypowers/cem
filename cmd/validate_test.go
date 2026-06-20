@@ -27,6 +27,19 @@ import (
 	"testing"
 )
 
+func TestValidateSingleManifestJSONIsArray(t *testing.T) {
+	projectDir := setupTest(t, "valid-manifest")
+	stdout, _ := runCemCommand(t, projectDir, "validate", "--format=json")
+
+	var results []json.RawMessage
+	if err := json.Unmarshal([]byte(stdout), &results); err != nil {
+		t.Fatalf("--format=json must produce a JSON array, got parse error: %v\nstdout: %s", err, stdout)
+	}
+	if len(results) != 1 {
+		t.Errorf("expected 1 result, got %d", len(results))
+	}
+}
+
 func TestValidateWorkspaceJSON(t *testing.T) {
 	projectDir := setupTest(t, "workspace-validate")
 	stdout, _ := runCemCommand(t, projectDir, "validate", "--format=json")

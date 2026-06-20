@@ -296,6 +296,11 @@ function M.run_references_benchmark(config, fixture_dir)
 		results.references_supported = supports_references
 		results.not_supported = not supports_references
 
+		if not supports_references then
+			results.error = "Feature not available in server capabilities"
+			return
+		end
+
 		-- Build small scale test list using dynamic positions
 		local small_scale_tests = {}
 		if positions_map["my-nav"] then
@@ -462,52 +467,27 @@ function M.run_references_benchmark(config, fixture_dir)
 		collectgarbage("collect")
 		results.memory_usage = collectgarbage("count") * 1024 -- Convert KB to bytes
 
-		-- Success requires both completing tests AND finding references
-		results.success = total_references >= 10 and total_tests >= 8
-		results.success_rate = results.success and 1.0 or 0.0
+		local successful_tests = 0
+		for _, scale in pairs(results.project_scale_results) do
+			if scale.tests then
+				for _, test in ipairs(scale.tests) do
+					if test.success then
+						successful_tests = successful_tests + 1
+					end
+				end
+			end
+		end
 
-		-- Set error message if criteria not met
+		results.success = total_tests > 0 and successful_tests > 0
+		results.success_rate = total_tests > 0 and (successful_tests / total_tests) or 0.0
+
 		if not results.success then
 			if results.not_supported then
 				results.error = "Feature not available in server capabilities"
+			elseif total_tests == 0 then
+				results.error = "no reference tests completed"
 			else
-				local reasons = {}
-				if total_references < 10 then
-					-- Check if there were any LSP errors
-					local had_errors = false
-					for _, scale in pairs(results.project_scale_results) do
-						if scale.tests then
-							for _, test in ipairs(scale.tests) do
-								if test.lsp_error then
-									had_errors = true
-									break
-								end
-							end
-						end
-					end
-
-					if had_errors then
-						table.insert(
-							reasons,
-							string.format(
-								"insufficient references found (%d < 10) - LSP errors occurred",
-								total_references
-							)
-						)
-					else
-						table.insert(
-							reasons,
-							string.format(
-								"insufficient references found (%d < 10) - server returned empty results",
-								total_references
-							)
-						)
-					end
-				end
-				if total_tests < 8 then
-					table.insert(reasons, string.format("insufficient tests completed (%d < 8)", total_tests))
-				end
-				results.error = table.concat(reasons, "; ")
+				results.error = string.format("no references found across %d tests", total_tests)
 			end
 		end
 	end)

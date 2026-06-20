@@ -134,9 +134,9 @@ for i in "${!ids[@]}"; do
     validation_stderr=$(mktemp)
     (cd .. && go run . validate --format json "docs/$resultFile") >"$validation_tmp" 2>"$validation_stderr" || true
 
-    # Try to extract valid JSON from output
-    if [[ -s "$validation_tmp" ]] && jq . "$validation_tmp" >/dev/null 2>&1; then
-      validation_result=$(cat "$validation_tmp")
+    # validate --format json always returns an array; extract the first result
+    if [[ -s "$validation_tmp" ]] && jq '.[0]' "$validation_tmp" >/dev/null 2>&1; then
+      validation_result=$(jq '.[0]' "$validation_tmp")
     elif [[ -s "$validation_stderr" ]]; then
       # Log what we got for debugging
       echo "Validation output:" >&2

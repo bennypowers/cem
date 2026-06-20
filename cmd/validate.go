@@ -40,7 +40,7 @@ func validateWorkspace(cmd *cobra.Command) error {
 	allDisabled = append(allDisabled, configDisabled...)
 	allDisabled = append(allDisabled, disableFlags...)
 
-	var collected []V.PackageValidationResult
+	var collected []*V.ValidationResult
 
 	results := workspace.ForEachPackage(ctx.Root(), func(pkg workspace.PackageInfo) error {
 		manifestPath := filepath.Join(pkg.Path, pkg.CustomElementsRef)
@@ -53,18 +53,18 @@ func validateWorkspace(cmd *cobra.Command) error {
 			return err
 		}
 
-		if format == "text" || format == "" {
+		switch format {
+		case "text", "":
 			displayOptions := V.DisplayOptions{Format: format}
 			cmd.PrintErrln("\n" + pkg.Name + ":")
 			if err := V.PrintValidationResult(cmd.OutOrStdout(), manifestPath, result, displayOptions); err != nil {
 				return err
 			}
-		} else {
+		case "json":
 			result.Path = manifestPath
-			collected = append(collected, V.PackageValidationResult{
-				Package: pkg.Name,
-				Result:  result,
-			})
+			collected = append(collected, result)
+		default:
+			return fmt.Errorf("invalid format %q: must be text or json", format)
 		}
 
 		if !result.IsValid {
@@ -74,8 +74,7 @@ func validateWorkspace(cmd *cobra.Command) error {
 	})
 
 	if format != "text" && format != "" {
-		displayOptions := V.DisplayOptions{Format: format}
-		if err := V.PrintWorkspaceValidationResults(cmd.OutOrStdout(), collected, displayOptions); err != nil {
+		if err := V.PrintValidationResultsJSON(cmd.OutOrStdout(), collected); err != nil {
 			return err
 		}
 	}
@@ -95,7 +94,7 @@ var validateCmd = &cobra.Command{
 	Long:  `Validate a custom-elements.json manifest against its JSON schema.`,
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		if workspace.ShouldUseWorkspaceMode(cmd) {
+		if workspace.ShouldUseWorkspaceMode(cmd) && len(args) == 0 {
 			if err := validateWorkspace(cmd); err != nil {
 				os.Exit(1)
 			}
@@ -139,12 +138,19 @@ var validateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		displayOptions := V.DisplayOptions{
-			Format: format,
-		}
-		if err := V.PrintValidationResult(cmd.OutOrStdout(), manifestPath, result, displayOptions); err != nil {
-			cmd.PrintErrln("Error displaying validation results:", err)
-			os.Exit(1)
+		switch format {
+		case "json":
+			result.Path = manifestPath
+			if err := V.PrintValidationResultsJSON(cmd.OutOrStdout(), []*V.ValidationResult{result}); err != nil {
+				cmd.PrintErrln("Error displaying validation results:", err)
+				os.Exit(1)
+			}
+		default:
+			displayOptions := V.DisplayOptions{Format: format}
+			if err := V.PrintValidationResult(cmd.OutOrStdout(), manifestPath, result, displayOptions); err != nil {
+				cmd.PrintErrln("Error displaying validation results:", err)
+				os.Exit(1)
+			}
 		}
 
 		// Exit with error code if validation failed
