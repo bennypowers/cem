@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "alpha-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "AlphaElement",
+          "tagName": "alpha-element",
+          "customElement": true,
+          "members": []
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "alpha-element",
+          "declaration": {
+            "name": "AlphaElement",
+            "module": "alpha-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

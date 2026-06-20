@@ -20,11 +20,25 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd_test
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestValidateWorkspaceJSON(t *testing.T) {
+	projectDir := setupTest(t, "workspace-validate")
+	stdout, _ := runCemCommand(t, projectDir, "validate", "--format=json")
+
+	var results []json.RawMessage
+	if err := json.Unmarshal([]byte(stdout), &results); err != nil {
+		t.Fatalf("workspace --format=json must produce a single JSON array, got parse error: %v\nstdout: %s", err, stdout)
+	}
+	if len(results) != 2 {
+		t.Errorf("expected 2 package results, got %d", len(results))
+	}
+}
 
 func TestValidateE2E(t *testing.T) {
 	testCases := []struct {

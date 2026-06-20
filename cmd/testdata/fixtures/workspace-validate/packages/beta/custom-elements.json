@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "beta-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "BetaElement",
+          "tagName": "beta-element",
+          "customElement": true,
+          "members": []
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "beta-element",
+          "declaration": {
+            "name": "BetaElement",
+            "module": "beta-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}
