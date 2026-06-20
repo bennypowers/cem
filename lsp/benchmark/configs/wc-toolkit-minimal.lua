@@ -30,7 +30,15 @@ local wc_toolkit_config = {
     'javascript',
   },
   single_file_support = true,
-  capabilities = vim.lsp.protocol.make_client_capabilities(),
+  capabilities = (function()
+    local caps = vim.lsp.protocol.make_client_capabilities()
+    -- Disable pull diagnostics so the server uses push (textDocument/publishDiagnostics).
+    -- The benchmark handler listens for push notifications.
+    if caps.textDocument then
+      caps.textDocument.diagnostic = nil
+    end
+    return caps
+  end)(),
   on_attach = function(client, bufnr)
     -- Minimal attach - no keybindings or fancy features
   end,

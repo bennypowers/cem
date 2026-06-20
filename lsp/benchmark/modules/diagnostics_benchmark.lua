@@ -9,33 +9,7 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 	local server_name = _G.BENCHMARK_LSP_NAME or "unknown"
 	local DIAGNOSTICS_TIMEOUT_MS = 3000
 
-	-- Track diagnostics - store bufnr for use in handler
-	local received_diagnostics = {}
-	local diagnostics_received = false
-	local test_bufnr = nil
-
-	-- Add client-specific diagnostics handler to config
-	-- This avoids modifying global handlers and prevents collisions with other LSP usage
-	local client_config = vim.tbl_deep_extend("force", config, {
-		handlers = {
-			["textDocument/publishDiagnostics"] = function(diag_err, result, ctx, handler_config)
-				if result and result.diagnostics then
-					received_diagnostics = result.diagnostics
-					diagnostics_received = true
-					-- Update diagnostics state using modern API
-					-- Use stored bufnr if ctx.bufnr is nil (root cause fix)
-					local bufnr = ctx.bufnr or test_bufnr
-					if bufnr and vim.api.nvim_buf_is_valid(bufnr) then
-						local namespace = vim.api.nvim_create_namespace(("lsp_%d"):format(ctx.client_id))
-						vim.diagnostic.set(namespace, bufnr, result.diagnostics)
-					end
-				end
-			end,
-		},
-	})
-
-	-- Setup LSP client with custom handlers
-	local client, err = benchmark.setup_client(client_config, fixture_dir)
+	local client, err = benchmark.setup_client(config, fixture_dir)
 	if not client then
 		return {
 			success = false,
@@ -46,36 +20,34 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 
 	local diagnostics_start = vim.uv.hrtime()
 
-	-- Now open the file (which will trigger didOpen and diagnostics)
 	local bufnr, test_file = benchmark.setup_test_file(fixture_dir, "diagnostics", "html", 2000, client)
 	if not bufnr then
 		benchmark.cleanup_test(nil, nil, client)
 		return {
 			success = false,
 			success_rate = 0.0,
-			error = test_file, -- test_file contains error message on failure
+			error = test_file,
 		}
 	end
 
-	-- Store bufnr for handler to use (root cause fix)
-	test_bufnr = bufnr
-
-	-- Wait for diagnostics to be published (if not already received)
-	local diagnostics_success = diagnostics_received
+	-- Neovim 0.11+ routes publishDiagnostics through vim.diagnostic internally;
+	-- custom client handlers for this method are bypassed. Poll vim.diagnostic.get()
+	-- instead of waiting for a handler callback.
+	local diagnostics_success = #vim.diagnostic.get(bufnr) > 0
 		or vim.wait(DIAGNOSTICS_TIMEOUT_MS, function()
-			return diagnostics_received or client:is_stopped()
+			return #vim.diagnostic.get(bufnr) > 0 or client:is_stopped()
 		end)
 
 	local diagnostics_duration = (vim.uv.hrtime() - diagnostics_start) / 1e6
 	local client_stopped = client:is_stopped()
+	local received_diagnostics = vim.diagnostic.get(bufnr)
 
-	-- Check if server supports diagnostics
 	local supports_diagnostics = client.server_capabilities
 		and (client.server_capabilities.diagnosticProvider or client.server_capabilities.textDocumentSync)
 
 	local result = {
-		success = false, -- Will be set to true only if diagnostics work correctly
-		success_rate = 0.0, -- Will be set to 1.0 if diagnostics work correctly
+		success = false,
+		success_rate = 0.0,
 		server_name = server_name,
 		duration_ms = diagnostics_duration,
 		diagnostics_count = #received_diagnostics,
@@ -91,7 +63,6 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 	elseif not diagnostics_success then
 		result.error = string.format("Timeout waiting for diagnostics (%gs)", DIAGNOSTICS_TIMEOUT_MS / 1000)
 	else
-		-- Validate that we received real diagnostics with proper structure
 		local has_valid_diagnostics = false
 		local error_count = 0
 		local warning_count = 0
@@ -99,8 +70,7 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 		local hint_count = 0
 
 		for _, diagnostic in ipairs(received_diagnostics) do
-			-- Check that diagnostic has required fields
-			if diagnostic.range and diagnostic.message and #diagnostic.message > 0 then
+			if diagnostic.lnum ~= nil and diagnostic.message and #diagnostic.message > 0 then
 				has_valid_diagnostics = true
 
 				if diagnostic.severity == vim.diagnostic.severity.ERROR then
@@ -122,17 +92,15 @@ function M.run_diagnostics_benchmark(config, fixture_dir)
 			hints = hint_count,
 		}
 
-		-- Only mark as success if we got valid diagnostics with content
 		if has_valid_diagnostics then
 			result.success = true
 			result.success_rate = 1.0
 		else
-			result.error = "No valid diagnostics received (missing range or message)"
+			result.error = "No valid diagnostics received (missing lnum or message)"
 			result.success_rate = 0.0
 		end
 	end
 
-	-- Clean up
 	benchmark.cleanup_test(bufnr, test_file, client)
 
 	return result
