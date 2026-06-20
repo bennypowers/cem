@@ -49,9 +49,8 @@ func TestListE2E(t *testing.T) {
 			expectedError: "Error: unknown format: json",
 		},
 		{
-			name:          "Markdown",
-			command:       []string{"list", "tags", "--format", "markdown"},
-			expectedError: "Error: unknown format: markdown",
+			name:    "Markdown",
+			command: []string{"list", "tags", "--format", "markdown"},
 		},
 		{
 			name:    "Attributes",

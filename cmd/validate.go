@@ -53,8 +53,8 @@ func validateWorkspace(cmd *cobra.Command) error {
 		displayOptions := V.DisplayOptions{
 			Format: format,
 		}
-		fmt.Fprintf(os.Stderr, "\n%s:\n", pkg.Name)
-		if err := V.PrintValidationResult(manifestPath, result, displayOptions); err != nil {
+		cmd.PrintErrln("\n" + pkg.Name + ":")
+		if err := V.PrintValidationResult(cmd.OutOrStdout(), manifestPath, result, displayOptions); err != nil {
 			return err
 		}
 		if !result.IsValid {
@@ -87,7 +87,7 @@ var validateCmd = &cobra.Command{
 
 		ctx, err := workspace.GetWorkspaceContext(cmd)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting workspace context: %v\n", err)
+			cmd.PrintErrln("Error getting workspace context:", err)
 			os.Exit(1)
 		}
 
@@ -97,7 +97,7 @@ var validateCmd = &cobra.Command{
 		}
 
 		if manifestPath == "" {
-			fmt.Fprintln(os.Stderr, "Could not find custom-elements.json")
+			cmd.PrintErrln("Could not find custom-elements.json")
 			os.Exit(1)
 		}
 
@@ -118,16 +118,15 @@ var validateCmd = &cobra.Command{
 		// Validate the manifest
 		result, err := V.Validate(manifestPath, options)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error validating manifest: %v\n", err)
+			cmd.PrintErrln("Error validating manifest:", err)
 			os.Exit(1)
 		}
 
-		// Print the results
 		displayOptions := V.DisplayOptions{
 			Format: format,
 		}
-		if err := V.PrintValidationResult(manifestPath, result, displayOptions); err != nil {
-			fmt.Fprintf(os.Stderr, "Error displaying validation results: %v\n", err)
+		if err := V.PrintValidationResult(cmd.OutOrStdout(), manifestPath, result, displayOptions); err != nil {
+			cmd.PrintErrln("Error displaying validation results:", err)
 			os.Exit(1)
 		}
 

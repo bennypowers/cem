@@ -1,5 +1,7 @@
-## CSS Parts
+CSS Parts
 
-Name    | Summary       
-------- | --------------
-`label` | The label part
+ Name  │ Summary        
+───────┼────────────────
+ label │ The label part 
+
+

@@ -21,12 +21,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"text/template"
 
+	lipgloss "charm.land/lipgloss/v2"
+
 	"bennypowers.dev/cem/internal/logging"
-	"github.com/pterm/pterm"
+)
+
+var (
+	headerStyle    = lipgloss.NewStyle().Bold(true)
+	sectionStyle   = lipgloss.NewStyle().Bold(true).Underline(true)
+	greenStyle     = lipgloss.NewStyle().Foreground(lipgloss.Green)
+	yellowStyle    = lipgloss.NewStyle().Foreground(lipgloss.Yellow)
+	redStyle       = lipgloss.NewStyle().Foreground(lipgloss.Red)
+	lightBlueStyle = lipgloss.NewStyle().Foreground(lipgloss.BrightBlue)
 )
 
 //go:embed templates/report.md.tmpl
@@ -38,36 +47,35 @@ type DisplayOptions struct {
 }
 
 // PrintHealthResult prints the health result with the specified format.
-func PrintHealthResult(result *HealthResult, options DisplayOptions) error {
+func PrintHealthResult(w io.Writer, result *HealthResult, options DisplayOptions) error {
 	switch options.Format {
 	case "json":
-		return printHealthResultJSON(os.Stdout, result)
+		return printHealthResultJSON(w, result)
 	case "markdown":
-		return writeMarkdownReport(os.Stdout, result)
+		return writeMarkdownReport(w, result)
 	case "text", "":
-		printHealthResultText(result)
-		return nil
+		return printHealthResultText(w, result)
 	default:
 		return fmt.Errorf("invalid format: %s. Use 'text', 'json', or 'markdown'", options.Format)
 	}
 }
 
 // PrintWorkspaceHealthResults prints collected workspace health results as a single output.
-func PrintWorkspaceHealthResults(results []PackageHealthResult, options DisplayOptions) error {
+func PrintWorkspaceHealthResults(w io.Writer, results []PackageHealthResult, options DisplayOptions) error {
 	switch options.Format {
 	case "json":
-		encoder := json.NewEncoder(os.Stdout)
+		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "  ")
 		return encoder.Encode(results)
 	case "markdown":
 		for _, r := range results {
-			if _, err := fmt.Fprintf(os.Stdout, "# %s\n\n", r.Package); err != nil {
+			if _, err := fmt.Fprintf(w, "# %s\n\n", r.Package); err != nil {
 				return err
 			}
-			if err := writeMarkdownReport(os.Stdout, r.Result); err != nil {
+			if err := writeMarkdownReport(w, r.Result); err != nil {
 				return err
 			}
-			if _, err := fmt.Fprintln(os.Stdout); err != nil {
+			if _, err := fmt.Fprintln(w); err != nil {
 				return err
 			}
 		}
@@ -83,60 +91,74 @@ func printHealthResultJSON(w io.Writer, result *HealthResult) error {
 	return encoder.Encode(result)
 }
 
-func printHealthResultText(result *HealthResult) {
+func printHealthResultText(w io.Writer, result *HealthResult) error {
 	if len(result.Modules) == 0 {
 		logging.Warning("No declarations found in manifest")
-		return
+		return nil
 	}
 
-	pterm.DefaultHeader.WithFullWidth().Println("Component Health Report")
-	pterm.Println()
+	if _, err := lipgloss.Fprintln(w, headerStyle.Render("Component Health Report")); err != nil {
+		return err
+	}
+	if _, err := lipgloss.Fprintln(w); err != nil {
+		return err
+	}
 
 	for _, mod := range result.Modules {
-		printModuleReport(mod)
+		if err := printModuleReport(w, mod); err != nil {
+			return err
+		}
 	}
 
-	// Overall score
 	pct := percentage(result.OverallScore, result.OverallMax)
 	style := scoreStyle(pct)
-	pterm.Println()
-	pterm.Printf("Overall: %s %d/%d\n",
-		style.Sprint(buildBar(pct, 40)),
+	if _, err := lipgloss.Fprintln(w); err != nil {
+		return err
+	}
+	if _, err := lipgloss.Fprintf(w, "Overall: %s %d/%d\n",
+		style.Render(buildBar(pct, 40)),
 		result.OverallScore,
-		result.OverallMax)
-	pterm.Println()
+		result.OverallMax); err != nil {
+		return err
+	}
+	if _, err := lipgloss.Fprintln(w); err != nil {
+		return err
+	}
 
-	// Recommendations
 	if len(result.Recommendations) > 0 {
-		pterm.DefaultSection.Println("Recommendations")
-		items := make([]pterm.BulletListItem, len(result.Recommendations))
-		for i, rec := range result.Recommendations {
-			items[i] = pterm.BulletListItem{
-				Level: 0,
-				Text:  rec,
+		if _, err := lipgloss.Fprintln(w, sectionStyle.Render("Recommendations")); err != nil {
+			return err
+		}
+		for _, rec := range result.Recommendations {
+			if _, err := lipgloss.Fprintf(w, "  • %s\n", rec); err != nil {
+				return err
 			}
 		}
-		_ = pterm.DefaultBulletList.WithItems(items).Render()
 	}
+	return nil
 }
 
-func printModuleReport(mod ModuleReport) {
+func printModuleReport(w io.Writer, mod ModuleReport) error {
 	modPct := percentage(mod.Score, mod.MaxScore)
 	modStyle := scoreStyle(modPct)
 
-	pterm.DefaultSection.WithLevel(1).Println(
-		fmt.Sprintf("%s %s %d/%d",
-			pterm.FgLightBlue.Sprint(mod.Path),
-			modStyle.Sprint(buildBar(modPct, 20)),
-			mod.Score,
-			mod.MaxScore))
+	if _, err := lipgloss.Fprintf(w, "\n%s %s %d/%d\n",
+		lightBlueStyle.Render(mod.Path),
+		modStyle.Render(buildBar(modPct, 20)),
+		mod.Score,
+		mod.MaxScore); err != nil {
+		return err
+	}
 
 	for _, decl := range mod.Declarations {
-		printComponentReport(decl)
+		if err := printComponentReport(w, decl); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func printComponentReport(comp ComponentReport) {
+func printComponentReport(w io.Writer, comp ComponentReport) error {
 	name := comp.TagName
 	if name == "" {
 		name = comp.Name
@@ -145,41 +167,38 @@ func printComponentReport(comp ComponentReport) {
 	pct := percentage(comp.Score, comp.MaxScore)
 	style := scoreStyle(pct)
 
-	pterm.DefaultSection.WithLevel(2).Println(
-		fmt.Sprintf("%s %s %d/%d",
-			name,
-			style.Sprint(buildBar(pct, 20)),
-			comp.Score,
-			comp.MaxScore))
+	if _, err := lipgloss.Fprintf(w, "\n  %s %s %d/%d\n",
+		name,
+		style.Render(buildBar(pct, 20)),
+		comp.Score,
+		comp.MaxScore); err != nil {
+		return err
+	}
 
-	items := make([]pterm.BulletListItem, 0, len(comp.Categories))
 	for _, cat := range comp.Categories {
-		icon := pterm.FgGreen.Sprint("✓")
+		icon := greenStyle.Render("✓")
 		switch cat.Status {
 		case "warn":
-			icon = pterm.FgYellow.Sprint("⚠")
+			icon = yellowStyle.Render("⚠")
 		case "fail":
-			icon = pterm.FgRed.Sprint("✗")
+			icon = redStyle.Render("✗")
 		}
 
 		msg := cat.Category
 		if cat.Status != "pass" {
 			for _, f := range cat.Findings {
 				if f.Message != "" && f.Points < f.Max {
-					msg = fmt.Sprintf("%s — %s", cat.Category, f.Message)
+					msg = fmt.Sprintf("%s -- %s", cat.Category, f.Message)
 					break
 				}
 			}
 		}
 
-		items = append(items, pterm.BulletListItem{
-			Level:       0,
-			Text:        fmt.Sprintf("%s %s (%d/%d)", icon, msg, cat.Points, cat.MaxPoints),
-			BulletStyle: pterm.NewStyle(),
-			Bullet:      " ",
-		})
+		if _, err := lipgloss.Fprintf(w, "    %s %s (%d/%d)\n", icon, msg, cat.Points, cat.MaxPoints); err != nil {
+			return err
+		}
 	}
-	_ = pterm.DefaultBulletList.WithItems(items).Render()
+	return nil
 }
 
 func buildBar(pct, width int) string {
@@ -195,14 +214,14 @@ func percentage(score, max int) int {
 	return score * 100 / max
 }
 
-func scoreStyle(pct int) pterm.Style {
+func scoreStyle(pct int) lipgloss.Style {
 	if pct >= 80 {
-		return *pterm.NewStyle(pterm.FgGreen)
+		return greenStyle
 	}
 	if pct >= 40 {
-		return *pterm.NewStyle(pterm.FgYellow)
+		return yellowStyle
 	}
-	return *pterm.NewStyle(pterm.FgRed)
+	return redStyle
 }
 
 var markdownTmpl = template.Must(template.New("report").Funcs(template.FuncMap{

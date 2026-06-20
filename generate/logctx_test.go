@@ -20,32 +20,29 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pterm/pterm"
+	lipgloss "charm.land/lipgloss/v2"
 	"github.com/stretchr/testify/assert"
 )
-
-// Inline: pure function, table-driven
 
 func TestColorizeDuration(t *testing.T) {
 	tests := []struct {
 		name  string
 		d     time.Duration
-		color pterm.Color
+		style lipgloss.Style
 	}{
-		{"fast green", 50 * time.Millisecond, pterm.FgGreen},
-		{"zero green", 0, pterm.FgGreen},
-		{"boundary 99ms green", 99 * time.Millisecond, pterm.FgGreen},
-		{"boundary 100ms yellow", 100 * time.Millisecond, pterm.FgYellow},
-		{"medium yellow", 300 * time.Millisecond, pterm.FgYellow},
-		{"boundary 499ms yellow", 499 * time.Millisecond, pterm.FgYellow},
-		{"boundary 500ms red", 500 * time.Millisecond, pterm.FgRed},
-		{"slow red", 2 * time.Second, pterm.FgRed},
+		{"fast green", 50 * time.Millisecond, greenDuration},
+		{"zero green", 0, greenDuration},
+		{"boundary 99ms green", 99 * time.Millisecond, greenDuration},
+		{"boundary 100ms yellow", 100 * time.Millisecond, yellowDuration},
+		{"medium yellow", 300 * time.Millisecond, yellowDuration},
+		{"boundary 499ms yellow", 499 * time.Millisecond, yellowDuration},
+		{"boundary 500ms red", 500 * time.Millisecond, redDuration},
+		{"slow red", 2 * time.Second, redDuration},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			style := ColorizeDuration(tc.d)
-			expected := pterm.NewStyle(tc.color)
-			assert.Equal(t, expected, style)
+			assert.Equal(t, tc.style, style)
 		})
 	}
 }

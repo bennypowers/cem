@@ -19,23 +19,31 @@ package list
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"path"
 	"regexp"
 	"strings"
 
 	"slices"
 
+	lipgloss "charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/table"
 	"github.com/agext/levenshtein"
-	"github.com/pterm/pterm"
+	"github.com/charmbracelet/x/ansi"
 
 	M "bennypowers.dev/cem/manifest"
 )
 
-var isCodeStyleHeader = regexp.MustCompile(`Code|Type|Syntax|Static|Default|DOM Property`)
+var (
+	isCodeStyleHeader = regexp.MustCompile(`Code|Type|Syntax|Static|Default|DOM Property`)
+	isURLHeader       = regexp.MustCompile(`(?i)^(URL|Source|Href)$`)
+)
 
 // RenderOptions provides options for the Render function.
 type RenderOptions struct {
 	Columns         []string
 	IncludeSections []string
+	Markdown        bool
 }
 
 // Render recursively renders a Renderable, creating sectioned tables.
@@ -48,15 +56,7 @@ func Render(r M.Renderable, opts RenderOptions, pred M.PredicateFunc) (string, e
 
 	// Only print the main header if we are not filtering by section.
 	if len(opts.IncludeSections) == 0 {
-		label := r.Label()
-		switch r.(type) {
-		case *M.RenderableCustomElementDeclaration:
-			if strings.HasPrefix(label, "<") {
-				label = "`" + label + "`"
-			}
-		}
-		formatted := pterm.DefaultSection.WithLevel(1).Sprint(label)
-		builder.WriteString(strings.TrimSpace(formatted) + "\n\n")
+		builder.WriteString(sectionStyle.Render(r.Label()) + "\n\n")
 
 		if d, ok := r.(M.Describable); ok {
 			if summary := d.Summary(); summary != "" {
@@ -92,8 +92,7 @@ func Render(r M.Renderable, opts RenderOptions, pred M.PredicateFunc) (string, e
 			}
 
 			// The title for a subsection is smaller
-			formatted := pterm.DefaultSection.WithLevel(2).Sprint(section.Title)
-			builder.WriteString(strings.TrimSpace(formatted) + "\n\n")
+			builder.WriteString(sectionStyle.Render(section.Title) + "\n\n")
 			headers := filteredItems[0].ColumnHeadings()
 			rows := MapToTableRows(filteredItems)
 
@@ -151,8 +150,7 @@ func hasMatchingDescendants(r M.Renderable, pred M.PredicateFunc) bool {
 func RenderTable(title string, headers []string, rows [][]string, columns []string) (string, error) {
 	var builder strings.Builder
 
-	formatted := pterm.DefaultSection.Sprint(title)
-	builder.WriteString(strings.TrimSpace(formatted) + "\n\n")
+	builder.WriteString(sectionStyle.Render(title) + "\n\n")
 	str, err := formatTable(headers, rows, columns)
 	if err != nil {
 		return "", err
@@ -169,10 +167,18 @@ func RenderModulesTable(manifest *M.Package, opts RenderOptions) (string, error)
 		customElements := make([]string, 0)
 		for _, decl := range mod.Declarations {
 			if ce, ok := decl.(*M.CustomElementDeclaration); ok {
-				customElements = append(customElements, fmt.Sprintf("`<%s>`", ce.TagName))
+				customElements = append(customElements, fmt.Sprintf("<%s>", ce.TagName))
 			}
 		}
 		rows = append(rows, []string{mod.Path, strings.Join(customElements, ", ")})
+	}
+
+	if opts.Markdown {
+		finalHeaders, finalRows, err := buildTableData(headers, rows, opts.Columns, true)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("### Modules\n\n%s", FormatMarkdownTable(finalHeaders, finalRows)), nil
 	}
 
 	str, err := formatTable(headers, rows, opts.Columns)
@@ -200,6 +206,14 @@ func RenderTagsTable(manifest *M.Package, opts RenderOptions) (string, error) {
 		}
 	}
 
+	if opts.Markdown {
+		finalHeaders, finalRows, err := buildTableData(headers, rows, opts.Columns, true)
+		if err != nil {
+			return "", err
+		}
+		return FormatMarkdownTable(finalHeaders, finalRows), nil
+	}
+
 	return formatTable(headers, rows, opts.Columns)
 }
 
@@ -212,35 +226,107 @@ func MapToTableRows[T M.Renderable](items []T) [][]string {
 	return rows
 }
 
-// formatTable renders a basic table, used by the main Render function.
+var (
+	tablePadding = lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1)
+	codeStyle    = lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1).Foreground(lipgloss.Cyan)
+	headerStyle  = lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1).Bold(true)
+)
+
+func isCodeColumn(headers []string, col int) bool {
+	return col == 0 || (col < len(headers) && isCodeStyleHeader.MatchString(headers[col]))
+}
+
+// formatTable renders a styled terminal table.
 func formatTable(headers []string, rows [][]string, columns []string) (string, error) {
-	// If the user did not specify columns, filter out all-empty columns (except the first column).
 	if len(columns) == 0 {
 		headers, rows = RemoveEmptyColumns(headers, rows)
 	}
-	finalHeaders, finalRows, err := buildTableData(headers, rows, columns)
+	finalHeaders, finalRows, err := buildTableData(headers, rows, columns, false)
 	if err != nil {
 		return "", err
 	}
 	if len(finalRows) == 0 {
 		return "", nil
 	}
-	table := pterm.DefaultTable.
-		WithHasHeader(true).
-		WithBoxed(false)
-	data := pterm.TableData{finalHeaders}
-	data = append(data, finalRows...)
-	return table.WithData(data).Srender()
+	finalRows = hyperlinkURLColumns(finalHeaders, finalRows)
+	t := table.New().
+		Headers(finalHeaders...).
+		Rows(finalRows...).
+		Border(lipgloss.NormalBorder()).
+		BorderTop(false).
+		BorderBottom(false).
+		BorderLeft(false).
+		BorderRight(false).
+		BorderHeader(true).
+		BorderColumn(true).
+		BorderRow(false).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			if row == table.HeaderRow {
+				return headerStyle
+			}
+			if isCodeColumn(finalHeaders, col) {
+				return codeStyle
+			}
+			return tablePadding
+		})
+	return t.Render(), nil
 }
 
 // buildTableData prepares the filtered headers and rows for the table, given column selection.
-// Returns error if unknown columns are requested.
-func buildTableData(headers []string, rows [][]string, columns []string) ([]string, [][]string, error) {
+// When markdown is true, code columns are wrapped in backticks.
+func buildTableData(headers []string, rows [][]string, columns []string, markdown bool) ([]string, [][]string, error) {
 	if err := checkUnknownColumns(headers, columns); err != nil {
 		return nil, nil, err
 	}
-	finalHeaders, finalRows := insertMarkdownHeaderRow(backtickCodeColumns(filterTableColumns(headers, rows, columns)))
+	finalHeaders, finalRows := filterTableColumns(headers, rows, columns)
+	if markdown {
+		finalHeaders, finalRows = backtickCodeColumns(finalHeaders, finalRows)
+	}
 	return finalHeaders, finalRows, nil
+}
+
+func shortenURL(rawURL string) string {
+	if rawURL == "" {
+		return ""
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	base := path.Base(u.Path)
+	if base == "" || base == "." || base == "/" {
+		return rawURL
+	}
+	return base
+}
+
+func formatURLColumns(headers []string, rows [][]string, linkFn func(short, full string) string) [][]string {
+	out := make([][]string, len(rows))
+	for i, row := range rows {
+		newRow := make([]string, len(row))
+		copy(newRow, row)
+		for j, cell := range row {
+			if j < len(headers) && isURLHeader.MatchString(headers[j]) && cell != "" {
+				newRow[j] = linkFn(shortenURL(cell), cell)
+			}
+		}
+		out[i] = newRow
+	}
+	return out
+}
+
+var linkStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Blue)
+
+func hyperlinkURLColumns(headers []string, rows [][]string) [][]string {
+	return formatURLColumns(headers, rows, func(short, full string) string {
+		return linkStyle.Hyperlink(full).Render(short)
+	})
+}
+
+func markdownLinkURLColumns(headers []string, rows [][]string) [][]string {
+	return formatURLColumns(headers, rows, func(short, full string) string {
+		return fmt.Sprintf("[%s](%s)", short, full)
+	})
 }
 
 // Wraps the first cell in a row in backticks, for markdown output
@@ -269,43 +355,6 @@ func backtickCodeColumns(
 	return headers, outrows
 }
 
-func insCopy(dest [][]string, row []string, i int) {
-	// Copy the row (so we don't mutate the source)
-	newRow := make([]string, len(row))
-	copy(newRow, row)
-	dest[i] = newRow
-}
-
-func insertMarkdownHeaderRow(headers []string, rows [][]string) ([]string, [][]string) {
-	if len(rows) == 0 {
-		return headers, rows
-	}
-
-	out := make([][]string, len(rows)+2)
-
-	columnWidths := make([]int, len(headers))
-
-	for i, header := range headers {
-		columnWidths[i] = len(header)
-	}
-	for _, row := range rows {
-		for i, cell := range row {
-			columnWidths[i] = max(columnWidths[i], len(cell))
-		}
-	}
-
-	// don't insert headers, that happened in formatTable
-	sep := make([]string, len(headers))
-	for j, width := range columnWidths {
-		sep[j] = strings.Repeat("-", max(3, width))
-	}
-	out[1] = sep
-
-	for i, row := range rows {
-		insCopy(out, row, i+2)
-	}
-	return headers, out
-}
 
 // checkUnknownColumns returns an error if any column name is not in headers, case-insensitive.
 func checkUnknownColumns(headers []string, columns []string) error {
@@ -418,4 +467,161 @@ func filterTableColumns(headers []string, rows [][]string, columns []string) ([]
 		filteredRows[i] = filtered
 	}
 	return filteredHeaders, filteredRows
+}
+
+// RenderMarkdown renders a Renderable as valid markdown tables (no ANSI).
+func RenderMarkdown(r M.Renderable, opts RenderOptions, pred M.PredicateFunc) (string, error) {
+	if r == nil {
+		return "", nil
+	}
+
+	var builder strings.Builder
+
+	if len(opts.IncludeSections) == 0 {
+		label := ansi.Strip(r.Label())
+		switch r.(type) {
+		case *M.RenderableCustomElementDeclaration:
+			if strings.HasPrefix(label, "<") {
+				label = "`" + label + "`"
+			}
+		}
+		builder.WriteString("# " + label + "\n\n")
+
+		if d, ok := r.(M.Describable); ok {
+			if summary := d.Summary(); summary != "" {
+				builder.WriteString(summary + "\n")
+			}
+			if description := d.Description(); description != "" {
+				builder.WriteString(description + "\n")
+			}
+		}
+	}
+
+	if sdp, ok := r.(M.SectionDataProvider); ok {
+		for _, section := range sdp.Sections() {
+			if len(section.Items) == 0 {
+				continue
+			}
+
+			if len(opts.IncludeSections) > 0 && !slices.Contains(opts.IncludeSections, section.Title) {
+				continue
+			}
+
+			var filteredItems []M.Renderable
+			for _, item := range section.Items {
+				if pred(item) {
+					filteredItems = append(filteredItems, item)
+				}
+			}
+
+			if len(filteredItems) == 0 {
+				continue
+			}
+
+			builder.WriteString("## " + ansi.Strip(section.Title) + "\n\n")
+			headers := filteredItems[0].ColumnHeadings()
+			rows := MapToTableRows(filteredItems)
+
+			if len(opts.Columns) == 0 {
+				headers, rows = RemoveEmptyColumns(headers, rows)
+			}
+
+			if len(headers) == 0 {
+				continue
+			}
+			finalHeaders, finalRows, err := buildTableData(headers, rows, opts.Columns, true)
+			if err != nil {
+				return "", err
+			}
+			finalRows = markdownLinkURLColumns(finalHeaders, finalRows)
+			if len(finalRows) > 0 {
+				builder.WriteString(FormatMarkdownTable(finalHeaders, finalRows))
+				builder.WriteString("\n")
+			}
+		}
+	} else {
+		for _, child := range r.Children() {
+			if pred(child) || hasMatchingDescendants(child, pred) {
+				s, err := RenderMarkdown(child, opts, pred)
+				if err != nil {
+					return "", err
+				}
+				if strings.TrimSpace(s) != "" {
+					builder.WriteString(s + "\n")
+				}
+			}
+		}
+	}
+
+	return strings.TrimRight(builder.String(), "\n") + "\n\n", nil
+}
+
+func escapeMarkdownPipe(s string) string {
+	return strings.ReplaceAll(s, "|", `\|`)
+}
+
+// FormatMarkdownTable renders headers and rows as a valid markdown table.
+func FormatMarkdownTable(headers []string, rows [][]string) string {
+	if len(rows) == 0 {
+		return ""
+	}
+
+	escapedHeaders := make([]string, len(headers))
+	for i, h := range headers {
+		escapedHeaders[i] = escapeMarkdownPipe(h)
+	}
+	escapedRows := make([][]string, len(rows))
+	for i, row := range rows {
+		escaped := make([]string, len(row))
+		for j, cell := range row {
+			escaped[j] = escapeMarkdownPipe(cell)
+		}
+		escapedRows[i] = escaped
+	}
+
+	widths := make([]int, len(escapedHeaders))
+	for i, h := range escapedHeaders {
+		widths[i] = len(h)
+	}
+	for _, row := range escapedRows {
+		for i, cell := range row {
+			if i < len(widths) {
+				widths[i] = max(widths[i], len(cell))
+			}
+		}
+	}
+
+	var builder strings.Builder
+
+	for i, h := range escapedHeaders {
+		if i > 0 {
+			builder.WriteString(" | ")
+		}
+		fmt.Fprintf(&builder, "%-*s", widths[i], h)
+	}
+	builder.WriteString("\n")
+
+	for i, w := range widths {
+		if i > 0 {
+			builder.WriteString(" | ")
+		}
+		builder.WriteString(strings.Repeat("-", max(3, w)))
+	}
+	builder.WriteString("\n")
+
+	for _, row := range escapedRows {
+		for i := range escapedHeaders {
+			if i > 0 {
+				builder.WriteString(" | ")
+			}
+			cell := ""
+			if i < len(row) {
+				cell = row[i]
+			}
+			fmt.Fprintf(&builder, "%-*s", widths[i], cell)
+		}
+		builder.WriteString("\n")
+	}
+
+	return builder.String()
 }

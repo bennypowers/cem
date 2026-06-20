@@ -1,52 +1,49 @@
 
 @test/button:
-# <root>
+<root>
 
-# module src/button.js
+module src/button.js
 
-# `<test-button>`
+<test-button>
 
 Test button
 A button
-## Demos
+Demos
 
-URL | Source
--------------------------------------------------------- | ----------------
-`https://test.example.com/components/button/demo/basic/` | /demo/basic.html
+ URL │ Source
+───────┼────────────
+ basic │ basic.html
+Fields
 
-## Fields
-
-Name | Type
-------- | --------
-`label` | `string`
+ Name │ Type
+───────┼────────
+ label │ string
 
 
 
 @test/card:
-# <root>
+<root>
 
-# module src/card.js
+module src/card.js
 
-# `<test-card>`
+<test-card>
 
 Test card
 A card
-## Slots
+Slots
 
-Name
------------
-`<default>`
+ Name
+───────────
+ <default>
+Demos
 
-## Demos
+ URL │ Source
+───────┼────────────
+ basic │ basic.html
+Fields
 
-URL | Source
------------------------------------------------------- | ----------------
-`https://test.example.com/components/card/demo/basic/` | /demo/basic.html
-
-## Fields
-
-Name | Type
---------- | --------
-`heading` | `string`
+ Name │ Type
+─────────┼────────
+ heading │ string
 
 

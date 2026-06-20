@@ -20,13 +20,13 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform/testutil"
+	"bennypowers.dev/cem/list"
 	"bennypowers.dev/cem/manifest"
-	"github.com/pterm/pterm"
 )
 
 func TestAttributeToTableRowGolden(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "custom_element_attributes.json", &pkg)
+	testutil.LoadJSONFixture(t, "custom-element-attributes.json", &pkg)
 
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
 	attrs := ced.Attributes()
@@ -35,17 +35,16 @@ func TestAttributeToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "attribute_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "attribute-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
 func TestSlotToTableRowGolden(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "custom_element_slots.json", &pkg)
+	testutil.LoadJSONFixture(t, "custom-element-slots.json", &pkg)
 
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
 	slots := ced.Slots()
@@ -54,17 +53,16 @@ func TestSlotToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "slot_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "slot-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
 func TestEventToTableRowGolden(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "custom_element_events.json", &pkg)
+	testutil.LoadJSONFixture(t, "custom-element-events.json", &pkg)
 
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
 	events := ced.Events()
@@ -73,17 +71,16 @@ func TestEventToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "event_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "event-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
 func TestCssPropertyToTableRowGolden(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "custom_element_css_parts_properties_states.json", &pkg)
+	testutil.LoadJSONFixture(t, "custom-element-css-parts-properties-states.json", &pkg)
 
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
 	props := ced.CssProperties()
@@ -92,17 +89,16 @@ func TestCssPropertyToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "css_property_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "css-property-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
 func TestCssPartToTableRowGolden(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "custom_element_css_parts_properties_states.json", &pkg)
+	testutil.LoadJSONFixture(t, "custom-element-css-parts-properties-states.json", &pkg)
 
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
 	parts := ced.CssParts()
@@ -111,11 +107,10 @@ func TestCssPartToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "css_part_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "css-part-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -135,11 +130,10 @@ func TestClassMethodToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "class_method_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "class-method-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -154,17 +148,16 @@ func TestClassFieldToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "class_field_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "class-field-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
 func TestCustomElementFieldToTableRowGolden(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "custom_element_member_with_attribute.json", &pkg)
+	testutil.LoadJSONFixture(t, "custom-element-member-with-attribute.json", &pkg)
 
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
 	field := ced.Members[0].(*manifest.CustomElementField)
@@ -173,17 +166,16 @@ func TestCustomElementFieldToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "custom_element_field_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "custom-element-field-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
 func TestCssCustomStateToTableRowGolden(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "custom_element_css_parts_properties_states.json", &pkg)
+	testutil.LoadJSONFixture(t, "custom-element-css-parts-properties-states.json", &pkg)
 
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
 	states := ced.CssStates()
@@ -192,17 +184,16 @@ func TestCssCustomStateToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "css_state_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "css-state-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
 func TestDemoToTableRowGolden(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "custom_element_demos.json", &pkg)
+	testutil.LoadJSONFixture(t, "custom-element-demos.json", &pkg)
 
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
 	renderable := manifest.NewRenderableDemo(&ced.Demos[0], ced, &pkg.Modules[0], &pkg)
@@ -210,11 +201,10 @@ func TestDemoToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "demo_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "demo-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -228,11 +218,10 @@ func TestFunctionDeclarationToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "function_declaration_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "function-declaration-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -246,17 +235,16 @@ func TestMixinDeclarationToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "mixin_declaration_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "mixin-declaration-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
 func TestCustomElementMixinDeclarationToTableRowGolden(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "custom_element_mixin.json", &pkg)
+	testutil.LoadJSONFixture(t, "custom-element-mixin.json", &pkg)
 
 	cemd := pkg.Modules[0].Declarations[0].(*manifest.CustomElementMixinDeclaration)
 	renderable := manifest.NewRenderableCustomElementMixinDeclaration(cemd, &pkg.Modules[0], &pkg)
@@ -264,11 +252,10 @@ func TestCustomElementMixinDeclarationToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "custom_element_mixin_declaration_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "custom-element-mixin-declaration-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
@@ -282,27 +269,25 @@ func TestVariableDeclarationToTableRowGolden(t *testing.T) {
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "variable_declaration_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "variable-declaration-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }
 
 func TestModuleToTableRowGolden(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "custom_element_members.json", &pkg)
+	testutil.LoadJSONFixture(t, "custom-element-members.json", &pkg)
 
 	renderable := manifest.NewRenderableModule(&pkg.Modules[0], &pkg)
 
 	headers := renderable.ColumnHeadings()
 	row := renderable.ToTableRow()
 
-	table, _ := pterm.DefaultTable.WithHasHeader(true).WithData([][]string{headers, row}).Srender()
-	testutil.CheckGolden(t, "module_row", []byte(table), testutil.GoldenOptions{
+	rendered := list.FormatMarkdownTable(headers, [][]string{row})
+	testutil.CheckGolden(t, "module-row", []byte(rendered), testutil.GoldenOptions{
 		Dir:       "testdata",
 		Extension: ".md",
-		StripANSI: true,
 	})
 }

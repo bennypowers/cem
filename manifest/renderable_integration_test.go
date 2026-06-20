@@ -13,7 +13,7 @@ func TestRenderableAttribute_WithMapLookup(t *testing.T) {
 	t.Run("MatchesCurrentBehavior", func(t *testing.T) {
 		// Load fixture with custom element members
 		fixtureFS := testutil.NewFixtureFS(t, "", "/")
-		manifestJSON, err := fs.ReadFile(fixtureFS, "/custom_element_member_with_attribute.json")
+		manifestJSON, err := fs.ReadFile(fixtureFS, "/custom-element-member-with-attribute.json")
 		if err != nil {
 			t.Fatalf("failed to load fixture: %v", err)
 		}
