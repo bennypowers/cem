@@ -52,6 +52,24 @@ type DisplayOptions struct {
 	Format string
 }
 
+// PackageValidationResult pairs a package name with its validation result for workspace output.
+type PackageValidationResult struct {
+	Package string            `json:"package"`
+	Result  *ValidationResult `json:"result"`
+}
+
+// PrintWorkspaceValidationResults prints collected workspace validation results as a single output.
+func PrintWorkspaceValidationResults(w io.Writer, results []PackageValidationResult, options DisplayOptions) error {
+	switch options.Format {
+	case "json":
+		encoder := json.NewEncoder(w)
+		encoder.SetIndent("", "  ")
+		return encoder.Encode(results)
+	default:
+		return fmt.Errorf("unsupported workspace format: %s", options.Format)
+	}
+}
+
 // PrintValidationResult prints the validation result with appropriate formatting
 func PrintValidationResult(w io.Writer, manifestPath string, result *ValidationResult, options DisplayOptions) error {
 	switch options.Format {

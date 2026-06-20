@@ -40,6 +40,8 @@ func validateWorkspace(cmd *cobra.Command) error {
 	allDisabled = append(allDisabled, configDisabled...)
 	allDisabled = append(allDisabled, disableFlags...)
 
+	var collected []V.PackageValidationResult
+
 	results := workspace.ForEachPackage(ctx.Root(), func(pkg workspace.PackageInfo) error {
 		manifestPath := filepath.Join(pkg.Path, pkg.CustomElementsRef)
 		options := V.ValidationOptions{
@@ -50,18 +52,33 @@ func validateWorkspace(cmd *cobra.Command) error {
 		if err != nil {
 			return err
 		}
-		displayOptions := V.DisplayOptions{
-			Format: format,
+
+		if format == "text" || format == "" {
+			displayOptions := V.DisplayOptions{Format: format}
+			cmd.PrintErrln("\n" + pkg.Name + ":")
+			if err := V.PrintValidationResult(cmd.OutOrStdout(), manifestPath, result, displayOptions); err != nil {
+				return err
+			}
+		} else {
+			result.Path = manifestPath
+			collected = append(collected, V.PackageValidationResult{
+				Package: pkg.Name,
+				Result:  result,
+			})
 		}
-		cmd.PrintErrln("\n" + pkg.Name + ":")
-		if err := V.PrintValidationResult(cmd.OutOrStdout(), manifestPath, result, displayOptions); err != nil {
-			return err
-		}
+
 		if !result.IsValid {
 			return fmt.Errorf("validation failed")
 		}
 		return nil
 	})
+
+	if format != "text" && format != "" {
+		displayOptions := V.DisplayOptions{Format: format}
+		if err := V.PrintWorkspaceValidationResults(cmd.OutOrStdout(), collected, displayOptions); err != nil {
+			return err
+		}
+	}
 
 	return workspace.ReportResults("Validated manifests", results)
 }
