@@ -26,7 +26,7 @@ import (
 // TestInheritance_SimpleMixin tests basic mixin flattening
 func TestInheritance_SimpleMixin(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "inheritance_simple_mixin.json", &pkg)
+	testutil.LoadJSONFixture(t, "inheritance-simple-mixin.json", &pkg)
 
 	// Get the custom element that uses the mixin
 	ced := pkg.Modules[1].Declarations[0].(*manifest.CustomElementDeclaration)
@@ -67,7 +67,7 @@ func TestInheritance_SimpleMixin(t *testing.T) {
 // TestInheritance_Superclass tests basic superclass inheritance
 func TestInheritance_Superclass(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "inheritance_superclass.json", &pkg)
+	testutil.LoadJSONFixture(t, "inheritance-superclass.json", &pkg)
 
 	// Get the subclass
 	ced := pkg.Modules[1].Declarations[0].(*manifest.CustomElementDeclaration)
@@ -108,7 +108,7 @@ func TestInheritance_Superclass(t *testing.T) {
 // TestInheritance_SuperclassAndMixins tests combined superclass + mixin inheritance
 func TestInheritance_SuperclassAndMixins(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "inheritance_superclass_and_mixins.json", &pkg)
+	testutil.LoadJSONFixture(t, "inheritance-superclass-and-mixins.json", &pkg)
 
 	// Get the element that has both superclass and mixins
 	ced := pkg.Modules[2].Declarations[0].(*manifest.CustomElementDeclaration)
@@ -154,7 +154,7 @@ func TestInheritance_SuperclassAndMixins(t *testing.T) {
 // TestInheritance_ChainedMixins tests mixin A → B → C chain
 func TestInheritance_ChainedMixins(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "inheritance_chained_mixins.json", &pkg)
+	testutil.LoadJSONFixture(t, "inheritance-chained-mixins.json", &pkg)
 
 	// Get the element that uses a mixin which itself uses another mixin
 	ced := pkg.Modules[2].Declarations[0].(*manifest.CustomElementDeclaration)
@@ -201,7 +201,7 @@ func TestInheritance_ChainedMixins(t *testing.T) {
 // TestInheritance_DescriptionDeduplication tests smart description merging
 func TestInheritance_DescriptionDeduplication(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "inheritance_description_dedup.json", &pkg)
+	testutil.LoadJSONFixture(t, "inheritance-description-dedup.json", &pkg)
 
 	ced := pkg.Modules[1].Declarations[0].(*manifest.CustomElementDeclaration)
 	attrs := ced.Attributes()
@@ -238,7 +238,7 @@ func TestInheritance_DescriptionDeduplication(t *testing.T) {
 // TestInheritance_MixinOverride tests class overriding mixin attribute
 func TestInheritance_MixinOverride(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "inheritance_mixin_override.json", &pkg)
+	testutil.LoadJSONFixture(t, "inheritance-mixin-override.json", &pkg)
 
 	ced := pkg.Modules[1].Declarations[0].(*manifest.CustomElementDeclaration)
 	attrs := ced.Attributes()
@@ -265,7 +265,7 @@ func TestInheritance_MixinOverride(t *testing.T) {
 // TestInheritance_CircularReference tests circular reference detection
 func TestInheritance_CircularReference(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "inheritance_circular.json", &pkg)
+	testutil.LoadJSONFixture(t, "inheritance-circular.json", &pkg)
 
 	ced := pkg.Modules[0].Declarations[0].(*manifest.CustomElementDeclaration)
 
@@ -281,7 +281,7 @@ func TestInheritance_CircularReference(t *testing.T) {
 // TestInheritance_SlotsAndEvents tests inheritance of slots and events
 func TestInheritance_SlotsAndEvents(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "inheritance_slots_events.json", &pkg)
+	testutil.LoadJSONFixture(t, "inheritance-slots-events.json", &pkg)
 
 	ced := pkg.Modules[1].Declarations[0].(*manifest.CustomElementDeclaration)
 
@@ -323,7 +323,7 @@ func TestInheritance_SlotsAndEvents(t *testing.T) {
 // TestInheritance_MultiLevelSuperclass tests 3-level superclass chain (Grandchild → Child → Base)
 func TestInheritance_MultiLevelSuperclass(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "inheritance_multilevel_superclass.json", &pkg)
+	testutil.LoadJSONFixture(t, "inheritance-multilevel-superclass.json", &pkg)
 
 	// Get the grandchild element (3 levels deep)
 	grandchildDecl := pkg.FindCustomElementDeclaration("grandchild-element")
@@ -412,7 +412,7 @@ func TestInheritance_MultiLevelSuperclass(t *testing.T) {
 
 func TestInheritance_CSSProperties(t *testing.T) {
 	var pkg manifest.Package
-	testutil.LoadJSONFixture(t, "inheritance_css.json", &pkg)
+	testutil.LoadJSONFixture(t, "inheritance-css.json", &pkg)
 
 	ced := pkg.FindCustomElementDeclaration("child-element")
 	if ced == nil {

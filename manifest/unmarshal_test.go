@@ -220,7 +220,7 @@ func TestUnmarshalPackage(t *testing.T) {
 
 		t.Run("BasicFields", func(t *testing.T) {
 			mustRunFixture(t)
-			manifestJSON := loadFixture(t, "custom_element_basic_fields.json")
+			manifestJSON := loadFixture(t, "custom-element-basic-fields.json")
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			mod := mustFirstModule(t, pkg)
 			ce := mustCustomElementDecl(t, mustModuleDecls(t, mod, 1)[0])
@@ -234,7 +234,7 @@ func TestUnmarshalPackage(t *testing.T) {
 
 		t.Run("MemberWithAttributeYieldsCustomElementField", func(t *testing.T) {
 			mustRunFixture(t)
-			manifestJSON := loadFixture(t, "custom_element_member_with_attribute.json")
+			manifestJSON := loadFixture(t, "custom-element-member-with-attribute.json")
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
 			if len(ce.Members) != 2 {
@@ -267,7 +267,7 @@ func TestUnmarshalPackage(t *testing.T) {
 
 		t.Run("Attributes", func(t *testing.T) {
 			mustRunFixture(t)
-			manifestJSON := loadFixture(t, "custom_element_attributes.json")
+			manifestJSON := loadFixture(t, "custom-element-attributes.json")
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
 			attrs := ce.Attributes()
@@ -349,7 +349,7 @@ func TestUnmarshalPackage(t *testing.T) {
 			})
 			t.Run("Event", func(t *testing.T) {
 				mustRunFixture(t)
-				manifestJSON := loadFixture(t, "custom_element_events.json")
+				manifestJSON := loadFixture(t, "custom-element-events.json")
 				pkg := mustUnmarshalPackage(t, manifestJSON)
 				ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
 				events := ce.Events()
@@ -402,7 +402,7 @@ func TestUnmarshalPackage(t *testing.T) {
 
 		t.Run("Slots", func(t *testing.T) {
 			mustRunFixture(t)
-			manifestJSON := loadFixture(t, "custom_element_slots.json")
+			manifestJSON := loadFixture(t, "custom-element-slots.json")
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
 			slots := ce.Slots()
@@ -443,7 +443,7 @@ func TestUnmarshalPackage(t *testing.T) {
 
 		t.Run("CssPartsPropertiesStates", func(t *testing.T) {
 			mustRunFixture(t)
-			manifestJSON := loadFixture(t, "custom_element_css_parts_properties_states.json")
+			manifestJSON := loadFixture(t, "custom-element-css-parts-properties-states.json")
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
 			parts := ce.CssParts()
@@ -550,7 +550,7 @@ func TestUnmarshalPackage(t *testing.T) {
 
 		t.Run("Demos", func(t *testing.T) {
 			mustRunFixture(t)
-			manifestJSON := loadFixture(t, "custom_element_demos.json")
+			manifestJSON := loadFixture(t, "custom-element-demos.json")
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
 			if len(ce.Demos) != 1 || ce.Demos[0].Description != "Basic demo" || ce.Demos[0].URL != "demo.html" {
@@ -560,7 +560,7 @@ func TestUnmarshalPackage(t *testing.T) {
 
 		t.Run("Mixins", func(t *testing.T) {
 			mustRunFixture(t)
-			manifestJSON := loadFixture(t, "custom_element_mixins.json")
+			manifestJSON := loadFixture(t, "custom-element-mixins.json")
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
 			if len(ce.Mixins) != 1 || ce.Mixins[0].Name != "MyMixin" {
@@ -570,7 +570,7 @@ func TestUnmarshalPackage(t *testing.T) {
 
 		t.Run("Members", func(t *testing.T) {
 			mustRunFixture(t)
-			manifestJSON := loadFixture(t, "custom_element_members.json")
+			manifestJSON := loadFixture(t, "custom-element-members.json")
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
 			if len(ce.Members) != 1 {
@@ -584,7 +584,7 @@ func TestUnmarshalPackage(t *testing.T) {
 
 		t.Run("SliceNils", func(t *testing.T) {
 			mustRunFixture(t)
-			manifestJSON := loadFixture(t, "custom_element_slice_nils.json")
+			manifestJSON := loadFixture(t, "custom-element-slice-nils.json")
 			pkg := mustUnmarshalPackage(t, manifestJSON)
 			ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
 			val := reflect.ValueOf(*ce)
@@ -886,7 +886,7 @@ func TestUnmarshalPackage(t *testing.T) {
 	})
 
 	t.Run("CustomElementMixin", func(t *testing.T) {
-		manifestJSON := loadFixture(t, "custom_element_mixin.json")
+		manifestJSON := loadFixture(t, "custom-element-mixin.json")
 		pkg := mustUnmarshalPackage(t, manifestJSON)
 		mod := mustFirstModule(t, pkg)
 		cem := mustCustomElementMixinDecl(t, mustModuleDecls(t, mod, 1)[0])
@@ -907,7 +907,7 @@ func TestUnmarshalPackage(t *testing.T) {
 	})
 
 	t.Run("EmptySlices", func(t *testing.T) {
-		manifestJSON := loadFixture(t, "empty_slices.json")
+		manifestJSON := loadFixture(t, "empty-slices.json")
 		pkg := mustUnmarshalPackage(t, manifestJSON)
 		ce := mustCustomElementDecl(t, mustFirstModule(t, pkg).Declarations[0])
 		val := reflect.ValueOf(*ce)
@@ -984,7 +984,7 @@ func TestUnmarshalPackage(t *testing.T) {
 	})
 
 	t.Run("UnknownKind", func(t *testing.T) {
-		manifestJSON := loadFixture(t, "unknown_kind.json")
+		manifestJSON := loadFixture(t, "unknown-kind.json")
 		_, err := mustUnmarshalPackageEdge(t, manifestJSON)
 		if err == nil {
 			t.Errorf("expected error for unknown kind, got nil")
