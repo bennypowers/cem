@@ -17,17 +17,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"os/signal"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
-	"atomicgo.dev/keyboard"
-	"atomicgo.dev/keyboard/keys"
+	tea "charm.land/bubbletea/v2"
+	"golang.org/x/term"
+
 	"bennypowers.dev/cem/cmd/config"
 	IC "bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/internal/logging"
@@ -35,10 +38,13 @@ import (
 	"bennypowers.dev/cem/serve/logger"
 	"bennypowers.dev/cem/serve/middleware/transform"
 	"bennypowers.dev/cem/serve/middleware/types"
+	servetui "bennypowers.dev/cem/serve/tui"
 	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+var serveTUILogger *servetui.Logger
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
@@ -49,8 +55,17 @@ var serveCmd = &cobra.Command{
 - WebSocket-based browser refresh
 - Multiple rendering modes (full UI, shadow DOM, or chromeless)
 - Static file serving with CORS`,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		if term.IsTerminal(int(os.Stdout.Fd())) {
+			serveTUILogger = servetui.NewLogger()
+			logging.SetMode(logging.ModeServe)
+			logging.SetServeSink(serveTUILogger)
+		} else {
+			serveTUILogger = nil
+		}
+		return rootPersistentPreRunE(cmd, args)
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Get workspace context
 		ctx, err := W.GetWorkspaceContext(cmd)
 		if err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
@@ -175,164 +190,232 @@ var serveCmd = &cobra.Command{
 			},
 		}
 
-		// Create logger
-		log := logger.NewPtermLogger()
-		defer func() {
-			if l, ok := log.(interface{ Stop() }); ok {
-				l.Stop()
-			}
-		}()
-
-		// ModeServe suppresses debug noise but keeps info/warning/error/success
-		logging.SetMode(logging.ModeServe)
-
-		// Create server
-		server, err := serve.NewServerWithConfig(config)
-		if err != nil {
-			return fmt.Errorf("failed to create server: %w", err)
-		}
-		defer func() {
-			if err := server.Close(); err != nil {
-				// Shutdown timeouts are expected with active browser sessions
-				log.Warning("Server close: %v", err)
-			}
-		}()
-
-		// Set logger
-		server.SetLogger(log)
-
-		// Set watch directory to project root
-		err = server.SetWatchDir(ctx.Root())
-		if err != nil {
-			return fmt.Errorf("failed to set watch directory: %w", err)
-		}
-
-		// Try workspace mode initialization first
-		logging.Info("Initializing server...")
-		err = server.InitializeWorkspaceMode()
-		if err != nil {
-			return fmt.Errorf("failed to initialize workspace mode: %w", err)
-		}
-
-		// If not workspace mode, try to load existing manifest or generate new one
-		if !server.IsWorkspace() {
-			// Try to load existing manifest from disk first for faster startup
-			size, err := server.TryLoadExistingManifest()
-			if err != nil {
-				// Failed to load, generate fresh manifest
-				logging.Warning("Could not load cached manifest: %v", err)
-				logging.Info("Generating initial manifest...")
-				_, err = server.RegenerateManifest()
-				if err != nil {
-					logging.Error("Failed to generate initial manifest: %v", err)
-					logging.Info("Server will continue, but manifest may be unavailable")
-				} else {
-					logging.Success("Initial manifest generated")
-				}
-			} else if size > 0 {
-				// Successfully loaded existing manifest
-				logging.Success("Loaded cached manifest from disk (%d bytes)", size)
-
-				// Schedule background regeneration (skip in build mode - Build() is synchronous)
-				buildMode, _ := cmd.Flags().GetBool("build")
-				if !buildMode {
-				go func(log logger.Logger, shutdownCh <-chan struct{}) {
-					// Wait a moment for server to fully start and become idle, or cancel if shutting down
-					select {
-					case <-time.After(2 * time.Second):
-						// Sleep completed, proceed with regeneration
-					case <-shutdownCh:
-						// Server shut down during sleep, cancel work
-						return
-					}
-
-					log.Info("Regenerating manifest in background...")
-					newSize, err := server.RegenerateManifest()
-					if err != nil {
-						log.Warning("Background manifest regeneration failed: %v", err)
-					} else {
-						log.Info("Background manifest regeneration complete (%d bytes)", newSize)
-					}
-				}(log, server.Done())
-				}
-			} else {
-				// No existing manifest found, generate fresh one
-				logging.Info("Generating initial manifest...")
-				_, err = server.RegenerateManifest()
-				if err != nil {
-					logging.Error("Failed to generate initial manifest: %v", err)
-					logging.Info("Server will continue, but manifest may be unavailable")
-				} else {
-					logging.Success("Initial manifest generated")
-				}
-			}
-		} else {
-			logging.Success("Workspace mode initialized")
-		}
-
-		// Build mode: render all pages to disk and exit (before live rendering)
 		if buildMode, _ := cmd.Flags().GetBool("build"); buildMode {
-			outputDir, _ := cmd.Flags().GetString("output")
-			basePath, _ := cmd.Flags().GetString("base-path")
-			importMode, _ := cmd.Flags().GetString("import")
-			return server.Build(serve.BuildConfig{
-				OutputDir:  outputDir,
-				BasePath:   basePath,
-				ImportMode: importMode,
-			})
+			return runBuild(config, ctx.Root(), cmd)
 		}
 
-		// Start live rendering area AFTER initial setup
-		if l, ok := log.(interface{ Start() }); ok {
-			l.Start()
+		if serveTUILogger != nil {
+			defer logging.SetServeSink(nil)
+			return runInteractive(serveTUILogger, config, ctx.Root(), reload)
 		}
-
-		// Start server
-		err = server.Start()
-		if err != nil {
-			return fmt.Errorf("failed to start server: %w", err)
-		}
-
-		// Single startup message
-		reloadStatus := ""
-		if reload {
-			reloadStatus = " (live reload enabled)"
-		}
-		// Use actual port (may differ from requested when --port 0)
-		actualPort := server.Port()
-		log.Success("Server started on http://localhost:%d%s", actualPort, reloadStatus)
-
-		// Update status with running info
-		statusMsg := formatStatusLine(actualPort, reload)
-		if l, ok := log.(interface{ SetStatus(string) }); ok {
-			l.SetStatus(statusMsg)
-		}
-
-		// Start keyboard input handler after a brief delay
-		// This allows the live area to stabilize before we enable raw mode
-		quitChan := make(chan struct{})
-		go func() {
-			time.Sleep(100 * time.Millisecond)
-			handleKeyboardInput(server, log, actualPort, quitChan)
-		}()
-
-		// Wait for quit signal (keyboard or interrupt)
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-
-		select {
-		case <-quitChan:
-			// User pressed 'q' or Ctrl+C in keyboard handler
-		case <-sigChan:
-			// Received system interrupt signal
-		}
-
-		if l, ok := log.(interface{ SetStatus(string) }); ok {
-			l.SetStatus("Shutting down...")
-		}
-		log.Info("Shutting down server...")
-		return nil
+		return runNonInteractive(config, ctx.Root(), reload)
 	},
+}
+
+func runInteractive(tl *servetui.Logger, config serve.Config, root string, reload bool) error {
+
+	config.Logger = tl
+
+	var server *serve.Server
+	var mu sync.Mutex
+	currentLogLevelIdx := 1
+	for i, v := range verbosityOrder {
+		if v == logging.CurrentVerbosity() {
+			currentLogLevelIdx = i
+			break
+		}
+	}
+
+	callbacks := servetui.Callbacks{
+		InitServer: func() tea.Msg {
+			var err error
+			server, err = initServer(config, tl, root, reload)
+			if err != nil {
+				return servetui.ServerInitErrorMsg{Err: err}
+			}
+			port := server.Port()
+			tl.SetStatus(formatStatusLine(port, reload, logging.CurrentVerbosity().String()))
+			return servetui.ServerReadyMsg{Port: port, Reload: reload, WatchDone: server.Done()}
+		},
+		RebuildManifest: func() (int, error) {
+			if server == nil {
+				return 0, fmt.Errorf("server not initialized")
+			}
+			tl.Info("Force rebuilding manifest...")
+			size, err := server.RegenerateManifest()
+			if err != nil {
+				tl.Warning("Failed to rebuild manifest: %v", err)
+			} else {
+				tl.Info("Manifest rebuilt successfully")
+			}
+			return size, err
+		},
+		OpenBrowser: func() error {
+			if server == nil {
+				return fmt.Errorf("server not initialized")
+			}
+			port := server.Port()
+			url := fmt.Sprintf("http://localhost:%d", port)
+			tl.Info("Opening %s in browser...", url)
+			return openBrowser(url)
+		},
+		CycleVerbosity: func() string {
+			mu.Lock()
+			currentLogLevelIdx = (currentLogLevelIdx + 1) % len(verbosityOrder)
+			v := verbosityOrder[currentLogLevelIdx]
+			mu.Unlock()
+			logging.SetVerbosity(v)
+			tl.Info("Log level: %s", v)
+			port := 0
+			if server != nil {
+				port = server.Port()
+			}
+			tl.SetStatus(formatStatusLine(port, reload, v.String()))
+			return v.String()
+		},
+		Shutdown: func() {
+			tl.Info("Shutting down server...")
+		},
+	}
+
+	model := servetui.NewModel(callbacks, nil)
+	p := tea.NewProgram(&model)
+	model.SetPending(tl.SetProgram(p))
+
+	if _, err := p.Run(); err != nil {
+		if !errors.Is(err, tea.ErrInterrupted) {
+			return err
+		}
+	}
+
+	if server != nil {
+		if err := server.Close(); err != nil {
+			logging.Warning("Server close: %v", err)
+		}
+	}
+	return nil
+}
+
+func initServer(config serve.Config, log logger.Logger, root string, reload bool) (ret *serve.Server, retErr error) {
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create server: %w", err)
+	}
+	defer func() {
+		if retErr != nil {
+			_ = server.Close()
+		}
+	}()
+
+	server.SetLogger(log)
+
+	if err := server.SetWatchDir(root); err != nil {
+		return nil, fmt.Errorf("failed to set watch directory: %w", err)
+	}
+
+	log.Info("Initializing server...")
+	if err := server.InitializeWorkspaceMode(); err != nil {
+		return nil, fmt.Errorf("failed to initialize workspace mode: %w", err)
+	}
+
+	if !server.IsWorkspace() {
+		size, err := server.TryLoadExistingManifest()
+		if err != nil {
+			log.Warning("Could not load cached manifest: %v", err)
+			log.Info("Generating initial manifest...")
+			if _, err = server.RegenerateManifest(); err != nil {
+				log.Error("Failed to generate initial manifest: %v", err)
+				log.Info("Server will continue, but manifest may be unavailable")
+			} else {
+				log.Success("Initial manifest generated")
+			}
+		} else if size > 0 {
+			log.Success("Loaded cached manifest from disk (%d bytes)", size)
+			go func() {
+				select {
+				case <-time.After(2 * time.Second):
+				case <-server.Done():
+					return
+				}
+				log.Info("Regenerating manifest in background...")
+				newSize, err := server.RegenerateManifest()
+				if err != nil {
+					log.Warning("Background manifest regeneration failed: %v", err)
+				} else {
+					log.Info("Background manifest regeneration complete (%d bytes)", newSize)
+				}
+			}()
+		} else {
+			log.Info("Generating initial manifest...")
+			if _, err = server.RegenerateManifest(); err != nil {
+				log.Error("Failed to generate initial manifest: %v", err)
+				log.Info("Server will continue, but manifest may be unavailable")
+			} else {
+				log.Success("Initial manifest generated")
+			}
+		}
+	} else {
+		log.Success("Workspace mode initialized")
+	}
+
+	if err := server.Start(); err != nil {
+		return nil, fmt.Errorf("failed to start server: %w", err)
+	}
+
+	reloadStatus := ""
+	if reload {
+		reloadStatus = " (live reload enabled)"
+	}
+	log.Success("Server started on http://localhost:%d%s", server.Port(), reloadStatus)
+
+	return server, nil
+}
+
+func runBuild(config serve.Config, root string, cmd *cobra.Command) error {
+	log := logger.NewDefaultLogger()
+	config.Logger = log
+
+	server, err := serve.NewServerWithConfig(config)
+	if err != nil {
+		return fmt.Errorf("failed to create server: %w", err)
+	}
+	server.SetLogger(log)
+	if err := server.SetWatchDir(root); err != nil {
+		return fmt.Errorf("failed to set watch directory: %w", err)
+	}
+	log.Info("Initializing server...")
+	if err := server.InitializeWorkspaceMode(); err != nil {
+		return fmt.Errorf("failed to initialize workspace mode: %w", err)
+	}
+	if !server.IsWorkspace() {
+		if _, err := server.TryLoadExistingManifest(); err != nil {
+			if _, err = server.RegenerateManifest(); err != nil {
+				return fmt.Errorf("failed to generate manifest: %w", err)
+			}
+		}
+	}
+
+	outputDir, _ := cmd.Flags().GetString("output")
+	basePath, _ := cmd.Flags().GetString("base-path")
+	importMode, _ := cmd.Flags().GetString("import")
+	return server.Build(serve.BuildConfig{
+		OutputDir:  outputDir,
+		BasePath:   basePath,
+		ImportMode: importMode,
+	})
+}
+
+func runNonInteractive(config serve.Config, root string, reload bool) error {
+	log := logger.NewDefaultLogger()
+	config.Logger = log
+
+	server, err := initServer(config, log, root, reload)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := server.Close(); err != nil {
+			logging.Warning("Server close: %v", err)
+		}
+	}()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	select {
+	case <-sigChan:
+	case <-server.Done():
+	}
+	return nil
 }
 
 // openBrowser opens the given URL in the default browser
@@ -351,96 +434,12 @@ func openBrowser(url string) error {
 	return cmd.Start()
 }
 
-// showHelp displays the keyboard shortcuts help menu
-func showHelp(log logger.Logger) {
-	log.Info(`Keyboard Shortcuts
-	m - Force rebuild manifest
-	v - Cycle log levels (quiet/normal/verbose/debug/trace)
-	o - Open in browser
-	c - Clear console
-	h - Show this help
-	q - Quit server
-	Ctrl+C - Also quits server                      `)
-}
-
-// verbosityOrder defines the cycle for the 'v' key in serve mode.
 var verbosityOrder = []logging.Verbosity{
 	logging.VerbosityQuiet,
 	logging.VerbosityNormal,
 	logging.VerbosityVerbose,
 	logging.VerbosityDebug,
 	logging.VerbosityTrace,
-}
-
-// handleKeyboardInput reads keyboard input and handles commands using atomicgo/keyboard
-func handleKeyboardInput(server *serve.Server, log logger.Logger, port int, quitChan chan struct{}) {
-	currentLogLevelIdx := 1 // matches VerbosityNormal default; synced if -v/-q passed
-	for i, v := range verbosityOrder {
-		if v == logging.CurrentVerbosity() {
-			currentLogLevelIdx = i
-			break
-		}
-	}
-
-	// Handle all keyboard input
-	err := keyboard.Listen(func(key keys.Key) (stop bool, err error) {
-		// Handle Ctrl+C
-		if key.Code == keys.CtrlC {
-			close(quitChan)
-			return true, nil // Stop listening
-		}
-
-		// Only handle rune key presses (regular characters)
-		if key.Code != keys.RuneKey || len(key.Runes) == 0 {
-			return false, nil
-		}
-
-		switch key.Runes[0] {
-		case 'q', 'Q':
-			log.Info("Quitting...")
-			close(quitChan)
-			return true, nil // Stop listening
-
-		case 'm', 'M':
-			log.Info("Force rebuilding manifest...")
-			if _, err := server.RegenerateManifest(); err != nil {
-				log.Warning("Failed to rebuild manifest: %v", err)
-			} else {
-				log.Info("Manifest rebuilt successfully")
-			}
-
-		case 'v', 'V':
-			currentLogLevelIdx = (currentLogLevelIdx + 1) % len(verbosityOrder)
-			v := verbosityOrder[currentLogLevelIdx]
-			log.Info("Log level: %s", v)
-			logging.SetVerbosity(v)
-
-		case 'o', 'O':
-			url := fmt.Sprintf("http://localhost:%d", port)
-			log.Info("Opening %s in browser...", url)
-			if err := openBrowser(url); err != nil {
-				log.Warning("Failed to open browser: %v", err)
-			}
-
-		case 'c', 'C':
-			// Clear console by clearing the log buffer
-			if clearer, ok := log.(interface{ Clear() }); ok {
-				clearer.Clear()
-				log.Info("Console cleared")
-			} else {
-				log.Warning("Clear not supported by current logger")
-			}
-
-		case 'h', 'H', '?':
-			showHelp(log)
-		}
-
-		return false, nil
-	})
-
-	if err != nil {
-		log.Warning("Keyboard input disabled: %v", err)
-	}
 }
 
 func init() {

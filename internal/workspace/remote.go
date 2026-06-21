@@ -52,7 +52,7 @@ type RemoteWorkspaceContext struct {
 	packageJSONPath    string
 	packageJSON        *M.PackageJSON
 	customElementsPath string
-	spinner            *pterm.SpinnerPrinter
+	spinner            *pterm.SpinnerPrinter // TODO: replace with bubbles/spinner from internal/tui
 	designTokensCache  types.DesignTokensCache
 }
 

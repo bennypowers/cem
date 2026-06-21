@@ -375,6 +375,13 @@ footer ::slotted([slot="description"]) {
 .log-message {
   color: var(--cem-dev-server-text-primary);
   word-break: break-word;
+  flex: 1;
+
+  .progress-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: var(--pf-t--global--spacer--gap--group--horizontal);
+  }
 }
 
 /* Navigation content (light DOM slotted content for cem-pf-v6-page-sidebar) */

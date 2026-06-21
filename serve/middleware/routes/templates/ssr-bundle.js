@@ -21,27 +21,27 @@ var __expectFn = (fn) => fn !== void 0 && typeof fn !== "function" ? __typeError
 var __decoratorContext = (kind, name, done, metadata, fns) => ({ kind: __decoratorStrings[kind], name, metadata, addInitializer: (fn) => done._ ? __typeError("Already initialized") : fns.push(__expectFn(fn || null)) });
 var __decoratorMetadata = (array, target) => __defNormalProp(target, __knownSymbol("metadata"), array[3]);
 var __runInitializers = (array, flags, self, value) => {
-  for (var i5 = 0, fns = array[flags >> 1], n5 = fns && fns.length; i5 < n5; i5++) flags & 1 ? fns[i5].call(self) : value = fns[i5].call(self, value);
+  for (var i6 = 0, fns = array[flags >> 1], n6 = fns && fns.length; i6 < n6; i6++) flags & 1 ? fns[i6].call(self) : value = fns[i6].call(self, value);
   return value;
 };
 var __decorateElement = (array, flags, name, decorators, target, extra) => {
-  var fn, it, done, ctx, access, k2 = flags & 7, s57 = !!(flags & 8), p4 = !!(flags & 16);
-  var j2 = k2 > 3 ? array.length + 1 : k2 ? s57 ? 1 : 2 : 0, key = __decoratorStrings[k2 + 5];
+  var fn, it, done, ctx, access, k2 = flags & 7, s58 = !!(flags & 8), p4 = !!(flags & 16);
+  var j2 = k2 > 3 ? array.length + 1 : k2 ? s58 ? 1 : 2 : 0, key = __decoratorStrings[k2 + 5];
   var initializers = k2 > 3 && (array[j2 - 1] = []), extraInitializers = array[j2] || (array[j2] = []);
-  var desc = k2 && (!p4 && !s57 && (target = target.prototype), k2 < 5 && (k2 > 3 || !p4) && __getOwnPropDesc(k2 < 4 ? target : { get [name]() {
+  var desc = k2 && (!p4 && !s58 && (target = target.prototype), k2 < 5 && (k2 > 3 || !p4) && __getOwnPropDesc(k2 < 4 ? target : { get [name]() {
     return __privateGet(this, extra);
   }, set [name](x2) {
     return __privateSet(this, extra, x2);
   } }, name));
   k2 ? p4 && k2 < 4 && __name(extra, (k2 > 2 ? "set " : k2 > 1 ? "get " : "") + name) : __name(target, name);
-  for (var i5 = decorators.length - 1; i5 >= 0; i5--) {
+  for (var i6 = decorators.length - 1; i6 >= 0; i6--) {
     ctx = __decoratorContext(k2, name, done = {}, array[3], extraInitializers);
     if (k2) {
-      ctx.static = s57, ctx.private = p4, access = ctx.access = { has: p4 ? (x2) => __privateIn(target, x2) : (x2) => name in x2 };
+      ctx.static = s58, ctx.private = p4, access = ctx.access = { has: p4 ? (x2) => __privateIn(target, x2) : (x2) => name in x2 };
       if (k2 ^ 3) access.get = p4 ? (x2) => (k2 ^ 1 ? __privateGet : __privateMethod)(x2, target, k2 ^ 4 ? extra : desc.get) : (x2) => x2[name];
       if (k2 > 2) access.set = p4 ? (x2, y3) => __privateSet(x2, target, y3, k2 ^ 4 ? extra : desc.set) : (x2, y3) => x2[name] = y3;
     }
-    it = (0, decorators[i5])(k2 ? k2 < 4 ? p4 ? extra : desc[key] : k2 > 4 ? void 0 : { get: desc.get, set: desc.set } : target, ctx), done._ = 1;
+    it = (0, decorators[i6])(k2 ? k2 < 4 ? p4 ? extra : desc[key] : k2 > 4 ? void 0 : { get: desc.get, set: desc.set } : target, ctx), done._ = 1;
     if (k2 ^ 4 || it === void 0) __expectFn(it) && (k2 > 4 ? initializers.unshift(it) : k2 ? p4 ? extra = it : desc[key] = it : target = it);
     else if (typeof it !== "object" || it === null) __typeError("Object expected");
     else __expectFn(fn = it.get) && (desc.get = fn), __expectFn(fn = it.set) && (desc.set = fn), __expectFn(fn = it.init) && initializers.unshift(fn);
@@ -130,16 +130,16 @@ var e = t.ShadowRoot && (void 0 === t.ShadyCSS || t.ShadyCSS.nativeShadow) && "a
 var s = /* @__PURE__ */ Symbol();
 var o = /* @__PURE__ */ new WeakMap();
 var n = class {
-  constructor(t6, e6, o8) {
-    if (this._$cssResult$ = true, o8 !== s) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
+  constructor(t6, e6, o9) {
+    if (this._$cssResult$ = true, o9 !== s) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
     this.cssText = t6, this.t = e6;
   }
   get styleSheet() {
     let t6 = this.o;
-    const s57 = this.t;
+    const s58 = this.t;
     if (e && void 0 === t6) {
-      const e6 = void 0 !== s57 && 1 === s57.length;
-      e6 && (t6 = o.get(s57)), void 0 === t6 && ((this.o = t6 = new CSSStyleSheet()).replaceSync(this.cssText), e6 && o.set(s57, t6));
+      const e6 = void 0 !== s58 && 1 === s58.length;
+      e6 && (t6 = o.get(s58)), void 0 === t6 && ((this.o = t6 = new CSSStyleSheet()).replaceSync(this.cssText), e6 && o.set(s58, t6));
     }
     return t6;
   }
@@ -148,16 +148,16 @@ var n = class {
   }
 };
 var r = (t6) => new n("string" == typeof t6 ? t6 : t6 + "", void 0, s);
-var S = (s57, o8) => {
-  if (e) s57.adoptedStyleSheets = o8.map((t6) => t6 instanceof CSSStyleSheet ? t6 : t6.styleSheet);
-  else for (const e6 of o8) {
-    const o9 = document.createElement("style"), n5 = t.litNonce;
-    void 0 !== n5 && o9.setAttribute("nonce", n5), o9.textContent = e6.cssText, s57.appendChild(o9);
+var S = (s58, o9) => {
+  if (e) s58.adoptedStyleSheets = o9.map((t6) => t6 instanceof CSSStyleSheet ? t6 : t6.styleSheet);
+  else for (const e6 of o9) {
+    const o10 = document.createElement("style"), n6 = t.litNonce;
+    void 0 !== n6 && o10.setAttribute("nonce", n6), o10.textContent = e6.cssText, s58.appendChild(o10);
   }
 };
 var c = e || void 0 === t.CSSStyleSheet ? (t6) => t6 : (t6) => t6 instanceof CSSStyleSheet ? ((t7) => {
   let e6 = "";
-  for (const s57 of t7.cssRules) e6 += s57.cssText;
+  for (const s58 of t7.cssRules) e6 += s58.cssText;
   return r(e6);
 })(t6) : t6;
 
@@ -168,9 +168,9 @@ l.customElements ??= customElements2;
 var p = l.trustedTypes;
 var d = p ? p.emptyScript : "";
 var u = l.reactiveElementPolyfillSupport;
-var f = (t6, s57) => t6;
-var b = { toAttribute(t6, s57) {
-  switch (s57) {
+var f = (t6, s58) => t6;
+var b = { toAttribute(t6, s58) {
+  switch (s58) {
     case Boolean:
       t6 = t6 ? d : null;
       break;
@@ -179,26 +179,26 @@ var b = { toAttribute(t6, s57) {
       t6 = null == t6 ? t6 : JSON.stringify(t6);
   }
   return t6;
-}, fromAttribute(t6, s57) {
-  let i5 = t6;
-  switch (s57) {
+}, fromAttribute(t6, s58) {
+  let i6 = t6;
+  switch (s58) {
     case Boolean:
-      i5 = null !== t6;
+      i6 = null !== t6;
       break;
     case Number:
-      i5 = null === t6 ? null : Number(t6);
+      i6 = null === t6 ? null : Number(t6);
       break;
     case Object:
     case Array:
       try {
-        i5 = JSON.parse(t6);
+        i6 = JSON.parse(t6);
       } catch (t7) {
-        i5 = null;
+        i6 = null;
       }
   }
-  return i5;
+  return i6;
 } };
-var m = (t6, s57) => !h(t6, s57);
+var m = (t6, s58) => !h(t6, s58);
 var y = { attribute: true, type: String, converter: b, reflect: false, useDefault: false, hasChanged: m };
 Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), l.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
 var g = class extends (globalThis.HTMLElement ?? HTMLElement2) {
@@ -208,21 +208,21 @@ var g = class extends (globalThis.HTMLElement ?? HTMLElement2) {
   static get observedAttributes() {
     return this.finalize(), this._$Eh && [...this._$Eh.keys()];
   }
-  static createProperty(t6, s57 = y) {
-    if (s57.state && (s57.attribute = false), this._$Ei(), this.prototype.hasOwnProperty(t6) && ((s57 = Object.create(s57)).wrapped = true), this.elementProperties.set(t6, s57), !s57.noAccessor) {
-      const i5 = /* @__PURE__ */ Symbol(), e6 = this.getPropertyDescriptor(t6, i5, s57);
+  static createProperty(t6, s58 = y) {
+    if (s58.state && (s58.attribute = false), this._$Ei(), this.prototype.hasOwnProperty(t6) && ((s58 = Object.create(s58)).wrapped = true), this.elementProperties.set(t6, s58), !s58.noAccessor) {
+      const i6 = /* @__PURE__ */ Symbol(), e6 = this.getPropertyDescriptor(t6, i6, s58);
       void 0 !== e6 && r2(this.prototype, t6, e6);
     }
   }
-  static getPropertyDescriptor(t6, s57, i5) {
+  static getPropertyDescriptor(t6, s58, i6) {
     const { get: e6, set: h3 } = o2(this.prototype, t6) ?? { get() {
-      return this[s57];
+      return this[s58];
     }, set(t7) {
-      this[s57] = t7;
+      this[s58] = t7;
     } };
-    return { get: e6, set(s58) {
+    return { get: e6, set(s59) {
       const r7 = e6?.call(this);
-      h3?.call(this, s58), this.requestUpdate(t6, r7, i5);
+      h3?.call(this, s59), this.requestUpdate(t6, r7, i6);
     }, configurable: true, enumerable: true };
   }
   static getPropertyOptions(t6) {
@@ -236,32 +236,32 @@ var g = class extends (globalThis.HTMLElement ?? HTMLElement2) {
   static finalize() {
     if (this.hasOwnProperty(f("finalized"))) return;
     if (this.finalized = true, this._$Ei(), this.hasOwnProperty(f("properties"))) {
-      const t7 = this.properties, s57 = [...n2(t7), ...a(t7)];
-      for (const i5 of s57) this.createProperty(i5, t7[i5]);
+      const t7 = this.properties, s58 = [...n2(t7), ...a(t7)];
+      for (const i6 of s58) this.createProperty(i6, t7[i6]);
     }
     const t6 = this[Symbol.metadata];
     if (null !== t6) {
-      const s57 = litPropertyMetadata.get(t6);
-      if (void 0 !== s57) for (const [t7, i5] of s57) this.elementProperties.set(t7, i5);
+      const s58 = litPropertyMetadata.get(t6);
+      if (void 0 !== s58) for (const [t7, i6] of s58) this.elementProperties.set(t7, i6);
     }
     this._$Eh = /* @__PURE__ */ new Map();
-    for (const [t7, s57] of this.elementProperties) {
-      const i5 = this._$Eu(t7, s57);
-      void 0 !== i5 && this._$Eh.set(i5, t7);
+    for (const [t7, s58] of this.elementProperties) {
+      const i6 = this._$Eu(t7, s58);
+      void 0 !== i6 && this._$Eh.set(i6, t7);
     }
     this.elementStyles = this.finalizeStyles(this.styles);
   }
   static finalizeStyles(t6) {
-    const s57 = [];
+    const s58 = [];
     if (Array.isArray(t6)) {
       const e6 = new Set(t6.flat(1 / 0).reverse());
-      for (const t7 of e6) s57.unshift(c(t7));
-    } else void 0 !== t6 && s57.push(c(t6));
-    return s57;
+      for (const t7 of e6) s58.unshift(c(t7));
+    } else void 0 !== t6 && s58.push(c(t6));
+    return s58;
   }
-  static _$Eu(t6, s57) {
-    const i5 = s57.attribute;
-    return false === i5 ? void 0 : "string" == typeof i5 ? i5 : "string" == typeof t6 ? t6.toLowerCase() : void 0;
+  static _$Eu(t6, s58) {
+    const i6 = s58.attribute;
+    return false === i6 ? void 0 : "string" == typeof i6 ? i6 : "string" == typeof t6 ? t6.toLowerCase() : void 0;
   }
   constructor() {
     super(), this._$Ep = void 0, this.isUpdatePending = false, this.hasUpdated = false, this._$Em = null, this._$Ev();
@@ -276,8 +276,8 @@ var g = class extends (globalThis.HTMLElement ?? HTMLElement2) {
     this._$EO?.delete(t6);
   }
   _$E_() {
-    const t6 = /* @__PURE__ */ new Map(), s57 = this.constructor.elementProperties;
-    for (const i5 of s57.keys()) this.hasOwnProperty(i5) && (t6.set(i5, this[i5]), delete this[i5]);
+    const t6 = /* @__PURE__ */ new Map(), s58 = this.constructor.elementProperties;
+    for (const i6 of s58.keys()) this.hasOwnProperty(i6) && (t6.set(i6, this[i6]), delete this[i6]);
     t6.size > 0 && (this._$Ep = t6);
   }
   createRenderRoot() {
@@ -292,35 +292,35 @@ var g = class extends (globalThis.HTMLElement ?? HTMLElement2) {
   disconnectedCallback() {
     this._$EO?.forEach((t6) => t6.hostDisconnected?.());
   }
-  attributeChangedCallback(t6, s57, i5) {
-    this._$AK(t6, i5);
+  attributeChangedCallback(t6, s58, i6) {
+    this._$AK(t6, i6);
   }
-  _$ET(t6, s57) {
-    const i5 = this.constructor.elementProperties.get(t6), e6 = this.constructor._$Eu(t6, i5);
-    if (void 0 !== e6 && true === i5.reflect) {
-      const h3 = (void 0 !== i5.converter?.toAttribute ? i5.converter : b).toAttribute(s57, i5.type);
+  _$ET(t6, s58) {
+    const i6 = this.constructor.elementProperties.get(t6), e6 = this.constructor._$Eu(t6, i6);
+    if (void 0 !== e6 && true === i6.reflect) {
+      const h3 = (void 0 !== i6.converter?.toAttribute ? i6.converter : b).toAttribute(s58, i6.type);
       this._$Em = t6, null == h3 ? this.removeAttribute(e6) : this.setAttribute(e6, h3), this._$Em = null;
     }
   }
-  _$AK(t6, s57) {
-    const i5 = this.constructor, e6 = i5._$Eh.get(t6);
+  _$AK(t6, s58) {
+    const i6 = this.constructor, e6 = i6._$Eh.get(t6);
     if (void 0 !== e6 && this._$Em !== e6) {
-      const t7 = i5.getPropertyOptions(e6), h3 = "function" == typeof t7.converter ? { fromAttribute: t7.converter } : void 0 !== t7.converter?.fromAttribute ? t7.converter : b;
+      const t7 = i6.getPropertyOptions(e6), h3 = "function" == typeof t7.converter ? { fromAttribute: t7.converter } : void 0 !== t7.converter?.fromAttribute ? t7.converter : b;
       this._$Em = e6;
-      const r7 = h3.fromAttribute(s57, t7.type);
+      const r7 = h3.fromAttribute(s58, t7.type);
       this[e6] = r7 ?? this._$Ej?.get(e6) ?? r7, this._$Em = null;
     }
   }
-  requestUpdate(t6, s57, i5, e6 = false, h3) {
+  requestUpdate(t6, s58, i6, e6 = false, h3) {
     if (void 0 !== t6) {
       const r7 = this.constructor;
-      if (false === e6 && (h3 = this[t6]), i5 ??= r7.getPropertyOptions(t6), !((i5.hasChanged ?? m)(h3, s57) || i5.useDefault && i5.reflect && h3 === this._$Ej?.get(t6) && !this.hasAttribute(r7._$Eu(t6, i5)))) return;
-      this.C(t6, s57, i5);
+      if (false === e6 && (h3 = this[t6]), i6 ??= r7.getPropertyOptions(t6), !((i6.hasChanged ?? m)(h3, s58) || i6.useDefault && i6.reflect && h3 === this._$Ej?.get(t6) && !this.hasAttribute(r7._$Eu(t6, i6)))) return;
+      this.C(t6, s58, i6);
     }
     false === this.isUpdatePending && (this._$ES = this._$EP());
   }
-  C(t6, s57, { useDefault: i5, reflect: e6, wrapped: h3 }, r7) {
-    i5 && !(this._$Ej ??= /* @__PURE__ */ new Map()).has(t6) && (this._$Ej.set(t6, r7 ?? s57 ?? this[t6]), true !== h3 || void 0 !== r7) || (this._$AL.has(t6) || (this.hasUpdated || i5 || (s57 = void 0), this._$AL.set(t6, s57)), true === e6 && this._$Em !== t6 && (this._$Eq ??= /* @__PURE__ */ new Set()).add(t6));
+  C(t6, s58, { useDefault: i6, reflect: e6, wrapped: h3 }, r7) {
+    i6 && !(this._$Ej ??= /* @__PURE__ */ new Map()).has(t6) && (this._$Ej.set(t6, r7 ?? s58 ?? this[t6]), true !== h3 || void 0 !== r7) || (this._$AL.has(t6) || (this.hasUpdated || i6 || (s58 = void 0), this._$AL.set(t6, s58)), true === e6 && this._$Em !== t6 && (this._$Eq ??= /* @__PURE__ */ new Set()).add(t6));
   }
   async _$EP() {
     this.isUpdatePending = true;
@@ -339,23 +339,23 @@ var g = class extends (globalThis.HTMLElement ?? HTMLElement2) {
     if (!this.isUpdatePending) return;
     if (!this.hasUpdated) {
       if (this.renderRoot ??= this.createRenderRoot(), this._$Ep) {
-        for (const [t8, s58] of this._$Ep) this[t8] = s58;
+        for (const [t8, s59] of this._$Ep) this[t8] = s59;
         this._$Ep = void 0;
       }
       const t7 = this.constructor.elementProperties;
-      if (t7.size > 0) for (const [s58, i5] of t7) {
-        const { wrapped: t8 } = i5, e6 = this[s58];
-        true !== t8 || this._$AL.has(s58) || void 0 === e6 || this.C(s58, void 0, i5, e6);
+      if (t7.size > 0) for (const [s59, i6] of t7) {
+        const { wrapped: t8 } = i6, e6 = this[s59];
+        true !== t8 || this._$AL.has(s59) || void 0 === e6 || this.C(s59, void 0, i6, e6);
       }
     }
     let t6 = false;
-    const s57 = this._$AL;
+    const s58 = this._$AL;
     try {
-      t6 = this.shouldUpdate(s57), t6 ? (this.willUpdate(s57), this._$EO?.forEach((t7) => t7.hostUpdate?.()), this.update(s57)) : this._$EM();
-    } catch (s58) {
-      throw t6 = false, this._$EM(), s58;
+      t6 = this.shouldUpdate(s58), t6 ? (this.willUpdate(s58), this._$EO?.forEach((t7) => t7.hostUpdate?.()), this.update(s58)) : this._$EM();
+    } catch (s59) {
+      throw t6 = false, this._$EM(), s59;
     }
-    t6 && this._$AE(s57);
+    t6 && this._$AE(s58);
   }
   willUpdate(t6) {
   }
@@ -407,7 +407,7 @@ var p2 = RegExp(`>|${f2}(?:([^\\s"'>=/]+)(${f2}*=${f2}*(?:[^
 var g2 = /'/g;
 var $ = /"/g;
 var y2 = /^(?:script|style|textarea|title)$/i;
-var x = (t6) => (i5, ...s57) => ({ _$litType$: t6, strings: i5, values: s57 });
+var x = (t6) => (i6, ...s58) => ({ _$litType$: t6, strings: i6, values: s58 });
 var T = x(1);
 var b2 = x(2);
 var w = x(3);
@@ -415,44 +415,44 @@ var E = /* @__PURE__ */ Symbol.for("lit-noChange");
 var A = /* @__PURE__ */ Symbol.for("lit-nothing");
 var C = /* @__PURE__ */ new WeakMap();
 var P = l2.createTreeWalker(l2, 129);
-function V(t6, i5) {
+function V(t6, i6) {
   if (!u2(t6) || !t6.hasOwnProperty("raw")) throw Error("invalid template strings array");
-  return void 0 !== e2 ? e2.createHTML(i5) : i5;
+  return void 0 !== e2 ? e2.createHTML(i6) : i6;
 }
-var N = (t6, i5) => {
-  const s57 = t6.length - 1, e6 = [];
-  let n5, l4 = 2 === i5 ? "<svg>" : 3 === i5 ? "<math>" : "", c4 = v;
-  for (let i6 = 0; i6 < s57; i6++) {
-    const s58 = t6[i6];
+var N = (t6, i6) => {
+  const s58 = t6.length - 1, e6 = [];
+  let n6, l4 = 2 === i6 ? "<svg>" : 3 === i6 ? "<math>" : "", c4 = v;
+  for (let i7 = 0; i7 < s58; i7++) {
+    const s59 = t6[i7];
     let a3, u3, d3 = -1, f3 = 0;
-    for (; f3 < s58.length && (c4.lastIndex = f3, u3 = c4.exec(s58), null !== u3); ) f3 = c4.lastIndex, c4 === v ? "!--" === u3[1] ? c4 = _ : void 0 !== u3[1] ? c4 = m2 : void 0 !== u3[2] ? (y2.test(u3[2]) && (n5 = RegExp("</" + u3[2], "g")), c4 = p2) : void 0 !== u3[3] && (c4 = p2) : c4 === p2 ? ">" === u3[0] ? (c4 = n5 ?? v, d3 = -1) : void 0 === u3[1] ? d3 = -2 : (d3 = c4.lastIndex - u3[2].length, a3 = u3[1], c4 = void 0 === u3[3] ? p2 : '"' === u3[3] ? $ : g2) : c4 === $ || c4 === g2 ? c4 = p2 : c4 === _ || c4 === m2 ? c4 = v : (c4 = p2, n5 = void 0);
-    const x2 = c4 === p2 && t6[i6 + 1].startsWith("/>") ? " " : "";
-    l4 += c4 === v ? s58 + r3 : d3 >= 0 ? (e6.push(a3), s58.slice(0, d3) + h2 + s58.slice(d3) + o3 + x2) : s58 + o3 + (-2 === d3 ? i6 : x2);
+    for (; f3 < s59.length && (c4.lastIndex = f3, u3 = c4.exec(s59), null !== u3); ) f3 = c4.lastIndex, c4 === v ? "!--" === u3[1] ? c4 = _ : void 0 !== u3[1] ? c4 = m2 : void 0 !== u3[2] ? (y2.test(u3[2]) && (n6 = RegExp("</" + u3[2], "g")), c4 = p2) : void 0 !== u3[3] && (c4 = p2) : c4 === p2 ? ">" === u3[0] ? (c4 = n6 ?? v, d3 = -1) : void 0 === u3[1] ? d3 = -2 : (d3 = c4.lastIndex - u3[2].length, a3 = u3[1], c4 = void 0 === u3[3] ? p2 : '"' === u3[3] ? $ : g2) : c4 === $ || c4 === g2 ? c4 = p2 : c4 === _ || c4 === m2 ? c4 = v : (c4 = p2, n6 = void 0);
+    const x2 = c4 === p2 && t6[i7 + 1].startsWith("/>") ? " " : "";
+    l4 += c4 === v ? s59 + r3 : d3 >= 0 ? (e6.push(a3), s59.slice(0, d3) + h2 + s59.slice(d3) + o3 + x2) : s59 + o3 + (-2 === d3 ? i7 : x2);
   }
-  return [V(t6, l4 + (t6[s57] || "<?>") + (2 === i5 ? "</svg>" : 3 === i5 ? "</math>" : "")), e6];
+  return [V(t6, l4 + (t6[s58] || "<?>") + (2 === i6 ? "</svg>" : 3 === i6 ? "</math>" : "")), e6];
 };
 var S2 = class _S {
-  constructor({ strings: t6, _$litType$: i5 }, e6) {
+  constructor({ strings: t6, _$litType$: i6 }, e6) {
     let r7;
     this.parts = [];
     let l4 = 0, a3 = 0;
-    const u3 = t6.length - 1, d3 = this.parts, [f3, v2] = N(t6, i5);
-    if (this.el = _S.createElement(f3, e6), P.currentNode = this.el.content, 2 === i5 || 3 === i5) {
+    const u3 = t6.length - 1, d3 = this.parts, [f3, v2] = N(t6, i6);
+    if (this.el = _S.createElement(f3, e6), P.currentNode = this.el.content, 2 === i6 || 3 === i6) {
       const t7 = this.el.content.firstChild;
       t7.replaceWith(...t7.childNodes);
     }
     for (; null !== (r7 = P.nextNode()) && d3.length < u3; ) {
       if (1 === r7.nodeType) {
         if (r7.hasAttributes()) for (const t7 of r7.getAttributeNames()) if (t7.endsWith(h2)) {
-          const i6 = v2[a3++], s57 = r7.getAttribute(t7).split(o3), e7 = /([.?@])?(.*)/.exec(i6);
-          d3.push({ type: 1, index: l4, name: e7[2], strings: s57, ctor: "." === e7[1] ? I : "?" === e7[1] ? L : "@" === e7[1] ? z : H }), r7.removeAttribute(t7);
+          const i7 = v2[a3++], s58 = r7.getAttribute(t7).split(o3), e7 = /([.?@])?(.*)/.exec(i7);
+          d3.push({ type: 1, index: l4, name: e7[2], strings: s58, ctor: "." === e7[1] ? I : "?" === e7[1] ? L : "@" === e7[1] ? z : H }), r7.removeAttribute(t7);
         } else t7.startsWith(o3) && (d3.push({ type: 6, index: l4 }), r7.removeAttribute(t7));
         if (y2.test(r7.tagName)) {
-          const t7 = r7.textContent.split(o3), i6 = t7.length - 1;
-          if (i6 > 0) {
+          const t7 = r7.textContent.split(o3), i7 = t7.length - 1;
+          if (i7 > 0) {
             r7.textContent = s2 ? s2.emptyScript : "";
-            for (let s57 = 0; s57 < i6; s57++) r7.append(t7[s57], c3()), P.nextNode(), d3.push({ type: 2, index: ++l4 });
-            r7.append(t7[i6], c3());
+            for (let s58 = 0; s58 < i7; s58++) r7.append(t7[s58], c3()), P.nextNode(), d3.push({ type: 2, index: ++l4 });
+            r7.append(t7[i7], c3());
           }
         }
       } else if (8 === r7.nodeType) if (r7.data === n3) d3.push({ type: 2, index: l4 });
@@ -463,20 +463,20 @@ var S2 = class _S {
       l4++;
     }
   }
-  static createElement(t6, i5) {
-    const s57 = l2.createElement("template");
-    return s57.innerHTML = t6, s57;
+  static createElement(t6, i6) {
+    const s58 = l2.createElement("template");
+    return s58.innerHTML = t6, s58;
   }
 };
-function M(t6, i5, s57 = t6, e6) {
-  if (i5 === E) return i5;
-  let h3 = void 0 !== e6 ? s57._$Co?.[e6] : s57._$Cl;
-  const o8 = a2(i5) ? void 0 : i5._$litDirective$;
-  return h3?.constructor !== o8 && (h3?._$AO?.(false), void 0 === o8 ? h3 = void 0 : (h3 = new o8(t6), h3._$AT(t6, s57, e6)), void 0 !== e6 ? (s57._$Co ??= [])[e6] = h3 : s57._$Cl = h3), void 0 !== h3 && (i5 = M(t6, h3._$AS(t6, i5.values), h3, e6)), i5;
+function M(t6, i6, s58 = t6, e6) {
+  if (i6 === E) return i6;
+  let h3 = void 0 !== e6 ? s58._$Co?.[e6] : s58._$Cl;
+  const o9 = a2(i6) ? void 0 : i6._$litDirective$;
+  return h3?.constructor !== o9 && (h3?._$AO?.(false), void 0 === o9 ? h3 = void 0 : (h3 = new o9(t6), h3._$AT(t6, s58, e6)), void 0 !== e6 ? (s58._$Co ??= [])[e6] = h3 : s58._$Cl = h3), void 0 !== h3 && (i6 = M(t6, h3._$AS(t6, i6.values), h3, e6)), i6;
 }
 var k = class {
-  constructor(t6, i5) {
-    this._$AV = [], this._$AN = void 0, this._$AD = t6, this._$AM = i5;
+  constructor(t6, i6) {
+    this._$AV = [], this._$AN = void 0, this._$AD = t6, this._$AM = i6;
   }
   get parentNode() {
     return this._$AM.parentNode;
@@ -485,34 +485,34 @@ var k = class {
     return this._$AM._$AU;
   }
   u(t6) {
-    const { el: { content: i5 }, parts: s57 } = this._$AD, e6 = (t6?.creationScope ?? l2).importNode(i5, true);
+    const { el: { content: i6 }, parts: s58 } = this._$AD, e6 = (t6?.creationScope ?? l2).importNode(i6, true);
     P.currentNode = e6;
-    let h3 = P.nextNode(), o8 = 0, n5 = 0, r7 = s57[0];
+    let h3 = P.nextNode(), o9 = 0, n6 = 0, r7 = s58[0];
     for (; void 0 !== r7; ) {
-      if (o8 === r7.index) {
-        let i6;
-        2 === r7.type ? i6 = new R(h3, h3.nextSibling, this, t6) : 1 === r7.type ? i6 = new r7.ctor(h3, r7.name, r7.strings, this, t6) : 6 === r7.type && (i6 = new W(h3, this, t6)), this._$AV.push(i6), r7 = s57[++n5];
+      if (o9 === r7.index) {
+        let i7;
+        2 === r7.type ? i7 = new R(h3, h3.nextSibling, this, t6) : 1 === r7.type ? i7 = new r7.ctor(h3, r7.name, r7.strings, this, t6) : 6 === r7.type && (i7 = new W(h3, this, t6)), this._$AV.push(i7), r7 = s58[++n6];
       }
-      o8 !== r7?.index && (h3 = P.nextNode(), o8++);
+      o9 !== r7?.index && (h3 = P.nextNode(), o9++);
     }
     return P.currentNode = l2, e6;
   }
   p(t6) {
-    let i5 = 0;
-    for (const s57 of this._$AV) void 0 !== s57 && (void 0 !== s57.strings ? (s57._$AI(t6, s57, i5), i5 += s57.strings.length - 2) : s57._$AI(t6[i5])), i5++;
+    let i6 = 0;
+    for (const s58 of this._$AV) void 0 !== s58 && (void 0 !== s58.strings ? (s58._$AI(t6, s58, i6), i6 += s58.strings.length - 2) : s58._$AI(t6[i6])), i6++;
   }
 };
 var R = class _R {
   get _$AU() {
     return this._$AM?._$AU ?? this._$Cv;
   }
-  constructor(t6, i5, s57, e6) {
-    this.type = 2, this._$AH = A, this._$AN = void 0, this._$AA = t6, this._$AB = i5, this._$AM = s57, this.options = e6, this._$Cv = e6?.isConnected ?? true;
+  constructor(t6, i6, s58, e6) {
+    this.type = 2, this._$AH = A, this._$AN = void 0, this._$AA = t6, this._$AB = i6, this._$AM = s58, this.options = e6, this._$Cv = e6?.isConnected ?? true;
   }
   get parentNode() {
     let t6 = this._$AA.parentNode;
-    const i5 = this._$AM;
-    return void 0 !== i5 && 11 === t6?.nodeType && (t6 = i5.parentNode), t6;
+    const i6 = this._$AM;
+    return void 0 !== i6 && 11 === t6?.nodeType && (t6 = i6.parentNode), t6;
   }
   get startNode() {
     return this._$AA;
@@ -520,8 +520,8 @@ var R = class _R {
   get endNode() {
     return this._$AB;
   }
-  _$AI(t6, i5 = this) {
-    t6 = M(this, t6, i5), a2(t6) ? t6 === A || null == t6 || "" === t6 ? (this._$AH !== A && this._$AR(), this._$AH = A) : t6 !== this._$AH && t6 !== E && this._(t6) : void 0 !== t6._$litType$ ? this.$(t6) : void 0 !== t6.nodeType ? this.T(t6) : d2(t6) ? this.k(t6) : this._(t6);
+  _$AI(t6, i6 = this) {
+    t6 = M(this, t6, i6), a2(t6) ? t6 === A || null == t6 || "" === t6 ? (this._$AH !== A && this._$AR(), this._$AH = A) : t6 !== this._$AH && t6 !== E && this._(t6) : void 0 !== t6._$litType$ ? this.$(t6) : void 0 !== t6.nodeType ? this.T(t6) : d2(t6) ? this.k(t6) : this._(t6);
   }
   O(t6) {
     return this._$AA.parentNode.insertBefore(t6, this._$AB);
@@ -533,28 +533,28 @@ var R = class _R {
     this._$AH !== A && a2(this._$AH) ? this._$AA.nextSibling.data = t6 : this.T(l2.createTextNode(t6)), this._$AH = t6;
   }
   $(t6) {
-    const { values: i5, _$litType$: s57 } = t6, e6 = "number" == typeof s57 ? this._$AC(t6) : (void 0 === s57.el && (s57.el = S2.createElement(V(s57.h, s57.h[0]), this.options)), s57);
-    if (this._$AH?._$AD === e6) this._$AH.p(i5);
+    const { values: i6, _$litType$: s58 } = t6, e6 = "number" == typeof s58 ? this._$AC(t6) : (void 0 === s58.el && (s58.el = S2.createElement(V(s58.h, s58.h[0]), this.options)), s58);
+    if (this._$AH?._$AD === e6) this._$AH.p(i6);
     else {
-      const t7 = new k(e6, this), s58 = t7.u(this.options);
-      t7.p(i5), this.T(s58), this._$AH = t7;
+      const t7 = new k(e6, this), s59 = t7.u(this.options);
+      t7.p(i6), this.T(s59), this._$AH = t7;
     }
   }
   _$AC(t6) {
-    let i5 = C.get(t6.strings);
-    return void 0 === i5 && C.set(t6.strings, i5 = new S2(t6)), i5;
+    let i6 = C.get(t6.strings);
+    return void 0 === i6 && C.set(t6.strings, i6 = new S2(t6)), i6;
   }
   k(t6) {
     u2(this._$AH) || (this._$AH = [], this._$AR());
-    const i5 = this._$AH;
-    let s57, e6 = 0;
-    for (const h3 of t6) e6 === i5.length ? i5.push(s57 = new _R(this.O(c3()), this.O(c3()), this, this.options)) : s57 = i5[e6], s57._$AI(h3), e6++;
-    e6 < i5.length && (this._$AR(s57 && s57._$AB.nextSibling, e6), i5.length = e6);
+    const i6 = this._$AH;
+    let s58, e6 = 0;
+    for (const h3 of t6) e6 === i6.length ? i6.push(s58 = new _R(this.O(c3()), this.O(c3()), this, this.options)) : s58 = i6[e6], s58._$AI(h3), e6++;
+    e6 < i6.length && (this._$AR(s58 && s58._$AB.nextSibling, e6), i6.length = e6);
   }
-  _$AR(t6 = this._$AA.nextSibling, s57) {
-    for (this._$AP?.(false, true, s57); t6 !== this._$AB; ) {
-      const s58 = i2(t6).nextSibling;
-      i2(t6).remove(), t6 = s58;
+  _$AR(t6 = this._$AA.nextSibling, s58) {
+    for (this._$AP?.(false, true, s58); t6 !== this._$AB; ) {
+      const s59 = i2(t6).nextSibling;
+      i2(t6).remove(), t6 = s59;
     }
   }
   setConnected(t6) {
@@ -568,19 +568,19 @@ var H = class {
   get _$AU() {
     return this._$AM._$AU;
   }
-  constructor(t6, i5, s57, e6, h3) {
-    this.type = 1, this._$AH = A, this._$AN = void 0, this.element = t6, this.name = i5, this._$AM = e6, this.options = h3, s57.length > 2 || "" !== s57[0] || "" !== s57[1] ? (this._$AH = Array(s57.length - 1).fill(new String()), this.strings = s57) : this._$AH = A;
+  constructor(t6, i6, s58, e6, h3) {
+    this.type = 1, this._$AH = A, this._$AN = void 0, this.element = t6, this.name = i6, this._$AM = e6, this.options = h3, s58.length > 2 || "" !== s58[0] || "" !== s58[1] ? (this._$AH = Array(s58.length - 1).fill(new String()), this.strings = s58) : this._$AH = A;
   }
-  _$AI(t6, i5 = this, s57, e6) {
+  _$AI(t6, i6 = this, s58, e6) {
     const h3 = this.strings;
-    let o8 = false;
-    if (void 0 === h3) t6 = M(this, t6, i5, 0), o8 = !a2(t6) || t6 !== this._$AH && t6 !== E, o8 && (this._$AH = t6);
+    let o9 = false;
+    if (void 0 === h3) t6 = M(this, t6, i6, 0), o9 = !a2(t6) || t6 !== this._$AH && t6 !== E, o9 && (this._$AH = t6);
     else {
       const e7 = t6;
-      let n5, r7;
-      for (t6 = h3[0], n5 = 0; n5 < h3.length - 1; n5++) r7 = M(this, e7[s57 + n5], i5, n5), r7 === E && (r7 = this._$AH[n5]), o8 ||= !a2(r7) || r7 !== this._$AH[n5], r7 === A ? t6 = A : t6 !== A && (t6 += (r7 ?? "") + h3[n5 + 1]), this._$AH[n5] = r7;
+      let n6, r7;
+      for (t6 = h3[0], n6 = 0; n6 < h3.length - 1; n6++) r7 = M(this, e7[s58 + n6], i6, n6), r7 === E && (r7 = this._$AH[n6]), o9 ||= !a2(r7) || r7 !== this._$AH[n6], r7 === A ? t6 = A : t6 !== A && (t6 += (r7 ?? "") + h3[n6 + 1]), this._$AH[n6] = r7;
     }
-    o8 && !e6 && this.j(t6);
+    o9 && !e6 && this.j(t6);
   }
   j(t6) {
     t6 === A ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, t6 ?? "");
@@ -603,21 +603,21 @@ var L = class extends H {
   }
 };
 var z = class extends H {
-  constructor(t6, i5, s57, e6, h3) {
-    super(t6, i5, s57, e6, h3), this.type = 5;
+  constructor(t6, i6, s58, e6, h3) {
+    super(t6, i6, s58, e6, h3), this.type = 5;
   }
-  _$AI(t6, i5 = this) {
-    if ((t6 = M(this, t6, i5, 0) ?? A) === E) return;
-    const s57 = this._$AH, e6 = t6 === A && s57 !== A || t6.capture !== s57.capture || t6.once !== s57.once || t6.passive !== s57.passive, h3 = t6 !== A && (s57 === A || e6);
-    e6 && this.element.removeEventListener(this.name, this, s57), h3 && this.element.addEventListener(this.name, this, t6), this._$AH = t6;
+  _$AI(t6, i6 = this) {
+    if ((t6 = M(this, t6, i6, 0) ?? A) === E) return;
+    const s58 = this._$AH, e6 = t6 === A && s58 !== A || t6.capture !== s58.capture || t6.once !== s58.once || t6.passive !== s58.passive, h3 = t6 !== A && (s58 === A || e6);
+    e6 && this.element.removeEventListener(this.name, this, s58), h3 && this.element.addEventListener(this.name, this, t6), this._$AH = t6;
   }
   handleEvent(t6) {
     "function" == typeof this._$AH ? this._$AH.call(this.options?.host ?? this.element, t6) : this._$AH.handleEvent(t6);
   }
 };
 var W = class {
-  constructor(t6, i5, s57) {
-    this.element = t6, this.type = 6, this._$AN = void 0, this._$AM = i5, this.options = s57;
+  constructor(t6, i6, s58) {
+    this.element = t6, this.type = 6, this._$AN = void 0, this._$AM = i6, this.options = s58;
   }
   get _$AU() {
     return this._$AM._$AU;
@@ -629,12 +629,12 @@ var W = class {
 var Z = { M: h2, P: o3, A: n3, C: 1, L: N, R: k, D: d2, V: M, I: R, H, N: L, U: z, B: I, F: W };
 var j = t2.litHtmlPolyfillSupport;
 j?.(S2, R), (t2.litHtmlVersions ??= []).push("3.3.2");
-var B = (t6, i5, s57) => {
-  const e6 = s57?.renderBefore ?? i5;
+var B = (t6, i6, s58) => {
+  const e6 = s58?.renderBefore ?? i6;
   let h3 = e6._$litPart$;
   if (void 0 === h3) {
-    const t7 = s57?.renderBefore ?? null;
-    e6._$litPart$ = h3 = new R(i5.insertBefore(c3(), t7), t7, void 0, s57 ?? {});
+    const t7 = s58?.renderBefore ?? null;
+    e6._$litPart$ = h3 = new R(i6.insertBefore(c3(), t7), t7, void 0, s58 ?? {});
   }
   return h3._$AI(t6), h3;
 };
@@ -669,8 +669,8 @@ o4?.({ LitElement: i3 });
 (s3.litElementVersions ??= []).push("4.2.2");
 
 // elements/node_modules/@lit/reactive-element/node/decorators/custom-element.js
-var t3 = (t6) => (e6, o8) => {
-  void 0 !== o8 ? o8.addInitializer(() => {
+var t3 = (t6) => (e6, o9) => {
+  void 0 !== o9 ? o9.addInitializer(() => {
     customElements.define(t6, e6);
   }) : customElements.define(t6, e6);
 };
@@ -781,31 +781,31 @@ __runInitializers(_init, 1, CemColorSchemeToggle);
 // elements/node_modules/@lit/reactive-element/node/decorators/property.js
 var o5 = { attribute: true, type: String, converter: b, reflect: false, hasChanged: m };
 var r4 = (t6 = o5, e6, r7) => {
-  const { kind: n5, metadata: i5 } = r7;
-  let s57 = globalThis.litPropertyMetadata.get(i5);
-  if (void 0 === s57 && globalThis.litPropertyMetadata.set(i5, s57 = /* @__PURE__ */ new Map()), "setter" === n5 && ((t6 = Object.create(t6)).wrapped = true), s57.set(r7.name, t6), "accessor" === n5) {
-    const { name: o8 } = r7;
+  const { kind: n6, metadata: i6 } = r7;
+  let s58 = globalThis.litPropertyMetadata.get(i6);
+  if (void 0 === s58 && globalThis.litPropertyMetadata.set(i6, s58 = /* @__PURE__ */ new Map()), "setter" === n6 && ((t6 = Object.create(t6)).wrapped = true), s58.set(r7.name, t6), "accessor" === n6) {
+    const { name: o9 } = r7;
     return { set(r8) {
-      const n6 = e6.get.call(this);
-      e6.set.call(this, r8), this.requestUpdate(o8, n6, t6, true, r8);
+      const n7 = e6.get.call(this);
+      e6.set.call(this, r8), this.requestUpdate(o9, n7, t6, true, r8);
     }, init(e7) {
-      return void 0 !== e7 && this.C(o8, void 0, t6, e7), e7;
+      return void 0 !== e7 && this.C(o9, void 0, t6, e7), e7;
     } };
   }
-  if ("setter" === n5) {
-    const { name: o8 } = r7;
+  if ("setter" === n6) {
+    const { name: o9 } = r7;
     return function(r8) {
-      const n6 = this[o8];
-      e6.call(this, r8), this.requestUpdate(o8, n6, t6, true, r8);
+      const n7 = this[o9];
+      e6.call(this, r8), this.requestUpdate(o9, n7, t6, true, r8);
     };
   }
-  throw Error("Unsupported decorator location: " + n5);
+  throw Error("Unsupported decorator location: " + n6);
 };
 function n4(t6) {
-  return (e6, o8) => "object" == typeof o8 ? r4(t6, e6, o8) : ((t7, e7, o9) => {
-    const r7 = e7.hasOwnProperty(o9);
-    return e7.constructor.createProperty(o9, t7), r7 ? Object.getOwnPropertyDescriptor(e7, o9) : void 0;
-  })(t6, e6, o8);
+  return (e6, o9) => "object" == typeof o9 ? r4(t6, e6, o9) : ((t7, e7, o10) => {
+    const r7 = e7.hasOwnProperty(o10);
+    return e7.constructor.createProperty(o10, t7), r7 ? Object.getOwnPropertyDescriptor(e7, o10) : void 0;
+  })(t6, e6, o9);
 }
 
 // lit-css:elements/cem-connection-status/cem-connection-status.css
@@ -886,8 +886,8 @@ var i4 = class {
   get _$AU() {
     return this._$AM._$AU;
   }
-  _$AT(t6, e6, i5) {
-    this._$Ct = t6, this._$AM = e6, this._$Ci = i5;
+  _$AT(t6, e6, i6) {
+    this._$Ct = t6, this._$AM = e6, this._$Ci = i6;
   }
   _$AS(t6, e6) {
     return this.update(t6, e6);
@@ -899,8 +899,8 @@ var i4 = class {
 
 // elements/node_modules/lit-html/node/directives/unsafe-html.js
 var e4 = class extends i4 {
-  constructor(i5) {
-    if (super(i5), this.it = A, i5.type !== t4.CHILD) throw Error(this.constructor.directiveName + "() can only be used in child bindings");
+  constructor(i6) {
+    if (super(i6), this.it = A, i6.type !== t4.CHILD) throw Error(this.constructor.directiveName + "() can only be used in child bindings");
   }
   render(r7) {
     if (r7 === A || null == r7) return this._t = void 0, this.it = r7;
@@ -908,8 +908,8 @@ var e4 = class extends i4 {
     if ("string" != typeof r7) throw Error(this.constructor.directiveName + "() called with a non-string value");
     if (r7 === this.it) return this._t;
     this.it = r7;
-    const s57 = [r7];
-    return s57.raw = s57, this._t = { _$litType$: this.constructor.resultType, strings: s57, values: [] };
+    const s58 = [r7];
+    return s58.raw = s58, this._t = { _$litType$: this.constructor.resultType, strings: s58, values: [] };
   }
 };
 e4.directiveName = "unsafeHTML", e4.resultType = 1;
@@ -1161,7 +1161,7 @@ buildEventDetails_fn = async function(item, manifest) {
 buildSlotDetails_fn = async function(item, manifest) {
   const ce = __privateMethod(this, _CemDetailPanel_instances, findCustomElement_fn).call(this, manifest, item.modulePath, item.tagName);
   if (!ce) return '<div class="empty-state">Custom element not found</div>';
-  const slot = ce.slots?.find((s57) => s57.name === item.name);
+  const slot = ce.slots?.find((s58) => s58.name === item.name);
   if (!slot) return '<div class="empty-state">Slot not found</div>';
   const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   const escapedTagName = item.tagName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
@@ -1226,7 +1226,7 @@ buildCSSPartDetails_fn = async function(item, manifest) {
 buildCSSStateDetails_fn = async function(item, manifest) {
   const ce = __privateMethod(this, _CemDetailPanel_instances, findCustomElement_fn).call(this, manifest, item.modulePath, item.tagName);
   if (!ce) return '<div class="empty-state">Custom element not found</div>';
-  const cssState = ce.cssStates?.find((s57) => s57.name === item.name);
+  const cssState = ce.cssStates?.find((s58) => s58.name === item.name);
   if (!cssState) return '<div class="empty-state">CSS state not found</div>';
   const escapedPath = item.modulePath.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
   const escapedTagName = item.tagName.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
@@ -1808,7 +1808,7 @@ s9.replaceSync(JSON.parse('":host {\\n  display: block;\\n  padding: var(--pf-t-
 var cem_health_panel_default = s9;
 
 // elements/node_modules/lit-html/node/directives/if-defined.js
-var o7 = (o8) => o8 ?? A;
+var o7 = (o9) => o9 ?? A;
 
 // lit-css:elements/cem-pf-v6-label/cem-pf-v6-label.css
 var s10 = new CSSStyleSheet();
@@ -2319,9 +2319,9 @@ __runInitializers(_init10, 1, PfV6Drawer);
 
 // elements/node_modules/lit-html/node/directive-helpers.js
 var { I: t5 } = Z;
-var r6 = (o8) => void 0 === o8.strings;
+var r6 = (o9) => void 0 === o9.strings;
 var m3 = {};
-var p3 = (o8, t6 = m3) => o8._$AH = t6;
+var p3 = (o9, t6 = m3) => o9._$AH = t6;
 
 // elements/node_modules/lit-html/node/directives/live.js
 var l3 = e3(class extends i4 {
@@ -2332,15 +2332,15 @@ var l3 = e3(class extends i4 {
   render(r7) {
     return r7;
   }
-  update(i5, [t6]) {
+  update(i6, [t6]) {
     if (t6 === E || t6 === A) return t6;
-    const o8 = i5.element, l4 = i5.name;
-    if (i5.type === t4.PROPERTY) {
-      if (t6 === o8[l4]) return E;
-    } else if (i5.type === t4.BOOLEAN_ATTRIBUTE) {
-      if (!!t6 === o8.hasAttribute(l4)) return E;
-    } else if (i5.type === t4.ATTRIBUTE && o8.getAttribute(l4) === t6 + "") return E;
-    return p3(i5), t6;
+    const o9 = i6.element, l4 = i6.name;
+    if (i6.type === t4.PROPERTY) {
+      if (t6 === o9[l4]) return E;
+    } else if (i6.type === t4.BOOLEAN_ATTRIBUTE) {
+      if (!!t6 === o9.hasAttribute(l4)) return E;
+    } else if (i6.type === t4.ATTRIBUTE && o9.getAttribute(l4) === t6 + "") return E;
+    return p3(i6), t6;
   }
 });
 
@@ -2545,19 +2545,19 @@ var e5 = e3(class extends i4 {
     if (super(t6), t6.type !== t4.ATTRIBUTE || "class" !== t6.name || t6.strings?.length > 2) throw Error("`classMap()` can only be used in the `class` attribute and must be the only part in the attribute.");
   }
   render(t6) {
-    return " " + Object.keys(t6).filter((s57) => t6[s57]).join(" ") + " ";
+    return " " + Object.keys(t6).filter((s58) => t6[s58]).join(" ") + " ";
   }
-  update(s57, [i5]) {
+  update(s58, [i6]) {
     if (void 0 === this.st) {
-      this.st = /* @__PURE__ */ new Set(), void 0 !== s57.strings && (this.nt = new Set(s57.strings.join(" ").split(/\s/).filter((t6) => "" !== t6)));
-      for (const t6 in i5) i5[t6] && !this.nt?.has(t6) && this.st.add(t6);
-      return this.render(i5);
+      this.st = /* @__PURE__ */ new Set(), void 0 !== s58.strings && (this.nt = new Set(s58.strings.join(" ").split(/\s/).filter((t6) => "" !== t6)));
+      for (const t6 in i6) i6[t6] && !this.nt?.has(t6) && this.st.add(t6);
+      return this.render(i6);
     }
-    const r7 = s57.element.classList;
-    for (const t6 of this.st) t6 in i5 || (r7.remove(t6), this.st.delete(t6));
-    for (const t6 in i5) {
-      const s58 = !!i5[t6];
-      s58 === this.st.has(t6) || this.nt?.has(t6) || (s58 ? (r7.add(t6), this.st.add(t6)) : (r7.remove(t6), this.st.delete(t6)));
+    const r7 = s58.element.classList;
+    for (const t6 of this.st) t6 in i6 || (r7.remove(t6), this.st.delete(t6));
+    for (const t6 in i6) {
+      const s59 = !!i6[t6];
+      s59 === this.st.has(t6) || this.nt?.has(t6) || (s59 ? (r7.add(t6), this.st.add(t6)) : (r7.remove(t6), this.st.delete(t6)));
     }
     return E;
   }
@@ -3357,7 +3357,7 @@ var _CemVirtualTree = class _CemVirtualTree extends (_a16 = i3) {
    */
   #isParentExpanded(item) {
     if (item.parentId === void 0) return true;
-    const parent = this.#flatItems.find((i5) => i5.id === item.parentId);
+    const parent = this.#flatItems.find((i6) => i6.id === item.parentId);
     return !!parent && parent.expanded && this.#isParentExpanded(parent);
   }
   /**
@@ -3365,7 +3365,7 @@ var _CemVirtualTree = class _CemVirtualTree extends (_a16 = i3) {
    */
   #showAncestors(item) {
     if (item.parentId === void 0) return;
-    const parent = this.#flatItems.find((i5) => i5.id === item.parentId);
+    const parent = this.#flatItems.find((i6) => i6.id === item.parentId);
     if (parent) {
       parent.visible = true;
       parent.expanded = true;
@@ -3379,7 +3379,7 @@ var _CemVirtualTree = class _CemVirtualTree extends (_a16 = i3) {
     for (const match of matchingItems) {
       let current = match;
       while (current.parentId !== void 0) {
-        const parent = this.#flatItems.find((i5) => i5.id === current.parentId);
+        const parent = this.#flatItems.find((i6) => i6.id === current.parentId);
         if (!parent) break;
         if (parent === item) return true;
         current = parent;
@@ -3402,7 +3402,7 @@ var _CemVirtualTree = class _CemVirtualTree extends (_a16 = i3) {
   #isDescendantOf(item, ancestor) {
     let current = item;
     while (current.parentId !== void 0) {
-      const parent = this.#flatItems.find((i5) => i5.id === current.parentId);
+      const parent = this.#flatItems.find((i6) => i6.id === current.parentId);
       if (!parent) return false;
       if (parent === ancestor) return true;
       current = parent;
@@ -3995,8 +3995,8 @@ initializeTabindex_fn = function() {
 focusItem_fn = function(item) {
   if (!item) return;
   const items = __privateMethod(this, _PfV6Menu_instances, getMenuItems_fn).call(this);
-  items.forEach((i5) => {
-    i5.setAttribute("tabindex", i5 === item ? "0" : "-1");
+  items.forEach((i6) => {
+    i6.setAttribute("tabindex", i6 === item ? "0" : "-1");
   });
   item.focus();
 };
@@ -5539,35 +5539,218 @@ PfV6Popover = __decorateElement(_init38, 0, "PfV6Popover", _PfV6Popover_decorato
 __publicField(PfV6Popover, "styles", cem_pf_v6_popover_default);
 __runInitializers(_init38, 1, PfV6Popover);
 
-// lit-css:elements/cem-pf-v6-select/cem-pf-v6-select.css
+// elements/node_modules/lit-html/node/directives/style-map.js
+var n5 = "important";
+var i5 = " !" + n5;
+var o8 = e3(class extends i4 {
+  constructor(t6) {
+    if (super(t6), t6.type !== t4.ATTRIBUTE || "style" !== t6.name || t6.strings?.length > 2) throw Error("The `styleMap` directive must be used in the `style` attribute and must be the only part in the attribute.");
+  }
+  render(t6) {
+    return Object.keys(t6).reduce((e6, r7) => {
+      const s58 = t6[r7];
+      return null == s58 ? e6 : e6 + `${r7 = r7.includes("-") ? r7 : r7.replace(/(?:^(webkit|moz|ms|o)|)(?=[A-Z])/g, "-$&").toLowerCase()}:${s58};`;
+    }, "");
+  }
+  update(e6, [r7]) {
+    const { style: s58 } = e6.element;
+    if (void 0 === this.ft) return this.ft = new Set(Object.keys(r7)), this.render(r7);
+    for (const t6 of this.ft) null == r7[t6] && (this.ft.delete(t6), t6.includes("-") ? s58.removeProperty(t6) : s58[t6] = null);
+    for (const t6 in r7) {
+      const e7 = r7[t6];
+      if (null != e7) {
+        this.ft.add(t6);
+        const r8 = "string" == typeof e7 && e7.endsWith(i5);
+        t6.includes("-") || r8 ? s58.setProperty(t6, r8 ? e7.slice(0, -11) : e7, r8 ? n5 : "") : s58[t6] = e7;
+      }
+    }
+    return E;
+  }
+});
+
+// lit-css:elements/cem-pf-v6-progress/cem-pf-v6-progress.css
 var s42 = new CSSStyleSheet();
-s42.replaceSync(JSON.parse(`":host {\\n\\n  /* Form control custom properties */\\n  --cem-pf-v6-c-form-control--ColumnGap: var(--pf-t--global--spacer--gap--text-to-element--default);\\n  --cem-pf-v6-c-form-control--Color: var(--pf-t--global--text--color--regular);\\n  --cem-pf-v6-c-form-control--FontSize: var(--pf-t--global--font--size--body--default);\\n  --cem-pf-v6-c-form-control--LineHeight: var(--pf-t--global--font--line-height--body);\\n  --cem-pf-v6-c-form-control--Resize: none;\\n  --cem-pf-v6-c-form-control--OutlineOffset: -6px;\\n  --cem-pf-v6-c-form-control--BorderRadius: var(--pf-t--global--border--radius--small);\\n  --cem-pf-v6-c-form-control--before--BorderWidth: var(--pf-t--global--border--width--control--default);\\n  --cem-pf-v6-c-form-control--before--BorderStyle: solid;\\n  --cem-pf-v6-c-form-control--before--BorderColor: var(--pf-t--global--border--color--default);\\n  --cem-pf-v6-c-form-control--before--BorderRadius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n  --cem-pf-v6-c-form-control--after--BorderWidth: var(--pf-t--global--border--width--control--default);\\n  --cem-pf-v6-c-form-control--after--BorderStyle: solid;\\n  --cem-pf-v6-c-form-control--after--BorderColor: transparent;\\n  --cem-pf-v6-c-form-control--after--BorderRadius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n  --cem-pf-v6-c-form-control--BackgroundColor: var(--pf-t--global--background--color--control--default);\\n  --cem-pf-v6-c-form-control--Width: 100%;\\n  --cem-pf-v6-c-form-control--inset--base: var(--pf-t--global--spacer--control--horizontal--default);\\n  --cem-pf-v6-c-form-control--PaddingBlockStart--base: var(--pf-t--global--spacer--control--vertical--default);\\n  --cem-pf-v6-c-form-control--PaddingBlockEnd--base: var(--pf-t--global--spacer--control--vertical--default);\\n  --cem-pf-v6-c-form-control--PaddingInlineEnd--base: var(--cem-pf-v6-c-form-control--inset--base);\\n  --cem-pf-v6-c-form-control--PaddingInlineStart--base: var(--cem-pf-v6-c-form-control--inset--base);\\n  --cem-pf-v6-c-form-control--PaddingBlockStart: var(--cem-pf-v6-c-form-control__select--PaddingBlockStart);\\n  --cem-pf-v6-c-form-control--PaddingBlockEnd: var(--cem-pf-v6-c-form-control__select--PaddingBlockEnd);\\n  --cem-pf-v6-c-form-control--PaddingInlineStart: var(--cem-pf-v6-c-form-control__select--PaddingInlineStart);\\n  --cem-pf-v6-c-form-control--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__select--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control__select--PaddingBlockStart: var(--cem-pf-v6-c-form-control--PaddingBlockStart--base);\\n  --cem-pf-v6-c-form-control__select--PaddingBlockEnd: var(--cem-pf-v6-c-form-control--PaddingBlockEnd--base);\\n  --cem-pf-v6-c-form-control__select--PaddingInlineEnd: var(--cem-pf-v6-c-form-control--PaddingInlineEnd--base);\\n  --cem-pf-v6-c-form-control__select--PaddingInlineStart: var(--cem-pf-v6-c-form-control--PaddingInlineStart--base);\\n  --cem-pf-v6-c-form-control__utilities--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__utilities--select--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control__utilities--select--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__select--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control--hover--after--BorderWidth: var(--pf-t--global--border--width--control--hover);\\n  --cem-pf-v6-c-form-control--hover--after--BorderColor: var(--pf-t--global--border--color--hover);\\n\\n  position: relative;\\n  display: grid;\\n  grid-template-columns: 1fr auto;\\n  column-gap: var(--cem-pf-v6-c-form-control--ColumnGap);\\n  align-items: start;\\n  width: var(--cem-pf-v6-c-form-control--Width);\\n  font-size: var(--cem-pf-v6-c-form-control--FontSize);\\n  line-height: var(--cem-pf-v6-c-form-control--LineHeight);\\n  resize: var(--cem-pf-v6-c-form-control--Resize);\\n  background-color: var(--cem-pf-v6-c-form-control--BackgroundColor);\\n  border-radius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n}\\n\\n:host::before,\\n:host::after {\\n  position: absolute;\\n  inset: 0;\\n  pointer-events: none;\\n  content: \\"\\";\\n}\\n\\n:host::before {\\n  border-color: var(--cem-pf-v6-c-form-control--before--BorderColor);\\n  border-style: var(--cem-pf-v6-c-form-control--before--BorderStyle);\\n  border-width: var(--cem-pf-v6-c-form-control--before--BorderWidth);\\n  border-radius: var(--cem-pf-v6-c-form-control--before--BorderRadius);\\n}\\n\\n:host::after {\\n  border: var(--cem-pf-v6-c-form-control--after--BorderWidth) var(--cem-pf-v6-c-form-control--after--BorderStyle) var(--cem-pf-v6-c-form-control--after--BorderColor);\\n  border-radius: var(--cem-pf-v6-c-form-control--before--BorderRadius);\\n}\\n\\n:host(:hover) {\\n  --cem-pf-v6-c-form-control--after--BorderColor: var(--cem-pf-v6-c-form-control--hover--after--BorderColor);\\n  --cem-pf-v6-c-form-control--after--BorderWidth: var(--cem-pf-v6-c-form-control--hover--after--BorderWidth);\\n}\\n\\n#select {\\n  grid-row: 1 / 2;\\n  grid-column: 1 / -1;\\n  padding-block-start: var(--cem-pf-v6-c-form-control--PaddingBlockStart);\\n  padding-block-end: var(--cem-pf-v6-c-form-control--PaddingBlockEnd);\\n  padding-inline-start: var(--cem-pf-v6-c-form-control--PaddingInlineStart);\\n  padding-inline-end: var(--cem-pf-v6-c-form-control--PaddingInlineEnd);\\n  margin: 0;\\n  font-family: inherit;\\n  font-size: 100%;\\n  line-height: var(--pf-t--global--font--line-height--body);\\n  color: var(--cem-pf-v6-c-form-control--Color);\\n  appearance: none;\\n  background-color: var(--cem-pf-v6-c-form-control--BackgroundColor);\\n  border: none;\\n  border-radius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n  outline-offset: var(--cem-pf-v6-c-form-control--OutlineOffset);\\n  cursor: pointer;\\n  background-image: url(\\"data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236a6e73' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\\");\\n  background-repeat: no-repeat;\\n  background-position: right var(--pf-t--global--spacer--md) center;\\n}\\n\\n#select * {\\n  color: var(--cem-pf-v6-c-form-control--Color);\\n}\\n"`));
-var cem_pf_v6_select_default = s42;
+s42.replaceSync(JSON.parse("\"*,\\n*::before,\\n*::after {\\n  box-sizing: border-box;\\n}\\n\\n:host {\\n  display: block;\\n}\\n\\n[hidden] {\\n  display: none !important;\\n}\\n\\n#container {\\n  display: grid;\\n  grid-template-rows: 1fr auto;\\n  grid-template-columns: auto auto;\\n  /** Gap between the description, bar, and helper-text rows. Defaults to `--pf-t--global--spacer--md`. */\\n  gap: var(--pf-v6-c-progress--GridGap, var(--pf-t--global--spacer--md, 1rem));\\n  align-items: end;\\n\\n  /* Size modifiers */\\n\\n  \\u0026.sm {\\n    /** Height of the bar at small size. Defaults to `--pf-t--global--spacer--sm`. */\\n    --_bar-height: var(--pf-v6-c-progress--m-sm__bar--Height,\\n      var(--pf-t--global--spacer--sm, 0.5rem));\\n\\n    \\u0026 #measure {\\n      /** Font size of the measure text at small size. Defaults to `--pf-t--global--font--size--body--sm`. */\\n      font-size: var(--pf-v6-c-progress--m-sm__measure--FontSize,\\n        var(--pf-t--global--font--size--body--sm, 0.75rem));\\n    }\\n  }\\n\\n  \\u0026.lg {\\n    /** Height of the bar at large size. Defaults to `--pf-t--global--spacer--lg`. */\\n    --_bar-height: var(--pf-v6-c-progress--m-lg__bar--Height,\\n      var(--pf-t--global--spacer--lg, 1.5rem));\\n  }\\n\\n  /* Measure location modifiers */\\n\\n  \\u0026.outside,\\n  \\u0026.singleline {\\n    grid-template-columns: 1fr fit-content(50%);\\n  }\\n\\n  \\u0026.outside {\\n    \\u0026 #description {\\n      grid-column: 1 / 3;\\n    }\\n\\n    \\u0026 #status {\\n      grid-row: 2 / 3;\\n      grid-column: 2 / 3;\\n      align-self: center;\\n    }\\n\\n    \\u0026 #measure {\\n      display: inline-block;\\n      /** Font size of the measure text in outside layout. Defaults to `--pf-t--global--font--size--sm`. */\\n      font-size: var(--pf-v6-c-progress--m-outside__measure--FontSize,\\n        var(--pf-t--global--font--size--sm, 0.875rem));\\n    }\\n\\n    \\u0026 #bar {\\n      grid-column: 1 / 2;\\n    }\\n  }\\n\\n  \\u0026.singleline {\\n    grid-template-rows: 1fr;\\n\\n    \\u0026 #description {\\n      display: none;\\n    }\\n\\n    \\u0026 #bar {\\n      grid-row: 1 / 2;\\n      grid-column: 1 / 2;\\n    }\\n\\n    \\u0026 #status {\\n      grid-row: 1 / 2;\\n      grid-column: 2 / 3;\\n    }\\n  }\\n\\n  \\u0026.inside {\\n    \\u0026 #indicator {\\n      display: flex;\\n      align-items: center;\\n      justify-content: center;\\n      /** Minimum width of the indicator when measure is inside. Defaults to `--pf-t--global--spacer--xl`. */\\n      min-width: var(--pf-v6-c-progress--m-inside__indicator--MinWidth,\\n        var(--pf-t--global--spacer--xl, 2rem));\\n    }\\n\\n    \\u0026 #measure {\\n      /** Font size of the measure text inside the bar. Defaults to `--pf-t--global--font--size--sm`. */\\n      font-size: var(--pf-v6-c-progress--m-inside__measure--FontSize,\\n        var(--pf-t--global--font--size--sm, 0.875rem));\\n      /** Color of the measure text inside the bar. Defaults to `--pf-t--global--text--color--on-brand--default`. */\\n      color: var(--_inside-measure-color,\\n        var(--pf-v6-c-progress--m-inside__measure--Color,\\n          var(--pf-t--global--text--color--on-brand--default, #fff)));\\n      text-align: center;\\n    }\\n  }\\n\\n  /* Variant modifiers */\\n\\n  \\u0026.success {\\n    /** Indicator color for the success variant. Defaults to `--pf-t--global--color--status--success--default`. */\\n    --_indicator-bg: var(--pf-v6-c-progress--m-success__indicator--BackgroundColor,\\n      var(--pf-t--global--color--status--success--default, #3e8635));\\n    /** Status icon color for the success variant. Defaults to `--pf-t--global--icon--color--status--success--default`. */\\n    --_status-icon-color: var(--pf-v6-c-progress--m-success__status-icon--Color,\\n      var(--pf-t--global--icon--color--status--success--default, #3e8635));\\n    /** Inside measure text color for the success variant. Defaults to `--pf-t--global--text--color--status--on-success--default`. */\\n    --_inside-measure-color: var(--pf-v6-c-progress--m-success--m-inside__measure--Color,\\n      var(--pf-t--global--text--color--status--on-success--default, #fff));\\n  }\\n\\n  \\u0026.warning {\\n    /** Indicator color for the warning variant. Defaults to `--pf-t--global--color--status--warning--default`. */\\n    --_indicator-bg: var(--pf-v6-c-progress--m-warning__indicator--BackgroundColor,\\n      var(--pf-t--global--color--status--warning--default, #f0ab00));\\n    /** Status icon color for the warning variant. Defaults to `--pf-t--global--icon--color--status--warning--default`. */\\n    --_status-icon-color: var(--pf-v6-c-progress--m-warning__status-icon--Color,\\n      var(--pf-t--global--icon--color--status--warning--default, #f0ab00));\\n    /** Inside measure text color for the warning variant. Defaults to `--pf-t--global--text--color--status--on-warning--default`. */\\n    --_inside-measure-color: var(--pf-v6-c-progress--m-warning--m-inside__measure--Color,\\n      var(--pf-t--global--text--color--status--on-warning--default, #151515));\\n  }\\n\\n  \\u0026.danger {\\n    /** Indicator color for the danger variant. Defaults to `--pf-t--global--color--status--danger--default`. */\\n    --_indicator-bg: var(--pf-v6-c-progress--m-danger__indicator--BackgroundColor,\\n      var(--pf-t--global--color--status--danger--default, #c9190b));\\n    /** Status icon color for the danger variant. Defaults to `--pf-t--global--icon--color--status--danger--default`. */\\n    --_status-icon-color: var(--pf-v6-c-progress--m-danger__status-icon--Color,\\n      var(--pf-t--global--icon--color--status--danger--default, #c9190b));\\n    /** Inside measure text color for the danger variant. Defaults to `--pf-t--global--text--color--status--on-danger--default`. */\\n    --_inside-measure-color: var(--pf-v6-c-progress--m-danger--m-inside__measure--Color,\\n      var(--pf-t--global--text--color--status--on-danger--default, #fff));\\n  }\\n\\n  /* Description truncation */\\n\\n  \\u0026.truncated #description {\\n    overflow: hidden;\\n    text-overflow: ellipsis;\\n    white-space: nowrap;\\n  }\\n\\n}\\n\\n/* Danger animations */\\n\\n@media (prefers-reduced-motion: no-preference) {\\n  .danger #bar {\\n    animation: danger-jiggle\\n      var(--pf-t--global--motion--duration--fade--default, 0.3s)\\n      var(--pf-t--global--motion--timing-function--default, cubic-bezier(0.25, 0.1, 0.25, 1))\\n      both;\\n  }\\n\\n  .danger #status-icon {\\n    animation: fade-in\\n      var(--pf-t--global--motion--duration--fade--default, 0.3s)\\n      var(--pf-t--global--motion--timing-function--default, cubic-bezier(0.25, 0.1, 0.25, 1));\\n  }\\n}\\n\\n/* Elements */\\n\\n#description {\\n  grid-column: 1 / 2;\\n  overflow-wrap: anywhere;\\n  word-break: normal;\\n}\\n\\n#status {\\n  display: flex;\\n  grid-row: 1 / 2;\\n  grid-column: 2 / 3;\\n  /** Gap between the measure text and status icon. Defaults to `--pf-t--global--spacer--sm`. */\\n  gap: var(--pf-v6-c-progress__status--Gap,\\n    var(--pf-t--global--spacer--sm, 0.5rem));\\n  align-items: start;\\n  justify-content: end;\\n  text-align: end;\\n  overflow-wrap: anywhere;\\n  word-break: normal;\\n}\\n\\n/** Color of the status icon. Overridden by variant. Defaults to `--pf-t--global--icon--color--regular`. */\\n#status-icon {\\n  color: var(--_status-icon-color,\\n    var(--pf-v6-c-progress__status-icon--Color,\\n      var(--pf-t--global--icon--color--regular, #151515)));\\n}\\n\\n#bar {\\n  position: relative;\\n  grid-row: 2 / 3;\\n  grid-column: 1 / 3;\\n  align-self: center;\\n  /** Height of the progress bar track. Defaults to `--pf-t--global--spacer--md`. */\\n  height: var(--_bar-height,\\n    var(--pf-v6-c-progress__bar--Height,\\n      var(--pf-t--global--spacer--md, 1rem)));\\n  overflow: hidden;\\n  /** Background color of the bar track. Defaults to `--pf-t--global--color--nonstatus--gray--default`. */\\n  background-color: var(--pf-v6-c-progress__bar--BackgroundColor,\\n    var(--pf-t--global--color--nonstatus--gray--default, #f0f0f0));\\n  /** Border radius of the bar track. Defaults to `--pf-t--global--border--radius--medium`. */\\n  border-radius: var(--pf-v6-c-progress__bar--BorderRadius,\\n    var(--pf-t--global--border--radius--medium, 6px));\\n\\n  \\u0026::before {\\n    position: absolute;\\n    inset: 0;\\n    pointer-events: none;\\n    content: '';\\n    /** Border width of the bar track for high-contrast mode. Defaults to `--pf-t--global--border--width--high-contrast--regular`. */\\n    border: var(--pf-v6-c-progress__bar--BorderWidth,\\n        var(--pf-t--global--border--width--high-contrast--regular, 0))\\n      solid\\n      /** Border color of the bar track for high-contrast mode. Defaults to `--pf-t--global--border--color--high-contrast`. */\\n      var(--pf-v6-c-progress__bar--BorderColor,\\n        var(--pf-t--global--border--color--high-contrast, transparent));\\n    border-radius: inherit;\\n  }\\n}\\n\\n#indicator {\\n  position: absolute;\\n  inset-block-start: 0;\\n  inset-inline-start: 0;\\n  /** Height of the filled indicator. Defaults to `--pf-v6-c-progress__bar--Height`. */\\n  height: var(--_bar-height,\\n    var(--pf-v6-c-progress__indicator--Height,\\n      var(--pf-v6-c-progress__bar--Height,\\n        var(--pf-t--global--spacer--md, 1rem))));\\n  /** Background color of the filled indicator. Overridden by variant. Defaults to `--pf-t--global--color--brand--default`. */\\n  background-color: var(--_indicator-bg,\\n    var(--pf-v6-c-progress__indicator--BackgroundColor,\\n      var(--pf-t--global--color--brand--default, #0066cc)));\\n\\n  \\u0026::before {\\n    position: absolute;\\n    inset: 0;\\n    content: '';\\n    /** Border width of the indicator for high-contrast mode. Defaults to `--pf-t--global--border--width--high-contrast--extra-strong`. */\\n    border: var(--pf-v6-c-progress__indicator--BorderWidth,\\n        var(--pf-t--global--border--width--high-contrast--extra-strong, 0))\\n      solid\\n      /** Border color of the indicator for high-contrast mode. */\\n      var(--pf-v6-c-progress__indicator--BorderColor, transparent);\\n    border-radius: var(--pf-v6-c-progress__bar--BorderRadius,\\n      var(--pf-t--global--border--radius--medium, 6px));\\n  }\\n}\\n\\n#helper-text {\\n  grid-row: 3 / 4;\\n  grid-column: 1 / 3;\\n  /** Negative offset to bring helper text closer to the bar. */\\n  margin-block-start: var(--pf-v6-c-progress__helper-text--MarginBlockStart,\\n    calc(var(--pf-t--global--spacer--sm, 0.5rem) - var(--pf-v6-c-progress--GridGap,\\n      var(--pf-t--global--spacer--md, 1rem))));\\n}\\n\\n/** Minimum width of the measure display for visual alignment across stacked progress bars. Set via CSS custom property. */\\n#measure {\\n  min-width: var(--pf-v6-c-progress__measure--m-static-width--MinWidth, 0);\\n  font-variant-numeric: tabular-nums;\\n}\\n\\nsvg {\\n  width: 1em;\\n  height: 1em;\\n  fill: currentcolor;\\n}\\n\\n@keyframes danger-jiggle {\\n  33% {\\n    translate: -2px;\\n  }\\n\\n  66% {\\n    translate: 3px;\\n  }\\n\\n  100% {\\n    translate: 0;\\n  }\\n}\\n\\n@keyframes fade-in {\\n  from {\\n    opacity: 0;\\n  }\\n\\n  to {\\n    opacity: 1;\\n  }\\n}\\n\""));
+var cem_pf_v6_progress_default = s42;
+
+// elements/cem-pf-v6-progress/cem-pf-v6-progress.ts
+var checkCircleIcon = T`<svg id="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L241 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L335 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"/></svg>`;
+var triangleExclamationIcon = T`<svg id="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true"><path d="M256 32c14.2 0 27.3 7.5 34.5 19.8l216 368c7.3 12.4 7.3 27.7 .2 40.1S486.3 480 472 480H40c-14.3 0-27.6-7.7-34.7-20.1s-7-27.8 .2-40.1l216-368C228.7 39.5 241.8 32 256 32zm0 128c-13.3 0-24 10.7-24 24V296c0 13.3 10.7 24 24 24s24-10.7 24-24V184c0-13.3-10.7-24-24-24zm32 224a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z"/></svg>`;
+var circleExclamationIcon = T`<svg id="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-384c13.3 0 24 10.7 24 24V264c0 13.3-10.7 24-24 24s-24-10.7-24-24V152c0-13.3 10.7-24 24-24zM224 352a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z"/></svg>`;
+var VARIANT_ICONS = /* @__PURE__ */ new Map([
+  ["success", checkCircleIcon],
+  ["warning", triangleExclamationIcon],
+  ["danger", circleExclamationIcon]
+]);
+var _valueText_dec, _hideStatusIcon_dec, _variant_dec11, _measureLocation_dec, _size_dec2, _min_dec, _max_dec, _accessibleLabel_dec, _truncated_dec, _description_dec3, _value_dec3, _a39, _CemPfV6Progress_decorators, _internals8, _init39, _value3, _description3, _truncated, _accessibleLabel, _max, _min, _size2, _measureLocation, _variant11, _hideStatusIcon, _valueText, _hasHelperText, _CemPfV6Progress_instances, calculatedPercentage_get, displayText_get, icon_get, onHelperTextSlotchange_fn;
+_CemPfV6Progress_decorators = [t3("cem-pf-v6-progress")];
+var CemPfV6Progress = class extends (_a39 = i3, _value_dec3 = [n4({ type: Number })], _description_dec3 = [n4()], _truncated_dec = [n4({ type: Boolean })], _accessibleLabel_dec = [n4({ attribute: "accessible-label" })], _max_dec = [n4({ type: Number })], _min_dec = [n4({ type: Number })], _size_dec2 = [n4()], _measureLocation_dec = [n4({ attribute: "measure-location" })], _variant_dec11 = [n4()], _hideStatusIcon_dec = [n4({ type: Boolean, attribute: "hide-status-icon" })], _valueText_dec = [n4({ attribute: "value-text" })], _a39) {
+  constructor() {
+    super(...arguments);
+    __privateAdd(this, _CemPfV6Progress_instances);
+    __privateAdd(this, _internals8, this.attachInternals());
+    __privateAdd(this, _value3, __runInitializers(_init39, 8, this, 0)), __runInitializers(_init39, 11, this);
+    __privateAdd(this, _description3, __runInitializers(_init39, 12, this)), __runInitializers(_init39, 15, this);
+    __privateAdd(this, _truncated, __runInitializers(_init39, 16, this, false)), __runInitializers(_init39, 19, this);
+    __privateAdd(this, _accessibleLabel, __runInitializers(_init39, 20, this)), __runInitializers(_init39, 23, this);
+    __privateAdd(this, _max, __runInitializers(_init39, 24, this, 100)), __runInitializers(_init39, 27, this);
+    __privateAdd(this, _min, __runInitializers(_init39, 28, this, 0)), __runInitializers(_init39, 31, this);
+    __privateAdd(this, _size2, __runInitializers(_init39, 32, this)), __runInitializers(_init39, 35, this);
+    __privateAdd(this, _measureLocation, __runInitializers(_init39, 36, this)), __runInitializers(_init39, 39, this);
+    __privateAdd(this, _variant11, __runInitializers(_init39, 40, this)), __runInitializers(_init39, 43, this);
+    __privateAdd(this, _hideStatusIcon, __runInitializers(_init39, 44, this, false)), __runInitializers(_init39, 47, this);
+    __privateAdd(this, _valueText, __runInitializers(_init39, 48, this)), __runInitializers(_init39, 51, this);
+    __privateAdd(this, _hasHelperText, false);
+  }
+  updated(changed) {
+    if (changed.has("value") || changed.has("min") || changed.has("max")) {
+      __privateGet(this, _internals8).ariaValueNow = __privateGet(this, _CemPfV6Progress_instances, calculatedPercentage_get).toString();
+      __privateGet(this, _internals8).ariaValueMin = "0";
+      __privateGet(this, _internals8).ariaValueMax = "100";
+    }
+    if (changed.has("valueText")) {
+      __privateGet(this, _internals8).ariaValueText = this.valueText ?? null;
+    }
+    if (changed.has("accessibleLabel") || changed.has("description")) {
+      __privateGet(this, _internals8).ariaLabel = this.accessibleLabel ?? this.description ?? "Progress status";
+    }
+  }
+  connectedCallback() {
+    super.connectedCallback();
+    __privateGet(this, _internals8).role = "progressbar";
+    __privateGet(this, _internals8).ariaValueNow = __privateGet(this, _CemPfV6Progress_instances, calculatedPercentage_get).toString();
+    __privateGet(this, _internals8).ariaValueMin = "0";
+    __privateGet(this, _internals8).ariaValueMax = "100";
+    __privateGet(this, _internals8).ariaLabel = this.accessibleLabel ?? this.description ?? "Progress status";
+  }
+  render() {
+    const pct = __privateGet(this, _CemPfV6Progress_instances, calculatedPercentage_get);
+    const displayText = __privateGet(this, _CemPfV6Progress_instances, displayText_get);
+    const icon = __privateGet(this, _CemPfV6Progress_instances, icon_get);
+    const noMeasure = this.measureLocation === "none";
+    const inside = this.measureLocation === "inside";
+    const hasDescription = this.description != null;
+    const hasIcon = this.variant != null && !this.hideStatusIcon;
+    const singleline = !hasDescription;
+    const classes = {
+      [this.size ?? ""]: !!this.size,
+      [this.measureLocation ?? ""]: !!this.measureLocation && this.measureLocation !== "none",
+      [this.variant ?? ""]: !!this.variant,
+      singleline,
+      truncated: this.truncated
+    };
+    return T`
+      <div id="container" class="${e5(classes)}">
+        <div id="description"
+             ?hidden="${!hasDescription}"
+>${this.description ?? ""}</div>
+
+        <div id="status"
+             aria-hidden="true"
+             ?hidden="${noMeasure && !hasIcon}">
+          ${!inside && !noMeasure ? T`<span id="measure">${displayText}</span>` : A}
+          ${icon}
+        </div>
+
+        <div id="bar">
+          <div id="indicator"
+               style="${o8({ width: `${pct}%` })}">
+            ${inside && !noMeasure ? T`<span id="measure">${displayText}</span>` : A}
+          </div>
+        </div>
+
+        <div id="helper-text" ?hidden="${!__privateGet(this, _hasHelperText)}">
+          <slot id="helper-text-slot"
+                name="helper-text"
+                @slotchange="${__privateMethod(this, _CemPfV6Progress_instances, onHelperTextSlotchange_fn)}"></slot>
+        </div>
+      </div>
+    `;
+  }
+};
+_init39 = __decoratorStart(_a39);
+_internals8 = new WeakMap();
+_value3 = new WeakMap();
+_description3 = new WeakMap();
+_truncated = new WeakMap();
+_accessibleLabel = new WeakMap();
+_max = new WeakMap();
+_min = new WeakMap();
+_size2 = new WeakMap();
+_measureLocation = new WeakMap();
+_variant11 = new WeakMap();
+_hideStatusIcon = new WeakMap();
+_valueText = new WeakMap();
+_hasHelperText = new WeakMap();
+_CemPfV6Progress_instances = new WeakSet();
+calculatedPercentage_get = function() {
+  const { value, min, max } = this;
+  const percentage = Math.round((value - min) / (max - min) * 100);
+  if (Number.isNaN(percentage) || percentage < 0) {
+    return 0;
+  }
+  return Math.min(percentage, 100);
+};
+displayText_get = function() {
+  return this.valueText ?? `${__privateGet(this, _CemPfV6Progress_instances, calculatedPercentage_get)}%`;
+};
+icon_get = function() {
+  if (this.hideStatusIcon) {
+    return A;
+  }
+  return VARIANT_ICONS.get(this.variant) ?? A;
+};
+onHelperTextSlotchange_fn = function(event) {
+  const slot = event.target;
+  const elements = slot?.assignedElements() ?? [];
+  __privateSet(this, _hasHelperText, elements.length > 0);
+  __privateGet(this, _internals8).ariaDescribedByElements = elements.length ? elements : null;
+  this.requestUpdate();
+};
+__decorateElement(_init39, 4, "value", _value_dec3, CemPfV6Progress, _value3);
+__decorateElement(_init39, 4, "description", _description_dec3, CemPfV6Progress, _description3);
+__decorateElement(_init39, 4, "truncated", _truncated_dec, CemPfV6Progress, _truncated);
+__decorateElement(_init39, 4, "accessibleLabel", _accessibleLabel_dec, CemPfV6Progress, _accessibleLabel);
+__decorateElement(_init39, 4, "max", _max_dec, CemPfV6Progress, _max);
+__decorateElement(_init39, 4, "min", _min_dec, CemPfV6Progress, _min);
+__decorateElement(_init39, 4, "size", _size_dec2, CemPfV6Progress, _size2);
+__decorateElement(_init39, 4, "measureLocation", _measureLocation_dec, CemPfV6Progress, _measureLocation);
+__decorateElement(_init39, 4, "variant", _variant_dec11, CemPfV6Progress, _variant11);
+__decorateElement(_init39, 4, "hideStatusIcon", _hideStatusIcon_dec, CemPfV6Progress, _hideStatusIcon);
+__decorateElement(_init39, 4, "valueText", _valueText_dec, CemPfV6Progress, _valueText);
+CemPfV6Progress = __decorateElement(_init39, 0, "CemPfV6Progress", _CemPfV6Progress_decorators, CemPfV6Progress);
+__publicField(CemPfV6Progress, "styles", cem_pf_v6_progress_default);
+__runInitializers(_init39, 1, CemPfV6Progress);
+
+// lit-css:elements/cem-pf-v6-select/cem-pf-v6-select.css
+var s43 = new CSSStyleSheet();
+s43.replaceSync(JSON.parse(`":host {\\n\\n  /* Form control custom properties */\\n  --cem-pf-v6-c-form-control--ColumnGap: var(--pf-t--global--spacer--gap--text-to-element--default);\\n  --cem-pf-v6-c-form-control--Color: var(--pf-t--global--text--color--regular);\\n  --cem-pf-v6-c-form-control--FontSize: var(--pf-t--global--font--size--body--default);\\n  --cem-pf-v6-c-form-control--LineHeight: var(--pf-t--global--font--line-height--body);\\n  --cem-pf-v6-c-form-control--Resize: none;\\n  --cem-pf-v6-c-form-control--OutlineOffset: -6px;\\n  --cem-pf-v6-c-form-control--BorderRadius: var(--pf-t--global--border--radius--small);\\n  --cem-pf-v6-c-form-control--before--BorderWidth: var(--pf-t--global--border--width--control--default);\\n  --cem-pf-v6-c-form-control--before--BorderStyle: solid;\\n  --cem-pf-v6-c-form-control--before--BorderColor: var(--pf-t--global--border--color--default);\\n  --cem-pf-v6-c-form-control--before--BorderRadius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n  --cem-pf-v6-c-form-control--after--BorderWidth: var(--pf-t--global--border--width--control--default);\\n  --cem-pf-v6-c-form-control--after--BorderStyle: solid;\\n  --cem-pf-v6-c-form-control--after--BorderColor: transparent;\\n  --cem-pf-v6-c-form-control--after--BorderRadius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n  --cem-pf-v6-c-form-control--BackgroundColor: var(--pf-t--global--background--color--control--default);\\n  --cem-pf-v6-c-form-control--Width: 100%;\\n  --cem-pf-v6-c-form-control--inset--base: var(--pf-t--global--spacer--control--horizontal--default);\\n  --cem-pf-v6-c-form-control--PaddingBlockStart--base: var(--pf-t--global--spacer--control--vertical--default);\\n  --cem-pf-v6-c-form-control--PaddingBlockEnd--base: var(--pf-t--global--spacer--control--vertical--default);\\n  --cem-pf-v6-c-form-control--PaddingInlineEnd--base: var(--cem-pf-v6-c-form-control--inset--base);\\n  --cem-pf-v6-c-form-control--PaddingInlineStart--base: var(--cem-pf-v6-c-form-control--inset--base);\\n  --cem-pf-v6-c-form-control--PaddingBlockStart: var(--cem-pf-v6-c-form-control__select--PaddingBlockStart);\\n  --cem-pf-v6-c-form-control--PaddingBlockEnd: var(--cem-pf-v6-c-form-control__select--PaddingBlockEnd);\\n  --cem-pf-v6-c-form-control--PaddingInlineStart: var(--cem-pf-v6-c-form-control__select--PaddingInlineStart);\\n  --cem-pf-v6-c-form-control--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__select--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control__select--PaddingBlockStart: var(--cem-pf-v6-c-form-control--PaddingBlockStart--base);\\n  --cem-pf-v6-c-form-control__select--PaddingBlockEnd: var(--cem-pf-v6-c-form-control--PaddingBlockEnd--base);\\n  --cem-pf-v6-c-form-control__select--PaddingInlineEnd: var(--cem-pf-v6-c-form-control--PaddingInlineEnd--base);\\n  --cem-pf-v6-c-form-control__select--PaddingInlineStart: var(--cem-pf-v6-c-form-control--PaddingInlineStart--base);\\n  --cem-pf-v6-c-form-control__utilities--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__utilities--select--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control__utilities--select--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__select--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control--hover--after--BorderWidth: var(--pf-t--global--border--width--control--hover);\\n  --cem-pf-v6-c-form-control--hover--after--BorderColor: var(--pf-t--global--border--color--hover);\\n\\n  position: relative;\\n  display: grid;\\n  grid-template-columns: 1fr auto;\\n  column-gap: var(--cem-pf-v6-c-form-control--ColumnGap);\\n  align-items: start;\\n  width: var(--cem-pf-v6-c-form-control--Width);\\n  font-size: var(--cem-pf-v6-c-form-control--FontSize);\\n  line-height: var(--cem-pf-v6-c-form-control--LineHeight);\\n  resize: var(--cem-pf-v6-c-form-control--Resize);\\n  background-color: var(--cem-pf-v6-c-form-control--BackgroundColor);\\n  border-radius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n}\\n\\n:host::before,\\n:host::after {\\n  position: absolute;\\n  inset: 0;\\n  pointer-events: none;\\n  content: \\"\\";\\n}\\n\\n:host::before {\\n  border-color: var(--cem-pf-v6-c-form-control--before--BorderColor);\\n  border-style: var(--cem-pf-v6-c-form-control--before--BorderStyle);\\n  border-width: var(--cem-pf-v6-c-form-control--before--BorderWidth);\\n  border-radius: var(--cem-pf-v6-c-form-control--before--BorderRadius);\\n}\\n\\n:host::after {\\n  border: var(--cem-pf-v6-c-form-control--after--BorderWidth) var(--cem-pf-v6-c-form-control--after--BorderStyle) var(--cem-pf-v6-c-form-control--after--BorderColor);\\n  border-radius: var(--cem-pf-v6-c-form-control--before--BorderRadius);\\n}\\n\\n:host(:hover) {\\n  --cem-pf-v6-c-form-control--after--BorderColor: var(--cem-pf-v6-c-form-control--hover--after--BorderColor);\\n  --cem-pf-v6-c-form-control--after--BorderWidth: var(--cem-pf-v6-c-form-control--hover--after--BorderWidth);\\n}\\n\\n#select {\\n  grid-row: 1 / 2;\\n  grid-column: 1 / -1;\\n  padding-block-start: var(--cem-pf-v6-c-form-control--PaddingBlockStart);\\n  padding-block-end: var(--cem-pf-v6-c-form-control--PaddingBlockEnd);\\n  padding-inline-start: var(--cem-pf-v6-c-form-control--PaddingInlineStart);\\n  padding-inline-end: var(--cem-pf-v6-c-form-control--PaddingInlineEnd);\\n  margin: 0;\\n  font-family: inherit;\\n  font-size: 100%;\\n  line-height: var(--pf-t--global--font--line-height--body);\\n  color: var(--cem-pf-v6-c-form-control--Color);\\n  appearance: none;\\n  background-color: var(--cem-pf-v6-c-form-control--BackgroundColor);\\n  border: none;\\n  border-radius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n  outline-offset: var(--cem-pf-v6-c-form-control--OutlineOffset);\\n  cursor: pointer;\\n  background-image: url(\\"data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236a6e73' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\\");\\n  background-repeat: no-repeat;\\n  background-position: right var(--pf-t--global--spacer--md) center;\\n}\\n\\n#select * {\\n  color: var(--cem-pf-v6-c-form-control--Color);\\n}\\n"`));
+var cem_pf_v6_select_default = s43;
 
 // elements/cem-pf-v6-select/cem-pf-v6-select.ts
-var _invalid_dec, _disabled_dec7, _value_dec3, _a39, _PfV6Select_decorators, _internals8, _observer, _init39, _value3, _disabled7, _invalid, _PfV6Select_instances, selectEl_get, cloneOptions_fn, _onChange, _onInput;
+var _invalid_dec, _disabled_dec7, _value_dec4, _a40, _PfV6Select_decorators, _internals9, _observer, _init40, _value4, _disabled7, _invalid, _PfV6Select_instances, selectEl_get, cloneOptions_fn, _onChange, _onInput;
 _PfV6Select_decorators = [t3("cem-pf-v6-select")];
-var PfV6Select = class extends (_a39 = i3, _value_dec3 = [n4({ reflect: true })], _disabled_dec7 = [n4({ type: Boolean, reflect: true })], _invalid_dec = [n4({ type: Boolean, reflect: true })], _a39) {
+var PfV6Select = class extends (_a40 = i3, _value_dec4 = [n4({ reflect: true })], _disabled_dec7 = [n4({ type: Boolean, reflect: true })], _invalid_dec = [n4({ type: Boolean, reflect: true })], _a40) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Select_instances);
-    __privateAdd(this, _internals8, this.attachInternals());
+    __privateAdd(this, _internals9, this.attachInternals());
     __privateAdd(this, _observer, new MutationObserver(() => __privateMethod(this, _PfV6Select_instances, cloneOptions_fn).call(this)));
-    __privateAdd(this, _value3, __runInitializers(_init39, 8, this, "")), __runInitializers(_init39, 11, this);
-    __privateAdd(this, _disabled7, __runInitializers(_init39, 12, this, false)), __runInitializers(_init39, 15, this);
-    __privateAdd(this, _invalid, __runInitializers(_init39, 16, this, false)), __runInitializers(_init39, 19, this);
+    __privateAdd(this, _value4, __runInitializers(_init40, 8, this, "")), __runInitializers(_init40, 11, this);
+    __privateAdd(this, _disabled7, __runInitializers(_init40, 12, this, false)), __runInitializers(_init40, 15, this);
+    __privateAdd(this, _invalid, __runInitializers(_init40, 16, this, false)), __runInitializers(_init40, 19, this);
     __privateAdd(this, _onChange, () => {
       const select = __privateGet(this, _PfV6Select_instances, selectEl_get);
       if (!select) return;
       this.value = select.value;
-      __privateGet(this, _internals8).setFormValue(select.value);
+      __privateGet(this, _internals9).setFormValue(select.value);
       this.dispatchEvent(new Event("change", { bubbles: true }));
     });
     __privateAdd(this, _onInput, () => {
       const select = __privateGet(this, _PfV6Select_instances, selectEl_get);
       if (!select) return;
       this.value = select.value;
-      __privateGet(this, _internals8).setFormValue(select.value);
+      __privateGet(this, _internals9).setFormValue(select.value);
       this.dispatchEvent(new Event("input", { bubbles: true }));
     });
   }
@@ -5586,7 +5769,7 @@ var PfV6Select = class extends (_a39 = i3, _value_dec3 = [n4({ reflect: true })]
     if (select && this.value) {
       select.value = this.value;
     }
-    __privateGet(this, _internals8).setFormValue(select?.value || null);
+    __privateGet(this, _internals9).setFormValue(select?.value || null);
     __privateGet(this, _observer).observe(this, {
       childList: true,
       subtree: true,
@@ -5599,7 +5782,7 @@ var PfV6Select = class extends (_a39 = i3, _value_dec3 = [n4({ reflect: true })]
       if (select && select.value !== this.value) {
         select.value = this.value;
       }
-      __privateGet(this, _internals8).setFormValue(this.value || null);
+      __privateGet(this, _internals9).setFormValue(this.value || null);
     }
   }
   disconnectedCallback() {
@@ -5607,10 +5790,10 @@ var PfV6Select = class extends (_a39 = i3, _value_dec3 = [n4({ reflect: true })]
     __privateGet(this, _observer).disconnect();
   }
 };
-_init39 = __decoratorStart(_a39);
-_internals8 = new WeakMap();
+_init40 = __decoratorStart(_a40);
+_internals9 = new WeakMap();
 _observer = new WeakMap();
-_value3 = new WeakMap();
+_value4 = new WeakMap();
 _disabled7 = new WeakMap();
 _invalid = new WeakMap();
 _PfV6Select_instances = new WeakSet();
@@ -5630,30 +5813,30 @@ cloneOptions_fn = function() {
 };
 _onChange = new WeakMap();
 _onInput = new WeakMap();
-__decorateElement(_init39, 4, "value", _value_dec3, PfV6Select, _value3);
-__decorateElement(_init39, 4, "disabled", _disabled_dec7, PfV6Select, _disabled7);
-__decorateElement(_init39, 4, "invalid", _invalid_dec, PfV6Select, _invalid);
-PfV6Select = __decorateElement(_init39, 0, "PfV6Select", _PfV6Select_decorators, PfV6Select);
+__decorateElement(_init40, 4, "value", _value_dec4, PfV6Select, _value4);
+__decorateElement(_init40, 4, "disabled", _disabled_dec7, PfV6Select, _disabled7);
+__decorateElement(_init40, 4, "invalid", _invalid_dec, PfV6Select, _invalid);
+PfV6Select = __decorateElement(_init40, 0, "PfV6Select", _PfV6Select_decorators, PfV6Select);
 __publicField(PfV6Select, "formAssociated", true);
 __publicField(PfV6Select, "shadowRootOptions", {
   ...i3.shadowRootOptions,
   delegatesFocus: true
 });
 __publicField(PfV6Select, "styles", cem_pf_v6_select_default);
-__runInitializers(_init39, 1, PfV6Select);
+__runInitializers(_init40, 1, PfV6Select);
 
 // lit-css:elements/cem-pf-v6-skip-to-content/cem-pf-v6-skip-to-content.css
-var s43 = new CSSStyleSheet();
-s43.replaceSync(JSON.parse('":host {\\n  position: absolute;\\n  inset-block-start: 0;\\n  inset-inline-start: 50%;\\n  z-index: var(--pf-t--global--z-index--xl);\\n  transform: translateX(-50%);\\n}\\n\\n#wrapper {\\n  position: absolute;\\n  inset-block-start: 0;\\n  inset-inline-start: 50%;\\n  z-index: var(--pf-t--global--z-index--xl);\\n  transform: translate(-50%, -100%);\\n  transition: transform var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default);\\n\\n  \\u0026:focus-within {\\n    transform: translate(-50%, 0);\\n  }\\n}\\n\\n#link {\\n  display: inline-flex;\\n  align-items: center;\\n  justify-content: center;\\n  padding-block-start: var(--pf-t--global--spacer--control--vertical--default);\\n  padding-block-end: var(--pf-t--global--spacer--control--vertical--default);\\n  padding-inline-start: var(--pf-t--global--spacer--control--horizontal--default);\\n  padding-inline-end: var(--pf-t--global--spacer--control--horizontal--default);\\n  font-family: var(--pf-t--global--font--family--body);\\n  font-size: var(--pf-t--global--font--size--body--default);\\n  font-weight: var(--pf-t--global--font--weight--body--bold);\\n  line-height: var(--pf-t--global--font--line-height--body);\\n  color: var(--pf-t--global--text--color--inverse);\\n  text-align: center;\\n  text-decoration: none;\\n  white-space: nowrap;\\n  background-color: var(--pf-t--global--color--brand--default);\\n  border: 0;\\n  border-radius: var(--pf-t--global--border--radius--small);\\n  cursor: pointer;\\n\\n  \\u0026:hover {\\n    background-color: var(--pf-t--global--color--brand--hover);\\n  }\\n\\n  \\u0026:active {\\n    background-color: var(--pf-t--global--color--brand--clicked);\\n  }\\n\\n  \\u0026:focus {\\n    outline: var(--pf-t--global--border--width--action--default) solid var(--pf-t--global--focus-ring--color--default);\\n    outline-offset: var(--pf-t--global--focus-ring--position--offset);\\n  }\\n}\\n"'));
-var cem_pf_v6_skip_to_content_default = s43;
+var s44 = new CSSStyleSheet();
+s44.replaceSync(JSON.parse('":host {\\n  position: absolute;\\n  inset-block-start: 0;\\n  inset-inline-start: 50%;\\n  z-index: var(--pf-t--global--z-index--xl);\\n  transform: translateX(-50%);\\n}\\n\\n#wrapper {\\n  position: absolute;\\n  inset-block-start: 0;\\n  inset-inline-start: 50%;\\n  z-index: var(--pf-t--global--z-index--xl);\\n  transform: translate(-50%, -100%);\\n  transition: transform var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default);\\n\\n  \\u0026:focus-within {\\n    transform: translate(-50%, 0);\\n  }\\n}\\n\\n#link {\\n  display: inline-flex;\\n  align-items: center;\\n  justify-content: center;\\n  padding-block-start: var(--pf-t--global--spacer--control--vertical--default);\\n  padding-block-end: var(--pf-t--global--spacer--control--vertical--default);\\n  padding-inline-start: var(--pf-t--global--spacer--control--horizontal--default);\\n  padding-inline-end: var(--pf-t--global--spacer--control--horizontal--default);\\n  font-family: var(--pf-t--global--font--family--body);\\n  font-size: var(--pf-t--global--font--size--body--default);\\n  font-weight: var(--pf-t--global--font--weight--body--bold);\\n  line-height: var(--pf-t--global--font--line-height--body);\\n  color: var(--pf-t--global--text--color--inverse);\\n  text-align: center;\\n  text-decoration: none;\\n  white-space: nowrap;\\n  background-color: var(--pf-t--global--color--brand--default);\\n  border: 0;\\n  border-radius: var(--pf-t--global--border--radius--small);\\n  cursor: pointer;\\n\\n  \\u0026:hover {\\n    background-color: var(--pf-t--global--color--brand--hover);\\n  }\\n\\n  \\u0026:active {\\n    background-color: var(--pf-t--global--color--brand--clicked);\\n  }\\n\\n  \\u0026:focus {\\n    outline: var(--pf-t--global--border--width--action--default) solid var(--pf-t--global--focus-ring--color--default);\\n    outline-offset: var(--pf-t--global--focus-ring--position--offset);\\n  }\\n}\\n"'));
+var cem_pf_v6_skip_to_content_default = s44;
 
 // elements/cem-pf-v6-skip-to-content/cem-pf-v6-skip-to-content.ts
-var _href_dec4, _a40, _PfV6SkipToContent_decorators, _init40, _href4;
+var _href_dec4, _a41, _PfV6SkipToContent_decorators, _init41, _href4;
 _PfV6SkipToContent_decorators = [t3("cem-pf-v6-skip-to-content")];
-var PfV6SkipToContent = class extends (_a40 = i3, _href_dec4 = [n4({ reflect: true })], _a40) {
+var PfV6SkipToContent = class extends (_a41 = i3, _href_dec4 = [n4({ reflect: true })], _a41) {
   constructor() {
     super(...arguments);
-    __privateAdd(this, _href4, __runInitializers(_init40, 8, this, "#main-content")), __runInitializers(_init40, 11, this);
+    __privateAdd(this, _href4, __runInitializers(_init41, 8, this, "#main-content")), __runInitializers(_init41, 11, this);
   }
   render() {
     return T`
@@ -5669,29 +5852,29 @@ var PfV6SkipToContent = class extends (_a40 = i3, _href_dec4 = [n4({ reflect: tr
     `;
   }
 };
-_init40 = __decoratorStart(_a40);
+_init41 = __decoratorStart(_a41);
 _href4 = new WeakMap();
-__decorateElement(_init40, 4, "href", _href_dec4, PfV6SkipToContent, _href4);
-PfV6SkipToContent = __decorateElement(_init40, 0, "PfV6SkipToContent", _PfV6SkipToContent_decorators, PfV6SkipToContent);
+__decorateElement(_init41, 4, "href", _href_dec4, PfV6SkipToContent, _href4);
+PfV6SkipToContent = __decorateElement(_init41, 0, "PfV6SkipToContent", _PfV6SkipToContent_decorators, PfV6SkipToContent);
 __publicField(PfV6SkipToContent, "styles", cem_pf_v6_skip_to_content_default);
-__runInitializers(_init40, 1, PfV6SkipToContent);
+__runInitializers(_init41, 1, PfV6SkipToContent);
 
 // lit-css:elements/cem-pf-v6-switch/cem-pf-v6-switch.css
-var s44 = new CSSStyleSheet();
-s44.replaceSync(JSON.parse('":host {\\n  display: inline-flex;\\n}\\n\\n#switch-label {\\n  display: inline-flex;\\n  align-items: center;\\n  gap: 0.5rem;\\n  cursor: pointer;\\n  user-select: none;\\n}\\n\\n#switch-input {\\n  position: absolute;\\n  opacity: 0;\\n  pointer-events: none;\\n}\\n\\n#switch-toggle {\\n  position: relative;\\n  display: inline-block;\\n  width: calc(calc(var(--pf-t--global--font--size--sm) * var(--pf-t--global--font--line-height--body)) + 0.125rem + calc(var(--pf-t--global--font--size--sm) - 0.125rem));\\n  height: calc(var(--pf-t--global--font--size--sm) * var(--pf-t--global--font--line-height--body));\\n  background-color: var(--pf-t--global--background--color--control--default);\\n  border-radius: var(--pf-t--global--border--radius--pill);\\n\\n  \\u0026::before {\\n    position: absolute;\\n    inset-block-start: 50%;\\n    inset-inline-start: calc((calc(var(--pf-t--global--font--size--sm) * var(--pf-t--global--font--line-height--body)) - calc(var(--pf-t--global--font--size--sm) - 0.125rem)) / 2);\\n    display: block;\\n    width: calc(var(--pf-t--global--font--size--sm) - 0.125rem);\\n    height: calc(var(--pf-t--global--font--size--sm) - 0.125rem);\\n    content: \\"\\";\\n    background-color: var(--pf-t--global--icon--color--subtle);\\n    border: var(--pf-t--global--border--width--regular) solid transparent;\\n    border-radius: var(--pf-t--global--border--radius--pill);\\n    transition: transform var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--default),\\n                background-color var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--default);\\n    transform: translateY(-50%);\\n  }\\n\\n  \\u0026::after {\\n    position: absolute;\\n    inset: 0;\\n    content: \\"\\";\\n    border: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);\\n    border-radius: var(--pf-t--global--border--radius--pill);\\n  }\\n}\\n\\n.switch-toggle-icon {\\n  position: absolute;\\n  inset-block-start: 0;\\n  inset-block-end: 0;\\n  inset-inline-start: calc(var(--pf-t--global--font--size--sm) * 0.4);\\n  display: none;\\n  align-items: center;\\n  font-size: calc(var(--pf-t--global--font--size--sm) * 0.625);\\n  color: var(--pf-t--global--icon--color--on-brand--default);\\n\\n  \\u0026 svg {\\n    width: 1em;\\n    height: 1em;\\n  }\\n}\\n\\n#switch-input:checked + #switch-toggle {\\n  background-color: var(--pf-t--global--color--brand--default);\\n\\n  \\u0026::before {\\n    transform: translate(calc(100% + 0.125rem), -50%);\\n    background-color: var(--pf-t--global--icon--color--inverse);\\n  }\\n\\n  \\u0026::after {\\n    border-color: transparent;\\n  }\\n\\n  \\u0026 .switch-toggle-icon {\\n    display: flex;\\n  }\\n}\\n\\n#switch-input:not(:checked) + #switch-toggle .switch-toggle-icon {\\n  display: none;\\n}\\n\\n#switch-input:focus-visible + #switch-toggle {\\n  outline: 2px solid var(--pf-t--global--color--brand--default);\\n  outline-offset: 2px;\\n}\\n\\n#switch-input:disabled + #switch-toggle {\\n  background-color: var(--pf-t--global--background--color--disabled--default);\\n  cursor: not-allowed;\\n\\n  \\u0026::before {\\n    background-color: var(--pf-t--global--text--color--disabled);\\n  }\\n\\n  \\u0026::after {\\n    border-color: var(--pf-t--global--border--color--disabled);\\n  }\\n\\n  \\u0026 .switch-toggle-icon {\\n    color: var(--pf-t--global--icon--color--disabled);\\n  }\\n}\\n\\n#switch-input:disabled ~ #switch-text {\\n  color: var(--pf-t--global--text--color--disabled);\\n  cursor: not-allowed;\\n}\\n\\n:host([disabled]) #switch-label {\\n  cursor: not-allowed;\\n}\\n\\n#switch-text {\\n  color: var(--pf-t--global--text--color--subtle);\\n  font-size: 0.875rem;\\n  line-height: 1.5;\\n}\\n\\n#switch-input:checked ~ #switch-text {\\n  color: var(--pf-t--global--text--color--regular);\\n}\\n\\n:host([label-position=\\"start\\"]) #switch-label {\\n  flex-direction: row-reverse;\\n  justify-content: flex-end;\\n}\\n"'));
-var cem_pf_v6_switch_default = s44;
+var s45 = new CSSStyleSheet();
+s45.replaceSync(JSON.parse('":host {\\n  display: inline-flex;\\n}\\n\\n#switch-label {\\n  display: inline-flex;\\n  align-items: center;\\n  gap: 0.5rem;\\n  cursor: pointer;\\n  user-select: none;\\n}\\n\\n#switch-input {\\n  position: absolute;\\n  opacity: 0;\\n  pointer-events: none;\\n}\\n\\n#switch-toggle {\\n  position: relative;\\n  display: inline-block;\\n  width: calc(calc(var(--pf-t--global--font--size--sm) * var(--pf-t--global--font--line-height--body)) + 0.125rem + calc(var(--pf-t--global--font--size--sm) - 0.125rem));\\n  height: calc(var(--pf-t--global--font--size--sm) * var(--pf-t--global--font--line-height--body));\\n  background-color: var(--pf-t--global--background--color--control--default);\\n  border-radius: var(--pf-t--global--border--radius--pill);\\n\\n  \\u0026::before {\\n    position: absolute;\\n    inset-block-start: 50%;\\n    inset-inline-start: calc((calc(var(--pf-t--global--font--size--sm) * var(--pf-t--global--font--line-height--body)) - calc(var(--pf-t--global--font--size--sm) - 0.125rem)) / 2);\\n    display: block;\\n    width: calc(var(--pf-t--global--font--size--sm) - 0.125rem);\\n    height: calc(var(--pf-t--global--font--size--sm) - 0.125rem);\\n    content: \\"\\";\\n    background-color: var(--pf-t--global--icon--color--subtle);\\n    border: var(--pf-t--global--border--width--regular) solid transparent;\\n    border-radius: var(--pf-t--global--border--radius--pill);\\n    transition: transform var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--default),\\n                background-color var(--pf-t--global--motion--duration--md) var(--pf-t--global--motion--timing-function--default);\\n    transform: translateY(-50%);\\n  }\\n\\n  \\u0026::after {\\n    position: absolute;\\n    inset: 0;\\n    content: \\"\\";\\n    border: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);\\n    border-radius: var(--pf-t--global--border--radius--pill);\\n  }\\n}\\n\\n.switch-toggle-icon {\\n  position: absolute;\\n  inset-block-start: 0;\\n  inset-block-end: 0;\\n  inset-inline-start: calc(var(--pf-t--global--font--size--sm) * 0.4);\\n  display: none;\\n  align-items: center;\\n  font-size: calc(var(--pf-t--global--font--size--sm) * 0.625);\\n  color: var(--pf-t--global--icon--color--on-brand--default);\\n\\n  \\u0026 svg {\\n    width: 1em;\\n    height: 1em;\\n  }\\n}\\n\\n#switch-input:checked + #switch-toggle {\\n  background-color: var(--pf-t--global--color--brand--default);\\n\\n  \\u0026::before {\\n    transform: translate(calc(100% + 0.125rem), -50%);\\n    background-color: var(--pf-t--global--icon--color--inverse);\\n  }\\n\\n  \\u0026::after {\\n    border-color: transparent;\\n  }\\n\\n  \\u0026 .switch-toggle-icon {\\n    display: flex;\\n  }\\n}\\n\\n#switch-input:not(:checked) + #switch-toggle .switch-toggle-icon {\\n  display: none;\\n}\\n\\n#switch-input:focus-visible + #switch-toggle {\\n  outline: 2px solid var(--pf-t--global--color--brand--default);\\n  outline-offset: 2px;\\n}\\n\\n#switch-input:disabled + #switch-toggle {\\n  background-color: var(--pf-t--global--background--color--disabled--default);\\n  cursor: not-allowed;\\n\\n  \\u0026::before {\\n    background-color: var(--pf-t--global--text--color--disabled);\\n  }\\n\\n  \\u0026::after {\\n    border-color: var(--pf-t--global--border--color--disabled);\\n  }\\n\\n  \\u0026 .switch-toggle-icon {\\n    color: var(--pf-t--global--icon--color--disabled);\\n  }\\n}\\n\\n#switch-input:disabled ~ #switch-text {\\n  color: var(--pf-t--global--text--color--disabled);\\n  cursor: not-allowed;\\n}\\n\\n:host([disabled]) #switch-label {\\n  cursor: not-allowed;\\n}\\n\\n#switch-text {\\n  color: var(--pf-t--global--text--color--subtle);\\n  font-size: 0.875rem;\\n  line-height: 1.5;\\n}\\n\\n#switch-input:checked ~ #switch-text {\\n  color: var(--pf-t--global--text--color--regular);\\n}\\n\\n:host([label-position=\\"start\\"]) #switch-label {\\n  flex-direction: row-reverse;\\n  justify-content: flex-end;\\n}\\n"'));
+var cem_pf_v6_switch_default = s45;
 
 // elements/cem-pf-v6-switch/cem-pf-v6-switch.ts
-var _labelPosition_dec, _disabled_dec8, _checked_dec2, _a41, _PfV6Switch_decorators, _internals9, _init41, _checked2, _disabled8, _labelPosition, _PfV6Switch_instances, onInput_fn2;
+var _labelPosition_dec, _disabled_dec8, _checked_dec2, _a42, _PfV6Switch_decorators, _internals10, _init42, _checked2, _disabled8, _labelPosition, _PfV6Switch_instances, onInput_fn2;
 _PfV6Switch_decorators = [t3("cem-pf-v6-switch")];
-var PfV6Switch = class extends (_a41 = i3, _checked_dec2 = [n4({ type: Boolean, reflect: true })], _disabled_dec8 = [n4({ type: Boolean, reflect: true })], _labelPosition_dec = [n4({ reflect: true, attribute: "label-position" })], _a41) {
+var PfV6Switch = class extends (_a42 = i3, _checked_dec2 = [n4({ type: Boolean, reflect: true })], _disabled_dec8 = [n4({ type: Boolean, reflect: true })], _labelPosition_dec = [n4({ reflect: true, attribute: "label-position" })], _a42) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Switch_instances);
-    __privateAdd(this, _internals9, this.attachInternals());
-    __privateAdd(this, _checked2, __runInitializers(_init41, 8, this, false)), __runInitializers(_init41, 11, this);
-    __privateAdd(this, _disabled8, __runInitializers(_init41, 12, this, false)), __runInitializers(_init41, 15, this);
-    __privateAdd(this, _labelPosition, __runInitializers(_init41, 16, this)), __runInitializers(_init41, 19, this);
+    __privateAdd(this, _internals10, this.attachInternals());
+    __privateAdd(this, _checked2, __runInitializers(_init42, 8, this, false)), __runInitializers(_init42, 11, this);
+    __privateAdd(this, _disabled8, __runInitializers(_init42, 12, this, false)), __runInitializers(_init42, 15, this);
+    __privateAdd(this, _labelPosition, __runInitializers(_init42, 16, this)), __runInitializers(_init42, 19, this);
   }
   render() {
     return T`
@@ -5718,8 +5901,8 @@ var PfV6Switch = class extends (_a41 = i3, _checked_dec2 = [n4({ type: Boolean, 
     `;
   }
 };
-_init41 = __decoratorStart(_a41);
-_internals9 = new WeakMap();
+_init42 = __decoratorStart(_a42);
+_internals10 = new WeakMap();
 _checked2 = new WeakMap();
 _disabled8 = new WeakMap();
 _labelPosition = new WeakMap();
@@ -5728,29 +5911,29 @@ onInput_fn2 = function() {
   const input = this.shadowRoot?.getElementById("switch-input");
   if (input) {
     this.checked = input.checked;
-    __privateGet(this, _internals9).setFormValue(input.checked ? "on" : null);
+    __privateGet(this, _internals10).setFormValue(input.checked ? "on" : null);
   }
 };
-__decorateElement(_init41, 4, "checked", _checked_dec2, PfV6Switch, _checked2);
-__decorateElement(_init41, 4, "disabled", _disabled_dec8, PfV6Switch, _disabled8);
-__decorateElement(_init41, 4, "labelPosition", _labelPosition_dec, PfV6Switch, _labelPosition);
-PfV6Switch = __decorateElement(_init41, 0, "PfV6Switch", _PfV6Switch_decorators, PfV6Switch);
+__decorateElement(_init42, 4, "checked", _checked_dec2, PfV6Switch, _checked2);
+__decorateElement(_init42, 4, "disabled", _disabled_dec8, PfV6Switch, _disabled8);
+__decorateElement(_init42, 4, "labelPosition", _labelPosition_dec, PfV6Switch, _labelPosition);
+PfV6Switch = __decorateElement(_init42, 0, "PfV6Switch", _PfV6Switch_decorators, PfV6Switch);
 __publicField(PfV6Switch, "formAssociated", true);
 __publicField(PfV6Switch, "styles", cem_pf_v6_switch_default);
-__runInitializers(_init41, 1, PfV6Switch);
+__runInitializers(_init42, 1, PfV6Switch);
 
 // lit-css:elements/cem-pf-v6-tab/cem-pf-v6-tab.css
-var s45 = new CSSStyleSheet();
-s45.replaceSync(JSON.parse('":host {\\n  display: block;\\n  padding: var(--pf-t--global--spacer--md);\\n  height: 100%;\\n  box-sizing: border-box;\\n}\\n"'));
-var cem_pf_v6_tab_default = s45;
+var s46 = new CSSStyleSheet();
+s46.replaceSync(JSON.parse('":host {\\n  display: block;\\n  padding: var(--pf-t--global--spacer--md);\\n  height: 100%;\\n  box-sizing: border-box;\\n}\\n"'));
+var cem_pf_v6_tab_default = s46;
 
 // elements/cem-pf-v6-tab/cem-pf-v6-tab.ts
-var _title_dec, _a42, _PfV6Tab_decorators, _init42, _title;
+var _title_dec, _a43, _PfV6Tab_decorators, _init43, _title;
 _PfV6Tab_decorators = [t3("cem-pf-v6-tab")];
-var PfV6Tab = class extends (_a42 = i3, _title_dec = [n4({ reflect: true })], _a42) {
+var PfV6Tab = class extends (_a43 = i3, _title_dec = [n4({ reflect: true })], _a43) {
   constructor() {
     super(...arguments);
-    __privateAdd(this, _title, __runInitializers(_init42, 8, this, "")), __runInitializers(_init42, 11, this);
+    __privateAdd(this, _title, __runInitializers(_init43, 8, this, "")), __runInitializers(_init43, 11, this);
   }
   connectedCallback() {
     super.connectedCallback();
@@ -5769,17 +5952,17 @@ var PfV6Tab = class extends (_a42 = i3, _title_dec = [n4({ reflect: true })], _a
     return T`<slot></slot>`;
   }
 };
-_init42 = __decoratorStart(_a42);
+_init43 = __decoratorStart(_a43);
 _title = new WeakMap();
-__decorateElement(_init42, 4, "title", _title_dec, PfV6Tab, _title);
-PfV6Tab = __decorateElement(_init42, 0, "PfV6Tab", _PfV6Tab_decorators, PfV6Tab);
+__decorateElement(_init43, 4, "title", _title_dec, PfV6Tab, _title);
+PfV6Tab = __decorateElement(_init43, 0, "PfV6Tab", _PfV6Tab_decorators, PfV6Tab);
 __publicField(PfV6Tab, "styles", cem_pf_v6_tab_default);
-__runInitializers(_init42, 1, PfV6Tab);
+__runInitializers(_init43, 1, PfV6Tab);
 
 // lit-css:elements/cem-pf-v6-tabs/cem-pf-v6-tabs.css
-var s46 = new CSSStyleSheet();
-s46.replaceSync(JSON.parse(`":host {\\n  display: block;\\n  height: 100%;\\n  position: relative;\\n  overflow: hidden;\\n}\\n\\n#tabs-container {\\n  display: flex;\\n  flex-direction: column;\\n  height: 100%;\\n}\\n\\n@property --_cem-pf-v6-tabs--link-accent--length {\\n  syntax: \\"\\u003clength\\u003e\\";\\n  inherits: true;\\n  initial-value: 0px;\\n}\\n\\n#tabs {\\n  --_tab--Color: var(--pf-t--global--text--color--subtle);\\n  --_tab--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);\\n  --_tab--BorderWidth: var(--pf-t--global--border--width--action--plain--hover);\\n  --_tab--BorderColor: transparent;\\n  --_tab--hover--Color: var(--pf-t--global--text--color--regular);\\n  --_tab--hover--BackgroundColor: var(--pf-t--global--background--color--action--plain--hover);\\n  --_tab--current--Color: var(--pf-t--global--text--color--regular);\\n  --_tab--current--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);\\n  --_tab--disabled--Color: var(--pf-t--global--text--color--on-disabled);\\n  --_tab--disabled--BackgroundColor: var(--pf-t--global--background--color--disabled--default);\\n\\n  --_cem-pf-v6-tabs--link-accent--start: 0px;\\n  --_cem-pf-v6-tabs--link-accent--length: 0px;\\n  --_cem-pf-v6-tabs--link-accent--color: var(--pf-t--global--border--color--clicked);\\n  --_cem-pf-v6-tabs--link-accent--border-size: var(--pf-t--global--border--width--extra-strong);\\n\\n  position: sticky;\\n  inset-block-start: 0;\\n  z-index: var(--pf-t--global--z-index--md);\\n  display: flex;\\n  overflow-x: auto;\\n  overflow-y: hidden;\\n  -webkit-overflow-scrolling: touch;\\n  scroll-behavior: smooth;\\n  flex-shrink: 0;\\n  background-color: var(--pf-t--global--background--color--primary--default);\\n\\n  \\u0026::before {\\n    content: '';\\n    position: absolute;\\n    inset-block-end: 0;\\n    inset-inline-start: 0;\\n    inset-inline-end: 0;\\n    border-block-end: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);\\n  }\\n\\n  \\u0026::after {\\n    content: '';\\n    position: absolute;\\n    inset-block-start: auto;\\n    inset-block-end: 0;\\n    inset-inline-start: 0;\\n    width: var(--_cem-pf-v6-tabs--link-accent--length);\\n    height: 0;\\n    border: 0 solid var(--_cem-pf-v6-tabs--link-accent--color);\\n    border-block-end-width: var(--_cem-pf-v6-tabs--link-accent--border-size);\\n    transform-origin: 0 center;\\n    translate: var(--_cem-pf-v6-tabs--link-accent--start) 0;\\n    transition-property: width, translate;\\n    transition-duration: var(--pf-t--global--motion--duration--md);\\n    transition-timing-function: var(--pf-t--global--motion--timing-function--decelerate);\\n  }\\n}\\n\\n#panels {\\n  flex: 1;\\n  min-height: 0;\\n  overflow: hidden;\\n}\\n\\n.panel {\\n  display: block;\\n  height: 100%;\\n  overflow-y: auto;\\n  box-sizing: border-box;\\n  contain: layout style paint;\\n\\n  \\u0026[hidden] {\\n    display: none;\\n    content-visibility: hidden;\\n  }\\n}\\n\\n.tab {\\n  position: relative;\\n  display: flex;\\n  flex: none;\\n  align-items: center;\\n  padding: calc(var(--pf-t--global--spacer--sm) + var(--pf-t--global--spacer--xs))\\n           calc(var(--pf-t--global--spacer--sm) + var(--pf-t--global--spacer--sm));\\n  font-family: inherit;\\n  font-size: var(--pf-t--global--font--size--sm);\\n  font-weight: 400;\\n  color: var(--_tab--Color);\\n  text-decoration: none;\\n  background-color: transparent;\\n  border: 0;\\n  cursor: pointer;\\n\\n  \\u0026::before {\\n    content: '';\\n    position: absolute;\\n    inset-block-start: 0;\\n    inset-inline-start: 0;\\n    width: calc(100% - calc(var(--pf-t--global--spacer--sm) * 2));\\n    height: calc(100% - calc(var(--pf-t--global--spacer--sm) * 2));\\n    translate: var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--sm);\\n    background-color: var(--_tab--BackgroundColor);\\n    border: var(--_tab--BorderWidth) solid var(--_tab--BorderColor);\\n    border-radius: var(--pf-t--global--border--radius--small);\\n    transition: background-color var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default);\\n    z-index: -1;\\n  }\\n\\n  \\u0026:where(:hover, :focus) {\\n    --_tab--Color: var(--_tab--hover--Color);\\n    --_tab--BackgroundColor: var(--_tab--hover--BackgroundColor);\\n  }\\n\\n  \\u0026[aria-selected=\\"true\\"] {\\n    --_tab--Color: var(--_tab--current--Color);\\n    --_tab--BackgroundColor: var(--_tab--current--BackgroundColor);\\n  }\\n\\n  \\u0026:disabled {\\n    --_tab--Color: var(--_tab--disabled--Color);\\n    --_tab--BackgroundColor: var(--_tab--disabled--BackgroundColor);\\n    cursor: not-allowed;\\n    pointer-events: none;\\n  }\\n}\\n"`));
-var cem_pf_v6_tabs_default = s46;
+var s47 = new CSSStyleSheet();
+s47.replaceSync(JSON.parse(`":host {\\n  display: block;\\n  height: 100%;\\n  position: relative;\\n  overflow: hidden;\\n}\\n\\n#tabs-container {\\n  display: flex;\\n  flex-direction: column;\\n  height: 100%;\\n}\\n\\n@property --_cem-pf-v6-tabs--link-accent--length {\\n  syntax: \\"\\u003clength\\u003e\\";\\n  inherits: true;\\n  initial-value: 0px;\\n}\\n\\n#tabs {\\n  --_tab--Color: var(--pf-t--global--text--color--subtle);\\n  --_tab--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);\\n  --_tab--BorderWidth: var(--pf-t--global--border--width--action--plain--hover);\\n  --_tab--BorderColor: transparent;\\n  --_tab--hover--Color: var(--pf-t--global--text--color--regular);\\n  --_tab--hover--BackgroundColor: var(--pf-t--global--background--color--action--plain--hover);\\n  --_tab--current--Color: var(--pf-t--global--text--color--regular);\\n  --_tab--current--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);\\n  --_tab--disabled--Color: var(--pf-t--global--text--color--on-disabled);\\n  --_tab--disabled--BackgroundColor: var(--pf-t--global--background--color--disabled--default);\\n\\n  --_cem-pf-v6-tabs--link-accent--start: 0px;\\n  --_cem-pf-v6-tabs--link-accent--length: 0px;\\n  --_cem-pf-v6-tabs--link-accent--color: var(--pf-t--global--border--color--clicked);\\n  --_cem-pf-v6-tabs--link-accent--border-size: var(--pf-t--global--border--width--extra-strong);\\n\\n  position: sticky;\\n  inset-block-start: 0;\\n  z-index: var(--pf-t--global--z-index--md);\\n  display: flex;\\n  overflow-x: auto;\\n  overflow-y: hidden;\\n  -webkit-overflow-scrolling: touch;\\n  scroll-behavior: smooth;\\n  flex-shrink: 0;\\n  background-color: var(--pf-t--global--background--color--primary--default);\\n\\n  \\u0026::before {\\n    content: '';\\n    position: absolute;\\n    inset-block-end: 0;\\n    inset-inline-start: 0;\\n    inset-inline-end: 0;\\n    border-block-end: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);\\n  }\\n\\n  \\u0026::after {\\n    content: '';\\n    position: absolute;\\n    inset-block-start: auto;\\n    inset-block-end: 0;\\n    inset-inline-start: 0;\\n    width: var(--_cem-pf-v6-tabs--link-accent--length);\\n    height: 0;\\n    border: 0 solid var(--_cem-pf-v6-tabs--link-accent--color);\\n    border-block-end-width: var(--_cem-pf-v6-tabs--link-accent--border-size);\\n    transform-origin: 0 center;\\n    translate: var(--_cem-pf-v6-tabs--link-accent--start) 0;\\n    transition-property: width, translate;\\n    transition-duration: var(--pf-t--global--motion--duration--md);\\n    transition-timing-function: var(--pf-t--global--motion--timing-function--decelerate);\\n  }\\n}\\n\\n#panels {\\n  flex: 1;\\n  min-height: 0;\\n  overflow: hidden;\\n}\\n\\n.panel {\\n  display: block;\\n  height: 100%;\\n  overflow-y: auto;\\n  box-sizing: border-box;\\n  contain: layout style paint;\\n\\n  \\u0026[hidden] {\\n    display: none;\\n    content-visibility: hidden;\\n  }\\n}\\n\\n.tab {\\n  position: relative;\\n  display: flex;\\n  flex: none;\\n  align-items: center;\\n  padding: calc(var(--pf-t--global--spacer--sm) + var(--pf-t--global--spacer--xs))\\n           calc(var(--pf-t--global--spacer--sm) + var(--pf-t--global--spacer--sm));\\n  font-family: inherit;\\n  font-size: var(--pf-t--global--font--size--sm);\\n  font-weight: 400;\\n  color: var(--_tab--Color);\\n  text-decoration: none;\\n  background-color: transparent;\\n  border: 0;\\n  cursor: pointer;\\n\\n  \\u0026::before {\\n    content: '';\\n    position: absolute;\\n    inset-block-start: 0;\\n    inset-inline-start: 0;\\n    width: calc(100% - calc(var(--pf-t--global--spacer--sm) * 2));\\n    height: calc(100% - calc(var(--pf-t--global--spacer--sm) * 2));\\n    translate: var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--sm);\\n    background-color: var(--_tab--BackgroundColor);\\n    border: var(--_tab--BorderWidth) solid var(--_tab--BorderColor);\\n    border-radius: var(--pf-t--global--border--radius--small);\\n    transition: background-color var(--pf-t--global--motion--duration--fade--short) var(--pf-t--global--motion--timing-function--default);\\n    z-index: -1;\\n  }\\n\\n  \\u0026:where(:hover, :focus) {\\n    --_tab--Color: var(--_tab--hover--Color);\\n    --_tab--BackgroundColor: var(--_tab--hover--BackgroundColor);\\n  }\\n\\n  \\u0026[aria-selected=\\"true\\"] {\\n    --_tab--Color: var(--_tab--current--Color);\\n    --_tab--BackgroundColor: var(--_tab--current--BackgroundColor);\\n  }\\n\\n  \\u0026:disabled {\\n    --_tab--Color: var(--_tab--disabled--Color);\\n    --_tab--BackgroundColor: var(--_tab--disabled--BackgroundColor);\\n    cursor: not-allowed;\\n    pointer-events: none;\\n  }\\n}\\n"`));
+var cem_pf_v6_tabs_default = s47;
 
 // elements/cem-pf-v6-tabs/cem-pf-v6-tabs.ts
 var PfTabsChangeEvent = class extends Event {
@@ -5789,14 +5972,14 @@ var PfTabsChangeEvent = class extends Event {
     this.selectedIndex = selectedIndex;
   }
 };
-var __tabs_dec, _selected_dec, _a43, _PfV6Tabs_decorators, _init43, _selected, __tabs, _mutationObserver, _onTabsChanged, _PfV6Tabs_instances, syncTabs_fn, handleTabClick_fn, handleKeyDown_fn, updateAccentLine_fn;
+var __tabs_dec, _selected_dec, _a44, _PfV6Tabs_decorators, _init44, _selected, __tabs, _mutationObserver, _onTabsChanged, _PfV6Tabs_instances, syncTabs_fn, handleTabClick_fn, handleKeyDown_fn, updateAccentLine_fn;
 _PfV6Tabs_decorators = [t3("cem-pf-v6-tabs")];
-var PfV6Tabs = class extends (_a43 = i3, _selected_dec = [n4({ type: Number, reflect: true })], __tabs_dec = [r5()], _a43) {
+var PfV6Tabs = class extends (_a44 = i3, _selected_dec = [n4({ type: Number, reflect: true })], __tabs_dec = [r5()], _a44) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6Tabs_instances);
-    __privateAdd(this, _selected, __runInitializers(_init43, 8, this, 0)), __runInitializers(_init43, 11, this);
-    __privateAdd(this, __tabs, __runInitializers(_init43, 12, this, [])), __runInitializers(_init43, 15, this);
+    __privateAdd(this, _selected, __runInitializers(_init44, 8, this, 0)), __runInitializers(_init44, 11, this);
+    __privateAdd(this, __tabs, __runInitializers(_init44, 12, this, [])), __runInitializers(_init44, 15, this);
     __privateAdd(this, _mutationObserver);
     __privateAdd(this, _onTabsChanged, () => {
       __privateMethod(this, _PfV6Tabs_instances, syncTabs_fn).call(this);
@@ -5828,8 +6011,8 @@ var PfV6Tabs = class extends (_a43 = i3, _selected_dec = [n4({ type: Number, ref
   }
   updated(changed) {
     if (changed.has("selected") || changed.has("_tabs")) {
-      this._tabs.forEach((tab, i5) => {
-        tab.setAttribute("slot", `panel-${i5}`);
+      this._tabs.forEach((tab, i6) => {
+        tab.setAttribute("slot", `panel-${i6}`);
       });
       requestAnimationFrame(() => __privateMethod(this, _PfV6Tabs_instances, updateAccentLine_fn).call(this));
     }
@@ -5871,7 +6054,7 @@ var PfV6Tabs = class extends (_a43 = i3, _selected_dec = [n4({ type: Number, ref
     `;
   }
 };
-_init43 = __decoratorStart(_a43);
+_init44 = __decoratorStart(_a44);
 _selected = new WeakMap();
 __tabs = new WeakMap();
 _mutationObserver = new WeakMap();
@@ -5932,34 +6115,34 @@ updateAccentLine_fn = function() {
   tabsEl.style.setProperty("--_cem-pf-v6-tabs--link-accent--start", `${start}px`);
   tabsEl.style.setProperty("--_cem-pf-v6-tabs--link-accent--length", `${length}px`);
 };
-__decorateElement(_init43, 4, "selected", _selected_dec, PfV6Tabs, _selected);
-__decorateElement(_init43, 4, "_tabs", __tabs_dec, PfV6Tabs, __tabs);
-PfV6Tabs = __decorateElement(_init43, 0, "PfV6Tabs", _PfV6Tabs_decorators, PfV6Tabs);
+__decorateElement(_init44, 4, "selected", _selected_dec, PfV6Tabs, _selected);
+__decorateElement(_init44, 4, "_tabs", __tabs_dec, PfV6Tabs, __tabs);
+PfV6Tabs = __decorateElement(_init44, 0, "PfV6Tabs", _PfV6Tabs_decorators, PfV6Tabs);
 __publicField(PfV6Tabs, "styles", cem_pf_v6_tabs_default);
-__runInitializers(_init43, 1, PfV6Tabs);
+__runInitializers(_init44, 1, PfV6Tabs);
 
 // lit-css:elements/cem-pf-v6-text-input/cem-pf-v6-text-input.css
-var s47 = new CSSStyleSheet();
-s47.replaceSync(JSON.parse('":host {\\n\\n  /* Form control custom properties */\\n  --cem-pf-v6-c-form-control--ColumnGap: var(--pf-t--global--spacer--gap--text-to-element--default);\\n  --cem-pf-v6-c-form-control--Color: var(--pf-t--global--text--color--regular);\\n  --cem-pf-v6-c-form-control--FontSize: var(--pf-t--global--font--size--body--default);\\n  --cem-pf-v6-c-form-control--LineHeight: var(--pf-t--global--font--line-height--body);\\n  --cem-pf-v6-c-form-control--Resize: none;\\n  --cem-pf-v6-c-form-control--OutlineOffset: -6px;\\n  --cem-pf-v6-c-form-control--BorderRadius: var(--pf-t--global--border--radius--small);\\n  --cem-pf-v6-c-form-control--before--BorderWidth: var(--pf-t--global--border--width--control--default);\\n  --cem-pf-v6-c-form-control--before--BorderStyle: solid;\\n  --cem-pf-v6-c-form-control--before--BorderColor: var(--pf-t--global--border--color--default);\\n  --cem-pf-v6-c-form-control--before--BorderRadius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n  --cem-pf-v6-c-form-control--after--BorderWidth: var(--pf-t--global--border--width--control--default);\\n  --cem-pf-v6-c-form-control--after--BorderStyle: solid;\\n  --cem-pf-v6-c-form-control--after--BorderColor: transparent;\\n  --cem-pf-v6-c-form-control--after--BorderRadius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n  --cem-pf-v6-c-form-control--BackgroundColor: var(--pf-t--global--background--color--control--default);\\n  --cem-pf-v6-c-form-control--Width: 100%;\\n  --cem-pf-v6-c-form-control--inset--base: var(--pf-t--global--spacer--control--horizontal--default);\\n  --cem-pf-v6-c-form-control--PaddingBlockStart--base: var(--pf-t--global--spacer--control--vertical--default);\\n  --cem-pf-v6-c-form-control--PaddingBlockEnd--base: var(--pf-t--global--spacer--control--vertical--default);\\n  --cem-pf-v6-c-form-control--PaddingInlineEnd--base: var(--cem-pf-v6-c-form-control--inset--base);\\n  --cem-pf-v6-c-form-control--PaddingInlineStart--base: var(--cem-pf-v6-c-form-control--inset--base);\\n  --cem-pf-v6-c-form-control--PaddingBlockStart: var(--cem-pf-v6-c-form-control__input--PaddingBlockStart);\\n  --cem-pf-v6-c-form-control--PaddingBlockEnd: var(--cem-pf-v6-c-form-control__input--PaddingBlockEnd);\\n  --cem-pf-v6-c-form-control--PaddingInlineStart: var(--cem-pf-v6-c-form-control__input--PaddingInlineStart);\\n  --cem-pf-v6-c-form-control--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__input--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control__utilities--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__utilities--input--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control__utilities--input--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__input--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control__utilities--select--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__select--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control__utilities--textarea--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__textarea--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control__input--PaddingBlockStart: var(--cem-pf-v6-c-form-control--PaddingBlockStart--base);\\n  --cem-pf-v6-c-form-control__input--PaddingBlockEnd: var(--cem-pf-v6-c-form-control--PaddingBlockEnd--base);\\n  --cem-pf-v6-c-form-control__input--PaddingInlineEnd: var(--cem-pf-v6-c-form-control--PaddingInlineEnd--base);\\n  --cem-pf-v6-c-form-control__input--PaddingInlineStart: var(--cem-pf-v6-c-form-control--PaddingInlineStart--base);\\n  --cem-pf-v6-c-form-control__select--PaddingBlockStart: var(--cem-pf-v6-c-form-control--PaddingBlockStart--base);\\n  --cem-pf-v6-c-form-control__select--PaddingBlockEnd: var(--cem-pf-v6-c-form-control--PaddingBlockEnd--base);\\n  --cem-pf-v6-c-form-control__select--PaddingInlineEnd: var(--cem-pf-v6-c-form-control--PaddingInlineEnd--base);\\n  --cem-pf-v6-c-form-control__select--PaddingInlineStart: var(--cem-pf-v6-c-form-control--PaddingInlineStart--base);\\n  --cem-pf-v6-c-form-control__textarea--PaddingBlockStart: var(--cem-pf-v6-c-form-control--PaddingBlockStart--base);\\n  --cem-pf-v6-c-form-control__textarea--PaddingBlockEnd: var(--cem-pf-v6-c-form-control--PaddingBlockEnd--base);\\n  --cem-pf-v6-c-form-control__textarea--PaddingInlineEnd: var(--cem-pf-v6-c-form-control--PaddingInlineEnd--base);\\n  --cem-pf-v6-c-form-control__textarea--PaddingInlineStart: var(--cem-pf-v6-c-form-control--PaddingInlineStart--base);\\n  --cem-pf-v6-c-form-control--hover--after--BorderWidth: var(--pf-t--global--border--width--control--hover);\\n  --cem-pf-v6-c-form-control--hover--after--BorderColor: var(--pf-t--global--border--color--hover);\\n  --cem-pf-v6-c-form-control--m-expanded--after--BorderWidth: var(--pf-t--global--border--width--control--clicked);\\n  --cem-pf-v6-c-form-control--m-expanded--after--BorderColor: var(--pf-t--global--border--color--clicked);\\n  --cem-pf-v6-c-form-control--m-placeholder--Color: var(--pf-t--global--text--color--placeholder);\\n  --cem-pf-v6-c-form-control--m-placeholder--child--Color: var(--pf-t--global--text--color--regular);\\n  --cem-pf-v6-c-form-control--m-disabled--Color: var(--pf-t--global--text--color--on-disabled);\\n  --cem-pf-v6-c-form-control--m-disabled--BackgroundColor: var(--pf-t--global--background--color--disabled--default);\\n  --cem-pf-v6-c-form-control--m-disabled--after--BorderColor: transparent;\\n  --cem-pf-v6-c-form-control--m-readonly--BackgroundColor: var(--pf-t--global--background--color--control--read-only);\\n  --cem-pf-v6-c-form-control--m-readonly--BorderColor: var(--pf-t--global--border--color--control--read-only);\\n  --cem-pf-v6-c-form-control--m-readonly--hover--after--BorderColor: revert;\\n  --cem-pf-v6-c-form-control--m-readonly--m-plain--BackgroundColor: transparent;\\n  --cem-pf-v6-c-form-control--m-readonly--m-plain--BorderColor: transparent;\\n  --cem-pf-v6-c-form-control--m-readonly--m-plain--inset--base: 0;\\n  --cem-pf-v6-c-form-control--m-readonly--m-plain--OutlineOffset: 0;\\n\\n  /* Structural styles */\\n  position: relative;\\n  display: grid;\\n  grid-template-columns: 1fr auto;\\n  column-gap: var(--cem-pf-v6-c-form-control--ColumnGap);\\n  align-items: start;\\n  width: var(--cem-pf-v6-c-form-control--Width);\\n  font-size: var(--cem-pf-v6-c-form-control--FontSize);\\n  line-height: var(--cem-pf-v6-c-form-control--LineHeight);\\n  resize: var(--cem-pf-v6-c-form-control--Resize);\\n  background-color: var(--cem-pf-v6-c-form-control--BackgroundColor);\\n  border-radius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n}\\n\\n:host::before,\\n:host::after {\\n  position: absolute;\\n  inset: 0;\\n  pointer-events: none;\\n  content: \\"\\";\\n}\\n\\n:host::before {\\n  border-color: var(--cem-pf-v6-c-form-control--before--BorderColor);\\n  border-style: var(--cem-pf-v6-c-form-control--before--BorderStyle);\\n  border-width: var(--cem-pf-v6-c-form-control--before--BorderWidth);\\n  border-radius: var(--cem-pf-v6-c-form-control--before--BorderRadius);\\n}\\n\\n:host::after {\\n  border: var(--cem-pf-v6-c-form-control--after--BorderWidth) var(--cem-pf-v6-c-form-control--after--BorderStyle) var(--cem-pf-v6-c-form-control--after--BorderColor);\\n  border-radius: var(--cem-pf-v6-c-form-control--before--BorderRadius);\\n}\\n\\n:host(:hover) {\\n  --cem-pf-v6-c-form-control--after--BorderColor: var(--cem-pf-v6-c-form-control--hover--after--BorderColor);\\n  --cem-pf-v6-c-form-control--after--BorderWidth: var(--cem-pf-v6-c-form-control--hover--after--BorderWidth);\\n}\\n\\n#text-input {\\n  grid-row: 1 / 2;\\n  grid-column: 1 / -1;\\n  padding-block-start: var(--cem-pf-v6-c-form-control--PaddingBlockStart);\\n  padding-block-end: var(--cem-pf-v6-c-form-control--PaddingBlockEnd);\\n  padding-inline-start: var(--cem-pf-v6-c-form-control--PaddingInlineStart);\\n  padding-inline-end: var(--cem-pf-v6-c-form-control--PaddingInlineEnd);\\n  margin: 0;\\n  font-family: inherit;\\n  font-size: 100%;\\n  line-height: var(--pf-t--global--font--line-height--body);\\n  color: var(--cem-pf-v6-c-form-control--Color);\\n  appearance: none;\\n  background-color: transparent;\\n  border: none;\\n  border-radius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n  outline-offset: var(--cem-pf-v6-c-form-control--OutlineOffset);\\n  text-overflow: ellipsis;\\n}\\n\\n#text-input::placeholder {\\n  color: var(--cem-pf-v6-c-form-control--m-placeholder--Color);\\n}\\n"'));
-var cem_pf_v6_text_input_default = s47;
+var s48 = new CSSStyleSheet();
+s48.replaceSync(JSON.parse('":host {\\n\\n  /* Form control custom properties */\\n  --cem-pf-v6-c-form-control--ColumnGap: var(--pf-t--global--spacer--gap--text-to-element--default);\\n  --cem-pf-v6-c-form-control--Color: var(--pf-t--global--text--color--regular);\\n  --cem-pf-v6-c-form-control--FontSize: var(--pf-t--global--font--size--body--default);\\n  --cem-pf-v6-c-form-control--LineHeight: var(--pf-t--global--font--line-height--body);\\n  --cem-pf-v6-c-form-control--Resize: none;\\n  --cem-pf-v6-c-form-control--OutlineOffset: -6px;\\n  --cem-pf-v6-c-form-control--BorderRadius: var(--pf-t--global--border--radius--small);\\n  --cem-pf-v6-c-form-control--before--BorderWidth: var(--pf-t--global--border--width--control--default);\\n  --cem-pf-v6-c-form-control--before--BorderStyle: solid;\\n  --cem-pf-v6-c-form-control--before--BorderColor: var(--pf-t--global--border--color--default);\\n  --cem-pf-v6-c-form-control--before--BorderRadius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n  --cem-pf-v6-c-form-control--after--BorderWidth: var(--pf-t--global--border--width--control--default);\\n  --cem-pf-v6-c-form-control--after--BorderStyle: solid;\\n  --cem-pf-v6-c-form-control--after--BorderColor: transparent;\\n  --cem-pf-v6-c-form-control--after--BorderRadius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n  --cem-pf-v6-c-form-control--BackgroundColor: var(--pf-t--global--background--color--control--default);\\n  --cem-pf-v6-c-form-control--Width: 100%;\\n  --cem-pf-v6-c-form-control--inset--base: var(--pf-t--global--spacer--control--horizontal--default);\\n  --cem-pf-v6-c-form-control--PaddingBlockStart--base: var(--pf-t--global--spacer--control--vertical--default);\\n  --cem-pf-v6-c-form-control--PaddingBlockEnd--base: var(--pf-t--global--spacer--control--vertical--default);\\n  --cem-pf-v6-c-form-control--PaddingInlineEnd--base: var(--cem-pf-v6-c-form-control--inset--base);\\n  --cem-pf-v6-c-form-control--PaddingInlineStart--base: var(--cem-pf-v6-c-form-control--inset--base);\\n  --cem-pf-v6-c-form-control--PaddingBlockStart: var(--cem-pf-v6-c-form-control__input--PaddingBlockStart);\\n  --cem-pf-v6-c-form-control--PaddingBlockEnd: var(--cem-pf-v6-c-form-control__input--PaddingBlockEnd);\\n  --cem-pf-v6-c-form-control--PaddingInlineStart: var(--cem-pf-v6-c-form-control__input--PaddingInlineStart);\\n  --cem-pf-v6-c-form-control--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__input--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control__utilities--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__utilities--input--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control__utilities--input--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__input--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control__utilities--select--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__select--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control__utilities--textarea--PaddingInlineEnd: var(--cem-pf-v6-c-form-control__textarea--PaddingInlineEnd);\\n  --cem-pf-v6-c-form-control__input--PaddingBlockStart: var(--cem-pf-v6-c-form-control--PaddingBlockStart--base);\\n  --cem-pf-v6-c-form-control__input--PaddingBlockEnd: var(--cem-pf-v6-c-form-control--PaddingBlockEnd--base);\\n  --cem-pf-v6-c-form-control__input--PaddingInlineEnd: var(--cem-pf-v6-c-form-control--PaddingInlineEnd--base);\\n  --cem-pf-v6-c-form-control__input--PaddingInlineStart: var(--cem-pf-v6-c-form-control--PaddingInlineStart--base);\\n  --cem-pf-v6-c-form-control__select--PaddingBlockStart: var(--cem-pf-v6-c-form-control--PaddingBlockStart--base);\\n  --cem-pf-v6-c-form-control__select--PaddingBlockEnd: var(--cem-pf-v6-c-form-control--PaddingBlockEnd--base);\\n  --cem-pf-v6-c-form-control__select--PaddingInlineEnd: var(--cem-pf-v6-c-form-control--PaddingInlineEnd--base);\\n  --cem-pf-v6-c-form-control__select--PaddingInlineStart: var(--cem-pf-v6-c-form-control--PaddingInlineStart--base);\\n  --cem-pf-v6-c-form-control__textarea--PaddingBlockStart: var(--cem-pf-v6-c-form-control--PaddingBlockStart--base);\\n  --cem-pf-v6-c-form-control__textarea--PaddingBlockEnd: var(--cem-pf-v6-c-form-control--PaddingBlockEnd--base);\\n  --cem-pf-v6-c-form-control__textarea--PaddingInlineEnd: var(--cem-pf-v6-c-form-control--PaddingInlineEnd--base);\\n  --cem-pf-v6-c-form-control__textarea--PaddingInlineStart: var(--cem-pf-v6-c-form-control--PaddingInlineStart--base);\\n  --cem-pf-v6-c-form-control--hover--after--BorderWidth: var(--pf-t--global--border--width--control--hover);\\n  --cem-pf-v6-c-form-control--hover--after--BorderColor: var(--pf-t--global--border--color--hover);\\n  --cem-pf-v6-c-form-control--m-expanded--after--BorderWidth: var(--pf-t--global--border--width--control--clicked);\\n  --cem-pf-v6-c-form-control--m-expanded--after--BorderColor: var(--pf-t--global--border--color--clicked);\\n  --cem-pf-v6-c-form-control--m-placeholder--Color: var(--pf-t--global--text--color--placeholder);\\n  --cem-pf-v6-c-form-control--m-placeholder--child--Color: var(--pf-t--global--text--color--regular);\\n  --cem-pf-v6-c-form-control--m-disabled--Color: var(--pf-t--global--text--color--on-disabled);\\n  --cem-pf-v6-c-form-control--m-disabled--BackgroundColor: var(--pf-t--global--background--color--disabled--default);\\n  --cem-pf-v6-c-form-control--m-disabled--after--BorderColor: transparent;\\n  --cem-pf-v6-c-form-control--m-readonly--BackgroundColor: var(--pf-t--global--background--color--control--read-only);\\n  --cem-pf-v6-c-form-control--m-readonly--BorderColor: var(--pf-t--global--border--color--control--read-only);\\n  --cem-pf-v6-c-form-control--m-readonly--hover--after--BorderColor: revert;\\n  --cem-pf-v6-c-form-control--m-readonly--m-plain--BackgroundColor: transparent;\\n  --cem-pf-v6-c-form-control--m-readonly--m-plain--BorderColor: transparent;\\n  --cem-pf-v6-c-form-control--m-readonly--m-plain--inset--base: 0;\\n  --cem-pf-v6-c-form-control--m-readonly--m-plain--OutlineOffset: 0;\\n\\n  /* Structural styles */\\n  position: relative;\\n  display: grid;\\n  grid-template-columns: 1fr auto;\\n  column-gap: var(--cem-pf-v6-c-form-control--ColumnGap);\\n  align-items: start;\\n  width: var(--cem-pf-v6-c-form-control--Width);\\n  font-size: var(--cem-pf-v6-c-form-control--FontSize);\\n  line-height: var(--cem-pf-v6-c-form-control--LineHeight);\\n  resize: var(--cem-pf-v6-c-form-control--Resize);\\n  background-color: var(--cem-pf-v6-c-form-control--BackgroundColor);\\n  border-radius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n}\\n\\n:host::before,\\n:host::after {\\n  position: absolute;\\n  inset: 0;\\n  pointer-events: none;\\n  content: \\"\\";\\n}\\n\\n:host::before {\\n  border-color: var(--cem-pf-v6-c-form-control--before--BorderColor);\\n  border-style: var(--cem-pf-v6-c-form-control--before--BorderStyle);\\n  border-width: var(--cem-pf-v6-c-form-control--before--BorderWidth);\\n  border-radius: var(--cem-pf-v6-c-form-control--before--BorderRadius);\\n}\\n\\n:host::after {\\n  border: var(--cem-pf-v6-c-form-control--after--BorderWidth) var(--cem-pf-v6-c-form-control--after--BorderStyle) var(--cem-pf-v6-c-form-control--after--BorderColor);\\n  border-radius: var(--cem-pf-v6-c-form-control--before--BorderRadius);\\n}\\n\\n:host(:hover) {\\n  --cem-pf-v6-c-form-control--after--BorderColor: var(--cem-pf-v6-c-form-control--hover--after--BorderColor);\\n  --cem-pf-v6-c-form-control--after--BorderWidth: var(--cem-pf-v6-c-form-control--hover--after--BorderWidth);\\n}\\n\\n#text-input {\\n  grid-row: 1 / 2;\\n  grid-column: 1 / -1;\\n  padding-block-start: var(--cem-pf-v6-c-form-control--PaddingBlockStart);\\n  padding-block-end: var(--cem-pf-v6-c-form-control--PaddingBlockEnd);\\n  padding-inline-start: var(--cem-pf-v6-c-form-control--PaddingInlineStart);\\n  padding-inline-end: var(--cem-pf-v6-c-form-control--PaddingInlineEnd);\\n  margin: 0;\\n  font-family: inherit;\\n  font-size: 100%;\\n  line-height: var(--pf-t--global--font--line-height--body);\\n  color: var(--cem-pf-v6-c-form-control--Color);\\n  appearance: none;\\n  background-color: transparent;\\n  border: none;\\n  border-radius: var(--cem-pf-v6-c-form-control--BorderRadius);\\n  outline-offset: var(--cem-pf-v6-c-form-control--OutlineOffset);\\n  text-overflow: ellipsis;\\n}\\n\\n#text-input::placeholder {\\n  color: var(--cem-pf-v6-c-form-control--m-placeholder--Color);\\n}\\n"'));
+var cem_pf_v6_text_input_default = s48;
 
 // elements/cem-pf-v6-text-input/cem-pf-v6-text-input.ts
-var _step_dec, _max_dec, _min_dec, _invalid_dec2, _readonly_dec2, _disabled_dec9, _placeholder_dec2, _value_dec4, _type_dec3, _a44, _PfV6TextInput_decorators, _internals10, _init44, _type3, _value4, _placeholder2, _disabled9, _readonly2, _invalid2, _min, _max, _step, _PfV6TextInput_instances, onInput_fn3, onChange_fn2;
+var _step_dec, _max_dec2, _min_dec2, _invalid_dec2, _readonly_dec2, _disabled_dec9, _placeholder_dec2, _value_dec5, _type_dec3, _a45, _PfV6TextInput_decorators, _internals11, _init45, _type3, _value5, _placeholder2, _disabled9, _readonly2, _invalid2, _min2, _max2, _step, _PfV6TextInput_instances, onInput_fn3, onChange_fn2;
 _PfV6TextInput_decorators = [t3("cem-pf-v6-text-input")];
-var PfV6TextInput = class extends (_a44 = i3, _type_dec3 = [n4({ reflect: true })], _value_dec4 = [n4()], _placeholder_dec2 = [n4()], _disabled_dec9 = [n4({ type: Boolean, reflect: true })], _readonly_dec2 = [n4({ type: Boolean, reflect: true })], _invalid_dec2 = [n4({ type: Boolean, reflect: true })], _min_dec = [n4()], _max_dec = [n4()], _step_dec = [n4()], _a44) {
+var PfV6TextInput = class extends (_a45 = i3, _type_dec3 = [n4({ reflect: true })], _value_dec5 = [n4()], _placeholder_dec2 = [n4()], _disabled_dec9 = [n4({ type: Boolean, reflect: true })], _readonly_dec2 = [n4({ type: Boolean, reflect: true })], _invalid_dec2 = [n4({ type: Boolean, reflect: true })], _min_dec2 = [n4()], _max_dec2 = [n4()], _step_dec = [n4()], _a45) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _PfV6TextInput_instances);
-    __privateAdd(this, _internals10, this.attachInternals());
-    __privateAdd(this, _type3, __runInitializers(_init44, 8, this, "text")), __runInitializers(_init44, 11, this);
-    __privateAdd(this, _value4, __runInitializers(_init44, 12, this, "")), __runInitializers(_init44, 15, this);
-    __privateAdd(this, _placeholder2, __runInitializers(_init44, 16, this)), __runInitializers(_init44, 19, this);
-    __privateAdd(this, _disabled9, __runInitializers(_init44, 20, this, false)), __runInitializers(_init44, 23, this);
-    __privateAdd(this, _readonly2, __runInitializers(_init44, 24, this, false)), __runInitializers(_init44, 27, this);
-    __privateAdd(this, _invalid2, __runInitializers(_init44, 28, this, false)), __runInitializers(_init44, 31, this);
-    __privateAdd(this, _min, __runInitializers(_init44, 32, this)), __runInitializers(_init44, 35, this);
-    __privateAdd(this, _max, __runInitializers(_init44, 36, this)), __runInitializers(_init44, 39, this);
-    __privateAdd(this, _step, __runInitializers(_init44, 40, this)), __runInitializers(_init44, 43, this);
+    __privateAdd(this, _internals11, this.attachInternals());
+    __privateAdd(this, _type3, __runInitializers(_init45, 8, this, "text")), __runInitializers(_init45, 11, this);
+    __privateAdd(this, _value5, __runInitializers(_init45, 12, this, "")), __runInitializers(_init45, 15, this);
+    __privateAdd(this, _placeholder2, __runInitializers(_init45, 16, this)), __runInitializers(_init45, 19, this);
+    __privateAdd(this, _disabled9, __runInitializers(_init45, 20, this, false)), __runInitializers(_init45, 23, this);
+    __privateAdd(this, _readonly2, __runInitializers(_init45, 24, this, false)), __runInitializers(_init45, 27, this);
+    __privateAdd(this, _invalid2, __runInitializers(_init45, 28, this, false)), __runInitializers(_init45, 31, this);
+    __privateAdd(this, _min2, __runInitializers(_init45, 32, this)), __runInitializers(_init45, 35, this);
+    __privateAdd(this, _max2, __runInitializers(_init45, 36, this)), __runInitializers(_init45, 39, this);
+    __privateAdd(this, _step, __runInitializers(_init45, 40, this)), __runInitializers(_init45, 43, this);
   }
   get valueAsNumber() {
     const input = this.shadowRoot?.getElementById("text-input");
@@ -6008,23 +6191,23 @@ var PfV6TextInput = class extends (_a44 = i3, _type_dec3 = [n4({ reflect: true }
     input?.setCustomValidity(message);
   }
 };
-_init44 = __decoratorStart(_a44);
-_internals10 = new WeakMap();
+_init45 = __decoratorStart(_a45);
+_internals11 = new WeakMap();
 _type3 = new WeakMap();
-_value4 = new WeakMap();
+_value5 = new WeakMap();
 _placeholder2 = new WeakMap();
 _disabled9 = new WeakMap();
 _readonly2 = new WeakMap();
 _invalid2 = new WeakMap();
-_min = new WeakMap();
-_max = new WeakMap();
+_min2 = new WeakMap();
+_max2 = new WeakMap();
 _step = new WeakMap();
 _PfV6TextInput_instances = new WeakSet();
 onInput_fn3 = function() {
   const input = this.shadowRoot?.getElementById("text-input");
   if (input) {
     this.value = input.value;
-    __privateGet(this, _internals10).setFormValue(input.value);
+    __privateGet(this, _internals11).setFormValue(input.value);
     this.dispatchEvent(new Event("input", { bubbles: true }));
   }
 };
@@ -6032,32 +6215,32 @@ onChange_fn2 = function() {
   const input = this.shadowRoot?.getElementById("text-input");
   if (input) {
     this.value = input.value;
-    __privateGet(this, _internals10).setFormValue(input.value);
+    __privateGet(this, _internals11).setFormValue(input.value);
     this.dispatchEvent(new Event("change", { bubbles: true }));
   }
 };
-__decorateElement(_init44, 4, "type", _type_dec3, PfV6TextInput, _type3);
-__decorateElement(_init44, 4, "value", _value_dec4, PfV6TextInput, _value4);
-__decorateElement(_init44, 4, "placeholder", _placeholder_dec2, PfV6TextInput, _placeholder2);
-__decorateElement(_init44, 4, "disabled", _disabled_dec9, PfV6TextInput, _disabled9);
-__decorateElement(_init44, 4, "readonly", _readonly_dec2, PfV6TextInput, _readonly2);
-__decorateElement(_init44, 4, "invalid", _invalid_dec2, PfV6TextInput, _invalid2);
-__decorateElement(_init44, 4, "min", _min_dec, PfV6TextInput, _min);
-__decorateElement(_init44, 4, "max", _max_dec, PfV6TextInput, _max);
-__decorateElement(_init44, 4, "step", _step_dec, PfV6TextInput, _step);
-PfV6TextInput = __decorateElement(_init44, 0, "PfV6TextInput", _PfV6TextInput_decorators, PfV6TextInput);
+__decorateElement(_init45, 4, "type", _type_dec3, PfV6TextInput, _type3);
+__decorateElement(_init45, 4, "value", _value_dec5, PfV6TextInput, _value5);
+__decorateElement(_init45, 4, "placeholder", _placeholder_dec2, PfV6TextInput, _placeholder2);
+__decorateElement(_init45, 4, "disabled", _disabled_dec9, PfV6TextInput, _disabled9);
+__decorateElement(_init45, 4, "readonly", _readonly_dec2, PfV6TextInput, _readonly2);
+__decorateElement(_init45, 4, "invalid", _invalid_dec2, PfV6TextInput, _invalid2);
+__decorateElement(_init45, 4, "min", _min_dec2, PfV6TextInput, _min2);
+__decorateElement(_init45, 4, "max", _max_dec2, PfV6TextInput, _max2);
+__decorateElement(_init45, 4, "step", _step_dec, PfV6TextInput, _step);
+PfV6TextInput = __decorateElement(_init45, 0, "PfV6TextInput", _PfV6TextInput_decorators, PfV6TextInput);
 __publicField(PfV6TextInput, "formAssociated", true);
 __publicField(PfV6TextInput, "shadowRootOptions", {
   ...i3.shadowRootOptions,
   delegatesFocus: true
 });
 __publicField(PfV6TextInput, "styles", cem_pf_v6_text_input_default);
-__runInitializers(_init44, 1, PfV6TextInput);
+__runInitializers(_init45, 1, PfV6TextInput);
 
 // lit-css:elements/cem-pf-v6-toggle-group/cem-pf-v6-toggle-group.css
-var s48 = new CSSStyleSheet();
-s48.replaceSync(JSON.parse('":host {\\n  display: inline-flex;\\n  --cem-pf-v6-c-toggle-group__button--PaddingBlockStart: var(--pf-t--global--spacer--sm);\\n  --cem-pf-v6-c-toggle-group__button--PaddingInlineEnd: var(--pf-t--global--spacer--md);\\n  --cem-pf-v6-c-toggle-group__button--PaddingBlockEnd: var(--pf-t--global--spacer--sm);\\n  --cem-pf-v6-c-toggle-group__button--PaddingInlineStart: var(--pf-t--global--spacer--md);\\n  --cem-pf-v6-c-toggle-group__button--FontSize: var(--pf-t--global--font--size--body--default);\\n  --cem-pf-v6-c-toggle-group__button--LineHeight: var(--pf-t--global--font--line-height--body);\\n  --cem-pf-v6-c-toggle-group__button--Color: var(--pf-t--global--text--color--regular);\\n  --cem-pf-v6-c-toggle-group__button--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);\\n  --cem-pf-v6-c-toggle-group__button--ZIndex: auto;\\n  --cem-pf-v6-c-toggle-group__button--hover--BackgroundColor: var(--pf-t--global--background--color--primary--hover);\\n  --cem-pf-v6-c-toggle-group__button--hover--ZIndex: var(--pf-t--global--z-index--xs);\\n  --cem-pf-v6-c-toggle-group__button--hover--before--BorderColor: var(--pf-t--global--border--color--default);\\n  --cem-pf-v6-c-toggle-group__button--hover--after--BorderWidth: var(--pf-t--global--border--width--high-contrast--regular);\\n  --cem-pf-v6-c-toggle-group__button--before--BorderWidth: var(--pf-t--global--border--width--control--default);\\n  --cem-pf-v6-c-toggle-group__button--before--BorderColor: var(--pf-t--global--border--color--default);\\n  --cem-pf-v6-c-toggle-group__item--item--MarginInlineStart: calc(-1 * var(--pf-t--global--border--width--control--default));\\n  --cem-pf-v6-c-toggle-group__item--first-child__button--BorderStartStartRadius: var(--pf-t--global--border--radius--tiny);\\n  --cem-pf-v6-c-toggle-group__item--first-child__button--BorderEndStartRadius: var(--pf-t--global--border--radius--tiny);\\n  --cem-pf-v6-c-toggle-group__item--last-child__button--BorderStartEndRadius: var(--pf-t--global--border--radius--tiny);\\n  --cem-pf-v6-c-toggle-group__item--last-child__button--BorderEndEndRadius: var(--pf-t--global--border--radius--tiny);\\n  --cem-pf-v6-c-toggle-group__icon--text--MarginInlineStart: var(--pf-t--global--spacer--sm);\\n  --cem-pf-v6-c-toggle-group__button--m-selected--BackgroundColor: var(--pf-t--global--color--brand--default);\\n  --cem-pf-v6-c-toggle-group__button--m-selected--Color: var(--pf-t--global--text--color--on-brand--default);\\n  --cem-pf-v6-c-toggle-group__button--m-selected--before--BorderColor: var(--pf-t--global--border--color--clicked);\\n  --cem-pf-v6-c-toggle-group__button--m-selected-selected--before--BorderInlineStartColor: var(--pf-t--global--border--color--alt);\\n  --cem-pf-v6-c-toggle-group__button--m-selected--ZIndex: var(--pf-t--global--z-index--xs);\\n  --cem-pf-v6-c-toggle-group__button--m-selected--after--BorderWidth: var(--pf-t--global--border--width--high-contrast--strong);\\n  --cem-pf-v6-c-toggle-group__button--disabled--BackgroundColor: var(--pf-t--global--background--color--disabled--default);\\n  --cem-pf-v6-c-toggle-group__button--disabled--Color: var(--pf-t--global--text--color--on-disabled);\\n  --cem-pf-v6-c-toggle-group__button--disabled--before--BorderColor: var(--pf-t--global--border--color--disabled);\\n  --cem-pf-v6-c-toggle-group__button--disabled-disabled--before--BorderInlineStartColor: var(--pf-t--global--border--color--disabled);\\n  --cem-pf-v6-c-toggle-group__button--disabled--ZIndex: var(--pf-t--global--z-index--xs);\\n  --cem-pf-v6-c-toggle-group--m-compact__button--PaddingBlockStart: 0;\\n  --cem-pf-v6-c-toggle-group--m-compact__button--PaddingInlineEnd: var(--pf-t--global--spacer--sm);\\n  --cem-pf-v6-c-toggle-group--m-compact__button--PaddingBlockEnd: 0;\\n  --cem-pf-v6-c-toggle-group--m-compact__button--PaddingInlineStart: var(--pf-t--global--spacer--sm);\\n  --cem-pf-v6-c-toggle-group--m-compact__button--FontSize: var(--pf-t--global--font--size--body--default);\\n}\\n\\n#container {\\n  display: flex;\\n}\\n\\n:host([compact]) {\\n  --cem-pf-v6-c-toggle-group__button--PaddingBlockStart: var(--cem-pf-v6-c-toggle-group--m-compact__button--PaddingBlockStart);\\n  --cem-pf-v6-c-toggle-group__button--PaddingInlineEnd: var(--cem-pf-v6-c-toggle-group--m-compact__button--PaddingInlineEnd);\\n  --cem-pf-v6-c-toggle-group__button--PaddingBlockEnd: var(--cem-pf-v6-c-toggle-group--m-compact__button--PaddingBlockEnd);\\n  --cem-pf-v6-c-toggle-group__button--PaddingInlineStart: var(--cem-pf-v6-c-toggle-group--m-compact__button--PaddingInlineStart);\\n  --cem-pf-v6-c-toggle-group__button--FontSize: var(--cem-pf-v6-c-toggle-group--m-compact__button--FontSize);\\n}\\n"'));
-var cem_pf_v6_toggle_group_default = s48;
+var s49 = new CSSStyleSheet();
+s49.replaceSync(JSON.parse('":host {\\n  display: inline-flex;\\n  --cem-pf-v6-c-toggle-group__button--PaddingBlockStart: var(--pf-t--global--spacer--sm);\\n  --cem-pf-v6-c-toggle-group__button--PaddingInlineEnd: var(--pf-t--global--spacer--md);\\n  --cem-pf-v6-c-toggle-group__button--PaddingBlockEnd: var(--pf-t--global--spacer--sm);\\n  --cem-pf-v6-c-toggle-group__button--PaddingInlineStart: var(--pf-t--global--spacer--md);\\n  --cem-pf-v6-c-toggle-group__button--FontSize: var(--pf-t--global--font--size--body--default);\\n  --cem-pf-v6-c-toggle-group__button--LineHeight: var(--pf-t--global--font--line-height--body);\\n  --cem-pf-v6-c-toggle-group__button--Color: var(--pf-t--global--text--color--regular);\\n  --cem-pf-v6-c-toggle-group__button--BackgroundColor: var(--pf-t--global--background--color--action--plain--default);\\n  --cem-pf-v6-c-toggle-group__button--ZIndex: auto;\\n  --cem-pf-v6-c-toggle-group__button--hover--BackgroundColor: var(--pf-t--global--background--color--primary--hover);\\n  --cem-pf-v6-c-toggle-group__button--hover--ZIndex: var(--pf-t--global--z-index--xs);\\n  --cem-pf-v6-c-toggle-group__button--hover--before--BorderColor: var(--pf-t--global--border--color--default);\\n  --cem-pf-v6-c-toggle-group__button--hover--after--BorderWidth: var(--pf-t--global--border--width--high-contrast--regular);\\n  --cem-pf-v6-c-toggle-group__button--before--BorderWidth: var(--pf-t--global--border--width--control--default);\\n  --cem-pf-v6-c-toggle-group__button--before--BorderColor: var(--pf-t--global--border--color--default);\\n  --cem-pf-v6-c-toggle-group__item--item--MarginInlineStart: calc(-1 * var(--pf-t--global--border--width--control--default));\\n  --cem-pf-v6-c-toggle-group__item--first-child__button--BorderStartStartRadius: var(--pf-t--global--border--radius--tiny);\\n  --cem-pf-v6-c-toggle-group__item--first-child__button--BorderEndStartRadius: var(--pf-t--global--border--radius--tiny);\\n  --cem-pf-v6-c-toggle-group__item--last-child__button--BorderStartEndRadius: var(--pf-t--global--border--radius--tiny);\\n  --cem-pf-v6-c-toggle-group__item--last-child__button--BorderEndEndRadius: var(--pf-t--global--border--radius--tiny);\\n  --cem-pf-v6-c-toggle-group__icon--text--MarginInlineStart: var(--pf-t--global--spacer--sm);\\n  --cem-pf-v6-c-toggle-group__button--m-selected--BackgroundColor: var(--pf-t--global--color--brand--default);\\n  --cem-pf-v6-c-toggle-group__button--m-selected--Color: var(--pf-t--global--text--color--on-brand--default);\\n  --cem-pf-v6-c-toggle-group__button--m-selected--before--BorderColor: var(--pf-t--global--border--color--clicked);\\n  --cem-pf-v6-c-toggle-group__button--m-selected-selected--before--BorderInlineStartColor: var(--pf-t--global--border--color--alt);\\n  --cem-pf-v6-c-toggle-group__button--m-selected--ZIndex: var(--pf-t--global--z-index--xs);\\n  --cem-pf-v6-c-toggle-group__button--m-selected--after--BorderWidth: var(--pf-t--global--border--width--high-contrast--strong);\\n  --cem-pf-v6-c-toggle-group__button--disabled--BackgroundColor: var(--pf-t--global--background--color--disabled--default);\\n  --cem-pf-v6-c-toggle-group__button--disabled--Color: var(--pf-t--global--text--color--on-disabled);\\n  --cem-pf-v6-c-toggle-group__button--disabled--before--BorderColor: var(--pf-t--global--border--color--disabled);\\n  --cem-pf-v6-c-toggle-group__button--disabled-disabled--before--BorderInlineStartColor: var(--pf-t--global--border--color--disabled);\\n  --cem-pf-v6-c-toggle-group__button--disabled--ZIndex: var(--pf-t--global--z-index--xs);\\n  --cem-pf-v6-c-toggle-group--m-compact__button--PaddingBlockStart: 0;\\n  --cem-pf-v6-c-toggle-group--m-compact__button--PaddingInlineEnd: var(--pf-t--global--spacer--sm);\\n  --cem-pf-v6-c-toggle-group--m-compact__button--PaddingBlockEnd: 0;\\n  --cem-pf-v6-c-toggle-group--m-compact__button--PaddingInlineStart: var(--pf-t--global--spacer--sm);\\n  --cem-pf-v6-c-toggle-group--m-compact__button--FontSize: var(--pf-t--global--font--size--body--default);\\n}\\n\\n#container {\\n  display: flex;\\n}\\n\\n:host([compact]) {\\n  --cem-pf-v6-c-toggle-group__button--PaddingBlockStart: var(--cem-pf-v6-c-toggle-group--m-compact__button--PaddingBlockStart);\\n  --cem-pf-v6-c-toggle-group__button--PaddingInlineEnd: var(--cem-pf-v6-c-toggle-group--m-compact__button--PaddingInlineEnd);\\n  --cem-pf-v6-c-toggle-group__button--PaddingBlockEnd: var(--cem-pf-v6-c-toggle-group--m-compact__button--PaddingBlockEnd);\\n  --cem-pf-v6-c-toggle-group__button--PaddingInlineStart: var(--cem-pf-v6-c-toggle-group--m-compact__button--PaddingInlineStart);\\n  --cem-pf-v6-c-toggle-group__button--FontSize: var(--cem-pf-v6-c-toggle-group--m-compact__button--FontSize);\\n}\\n"'));
+var cem_pf_v6_toggle_group_default = s49;
 
 // elements/cem-pf-v6-toggle-group/cem-pf-v6-toggle-group.ts
 var ToggleGroupChangeEvent = class extends Event {
@@ -6071,13 +6254,13 @@ var ToggleGroupChangeEvent = class extends Event {
     this.value = value;
   }
 };
-var _compact_dec3, _a45, _PfV6ToggleGroup_decorators, _init45, _compact3, _internals11, _handleItemSelect;
+var _compact_dec3, _a46, _PfV6ToggleGroup_decorators, _init46, _compact3, _internals12, _handleItemSelect;
 _PfV6ToggleGroup_decorators = [t3("cem-pf-v6-toggle-group")];
-var PfV6ToggleGroup = class extends (_a45 = i3, _compact_dec3 = [n4({ type: Boolean, reflect: true })], _a45) {
+var PfV6ToggleGroup = class extends (_a46 = i3, _compact_dec3 = [n4({ type: Boolean, reflect: true })], _a46) {
   constructor() {
     super(...arguments);
-    __privateAdd(this, _compact3, __runInitializers(_init45, 8, this, false)), __runInitializers(_init45, 11, this);
-    __privateAdd(this, _internals11, this.attachInternals());
+    __privateAdd(this, _compact3, __runInitializers(_init46, 8, this, false)), __runInitializers(_init46, 11, this);
+    __privateAdd(this, _internals12, this.attachInternals());
     __privateAdd(this, _handleItemSelect, (event) => {
       const detail = event;
       const selectedItem = detail.item;
@@ -6116,19 +6299,19 @@ var PfV6ToggleGroup = class extends (_a45 = i3, _compact_dec3 = [n4({ type: Bool
     `;
   }
 };
-_init45 = __decoratorStart(_a45);
+_init46 = __decoratorStart(_a46);
 _compact3 = new WeakMap();
-_internals11 = new WeakMap();
+_internals12 = new WeakMap();
 _handleItemSelect = new WeakMap();
-__decorateElement(_init45, 4, "compact", _compact_dec3, PfV6ToggleGroup, _compact3);
-PfV6ToggleGroup = __decorateElement(_init45, 0, "PfV6ToggleGroup", _PfV6ToggleGroup_decorators, PfV6ToggleGroup);
+__decorateElement(_init46, 4, "compact", _compact_dec3, PfV6ToggleGroup, _compact3);
+PfV6ToggleGroup = __decorateElement(_init46, 0, "PfV6ToggleGroup", _PfV6ToggleGroup_decorators, PfV6ToggleGroup);
 __publicField(PfV6ToggleGroup, "styles", cem_pf_v6_toggle_group_default);
-__runInitializers(_init45, 1, PfV6ToggleGroup);
+__runInitializers(_init46, 1, PfV6ToggleGroup);
 
 // lit-css:elements/cem-pf-v6-toggle-group-item/cem-pf-v6-toggle-group-item.css
-var s49 = new CSSStyleSheet();
-s49.replaceSync(JSON.parse('":host {\\n  position: relative;\\n  z-index: var(--cem-pf-v6-c-toggle-group__button--ZIndex);\\n  display: inline-flex;\\n  align-items: center;\\n  padding-block-start: var(--cem-pf-v6-c-toggle-group__button--PaddingBlockStart);\\n  padding-block-end: var(--cem-pf-v6-c-toggle-group__button--PaddingBlockEnd);\\n  padding-inline-start: var(--cem-pf-v6-c-toggle-group__button--PaddingInlineStart);\\n  padding-inline-end: var(--cem-pf-v6-c-toggle-group__button--PaddingInlineEnd);\\n  font-size: var(--cem-pf-v6-c-toggle-group__button--FontSize);\\n  line-height: var(--cem-pf-v6-c-toggle-group__button--LineHeight);\\n  color: var(--cem-pf-v6-c-toggle-group__button--Color);\\n  background-color: var(--cem-pf-v6-c-toggle-group__button--BackgroundColor);\\n  border: 0;\\n  cursor: pointer;\\n  user-select: none;\\n}\\n\\n:host(:not(:first-child)) {\\n  margin-inline-start: var(--cem-pf-v6-c-toggle-group__item--item--MarginInlineStart);\\n}\\n\\n:host::before,\\n:host::after {\\n  position: absolute;\\n  inset: 0;\\n  pointer-events: none;\\n  content: \\"\\";\\n  border-style: solid;\\n  border-radius: inherit;\\n}\\n\\n:host::before {\\n  border-width: var(--cem-pf-v6-c-toggle-group__button--before--BorderWidth);\\n  border-block-start-color: var(--cem-pf-v6-c-toggle-group__button--before--BorderBlockStartColor, var(--cem-pf-v6-c-toggle-group__button--before--BorderColor));\\n  border-block-end-color: var(--cem-pf-v6-c-toggle-group__button--before--BorderBlockEndColor, var(--cem-pf-v6-c-toggle-group__button--before--BorderColor));\\n  border-inline-start-color: var(--cem-pf-v6-c-toggle-group__button--before--BorderInlineStartColor, var(--cem-pf-v6-c-toggle-group__button--before--BorderColor));\\n  border-inline-end-color: var(--cem-pf-v6-c-toggle-group__button--before--BorderInlineEndColor, var(--cem-pf-v6-c-toggle-group__button--before--BorderColor));\\n}\\n\\n:host::after {\\n  inset: var(--cem-pf-v6-c-toggle-group__button--before--BorderWidth);\\n  border-color: var(--cem-pf-v6-c-toggle-group__button--after--BorderColor);\\n  border-width: var(--cem-pf-v6-c-toggle-group__button--after--BorderWidth);\\n}\\n\\n:host(:hover:not([disabled])) {\\n  --cem-pf-v6-c-toggle-group__button--BackgroundColor: var(--cem-pf-v6-c-toggle-group__button--hover--BackgroundColor);\\n  --cem-pf-v6-c-toggle-group__button--ZIndex: var(--cem-pf-v6-c-toggle-group__button--hover--ZIndex);\\n  --cem-pf-v6-c-toggle-group__button--before--BorderColor: var(--cem-pf-v6-c-toggle-group__button--hover--before--BorderColor);\\n  --cem-pf-v6-c-toggle-group__button--after--BorderWidth: var(--cem-pf-v6-c-toggle-group__button--hover--after--BorderWidth);\\n}\\n\\n:host(:focus-visible) {\\n  outline: 2px solid var(--pf-t--global--color--brand--default);\\n  outline-offset: 2px;\\n  --cem-pf-v6-c-toggle-group__button--ZIndex: var(--cem-pf-v6-c-toggle-group__button--hover--ZIndex);\\n}\\n\\n:host([selected]) {\\n  --cem-pf-v6-c-toggle-group__button--BackgroundColor: var(--cem-pf-v6-c-toggle-group__button--m-selected--BackgroundColor);\\n  --cem-pf-v6-c-toggle-group__button--Color: var(--cem-pf-v6-c-toggle-group__button--m-selected--Color);\\n  --cem-pf-v6-c-toggle-group__button--before--BorderColor: var(--cem-pf-v6-c-toggle-group__button--m-selected--before--BorderColor);\\n  --cem-pf-v6-c-toggle-group__button--ZIndex: var(--cem-pf-v6-c-toggle-group__button--m-selected--ZIndex);\\n  --cem-pf-v6-c-toggle-group__button--after--BorderWidth: var(--cem-pf-v6-c-toggle-group__button--m-selected--after--BorderWidth);\\n}\\n\\n:host([selected]) + :host([selected]) {\\n  --cem-pf-v6-c-toggle-group__button--before--BorderInlineStartColor: var(--cem-pf-v6-c-toggle-group__button--m-selected-selected--before--BorderInlineStartColor);\\n}\\n\\n:host([disabled]) {\\n  --cem-pf-v6-c-toggle-group__button--BackgroundColor: var(--cem-pf-v6-c-toggle-group__button--disabled--BackgroundColor);\\n  --cem-pf-v6-c-toggle-group__button--Color: var(--cem-pf-v6-c-toggle-group__button--disabled--Color);\\n  --cem-pf-v6-c-toggle-group__button--before--BorderColor: var(--cem-pf-v6-c-toggle-group__button--disabled--before--BorderColor);\\n  --cem-pf-v6-c-toggle-group__button--ZIndex: var(--cem-pf-v6-c-toggle-group__button--disabled--ZIndex);\\n  cursor: not-allowed;\\n  pointer-events: none;\\n}\\n\\n:host([disabled]) + :host([disabled]) {\\n  --cem-pf-v6-c-toggle-group__button--before--BorderInlineStartColor: var(--cem-pf-v6-c-toggle-group__button--disabled-disabled--before--BorderInlineStartColor);\\n}\\n\\n:host(:first-child) {\\n  border-start-start-radius: var(--cem-pf-v6-c-toggle-group__item--first-child__button--BorderStartStartRadius);\\n  border-end-start-radius: var(--cem-pf-v6-c-toggle-group__item--first-child__button--BorderEndStartRadius);\\n}\\n\\n:host(:last-child) {\\n  border-start-end-radius: var(--cem-pf-v6-c-toggle-group__item--last-child__button--BorderStartEndRadius);\\n  border-end-end-radius: var(--cem-pf-v6-c-toggle-group__item--last-child__button--BorderEndEndRadius);\\n}\\n\\n#wrapper {\\n  display: var(--_has-content, inline-flex);\\n  gap: var(--cem-pf-v6-c-toggle-group__icon--text--MarginInlineStart);\\n  align-items: center;\\n}\\n\\n::slotted(svg) {\\n  width: 1em;\\n  height: 1em;\\n  vertical-align: -0.125em;\\n  fill: currentColor;\\n}\\n"'));
-var cem_pf_v6_toggle_group_item_default = s49;
+var s50 = new CSSStyleSheet();
+s50.replaceSync(JSON.parse('":host {\\n  position: relative;\\n  z-index: var(--cem-pf-v6-c-toggle-group__button--ZIndex);\\n  display: inline-flex;\\n  align-items: center;\\n  padding-block-start: var(--cem-pf-v6-c-toggle-group__button--PaddingBlockStart);\\n  padding-block-end: var(--cem-pf-v6-c-toggle-group__button--PaddingBlockEnd);\\n  padding-inline-start: var(--cem-pf-v6-c-toggle-group__button--PaddingInlineStart);\\n  padding-inline-end: var(--cem-pf-v6-c-toggle-group__button--PaddingInlineEnd);\\n  font-size: var(--cem-pf-v6-c-toggle-group__button--FontSize);\\n  line-height: var(--cem-pf-v6-c-toggle-group__button--LineHeight);\\n  color: var(--cem-pf-v6-c-toggle-group__button--Color);\\n  background-color: var(--cem-pf-v6-c-toggle-group__button--BackgroundColor);\\n  border: 0;\\n  cursor: pointer;\\n  user-select: none;\\n}\\n\\n:host(:not(:first-child)) {\\n  margin-inline-start: var(--cem-pf-v6-c-toggle-group__item--item--MarginInlineStart);\\n}\\n\\n:host::before,\\n:host::after {\\n  position: absolute;\\n  inset: 0;\\n  pointer-events: none;\\n  content: \\"\\";\\n  border-style: solid;\\n  border-radius: inherit;\\n}\\n\\n:host::before {\\n  border-width: var(--cem-pf-v6-c-toggle-group__button--before--BorderWidth);\\n  border-block-start-color: var(--cem-pf-v6-c-toggle-group__button--before--BorderBlockStartColor, var(--cem-pf-v6-c-toggle-group__button--before--BorderColor));\\n  border-block-end-color: var(--cem-pf-v6-c-toggle-group__button--before--BorderBlockEndColor, var(--cem-pf-v6-c-toggle-group__button--before--BorderColor));\\n  border-inline-start-color: var(--cem-pf-v6-c-toggle-group__button--before--BorderInlineStartColor, var(--cem-pf-v6-c-toggle-group__button--before--BorderColor));\\n  border-inline-end-color: var(--cem-pf-v6-c-toggle-group__button--before--BorderInlineEndColor, var(--cem-pf-v6-c-toggle-group__button--before--BorderColor));\\n}\\n\\n:host::after {\\n  inset: var(--cem-pf-v6-c-toggle-group__button--before--BorderWidth);\\n  border-color: var(--cem-pf-v6-c-toggle-group__button--after--BorderColor);\\n  border-width: var(--cem-pf-v6-c-toggle-group__button--after--BorderWidth);\\n}\\n\\n:host(:hover:not([disabled])) {\\n  --cem-pf-v6-c-toggle-group__button--BackgroundColor: var(--cem-pf-v6-c-toggle-group__button--hover--BackgroundColor);\\n  --cem-pf-v6-c-toggle-group__button--ZIndex: var(--cem-pf-v6-c-toggle-group__button--hover--ZIndex);\\n  --cem-pf-v6-c-toggle-group__button--before--BorderColor: var(--cem-pf-v6-c-toggle-group__button--hover--before--BorderColor);\\n  --cem-pf-v6-c-toggle-group__button--after--BorderWidth: var(--cem-pf-v6-c-toggle-group__button--hover--after--BorderWidth);\\n}\\n\\n:host(:focus-visible) {\\n  outline: 2px solid var(--pf-t--global--color--brand--default);\\n  outline-offset: 2px;\\n  --cem-pf-v6-c-toggle-group__button--ZIndex: var(--cem-pf-v6-c-toggle-group__button--hover--ZIndex);\\n}\\n\\n:host([selected]) {\\n  --cem-pf-v6-c-toggle-group__button--BackgroundColor: var(--cem-pf-v6-c-toggle-group__button--m-selected--BackgroundColor);\\n  --cem-pf-v6-c-toggle-group__button--Color: var(--cem-pf-v6-c-toggle-group__button--m-selected--Color);\\n  --cem-pf-v6-c-toggle-group__button--before--BorderColor: var(--cem-pf-v6-c-toggle-group__button--m-selected--before--BorderColor);\\n  --cem-pf-v6-c-toggle-group__button--ZIndex: var(--cem-pf-v6-c-toggle-group__button--m-selected--ZIndex);\\n  --cem-pf-v6-c-toggle-group__button--after--BorderWidth: var(--cem-pf-v6-c-toggle-group__button--m-selected--after--BorderWidth);\\n}\\n\\n:host([selected]) + :host([selected]) {\\n  --cem-pf-v6-c-toggle-group__button--before--BorderInlineStartColor: var(--cem-pf-v6-c-toggle-group__button--m-selected-selected--before--BorderInlineStartColor);\\n}\\n\\n:host([disabled]) {\\n  --cem-pf-v6-c-toggle-group__button--BackgroundColor: var(--cem-pf-v6-c-toggle-group__button--disabled--BackgroundColor);\\n  --cem-pf-v6-c-toggle-group__button--Color: var(--cem-pf-v6-c-toggle-group__button--disabled--Color);\\n  --cem-pf-v6-c-toggle-group__button--before--BorderColor: var(--cem-pf-v6-c-toggle-group__button--disabled--before--BorderColor);\\n  --cem-pf-v6-c-toggle-group__button--ZIndex: var(--cem-pf-v6-c-toggle-group__button--disabled--ZIndex);\\n  cursor: not-allowed;\\n  pointer-events: none;\\n}\\n\\n:host([disabled]) + :host([disabled]) {\\n  --cem-pf-v6-c-toggle-group__button--before--BorderInlineStartColor: var(--cem-pf-v6-c-toggle-group__button--disabled-disabled--before--BorderInlineStartColor);\\n}\\n\\n:host(:first-child) {\\n  border-start-start-radius: var(--cem-pf-v6-c-toggle-group__item--first-child__button--BorderStartStartRadius);\\n  border-end-start-radius: var(--cem-pf-v6-c-toggle-group__item--first-child__button--BorderEndStartRadius);\\n}\\n\\n:host(:last-child) {\\n  border-start-end-radius: var(--cem-pf-v6-c-toggle-group__item--last-child__button--BorderStartEndRadius);\\n  border-end-end-radius: var(--cem-pf-v6-c-toggle-group__item--last-child__button--BorderEndEndRadius);\\n}\\n\\n#wrapper {\\n  display: var(--_has-content, inline-flex);\\n  gap: var(--cem-pf-v6-c-toggle-group__icon--text--MarginInlineStart);\\n  align-items: center;\\n}\\n\\n::slotted(svg) {\\n  width: 1em;\\n  height: 1em;\\n  vertical-align: -0.125em;\\n  fill: currentColor;\\n}\\n"'));
+var cem_pf_v6_toggle_group_item_default = s50;
 
 // elements/cem-pf-v6-toggle-group-item/cem-pf-v6-toggle-group-item.ts
 var ToggleGroupItemSelectEvent = class extends Event {
@@ -6142,16 +6325,16 @@ var ToggleGroupItemSelectEvent = class extends Event {
     this.value = value;
   }
 };
-var _value_dec5, _disabled_dec10, _selected_dec2, _a46, _PfV6ToggleGroupItem_decorators, _internals12, _init46, _selected2, _disabled10, _value5, _PfV6ToggleGroupItem_instances, updateTabindex_fn, _handleClick2, _handleKeydown3, _handleFocus, selectItem_fn, focusAndSelect_fn, navigateItems_fn, navigateToEnd_fn, updateRovingTabindex_fn;
+var _value_dec6, _disabled_dec10, _selected_dec2, _a47, _PfV6ToggleGroupItem_decorators, _internals13, _init47, _selected2, _disabled10, _value6, _PfV6ToggleGroupItem_instances, updateTabindex_fn, _handleClick2, _handleKeydown3, _handleFocus, selectItem_fn, focusAndSelect_fn, navigateItems_fn, navigateToEnd_fn, updateRovingTabindex_fn;
 _PfV6ToggleGroupItem_decorators = [t3("cem-pf-v6-toggle-group-item")];
-var PfV6ToggleGroupItem = class extends (_a46 = i3, _selected_dec2 = [n4({ type: Boolean, reflect: true })], _disabled_dec10 = [n4({ type: Boolean, reflect: true })], _value_dec5 = [n4({ reflect: true })], _a46) {
+var PfV6ToggleGroupItem = class extends (_a47 = i3, _selected_dec2 = [n4({ type: Boolean, reflect: true })], _disabled_dec10 = [n4({ type: Boolean, reflect: true })], _value_dec6 = [n4({ reflect: true })], _a47) {
   constructor() {
     super();
     __privateAdd(this, _PfV6ToggleGroupItem_instances);
-    __privateAdd(this, _internals12, this.attachInternals());
-    __privateAdd(this, _selected2, __runInitializers(_init46, 8, this, false)), __runInitializers(_init46, 11, this);
-    __privateAdd(this, _disabled10, __runInitializers(_init46, 12, this, false)), __runInitializers(_init46, 15, this);
-    __privateAdd(this, _value5, __runInitializers(_init46, 16, this)), __runInitializers(_init46, 19, this);
+    __privateAdd(this, _internals13, this.attachInternals());
+    __privateAdd(this, _selected2, __runInitializers(_init47, 8, this, false)), __runInitializers(_init47, 11, this);
+    __privateAdd(this, _disabled10, __runInitializers(_init47, 12, this, false)), __runInitializers(_init47, 15, this);
+    __privateAdd(this, _value6, __runInitializers(_init47, 16, this)), __runInitializers(_init47, 19, this);
     __privateAdd(this, _handleClick2, (event) => {
       if (this.disabled) {
         event.preventDefault();
@@ -6190,7 +6373,7 @@ var PfV6ToggleGroupItem = class extends (_a46 = i3, _selected_dec2 = [n4({ type:
     __privateAdd(this, _handleFocus, () => {
       __privateMethod(this, _PfV6ToggleGroupItem_instances, updateRovingTabindex_fn).call(this);
     });
-    __privateGet(this, _internals12).role = "radio";
+    __privateGet(this, _internals13).role = "radio";
     if (!this.hasAttribute("tabindex")) {
       this.setAttribute("tabindex", "-1");
     }
@@ -6219,11 +6402,11 @@ var PfV6ToggleGroupItem = class extends (_a46 = i3, _selected_dec2 = [n4({ type:
   }
   updated(changed) {
     if (changed.has("selected")) {
-      __privateGet(this, _internals12).ariaChecked = String(this.selected);
+      __privateGet(this, _internals13).ariaChecked = String(this.selected);
       __privateMethod(this, _PfV6ToggleGroupItem_instances, updateRovingTabindex_fn).call(this);
     }
     if (changed.has("disabled")) {
-      __privateGet(this, _internals12).ariaDisabled = String(this.disabled);
+      __privateGet(this, _internals13).ariaDisabled = String(this.disabled);
       __privateMethod(this, _PfV6ToggleGroupItem_instances, updateTabindex_fn).call(this);
     }
   }
@@ -6237,11 +6420,11 @@ var PfV6ToggleGroupItem = class extends (_a46 = i3, _selected_dec2 = [n4({ type:
     `;
   }
 };
-_init46 = __decoratorStart(_a46);
-_internals12 = new WeakMap();
+_init47 = __decoratorStart(_a47);
+_internals13 = new WeakMap();
 _selected2 = new WeakMap();
 _disabled10 = new WeakMap();
-_value5 = new WeakMap();
+_value6 = new WeakMap();
 _PfV6ToggleGroupItem_instances = new WeakSet();
 updateTabindex_fn = function() {
   if (this.disabled) {
@@ -6305,22 +6488,22 @@ updateRovingTabindex_fn = function() {
     item.setAttribute("tabindex", item === this ? "0" : "-1");
   });
 };
-__decorateElement(_init46, 4, "selected", _selected_dec2, PfV6ToggleGroupItem, _selected2);
-__decorateElement(_init46, 4, "disabled", _disabled_dec10, PfV6ToggleGroupItem, _disabled10);
-__decorateElement(_init46, 4, "value", _value_dec5, PfV6ToggleGroupItem, _value5);
-PfV6ToggleGroupItem = __decorateElement(_init46, 0, "PfV6ToggleGroupItem", _PfV6ToggleGroupItem_decorators, PfV6ToggleGroupItem);
+__decorateElement(_init47, 4, "selected", _selected_dec2, PfV6ToggleGroupItem, _selected2);
+__decorateElement(_init47, 4, "disabled", _disabled_dec10, PfV6ToggleGroupItem, _disabled10);
+__decorateElement(_init47, 4, "value", _value_dec6, PfV6ToggleGroupItem, _value6);
+PfV6ToggleGroupItem = __decorateElement(_init47, 0, "PfV6ToggleGroupItem", _PfV6ToggleGroupItem_decorators, PfV6ToggleGroupItem);
 __publicField(PfV6ToggleGroupItem, "styles", cem_pf_v6_toggle_group_item_default);
-__runInitializers(_init46, 1, PfV6ToggleGroupItem);
+__runInitializers(_init47, 1, PfV6ToggleGroupItem);
 
 // lit-css:elements/cem-pf-v6-tree-view/cem-pf-v6-tree-view.css
-var s50 = new CSSStyleSheet();
-s50.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n\\n#tree {\\n  margin: 0;\\n  padding: 0;\\n  list-style: none;\\n}\\n"'));
-var cem_pf_v6_tree_view_default = s50;
+var s51 = new CSSStyleSheet();
+s51.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n\\n#tree {\\n  margin: 0;\\n  padding: 0;\\n  list-style: none;\\n}\\n"'));
+var cem_pf_v6_tree_view_default = s51;
 
 // elements/cem-pf-v6-tree-view/cem-pf-v6-tree-view.ts
-var _PfV6TreeView_decorators, _init47, _a47;
+var _PfV6TreeView_decorators, _init48, _a48;
 _PfV6TreeView_decorators = [t3("cem-pf-v6-tree-view")];
-var PfV6TreeView = class extends (_a47 = i3) {
+var PfV6TreeView = class extends (_a48 = i3) {
   static styles = cem_pf_v6_tree_view_default;
   #currentSelection = null;
   connectedCallback() {
@@ -6475,7 +6658,7 @@ var PfV6TreeView = class extends (_a47 = i3) {
   #focusItem(item) {
     if (!item) return;
     const allItems = this.querySelectorAll("cem-pf-v6-tree-item");
-    allItems.forEach((i5) => i5.setTabindex?.(-1));
+    allItems.forEach((i6) => i6.setTabindex?.(-1));
     item.setTabindex?.(0);
     item.focusItem?.();
   }
@@ -6490,23 +6673,23 @@ var PfV6TreeView = class extends (_a47 = i3) {
     );
   }
 };
-_init47 = __decoratorStart(_a47);
-PfV6TreeView = __decorateElement(_init47, 0, "PfV6TreeView", _PfV6TreeView_decorators, PfV6TreeView);
-__runInitializers(_init47, 1, PfV6TreeView);
+_init48 = __decoratorStart(_a48);
+PfV6TreeView = __decorateElement(_init48, 0, "PfV6TreeView", _PfV6TreeView_decorators, PfV6TreeView);
+__runInitializers(_init48, 1, PfV6TreeView);
 
 // lit-css:elements/cem-reconnection-content/cem-reconnection-content.css
-var s51 = new CSSStyleSheet();
-s51.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n\\np {\\n  margin: 0 0 var(--pf-t--global--spacer--md) 0;\\n  line-height: var(--pf-t--global--font--line-height--body);\\n  color: var(--pf-t--global--text--color--regular);\\n}\\n\\n#retry-info {\\n  background: var(--pf-t--global--background--color--secondary--default);\\n  padding: var(--pf-t--global--spacer--md);\\n  border-radius: var(--pf-t--global--border--radius--small);\\n  margin: 0;\\n  font-size: var(--pf-t--global--font--size--body--sm);\\n  color: var(--pf-t--global--text--color--subtle);\\n  border: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);\\n}\\n"'));
-var cem_reconnection_content_default = s51;
+var s52 = new CSSStyleSheet();
+s52.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n\\np {\\n  margin: 0 0 var(--pf-t--global--spacer--md) 0;\\n  line-height: var(--pf-t--global--font--line-height--body);\\n  color: var(--pf-t--global--text--color--regular);\\n}\\n\\n#retry-info {\\n  background: var(--pf-t--global--background--color--secondary--default);\\n  padding: var(--pf-t--global--spacer--md);\\n  border-radius: var(--pf-t--global--border--radius--small);\\n  margin: 0;\\n  font-size: var(--pf-t--global--font--size--body--sm);\\n  color: var(--pf-t--global--text--color--subtle);\\n  border: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);\\n}\\n"'));
+var cem_reconnection_content_default = s52;
 
 // elements/cem-reconnection-content/cem-reconnection-content.ts
-var _retryText_dec, _a48, _CemReconnectionContent_decorators, _init48, _retryText, _b3, retryText_get, retryText_set, _CemReconnectionContent_instances, _countdownInterval, _remainingMs;
+var _retryText_dec, _a49, _CemReconnectionContent_decorators, _init49, _retryText, _b3, retryText_get, retryText_set, _CemReconnectionContent_instances, _countdownInterval, _remainingMs;
 _CemReconnectionContent_decorators = [t3("cem-reconnection-content")];
-var CemReconnectionContent = class extends (_a48 = i3, _retryText_dec = [r5()], _a48) {
+var CemReconnectionContent = class extends (_a49 = i3, _retryText_dec = [r5()], _a49) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _CemReconnectionContent_instances);
-    __privateAdd(this, _retryText, __runInitializers(_init48, 8, this, "")), __runInitializers(_init48, 11, this);
+    __privateAdd(this, _retryText, __runInitializers(_init49, 8, this, "")), __runInitializers(_init49, 11, this);
     __privateAdd(this, _countdownInterval, null);
     __privateAdd(this, _remainingMs, 0);
   }
@@ -6556,34 +6739,34 @@ var CemReconnectionContent = class extends (_a48 = i3, _retryText_dec = [r5()], 
     this.clearCountdown();
   }
 };
-_init48 = __decoratorStart(_a48);
+_init49 = __decoratorStart(_a49);
 _retryText = new WeakMap();
 _CemReconnectionContent_instances = new WeakSet();
 _countdownInterval = new WeakMap();
 _remainingMs = new WeakMap();
-_b3 = __decorateElement(_init48, 20, "#retryText", _retryText_dec, _CemReconnectionContent_instances, _retryText), retryText_get = _b3.get, retryText_set = _b3.set;
-CemReconnectionContent = __decorateElement(_init48, 0, "CemReconnectionContent", _CemReconnectionContent_decorators, CemReconnectionContent);
+_b3 = __decorateElement(_init49, 20, "#retryText", _retryText_dec, _CemReconnectionContent_instances, _retryText), retryText_get = _b3.get, retryText_set = _b3.set;
+CemReconnectionContent = __decorateElement(_init49, 0, "CemReconnectionContent", _CemReconnectionContent_decorators, CemReconnectionContent);
 __publicField(CemReconnectionContent, "styles", cem_reconnection_content_default);
-__runInitializers(_init48, 1, CemReconnectionContent);
+__runInitializers(_init49, 1, CemReconnectionContent);
 
 // lit-css:elements/cem-serve-chrome/cem-serve-chrome.css
-var s52 = new CSSStyleSheet();
-s52.replaceSync(JSON.parse(`":host {\\n  display: block;\\n  height: 100vh;\\n  overflow: hidden;\\n  --cem-pf-v6-c-masthead__logo--Width: max-content;\\n  --cem-pf-v6-c-masthead__toggle--Size: 1rem;\\n}\\n\\n[hidden] {\\n  display: none !important;\\n}\\n\\n/* Masthead logo styles */\\n.masthead-logo {\\n  display: flex;\\n  align-items: center;\\n  text-decoration: none;\\n  color: inherit;\\n  max-height: var(--cem-pf-v6-c-masthead__logo--MaxHeight);\\n  gap: 4px;\\n  \\u0026 img {\\n    display: block;\\n    max-height: var(--cem-pf-v6-c-masthead__logo--MaxHeight);\\n    width: auto;\\n  }\\n  \\u0026 ::slotted([slot=\\"title\\"]) {\\n    margin: 0;\\n    font-size: 1.125rem;\\n    font-weight: 600;\\n    color: var(--pf-t--global--text--color--regular);\\n  }\\n  \\u0026 h1 {\\n    margin: 0;\\n    font-size: 18px;\\n  }\\n}\\n\\n/* Toolbar group alignment */\\ncem-pf-v6-toolbar-group[variant=\\"action-group\\"] {\\n  margin-inline-start: auto;\\n  align-items: center;\\n}\\n\\n.debug-panel {\\n  background: var(--pf-t--global--background--color--primary--default);\\n  border: 1px solid var(--pf-t--global--border--color--default);\\n  border-radius: 6px;\\n  padding: 1.5rem;\\n  max-width: 600px;\\n  width: 90%;\\n  max-height: 80vh;\\n  overflow-y: auto;\\n\\n  h2 {\\n    margin: 0 0 1rem 0;\\n    color: var(--pf-t--global--text--color--regular);\\n    font-size: 1.125rem;\\n    font-weight: 600;\\n  }\\n\\n  dl {\\n    margin: 0;\\n  }\\n\\n  dt {\\n    color: var(--pf-t--global--text--color--subtle);\\n    font-size: 0.875rem;\\n    margin-top: 0.5rem;\\n    font-weight: 500;\\n  }\\n\\n  dd {\\n    margin: 0 0 0.5rem 0;\\n    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;\\n    font-size: 0.875rem;\\n    color: var(--pf-t--global--text--color--regular);\\n  }\\n\\n  details {\\n    margin-top: 1rem;\\n\\n    summary {\\n      cursor: pointer;\\n      color: var(--pf-t--global--text--color--regular);\\n      font-size: 0.875rem;\\n      font-weight: 500;\\n      list-style: none;\\n      display: flex;\\n      align-items: center;\\n      gap: 0.5rem;\\n      user-select: none;\\n\\n      \\u0026::-webkit-details-marker {\\n        display: none;\\n      }\\n\\n      \\u0026::before {\\n        content: '\\\\25B8';\\n        display: inline-block;\\n        transition: transform 100ms cubic-bezier(0.4, 0, 0.2, 1);\\n        color: var(--pf-t--global--text--color--subtle);\\n      }\\n    }\\n\\n    \\u0026[open] summary::before {\\n      transform: rotate(90deg);\\n    }\\n\\n    pre {\\n      margin-top: 0.5rem;\\n      margin-left: 1.5rem;\\n      padding: 0.5rem;\\n      background: var(--pf-t--global--background--color--secondary--default);\\n      border-radius: 6px;\\n      font-size: 0.875rem;\\n      overflow-x: auto;\\n      color: var(--pf-t--global--text--color--regular);\\n    }\\n  }\\n\\n  .button-container {\\n    display: flex;\\n    gap: 0.5rem;\\n    margin-top: 1rem;\\n  }\\n\\n  p {\\n    color: var(--pf-t--global--text--color--subtle);\\n    font-size: 0.875rem;\\n  }\\n\\n  button {\\n    margin-top: 1rem;\\n    padding: 0.5rem 1rem;\\n    background: var(--pf-t--global--color--brand--default);\\n    color: var(--pf-t--global--text--color--on-brand);\\n    border: none;\\n    border-radius: 6px;\\n    font-size: 0.875rem;\\n    font-weight: 400;\\n    cursor: pointer;\\n    transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);\\n\\n    \\u0026:hover {\\n      background: var(--pf-t--global--color--brand--hover);\\n    }\\n  }\\n}\\n\\n/* Content area padding for demo */\\ncem-pf-v6-page-main {\\n  min-height: calc(100dvh - 72px - var(--pf-t--global--spacer--inset--page-chrome));\\n  display: flex;\\n  flex-direction: column;\\n  \\u0026 \\u003e ::slotted(:not([slot=knobs])) {\\n    padding: var(--pf-t--global--spacer--lg);\\n    flex: 1;\\n  }\\n}\\n\\ncem-drawer {\\n  cem-pf-v6-tabs {\\n    cem-pf-v6-tab {\\n      padding-block-end: 0;\\n    }\\n  }\\n}\\n\\n/* Element descriptions in listing */\\n.element-summary {\\n  margin: 0;\\n  color: var(--pf-t--global--text--color--subtle);\\n  font-size: var(--pf-t--global--font--size--body--sm);\\n}\\n\\n.element-description {\\n  margin: 0;\\n  color: var(--pf-t--global--text--color--subtle);\\n  font-size: var(--pf-t--global--font--size--body--sm);\\n}\\n\\n/* Card footer demo navigation */\\n.card-demos {\\n  display: flex;\\n  flex-wrap: wrap;\\n  gap: var(--pf-t--global--spacer--gap--action-to-action--default);\\n  padding: 0;\\n  margin: 0;\\n}\\n\\n.package-name {\\n  color: var(--pf-t--global--text--color--subtle);\\n  font-size: var(--pf-t--global--font--size--body--sm);\\n}\\n\\n/* Knobs container - fills tab panel height */\\n#knobs-container {\\n  height: 100%;\\n  display: flex;\\n  flex-direction: column;\\n  \\u0026 ::slotted([slot=\\"knobs\\"]) {\\n    flex: 1;\\n    min-height: 0;\\n    overflow: hidden;\\n  }\\n}\\n\\n.knobs-empty {\\n  color: var(--cem-dev-server-text-muted);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n  text-align: center;\\n  padding: var(--cem-dev-server-spacing-lg);\\n\\n  code {\\n    background: var(--cem-dev-server-bg-tertiary);\\n    padding: 2px 6px;\\n    border-radius: 3px;\\n    font-family: var(--cem-dev-server-font-family-mono);\\n  }\\n}\\n\\n.instance-tag {\\n  font-family: var(--cem-dev-server-font-family-mono);\\n  color: var(--cem-dev-server-accent-color);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n}\\n\\n.instance-label {\\n  color: var(--cem-dev-server-text-secondary);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n}\\n\\n.knob-group {\\n  margin-bottom: var(--cem-dev-server-spacing-lg);\\n\\n  \\u0026:last-child {\\n    margin-bottom: 0;\\n  }\\n}\\n\\n/* PatternFly v6 form - horizontal layout */\\ncem-pf-v6-form[horizontal] cem-pf-v6-form-field-group {\\n  grid-column: span 2\\n}\\n\\n.knob-group-title {\\n  grid-column: 1 / -1;\\n  margin: 0 0 var(--cem-dev-server-spacing-md) 0;\\n  color: var(--cem-dev-server-text-primary);\\n  font-size: var(--cem-dev-server-font-size-base);\\n  font-weight: 600;\\n  border-bottom: 1px solid var(--cem-dev-server-border-color);\\n  padding-bottom: var(--cem-dev-server-spacing-sm);\\n}\\n\\n.knob-control {\\n  margin-bottom: var(--cem-dev-server-spacing-md);\\n}\\n\\n.knob-label {\\n  display: flex;\\n  flex-direction: column;\\n  gap: var(--cem-dev-server-spacing-xs);\\n  cursor: pointer;\\n}\\n\\n.knob-name {\\n  font-family: var(--cem-dev-server-font-family-mono);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n  color: var(--cem-dev-server-text-primary);\\n  font-weight: 500;\\n}\\n\\n.knob-description {\\n  color: var(--cem-dev-server-text-secondary);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n  line-height: 1.5;\\n\\n  p {\\n    margin: var(--cem-dev-server-spacing-xs) 0;\\n  }\\n\\n  code {\\n    background: var(--cem-dev-server-bg-tertiary);\\n    border-radius: 3px;\\n    font-family: var(--cem-dev-server-font-family-mono);\\n  }\\n\\n  a {\\n    color: var(--cem-dev-server-accent-color);\\n    text-decoration: none;\\n\\n    \\u0026:hover {\\n      text-decoration: underline;\\n    }\\n  }\\n\\n  strong {\\n    font-weight: 600;\\n    color: var(--cem-dev-server-text-primary);\\n  }\\n\\n  ul, ol {\\n    margin: var(--cem-dev-server-spacing-xs) 0;\\n    padding-left: var(--cem-dev-server-spacing-lg);\\n  }\\n}\\n\\nfooter.pf-m-sticky-bottom {\\n  view-transition-name: dev-server-footer;\\n  position: sticky;\\n  bottom: 0;\\n  background: var(--pf-t--global--background--color--primary--default);\\n  border-top: 1px solid var(--pf-t--global--border--color--default);\\n  z-index: var(--cem-pf-v6-c-page--section--m-sticky-bottom--ZIndex, var(--pf-t--global--z-index--md));\\n  box-shadow: var(--cem-pf-v6-c-page--section--m-sticky-bottom--BoxShadow, var(--pf-t--global--box-shadow--sm--top));\\n}\\n\\n.footer-description {\\n  padding: 1.5rem;\\n\\n  \\u0026.empty {\\n    display: none;\\n  }\\n}\\n\\nfooter ::slotted([slot=\\"description\\"]) {\\n  margin: 0;\\n  color: var(--pf-t--global--text--color--subtle);\\n  line-height: 1.6;\\n  font-size: 0.875rem;\\n\\n  code {\\n    background: var(--pf-t--global--background--color--primary--hover);\\n    padding: 2px 6px;\\n    border-radius: 3px;\\n    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;\\n    font-size: 0.875rem;\\n  }\\n}\\n\\n.logs-wrapper {\\n  display: flex;\\n  flex-direction: column;\\n  height: 100%;\\n}\\n\\n#log-container {\\n  flex-grow: 1;\\n  overflow-y: auto;\\n}\\n\\n.log-entry {\\n  padding: var(--cem-dev-server-spacing-xs) var(--cem-dev-server-spacing-md);\\n  display: flex;\\n  gap: var(--cem-dev-server-spacing-sm);\\n  align-items: baseline;\\n  cem-pf-v6-label {\\n    flex-shrink: 0;\\n  }\\n}\\n\\n.log-time,\\n.log-message {\\n  font-family: var(--cem-dev-server-font-family-mono);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n}\\n\\n.log-time {\\n  color: var(--cem-dev-server-text-muted);\\n  flex-shrink: 0;\\n  font-size: 11px;\\n}\\n\\n.log-message {\\n  color: var(--cem-dev-server-text-primary);\\n  word-break: break-word;\\n}\\n\\n/* Navigation content (light DOM slotted content for cem-pf-v6-page-sidebar) */\\n.nav-package {\\n  margin-bottom: var(--cem-dev-server-spacing-md);\\n\\n  \\u0026 \\u003e summary {\\n    cursor: pointer;\\n    padding: 0.5rem 1rem;\\n    background: var(--pf-t--global--background--color--secondary--default);\\n    border-radius: 6px;\\n    color: var(--pf-t--global--text--color--regular);\\n    font-weight: 600;\\n    font-size: 0.875rem;\\n    list-style: none;\\n    transition: background 200ms cubic-bezier(0.4, 0, 0.2, 1);\\n    margin-bottom: 0.5rem;\\n    display: flex;\\n    align-items: center;\\n    gap: 0.5rem;\\n    user-select: none;\\n\\n    \\u0026:hover {\\n      background: var(--pf-t--global--background--color--secondary--hover);\\n    }\\n\\n    \\u0026::-webkit-details-marker {\\n      display: none;\\n    }\\n\\n    \\u0026::before {\\n      content: '\\\\25B8';\\n      display: inline-block;\\n      transition: transform 100ms cubic-bezier(0.4, 0, 0.2, 1);\\n      color: var(--pf-t--global--text--color--subtle);\\n    }\\n  }\\n\\n  \\u0026[open] \\u003e summary::before {\\n    transform: rotate(90deg);\\n  }\\n}\\n\\n.nav-element {\\n  margin-bottom: var(--cem-dev-server-spacing-sm);\\n  margin-inline-start: var(--cem-dev-server-spacing-md);\\n\\n  summary {\\n    cursor: pointer;\\n    padding: 0.5rem 1rem;\\n    background: var(--pf-t--global--background--color--secondary--default);\\n    border-radius: 6px;\\n    color: var(--pf-t--global--text--color--regular);\\n    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;\\n    font-size: 0.875rem;\\n    list-style: none;\\n    transition: background 200ms cubic-bezier(0.4, 0, 0.2, 1);\\n    display: flex;\\n    align-items: center;\\n    gap: 0.5rem;\\n    user-select: none;\\n\\n    \\u0026:hover {\\n      background: var(--pf-t--global--background--color--secondary--hover);\\n    }\\n\\n    \\u0026::-webkit-details-marker {\\n      display: none;\\n    }\\n\\n    \\u0026::before {\\n      content: '\\\\25B8';\\n      display: inline-block;\\n      transition: transform 100ms cubic-bezier(0.4, 0, 0.2, 1);\\n      color: var(--pf-t--global--text--color--subtle);\\n    }\\n  }\\n\\n  \\u0026[open] summary::before {\\n    transform: rotate(90deg);\\n  }\\n}\\n\\n.nav-element-title {\\n  user-select: none;\\n}\\n\\n.nav-demo-list {\\n  list-style: none;\\n  padding: 0;\\n  margin: var(--cem-dev-server-spacing-sm) 0 0 0;\\n  display: grid;\\n  gap: var(--cem-dev-server-spacing-xs);\\n}\\n\\n.nav-demo-link {\\n  color: var(--cem-dev-server-text-primary);\\n  text-decoration: none;\\n  padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);\\n  padding-inline-start: calc(var(--cem-dev-server-spacing-md) * 2);\\n  background: var(--cem-dev-server-bg-tertiary);\\n  border-radius: var(--cem-dev-server-border-radius);\\n  display: block;\\n  font-size: var(--cem-dev-server-font-size-sm);\\n  transition: background 0.2s, color 0.2s;\\n\\n  \\u0026:hover {\\n    background: var(--cem-dev-server-accent-color);\\n    color: var(--pf-t--global--text--color--on-brand);\\n\\n    .nav-package-name {\\n      color: rgba(255, 255, 255, 0.8);\\n    }\\n  }\\n\\n  \\u0026[aria-current=\\"page\\"] {\\n    background: var(--cem-dev-server-accent-color);\\n    color: var(--pf-t--global--text--color--on-brand);\\n\\n    .nav-package-name {\\n      color: rgba(255, 255, 255, 0.8);\\n    }\\n  }\\n}\\n\\n.nav-package-name {\\n  color: var(--cem-dev-server-text-secondary);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n}\\n\\n/* Info button popover triggers in knobs - override plain button padding */\\ncem-pf-v6-popover cem-pf-v6-button[variant=\\"plain\\"] {\\n  --cem-pf-v6-c-button--m-plain--PaddingInlineEnd: 0;\\n  --cem-pf-v6-c-button--m-plain--PaddingInlineStart: 0;\\n  --cem-pf-v6-c-button--MinWidth: auto;\\n}\\n\\n/* Knob description content (slotted in form group helper) */\\ncem-pf-v6-form-group [slot=\\"helper\\"] {\\n  p {\\n    margin: var(--cem-dev-server-spacing-xs) 0;\\n  }\\n\\n  code {\\n    background: var(--cem-dev-server-bg-tertiary);\\n    border-radius: 3px;\\n    font-family: var(--cem-dev-server-font-family-mono);\\n  }\\n\\n  a {\\n    color: var(--cem-dev-server-accent-color);\\n    text-decoration: none;\\n\\n    \\u0026:hover {\\n      text-decoration: underline;\\n    }\\n  }\\n\\n  strong {\\n    font-weight: 600;\\n  }\\n\\n  ul, ol {\\n    margin: var(--cem-dev-server-spacing-xs) 0;\\n    padding-left: var(--cem-dev-server-spacing-lg);\\n  }\\n}\\n\\n/* Syntax highlighting (chroma - themable via CSS custom properties) */\\ncem-pf-v6-form-group [slot=\\"helper\\"] {\\n  .chroma {\\n    background-color: var(--cem-dev-server-bg-tertiary);\\n    padding: var(--cem-dev-server-spacing-sm);\\n    border-radius: var(--cem-dev-server-border-radius);\\n    overflow-x: auto;\\n\\n    \\u0026 .lntd { vertical-align: top; padding: 0; margin: 0; border: 0; }\\n    \\u0026 .lntable { border-spacing: 0; padding: 0; margin: 0; border: 0; }\\n    \\u0026 .hl { background-color: var(--cem-dev-server-syntax-highlight) }\\n    \\u0026 .lnt,\\n    \\u0026 .ln {\\n      white-space: pre;\\n      user-select: none;\\n      margin-right: 0.4em;\\n      padding: 0 0.4em 0 0.4em;\\n      color: var(--cem-dev-server-text-muted);\\n    }\\n    \\u0026 .line { display: flex; }\\n\\n    /* Keywords */\\n    \\u0026 .k,\\n    \\u0026 .kc,\\n    \\u0026 .kd,\\n    \\u0026 .kn,\\n    \\u0026 .kp,\\n    \\u0026 .kr {\\n      color: var(--cem-dev-server-syntax-keyword);\\n      font-weight: bold;\\n    }\\n    \\u0026 .kt { color: var(--cem-dev-server-syntax-type); font-weight: bold; }\\n\\n    /* Names */\\n    \\u0026 .na,\\n    \\u0026 .nb,\\n    \\u0026 .no,\\n    \\u0026 .nv,\\n    \\u0026 .vc,\\n    \\u0026 .vg,\\n    \\u0026 .vi {\\n      color: var(--cem-dev-server-syntax-name);\\n    }\\n    \\u0026 .bp { color: var(--cem-dev-server-text-secondary) }\\n    \\u0026 .nc { color: var(--cem-dev-server-syntax-class); font-weight: bold; }\\n    \\u0026 .nd { color: var(--cem-dev-server-syntax-decorator); font-weight: bold; }\\n    \\u0026 .ni,\\n    \\u0026 .ss {\\n      color: var(--cem-dev-server-syntax-special);\\n    }\\n    \\u0026 .ne,\\n    \\u0026 .nl {\\n      color: var(--cem-dev-server-syntax-keyword);\\n      font-weight: bold;\\n    }\\n    \\u0026 .nf { color: var(--cem-dev-server-syntax-function); font-weight: bold; }\\n    \\u0026 .nn { color: var(--cem-dev-server-text-secondary) }\\n    \\u0026 .nt { color: var(--cem-dev-server-syntax-tag) }\\n\\n    /* Strings */\\n    \\u0026 .s,\\n    \\u0026 .sa,\\n    \\u0026 .sb,\\n    \\u0026 .sc,\\n    \\u0026 .dl,\\n    \\u0026 .sd,\\n    \\u0026 .s2,\\n    \\u0026 .se,\\n    \\u0026 .sh,\\n    \\u0026 .si,\\n    \\u0026 .sx,\\n    \\u0026 .s1 {\\n      color: var(--cem-dev-server-syntax-string);\\n    }\\n    \\u0026 .sr { color: var(--cem-dev-server-syntax-tag) }\\n\\n    /* Numbers */\\n    \\u0026 .m,\\n    \\u0026 .mb,\\n    \\u0026 .mf,\\n    \\u0026 .mh,\\n    \\u0026 .mi,\\n    \\u0026 .il,\\n    \\u0026 .mo {\\n      color: var(--cem-dev-server-syntax-number);\\n    }\\n\\n    /* Operators */\\n    \\u0026 .o,\\n    \\u0026 .ow {\\n      color: var(--cem-dev-server-syntax-keyword);\\n      font-weight: bold;\\n    }\\n\\n    /* Comments */\\n    \\u0026 .c,\\n    \\u0026 .ch,\\n    \\u0026 .cm,\\n    \\u0026 .c1 {\\n      color: var(--cem-dev-server-text-muted);\\n      font-style: italic;\\n    }\\n    \\u0026 .cs,\\n    \\u0026 .cp,\\n    \\u0026 .cpf {\\n      color: var(--cem-dev-server-text-muted);\\n      font-weight: bold;\\n      font-style: italic;\\n    }\\n\\n    /* Errors */\\n    \\u0026 .err {\\n      color: var(--cem-dev-server-syntax-error);\\n      background-color: var(--cem-dev-server-syntax-error-bg);\\n    }\\n\\n    /* Generics */\\n    \\u0026 .gd {\\n      color: var(--cem-dev-server-syntax-deleted);\\n      background-color: var(--cem-dev-server-syntax-deleted-bg);\\n    }\\n    \\u0026 .ge { font-style: italic; }\\n    \\u0026 .gr { color: var(--cem-dev-server-syntax-error) }\\n    \\u0026 .gh { color: var(--cem-dev-server-text-secondary) }\\n    \\u0026 .gi {\\n      color: var(--cem-dev-server-syntax-inserted);\\n      background-color: var(--cem-dev-server-syntax-inserted-bg);\\n    }\\n    \\u0026 .go { color: var(--cem-dev-server-text-secondary) }\\n    \\u0026 .gp { color: var(--cem-dev-server-text-secondary) }\\n    \\u0026 .gs { font-weight: bold; }\\n    \\u0026 .gu { color: var(--cem-dev-server-text-secondary) }\\n    \\u0026 .gt { color: var(--cem-dev-server-syntax-error) }\\n    \\u0026 .gl { text-decoration: underline; }\\n    \\u0026 .w { color: var(--cem-dev-server-text-muted) }\\n  }\\n}\\n\\n/* Events tab styling - Primary-detail layout */\\n.events-wrapper {\\n  display: flex;\\n  flex-direction: column;\\n  height: 100%;\\n}\\n\\n#event-drawer {\\n  flex: 1;\\n  min-height: 0;\\n}\\n\\n/* Event list (primary panel) */\\n#event-list {\\n  overflow-y: auto;\\n  height: 100%;\\n}\\n\\n.event-list-item {\\n  /* Reset button styles */\\n  appearance: none;\\n  background: none;\\n  border: none;\\n  border-left: 3px solid transparent;\\n  margin: 0;\\n  font: inherit;\\n  color: inherit;\\n  text-align: inherit;\\n  width: 100%;\\n\\n  /* Component styles */\\n  padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);\\n  display: flex;\\n  gap: var(--cem-dev-server-spacing-sm);\\n  align-items: center;\\n  cursor: pointer;\\n  transition: background 100ms ease-in-out, border-color 100ms ease-in-out;\\n\\n  cem-pf-v6-label {\\n    flex-shrink: 0;\\n  }\\n\\n  \\u0026:hover {\\n    background: var(--pf-t--global--background--color--primary--hover);\\n  }\\n\\n  \\u0026:focus {\\n    outline: 2px solid var(--pf-t--global--border--color--clicked);\\n    outline-offset: -2px;\\n  }\\n\\n  \\u0026.selected {\\n    background: var(--pf-t--global--background--color--action--plain--selected);\\n    border-left-color: var(--pf-t--global--border--color--brand--default);\\n  }\\n}\\n\\n.event-time,\\n.event-element {\\n  font-family: var(--cem-dev-server-font-family-mono);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n}\\n\\n.event-time {\\n  color: var(--cem-dev-server-text-muted);\\n  flex-shrink: 0;\\n  font-size: 11px;\\n}\\n\\n.event-element {\\n  color: var(--cem-dev-server-text-muted);\\n  font-weight: 400;\\n}\\n\\n/* Event detail panel */\\n.event-detail-header-content {\\n  padding: var(--cem-dev-server-spacing-md);\\n  border-bottom: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);\\n}\\n\\n.event-detail-name {\\n  margin: 0 0 var(--cem-dev-server-spacing-sm) 0;\\n  font-size: var(--cem-dev-server-font-size-lg);\\n  font-weight: 600;\\n  color: var(--cem-dev-server-text-primary);\\n}\\n\\n.event-detail-summary {\\n  margin: 0 0 var(--cem-dev-server-spacing-sm) 0;\\n  font-size: var(--cem-dev-server-font-size-sm);\\n  color: var(--cem-dev-server-text-secondary);\\n  line-height: 1.5;\\n  white-space: pre-wrap;\\n}\\n\\n.event-detail-description {\\n  margin: 0 0 var(--cem-dev-server-spacing-sm) 0;\\n  font-size: var(--cem-dev-server-font-size-sm);\\n  color: var(--cem-dev-server-text-secondary);\\n  line-height: 1.5;\\n  white-space: pre-wrap;\\n}\\n\\n.event-detail-meta {\\n  display: flex;\\n  gap: var(--cem-dev-server-spacing-md);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n}\\n\\n.event-detail-time {\\n  color: var(--cem-dev-server-text-muted);\\n  font-family: var(--cem-dev-server-font-family-mono);\\n}\\n\\n.event-detail-element {\\n  color: var(--cem-dev-server-text-secondary);\\n  font-family: var(--cem-dev-server-font-family-mono);\\n}\\n\\n.event-detail-properties-heading {\\n  margin: var(--cem-dev-server-spacing-md) var(--cem-dev-server-spacing-md) var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);\\n  font-size: var(--cem-dev-server-font-size-base);\\n  font-weight: 600;\\n  color: var(--cem-dev-server-text-primary);\\n}\\n\\n.event-detail-properties {\\n  padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);\\n  background: var(--cem-dev-server-bg-secondary);\\n  border: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);\\n  border-radius: var(--cem-dev-server-border-radius);\\n  font-family: var(--cem-dev-server-font-family-mono);\\n  font-size: 12px;\\n  line-height: 1.6;\\n  margin: 0 var(--cem-dev-server-spacing-md) var(--cem-dev-server-spacing-md) var(--cem-dev-server-spacing-md);\\n}\\n\\n.event-property-tree {\\n  list-style: none;\\n  padding: 0;\\n  margin: 0;\\n\\n  \\u0026.nested {\\n    padding-left: 1.5em;\\n    margin-top: 0.25em;\\n  }\\n}\\n\\n.property-item {\\n  padding: 0.125em 0;\\n}\\n\\n.property-key {\\n  color: var(--cem-dev-server-accent-color);\\n  font-weight: 500;\\n}\\n\\n.property-colon {\\n  color: var(--cem-dev-server-text-muted);\\n}\\n\\n.property-value {\\n  \\u0026.null,\\n  \\u0026.undefined {\\n    color: var(--cem-dev-server-text-muted);\\n    font-style: italic;\\n  }\\n\\n  \\u0026.boolean {\\n    color: var(--cem-dev-server-color-boolean);\\n  }\\n\\n  \\u0026.number {\\n    color: var(--cem-dev-server-color-number);\\n  }\\n\\n  \\u0026.string {\\n    color: var(--cem-dev-server-color-string);\\n  }\\n\\n  \\u0026.array,\\n  \\u0026.object {\\n    color: var(--cem-dev-server-text-secondary);\\n  }\\n}\\n\\n#debug-modal {\\n  container-type: inline-size;\\n}\\n"`));
-var cem_serve_chrome_default = s52;
+var s53 = new CSSStyleSheet();
+s53.replaceSync(JSON.parse(`":host {\\n  display: block;\\n  height: 100vh;\\n  overflow: hidden;\\n  --cem-pf-v6-c-masthead__logo--Width: max-content;\\n  --cem-pf-v6-c-masthead__toggle--Size: 1rem;\\n}\\n\\n[hidden] {\\n  display: none !important;\\n}\\n\\n/* Masthead logo styles */\\n.masthead-logo {\\n  display: flex;\\n  align-items: center;\\n  text-decoration: none;\\n  color: inherit;\\n  max-height: var(--cem-pf-v6-c-masthead__logo--MaxHeight);\\n  gap: 4px;\\n  \\u0026 img {\\n    display: block;\\n    max-height: var(--cem-pf-v6-c-masthead__logo--MaxHeight);\\n    width: auto;\\n  }\\n  \\u0026 ::slotted([slot=\\"title\\"]) {\\n    margin: 0;\\n    font-size: 1.125rem;\\n    font-weight: 600;\\n    color: var(--pf-t--global--text--color--regular);\\n  }\\n  \\u0026 h1 {\\n    margin: 0;\\n    font-size: 18px;\\n  }\\n}\\n\\n/* Toolbar group alignment */\\ncem-pf-v6-toolbar-group[variant=\\"action-group\\"] {\\n  margin-inline-start: auto;\\n  align-items: center;\\n}\\n\\n.debug-panel {\\n  background: var(--pf-t--global--background--color--primary--default);\\n  border: 1px solid var(--pf-t--global--border--color--default);\\n  border-radius: 6px;\\n  padding: 1.5rem;\\n  max-width: 600px;\\n  width: 90%;\\n  max-height: 80vh;\\n  overflow-y: auto;\\n\\n  h2 {\\n    margin: 0 0 1rem 0;\\n    color: var(--pf-t--global--text--color--regular);\\n    font-size: 1.125rem;\\n    font-weight: 600;\\n  }\\n\\n  dl {\\n    margin: 0;\\n  }\\n\\n  dt {\\n    color: var(--pf-t--global--text--color--subtle);\\n    font-size: 0.875rem;\\n    margin-top: 0.5rem;\\n    font-weight: 500;\\n  }\\n\\n  dd {\\n    margin: 0 0 0.5rem 0;\\n    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;\\n    font-size: 0.875rem;\\n    color: var(--pf-t--global--text--color--regular);\\n  }\\n\\n  details {\\n    margin-top: 1rem;\\n\\n    summary {\\n      cursor: pointer;\\n      color: var(--pf-t--global--text--color--regular);\\n      font-size: 0.875rem;\\n      font-weight: 500;\\n      list-style: none;\\n      display: flex;\\n      align-items: center;\\n      gap: 0.5rem;\\n      user-select: none;\\n\\n      \\u0026::-webkit-details-marker {\\n        display: none;\\n      }\\n\\n      \\u0026::before {\\n        content: '\\\\25B8';\\n        display: inline-block;\\n        transition: transform 100ms cubic-bezier(0.4, 0, 0.2, 1);\\n        color: var(--pf-t--global--text--color--subtle);\\n      }\\n    }\\n\\n    \\u0026[open] summary::before {\\n      transform: rotate(90deg);\\n    }\\n\\n    pre {\\n      margin-top: 0.5rem;\\n      margin-left: 1.5rem;\\n      padding: 0.5rem;\\n      background: var(--pf-t--global--background--color--secondary--default);\\n      border-radius: 6px;\\n      font-size: 0.875rem;\\n      overflow-x: auto;\\n      color: var(--pf-t--global--text--color--regular);\\n    }\\n  }\\n\\n  .button-container {\\n    display: flex;\\n    gap: 0.5rem;\\n    margin-top: 1rem;\\n  }\\n\\n  p {\\n    color: var(--pf-t--global--text--color--subtle);\\n    font-size: 0.875rem;\\n  }\\n\\n  button {\\n    margin-top: 1rem;\\n    padding: 0.5rem 1rem;\\n    background: var(--pf-t--global--color--brand--default);\\n    color: var(--pf-t--global--text--color--on-brand);\\n    border: none;\\n    border-radius: 6px;\\n    font-size: 0.875rem;\\n    font-weight: 400;\\n    cursor: pointer;\\n    transition: all 200ms cubic-bezier(0.645, 0.045, 0.355, 1);\\n\\n    \\u0026:hover {\\n      background: var(--pf-t--global--color--brand--hover);\\n    }\\n  }\\n}\\n\\n/* Content area padding for demo */\\ncem-pf-v6-page-main {\\n  min-height: calc(100dvh - 72px - var(--pf-t--global--spacer--inset--page-chrome));\\n  display: flex;\\n  flex-direction: column;\\n  \\u0026 \\u003e ::slotted(:not([slot=knobs])) {\\n    padding: var(--pf-t--global--spacer--lg);\\n    flex: 1;\\n  }\\n}\\n\\ncem-drawer {\\n  cem-pf-v6-tabs {\\n    cem-pf-v6-tab {\\n      padding-block-end: 0;\\n    }\\n  }\\n}\\n\\n/* Element descriptions in listing */\\n.element-summary {\\n  margin: 0;\\n  color: var(--pf-t--global--text--color--subtle);\\n  font-size: var(--pf-t--global--font--size--body--sm);\\n}\\n\\n.element-description {\\n  margin: 0;\\n  color: var(--pf-t--global--text--color--subtle);\\n  font-size: var(--pf-t--global--font--size--body--sm);\\n}\\n\\n/* Card footer demo navigation */\\n.card-demos {\\n  display: flex;\\n  flex-wrap: wrap;\\n  gap: var(--pf-t--global--spacer--gap--action-to-action--default);\\n  padding: 0;\\n  margin: 0;\\n}\\n\\n.package-name {\\n  color: var(--pf-t--global--text--color--subtle);\\n  font-size: var(--pf-t--global--font--size--body--sm);\\n}\\n\\n/* Knobs container - fills tab panel height */\\n#knobs-container {\\n  height: 100%;\\n  display: flex;\\n  flex-direction: column;\\n  \\u0026 ::slotted([slot=\\"knobs\\"]) {\\n    flex: 1;\\n    min-height: 0;\\n    overflow: hidden;\\n  }\\n}\\n\\n.knobs-empty {\\n  color: var(--cem-dev-server-text-muted);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n  text-align: center;\\n  padding: var(--cem-dev-server-spacing-lg);\\n\\n  code {\\n    background: var(--cem-dev-server-bg-tertiary);\\n    padding: 2px 6px;\\n    border-radius: 3px;\\n    font-family: var(--cem-dev-server-font-family-mono);\\n  }\\n}\\n\\n.instance-tag {\\n  font-family: var(--cem-dev-server-font-family-mono);\\n  color: var(--cem-dev-server-accent-color);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n}\\n\\n.instance-label {\\n  color: var(--cem-dev-server-text-secondary);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n}\\n\\n.knob-group {\\n  margin-bottom: var(--cem-dev-server-spacing-lg);\\n\\n  \\u0026:last-child {\\n    margin-bottom: 0;\\n  }\\n}\\n\\n/* PatternFly v6 form - horizontal layout */\\ncem-pf-v6-form[horizontal] cem-pf-v6-form-field-group {\\n  grid-column: span 2\\n}\\n\\n.knob-group-title {\\n  grid-column: 1 / -1;\\n  margin: 0 0 var(--cem-dev-server-spacing-md) 0;\\n  color: var(--cem-dev-server-text-primary);\\n  font-size: var(--cem-dev-server-font-size-base);\\n  font-weight: 600;\\n  border-bottom: 1px solid var(--cem-dev-server-border-color);\\n  padding-bottom: var(--cem-dev-server-spacing-sm);\\n}\\n\\n.knob-control {\\n  margin-bottom: var(--cem-dev-server-spacing-md);\\n}\\n\\n.knob-label {\\n  display: flex;\\n  flex-direction: column;\\n  gap: var(--cem-dev-server-spacing-xs);\\n  cursor: pointer;\\n}\\n\\n.knob-name {\\n  font-family: var(--cem-dev-server-font-family-mono);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n  color: var(--cem-dev-server-text-primary);\\n  font-weight: 500;\\n}\\n\\n.knob-description {\\n  color: var(--cem-dev-server-text-secondary);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n  line-height: 1.5;\\n\\n  p {\\n    margin: var(--cem-dev-server-spacing-xs) 0;\\n  }\\n\\n  code {\\n    background: var(--cem-dev-server-bg-tertiary);\\n    border-radius: 3px;\\n    font-family: var(--cem-dev-server-font-family-mono);\\n  }\\n\\n  a {\\n    color: var(--cem-dev-server-accent-color);\\n    text-decoration: none;\\n\\n    \\u0026:hover {\\n      text-decoration: underline;\\n    }\\n  }\\n\\n  strong {\\n    font-weight: 600;\\n    color: var(--cem-dev-server-text-primary);\\n  }\\n\\n  ul, ol {\\n    margin: var(--cem-dev-server-spacing-xs) 0;\\n    padding-left: var(--cem-dev-server-spacing-lg);\\n  }\\n}\\n\\nfooter.pf-m-sticky-bottom {\\n  view-transition-name: dev-server-footer;\\n  position: sticky;\\n  bottom: 0;\\n  background: var(--pf-t--global--background--color--primary--default);\\n  border-top: 1px solid var(--pf-t--global--border--color--default);\\n  z-index: var(--cem-pf-v6-c-page--section--m-sticky-bottom--ZIndex, var(--pf-t--global--z-index--md));\\n  box-shadow: var(--cem-pf-v6-c-page--section--m-sticky-bottom--BoxShadow, var(--pf-t--global--box-shadow--sm--top));\\n}\\n\\n.footer-description {\\n  padding: 1.5rem;\\n\\n  \\u0026.empty {\\n    display: none;\\n  }\\n}\\n\\nfooter ::slotted([slot=\\"description\\"]) {\\n  margin: 0;\\n  color: var(--pf-t--global--text--color--subtle);\\n  line-height: 1.6;\\n  font-size: 0.875rem;\\n\\n  code {\\n    background: var(--pf-t--global--background--color--primary--hover);\\n    padding: 2px 6px;\\n    border-radius: 3px;\\n    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;\\n    font-size: 0.875rem;\\n  }\\n}\\n\\n.logs-wrapper {\\n  display: flex;\\n  flex-direction: column;\\n  height: 100%;\\n}\\n\\n#log-container {\\n  flex-grow: 1;\\n  overflow-y: auto;\\n}\\n\\n.log-entry {\\n  padding: var(--cem-dev-server-spacing-xs) var(--cem-dev-server-spacing-md);\\n  display: flex;\\n  gap: var(--cem-dev-server-spacing-sm);\\n  align-items: baseline;\\n  cem-pf-v6-label {\\n    flex-shrink: 0;\\n  }\\n}\\n\\n.log-time,\\n.log-message {\\n  font-family: var(--cem-dev-server-font-family-mono);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n}\\n\\n.log-time {\\n  color: var(--cem-dev-server-text-muted);\\n  flex-shrink: 0;\\n  font-size: 11px;\\n}\\n\\n.log-message {\\n  color: var(--cem-dev-server-text-primary);\\n  word-break: break-word;\\n  flex: 1;\\n\\n  .progress-grid {\\n    display: grid;\\n    grid-template-columns: auto 1fr;\\n    column-gap: var(--pf-t--global--spacer--gap--group--horizontal);\\n  }\\n}\\n\\n/* Navigation content (light DOM slotted content for cem-pf-v6-page-sidebar) */\\n.nav-package {\\n  margin-bottom: var(--cem-dev-server-spacing-md);\\n\\n  \\u0026 \\u003e summary {\\n    cursor: pointer;\\n    padding: 0.5rem 1rem;\\n    background: var(--pf-t--global--background--color--secondary--default);\\n    border-radius: 6px;\\n    color: var(--pf-t--global--text--color--regular);\\n    font-weight: 600;\\n    font-size: 0.875rem;\\n    list-style: none;\\n    transition: background 200ms cubic-bezier(0.4, 0, 0.2, 1);\\n    margin-bottom: 0.5rem;\\n    display: flex;\\n    align-items: center;\\n    gap: 0.5rem;\\n    user-select: none;\\n\\n    \\u0026:hover {\\n      background: var(--pf-t--global--background--color--secondary--hover);\\n    }\\n\\n    \\u0026::-webkit-details-marker {\\n      display: none;\\n    }\\n\\n    \\u0026::before {\\n      content: '\\\\25B8';\\n      display: inline-block;\\n      transition: transform 100ms cubic-bezier(0.4, 0, 0.2, 1);\\n      color: var(--pf-t--global--text--color--subtle);\\n    }\\n  }\\n\\n  \\u0026[open] \\u003e summary::before {\\n    transform: rotate(90deg);\\n  }\\n}\\n\\n.nav-element {\\n  margin-bottom: var(--cem-dev-server-spacing-sm);\\n  margin-inline-start: var(--cem-dev-server-spacing-md);\\n\\n  summary {\\n    cursor: pointer;\\n    padding: 0.5rem 1rem;\\n    background: var(--pf-t--global--background--color--secondary--default);\\n    border-radius: 6px;\\n    color: var(--pf-t--global--text--color--regular);\\n    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;\\n    font-size: 0.875rem;\\n    list-style: none;\\n    transition: background 200ms cubic-bezier(0.4, 0, 0.2, 1);\\n    display: flex;\\n    align-items: center;\\n    gap: 0.5rem;\\n    user-select: none;\\n\\n    \\u0026:hover {\\n      background: var(--pf-t--global--background--color--secondary--hover);\\n    }\\n\\n    \\u0026::-webkit-details-marker {\\n      display: none;\\n    }\\n\\n    \\u0026::before {\\n      content: '\\\\25B8';\\n      display: inline-block;\\n      transition: transform 100ms cubic-bezier(0.4, 0, 0.2, 1);\\n      color: var(--pf-t--global--text--color--subtle);\\n    }\\n  }\\n\\n  \\u0026[open] summary::before {\\n    transform: rotate(90deg);\\n  }\\n}\\n\\n.nav-element-title {\\n  user-select: none;\\n}\\n\\n.nav-demo-list {\\n  list-style: none;\\n  padding: 0;\\n  margin: var(--cem-dev-server-spacing-sm) 0 0 0;\\n  display: grid;\\n  gap: var(--cem-dev-server-spacing-xs);\\n}\\n\\n.nav-demo-link {\\n  color: var(--cem-dev-server-text-primary);\\n  text-decoration: none;\\n  padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);\\n  padding-inline-start: calc(var(--cem-dev-server-spacing-md) * 2);\\n  background: var(--cem-dev-server-bg-tertiary);\\n  border-radius: var(--cem-dev-server-border-radius);\\n  display: block;\\n  font-size: var(--cem-dev-server-font-size-sm);\\n  transition: background 0.2s, color 0.2s;\\n\\n  \\u0026:hover {\\n    background: var(--cem-dev-server-accent-color);\\n    color: var(--pf-t--global--text--color--on-brand);\\n\\n    .nav-package-name {\\n      color: rgba(255, 255, 255, 0.8);\\n    }\\n  }\\n\\n  \\u0026[aria-current=\\"page\\"] {\\n    background: var(--cem-dev-server-accent-color);\\n    color: var(--pf-t--global--text--color--on-brand);\\n\\n    .nav-package-name {\\n      color: rgba(255, 255, 255, 0.8);\\n    }\\n  }\\n}\\n\\n.nav-package-name {\\n  color: var(--cem-dev-server-text-secondary);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n}\\n\\n/* Info button popover triggers in knobs - override plain button padding */\\ncem-pf-v6-popover cem-pf-v6-button[variant=\\"plain\\"] {\\n  --cem-pf-v6-c-button--m-plain--PaddingInlineEnd: 0;\\n  --cem-pf-v6-c-button--m-plain--PaddingInlineStart: 0;\\n  --cem-pf-v6-c-button--MinWidth: auto;\\n}\\n\\n/* Knob description content (slotted in form group helper) */\\ncem-pf-v6-form-group [slot=\\"helper\\"] {\\n  p {\\n    margin: var(--cem-dev-server-spacing-xs) 0;\\n  }\\n\\n  code {\\n    background: var(--cem-dev-server-bg-tertiary);\\n    border-radius: 3px;\\n    font-family: var(--cem-dev-server-font-family-mono);\\n  }\\n\\n  a {\\n    color: var(--cem-dev-server-accent-color);\\n    text-decoration: none;\\n\\n    \\u0026:hover {\\n      text-decoration: underline;\\n    }\\n  }\\n\\n  strong {\\n    font-weight: 600;\\n  }\\n\\n  ul, ol {\\n    margin: var(--cem-dev-server-spacing-xs) 0;\\n    padding-left: var(--cem-dev-server-spacing-lg);\\n  }\\n}\\n\\n/* Syntax highlighting (chroma - themable via CSS custom properties) */\\ncem-pf-v6-form-group [slot=\\"helper\\"] {\\n  .chroma {\\n    background-color: var(--cem-dev-server-bg-tertiary);\\n    padding: var(--cem-dev-server-spacing-sm);\\n    border-radius: var(--cem-dev-server-border-radius);\\n    overflow-x: auto;\\n\\n    \\u0026 .lntd { vertical-align: top; padding: 0; margin: 0; border: 0; }\\n    \\u0026 .lntable { border-spacing: 0; padding: 0; margin: 0; border: 0; }\\n    \\u0026 .hl { background-color: var(--cem-dev-server-syntax-highlight) }\\n    \\u0026 .lnt,\\n    \\u0026 .ln {\\n      white-space: pre;\\n      user-select: none;\\n      margin-right: 0.4em;\\n      padding: 0 0.4em 0 0.4em;\\n      color: var(--cem-dev-server-text-muted);\\n    }\\n    \\u0026 .line { display: flex; }\\n\\n    /* Keywords */\\n    \\u0026 .k,\\n    \\u0026 .kc,\\n    \\u0026 .kd,\\n    \\u0026 .kn,\\n    \\u0026 .kp,\\n    \\u0026 .kr {\\n      color: var(--cem-dev-server-syntax-keyword);\\n      font-weight: bold;\\n    }\\n    \\u0026 .kt { color: var(--cem-dev-server-syntax-type); font-weight: bold; }\\n\\n    /* Names */\\n    \\u0026 .na,\\n    \\u0026 .nb,\\n    \\u0026 .no,\\n    \\u0026 .nv,\\n    \\u0026 .vc,\\n    \\u0026 .vg,\\n    \\u0026 .vi {\\n      color: var(--cem-dev-server-syntax-name);\\n    }\\n    \\u0026 .bp { color: var(--cem-dev-server-text-secondary) }\\n    \\u0026 .nc { color: var(--cem-dev-server-syntax-class); font-weight: bold; }\\n    \\u0026 .nd { color: var(--cem-dev-server-syntax-decorator); font-weight: bold; }\\n    \\u0026 .ni,\\n    \\u0026 .ss {\\n      color: var(--cem-dev-server-syntax-special);\\n    }\\n    \\u0026 .ne,\\n    \\u0026 .nl {\\n      color: var(--cem-dev-server-syntax-keyword);\\n      font-weight: bold;\\n    }\\n    \\u0026 .nf { color: var(--cem-dev-server-syntax-function); font-weight: bold; }\\n    \\u0026 .nn { color: var(--cem-dev-server-text-secondary) }\\n    \\u0026 .nt { color: var(--cem-dev-server-syntax-tag) }\\n\\n    /* Strings */\\n    \\u0026 .s,\\n    \\u0026 .sa,\\n    \\u0026 .sb,\\n    \\u0026 .sc,\\n    \\u0026 .dl,\\n    \\u0026 .sd,\\n    \\u0026 .s2,\\n    \\u0026 .se,\\n    \\u0026 .sh,\\n    \\u0026 .si,\\n    \\u0026 .sx,\\n    \\u0026 .s1 {\\n      color: var(--cem-dev-server-syntax-string);\\n    }\\n    \\u0026 .sr { color: var(--cem-dev-server-syntax-tag) }\\n\\n    /* Numbers */\\n    \\u0026 .m,\\n    \\u0026 .mb,\\n    \\u0026 .mf,\\n    \\u0026 .mh,\\n    \\u0026 .mi,\\n    \\u0026 .il,\\n    \\u0026 .mo {\\n      color: var(--cem-dev-server-syntax-number);\\n    }\\n\\n    /* Operators */\\n    \\u0026 .o,\\n    \\u0026 .ow {\\n      color: var(--cem-dev-server-syntax-keyword);\\n      font-weight: bold;\\n    }\\n\\n    /* Comments */\\n    \\u0026 .c,\\n    \\u0026 .ch,\\n    \\u0026 .cm,\\n    \\u0026 .c1 {\\n      color: var(--cem-dev-server-text-muted);\\n      font-style: italic;\\n    }\\n    \\u0026 .cs,\\n    \\u0026 .cp,\\n    \\u0026 .cpf {\\n      color: var(--cem-dev-server-text-muted);\\n      font-weight: bold;\\n      font-style: italic;\\n    }\\n\\n    /* Errors */\\n    \\u0026 .err {\\n      color: var(--cem-dev-server-syntax-error);\\n      background-color: var(--cem-dev-server-syntax-error-bg);\\n    }\\n\\n    /* Generics */\\n    \\u0026 .gd {\\n      color: var(--cem-dev-server-syntax-deleted);\\n      background-color: var(--cem-dev-server-syntax-deleted-bg);\\n    }\\n    \\u0026 .ge { font-style: italic; }\\n    \\u0026 .gr { color: var(--cem-dev-server-syntax-error) }\\n    \\u0026 .gh { color: var(--cem-dev-server-text-secondary) }\\n    \\u0026 .gi {\\n      color: var(--cem-dev-server-syntax-inserted);\\n      background-color: var(--cem-dev-server-syntax-inserted-bg);\\n    }\\n    \\u0026 .go { color: var(--cem-dev-server-text-secondary) }\\n    \\u0026 .gp { color: var(--cem-dev-server-text-secondary) }\\n    \\u0026 .gs { font-weight: bold; }\\n    \\u0026 .gu { color: var(--cem-dev-server-text-secondary) }\\n    \\u0026 .gt { color: var(--cem-dev-server-syntax-error) }\\n    \\u0026 .gl { text-decoration: underline; }\\n    \\u0026 .w { color: var(--cem-dev-server-text-muted) }\\n  }\\n}\\n\\n/* Events tab styling - Primary-detail layout */\\n.events-wrapper {\\n  display: flex;\\n  flex-direction: column;\\n  height: 100%;\\n}\\n\\n#event-drawer {\\n  flex: 1;\\n  min-height: 0;\\n}\\n\\n/* Event list (primary panel) */\\n#event-list {\\n  overflow-y: auto;\\n  height: 100%;\\n}\\n\\n.event-list-item {\\n  /* Reset button styles */\\n  appearance: none;\\n  background: none;\\n  border: none;\\n  border-left: 3px solid transparent;\\n  margin: 0;\\n  font: inherit;\\n  color: inherit;\\n  text-align: inherit;\\n  width: 100%;\\n\\n  /* Component styles */\\n  padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);\\n  display: flex;\\n  gap: var(--cem-dev-server-spacing-sm);\\n  align-items: center;\\n  cursor: pointer;\\n  transition: background 100ms ease-in-out, border-color 100ms ease-in-out;\\n\\n  cem-pf-v6-label {\\n    flex-shrink: 0;\\n  }\\n\\n  \\u0026:hover {\\n    background: var(--pf-t--global--background--color--primary--hover);\\n  }\\n\\n  \\u0026:focus {\\n    outline: 2px solid var(--pf-t--global--border--color--clicked);\\n    outline-offset: -2px;\\n  }\\n\\n  \\u0026.selected {\\n    background: var(--pf-t--global--background--color--action--plain--selected);\\n    border-left-color: var(--pf-t--global--border--color--brand--default);\\n  }\\n}\\n\\n.event-time,\\n.event-element {\\n  font-family: var(--cem-dev-server-font-family-mono);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n}\\n\\n.event-time {\\n  color: var(--cem-dev-server-text-muted);\\n  flex-shrink: 0;\\n  font-size: 11px;\\n}\\n\\n.event-element {\\n  color: var(--cem-dev-server-text-muted);\\n  font-weight: 400;\\n}\\n\\n/* Event detail panel */\\n.event-detail-header-content {\\n  padding: var(--cem-dev-server-spacing-md);\\n  border-bottom: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);\\n}\\n\\n.event-detail-name {\\n  margin: 0 0 var(--cem-dev-server-spacing-sm) 0;\\n  font-size: var(--cem-dev-server-font-size-lg);\\n  font-weight: 600;\\n  color: var(--cem-dev-server-text-primary);\\n}\\n\\n.event-detail-summary {\\n  margin: 0 0 var(--cem-dev-server-spacing-sm) 0;\\n  font-size: var(--cem-dev-server-font-size-sm);\\n  color: var(--cem-dev-server-text-secondary);\\n  line-height: 1.5;\\n  white-space: pre-wrap;\\n}\\n\\n.event-detail-description {\\n  margin: 0 0 var(--cem-dev-server-spacing-sm) 0;\\n  font-size: var(--cem-dev-server-font-size-sm);\\n  color: var(--cem-dev-server-text-secondary);\\n  line-height: 1.5;\\n  white-space: pre-wrap;\\n}\\n\\n.event-detail-meta {\\n  display: flex;\\n  gap: var(--cem-dev-server-spacing-md);\\n  font-size: var(--cem-dev-server-font-size-sm);\\n}\\n\\n.event-detail-time {\\n  color: var(--cem-dev-server-text-muted);\\n  font-family: var(--cem-dev-server-font-family-mono);\\n}\\n\\n.event-detail-element {\\n  color: var(--cem-dev-server-text-secondary);\\n  font-family: var(--cem-dev-server-font-family-mono);\\n}\\n\\n.event-detail-properties-heading {\\n  margin: var(--cem-dev-server-spacing-md) var(--cem-dev-server-spacing-md) var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);\\n  font-size: var(--cem-dev-server-font-size-base);\\n  font-weight: 600;\\n  color: var(--cem-dev-server-text-primary);\\n}\\n\\n.event-detail-properties {\\n  padding: var(--cem-dev-server-spacing-sm) var(--cem-dev-server-spacing-md);\\n  background: var(--cem-dev-server-bg-secondary);\\n  border: var(--cem-dev-server-border-width) solid var(--cem-dev-server-border-color);\\n  border-radius: var(--cem-dev-server-border-radius);\\n  font-family: var(--cem-dev-server-font-family-mono);\\n  font-size: 12px;\\n  line-height: 1.6;\\n  margin: 0 var(--cem-dev-server-spacing-md) var(--cem-dev-server-spacing-md) var(--cem-dev-server-spacing-md);\\n}\\n\\n.event-property-tree {\\n  list-style: none;\\n  padding: 0;\\n  margin: 0;\\n\\n  \\u0026.nested {\\n    padding-left: 1.5em;\\n    margin-top: 0.25em;\\n  }\\n}\\n\\n.property-item {\\n  padding: 0.125em 0;\\n}\\n\\n.property-key {\\n  color: var(--cem-dev-server-accent-color);\\n  font-weight: 500;\\n}\\n\\n.property-colon {\\n  color: var(--cem-dev-server-text-muted);\\n}\\n\\n.property-value {\\n  \\u0026.null,\\n  \\u0026.undefined {\\n    color: var(--cem-dev-server-text-muted);\\n    font-style: italic;\\n  }\\n\\n  \\u0026.boolean {\\n    color: var(--cem-dev-server-color-boolean);\\n  }\\n\\n  \\u0026.number {\\n    color: var(--cem-dev-server-color-number);\\n  }\\n\\n  \\u0026.string {\\n    color: var(--cem-dev-server-color-string);\\n  }\\n\\n  \\u0026.array,\\n  \\u0026.object {\\n    color: var(--cem-dev-server-text-secondary);\\n  }\\n}\\n\\n#debug-modal {\\n  container-type: inline-size;\\n}\\n"`));
+var cem_serve_chrome_default = s53;
 
 // lit-css:elements/cem-serve-demo/cem-serve-demo.css
-var s53 = new CSSStyleSheet();
-s53.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n\\niframe {\\n  border: none;\\n  width: 100%;\\n  height: 100%;\\n}\\n"'));
-var cem_serve_demo_default = s53;
+var s54 = new CSSStyleSheet();
+s54.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n\\niframe {\\n  border: none;\\n  width: 100%;\\n  height: 100%;\\n}\\n"'));
+var cem_serve_demo_default = s54;
 
 // elements/cem-serve-demo/cem-serve-demo.ts
-var _rendering_dec, _a49, _CemServeDemo_decorators, _init49, _rendering, _iframeReady, _pendingMessages, _CemServeDemo_instances, iframe_get, iframeSrc_fn, _onChildReady, getElementInstance_fn, postKnobChange_fn, applyAttributeChange_fn, applyPropertyChange_fn, applyCSSPropertyChange_fn;
+var _rendering_dec, _a50, _CemServeDemo_decorators, _init50, _rendering, _iframeReady, _pendingMessages, _CemServeDemo_instances, iframe_get, iframeSrc_fn, _onChildReady, getElementInstance_fn, postKnobChange_fn, applyAttributeChange_fn, applyPropertyChange_fn, applyCSSPropertyChange_fn;
 _CemServeDemo_decorators = [t3("cem-serve-demo")];
-var CemServeDemo = class extends (_a49 = i3, _rendering_dec = [n4({ reflect: true })], _a49) {
+var CemServeDemo = class extends (_a50 = i3, _rendering_dec = [n4({ reflect: true })], _a50) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _CemServeDemo_instances);
-    __privateAdd(this, _rendering, __runInitializers(_init49, 8, this)), __runInitializers(_init49, 11, this);
+    __privateAdd(this, _rendering, __runInitializers(_init50, 8, this)), __runInitializers(_init50, 11, this);
     __privateAdd(this, _iframeReady, false);
     __privateAdd(this, _pendingMessages, []);
     __privateAdd(this, _onChildReady, (event) => {
@@ -6680,7 +6863,7 @@ var CemServeDemo = class extends (_a49 = i3, _rendering_dec = [n4({ reflect: tru
     return false;
   }
 };
-_init49 = __decoratorStart(_a49);
+_init50 = __decoratorStart(_a50);
 _rendering = new WeakMap();
 _iframeReady = new WeakMap();
 _pendingMessages = new WeakMap();
@@ -6746,15 +6929,15 @@ applyCSSPropertyChange_fn = function(element, name, value) {
   }
   return true;
 };
-__decorateElement(_init49, 4, "rendering", _rendering_dec, CemServeDemo, _rendering);
-CemServeDemo = __decorateElement(_init49, 0, "CemServeDemo", _CemServeDemo_decorators, CemServeDemo);
+__decorateElement(_init50, 4, "rendering", _rendering_dec, CemServeDemo, _rendering);
+CemServeDemo = __decorateElement(_init50, 0, "CemServeDemo", _CemServeDemo_decorators, CemServeDemo);
 __publicField(CemServeDemo, "styles", cem_serve_demo_default);
-__runInitializers(_init49, 1, CemServeDemo);
+__runInitializers(_init50, 1, CemServeDemo);
 
 // lit-css:elements/cem-serve-knob-group/cem-serve-knob-group.css
-var s54 = new CSSStyleSheet();
-s54.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n"'));
-var cem_serve_knob_group_default = s54;
+var s55 = new CSSStyleSheet();
+s55.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n"'));
+var cem_serve_knob_group_default = s55;
 
 // elements/cem-serve-knob-group/cem-serve-knob-group.ts
 var KnobAttributeChangeEvent = class extends Event {
@@ -6805,13 +6988,13 @@ var KnobCssPropertyClearEvent = class extends Event {
     this.name = name;
   }
 };
-var _htmlFor_dec, _a50, _CemServeKnobGroup_decorators, _init50, _htmlFor, _debounceTimers, _debounceDelay, _colorButtonListeners, _clearButtonListeners, _CemServeKnobGroup_instances, onSlotChange_fn4, attachColorButtonListeners_fn, removeColorButtonListeners_fn, attachClearButtonListeners_fn, removeClearButtonListeners_fn, _handleClearButtonClick, updateClearButtonVisibility_fn, _handleInput, _handleChange, isBooleanControl_fn, _handleColorButtonClick, applyChange_fn, parseValue_fn;
+var _htmlFor_dec, _a51, _CemServeKnobGroup_decorators, _init51, _htmlFor, _debounceTimers, _debounceDelay, _colorButtonListeners, _clearButtonListeners, _CemServeKnobGroup_instances, onSlotChange_fn4, attachColorButtonListeners_fn, removeColorButtonListeners_fn, attachClearButtonListeners_fn, removeClearButtonListeners_fn, _handleClearButtonClick, updateClearButtonVisibility_fn, _handleInput, _handleChange, isBooleanControl_fn, _handleColorButtonClick, applyChange_fn, parseValue_fn;
 _CemServeKnobGroup_decorators = [t3("cem-serve-knob-group")];
-var CemServeKnobGroup = class extends (_a50 = i3, _htmlFor_dec = [n4({ reflect: true, attribute: "for" })], _a50) {
+var CemServeKnobGroup = class extends (_a51 = i3, _htmlFor_dec = [n4({ reflect: true, attribute: "for" })], _a51) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _CemServeKnobGroup_instances);
-    __privateAdd(this, _htmlFor, __runInitializers(_init50, 8, this)), __runInitializers(_init50, 11, this);
+    __privateAdd(this, _htmlFor, __runInitializers(_init51, 8, this)), __runInitializers(_init51, 11, this);
     __privateAdd(this, _debounceTimers, /* @__PURE__ */ new Map());
     __privateAdd(this, _debounceDelay, 250);
     __privateAdd(this, _colorButtonListeners, /* @__PURE__ */ new WeakMap());
@@ -6943,7 +7126,7 @@ var CemServeKnobGroup = class extends (_a50 = i3, _htmlFor_dec = [n4({ reflect: 
     __privateMethod(this, _CemServeKnobGroup_instances, removeClearButtonListeners_fn).call(this);
   }
 };
-_init50 = __decoratorStart(_a50);
+_init51 = __decoratorStart(_a51);
 _htmlFor = new WeakMap();
 _debounceTimers = new WeakMap();
 _debounceDelay = new WeakMap();
@@ -7048,20 +7231,20 @@ parseValue_fn = function(value) {
   }
   return value;
 };
-__decorateElement(_init50, 4, "htmlFor", _htmlFor_dec, CemServeKnobGroup, _htmlFor);
-CemServeKnobGroup = __decorateElement(_init50, 0, "CemServeKnobGroup", _CemServeKnobGroup_decorators, CemServeKnobGroup);
+__decorateElement(_init51, 4, "htmlFor", _htmlFor_dec, CemServeKnobGroup, _htmlFor);
+CemServeKnobGroup = __decorateElement(_init51, 0, "CemServeKnobGroup", _CemServeKnobGroup_decorators, CemServeKnobGroup);
 __publicField(CemServeKnobGroup, "styles", cem_serve_knob_group_default);
-__runInitializers(_init50, 1, CemServeKnobGroup);
+__runInitializers(_init51, 1, CemServeKnobGroup);
 
 // lit-css:elements/cem-serve-knobs/cem-serve-knobs.css
-var s55 = new CSSStyleSheet();
-s55.replaceSync(JSON.parse('":host {\\n  display: flex;\\n  flex-direction: column;\\n  gap: 0;\\n  height: 100%;\\n}\\n\\ncem-pf-v6-navigation {\\n  flex-shrink: 0;\\n}\\n\\n#knobs {\\n  flex: 1;\\n  min-height: 0;\\n  overflow-y: auto;\\n  padding: var(--pf-t--global--spacer--lg);\\n}\\n\\n#knobs slot {\\n  display: grid;\\n  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));\\n  gap: var(--pf-t--global--spacer--gap--group-to-group--horizontal--default) var(--pf-t--global--spacer--gap--group-to-group--vertical--default);\\n  align-items: start;\\n}\\n\\n::slotted(cem-pf-v6-card.active) {\\n  --cem-pf-v6-c-card--BorderColor: var(--cem-pf-v6-c-card--m-selectable--m-selected--BorderColor);\\n  --cem-pf-v6-c-card--BorderWidth: var(--cem-pf-v6-c-card--m-selectable--m-selected--BorderWidth);\\n}\\n"'));
-var cem_serve_knobs_default = s55;
+var s56 = new CSSStyleSheet();
+s56.replaceSync(JSON.parse('":host {\\n  display: flex;\\n  flex-direction: column;\\n  gap: 0;\\n  height: 100%;\\n}\\n\\ncem-pf-v6-navigation {\\n  flex-shrink: 0;\\n}\\n\\n#knobs {\\n  flex: 1;\\n  min-height: 0;\\n  overflow-y: auto;\\n  padding: var(--pf-t--global--spacer--lg);\\n}\\n\\n#knobs slot {\\n  display: grid;\\n  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));\\n  gap: var(--pf-t--global--spacer--gap--group-to-group--horizontal--default) var(--pf-t--global--spacer--gap--group-to-group--vertical--default);\\n  align-items: start;\\n}\\n\\n::slotted(cem-pf-v6-card.active) {\\n  --cem-pf-v6-c-card--BorderColor: var(--cem-pf-v6-c-card--m-selectable--m-selected--BorderColor);\\n  --cem-pf-v6-c-card--BorderWidth: var(--cem-pf-v6-c-card--m-selectable--m-selected--BorderWidth);\\n}\\n"'));
+var cem_serve_knobs_default = s56;
 
 // elements/cem-serve-knobs/cem-serve-knobs.ts
-var _CemServeKnobs_decorators, _init51, _a51;
+var _CemServeKnobs_decorators, _init52, _a52;
 _CemServeKnobs_decorators = [t3("cem-serve-knobs")];
-var CemServeKnobs = class extends (_a51 = i3) {
+var CemServeKnobs = class extends (_a52 = i3) {
   static styles = cem_serve_knobs_default;
   #navList = null;
   #handleHashChange = () => {
@@ -7144,25 +7327,25 @@ var CemServeKnobs = class extends (_a51 = i3) {
     });
   }
 };
-_init51 = __decoratorStart(_a51);
-CemServeKnobs = __decorateElement(_init51, 0, "CemServeKnobs", _CemServeKnobs_decorators, CemServeKnobs);
-__runInitializers(_init51, 1, CemServeKnobs);
+_init52 = __decoratorStart(_a52);
+CemServeKnobs = __decorateElement(_init52, 0, "CemServeKnobs", _CemServeKnobs_decorators, CemServeKnobs);
+__runInitializers(_init52, 1, CemServeKnobs);
 
 // lit-css:elements/cem-transform-error-overlay/cem-transform-error-overlay.css
-var s56 = new CSSStyleSheet();
-s56.replaceSync(JSON.parse('"/* Transform Error Overlay - displays server-side compilation errors */\\n\\n:host {\\n  display: none;\\n  position: fixed;\\n  inset: 0;\\n  z-index: var(--pf-t--global--z-index--2xl, 1000);\\n  background: rgba(0, 0, 0, 0.9);\\n  backdrop-filter: blur(4px);\\n  animation: fadeIn 0.2s ease-out;\\n}\\n\\n:host([open]) {\\n  display: flex;\\n  align-items: center;\\n  justify-content: center;\\n  padding: var(--pf-t--global--spacer--lg);\\n}\\n\\n@keyframes fadeIn {\\n  from {\\n    opacity: 0;\\n  }\\n  to {\\n    opacity: 1;\\n  }\\n}\\n\\n#overlay-content {\\n  background: var(--pf-t--global--background--color--floating--default);\\n  color: var(--pf-t--global--text--color--regular);\\n  border: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--color--status--danger--default);\\n  border-radius: var(--pf-t--global--border--radius--medium);\\n  max-width: 800px;\\n  width: 100%;\\n  max-height: 90vh;\\n  display: flex;\\n  flex-direction: column;\\n  box-shadow: var(--pf-t--global--box-shadow--xl);\\n  font-family: var(--pf-t--global--font--family--mono);\\n}\\n\\n#header {\\n  display: flex;\\n  align-items: center;\\n  justify-content: space-between;\\n  padding: var(--pf-t--global--spacer--md) var(--pf-t--global--spacer--lg);\\n  background: var(--pf-t--global--color--status--danger--default);\\n  color: var(--pf-t--global--text--color--on-status--danger);\\n  border-radius: var(--pf-t--global--border--radius--small) var(--pf-t--global--border--radius--small) 0 0;\\n}\\n\\n#title-container {\\n  display: flex;\\n  align-items: center;\\n  gap: var(--pf-t--global--spacer--sm);\\n  font-size: var(--pf-t--global--font--size--body--lg);\\n  font-weight: var(--pf-t--global--font--weight--body--bold);\\n  margin: 0;\\n}\\n\\n#error-icon {\\n  font-size: var(--pf-t--global--font--size--heading--sm);\\n}\\n\\n#close {\\n  --cem-pf-v6-c-button--Color: var(--pf-t--global--text--color--on-status--danger);\\n  --cem-pf-v6-c-button--BackgroundColor: rgba(255, 255, 255, 0.2);\\n  --cem-pf-v6-c-button--BorderColor: transparent;\\n  --cem-pf-v6-c-button--hover--BackgroundColor: rgba(255, 255, 255, 0.3);\\n  --cem-pf-v6-c-button--hover--Color: var(--pf-t--global--text--color--on-status--danger);\\n}\\n\\n#body {\\n  padding: var(--pf-t--global--spacer--lg);\\n  overflow-y: auto;\\n  flex: 1;\\n}\\n\\n#file {\\n  background: var(--pf-t--global--background--color--secondary--default);\\n  padding: var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--md);\\n  border-radius: var(--pf-t--global--border--radius--small);\\n  margin-bottom: var(--pf-t--global--spacer--md);\\n  font-size: var(--pf-t--global--font--size--body--sm);\\n  color: var(--pf-t--global--color--brand--default);\\n  border-inline-start: var(--pf-t--global--border--width--strong, 3px) solid var(--pf-t--global--color--status--danger--default);\\n}\\n\\n#file:empty {\\n  display: none;\\n}\\n\\n#message {\\n  background: var(--pf-t--global--background--color--primary--default);\\n  padding: var(--pf-t--global--spacer--md);\\n  border-radius: var(--pf-t--global--border--radius--small);\\n  white-space: pre-wrap;\\n  word-break: break-word;\\n  font-size: var(--pf-t--global--font--size--body--sm);\\n  line-height: var(--pf-t--global--font--line-height--body);\\n  color: var(--pf-t--global--text--color--regular);\\n  border: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);\\n}\\n\\n#footer {\\n  padding: var(--pf-t--global--spacer--md) var(--pf-t--global--spacer--lg);\\n  background: var(--pf-t--global--background--color--secondary--default);\\n  border-block-start: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);\\n  border-radius: 0 0 var(--pf-t--global--border--radius--small) var(--pf-t--global--border--radius--small);\\n  font-size: var(--pf-t--global--font--size--body--sm);\\n  color: var(--pf-t--global--text--color--subtle);\\n}\\n"'));
-var cem_transform_error_overlay_default = s56;
+var s57 = new CSSStyleSheet();
+s57.replaceSync(JSON.parse('"/* Transform Error Overlay - displays server-side compilation errors */\\n\\n:host {\\n  display: none;\\n  position: fixed;\\n  inset: 0;\\n  z-index: var(--pf-t--global--z-index--2xl, 1000);\\n  background: rgba(0, 0, 0, 0.9);\\n  backdrop-filter: blur(4px);\\n  animation: fadeIn 0.2s ease-out;\\n}\\n\\n:host([open]) {\\n  display: flex;\\n  align-items: center;\\n  justify-content: center;\\n  padding: var(--pf-t--global--spacer--lg);\\n}\\n\\n@keyframes fadeIn {\\n  from {\\n    opacity: 0;\\n  }\\n  to {\\n    opacity: 1;\\n  }\\n}\\n\\n#overlay-content {\\n  background: var(--pf-t--global--background--color--floating--default);\\n  color: var(--pf-t--global--text--color--regular);\\n  border: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--color--status--danger--default);\\n  border-radius: var(--pf-t--global--border--radius--medium);\\n  max-width: 800px;\\n  width: 100%;\\n  max-height: 90vh;\\n  display: flex;\\n  flex-direction: column;\\n  box-shadow: var(--pf-t--global--box-shadow--xl);\\n  font-family: var(--pf-t--global--font--family--mono);\\n}\\n\\n#header {\\n  display: flex;\\n  align-items: center;\\n  justify-content: space-between;\\n  padding: var(--pf-t--global--spacer--md) var(--pf-t--global--spacer--lg);\\n  background: var(--pf-t--global--color--status--danger--default);\\n  color: var(--pf-t--global--text--color--on-status--danger);\\n  border-radius: var(--pf-t--global--border--radius--small) var(--pf-t--global--border--radius--small) 0 0;\\n}\\n\\n#title-container {\\n  display: flex;\\n  align-items: center;\\n  gap: var(--pf-t--global--spacer--sm);\\n  font-size: var(--pf-t--global--font--size--body--lg);\\n  font-weight: var(--pf-t--global--font--weight--body--bold);\\n  margin: 0;\\n}\\n\\n#error-icon {\\n  font-size: var(--pf-t--global--font--size--heading--sm);\\n}\\n\\n#close {\\n  --cem-pf-v6-c-button--Color: var(--pf-t--global--text--color--on-status--danger);\\n  --cem-pf-v6-c-button--BackgroundColor: rgba(255, 255, 255, 0.2);\\n  --cem-pf-v6-c-button--BorderColor: transparent;\\n  --cem-pf-v6-c-button--hover--BackgroundColor: rgba(255, 255, 255, 0.3);\\n  --cem-pf-v6-c-button--hover--Color: var(--pf-t--global--text--color--on-status--danger);\\n}\\n\\n#body {\\n  padding: var(--pf-t--global--spacer--lg);\\n  overflow-y: auto;\\n  flex: 1;\\n}\\n\\n#file {\\n  background: var(--pf-t--global--background--color--secondary--default);\\n  padding: var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--md);\\n  border-radius: var(--pf-t--global--border--radius--small);\\n  margin-bottom: var(--pf-t--global--spacer--md);\\n  font-size: var(--pf-t--global--font--size--body--sm);\\n  color: var(--pf-t--global--color--brand--default);\\n  border-inline-start: var(--pf-t--global--border--width--strong, 3px) solid var(--pf-t--global--color--status--danger--default);\\n}\\n\\n#file:empty {\\n  display: none;\\n}\\n\\n#message {\\n  background: var(--pf-t--global--background--color--primary--default);\\n  padding: var(--pf-t--global--spacer--md);\\n  border-radius: var(--pf-t--global--border--radius--small);\\n  white-space: pre-wrap;\\n  word-break: break-word;\\n  font-size: var(--pf-t--global--font--size--body--sm);\\n  line-height: var(--pf-t--global--font--line-height--body);\\n  color: var(--pf-t--global--text--color--regular);\\n  border: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);\\n}\\n\\n#footer {\\n  padding: var(--pf-t--global--spacer--md) var(--pf-t--global--spacer--lg);\\n  background: var(--pf-t--global--background--color--secondary--default);\\n  border-block-start: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--default);\\n  border-radius: 0 0 var(--pf-t--global--border--radius--small) var(--pf-t--global--border--radius--small);\\n  font-size: var(--pf-t--global--font--size--body--sm);\\n  color: var(--pf-t--global--text--color--subtle);\\n}\\n"'));
+var cem_transform_error_overlay_default = s57;
 
 // elements/cem-transform-error-overlay/cem-transform-error-overlay.ts
-var _message_dec2, _file_dec, _title_dec2, _open_dec4, _a52, _CemTransformErrorOverlay_decorators, _init52, _open4, _title2, _file, _message2, _handleKeydown4;
+var _message_dec2, _file_dec, _title_dec2, _open_dec4, _a53, _CemTransformErrorOverlay_decorators, _init53, _open4, _title2, _file, _message2, _handleKeydown4;
 _CemTransformErrorOverlay_decorators = [t3("cem-transform-error-overlay")];
-var CemTransformErrorOverlay = class extends (_a52 = i3, _open_dec4 = [n4({ type: Boolean, reflect: true })], _title_dec2 = [n4()], _file_dec = [n4()], _message_dec2 = [n4()], _a52) {
+var CemTransformErrorOverlay = class extends (_a53 = i3, _open_dec4 = [n4({ type: Boolean, reflect: true })], _title_dec2 = [n4()], _file_dec = [n4()], _message_dec2 = [n4()], _a53) {
   constructor() {
     super(...arguments);
-    __privateAdd(this, _open4, __runInitializers(_init52, 8, this, false)), __runInitializers(_init52, 11, this);
-    __privateAdd(this, _title2, __runInitializers(_init52, 12, this, "")), __runInitializers(_init52, 15, this);
-    __privateAdd(this, _file, __runInitializers(_init52, 16, this, "")), __runInitializers(_init52, 19, this);
-    __privateAdd(this, _message2, __runInitializers(_init52, 20, this, "")), __runInitializers(_init52, 23, this);
+    __privateAdd(this, _open4, __runInitializers(_init53, 8, this, false)), __runInitializers(_init53, 11, this);
+    __privateAdd(this, _title2, __runInitializers(_init53, 12, this, "")), __runInitializers(_init53, 15, this);
+    __privateAdd(this, _file, __runInitializers(_init53, 16, this, "")), __runInitializers(_init53, 19, this);
+    __privateAdd(this, _message2, __runInitializers(_init53, 20, this, "")), __runInitializers(_init53, 23, this);
     __privateAdd(this, _handleKeydown4, (e6) => {
       if (e6.key === "Escape" && this.open) {
         this.hide();
@@ -7216,19 +7399,19 @@ var CemTransformErrorOverlay = class extends (_a52 = i3, _open_dec4 = [n4({ type
     this.open = false;
   }
 };
-_init52 = __decoratorStart(_a52);
+_init53 = __decoratorStart(_a53);
 _open4 = new WeakMap();
 _title2 = new WeakMap();
 _file = new WeakMap();
 _message2 = new WeakMap();
 _handleKeydown4 = new WeakMap();
-__decorateElement(_init52, 4, "open", _open_dec4, CemTransformErrorOverlay, _open4);
-__decorateElement(_init52, 4, "title", _title_dec2, CemTransformErrorOverlay, _title2);
-__decorateElement(_init52, 4, "file", _file_dec, CemTransformErrorOverlay, _file);
-__decorateElement(_init52, 4, "message", _message_dec2, CemTransformErrorOverlay, _message2);
-CemTransformErrorOverlay = __decorateElement(_init52, 0, "CemTransformErrorOverlay", _CemTransformErrorOverlay_decorators, CemTransformErrorOverlay);
+__decorateElement(_init53, 4, "open", _open_dec4, CemTransformErrorOverlay, _open4);
+__decorateElement(_init53, 4, "title", _title_dec2, CemTransformErrorOverlay, _title2);
+__decorateElement(_init53, 4, "file", _file_dec, CemTransformErrorOverlay, _file);
+__decorateElement(_init53, 4, "message", _message_dec2, CemTransformErrorOverlay, _message2);
+CemTransformErrorOverlay = __decorateElement(_init53, 0, "CemTransformErrorOverlay", _CemTransformErrorOverlay_decorators, CemTransformErrorOverlay);
 __publicField(CemTransformErrorOverlay, "styles", cem_transform_error_overlay_default);
-__runInitializers(_init52, 1, CemTransformErrorOverlay);
+__runInitializers(_init53, 1, CemTransformErrorOverlay);
 
 // elements/cem-serve-chrome/cem-serve-chrome.ts
 var CEMReloadClient4;
@@ -7240,23 +7423,23 @@ var CemLogsEvent = class extends Event {
     this.logs = logs;
   }
 };
-var _hasDescription_dec, _sidebar_dec, _tabsSelected_dec, _drawerHeight_dec2, _drawer_dec, _knobs_dec, _sourceURL_dec, _canonicalURL_dec, _packageName_dec, _demoTitle_dec, _primaryTagName_dec, _a53, _CemServeChrome_decorators, _demoInfoTemplate, _demoGroupTemplate, _demoListTemplate, _logEntryTemplate, _eventEntryTemplate, _init53, _primaryTagName, _demoTitle, _packageName, _canonicalURL, _sourceURL, _knobs, _drawer, _drawerHeight2, _tabsSelected, _sidebar, _hasDescription2, _CemServeChrome_instances, $_fn2, $$_fn, _logContainer, _drawerOpen, _initialLogsFetched, _isInitialLoad, _debugData, _elementEventMap, _manifest, _capturedEvents, _maxCapturedEvents, _eventList, _eventDetailHeader, _eventDetailBody, _selectedEventId, _eventsFilterValue, _eventsFilterDebounceTimer, _eventTypeFilters, _elementFilters, _discoveredElements, _handleLogsEvent, _handleTreeExpand, _handleTreeCollapse, _handleTreeSelect, _copyLogsFeedbackTimeout, _copyDebugFeedbackTimeout, _copyEventsFeedbackTimeout, _logsFilterValue, _logsFilterDebounceTimer, _logLevelFilters, _logLevelDropdown, _observer2, _wsClient, initWsClient_fn, renderSourceButton_fn, _modulesReady, loadClientModules_fn, fetchDebugInfo_fn, populateDemoUrls_fn, setupLogListener_fn, filterLogs_fn, getLogTypeFromEntry_fn, loadLogFilterState_fn, syncCheckboxStates_fn, saveLogFilterState_fn, _handleLogFilterChange, copyLogs_fn, setupDebugOverlay_fn, setupFooterDrawer_fn, detectBrowser_fn, copyDebugInfo_fn, renderLogs_fn, getLogBadge_fn, applyLogLabelAttrs_fn, scrollLatestIntoView_fn, scrollLogsToBottom_fn, migrateFromLocalStorageIfNeeded_fn, setupColorSchemeToggle_fn, applyColorScheme_fn, setupKnobCoordination_fn, _onKnobChange, _onKnobClear, getKnobTarget_fn, getKnobTypeFromEvent_fn, getKnobTypeFromClearEvent_fn, setupTreeStatePersistence_fn, applyTreeState_fn, setupSidebarStatePersistence_fn, findTreeItemById_fn, getTreeNodeId_fn, discoverElementEvents_fn, setupEventCapture_fn, attachEventListeners_fn, observeDemoMutations_fn, _handleElementEvent, getEventDocumentation_fn, findTypeDeclaration_fn, captureEvent_fn, extractEventProperties_fn, renderEvent_fn, selectEvent_fn, buildPropertiesForDisplay_fn, buildPropertyTree_fn, scrollEventsToBottom_fn, isEventsTabActive_fn, filterEvents_fn, eventMatchesTextFilter_fn, getEventRecordById_fn, updateEventFilters_fn, _handleEventTypeFilterChange, _handleElementFilterChange, loadEventFiltersFromStorage_fn, saveEventFilters_fn, clearEvents_fn, copyEvents_fn, setupEventListeners_fn;
+var _hasDescription_dec, _sidebar_dec, _tabsSelected_dec, _drawerHeight_dec2, _drawer_dec, _knobs_dec, _sourceURL_dec, _canonicalURL_dec, _packageName_dec, _demoTitle_dec, _primaryTagName_dec, _a54, _CemServeChrome_decorators, _demoInfoTemplate, _demoGroupTemplate, _demoListTemplate, _logEntryTemplate, _eventEntryTemplate, _init54, _primaryTagName, _demoTitle, _packageName, _canonicalURL, _sourceURL, _knobs, _drawer, _drawerHeight2, _tabsSelected, _sidebar, _hasDescription2, _CemServeChrome_instances, $_fn2, $$_fn, _logContainer, _drawerOpen, _initialLogsFetched, _isInitialLoad, _debugData, _elementEventMap, _manifest, _capturedEvents, _maxCapturedEvents, _eventList, _eventDetailHeader, _eventDetailBody, _selectedEventId, _eventsFilterValue, _eventsFilterDebounceTimer, _eventTypeFilters, _elementFilters, _discoveredElements, _handleLogsEvent, _handleTreeExpand, _handleTreeCollapse, _handleTreeSelect, _copyLogsFeedbackTimeout, _copyDebugFeedbackTimeout, _copyEventsFeedbackTimeout, _logsFilterValue, _logsFilterDebounceTimer, _logLevelFilters, _logLevelDropdown, _observer2, _wsClient, initWsClient_fn, renderSourceButton_fn, _modulesReady, loadClientModules_fn, fetchDebugInfo_fn, populateDemoUrls_fn, setupLogListener_fn, filterLogs_fn, getLogTypeFromEntry_fn, loadLogFilterState_fn, syncCheckboxStates_fn, saveLogFilterState_fn, _handleLogFilterChange, copyLogs_fn, setupDebugOverlay_fn, setupFooterDrawer_fn, detectBrowser_fn, copyDebugInfo_fn, renderLogs_fn, getLogBadge_fn, applyLogLabelAttrs_fn, scrollLatestIntoView_fn, scrollLogsToBottom_fn, migrateFromLocalStorageIfNeeded_fn, setupColorSchemeToggle_fn, applyColorScheme_fn, setupKnobCoordination_fn, _onKnobChange, _onKnobClear, getKnobTarget_fn, getKnobTypeFromEvent_fn, getKnobTypeFromClearEvent_fn, setupTreeStatePersistence_fn, applyTreeState_fn, setupSidebarStatePersistence_fn, findTreeItemById_fn, getTreeNodeId_fn, discoverElementEvents_fn, setupEventCapture_fn, attachEventListeners_fn, observeDemoMutations_fn, _handleElementEvent, getEventDocumentation_fn, findTypeDeclaration_fn, captureEvent_fn, extractEventProperties_fn, renderEvent_fn, selectEvent_fn, buildPropertiesForDisplay_fn, buildPropertyTree_fn, scrollEventsToBottom_fn, isEventsTabActive_fn, filterEvents_fn, eventMatchesTextFilter_fn, getEventRecordById_fn, updateEventFilters_fn, _handleEventTypeFilterChange, _handleElementFilterChange, loadEventFiltersFromStorage_fn, saveEventFilters_fn, clearEvents_fn, copyEvents_fn, setupEventListeners_fn;
 _CemServeChrome_decorators = [t3("cem-serve-chrome")];
-var _CemServeChrome = class _CemServeChrome extends (_a53 = i3, _primaryTagName_dec = [n4({ attribute: "primary-tag-name" })], _demoTitle_dec = [n4({ attribute: "demo-title" })], _packageName_dec = [n4({ attribute: "package-name" })], _canonicalURL_dec = [n4({ attribute: "canonical-url" })], _sourceURL_dec = [n4({ attribute: "source-url" })], _knobs_dec = [n4()], _drawer_dec = [n4()], _drawerHeight_dec2 = [n4({ attribute: "drawer-height" })], _tabsSelected_dec = [n4({ attribute: "tabs-selected" })], _sidebar_dec = [n4()], _hasDescription_dec = [n4({ type: Boolean, attribute: "has-description" })], _a53) {
+var _CemServeChrome = class _CemServeChrome extends (_a54 = i3, _primaryTagName_dec = [n4({ attribute: "primary-tag-name" })], _demoTitle_dec = [n4({ attribute: "demo-title" })], _packageName_dec = [n4({ attribute: "package-name" })], _canonicalURL_dec = [n4({ attribute: "canonical-url" })], _sourceURL_dec = [n4({ attribute: "source-url" })], _knobs_dec = [n4()], _drawer_dec = [n4()], _drawerHeight_dec2 = [n4({ attribute: "drawer-height" })], _tabsSelected_dec = [n4({ attribute: "tabs-selected" })], _sidebar_dec = [n4()], _hasDescription_dec = [n4({ type: Boolean, attribute: "has-description" })], _a54) {
   constructor() {
     super(...arguments);
     __privateAdd(this, _CemServeChrome_instances);
-    __privateAdd(this, _primaryTagName, __runInitializers(_init53, 8, this, "")), __runInitializers(_init53, 11, this);
-    __privateAdd(this, _demoTitle, __runInitializers(_init53, 12, this, "")), __runInitializers(_init53, 15, this);
-    __privateAdd(this, _packageName, __runInitializers(_init53, 16, this, "")), __runInitializers(_init53, 19, this);
-    __privateAdd(this, _canonicalURL, __runInitializers(_init53, 20, this, "")), __runInitializers(_init53, 23, this);
-    __privateAdd(this, _sourceURL, __runInitializers(_init53, 24, this, "")), __runInitializers(_init53, 27, this);
-    __privateAdd(this, _knobs, __runInitializers(_init53, 28, this, "")), __runInitializers(_init53, 31, this);
-    __privateAdd(this, _drawer, __runInitializers(_init53, 32, this, "")), __runInitializers(_init53, 35, this);
-    __privateAdd(this, _drawerHeight2, __runInitializers(_init53, 36, this, "")), __runInitializers(_init53, 39, this);
-    __privateAdd(this, _tabsSelected, __runInitializers(_init53, 40, this, "")), __runInitializers(_init53, 43, this);
-    __privateAdd(this, _sidebar, __runInitializers(_init53, 44, this, "")), __runInitializers(_init53, 47, this);
-    __privateAdd(this, _hasDescription2, __runInitializers(_init53, 48, this, false)), __runInitializers(_init53, 51, this);
+    __privateAdd(this, _primaryTagName, __runInitializers(_init54, 8, this, "")), __runInitializers(_init54, 11, this);
+    __privateAdd(this, _demoTitle, __runInitializers(_init54, 12, this, "")), __runInitializers(_init54, 15, this);
+    __privateAdd(this, _packageName, __runInitializers(_init54, 16, this, "")), __runInitializers(_init54, 19, this);
+    __privateAdd(this, _canonicalURL, __runInitializers(_init54, 20, this, "")), __runInitializers(_init54, 23, this);
+    __privateAdd(this, _sourceURL, __runInitializers(_init54, 24, this, "")), __runInitializers(_init54, 27, this);
+    __privateAdd(this, _knobs, __runInitializers(_init54, 28, this, "")), __runInitializers(_init54, 31, this);
+    __privateAdd(this, _drawer, __runInitializers(_init54, 32, this, "")), __runInitializers(_init54, 35, this);
+    __privateAdd(this, _drawerHeight2, __runInitializers(_init54, 36, this, "")), __runInitializers(_init54, 39, this);
+    __privateAdd(this, _tabsSelected, __runInitializers(_init54, 40, this, "")), __runInitializers(_init54, 43, this);
+    __privateAdd(this, _sidebar, __runInitializers(_init54, 44, this, "")), __runInitializers(_init54, 47, this);
+    __privateAdd(this, _hasDescription2, __runInitializers(_init54, 48, this, false)), __runInitializers(_init54, 51, this);
     __privateAdd(this, _logContainer, null);
     __privateAdd(this, _drawerOpen, false);
     __privateAdd(this, _initialLogsFetched, false);
@@ -7758,7 +7941,7 @@ var _CemServeChrome = class _CemServeChrome extends (_a53 = i3, _primaryTagName_
     }
   }
 };
-_init53 = __decoratorStart(_a53);
+_init54 = __decoratorStart(_a54);
 _demoInfoTemplate = new WeakMap();
 _demoGroupTemplate = new WeakMap();
 _demoListTemplate = new WeakMap();
@@ -8102,7 +8285,7 @@ copyLogs_fn = async function() {
     const btn = __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "copy-logs");
     if (btn) {
       const textNode = Array.from(btn.childNodes).find(
-        (n5) => n5.nodeType === Node.TEXT_NODE && (n5.textContent?.trim().length ?? 0) > 0
+        (n6) => n6.nodeType === Node.TEXT_NODE && (n6.textContent?.trim().length ?? 0) > 0
       );
       if (textNode) {
         const original = textNode.textContent;
@@ -8252,7 +8435,19 @@ renderLogs_fn = function(logs) {
     const timeEl = fragment.querySelector('[data-field="time"]');
     timeEl.setAttribute("datetime", log.date);
     timeEl.textContent = time;
-    fragment.querySelector('[data-field="message"]').textContent = log.message;
+    const messageEl = fragment.querySelector('[data-field="message"]');
+    if (log.data?.kind === "durations" && log.data.durations?.length) {
+      B(T`
+           <div class="progress-grid">${log.data.durations.map((d3) => T`
+            <span>${d3.name}</span>
+            <cem-pf-v6-progress value="${Math.round(d3.percent)}"
+                                value-text="${d3.duration}"
+                                measure-location="outside"
+                                size="sm"></cem-pf-v6-progress>`)}
+          </div>`, messageEl);
+    } else {
+      messageEl.textContent = log.message;
+    }
     return fragment;
   });
   if (!__privateGet(this, _initialLogsFetched)) {
@@ -9019,7 +9214,7 @@ copyEvents_fn = async function() {
     const btn = __privateMethod(this, _CemServeChrome_instances, $_fn2).call(this, "copy-events");
     if (btn) {
       const textNode = Array.from(btn.childNodes).find(
-        (n5) => n5.nodeType === Node.TEXT_NODE && (n5.textContent?.trim().length ?? 0) > 0
+        (n6) => n6.nodeType === Node.TEXT_NODE && (n6.textContent?.trim().length ?? 0) > 0
       );
       if (textNode) {
         const original = textNode.textContent;
@@ -9079,18 +9274,18 @@ setupEventListeners_fn = function() {
     __privateMethod(this, _CemServeChrome_instances, copyEvents_fn).call(this);
   });
 };
-__decorateElement(_init53, 4, "primaryTagName", _primaryTagName_dec, _CemServeChrome, _primaryTagName);
-__decorateElement(_init53, 4, "demoTitle", _demoTitle_dec, _CemServeChrome, _demoTitle);
-__decorateElement(_init53, 4, "packageName", _packageName_dec, _CemServeChrome, _packageName);
-__decorateElement(_init53, 4, "canonicalURL", _canonicalURL_dec, _CemServeChrome, _canonicalURL);
-__decorateElement(_init53, 4, "sourceURL", _sourceURL_dec, _CemServeChrome, _sourceURL);
-__decorateElement(_init53, 4, "knobs", _knobs_dec, _CemServeChrome, _knobs);
-__decorateElement(_init53, 4, "drawer", _drawer_dec, _CemServeChrome, _drawer);
-__decorateElement(_init53, 4, "drawerHeight", _drawerHeight_dec2, _CemServeChrome, _drawerHeight2);
-__decorateElement(_init53, 4, "tabsSelected", _tabsSelected_dec, _CemServeChrome, _tabsSelected);
-__decorateElement(_init53, 4, "sidebar", _sidebar_dec, _CemServeChrome, _sidebar);
-__decorateElement(_init53, 4, "hasDescription", _hasDescription_dec, _CemServeChrome, _hasDescription2);
-_CemServeChrome = __decorateElement(_init53, 0, "CemServeChrome", _CemServeChrome_decorators, _CemServeChrome);
+__decorateElement(_init54, 4, "primaryTagName", _primaryTagName_dec, _CemServeChrome, _primaryTagName);
+__decorateElement(_init54, 4, "demoTitle", _demoTitle_dec, _CemServeChrome, _demoTitle);
+__decorateElement(_init54, 4, "packageName", _packageName_dec, _CemServeChrome, _packageName);
+__decorateElement(_init54, 4, "canonicalURL", _canonicalURL_dec, _CemServeChrome, _canonicalURL);
+__decorateElement(_init54, 4, "sourceURL", _sourceURL_dec, _CemServeChrome, _sourceURL);
+__decorateElement(_init54, 4, "knobs", _knobs_dec, _CemServeChrome, _knobs);
+__decorateElement(_init54, 4, "drawer", _drawer_dec, _CemServeChrome, _drawer);
+__decorateElement(_init54, 4, "drawerHeight", _drawerHeight_dec2, _CemServeChrome, _drawerHeight2);
+__decorateElement(_init54, 4, "tabsSelected", _tabsSelected_dec, _CemServeChrome, _tabsSelected);
+__decorateElement(_init54, 4, "sidebar", _sidebar_dec, _CemServeChrome, _sidebar);
+__decorateElement(_init54, 4, "hasDescription", _hasDescription_dec, _CemServeChrome, _hasDescription2);
+_CemServeChrome = __decorateElement(_init54, 0, "CemServeChrome", _CemServeChrome_decorators, _CemServeChrome);
 __publicField(_CemServeChrome, "styles", cem_serve_chrome_default);
 // Static templates for DOM cloning (logs, events, debug info)
 __privateAdd(_CemServeChrome, _demoInfoTemplate, (() => {
@@ -9164,7 +9359,7 @@ __privateAdd(_CemServeChrome, _eventEntryTemplate, (() => {
       </button>`;
   return t6;
 })());
-__runInitializers(_init53, 1, _CemServeChrome);
+__runInitializers(_init54, 1, _CemServeChrome);
 var CemServeChrome = _CemServeChrome;
 /*! Bundled license information:
 
@@ -9197,6 +9392,7 @@ lit-html/node/is-server.js:
 
 lit-html/node/directives/if-defined.js:
 lit-html/node/directives/class-map.js:
+lit-html/node/directives/style-map.js:
   (**
    * @license
    * Copyright 2018 Google LLC

@@ -146,6 +146,7 @@ func hasMatchingDescendants(r M.Renderable, pred M.PredicateFunc) bool {
 	return false
 }
 
+// TODO: extract to internal/tui as a generic table wrapper (needs decoupling from manifest types)
 // RenderTable renders a simple table with a title.
 func RenderTable(title string, headers []string, rows [][]string, columns []string) (string, error) {
 	var builder strings.Builder

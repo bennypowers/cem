@@ -24,6 +24,7 @@ endif
 build: generate
 	@mkdir -p dist
 	go build -ldflags="$(shell ./scripts/ldflags.sh)" -o dist/cem .
+	echo "DONE build"
 
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
 # It's mostly intended for local development, not for distribution
@@ -126,6 +127,7 @@ install-elements:
 
 generate: install-elements
 	go generate ./...
+	echo "DONE generating manifest for cem- elements"
 
 install-bindings: generate
 

@@ -35,7 +35,10 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "cem",
 	Short: "Tool for generating and querying custom-elements manifests",
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPreRunE: rootPersistentPreRunE,
+}
+
+func rootPersistentPreRunE(cmd *cobra.Command, args []string) error {
 		_, err := os.Getwd()
 		if err != nil {
 			return fmt.Errorf("unable to get current working directory: %v", err)
@@ -112,7 +115,6 @@ var rootCmd = &cobra.Command{
 		}
 		viper.AutomaticEnv()
 		return nil
-	},
 }
 
 func Execute() {
