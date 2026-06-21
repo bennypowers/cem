@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/nsf/jsondiff"
 	"github.com/stretchr/testify/assert"
@@ -82,7 +83,7 @@ func normalizeTextOutput(s string) string {
 func compareGolden(t *testing.T, goldenPath, actual string, isJSON bool) {
 	t.Helper()
 
-	if *update {
+	if *testutil.Update {
 		if err := os.MkdirAll(filepath.Dir(goldenPath), 0755); err != nil {
 			t.Fatalf("failed to create golden dir: %v", err)
 		}
