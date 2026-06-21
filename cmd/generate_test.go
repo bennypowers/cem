@@ -20,20 +20,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd_test
 
 import (
-	"bytes"
-	"encoding/json"
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/nsf/jsondiff"
 )
-
-var update = flag.Bool("update", false, "update golden files")
 
 func TestGenerateE2E(t *testing.T) {
 	testCases := []struct {
@@ -79,7 +74,6 @@ func TestGenerateE2E(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			projectDir := setupTest(t, tc.fixture)
 			outputFilePath := filepath.Join(projectDir, tc.outputFile)
-			goldenPath := filepath.Join("testdata", "goldens", tc.name+".json")
 
 			command := tc.command
 			if len(command) > 0 && command[len(command)-1] == "--package" {
@@ -102,30 +96,11 @@ func TestGenerateE2E(t *testing.T) {
 				t.Fatalf("Failed to read output file: %v", err)
 			}
 
-			if *update {
-				if err := os.WriteFile(goldenPath, content, 0644); err != nil {
-					t.Fatalf("failed to write golden file: %v", err)
-				}
-			}
-
-			expected, err := os.ReadFile(goldenPath)
-			if err != nil {
-				t.Fatalf("golden file missing: %s (have you run with -update?)\nerror: %v", goldenPath, err)
-			}
-
-			// Validate JSON
-			var jsExpected, jsActual any
-			if err := json.Unmarshal(expected, &jsExpected); err != nil {
-				t.Fatalf("expected golden file is invalid JSON: %v", err)
-			}
-			if err := json.Unmarshal(content, &jsActual); err != nil {
-				t.Fatalf("actual output is invalid JSON: %v\noutput:\n%s", err, content)
-			}
-
-			if !bytes.Equal(expected, content) {
-				options := jsondiff.DefaultConsoleOptions()
-				t.Error(jsondiff.Compare(expected, content, &options))
-			}
+			testutil.CheckGolden(t, tc.name, content, testutil.GoldenOptions{
+				Dir:         "testdata/goldens",
+				Extension:   ".json",
+				UseJSONDiff: true,
+			})
 
 			expectedLog := tc.expectedLog
 			if tc.name == "WithOutputFlag" {

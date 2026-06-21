@@ -36,7 +36,6 @@ import (
 	"bennypowers.dev/cem/serve/middleware/transform"
 	"bennypowers.dev/cem/serve/middleware/types"
 	W "bennypowers.dev/cem/internal/workspace"
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -176,7 +175,7 @@ var serveCmd = &cobra.Command{
 			},
 		}
 
-		// Create pterm logger
+		// Create logger
 		log := logger.NewPtermLogger()
 		defer func() {
 			if l, ok := log.(interface{ Stop() }); ok {
@@ -199,7 +198,7 @@ var serveCmd = &cobra.Command{
 			}
 		}()
 
-		// Set pterm logger
+		// Set logger
 		server.SetLogger(log)
 
 		// Set watch directory to project root
@@ -303,25 +302,14 @@ var serveCmd = &cobra.Command{
 		actualPort := server.Port()
 		log.Success("Server started on http://localhost:%d%s", actualPort, reloadStatus)
 
-		// Update status with running info (with colors)
-		reloadColor := pterm.FgRed.Sprint("false")
-		if reload {
-			reloadColor = pterm.FgGreen.Sprint("true")
-		}
-		statusMsg := fmt.Sprintf("Running on %s%s Live reload: %s %s Press %s for help, %s to quit",
-			pterm.FgCyan.Sprintf("http://localhost:%d", actualPort),
-			pterm.FgGray.Sprint(" |"),
-			reloadColor,
-			pterm.FgGray.Sprint("|"),
-			pterm.FgYellow.Sprint("h"),
-			pterm.FgYellow.Sprint("q"),
-		)
+		// Update status with running info
+		statusMsg := formatStatusLine(actualPort, reload)
 		if l, ok := log.(interface{ SetStatus(string) }); ok {
 			l.SetStatus(statusMsg)
 		}
 
 		// Start keyboard input handler after a brief delay
-		// This allows pterm's live area to stabilize before we enable raw mode
+		// This allows the live area to stabilize before we enable raw mode
 		quitChan := make(chan struct{})
 		go func() {
 			time.Sleep(100 * time.Millisecond)
