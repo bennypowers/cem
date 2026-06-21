@@ -25,13 +25,12 @@ import (
 	"runtime"
 	"strings"
 
-	"atomicgo.dev/keyboard/keys"
-
 	"bennypowers.dev/cem/internal/jsoncmerge"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/tui"
 	W "bennypowers.dev/cem/internal/workspace"
+	"charm.land/huh/v2"
 	"github.com/adrg/xdg"
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -123,10 +122,7 @@ In non-interactive mode, use --tool to specify tools directly.`,
 			cmd.Print(action.preview)
 
 			if interactive && action.apply != nil {
-				confirmed, err := pterm.DefaultInteractiveConfirm.
-					WithDefaultValue(true).
-					WithDefaultText("Apply?").
-					Show()
+				confirmed, err := tui.Confirm("Apply?", true)
 				if err != nil {
 					return err
 				}
@@ -179,17 +175,11 @@ func parseToolName(name string) (aiTool, error) {
 }
 
 func promptToolSelection() ([]aiTool, error) {
-	options := make([]string, len(knownTools))
+	options := make([]huh.Option[string], len(knownTools))
 	for i, t := range knownTools {
-		options[i] = string(t)
+		options[i] = huh.NewOption(string(t), string(t))
 	}
-	selected, err := pterm.DefaultInteractiveMultiselect.
-		WithOptions(options).
-		WithDefaultText("Which AI tools would you like to configure?\n  space: select, enter: confirm, left/right: none/all").
-		WithKeySelect(keys.Space).
-		WithKeyConfirm(keys.Enter).
-		WithFilter(false).
-		Show()
+	selected, err := tui.MultiSelect("Which AI tools would you like to configure?", options)
 	if err != nil {
 		return nil, fmt.Errorf("tool selection cancelled: %w", err)
 	}
@@ -205,9 +195,10 @@ func promptAdditionalPackages() ([]string, error) {
 	logging.Info("If your project consumes a design system, enter package specifiers to load.")
 	logging.Info("Examples: npm:@rhds/elements@2.0.0, jsr:@example/components, https://cdn.example.com/pkg/")
 
-	input, err := pterm.DefaultInteractiveTextInput.
-		WithDefaultText("Additional packages (comma-separated, or press Enter to skip)").
-		Show()
+	input, err := tui.TextInput(
+		"Additional packages (comma-separated, or press Enter to skip)",
+		"npm:@example/elements@1.0.0",
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -441,10 +432,7 @@ func chooseScope(interactive bool, projectDir, projectPath, globalPath string) s
 	} else {
 		options = []string{globalLabel, projectLabel}
 	}
-	result, err := pterm.DefaultInteractiveSelect.
-		WithOptions(options).
-		WithDefaultText("Configure for this project or globally?").
-		Show()
+	result, err := tui.Select("Configure for this project or globally?", tui.StringOptions(options...))
 	if err != nil {
 		if projectExists == nil {
 			return projectPath
