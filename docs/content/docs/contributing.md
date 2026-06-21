@@ -71,19 +71,24 @@ This will open an HTML report in your browser.
 
 ## NPM Packaging
 
-The project produces platform-specific npm packages. Platform detection and binary installation are managed by scripts in the `npm` directory. You can test npm packaging locally with:
+The project uses an esbuild-style `optionalDependencies` strategy for platform binaries. The main package (`@pwrs/cem`) does not ship a binary — on install, npm pulls in the appropriate `@pwrs/cem-PLATFORM-ARCH` package, and the wrapper script (`bin/cem.js`) detects your platform and runs the correct binary.
+
+You can test npm packaging locally with:
 ```sh
 node scripts/gen-platform-package-jsons.js
 ```
-and validate the package with:
+and validate a package with:
 ```sh
 cd platforms/cem-<platform>-<arch>
 npm pack --dry-run
 ```
 
-## Multi-Platform Publishing for cem
+To test installation end-to-end, use `npm install --ignore-scripts`.
 
-cem uses an esbuild-style optionalDependencies strategy for platform binaries.
+### Adding a New Platform
+
+- Add a new entry in `scripts/gen-platform-package-jsons.mjs` and build logic.
+- Update the main package's `optionalDependencies`.
 
 ## Releasing
 
@@ -91,27 +96,6 @@ cem uses an esbuild-style optionalDependencies strategy for platform binaries.
 2. The CI workflow will:
    - Cross-compile and publish each `@pwrs/cem-PLATFORM-ARCH` package with the correct binary.
    - Publish the main `@pwrs/cem` package with all subpackages as `optionalDependencies`.
-
-## Local Testing
-
-- Use `npm install --ignore-scripts` to test installation.
-- The wrapper (`bin/cem.js`) will find and invoke the platform-specific binary.
-
-## Requirements
-
-- Node.js 22+ is required for all packages.
-- All packages are ESM-only (`"type": "module"`).
-
-## Adding a New Platform
-
-- Add a new entry in `scripts/gen-platform-package-jsons.mjs` and build logic.
-- Update the main package's `optionalDependencies`.
-
-## How It Works
-
-- The main package (`@pwrs/cem`) does not ship a binary.
-- On install, npm will only pull in the appropriate platform package.
-- The wrapper script detects your platform and runs the correct binary.
 
 ## Code Formatting & Linting
 
