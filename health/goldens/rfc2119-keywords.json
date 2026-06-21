@@ -1,0 +1,187 @@
+{
+  "modules": [
+    {
+      "path": "elements/strict-input/strict-input.js",
+      "score": 78,
+      "maxScore": 100,
+      "declarations": [
+        {
+          "tagName": "strict-input",
+          "name": "StrictInput",
+          "score": 78,
+          "maxScore": 100,
+          "categories": [
+            {
+              "id": "description",
+              "category": "Element description",
+              "points": 13,
+              "maxPoints": 25,
+              "status": "warn",
+              "findings": [
+                {
+                  "check": "Has description",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Optimal length",
+                  "points": 3,
+                  "max": 3
+                },
+                {
+                  "check": "Explains purpose/context",
+                  "points": 0,
+                  "max": 5,
+                  "message": "describe purpose and context using words like 'for', 'when', 'provides', 'allows'"
+                },
+                {
+                  "check": "RFC 2119 keywords",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Accessibility notes",
+                  "points": 0,
+                  "max": 4,
+                  "message": "mention accessibility considerations (ARIA, screen reader, WCAG)"
+                },
+                {
+                  "check": "Keyboard interaction",
+                  "points": 0,
+                  "max": 3,
+                  "message": "document keyboard interaction (Enter, Space, Tab, focus)"
+                }
+              ]
+            },
+            {
+              "id": "attributes",
+              "category": "Attribute documentation",
+              "points": 20,
+              "maxPoints": 20,
+              "status": "pass",
+              "findings": [
+                {
+                  "check": "All have descriptions",
+                  "points": 10,
+                  "max": 10
+                },
+                {
+                  "check": "Descriptions explain purpose",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Constraints documented",
+                  "points": 5,
+                  "max": 5
+                }
+              ]
+            },
+            {
+              "id": "slots",
+              "category": "Slot documentation",
+              "points": 15,
+              "maxPoints": 15,
+              "status": "pass",
+              "findings": [
+                {
+                  "check": "All have descriptions",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Content type guidelines",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Accessibility considerations",
+                  "points": 5,
+                  "max": 5
+                }
+              ]
+            },
+            {
+              "id": "css",
+              "category": "CSS documentation",
+              "points": 15,
+              "maxPoints": 15,
+              "status": "pass",
+              "findings": [
+                {
+                  "check": "CSS properties documented",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "CSS parts documented",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Design system notes",
+                  "points": 5,
+                  "max": 5
+                }
+              ]
+            },
+            {
+              "id": "events",
+              "category": "Event documentation",
+              "points": 15,
+              "maxPoints": 15,
+              "status": "pass",
+              "findings": [
+                {
+                  "check": "All have descriptions",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Trigger conditions",
+                  "points": 5,
+                  "max": 5
+                },
+                {
+                  "check": "Event detail described",
+                  "points": 5,
+                  "max": 5
+                }
+              ]
+            },
+            {
+              "id": "demos",
+              "category": "Demos",
+              "points": 0,
+              "maxPoints": 10,
+              "status": "fail",
+              "findings": [
+                {
+                  "check": "Has demo",
+                  "points": 0,
+                  "max": 5,
+                  "message": "add at least one demo with a URL"
+                },
+                {
+                  "check": "Demo has description",
+                  "points": 0,
+                  "max": 5,
+                  "message": "add demos with descriptions"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "overallScore": 78,
+  "overallMax": 100,
+  "recommendations": [
+    "strict-input: describe purpose and context using words like 'for', 'when', 'provides', 'allows' (Element description, +5 pts)",
+    "strict-input: add at least one demo with a URL (Demos, +5 pts)",
+    "strict-input: add demos with descriptions (Demos, +5 pts)",
+    "strict-input: mention accessibility considerations (ARIA, screen reader, WCAG) (Element description, +4 pts)",
+    "strict-input: document keyboard interaction (Enter, Space, Tab, focus) (Element description, +3 pts)"
+  ]
+}

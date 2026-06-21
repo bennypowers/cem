@@ -21,9 +21,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
 	"text/template"
 
+	"charm.land/bubbles/v2/progress"
 	lipgloss "charm.land/lipgloss/v2"
 
 	"bennypowers.dev/cem/internal/logging"
@@ -202,9 +202,12 @@ func printComponentReport(w io.Writer, comp ComponentReport) error {
 }
 
 func buildBar(pct, width int) string {
-	filled := min(pct*width/100, width)
-	empty := width - filled
-	return strings.Repeat("█", filled) + strings.Repeat("░", empty)
+	bar := progress.New(
+		progress.WithWidth(width),
+		progress.WithoutPercentage(),
+		progress.WithDefaultBlend(),
+	)
+	return bar.ViewAs(float64(pct) / 100)
 }
 
 func percentage(score, max int) int {

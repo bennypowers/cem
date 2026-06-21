@@ -1,4 +1,4 @@
-import { LitElement, html, nothing } from 'lit';
+import { LitElement, html, nothing, render } from 'lit';
 import { customElement } from 'lit/decorators/custom-element.js';
 import { property } from 'lit/decorators/property.js';
 import { state } from 'lit/decorators/state.js';
@@ -34,6 +34,7 @@ import '../cem-pf-v6-page-main/cem-pf-v6-page-main.js';
 import '../cem-pf-v6-page-sidebar/cem-pf-v6-page-sidebar.js';
 import '../cem-pf-v6-page/cem-pf-v6-page.js';
 import '../cem-pf-v6-popover/cem-pf-v6-popover.js';
+import '../cem-pf-v6-progress/cem-pf-v6-progress.js';
 import '../cem-pf-v6-select/cem-pf-v6-select.js';
 import '../cem-pf-v6-skip-to-content/cem-pf-v6-skip-to-content.js';
 import '../cem-pf-v6-switch/cem-pf-v6-switch.js';
@@ -114,12 +115,30 @@ interface Manifest {
   }>;
 }
 
+interface DurationEntry {
+  name: string;
+  duration: string;
+  percent: number;
+}
+
+interface LogData {
+  kind: string;
+  durations?: DurationEntry[];
+}
+
+interface LogEntryData {
+  type: string;
+  date: string;
+  message: string;
+  data?: LogData;
+}
+
 /**
  * Custom event fired when logs are received
  */
 export class CemLogsEvent extends Event {
-  logs: Array<{ type: string; date: string; message: string }>;
-  constructor(logs: Array<{ type: string; date: string; message: string }>) {
+  logs: Array<LogEntryData>;
+  constructor(logs: Array<LogEntryData>) {
     super('cem:logs', { bubbles: true });
     this.logs = logs;
   }
@@ -1155,7 +1174,7 @@ Generated: ${new Date().toISOString()}`;
     }
   }
 
-  #renderLogs(logs: Array<{ type: string; date: string; message: string }>) {
+  #renderLogs(logs: Array<LogEntryData>) {
     if (!this.#logContainer) return;
 
     const logElements = logs.map(log => {
@@ -1187,7 +1206,19 @@ Generated: ${new Date().toISOString()}`;
       timeEl.setAttribute('datetime', log.date);
       timeEl.textContent = time;
 
-      (fragment.querySelector('[data-field="message"]') as HTMLElement).textContent = log.message;
+      const messageEl = fragment.querySelector('[data-field="message"]') as HTMLElement;
+      if (log.data?.kind === 'durations' && log.data.durations?.length) {
+        render(html`
+           <div class="progress-grid">${log.data.durations.map(d => html`
+            <span>${d.name}</span>
+            <cem-pf-v6-progress value="${Math.round(d.percent)}"
+                                value-text="${d.duration}"
+                                measure-location="outside"
+                                size="sm"></cem-pf-v6-progress>`)}
+          </div>`, messageEl);
+      } else {
+        messageEl.textContent = log.message;
+      }
 
       return fragment;
     });

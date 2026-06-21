@@ -1,1 +1,1 @@
-Running on [36mhttp://localhost:0[m [90m|[m Live reload: [32mtrue[m [90m|[m Press [33mh[m for help, [33mq[m to quit
+Running on [36mhttp://localhost:0[m [90m|[m Live reload: [32mtrue[m [90m|[m Log level: debug

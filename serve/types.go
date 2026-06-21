@@ -66,6 +66,7 @@ type Config struct {
 	FS                   platform.FileSystem   // Optional filesystem for testing (defaults to os package)
 	URLRewrites          []config.URLRewrite   // URL rewrites for request path mapping (e.g., "/dist/:path*" -> "/src/{{.path}}")
 	WebSocketManager     WebSocketManager      // Optional WebSocket manager for testing (created automatically if nil and Reload=true)
+	Logger               Logger                // Optional logger (defaults to defaultLogger)
 }
 
 // ReloadMessage represents a WebSocket reload event

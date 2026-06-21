@@ -8,6 +8,8 @@ require (
 	bennypowers.dev/mappa v0.0.6
 	bennypowers.dev/tree-sitter-handlebars v0.1.1
 	bennypowers.dev/tree-sitter-jinja-dialects v0.1.1
+	charm.land/bubbles/v2 v2.1.0
+	charm.land/bubbletea/v2 v2.0.6
 	charm.land/lipgloss/v2 v2.0.4
 	github.com/Digital-Shane/treeview/v2 v2.0.1
 	github.com/EmranMR/tree-sitter-blade v0.12.3
@@ -54,9 +56,8 @@ require (
 )
 
 require (
-	charm.land/bubbles/v2 v2.1.0 // indirect
-	charm.land/bubbletea/v2 v2.0.6 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
+	github.com/charmbracelet/harmonica v0.2.0 // indirect
 	github.com/charmbracelet/ultraviolet v0.0.0-20260525132238-948f4557a654 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect

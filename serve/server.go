@@ -104,10 +104,15 @@ func NewServerWithConfig(config Config) (*Server, error) {
 		}
 	}
 
+	log := config.Logger
+	if log == nil {
+		log = logger.NewDefaultLogger()
+	}
+
 	s := &Server{
 		port:                 config.Port,
 		config:               config,
-		logger:               logger.NewDefaultLogger(),
+		logger:               log,
 		shutdown:             make(chan struct{}),
 		sourceControlRootURL: config.SourceControlRootURL,
 	}

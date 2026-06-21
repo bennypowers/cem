@@ -1,0 +1,318 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "",
+      "declarations": [
+        {
+          "name": "MultiSelectElement",
+          "summary": "Multi-select dropdown with search and keyboard navigation",
+          "description": "An accessible multi-select dropdown with search, keyboard navigation, and bulk operations.\nImplements WCAG 2.1 AA standards with comprehensive screen reader support and keyboard\ninteraction patterns. Use for selection from large datasets where users need to choose\nmultiple related items, such as tag selection, user assignment, or category filtering.",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "placeholder",
+              "description": "Placeholder text shown when no selections are made. Should be descriptive\nand action-oriented (e.g., 'Select team members' rather than 'Choose options').\nAnnounced by screen readers when the component receives focus.",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Select options...'",
+              "kind": "field",
+              "attribute": "placeholder"
+            },
+            {
+              "name": "searchable",
+              "description": "Enables search/filter functionality within the dropdown. When true, users can\ntype to filter available options, improving usability for large option sets.\nSearch is case-insensitive and matches partial strings. Essential for lists\nwith more than 10 options.",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "searchable"
+            },
+            {
+              "name": "maxSelections",
+              "description": "Maximum number of items that can be selected. When limit is reached, remaining\noptions become disabled with appropriate ARIA states. Use to prevent overwhelming\ninterfaces or enforce business rules. Value of 0 means unlimited selections.",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "kind": "field",
+              "attribute": "max-selections"
+            },
+            {
+              "name": "required",
+              "description": "Marks the component as required for form validation. Displays visual indicator\nand updates ARIA attributes for screen readers. Prevents form submission when\nno selections are made. Should be paired with clear error messaging.",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "required"
+            },
+            {
+              "name": "disabled",
+              "description": "Disables all interaction with the component. Sets appropriate ARIA states and\nvisual styling. Use for read-only states or when dependent form fields haven't\nbeen completed. Maintains selection visibility for context.",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "kind": "field",
+              "attribute": "disabled"
+            },
+            {
+              "name": "variant",
+              "description": "Controls layout density and information display. 'default' shows standard spacing\nand basic option text. 'compact' reduces spacing for dense interfaces. 'detailed'\nshows additional option metadata and descriptions. Choose based on interface\ndensity and content complexity.",
+              "type": {
+                "text": "'default' | 'compact' | 'detailed'"
+              },
+              "default": "'default'",
+              "kind": "field",
+              "attribute": "variant"
+            },
+            {
+              "name": "selectionDisplay",
+              "description": "How selected items are displayed in the closed state. 'tags' shows individual\nremovable chips (best for \u003c= 5 selections). 'count' shows summary like '3 selected'\n(best for large selections). 'list' shows comma-separated names (best for 2-4\nselections). Automatically adjusts for accessibility and screen space.",
+              "type": {
+                "text": "'tags' | 'count' | 'list'"
+              },
+              "default": "'tags'",
+              "kind": "field",
+              "attribute": "selection-display"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/ai-friendly-docs/elements/multi-select/multi-select.ts#L41"
+          },
+          "kind": "class",
+          "tagName": "multi-select",
+          "attributes": [
+            {
+              "name": "placeholder",
+              "description": "Placeholder text shown when no selections are made. Should be descriptive\nand action-oriented (e.g., 'Select team members' rather than 'Choose options').\nAnnounced by screen readers when the component receives focus.",
+              "type": {
+                "text": "string"
+              },
+              "default": "'Select options...'",
+              "fieldName": "placeholder"
+            },
+            {
+              "name": "searchable",
+              "description": "Enables search/filter functionality within the dropdown. When true, users can\ntype to filter available options, improving usability for large option sets.\nSearch is case-insensitive and matches partial strings. Essential for lists\nwith more than 10 options.",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "searchable"
+            },
+            {
+              "name": "max-selections",
+              "description": "Maximum number of items that can be selected. When limit is reached, remaining\noptions become disabled with appropriate ARIA states. Use to prevent overwhelming\ninterfaces or enforce business rules. Value of 0 means unlimited selections.",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "fieldName": "maxSelections"
+            },
+            {
+              "name": "required",
+              "description": "Marks the component as required for form validation. Displays visual indicator\nand updates ARIA attributes for screen readers. Prevents form submission when\nno selections are made. Should be paired with clear error messaging.",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "required"
+            },
+            {
+              "name": "disabled",
+              "description": "Disables all interaction with the component. Sets appropriate ARIA states and\nvisual styling. Use for read-only states or when dependent form fields haven't\nbeen completed. Maintains selection visibility for context.",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false",
+              "fieldName": "disabled"
+            },
+            {
+              "name": "variant",
+              "description": "Controls layout density and information display. 'default' shows standard spacing\nand basic option text. 'compact' reduces spacing for dense interfaces. 'detailed'\nshows additional option metadata and descriptions. Choose based on interface\ndensity and content complexity.",
+              "type": {
+                "text": "'default' | 'compact' | 'detailed'"
+              },
+              "default": "'default'",
+              "fieldName": "variant"
+            },
+            {
+              "name": "selection-display",
+              "description": "How selected items are displayed in the closed state. 'tags' shows individual\nremovable chips (best for \u003c= 5 selections). 'count' shows summary like '3 selected'\n(best for large selections). 'list' shows comma-separated names (best for 2-4\nselections). Automatically adjusts for accessibility and screen space.",
+              "type": {
+                "text": "'tags' | 'count' | 'list'"
+              },
+              "default": "'tags'",
+              "fieldName": "selectionDisplay"
+            }
+          ],
+          "events": [
+            {
+              "name": "selection-change",
+              "description": "Fired when selection changes through any interaction method (click, keyboard, programmatic). Event detail includes complete selection state and the specific change that occurred. Use for form validation, dependent field updates, or analytics tracking. Debounced during rapid keyboard navigation to prevent excessive firing.",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "search-input",
+              "description": "Fired when user types in search field (when searchable is true). Event detail contains current search query and number of matching options. Use for external filtering, analytics, or implementing custom search behavior. Fires after built-in filtering is applied.",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "dropdown-toggle",
+              "description": "Fired when dropdown opens or closes. Event detail indicates new state and what triggered the change. Use for coordinating with external UI elements, implementing custom positioning, or managing page-level focus. Essential for modal-style behaviors.",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "max-reached",
+              "description": "Fired when user attempts to select beyond max-selections limit. Use to show helpful error messages or suggest alternative actions. Event is fired before selection is rejected, allowing for custom handling or user education.",
+              "type": {
+                "text": "Event",
+                "references": [
+                  {
+                    "name": "Event",
+                    "package": "global:"
+                  }
+                ]
+              }
+            }
+          ],
+          "slots": [
+            {
+              "name": "header",
+              "description": "Optional header content above the options list. Use for category labels, action buttons (like 'Select All'), or contextual help. Should not contain form controls that conflict with option selection. Announced as part of dropdown context by screen readers."
+            },
+            {
+              "name": "",
+              "description": "Default slot for option elements. Should contain option elements with value attributes and descriptive text content. Options support disabled state and optional description text. Maintain semantic markup for screen readers - each option should be self-contained and descriptive."
+            },
+            {
+              "name": "empty-state",
+              "description": "Content shown when no options match current search or when options list is empty. Should provide helpful guidance or alternative actions. Include clear messaging about search refinement or data loading states. Will be announced by screen readers when displayed."
+            },
+            {
+              "name": "footer",
+              "description": "Footer content below options list. Ideal for summary information ('X of Y selected'), action buttons, or links to manage the option set externally. Maintains focus context within the dropdown for keyboard navigation."
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "trigger",
+              "description": "Main clickable area that opens the dropdown. Style for brand consistency and clear affordance. Includes focus indicators and disabled states. Should maintain minimum 44px touch target for mobile accessibility."
+            },
+            {
+              "name": "selections",
+              "description": "Container for displaying selected items. Layout varies based on selection-display attribute. Style for clear visual hierarchy and easy scanning. Handles overflow with appropriate text truncation."
+            },
+            {
+              "name": "dropdown",
+              "description": "Dropdown container including search, options, and footer areas. Handles positioning, shadows, and border styling. Consider z-index stacking context and responsive positioning behavior."
+            },
+            {
+              "name": "search-input",
+              "description": "Search input field within dropdown (when searchable). Style for clear focus states and placeholder visibility. Should integrate seamlessly with dropdown design while remaining clearly functional."
+            },
+            {
+              "name": "option",
+              "description": "Individual option elements within the list. Style for clear selection states, hover feedback, and disabled appearance. Must maintain accessibility contrast requirements across all states."
+            },
+            {
+              "name": "selected-tag",
+              "description": "Individual selection chips (when selection-display='tags'). Include close button styling and hover states. Should be easily scannable and clearly removable for keyboard users."
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--multi-select-width",
+              "description": "Controls component width. Use design system width tokens or specific measurements. Affects dropdown positioning and text wrapping behavior. Consider content length and container constraints when setting. (default: auto)",
+              "default": "auto"
+            },
+            {
+              "name": "--multi-select-max-height",
+              "description": "Maximum height for the dropdown options list. When exceeded, the list becomes scrollable with keyboard navigation support. Use viewport-relative units for responsive behavior. Recommended range: 200px to 60vh for optimal usability. (default: 300px)"
+            },
+            {
+              "name": "--selection-tag-color",
+              "description": "Background color for selected item tags (when selection-display='tags'). Should maintain sufficient contrast with text color for accessibility. Use semantic colors from design system that indicate selection state clearly. (default: var(--color-primary-100))"
+            },
+            {
+              "name": "--option-hover-bg",
+              "description": "Background color for option hover state. Must meet WCAG contrast requirements against option text. Provides visual feedback for keyboard and mouse navigation. Should be distinct from selection and focus states. (default: var(--color-gray-100))"
+            },
+            {
+              "name": "--dropdown-border-radius",
+              "description": "Border radius for dropdown container. Use design system radius tokens for consistency. Affects visual integration with page design and brand consistency. Consider relationship to trigger element styling. (default: var(--radius-md))"
+            }
+          ],
+          "cssStates": [
+            {
+              "name": "open",
+              "description": "Applied when dropdown is expanded. Use for styling state transitions, positioning adjustments, or coordinating with external elements. Helps manage z-index and overlay behaviors."
+            },
+            {
+              "name": "searching",
+              "description": "Applied when user is actively typing in search field. Use for loading indicators, highlighting matched text, or adjusting dropdown layout. Provides visual feedback during search operations."
+            },
+            {
+              "name": "max-reached",
+              "description": "Applied when maximum selection limit is reached. Use for visual feedback, disabling remaining options, or showing helpful messaging. Should clearly communicate the constraint to users."
+            },
+            {
+              "name": "required-empty",
+              "description": "Applied when component is required but has no selections. Use for error styling, validation messaging, or form submission prevention. Should clearly indicate the validation state."
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "multi-select",
+          "declaration": {
+            "name": "MultiSelectElement"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "MultiSelectElement",
+          "declaration": {
+            "name": "MultiSelectElement"
+          }
+        }
+      ]
+    }
+  ]
+}

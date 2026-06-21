@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -162,6 +163,35 @@ func TestIsDebugEnabled(t *testing.T) {
 	assert.True(t, l.IsDebugEnabled())
 	l.SetVerbosity(VerbosityQuiet)
 	assert.False(t, l.IsDebugEnabled())
+}
+
+type testSink struct {
+	msgs []string
+}
+
+func (s *testSink) Info(msg string, args ...any)    { s.msgs = append(s.msgs, "info: "+fmt.Sprintf(msg, args...)) }
+func (s *testSink) Warning(msg string, args ...any) { s.msgs = append(s.msgs, "warn: "+fmt.Sprintf(msg, args...)) }
+func (s *testSink) Error(msg string, args ...any)   { s.msgs = append(s.msgs, "error: "+fmt.Sprintf(msg, args...)) }
+func (s *testSink) Debug(msg string, args ...any)   { s.msgs = append(s.msgs, "debug: "+fmt.Sprintf(msg, args...)) }
+func (s *testSink) Success(msg string, args ...any) { s.msgs = append(s.msgs, "success: "+fmt.Sprintf(msg, args...)) }
+func (s *testSink) Trace(msg string, args ...any)   { s.msgs = append(s.msgs, "trace: "+fmt.Sprintf(msg, args...)) }
+
+func TestServeSinkForwarding(t *testing.T) {
+	l := &Logger{mode: ModeServe, verbosity: VerbosityTrace}
+	sink := &testSink{}
+	l.SetServeSink(sink)
+
+	l.log(LogLevelDebug, "project dir: %s", "/tmp")
+	l.log(LogLevelInfo, "config loaded")
+	l.Success("manifest ok")
+
+	// Inline assertions justified: testing sink forwarding mechanics, not output format.
+	if len(sink.msgs) != 3 {
+		t.Fatalf("expected 3 forwarded messages, got %d: %v", len(sink.msgs), sink.msgs)
+	}
+	assert.Equal(t, "debug: project dir: /tmp", sink.msgs[0])
+	assert.Equal(t, "info: config loaded", sink.msgs[1])
+	assert.Equal(t, "success: manifest ok", sink.msgs[2])
 }
 
 func TestModeDoesNotAffectVerbosityGating(t *testing.T) {

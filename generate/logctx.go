@@ -126,41 +126,30 @@ func ColorizeDuration(d time.Duration) lipgloss.Style {
 	}
 }
 
+// TODO: extract to internal/tui as a generic bar chart renderer
 // RenderBarChart shows a summary bar chart for all modules.
 func RenderBarChart(logs []*LogCtx) {
 	if len(logs) == 0 {
 		return
 	}
 
-	const barWidth = 40
-
 	var maxMs int64
-	maxLabel := 0
 	for _, lc := range logs {
-		ms := lc.Duration.Milliseconds()
-		if ms > maxMs {
+		if ms := lc.Duration.Milliseconds(); ms > maxMs {
 			maxMs = ms
-		}
-		name := filepath.Base(lc.File)
-		if len(name) > maxLabel {
-			maxLabel = len(name)
 		}
 	}
 	if maxMs == 0 {
 		maxMs = 1
 	}
 
-	logging.Debug("Module Durations")
+	entries := make([]logging.DurationData, 0, len(logs))
 	for _, lc := range logs {
-		name := filepath.Base(lc.File)
-		ms := lc.Duration.Milliseconds()
-		filled := int(ms * int64(barWidth) / maxMs)
-		empty := barWidth - filled
-		bar := strings.Repeat("█", filled) + strings.Repeat("░", empty)
-		style := ColorizeDuration(lc.Duration)
-		logging.Debug("  %-*s  %s  %s",
-			maxLabel, name,
-			style.Render(bar),
-			style.Render(fmt.Sprint(lc.Duration)))
+		entries = append(entries, logging.DurationData{
+			Name:     filepath.Base(lc.File),
+			Duration: fmt.Sprint(lc.Duration),
+			Percent:  float64(lc.Duration.Milliseconds()) / float64(maxMs) * 100,
+		})
 	}
+	logging.LogDurations("Module Durations", entries)
 }

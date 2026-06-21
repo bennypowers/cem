@@ -104,12 +104,35 @@ func (l LogLevel) String() string {
 	}
 }
 
+// ServeSink receives log messages forwarded from the centralized logger in ModeServe.
+type ServeSink interface {
+	Info(msg string, args ...any)
+	Warning(msg string, args ...any)
+	Error(msg string, args ...any)
+	Debug(msg string, args ...any)
+	Success(msg string, args ...any)
+	Trace(msg string, args ...any)
+}
+
+// DurationSink extends ServeSink with structured duration data support.
+type DurationSink interface {
+	LogDurations(title string, entries []DurationData)
+}
+
+// DurationData carries structured duration info for bar chart rendering.
+type DurationData struct {
+	Name     string
+	Duration string
+	Percent  float64
+}
+
 // Logger provides centralized logging that adapts to CLI vs LSP contexts
 type Logger struct {
 	mu         sync.RWMutex
 	mode       LoggerMode
 	lspContext *glsp.Context
 	verbosity  Verbosity
+	serveSink  ServeSink
 }
 
 // LoggerMode determines how logs are output
@@ -141,6 +164,13 @@ func (l *Logger) SetMode(mode LoggerMode) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.mode = mode
+}
+
+// SetServeSink registers a sink for ModeServe output forwarding.
+func (l *Logger) SetServeSink(sink ServeSink) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.serveSink = sink
 }
 
 // SetLSPContext sets the LSP context for LSP mode logging
@@ -224,6 +254,21 @@ func (l *Logger) IsQuietEnabled() bool {
 	return l.verbosity == VerbosityQuiet
 }
 
+// LogDurations sends structured duration data to the serve sink.
+// In CLI mode, this is a no-op (callers render their own bar charts).
+func (l *Logger) LogDurations(title string, entries []DurationData) {
+	l.mu.RLock()
+	mode := l.mode
+	sink := l.serveSink
+	l.mu.RUnlock()
+	if mode != ModeServe {
+		return
+	}
+	if ds, ok := sink.(DurationSink); ok {
+		ds.LogDurations(title, entries)
+	}
+}
+
 // Trace logs a trace message (only shown at -vvv).
 func (l *Logger) Trace(format string, args ...any) {
 	l.log(LogLevelTrace, format, args...)
@@ -254,13 +299,18 @@ func (l *Logger) Critical(format string, args ...any) {
 	l.mu.RLock()
 	mode := l.mode
 	lspContext := l.lspContext
+	sink := l.serveSink
 	l.mu.RUnlock()
 
 	message := fmt.Sprintf(format, args...)
 
 	switch mode {
-	case ModeCLI, ModeServe:
+	case ModeCLI:
 		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", errorPrefix, message)
+	case ModeServe:
+		if sink != nil {
+			sink.Error("%s", message)
+		}
 	case ModeLSP:
 		if lspContext != nil {
 			// Always use window/showMessage for critical errors (popup)
@@ -283,13 +333,18 @@ func (l *Logger) Notify(format string, args ...any) {
 	l.mu.RLock()
 	mode := l.mode
 	lspContext := l.lspContext
+	sink := l.serveSink
 	l.mu.RUnlock()
 
 	message := fmt.Sprintf(format, args...)
 
 	switch mode {
-	case ModeCLI, ModeServe:
+	case ModeCLI:
 		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", infoPrefix, message)
+	case ModeServe:
+		if sink != nil {
+			sink.Info("%s", message)
+		}
 	case ModeLSP:
 		if lspContext != nil {
 			go func() {
@@ -311,14 +366,24 @@ func (l *Logger) NotifyWithActions(message string, actions []MessageAction) {
 	l.mu.RLock()
 	mode := l.mode
 	lspContext := l.lspContext
+	sink := l.serveSink
 	l.mu.RUnlock()
 
 	switch mode {
-	case ModeCLI, ModeServe:
+	case ModeCLI:
 		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", infoPrefix, message)
 		for _, action := range actions {
 			if action.URL != "" {
 				_, _ = lipgloss.Fprintf(os.Stderr, "%s   %s: %s\n", infoPrefix, action.Title, action.URL)
+			}
+		}
+	case ModeServe:
+		if sink != nil {
+			sink.Info("%s", message)
+			for _, action := range actions {
+				if action.URL != "" {
+					sink.Info("  %s: %s", action.Title, action.URL)
+				}
 			}
 		}
 	case ModeLSP:
@@ -383,15 +448,22 @@ func (l *Logger) Success(format string, args ...any) {
 	mode := l.mode
 	verbosity := l.verbosity
 	lspContext := l.lspContext
+	sink := l.serveSink
 	l.mu.RUnlock()
 
 	if verbosity < VerbosityNormal {
 		return
 	}
 
+	message := fmt.Sprintf(format, args...)
+
 	switch mode {
-	case ModeCLI, ModeServe:
-		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", successPrefix, fmt.Sprintf(format, args...))
+	case ModeCLI:
+		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", successPrefix, message)
+	case ModeServe:
+		if sink != nil {
+			sink.Success("%s", message)
+		}
 	case ModeLSP:
 		message := fmt.Sprintf(format, args...)
 		l.logLSP(LogLevelInfo, message, lspContext)
@@ -403,6 +475,7 @@ func (l *Logger) log(level LogLevel, format string, args ...any) {
 	l.mu.RLock()
 	mode := l.mode
 	lspContext := l.lspContext
+	sink := l.serveSink
 	ok := l.shouldLog(level)
 	l.mu.RUnlock()
 
@@ -413,10 +486,29 @@ func (l *Logger) log(level LogLevel, format string, args ...any) {
 	message := fmt.Sprintf(format, args...)
 
 	switch mode {
-	case ModeCLI, ModeServe:
+	case ModeCLI:
 		l.logCLI(level, message)
+	case ModeServe:
+		if sink != nil {
+			l.logServe(level, message, sink)
+		}
 	case ModeLSP:
 		l.logLSP(level, message, lspContext)
+	}
+}
+
+func (l *Logger) logServe(level LogLevel, message string, sink ServeSink) {
+	switch level {
+	case LogLevelTrace:
+		sink.Trace("%s", message)
+	case LogLevelDebug:
+		sink.Debug("%s", message)
+	case LogLevelInfo:
+		sink.Info("%s", message)
+	case LogLevelWarning:
+		sink.Warning("%s", message)
+	case LogLevelError:
+		sink.Error("%s", message)
 	}
 }
 
@@ -476,6 +568,7 @@ func Debug(format string, args ...any) {
 	globalLogger.Debug(format, args...)
 }
 
+
 func Info(format string, args ...any) {
 	globalLogger.Info(format, args...)
 }
@@ -507,6 +600,15 @@ func Success(format string, args ...any) {
 func SetMode(mode LoggerMode) {
 	globalLogger.SetMode(mode)
 }
+
+func SetServeSink(sink ServeSink) {
+	globalLogger.SetServeSink(sink)
+}
+
+func LogDurations(title string, entries []DurationData) {
+	globalLogger.LogDurations(title, entries)
+}
+
 
 func SetLSPContext(context *glsp.Context) {
 	globalLogger.SetLSPContext(context)
