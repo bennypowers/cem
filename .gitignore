@@ -47,3 +47,6 @@ serve/elements/node_modules/
 serve/elements/patternfly/custom-elements.json
 serve/elements/chrome/custom-elements.json
 serve/middleware/routes/templates/ssr-bundle.qbc
+
+# Makefile stamp files
+.generate.stamp
