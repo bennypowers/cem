@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"bennypowers.dev/cem/generate/jsdoc"
+	"bennypowers.dev/cem/internal/tui"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
 	S "bennypowers.dev/cem/internal/set"
@@ -185,7 +186,7 @@ func (mp *ModuleProcessor) Collect() (
 	} else {
 		mp.logger.Info("Module processed successfully")
 	}
-	mp.logger.Info("Total time: %s", ColorizeDuration(mp.logger.Duration).Render(fmt.Sprint(mp.logger.Duration)))
+	mp.logger.Info("Total time: %s", tui.ColorizeDuration(mp.logger.Duration).Render(fmt.Sprint(mp.logger.Duration)))
 	slices.SortStableFunc(mp.module.Declarations, func(a, b M.Declaration) int {
 		return int(a.GetStartByte() - b.GetStartByte())
 	})

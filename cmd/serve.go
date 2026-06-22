@@ -195,7 +195,10 @@ var serveCmd = &cobra.Command{
 		}
 
 		if serveTUILogger != nil {
-			defer logging.SetServeSink(nil)
+			defer func() {
+				logging.SetServeSink(nil)
+				logging.SetMode(logging.ModeCLI)
+			}()
 			return runInteractive(serveTUILogger, config, ctx.Root(), reload)
 		}
 		return runNonInteractive(config, ctx.Root(), reload)
@@ -207,6 +210,7 @@ func runInteractive(tl *servetui.Logger, config serve.Config, root string, reloa
 	config.Logger = tl
 
 	var server *serve.Server
+	var initErr error
 	var mu sync.Mutex
 	currentLogLevelIdx := 1
 	for i, v := range verbosityOrder {
@@ -219,20 +223,29 @@ func runInteractive(tl *servetui.Logger, config serve.Config, root string, reloa
 	callbacks := servetui.Callbacks{
 		InitServer: func() tea.Msg {
 			var err error
-			server, err = initServer(config, tl, root, reload)
+			s, err := initServer(config, tl, root, reload)
 			if err != nil {
+				mu.Lock()
+				initErr = err
+				mu.Unlock()
 				return servetui.ServerInitErrorMsg{Err: err}
 			}
-			port := server.Port()
+			mu.Lock()
+			server = s
+			mu.Unlock()
+			port := s.Port()
 			tl.SetStatus(formatStatusLine(port, reload, logging.CurrentVerbosity().String()))
-			return servetui.ServerReadyMsg{Port: port, Reload: reload, WatchDone: server.Done()}
+			return servetui.ServerReadyMsg{Port: port, Reload: reload, WatchDone: s.Done()}
 		},
 		RebuildManifest: func() (int, error) {
-			if server == nil {
+			mu.Lock()
+			s := server
+			mu.Unlock()
+			if s == nil {
 				return 0, fmt.Errorf("server not initialized")
 			}
 			tl.Info("Force rebuilding manifest...")
-			size, err := server.RegenerateManifest()
+			size, err := s.RegenerateManifest()
 			if err != nil {
 				tl.Warning("Failed to rebuild manifest: %v", err)
 			} else {
@@ -241,10 +254,13 @@ func runInteractive(tl *servetui.Logger, config serve.Config, root string, reloa
 			return size, err
 		},
 		OpenBrowser: func() error {
-			if server == nil {
+			mu.Lock()
+			s := server
+			mu.Unlock()
+			if s == nil {
 				return fmt.Errorf("server not initialized")
 			}
-			port := server.Port()
+			port := s.Port()
 			url := fmt.Sprintf("http://localhost:%d", port)
 			tl.Info("Opening %s in browser...", url)
 			return openBrowser(url)
@@ -253,12 +269,13 @@ func runInteractive(tl *servetui.Logger, config serve.Config, root string, reloa
 			mu.Lock()
 			currentLogLevelIdx = (currentLogLevelIdx + 1) % len(verbosityOrder)
 			v := verbosityOrder[currentLogLevelIdx]
+			s := server
 			mu.Unlock()
 			logging.SetVerbosity(v)
 			tl.Info("Log level: %s", v)
 			port := 0
-			if server != nil {
-				port = server.Port()
+			if s != nil {
+				port = s.Port()
 			}
 			tl.SetStatus(formatStatusLine(port, reload, v.String()))
 			return v.String()
@@ -278,12 +295,18 @@ func runInteractive(tl *servetui.Logger, config serve.Config, root string, reloa
 		}
 	}
 
-	if server != nil {
-		if err := server.Close(); err != nil {
+	mu.Lock()
+	s := server
+	ie := initErr
+	mu.Unlock()
+
+	if s != nil {
+		if err := s.Close(); err != nil {
 			logging.Warning("Server close: %v", err)
 		}
 	}
-	return nil
+
+	return ie
 }
 
 func initServer(config serve.Config, log logger.Logger, root string, reload bool) (ret *serve.Server, retErr error) {
@@ -326,6 +349,11 @@ func initServer(config serve.Config, log logger.Logger, root string, reload bool
 				case <-time.After(2 * time.Second):
 				case <-server.Done():
 					return
+				}
+				select {
+				case <-server.Done():
+					return
+				default:
 				}
 				log.Info("Regenerating manifest in background...")
 				newSize, err := server.RegenerateManifest()

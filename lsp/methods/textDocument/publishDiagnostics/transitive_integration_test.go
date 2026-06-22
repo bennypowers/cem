@@ -34,7 +34,7 @@ func TestTransitiveIntegration_ThreeLevelDependency(t *testing.T) {
 	// lifecycle which causes lazy module graph building. Fixed by properly opening
 	// the document through the server.
 
-	// Disable debug logging during this test to avoid race conditions with pterm global state
+	// Disable debug logging during this test to avoid race conditions with global logger state
 	helpers.SetDebugLoggingEnabled(false)
 	defer helpers.SetDebugLoggingEnabled(false)
 

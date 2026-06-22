@@ -8,6 +8,7 @@ import (
 	lipgloss "charm.land/lipgloss/v2"
 	"bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/internal/sourcepos"
+	"bennypowers.dev/cem/internal/tui"
 )
 
 // Diagnostic holds all data needed to render a single config validation finding
@@ -23,13 +24,13 @@ type Diagnostic struct {
 }
 
 var (
-	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Red).Bold(true)
-	warningStyle = lipgloss.NewStyle().Foreground(lipgloss.Yellow).Bold(true)
-	gutterStyle  = lipgloss.NewStyle().Foreground(lipgloss.Cyan)
-	lineNumStyle = lipgloss.NewStyle().Foreground(lipgloss.Cyan)
-	labelStyle   = lipgloss.NewStyle().Foreground(lipgloss.Red)
-	warnLabel    = lipgloss.NewStyle().Foreground(lipgloss.Yellow)
-	fieldStyle   = lipgloss.NewStyle().Bold(true)
+	errorStyle   = tui.ErrorStyle.Bold(true)
+	warningStyle = tui.WarnStyle.Bold(true)
+	gutterStyle  = tui.CodeStyle
+	lineNumStyle = tui.CodeStyle
+	labelStyle   = tui.ErrorStyle
+	warnLabel    = tui.WarnStyle
+	fieldStyle   = tui.FieldStyle
 )
 
 // Render writes a single diagnostic to w with miette-style source snippets.

@@ -37,14 +37,8 @@ import (
 	lipgloss "charm.land/lipgloss/v2"
 	"github.com/bennypowers/glsp"
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
-)
 
-var (
-	infoPrefix    = lipgloss.NewStyle().Foreground(lipgloss.Blue).Render(" INFO ")
-	successPrefix = lipgloss.NewStyle().Foreground(lipgloss.Green).Render(" SUCCESS ")
-	warningPrefix = lipgloss.NewStyle().Foreground(lipgloss.Yellow).Render(" WARNING ")
-	errorPrefix   = lipgloss.NewStyle().Foreground(lipgloss.Red).Render(" ERROR ")
-	debugPrefix   = lipgloss.NewStyle().Foreground(lipgloss.Cyan).Render(" DEBUG ")
+	"bennypowers.dev/cem/internal/tui"
 )
 
 // Verbosity controls how much diagnostic output is produced.
@@ -116,14 +110,7 @@ type ServeSink interface {
 
 // DurationSink extends ServeSink with structured duration data support.
 type DurationSink interface {
-	LogDurations(title string, entries []DurationData)
-}
-
-// DurationData carries structured duration info for bar chart rendering.
-type DurationData struct {
-	Name     string
-	Duration string
-	Percent  float64
+	LogDurations(title string, entries []tui.DurationData)
 }
 
 // Logger provides centralized logging that adapts to CLI vs LSP contexts
@@ -256,7 +243,7 @@ func (l *Logger) IsQuietEnabled() bool {
 
 // LogDurations sends structured duration data to the serve sink.
 // In CLI mode, this is a no-op (callers render their own bar charts).
-func (l *Logger) LogDurations(title string, entries []DurationData) {
+func (l *Logger) LogDurations(title string, entries []tui.DurationData) {
 	l.mu.RLock()
 	mode := l.mode
 	sink := l.serveSink
@@ -306,7 +293,7 @@ func (l *Logger) Critical(format string, args ...any) {
 
 	switch mode {
 	case ModeCLI:
-		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", errorPrefix, message)
+		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", tui.ErrorPrefix, message)
 	case ModeServe:
 		if sink != nil {
 			sink.Error("%s", message)
@@ -340,7 +327,7 @@ func (l *Logger) Notify(format string, args ...any) {
 
 	switch mode {
 	case ModeCLI:
-		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", infoPrefix, message)
+		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", tui.InfoPrefix, message)
 	case ModeServe:
 		if sink != nil {
 			sink.Info("%s", message)
@@ -371,10 +358,10 @@ func (l *Logger) NotifyWithActions(message string, actions []MessageAction) {
 
 	switch mode {
 	case ModeCLI:
-		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", infoPrefix, message)
+		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", tui.InfoPrefix, message)
 		for _, action := range actions {
 			if action.URL != "" {
-				_, _ = lipgloss.Fprintf(os.Stderr, "%s   %s: %s\n", infoPrefix, action.Title, action.URL)
+				_, _ = lipgloss.Fprintf(os.Stderr, "%s   %s: %s\n", tui.InfoPrefix, action.Title, action.URL)
 			}
 		}
 	case ModeServe:
@@ -459,7 +446,7 @@ func (l *Logger) Success(format string, args ...any) {
 
 	switch mode {
 	case ModeCLI:
-		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", successPrefix, message)
+		_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", tui.SuccessPrefix, message)
 	case ModeServe:
 		if sink != nil {
 			sink.Success("%s", message)
@@ -516,13 +503,13 @@ func (l *Logger) logCLI(level LogLevel, message string) {
 	var prefix string
 	switch level {
 	case LogLevelTrace, LogLevelDebug:
-		prefix = debugPrefix
+		prefix = tui.DebugPrefix
 	case LogLevelInfo:
-		prefix = infoPrefix
+		prefix = tui.InfoPrefix
 	case LogLevelWarning:
-		prefix = warningPrefix
+		prefix = tui.WarningPrefix
 	case LogLevelError:
-		prefix = errorPrefix
+		prefix = tui.ErrorPrefix
 	}
 	_, _ = lipgloss.Fprintf(os.Stderr, "%s %s\n", prefix, message)
 }
@@ -605,7 +592,7 @@ func SetServeSink(sink ServeSink) {
 	globalLogger.SetServeSink(sink)
 }
 
-func LogDurations(title string, entries []DurationData) {
+func LogDurations(title string, entries []tui.DurationData) {
 	globalLogger.LogDurations(title, entries)
 }
 
@@ -640,4 +627,23 @@ func SetQuietEnabled(enabled bool) {
 
 func IsQuietEnabled() bool {
 	return globalLogger.IsQuietEnabled()
+}
+
+// ShouldDisplay reports whether a log entry of the given level type
+// should be shown at the current verbosity.
+func ShouldDisplay(levelType string) bool {
+	switch levelType {
+	case "trace":
+		return AtLevel(LogLevelTrace)
+	case "debug":
+		return AtLevel(LogLevelDebug)
+	case "info":
+		return AtLevel(LogLevelInfo)
+	case "success":
+		return CurrentVerbosity() >= VerbosityNormal
+	case "warning", "error":
+		return true
+	default:
+		return false
+	}
 }

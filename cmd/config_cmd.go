@@ -8,8 +8,10 @@ import (
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	IC "bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/internal/diagnostic"
+	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/sourcepos"
+	"bennypowers.dev/cem/internal/tui"
 	W "bennypowers.dev/cem/internal/workspace"
 	"bennypowers.dev/cem/serve/middleware/transform"
 	"github.com/spf13/cobra"
@@ -190,19 +192,26 @@ var configShowCmd = &cobra.Command{
 		}
 
 		format, _ := cmd.Flags().GetString("format")
+		var text, lang string
 		switch format {
 		case "json":
 			data, err := json.MarshalIndent(cfg, "", "  ")
 			if err != nil {
 				return fmt.Errorf("failed to marshal config: %w", err)
 			}
-			cmd.Println(string(data))
+			text = string(data) + "\n"
+			lang = "json"
 		default:
 			data, err := yaml.Marshal(cfg)
 			if err != nil {
 				return fmt.Errorf("failed to marshal config: %w", err)
 			}
-			cmd.Print(string(data))
+			text = string(data)
+			lang = "yaml"
+		}
+		if err := tui.Highlight(cmd.OutOrStdout(), text, lang); err != nil {
+			logging.Debug("syntax highlighting failed: %v", err)
+			cmd.Print(text)
 		}
 		return nil
 	},

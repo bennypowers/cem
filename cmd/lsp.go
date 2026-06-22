@@ -25,7 +25,6 @@ import (
 	LSP "bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/internal/workspace"
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -48,9 +47,6 @@ Features provided:
 - Go-to-definition for custom elements
 - Diagnostics for unknown elements and invalid attributes`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// CRITICAL: Redirect all pterm output to stderr immediately to prevent LSP stdout contamination
-		pterm.SetDefaultOutput(os.Stderr)
-
 		// Start pprof server if enabled
 		pprofFlag, _ := cmd.Flags().GetBool("pprof")
 		if pprofFlag {

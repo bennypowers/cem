@@ -22,6 +22,8 @@ import (
 
 	lipgloss "charm.land/lipgloss/v2"
 	"github.com/stretchr/testify/assert"
+
+	"bennypowers.dev/cem/internal/tui"
 )
 
 func TestColorizeDuration(t *testing.T) {
@@ -30,18 +32,18 @@ func TestColorizeDuration(t *testing.T) {
 		d     time.Duration
 		style lipgloss.Style
 	}{
-		{"fast green", 50 * time.Millisecond, greenDuration},
-		{"zero green", 0, greenDuration},
-		{"boundary 99ms green", 99 * time.Millisecond, greenDuration},
-		{"boundary 100ms yellow", 100 * time.Millisecond, yellowDuration},
-		{"medium yellow", 300 * time.Millisecond, yellowDuration},
-		{"boundary 499ms yellow", 499 * time.Millisecond, yellowDuration},
-		{"boundary 500ms red", 500 * time.Millisecond, redDuration},
-		{"slow red", 2 * time.Second, redDuration},
+		{"fast green", 50 * time.Millisecond, tui.DurationFastStyle},
+		{"zero green", 0, tui.DurationFastStyle},
+		{"boundary 99ms green", 99 * time.Millisecond, tui.DurationFastStyle},
+		{"boundary 100ms yellow", 100 * time.Millisecond, tui.DurationMediumStyle},
+		{"medium yellow", 300 * time.Millisecond, tui.DurationMediumStyle},
+		{"boundary 499ms yellow", 499 * time.Millisecond, tui.DurationMediumStyle},
+		{"boundary 500ms red", 500 * time.Millisecond, tui.DurationSlowStyle},
+		{"slow red", 2 * time.Second, tui.DurationSlowStyle},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			style := ColorizeDuration(tc.d)
+			style := tui.ColorizeDuration(tc.d)
 			assert.Equal(t, tc.style, style)
 		})
 	}

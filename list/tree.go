@@ -21,12 +21,10 @@ import (
 	"reflect"
 	"strings"
 
-	lipgloss "charm.land/lipgloss/v2"
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/internal/tui"
 	treeview "github.com/Digital-Shane/treeview/v2"
 )
-
-var sectionStyle = lipgloss.NewStyle().Bold(true)
 
 func RenderTree(title string, renderable M.Renderable, pred M.PredicateFunc) (string, error) {
 	if renderable == nil || isTypedNil(renderable) {
@@ -48,7 +46,7 @@ func RenderTree(title string, renderable M.Renderable, pred M.PredicateFunc) (st
 	}
 
 	var builder strings.Builder
-	builder.WriteString(sectionStyle.Render(title))
+	builder.WriteString(tui.HeaderStyle.Render(title))
 	builder.WriteString("\n")
 	builder.WriteString(s)
 	return builder.String(), nil

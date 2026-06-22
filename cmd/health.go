@@ -20,13 +20,13 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"os"
 	"path/filepath"
 	"strings"
 
 	lipgloss "charm.land/lipgloss/v2"
 
 	"bennypowers.dev/cem/health"
+	"bennypowers.dev/cem/internal/tui"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/internal/workspace"
 	"github.com/spf13/cobra"
@@ -112,7 +112,7 @@ func healthWorkspace(cmd *cobra.Command, args []string) error {
 		}
 
 		if format == "text" {
-			if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), lipgloss.NewStyle().Bold(true).Render(pkg.Name)); err != nil {
+			if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), tui.HeaderStyle.Render(pkg.Name)); err != nil {
 				return err
 			}
 			displayOptions := health.DisplayOptions{Format: format}
@@ -171,29 +171,23 @@ Source file paths can be passed as positional arguments to filter the report
 to modules matching those files. File extensions are mapped to their compiled
 output equivalents (.ts -> .js, .tsx -> .js, etc.) and resolved through the
 package.json exports map, replicating the same logic used by cem generate.`,
-	Args: cobra.ArbitraryArgs,
-	Run: func(cmd *cobra.Command, args []string) {
+	Args:         cobra.ArbitraryArgs,
+	SilenceUsage: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if workspace.ShouldUseWorkspaceMode(cmd) {
-			if err := healthWorkspace(cmd, args); err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
-			return
+			return healthWorkspace(cmd, args)
 		}
 
 		ctx, err := workspace.GetWorkspaceContext(cmd)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting workspace context: %v\n", err)
-			os.Exit(1)
+			return err
 		}
 
 		manifestPath := ctx.CustomElementsManifestPath()
 		if manifestPath == "" {
-			fmt.Fprintln(os.Stderr, "Could not find custom-elements.json")
-			os.Exit(1)
+			return fmt.Errorf("could not find custom-elements.json")
 		}
 
-		// Get flags — prefer --tag-name, fall back to deprecated --component
 		component, _ := cmd.Flags().GetString("tag-name")
 		if component == "" {
 			component, _ = cmd.Flags().GetString("component")
@@ -203,13 +197,11 @@ package.json exports map, replicating the same logic used by cem generate.`,
 		switch format {
 		case "text", "json", "markdown":
 		default:
-			fmt.Fprintf(os.Stderr, "Invalid format %q: must be text, json, or markdown\n", format)
-			os.Exit(1)
+			return fmt.Errorf("invalid format %q: must be text, json, or markdown", format)
 		}
 		failBelow, _ := cmd.Flags().GetInt("fail-below")
 		disableFlags, _ := cmd.Flags().GetStringArray("disable")
 
-		// Merge config and flag values
 		configDisabled := viper.GetStringSlice("health.disable")
 		allDisabled := make([]string, 0, len(configDisabled)+len(disableFlags))
 		allDisabled = append(allDisabled, configDisabled...)
@@ -220,13 +212,8 @@ package.json exports map, replicating the same logic used by cem generate.`,
 		allModules = append(allModules, configModules...)
 		allModules = append(allModules, moduleFlags...)
 
-		// Resolve positional file args to module paths
 		if len(args) > 0 {
 			pkgJSON, _ := ctx.PackageJSON()
-
-			// Determine the package path prefix to strip from file args.
-			// File args (e.g. from git diff) are repo-root-relative, but
-			// module paths in the manifest are package-root-relative.
 			pkgPrefix := ""
 			if p, _ := cmd.Flags().GetString("package"); p != "" && p != "." {
 				pkgPrefix = filepath.ToSlash(filepath.Clean(p)) + "/"
@@ -239,10 +226,8 @@ package.json exports map, replicating the same logic used by cem generate.`,
 				resolved, err := M.ResolveExportPath(pkgJSON, normalized)
 				if err != nil {
 					if errors.Is(err, M.ErrNotExported) {
-						// Not exported — use normalized path as-is (same as generate)
 						allModules = append(allModules, normalized)
 					}
-					// Other files (README, tests, etc.) — silently skip
 					continue
 				}
 				allModules = append(allModules, resolved)
@@ -262,26 +247,21 @@ package.json exports map, replicating the same logic used by cem generate.`,
 
 		result, err := health.Analyze(manifestPath, options)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error analyzing manifest: %v\n", err)
-			os.Exit(1)
+			return err
 		}
 
-		displayOptions := health.DisplayOptions{
-			Format: format,
-		}
+		displayOptions := health.DisplayOptions{Format: format}
 		if err := health.PrintHealthResult(cmd.OutOrStdout(), result, displayOptions); err != nil {
-			fmt.Fprintf(os.Stderr, "Error displaying health results: %v\n", err)
-			os.Exit(1)
+			return err
 		}
 
-		// Check fail-below threshold
 		if failBelow > 0 && result.OverallMax > 0 {
 			pct := int(math.Round(float64(result.OverallScore) * 100 / float64(result.OverallMax)))
 			if pct < failBelow {
-				fmt.Fprintf(os.Stderr, "Health score %d%% (%d/%d) is below the --fail-below threshold of %d%%\n",
+				return fmt.Errorf("health score %d%% (%d/%d) is below threshold of %d%%",
 					pct, result.OverallScore, result.OverallMax, failBelow)
-				os.Exit(1)
 			}
 		}
+		return nil
 	},
 }

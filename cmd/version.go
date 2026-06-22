@@ -32,30 +32,26 @@ var versionCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		output, err := cmd.Flags().GetString("output")
 		if err != nil {
-			return fmt.Errorf("error reading output flag: %v", err)
+			return fmt.Errorf("error reading output flag: %w", err)
 		}
 		switch output {
 		case "json":
-			printVersionJSON()
+			return printVersionJSON(cmd)
 		default:
-			printVersionText()
+			cmd.Printf("cem %s\n", version.GetVersion())
+			return nil
 		}
-		return nil
 	},
 }
 
-func printVersionText() {
-	fmt.Printf("cem %s\n", version.GetVersion())
-}
-
-func printVersionJSON() {
+func printVersionJSON(cmd *cobra.Command) error {
 	buildInfo := version.GetBuildInfo()
 	output, err := json.MarshalIndent(buildInfo, "", "  ")
 	if err != nil {
-		fmt.Printf("error marshaling version info: %v\n", err)
-		return
+		return fmt.Errorf("marshaling version info: %w", err)
 	}
-	fmt.Println(string(output))
+	cmd.Println(string(output))
+	return nil
 }
 
 func init() {

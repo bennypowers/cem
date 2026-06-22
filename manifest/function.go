@@ -206,7 +206,6 @@ func (x *RenderableFunctionDeclaration) Name() string {
 		return ""
 	}
 	return x.FunctionDeclaration.Name()
-	// label := pterm.LightBlue("function") + " " + highlightIfDeprecated(x.FunctionDeclaration.Name(), x)
 }
 
 func (x *RenderableFunctionDeclaration) Label() string {

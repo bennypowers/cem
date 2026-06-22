@@ -11,7 +11,7 @@ import (
 	lipgloss "charm.land/lipgloss/v2"
 
 	"bennypowers.dev/cem/internal/logging"
-	"bennypowers.dev/cem/internal/tui"
+	itui "bennypowers.dev/cem/internal/tui"
 )
 
 const (
@@ -218,10 +218,10 @@ func (m Model) View() tea.View {
 	b.WriteString(m.viewport.View())
 	b.WriteByte('\n')
 
-	b.WriteString(tui.SeparatorStyle.Render(strings.Repeat("─", m.width)))
+	b.WriteString(itui.SeparatorStyle.Render(strings.Repeat("─", m.width)))
 	b.WriteByte('\n')
 
-	b.WriteString(tui.StatusBulletStyle.Render("● "))
+	b.WriteString(itui.StatusBulletStyle.Render("● "))
 	b.WriteString(m.status)
 	b.WriteByte('\n')
 
@@ -237,7 +237,7 @@ func (m *Model) appendLog(msg LogMsg) {
 	if len(m.logMsgs) > maxTermLines {
 		m.logMsgs = m.logMsgs[len(m.logMsgs)-maxTermLines:]
 	}
-	if tui.ShouldDisplay(msg.Entry.Type) {
+	if logging.ShouldDisplay(msg.Entry.Type) {
 		m.lines = append(m.lines, formatLogLine(msg, m.width))
 		if len(m.lines) > maxTermLines {
 			m.lines = m.lines[len(m.lines)-maxTermLines:]
@@ -252,7 +252,7 @@ func (m *Model) appendLog(msg LogMsg) {
 func (m *Model) reflowLines() {
 	m.lines = m.lines[:0]
 	for _, msg := range m.logMsgs {
-		if tui.ShouldDisplay(msg.Entry.Type) {
+		if logging.ShouldDisplay(msg.Entry.Type) {
 			m.lines = append(m.lines, formatLogLine(msg, m.width))
 		}
 	}
@@ -317,13 +317,13 @@ func (m Model) shutdownCmd() tea.Cmd {
 func styleMessage(levelType, message string) string {
 	switch levelType {
 	case "warning":
-		return tui.WarnStyle.Render(message)
+		return itui.WarnStyle.Render(message)
 	case "error":
-		return tui.ErrorStyle.Render(message)
+		return itui.ErrorStyle.Render(message)
 	case "debug":
-		return tui.DebugStyle.Render(message)
+		return itui.DebugStyle.Render(message)
 	case "trace":
-		return tui.TraceStyle.Render(message)
+		return itui.TraceStyle.Render(message)
 	default:
 		return message
 	}
@@ -332,17 +332,17 @@ func styleMessage(levelType, message string) string {
 func levelPrefix(levelType string) string {
 	switch levelType {
 	case "info":
-		return tui.InfoStyle.Render("INFO ")
+		return itui.InfoStyle.Render("INFO ")
 	case "warning":
-		return tui.WarnStyle.Render("WARN ")
+		return itui.WarnStyle.Render("WARN ")
 	case "error":
-		return tui.ErrorStyle.Render("ERROR")
+		return itui.ErrorStyle.Render("ERROR")
 	case "success":
-		return tui.SuccessStyle.Render(" OK  ")
+		return itui.SuccessStyle.Render(" OK  ")
 	case "debug":
-		return tui.DebugStyle.Render("DEBUG")
+		return itui.DebugStyle.Render("DEBUG")
 	case "trace":
-		return tui.TraceStyle.Render("TRACE")
+		return itui.TraceStyle.Render("TRACE")
 	default:
 		return fmt.Sprintf("%-5s", levelType)
 	}
@@ -380,7 +380,7 @@ func formatLogLine(msg LogMsg, width int) string {
 			visualLen := prefixCols + lipgloss.Width(line) + timestampCols
 			padding := max(width-visualLen, 1)
 			b.WriteString(strings.Repeat(" ", padding))
-			b.WriteString(tui.TimestampStyle.Render(timestamp))
+			b.WriteString(itui.TimestampStyle.Render(timestamp))
 		}
 		if i < len(lines)-1 {
 			b.WriteByte('\n')
@@ -389,15 +389,15 @@ func formatLogLine(msg LogMsg, width int) string {
 
 	if d := msg.Entry.Data; d != nil && d.Kind == "durations" {
 		b.WriteByte('\n')
-		durationData := make([]logging.DurationData, len(d.Durations))
+		durationData := make([]itui.DurationData, len(d.Durations))
 		for i, de := range d.Durations {
-			durationData[i] = logging.DurationData{
+			durationData[i] = itui.DurationData{
 				Name:     de.Name,
 				Duration: de.Duration,
 				Percent:  de.Percent,
 			}
 		}
-		tui.FormatDurationBars(&b, durationData, indent, timestamp, width)
+		itui.FormatDurationBars(&b, durationData, indent, timestamp, width)
 	}
 
 	return b.String()

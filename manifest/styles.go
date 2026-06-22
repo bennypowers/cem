@@ -1,11 +1,11 @@
 package manifest
 
-import lipgloss "charm.land/lipgloss/v2"
+import "bennypowers.dev/cem/internal/tui"
 
 var (
-	categoryStyle         = lipgloss.NewStyle().Foreground(lipgloss.Blue)
-	kindStyle             = lipgloss.NewStyle().Foreground(lipgloss.BrightBlue)
-	summaryStyle          = lipgloss.NewStyle().Foreground(lipgloss.BrightBlack)
-	deprecatedStyle       = lipgloss.NewStyle().Foreground(lipgloss.Red)
-	deprecatedReasonStyle = lipgloss.NewStyle().Foreground(lipgloss.BrightRed)
+	categoryStyle         = tui.CategoryStyle
+	kindStyle             = tui.KindStyle
+	summaryStyle          = tui.MutedStyle
+	deprecatedStyle       = tui.DeprecatedStyle
+	deprecatedReasonStyle = tui.ErrorStyle
 )
