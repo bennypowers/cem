@@ -25,15 +25,7 @@ import (
 	lipgloss "charm.land/lipgloss/v2"
 
 	"bennypowers.dev/cem/internal/logging"
-)
-
-var (
-	folderStyle = lipgloss.NewStyle().Foreground(lipgloss.BrightCyan)
-	moduleStyle = lipgloss.NewStyle().Foreground(lipgloss.BrightBlue)
-	arrowStyle  = lipgloss.NewStyle().Foreground(lipgloss.BrightBlack)
-	declStyle   = lipgloss.NewStyle().Foreground(lipgloss.Yellow)
-	warnStyle   = lipgloss.NewStyle().Foreground(lipgloss.BrightYellow)
-	errStyle    = lipgloss.NewStyle().Foreground(lipgloss.BrightRed)
+	"bennypowers.dev/cem/internal/tui"
 )
 
 type GroupedIssues struct {
@@ -190,16 +182,16 @@ func printGroupedWarnings(w io.Writer, groupedWarnings []GroupedWarnings) error 
 	for _, group := range groupedWarnings {
 		if group.Module != "" && group.Declaration != "" {
 			if _, err := lipgloss.Fprintf(w, "%s %s %s %s\n",
-				folderStyle.Render("📁"),
-				moduleStyle.Render(group.Module),
-				arrowStyle.Render("→"),
-				declStyle.Render(group.Declaration)); err != nil {
+				tui.FolderStyle.Render("📁"),
+				tui.KindStyle.Render(group.Module),
+				tui.MutedStyle.Render("→"),
+				tui.DeclStyle.Render(group.Declaration)); err != nil {
 				return err
 			}
 		} else if group.Module != "" {
 			if _, err := lipgloss.Fprintf(w, "%s %s\n",
-				folderStyle.Render("📁"),
-				moduleStyle.Render(group.Module)); err != nil {
+				tui.FolderStyle.Render("📁"),
+				tui.KindStyle.Render(group.Module)); err != nil {
 				return err
 			}
 		}
@@ -207,7 +199,7 @@ func printGroupedWarnings(w io.Writer, groupedWarnings []GroupedWarnings) error 
 		for _, warning := range group.Warnings {
 			if warning.Member != "" && warning.Property != "" {
 				if _, err := lipgloss.Fprintf(w, "  %s %s → %s: %s\n",
-					warnStyle.Render("⚠"),
+					tui.WarnStyle.Render("⚠"),
 					warning.Member,
 					warning.Property,
 					warning.Message); err != nil {
@@ -215,21 +207,21 @@ func printGroupedWarnings(w io.Writer, groupedWarnings []GroupedWarnings) error 
 				}
 			} else if warning.Member != "" {
 				if _, err := lipgloss.Fprintf(w, "  %s %s: %s\n",
-					warnStyle.Render("⚠"),
+					tui.WarnStyle.Render("⚠"),
 					warning.Member,
 					warning.Message); err != nil {
 					return err
 				}
 			} else if warning.Property != "" {
 				if _, err := lipgloss.Fprintf(w, "  %s %s: %s\n",
-					warnStyle.Render("⚠"),
+					tui.WarnStyle.Render("⚠"),
 					warning.Property,
 					warning.Message); err != nil {
 					return err
 				}
 			} else {
 				if _, err := lipgloss.Fprintf(w, "  %s %s\n",
-					warnStyle.Render("⚠"),
+					tui.WarnStyle.Render("⚠"),
 					warning.Message); err != nil {
 					return err
 				}
@@ -246,22 +238,22 @@ func printGroupedIssues(w io.Writer, groupedIssues []GroupedIssues) error {
 	for _, group := range groupedIssues {
 		if group.Module != "" && group.Declaration != "" {
 			if _, err := lipgloss.Fprintf(w, "%s %s %s %s\n",
-				folderStyle.Render("📁"),
-				moduleStyle.Render(group.Module),
-				arrowStyle.Render("→"),
-				declStyle.Render(group.Declaration)); err != nil {
+				tui.FolderStyle.Render("📁"),
+				tui.KindStyle.Render(group.Module),
+				tui.MutedStyle.Render("→"),
+				tui.DeclStyle.Render(group.Declaration)); err != nil {
 				return err
 			}
 		} else if group.Module != "" {
 			if _, err := lipgloss.Fprintf(w, "%s %s\n",
-				folderStyle.Render("📁"),
-				moduleStyle.Render(group.Module)); err != nil {
+				tui.FolderStyle.Render("📁"),
+				tui.KindStyle.Render(group.Module)); err != nil {
 				return err
 			}
 		} else {
 			if _, err := lipgloss.Fprintf(w, "%s %s\n",
-				errStyle.Render("⚠"),
-				declStyle.Render("Root level issues")); err != nil {
+				tui.ErrorStyle.Render("⚠"),
+				tui.DeclStyle.Render("Root level issues")); err != nil {
 				return err
 			}
 		}
@@ -269,7 +261,7 @@ func printGroupedIssues(w io.Writer, groupedIssues []GroupedIssues) error {
 		for _, issue := range group.Issues {
 			if issue.Member != "" && issue.Property != "" {
 				if _, err := lipgloss.Fprintf(w, "  %s %s → %s: %s\n",
-					errStyle.Render("●"),
+					tui.ErrorStyle.Render("●"),
 					issue.Member,
 					issue.Property,
 					issue.Message); err != nil {
@@ -277,21 +269,21 @@ func printGroupedIssues(w io.Writer, groupedIssues []GroupedIssues) error {
 				}
 			} else if issue.Member != "" {
 				if _, err := lipgloss.Fprintf(w, "  %s %s: %s\n",
-					errStyle.Render("●"),
+					tui.ErrorStyle.Render("●"),
 					issue.Member,
 					issue.Message); err != nil {
 					return err
 				}
 			} else if issue.Property != "" {
 				if _, err := lipgloss.Fprintf(w, "  %s %s: %s\n",
-					errStyle.Render("●"),
+					tui.ErrorStyle.Render("●"),
 					issue.Property,
 					issue.Message); err != nil {
 					return err
 				}
 			} else {
 				if _, err := lipgloss.Fprintf(w, "  %s %s\n",
-					errStyle.Render("●"),
+					tui.ErrorStyle.Render("●"),
 					issue.Message); err != nil {
 					return err
 				}

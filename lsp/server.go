@@ -18,7 +18,6 @@ package lsp
 
 import (
 	"fmt"
-	"os"
 	"sync"
 
 	"bennypowers.dev/cem/lsp/document"
@@ -38,7 +37,6 @@ import (
 	"bennypowers.dev/cem/lsp/methods/workspace/symbol"
 	lspTypes "bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/types"
-	"github.com/pterm/pterm"
 	protocol316 "github.com/bennypowers/glsp/protocol_3_16"
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 	"github.com/bennypowers/glsp/server"
@@ -70,9 +68,6 @@ type Server struct {
 
 // NewServer creates a new CEM LSP server
 func NewServer(workspace types.WorkspaceContext, transport TransportKind) (*Server, error) {
-	// Configure pterm to output to stderr to avoid contaminating LSP stdout stream
-	pterm.SetDefaultOutput(os.Stderr)
-
 	documents, err := document.NewDocumentManager()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create document manager: %w", err)

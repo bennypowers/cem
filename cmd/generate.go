@@ -25,6 +25,7 @@ import (
 	G "bennypowers.dev/cem/generate"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/tui"
 	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/spf13/cobra"
@@ -178,7 +179,7 @@ var generateCmd = &cobra.Command{
 					if err != nil {
 						reloutputpath = outputPath
 					}
-					message := fmt.Sprintf("Wrote manifest to %s in %s", reloutputpath, G.ColorizeDuration(end).Render(fmt.Sprint(end)))
+					message := fmt.Sprintf("Wrote manifest to %s in %s", reloutputpath, tui.ColorizeDuration(end).Render(fmt.Sprint(end)))
 					if errs != nil {
 						logging.Warning("%s", message)
 					} else {

@@ -19,7 +19,6 @@ package workspace
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -171,7 +170,7 @@ func ReportResults(verb string, results []PackageResult) error {
 	}
 
 	if len(failed) > 0 {
-		fmt.Fprintf(os.Stderr, "%s for %d of %d packages.\n\n", verb, len(succeeded), len(results))
+		logging.Warning("%s for %d of %d packages.", verb, len(succeeded), len(results))
 
 		var b strings.Builder
 		b.WriteString("Failed:\n")
@@ -181,7 +180,6 @@ func ReportResults(verb string, results []PackageResult) error {
 		logging.Error("%s", b.String())
 
 		if len(succeeded) > 0 {
-			fmt.Fprintln(os.Stderr)
 			var s strings.Builder
 			s.WriteString("Succeeded:\n")
 			for _, r := range succeeded {

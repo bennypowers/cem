@@ -23,21 +23,8 @@ import (
 	"strings"
 	"time"
 
-	lipgloss "charm.land/lipgloss/v2"
-
 	"bennypowers.dev/cem/internal/logging"
-)
-
-var (
-	traceStyle = lipgloss.NewStyle().Foreground(lipgloss.Cyan)
-	debugStyle = lipgloss.NewStyle().Foreground(lipgloss.Blue)
-	infoStyle  = lipgloss.NewStyle().Foreground(lipgloss.Green)
-	warnStyle  = lipgloss.NewStyle().Foreground(lipgloss.Yellow)
-	errStyle   = lipgloss.NewStyle().Foreground(lipgloss.Red)
-
-	greenDuration  = lipgloss.NewStyle().Foreground(lipgloss.Green)
-	yellowDuration = lipgloss.NewStyle().Foreground(lipgloss.Yellow)
-	redDuration    = lipgloss.NewStyle().Foreground(lipgloss.Red)
+	"bennypowers.dev/cem/internal/tui"
 )
 
 // LogCtx manages per-module/file log context with streaming and buffered output.
@@ -64,35 +51,35 @@ func (lc *LogCtx) Trace(msg string, args ...any) {
 	if !lc.Verbose {
 		return
 	}
-	fmt.Fprintf(lc.Buffer, "%s %s\n", traceStyle.Render("TRACE"), fmt.Sprintf(msg, args...))
+	fmt.Fprintf(lc.Buffer, "%s %s\n", tui.TraceStyle.Render("TRACE"), fmt.Sprintf(msg, args...))
 }
 
 func (lc *LogCtx) Debug(msg string, args ...any) {
 	if !lc.Verbose {
 		return
 	}
-	fmt.Fprintf(lc.Buffer, "%s %s\n", debugStyle.Render("DEBUG"), fmt.Sprintf(msg, args...))
+	fmt.Fprintf(lc.Buffer, "%s %s\n", tui.DebugStyle.Render("DEBUG"), fmt.Sprintf(msg, args...))
 }
 
 func (lc *LogCtx) Info(msg string, args ...any) {
 	if !lc.Verbose {
 		return
 	}
-	fmt.Fprintf(lc.Buffer, "%s %s\n", infoStyle.Render(" INFO"), fmt.Sprintf(msg, args...))
+	fmt.Fprintf(lc.Buffer, "%s %s\n", tui.InfoStyle.Render(" INFO"), fmt.Sprintf(msg, args...))
 }
 
 func (lc *LogCtx) Error(msg string, args ...any) {
 	if !lc.Verbose {
 		return
 	}
-	fmt.Fprintf(lc.Buffer, "%s %s\n", errStyle.Render("ERROR"), fmt.Sprintf(msg, args...))
+	fmt.Fprintf(lc.Buffer, "%s %s\n", tui.ErrorStyle.Render("ERROR"), fmt.Sprintf(msg, args...))
 }
 
 func (lc *LogCtx) Warn(msg string, args ...any) {
 	if !lc.Verbose {
 		return
 	}
-	fmt.Fprintf(lc.Buffer, "%s %s\n", warnStyle.Render(" WARN"), fmt.Sprintf(msg, args...))
+	fmt.Fprintf(lc.Buffer, "%s %s\n", tui.WarnStyle.Render(" WARN"), fmt.Sprintf(msg, args...))
 }
 
 func (lc *LogCtx) IndentedLog(indent int, label string, msg string, args ...any) {
@@ -107,26 +94,13 @@ func (lc *LogCtx) TimedLog(indent int, label string, duration time.Duration) {
 	if !lc.Verbose {
 		return
 	}
-	lc.IndentedLog(indent, label, "finished in %s", ColorizeDuration(duration).Render(fmt.Sprint(duration)))
+	lc.IndentedLog(indent, label, "finished in %s", tui.ColorizeDuration(duration).Render(fmt.Sprint(duration)))
 }
 
 func (lc *LogCtx) Finish() {
 	lc.Duration = time.Since(lc.Start)
 }
 
-// ColorizeDuration returns a lipgloss style colored by duration threshold.
-func ColorizeDuration(d time.Duration) lipgloss.Style {
-	switch {
-	case d < 100*time.Millisecond:
-		return greenDuration
-	case d < 500*time.Millisecond:
-		return yellowDuration
-	default:
-		return redDuration
-	}
-}
-
-// TODO: extract to internal/tui as a generic bar chart renderer
 // RenderBarChart shows a summary bar chart for all modules.
 func RenderBarChart(logs []*LogCtx) {
 	if len(logs) == 0 {
@@ -143,9 +117,9 @@ func RenderBarChart(logs []*LogCtx) {
 		maxMs = 1
 	}
 
-	entries := make([]logging.DurationData, 0, len(logs))
+	entries := make([]tui.DurationData, 0, len(logs))
 	for _, lc := range logs {
-		entries = append(entries, logging.DurationData{
+		entries = append(entries, tui.DurationData{
 			Name:     filepath.Base(lc.File),
 			Duration: fmt.Sprint(lc.Duration),
 			Percent:  float64(lc.Duration.Milliseconds()) / float64(maxMs) * 100,

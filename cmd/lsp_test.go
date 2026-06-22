@@ -21,6 +21,7 @@ package cmd_test
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -36,6 +37,8 @@ import (
 	"time"
 
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // jsonrpcRequest represents a JSON-RPC 2.0 request
@@ -518,4 +521,100 @@ func TestLSPDidChange(t *testing.T) {
 	}
 
 	t.Logf("Hover after change: %+v", hover)
+}
+
+// TestLSPCommandStdoutClean verifies the `cem lsp` command produces only
+// valid JSON-RPC framed content on stdout, with no stray log output.
+func TestLSPCommandStdoutClean(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, cemBinary, "lsp")
+	cmd.Dir = filepath.Join("testdata", "fixtures", "generate-project")
+	cmd.Env = append(os.Environ(), "GOCOVERDIR="+coverDir)
+
+	var stdout, stderr bytes.Buffer
+	stdinPipe, err := cmd.StdinPipe()
+	require.NoError(t, err)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	require.NoError(t, cmd.Start())
+
+	initReq := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}}`
+	header := fmt.Sprintf("Content-Length: %d\r\n\r\n", len(initReq))
+	_, err = stdinPipe.Write([]byte(header + initReq))
+	require.NoError(t, err)
+
+	// Close stdin to signal the server to exit, then wait for process
+	// to finish. All stdout is captured after the process exits,
+	// avoiding concurrent buffer access.
+	require.NoError(t, stdinPipe.Close())
+	if err := cmd.Wait(); err != nil {
+		if ctx.Err() == nil {
+			t.Fatalf("LSP process failed: %v\nstderr: %s", err, stderr.String())
+		}
+	}
+
+	out := stdout.String()
+	t.Logf("stdout length: %d bytes", len(out))
+	t.Logf("stderr (expected): %s", stderr.String())
+
+	contaminations := []string{
+		"[REGISTRY]",
+		"[IN-MEMORY]",
+		"INFO",
+		"DEBUG",
+		"Loading manifests",
+		"Successfully",
+	}
+	for _, pattern := range contaminations {
+		assert.NotContains(t, out, pattern,
+			"stdout contains log output %q which would corrupt JSON-RPC", pattern)
+	}
+
+	// Verify all stdout bytes parse as JSON-RPC framed messages
+	remaining := out
+	for len(remaining) > 0 {
+		idx := strings.Index(remaining, "Content-Length:")
+		if idx < 0 {
+			if strings.TrimSpace(remaining) != "" {
+				t.Errorf("trailing non-JSON-RPC content: %q", remaining)
+			}
+			break
+		}
+		if idx != 0 {
+			nonRPC := remaining[:idx]
+			if strings.TrimSpace(nonRPC) != "" {
+				t.Errorf("non-JSON-RPC content before header: %q", nonRPC)
+			}
+			remaining = remaining[idx:]
+		}
+		headerEnd := strings.Index(remaining, "\r\n\r\n")
+		if headerEnd < 0 {
+			t.Errorf("incomplete JSON-RPC header: %q", remaining)
+			break
+		}
+		clLine := remaining[:headerEnd]
+		parts := strings.SplitN(clLine, ":", 2)
+		if len(parts) != 2 {
+			t.Errorf("malformed Content-Length header: %q", clLine)
+			break
+		}
+		cl, err := strconv.Atoi(strings.TrimSpace(parts[1]))
+		if err != nil {
+			t.Errorf("invalid Content-Length value: %v", err)
+			break
+		}
+		bodyStart := headerEnd + 4
+		if bodyStart+cl > len(remaining) {
+			t.Errorf("body truncated: need %d bytes, have %d", cl, len(remaining)-bodyStart)
+			break
+		}
+		body := remaining[bodyStart : bodyStart+cl]
+		if !json.Valid([]byte(body)) {
+			t.Errorf("JSON-RPC body is not valid JSON: %q", body[:min(100, len(body))])
+		}
+		remaining = remaining[bodyStart+cl:]
+	}
 }

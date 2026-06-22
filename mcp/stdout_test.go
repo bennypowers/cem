@@ -28,7 +28,6 @@ import (
 	"bennypowers.dev/cem/internal/logging"
 	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"bennypowers.dev/cem/mcp"
-	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -99,11 +98,6 @@ func TestMCPCommandStdoutClean(t *testing.T) {
 //
 // See: https://github.com/bennypowers/cem/issues/129
 func TestMCPServerStdoutCleanWithQuietMode(t *testing.T) {
-	// Redirect pterm to stderr (like cmd/mcp.go does)
-	originalPtermOutput := pterm.DefaultBasicText.Writer
-	pterm.SetDefaultOutput(os.Stderr)
-	defer pterm.SetDefaultOutput(originalPtermOutput)
-
 	// Enable quiet mode (THIS IS THE FIX WE'RE TESTING)
 	originalQuiet := logging.IsQuietEnabled()
 	logging.SetQuietEnabled(true)
@@ -200,6 +194,6 @@ func TestMCPServerStderrAllowed(t *testing.T) {
 
 	// stderr MAY contain error/warning messages (this is acceptable and desired for debugging)
 	// We're just verifying the test infrastructure works
-	// The actual stderr content depends on whether pterm outputs debug info
+	// The actual stderr content depends on verbosity settings
 	// This is fine - we just want to ensure stderr is available for logging
 }

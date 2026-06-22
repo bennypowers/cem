@@ -29,6 +29,7 @@ import (
 
 	C "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/tui"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
 	DS "github.com/bmatcuk/doublestar"
@@ -90,7 +91,7 @@ func (ws *WatchSession) RunWatch() error {
 	ws.updateDemoDiscoveryState()
 
 	duration := time.Since(start)
-	logging.Success("Generated in %s", ColorizeDuration(duration).Render(fmt.Sprint(duration)))
+	logging.Success("Generated in %s", tui.ColorizeDuration(duration).Render(fmt.Sprint(duration)))
 
 	// Set up file watcher
 	watcher, err := ws.setupWatcher()
@@ -399,7 +400,7 @@ func (ws *WatchSession) processChanges() {
 	}
 
 	duration := time.Since(start)
-	logging.Success("Regenerated in %s", ColorizeDuration(duration).Render(fmt.Sprint(duration)))
+	logging.Success("Regenerated in %s", tui.ColorizeDuration(duration).Render(fmt.Sprint(duration)))
 }
 
 // generateOnce performs a single generation cycle, respecting cancellation

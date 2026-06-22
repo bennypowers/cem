@@ -6,14 +6,19 @@ import (
 
 	"charm.land/bubbles/v2/progress"
 	lipgloss "charm.land/lipgloss/v2"
-
-	"bennypowers.dev/cem/internal/logging"
 )
+
+// DurationData carries structured duration info for bar chart rendering.
+type DurationData struct {
+	Name     string
+	Duration string
+	Percent  float64
+}
 
 const defaultBarWidth = 40
 
 // FormatDurationBars renders structured duration data as progress bars.
-func FormatDurationBars(b *strings.Builder, durations []logging.DurationData, indent, timestamp string, width int) {
+func FormatDurationBars(b *strings.Builder, durations []DurationData, indent, timestamp string, width int) {
 	maxLabel := 0
 	for _, d := range durations {
 		if len(d.Name) > maxLabel {

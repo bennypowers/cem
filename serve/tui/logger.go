@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 
 	"bennypowers.dev/cem/internal/logging"
-	"bennypowers.dev/cem/internal/tui"
+	itui "bennypowers.dev/cem/internal/tui"
 	"bennypowers.dev/cem/serve/logger"
 )
 
@@ -76,7 +76,7 @@ func (l *Logger) log(level, levelType, msg string, args ...any) {
 	}
 	p := l.program
 	ws := l.wsManager
-	shouldSend := tui.ShouldDisplay(levelType)
+	shouldSend := logging.ShouldDisplay(levelType)
 	if shouldSend && p == nil {
 		l.pending = append(l.pending, LogMsg{Entry: entry, Level: level})
 	}
@@ -129,8 +129,8 @@ func (l *Logger) SetStatus(status string) {
 }
 
 // LogDurations sends structured duration data to both TUI and WebSocket.
-func (l *Logger) LogDurations(title string, entries []logging.DurationData) {
-	if !tui.ShouldDisplay("debug") {
+func (l *Logger) LogDurations(title string, entries []itui.DurationData) {
+	if !logging.ShouldDisplay("debug") {
 		return
 	}
 

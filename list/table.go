@@ -32,6 +32,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/internal/tui"
 )
 
 var (
@@ -56,7 +57,7 @@ func Render(r M.Renderable, opts RenderOptions, pred M.PredicateFunc) (string, e
 
 	// Only print the main header if we are not filtering by section.
 	if len(opts.IncludeSections) == 0 {
-		builder.WriteString(sectionStyle.Render(r.Label()) + "\n\n")
+		builder.WriteString(tui.HeaderStyle.Render(r.Label()) + "\n\n")
 
 		if d, ok := r.(M.Describable); ok {
 			if summary := d.Summary(); summary != "" {
@@ -92,7 +93,7 @@ func Render(r M.Renderable, opts RenderOptions, pred M.PredicateFunc) (string, e
 			}
 
 			// The title for a subsection is smaller
-			builder.WriteString(sectionStyle.Render(section.Title) + "\n\n")
+			builder.WriteString(tui.HeaderStyle.Render(section.Title) + "\n\n")
 			headers := filteredItems[0].ColumnHeadings()
 			rows := MapToTableRows(filteredItems)
 
@@ -151,7 +152,7 @@ func hasMatchingDescendants(r M.Renderable, pred M.PredicateFunc) bool {
 func RenderTable(title string, headers []string, rows [][]string, columns []string) (string, error) {
 	var builder strings.Builder
 
-	builder.WriteString(sectionStyle.Render(title) + "\n\n")
+	builder.WriteString(tui.HeaderStyle.Render(title) + "\n\n")
 	str, err := formatTable(headers, rows, columns)
 	if err != nil {
 		return "", err
@@ -229,8 +230,8 @@ func MapToTableRows[T M.Renderable](items []T) [][]string {
 
 var (
 	tablePadding = lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1)
-	codeStyle    = lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1).Foreground(lipgloss.Cyan)
-	headerStyle  = lipgloss.NewStyle().PaddingLeft(1).PaddingRight(1).Bold(true)
+	codeStyle    = tui.CodeStyle.PaddingLeft(1).PaddingRight(1)
+	headerStyle  = tui.HeaderStyle.PaddingLeft(1).PaddingRight(1)
 )
 
 func isCodeColumn(headers []string, col int) bool {
@@ -316,11 +317,9 @@ func formatURLColumns(headers []string, rows [][]string, linkFn func(short, full
 	return out
 }
 
-var linkStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Blue)
-
 func hyperlinkURLColumns(headers []string, rows [][]string) [][]string {
 	return formatURLColumns(headers, rows, func(short, full string) string {
-		return linkStyle.Hyperlink(full).Render(short)
+		return tui.LinkStyle.Hyperlink(full).Render(short)
 	})
 }
 

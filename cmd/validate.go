@@ -18,7 +18,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	V "bennypowers.dev/cem/validate"
@@ -56,7 +55,9 @@ func validateWorkspace(cmd *cobra.Command) error {
 		switch format {
 		case "text", "":
 			displayOptions := V.DisplayOptions{Format: format}
-			cmd.PrintErrln("\n" + pkg.Name + ":")
+			if _, err := fmt.Fprintln(cmd.OutOrStdout(), "\n"+pkg.Name+":"); err != nil {
+				return err
+			}
 			if err := V.PrintValidationResult(cmd.OutOrStdout(), manifestPath, result, displayOptions); err != nil {
 				return err
 			}
@@ -92,19 +93,16 @@ var validateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "Validate a custom-elements.json manifest",
 	Long:  `Validate a custom-elements.json manifest against its JSON schema.`,
-	Args:  cobra.MaximumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	Args:         cobra.MaximumNArgs(1),
+	SilenceUsage: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if workspace.ShouldUseWorkspaceMode(cmd) && len(args) == 0 {
-			if err := validateWorkspace(cmd); err != nil {
-				os.Exit(1)
-			}
-			return
+			return validateWorkspace(cmd)
 		}
 
 		ctx, err := workspace.GetWorkspaceContext(cmd)
 		if err != nil {
-			cmd.PrintErrln("Error getting workspace context:", err)
-			os.Exit(1)
+			return err
 		}
 
 		manifestPath := ctx.CustomElementsManifestPath()
@@ -113,49 +111,41 @@ var validateCmd = &cobra.Command{
 		}
 
 		if manifestPath == "" {
-			cmd.PrintErrln("Could not find custom-elements.json")
-			os.Exit(1)
+			return fmt.Errorf("could not find custom-elements.json")
 		}
 
-		// Get flags
 		disableFlags, _ := cmd.Flags().GetStringArray("disable")
 		format, _ := cmd.Flags().GetString("format")
 
-		// Merge config and flag disabled rules
 		configDisabled := viper.GetStringSlice("warnings.disable")
 		allDisabled := append(configDisabled, disableFlags...)
 
-		// Set up validation options
 		options := V.ValidationOptions{
-			IncludeWarnings: true, // Always include warnings, but filter them
+			IncludeWarnings: true,
 			DisabledRules:   allDisabled,
 		}
 
-		// Validate the manifest
 		result, err := V.Validate(manifestPath, options)
 		if err != nil {
-			cmd.PrintErrln("Error validating manifest:", err)
-			os.Exit(1)
+			return err
 		}
 
 		switch format {
 		case "json":
 			result.Path = manifestPath
 			if err := V.PrintValidationResultsJSON(cmd.OutOrStdout(), []*V.ValidationResult{result}); err != nil {
-				cmd.PrintErrln("Error displaying validation results:", err)
-				os.Exit(1)
+				return err
 			}
 		default:
 			displayOptions := V.DisplayOptions{Format: format}
 			if err := V.PrintValidationResult(cmd.OutOrStdout(), manifestPath, result, displayOptions); err != nil {
-				cmd.PrintErrln("Error displaying validation results:", err)
-				os.Exit(1)
+				return err
 			}
 		}
 
-		// Exit with error code if validation failed
 		if !result.IsValid {
-			os.Exit(1)
+			return fmt.Errorf("validation failed")
 		}
+		return nil
 	},
 }

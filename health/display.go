@@ -27,15 +27,7 @@ import (
 	lipgloss "charm.land/lipgloss/v2"
 
 	"bennypowers.dev/cem/internal/logging"
-)
-
-var (
-	headerStyle    = lipgloss.NewStyle().Bold(true)
-	sectionStyle   = lipgloss.NewStyle().Bold(true).Underline(true)
-	greenStyle     = lipgloss.NewStyle().Foreground(lipgloss.Green)
-	yellowStyle    = lipgloss.NewStyle().Foreground(lipgloss.Yellow)
-	redStyle       = lipgloss.NewStyle().Foreground(lipgloss.Red)
-	lightBlueStyle = lipgloss.NewStyle().Foreground(lipgloss.BrightBlue)
+	"bennypowers.dev/cem/internal/tui"
 )
 
 //go:embed templates/report.md.tmpl
@@ -97,7 +89,7 @@ func printHealthResultText(w io.Writer, result *HealthResult) error {
 		return nil
 	}
 
-	if _, err := lipgloss.Fprintln(w, headerStyle.Render("Component Health Report")); err != nil {
+	if _, err := lipgloss.Fprintln(w, tui.HeaderStyle.Render("Component Health Report")); err != nil {
 		return err
 	}
 	if _, err := lipgloss.Fprintln(w); err != nil {
@@ -126,7 +118,7 @@ func printHealthResultText(w io.Writer, result *HealthResult) error {
 	}
 
 	if len(result.Recommendations) > 0 {
-		if _, err := lipgloss.Fprintln(w, sectionStyle.Render("Recommendations")); err != nil {
+		if _, err := lipgloss.Fprintln(w, tui.SectionStyle.Render("Recommendations")); err != nil {
 			return err
 		}
 		for _, rec := range result.Recommendations {
@@ -143,7 +135,7 @@ func printModuleReport(w io.Writer, mod ModuleReport) error {
 	modStyle := scoreStyle(modPct)
 
 	if _, err := lipgloss.Fprintf(w, "\n%s %s %d/%d\n",
-		lightBlueStyle.Render(mod.Path),
+		tui.KindStyle.Render(mod.Path),
 		modStyle.Render(buildBar(modPct, 20)),
 		mod.Score,
 		mod.MaxScore); err != nil {
@@ -176,12 +168,12 @@ func printComponentReport(w io.Writer, comp ComponentReport) error {
 	}
 
 	for _, cat := range comp.Categories {
-		icon := greenStyle.Render("✓")
+		icon := tui.SuccessStyle.Render("✓")
 		switch cat.Status {
 		case "warn":
-			icon = yellowStyle.Render("⚠")
+			icon = tui.WarnStyle.Render("⚠")
 		case "fail":
-			icon = redStyle.Render("✗")
+			icon = tui.ErrorStyle.Render("✗")
 		}
 
 		msg := cat.Category
@@ -219,12 +211,12 @@ func percentage(score, max int) int {
 
 func scoreStyle(pct int) lipgloss.Style {
 	if pct >= 80 {
-		return greenStyle
+		return tui.SuccessStyle
 	}
 	if pct >= 40 {
-		return yellowStyle
+		return tui.WarnStyle
 	}
-	return redStyle
+	return tui.ErrorStyle
 }
 
 var markdownTmpl = template.Must(template.New("report").Funcs(template.FuncMap{

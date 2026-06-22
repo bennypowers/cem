@@ -18,13 +18,11 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"bennypowers.dev/cem/internal/logging"
 	MCP "bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/types"
 	"bennypowers.dev/cem/internal/workspace"
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -54,9 +52,6 @@ Tools provided:
 - CSS integration guidance
 - Registry querying and component discovery`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// CRITICAL: Redirect all pterm output to stderr immediately to prevent MCP stdout contamination
-		pterm.SetDefaultOutput(os.Stderr)
-
 		// Enable quiet mode to suppress INFO and DEBUG logs (prevents stdout contamination)
 		// Per MCP specification, stdio-based servers must ONLY write JSON-RPC to stdout
 		// See: https://github.com/bennypowers/cem/issues/129

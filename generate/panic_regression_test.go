@@ -82,8 +82,7 @@ func TestGenerateConfigMissingFileNoPanic(t *testing.T) {
 }
 
 // TestGenerateSuccessCodePathNoPanic tests that the success code path doesn't panic
-// when writing output files. This tests the specific line that was panicking in
-// cmd/generate.go:150 (pterm.Success.Printf)
+// when writing output files.
 func TestGenerateSuccessCodePathNoPanic(t *testing.T) {
 	// Test successful generation with output file (the code path that was panicking)
 	fixtureDir := filepath.Join("testdata", "fixtures", "project-source-hrefs")

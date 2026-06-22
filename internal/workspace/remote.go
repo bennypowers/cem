@@ -20,6 +20,7 @@ package workspace
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -35,9 +36,9 @@ import (
 	"bennypowers.dev/cem/internal/logging"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
+	"bennypowers.dev/cem/internal/tui"
 	"github.com/adrg/xdg"
 	"github.com/bmatcuk/doublestar"
-	"github.com/pterm/pterm"
 	"gopkg.in/yaml.v3"
 )
 
@@ -52,7 +53,6 @@ type RemoteWorkspaceContext struct {
 	packageJSONPath    string
 	packageJSON        *M.PackageJSON
 	customElementsPath string
-	spinner            *pterm.SpinnerPrinter // TODO: replace with bubbles/spinner from internal/tui
 	designTokensCache  types.DesignTokensCache
 }
 
@@ -88,36 +88,37 @@ func (c *RemoteWorkspaceContext) Init() error {
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
 
-	c.spinner, _ = pterm.SpinnerPrinter.Start(*pterm.DefaultSpinner.WithRemoveWhenDone())
-	defer func() {
-		if err := c.spinner.Stop(); err != nil {
-			logging.Warning("error stopping spinner: %v", err)
-		}
-	}()
+	return tui.RunWithSpinner("Fetching "+c.spec+"...", func(ctx context.Context, s *tui.Spinner) error {
+		return c.fetchRemote(ctx, s, name, version)
+	})
+}
 
-	// Try fetching from CDNs first (jsdelivr preferred, then esm.sh, then unpkg as fallback)
-	cdnFetchers := []func(string, string) error{
-		c.fetchFromJsdelivr,
-		c.fetchFromEsmsh,
-		c.fetchFromUnpkg,
+func (c *RemoteWorkspaceContext) fetchRemote(ctx context.Context, s *tui.Spinner, name, version string) error {
+	type cdnFetcher struct {
+		name string
+		fn   func(context.Context, string, string) error
+	}
+	fetchers := []cdnFetcher{
+		{"jsdelivr", c.fetchFromJsdelivr},
+		{"esm.sh", c.fetchFromEsmsh},
+		{"unpkg", c.fetchFromUnpkg},
 	}
 
 	var lastCdnError error
-	for _, fetcher := range cdnFetchers {
-		err := fetcher(name, version)
+	for _, f := range fetchers {
+		s.UpdateTitle(fmt.Sprintf("Fetching from %s...", f.name))
+		err := f.fn(ctx, name, version)
 		if err == nil {
-			return nil // Success
+			return nil
 		}
 
 		if errors.Is(err, ErrPackageNotFound) {
 			logging.Debug("Package not found on CDN, stopping.")
-			return err // The package doesn't exist, no point in trying others.
+			return err
 		}
 
-		lastCdnError = err // Store the error to return later if all fallbacks fail
+		lastCdnError = err
 
-		// If we successfully got package.json but failed to get the manifest,
-		// then the manifest is confirmed to be missing. No need to try other sources.
 		if c.packageJSON != nil && errors.Is(err, ErrManifestNotFound) {
 			logging.Debug("Found package.json but manifest is missing. Stopping.")
 			return ErrManifestNotFound
@@ -126,15 +127,13 @@ func (c *RemoteWorkspaceContext) Init() error {
 		logging.Debug("CDN fetcher failed, trying next source: %v", err)
 	}
 
-	// If we're here, it means we couldn't even get package.json from any CDN.
-	// Fallback to the npm tarball.
+	s.UpdateTitle("Falling back to npm tarball...")
 	logging.Debug("All CDN fetchers failed. Falling back to npm tarball.")
-	if err := c.fetchFromNpm(name, version); err != nil {
-		// Join the npm error with the last CDN error for a more complete picture.
+	if err := c.fetchFromNpm(ctx, name, version); err != nil {
 		return errors.Join(lastCdnError, err)
 	}
 
-	return nil // Success from npm tarball
+	return nil
 }
 
 func (c *RemoteWorkspaceContext) readInPackageJSON() error {
@@ -152,40 +151,42 @@ func (c *RemoteWorkspaceContext) readInPackageJSON() error {
 	return nil
 }
 
-func (c *RemoteWorkspaceContext) fetchFromCDN(name, version, cdnName, baseUrlPattern string) error {
-	c.spinner.UpdateText(fmt.Sprintf("Fetching package from %s", cdnName))
+func (c *RemoteWorkspaceContext) fetchFromCDN(ctx context.Context, name, version, cdnName, baseUrlPattern string) error {
 	base := fmt.Sprintf(baseUrlPattern, name, version)
-	if err := c.fetch(base+"package.json", c.packageJSONPath); err != nil {
-		c.spinner.Warning(fmt.Sprintf("Failed to load package.json from %s", cdnName))
+	if err := c.fetch(ctx, base+"package.json", c.packageJSONPath); err != nil {
+		logging.Warning("Failed to load package.json from %s", cdnName)
 		return err
 	}
 	if err := c.readInPackageJSON(); err != nil {
 		return err
 	}
 	c.customElementsPath = filepath.Join(c.cacheDir, c.packageJSON.CustomElements)
-	if err := c.fetch(base+c.packageJSON.CustomElements, c.customElementsPath); err != nil {
-		c.spinner.Warning(fmt.Sprintf("Failed to load %s from %s", c.packageJSON.CustomElements, cdnName))
+	if err := c.fetch(ctx, base+c.packageJSON.CustomElements, c.customElementsPath); err != nil {
+		logging.Warning("Failed to load %s from %s", c.packageJSON.CustomElements, cdnName)
 		return err
 	}
 	return nil
 }
 
-func (c *RemoteWorkspaceContext) fetchFromJsdelivr(name, version string) error {
-	return c.fetchFromCDN(name, version, "jsdelivr", "https://cdn.jsdelivr.net/npm/%s@%s/")
+func (c *RemoteWorkspaceContext) fetchFromJsdelivr(ctx context.Context, name, version string) error {
+	return c.fetchFromCDN(ctx, name, version, "jsdelivr", "https://cdn.jsdelivr.net/npm/%s@%s/")
 }
 
-func (c *RemoteWorkspaceContext) fetchFromEsmsh(name, version string) error {
-	return c.fetchFromCDN(name, version, "esm.sh", "https://esm.sh/%s@%s/")
+func (c *RemoteWorkspaceContext) fetchFromEsmsh(ctx context.Context, name, version string) error {
+	return c.fetchFromCDN(ctx, name, version, "esm.sh", "https://esm.sh/%s@%s/")
 }
 
-func (c *RemoteWorkspaceContext) fetchFromUnpkg(name, version string) error {
-	return c.fetchFromCDN(name, version, "unpkg", "https://unpkg.com/%s@%s/")
+func (c *RemoteWorkspaceContext) fetchFromUnpkg(ctx context.Context, name, version string) error {
+	return c.fetchFromCDN(ctx, name, version, "unpkg", "https://unpkg.com/%s@%s/")
 }
 
-func (c *RemoteWorkspaceContext) fetchFromNpm(name, version string) error {
-	c.spinner.UpdateText("Falling back to npm tarball")
+func (c *RemoteWorkspaceContext) fetchFromNpm(ctx context.Context, name, version string) error {
 	metaUrl := fmt.Sprintf("https://registry.npmjs.org/%s", strings.ReplaceAll(name, "/", "%2F"))
-	resp, err := http.Get(metaUrl)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, metaUrl, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -200,7 +201,11 @@ func (c *RemoteWorkspaceContext) fetchFromNpm(name, version string) error {
 		return err
 	}
 	tarballUrl := meta.Versions[version].Dist.Tarball
-	resp, err = http.Get(tarballUrl)
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, tarballUrl, nil)
+	if err != nil {
+		return err
+	}
+	resp, err = http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -372,9 +377,13 @@ func setupTempdirFromCache(cacheDir string) (string, error) {
 	return tempdir, nil
 }
 
-func (c *RemoteWorkspaceContext) fetch(url, dest string) error {
-	c.spinner.UpdateText("Fetching " + url)
-	resp, err := http.Get(url)
+func (c *RemoteWorkspaceContext) fetch(ctx context.Context, url, dest string) error {
+	logging.Debug("Fetching %s", url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
