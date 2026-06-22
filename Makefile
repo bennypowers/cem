@@ -19,28 +19,85 @@ else
     RACE_LDFLAGS :=
 endif
 
-.PHONY: all build test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update install-frontend install-elements update watch bench bench-generate bench-lookup bench-lsp bench-lsp-cem bench-lsp-wc setup-wc-toolkit profile flamegraph coverage show-coverage clean lint format prepare-npm generate install-bindings windows windows-x64 windows-arm64 build-windows-cc-image rebuild-windows-cc-image build-shared-windows-image install-git-hooks update-html-attributes vscode-build vscode-package release patch minor major examples-analyze examples-verify examples-clean linux-x64 linux-arm64 darwin-x64 darwin-arm64 win32-x64 win32-arm64 verify-npm
+LDFLAGS := $(shell ./scripts/ldflags.sh)
 
-build: generate
+# Source file lists for dependency tracking
+GO_SOURCES := $(shell find . -name '*.go' -not -path '*/node_modules/*' -not -name '*_test.go' -not -name 'generate_elements.go') go.mod go.sum
+ELEMENT_SOURCES := $(shell find serve/elements -name '*.ts' -o -name '*.css' 2>/dev/null)
+
+## npm dependency targets (file-based, skip if up-to-date)
+
+serve/elements/node_modules/.package-lock.json: serve/elements/package-lock.json
+	cd serve/elements && npm ci
+	@touch $@
+
+serve/node_modules/.package-lock.json: serve/package-lock.json
+	cd serve && npm ci
+	@touch $@
+
+.PHONY: install-elements install-frontend
+install-elements: serve/elements/node_modules/.package-lock.json
+install-frontend: serve/node_modules/.package-lock.json
+
+## Code generation (stamp file tracks go generate output)
+
+.generate.stamp: serve/elements/node_modules/.package-lock.json $(ELEMENT_SOURCES) serve/generate_elements.go
+	go generate ./...
+	@touch $@
+
+.PHONY: generate install-bindings
+generate: .generate.stamp
+install-bindings: .generate.stamp
+
+## Build targets (file-based)
+
+dist/cem: .generate.stamp $(GO_SOURCES)
 	@mkdir -p dist
-	go build -ldflags="$(shell ./scripts/ldflags.sh)" -o dist/cem .
-	echo "DONE build"
+	go build -ldflags="$$(./scripts/ldflags.sh)" -o $@ .
+
+.PHONY: build
+build: dist/cem
 
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
 # It's mostly intended for local development, not for distribution
-install: build
+.PHONY: install
+install: dist/cem
 	mkdir -p ~/.local/bin/
 	cp dist/cem ~/.local/bin/
 
-all: windows
+## Cross-platform build targets
+## Output to dist/bin/<binary>-<platform>[.exe] per bennypowers/go-release-workflows contract
 
-clean:
-	rm -rf dist/ cpu.out cover.out coverage/ cmd/coverage.e2e/ artifacts platforms existing-binaries
+dist/bin/cem-linux-x64: .generate.stamp $(GO_SOURCES)
+	@mkdir -p dist/bin
+	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 CC=gcc \
+		go build -ldflags="$(LDFLAGS)" -o $@ .
 
-# Convenience target to build both Windows variants
-windows: windows-x64 windows-arm64
+dist/bin/cem-linux-arm64: .generate.stamp $(GO_SOURCES)
+	@mkdir -p dist/bin
+	CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc \
+		go build -ldflags="$(LDFLAGS)" -o $@ .
 
-# Build the Podman image only if it doesn't exist
+# Darwin targets (must run on macOS)
+# Explicit -arch flags ensure correct architecture when cross-compiling on macOS
+dist/bin/cem-darwin-x64: .generate.stamp $(GO_SOURCES)
+	@mkdir -p dist/bin
+	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 \
+		CC="clang -arch x86_64" \
+		CGO_CFLAGS="-arch x86_64" CGO_LDFLAGS="-arch x86_64" \
+		go build -ldflags="$(LDFLAGS)" -o $@ .
+
+dist/bin/cem-darwin-arm64: .generate.stamp $(GO_SOURCES)
+	@mkdir -p dist/bin
+	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 \
+		CC="clang -arch arm64" \
+		CGO_CFLAGS="-arch arm64" CGO_LDFLAGS="-arch arm64" \
+		go build -ldflags="$(LDFLAGS)" -o $@ .
+
+# Windows targets (use shared Containerfile.windows via podman)
+SHARED_WINDOWS_CC_IMAGE := cem-shared-windows-cc
+
+.PHONY: build-windows-cc-image rebuild-windows-cc-image build-shared-windows-image
 build-windows-cc-image:
 	@if ! podman image exists $(WINDOWS_CC_IMAGE); then \
 		echo "Building image..."; \
@@ -49,53 +106,8 @@ build-windows-cc-image:
 		echo "Image $(WINDOWS_CC_IMAGE) already exists, skipping build."; \
 	fi
 
-# Force rebuild of the image
 rebuild-windows-cc-image:
 	podman build --no-cache -t $(WINDOWS_CC_IMAGE) .
-
-windows-x64: build-windows-cc-image
-	mkdir -p dist
-	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=amd64 -e GOEXPERIMENT=$(GOEXPERIMENT) $(WINDOWS_CC_IMAGE)
-
-windows-arm64: build-windows-cc-image
-	mkdir -p dist
-	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=arm64 -e GOEXPERIMENT=$(GOEXPERIMENT) $(WINDOWS_CC_IMAGE)
-
-## Cross-platform build targets for go-release-workflows compatibility
-## These targets output to dist/bin/<binary>-<platform>[.exe] as required by
-## bennypowers/go-release-workflows
-
-LDFLAGS := $(shell ./scripts/ldflags.sh)
-
-# Linux targets (native or cross-compile)
-linux-x64: generate
-	@mkdir -p dist/bin
-	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 CC=gcc \
-		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-linux-x64 .
-
-linux-arm64: generate
-	@mkdir -p dist/bin
-	CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc \
-		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-linux-arm64 .
-
-# Darwin targets (must run on macOS)
-# Explicit -arch flags ensure correct architecture when cross-compiling on macOS
-darwin-x64: generate
-	@mkdir -p dist/bin
-	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 \
-		CC="clang -arch x86_64" \
-		CGO_CFLAGS="-arch x86_64" CGO_LDFLAGS="-arch x86_64" \
-		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-darwin-x64 .
-
-darwin-arm64: generate
-	@mkdir -p dist/bin
-	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 \
-		CC="clang -arch arm64" \
-		CGO_CFLAGS="-arch arm64" CGO_LDFLAGS="-arch arm64" \
-		go build -ldflags="$(LDFLAGS)" -o dist/bin/cem-darwin-arm64 .
-
-# Windows targets for go-release-workflows (use shared Containerfile.windows)
-SHARED_WINDOWS_CC_IMAGE := cem-shared-windows-cc
 
 build-shared-windows-image:
 	@if [ ! -f Containerfile.windows ]; then \
@@ -109,38 +121,52 @@ build-shared-windows-image:
 		echo "Image $(SHARED_WINDOWS_CC_IMAGE) already exists, skipping build."; \
 	fi
 
-win32-x64: generate build-shared-windows-image
+dist/bin/cem-win32-x64.exe: .generate.stamp $(GO_SOURCES) | build-shared-windows-image
 	@mkdir -p dist/bin
 	podman run --rm -v $(PWD):/app:Z -w /app \
 		-e GOARCH=amd64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(SHARED_WINDOWS_CC_IMAGE)
-	@mv dist/bin/cem-windows-amd64.exe dist/bin/cem-win32-x64.exe
+	@mv dist/bin/cem-windows-amd64.exe $@
 
-win32-arm64: generate build-shared-windows-image
+dist/bin/cem-win32-arm64.exe: .generate.stamp $(GO_SOURCES) | build-shared-windows-image
 	@mkdir -p dist/bin
 	podman run --rm -v $(PWD):/app:Z -w /app \
 		-e GOARCH=arm64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(SHARED_WINDOWS_CC_IMAGE)
-	@mv dist/bin/cem-windows-arm64.exe dist/bin/cem-win32-arm64.exe
+	@mv dist/bin/cem-windows-arm64.exe $@
 
-## Code generation and dependencies
-install-elements:
-	cd serve/elements && npm ci
+# Platform aliases (satisfy go-release-workflows Makefile contract)
+.PHONY: linux-x64 linux-arm64 darwin-x64 darwin-arm64 win32-x64 win32-arm64
+linux-x64: dist/bin/cem-linux-x64
+linux-arm64: dist/bin/cem-linux-arm64
+darwin-x64: dist/bin/cem-darwin-x64
+darwin-arm64: dist/bin/cem-darwin-arm64
+win32-x64: dist/bin/cem-win32-x64.exe
+win32-arm64: dist/bin/cem-win32-arm64.exe
 
-generate: install-elements
-	go generate ./...
-	echo "DONE generating manifest for cem- elements"
+# Legacy Windows targets (local podman-based cross-compile)
+.PHONY: windows windows-x64 windows-arm64
+windows: windows-x64 windows-arm64
 
-install-bindings: generate
+windows-x64: build-windows-cc-image
+	mkdir -p dist
+	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=amd64 -e GOEXPERIMENT=$(GOEXPERIMENT) $(WINDOWS_CC_IMAGE)
 
-test-unit: generate
+windows-arm64: build-windows-cc-image
+	mkdir -p dist
+	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=arm64 -e GOEXPERIMENT=$(GOEXPERIMENT) $(WINDOWS_CC_IMAGE)
+
+.PHONY: all
+all: windows
+
+## Testing
+
+.PHONY: test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update test-pkg update
+test-unit: .generate.stamp
 	gotestsum --rerun-fails --rerun-fails-max-failures=3 --packages=./... -- -race $(RACE_LDFLAGS)
 
-test-e2e: generate
+test-e2e: .generate.stamp
 	gotestsum --rerun-fails --rerun-fails-max-failures=3 --packages=./cmd/ -- -race $(RACE_LDFLAGS) -tags=e2e
 
-install-frontend:
-	cd serve && npm ci
-
-test-frontend: install-frontend build
+test-frontend: serve/node_modules/.package-lock.json dist/cem
 	@set -e; \
 	PIDFILE=$$(mktemp); \
 	LOGFILE=$$(mktemp); \
@@ -200,10 +226,10 @@ test-frontend: install-frontend build
 	TEST_EXIT=$$?; \
 	exit $$TEST_EXIT
 
-test-frontend-watch: install-frontend
+test-frontend-watch: serve/node_modules/.package-lock.json
 	cd serve && npm run test:watch
 
-test-frontend-update: install-frontend
+test-frontend-update: serve/node_modules/.package-lock.json
 	cd serve && npm run test:update
 
 test: test-unit test-e2e test-frontend
@@ -221,6 +247,9 @@ update:
 	go test -race $(RACE_LDFLAGS) -json ./... --update | go tool tparse -all
 	make test-frontend-update
 
+## Code quality
+
+.PHONY: lint format
 lint:
 	golangci-lint run
 
@@ -228,18 +257,22 @@ format:
 	gofmt -s -w .
 	goimports -w .
 
+## Watch
+
+.PHONY: watch
 watch:
 	while true; do \
 		find . -type f \( -name "*.go" -o -name "*.scm" -o -name "*.ts" \) | entr -d sh -c 'make test || true'; \
 	done
 
+## Benchmarks
+
+.PHONY: bench bench-generate bench-lookup bench-lsp bench-lsp-cem bench-lsp-wc setup-wc-toolkit
 bench: bench-generate bench-lsp
 
-# Go performance benchmarks
-bench-generate: generate
+bench-generate: .generate.stamp
 	go test -v -cpuprofile=cpu.out -bench=BenchmarkGenerate -run=^$$ ./generate/
 
-# Manifest lookup benchmarks
 bench-lookup:
 	@echo "=== Running Attribute Lookup Benchmarks ==="
 	go test -bench=BenchmarkAttributeLookup -benchmem -count=5 -run=^$$ ./manifest/
@@ -250,12 +283,10 @@ bench-lookup:
 	@echo "=== Running Renderable Creation Benchmarks ==="
 	go test -bench=BenchmarkRenderableCreation -benchmem -count=5 -run=^$$ ./manifest/
 
-# LSP server benchmarks
-# Setup wc-toolkit language server wrapper (isolated, doesn't affect Mason)
 setup-wc-toolkit:
 	@cd lsp/benchmark && ./setup_wc_toolkit.sh
 
-bench-lsp: build setup-wc-toolkit
+bench-lsp: dist/cem setup-wc-toolkit
 	@cd lsp/benchmark && \
 	BENCHMARK_COMPARISON_MODE=1 nvim --headless --clean -u configs/cem-minimal.lua -l run_modular_benchmark.lua && \
 	if [ -f bin/wc-language-server ]; then \
@@ -266,12 +297,11 @@ bench-lsp: build setup-wc-toolkit
 	fi && \
 	nvim --headless --clean -l compare_results.lua
 
-# LSP benchmark for a specific server
-bench-lsp-cem: build
+bench-lsp-cem: dist/cem
 	@echo "Running benchmarks for cem LSP server only..."
 	@cd lsp/benchmark && nvim --headless --clean -u configs/cem-minimal.lua -l run_modular_benchmark.lua
 
-bench-lsp-wc: build setup-wc-toolkit
+bench-lsp-wc: dist/cem setup-wc-toolkit
 	@echo "Running benchmarks for wc-toolkit LSP server only..."
 	@if [ ! -f lsp/benchmark/bin/wc-language-server ]; then \
 		echo "✗ Error: wc-toolkit server not found at lsp/benchmark/bin/wc-language-server" && \
@@ -280,13 +310,20 @@ bench-lsp-wc: build setup-wc-toolkit
 	fi
 	@cd lsp/benchmark && nvim --headless --clean -u configs/wc-toolkit-minimal.lua -l run_modular_benchmark.lua
 
+## Profiling
 
-profile:
-	go test -bench=... -run=^$ -cpuprofile=cpu.out ./generate/
+cpu.out: .generate.stamp
+	go test -bench=... -run=^$$ -cpuprofile=$@ ./generate/
 
-flamegraph: profile
-	go tool pprof -http=:8080 cpu.out # Visual analysis
+.PHONY: profile flamegraph
+profile: cpu.out
 
+flamegraph: cpu.out
+	go tool pprof -http=:8080 cpu.out
+
+## Coverage
+
+.PHONY: coverage show-coverage
 coverage:
 	@echo "Running unit tests with coverage..."
 	@mkdir -p coverage/unit
@@ -312,6 +349,15 @@ coverage:
 show-coverage:
 	go tool cover -html=cover.out
 
+## Clean
+
+.PHONY: clean
+clean:
+	rm -rf dist/ cpu.out cover.out coverage/ cmd/coverage.e2e/ artifacts platforms existing-binaries .generate.stamp
+
+## Git hooks
+
+.PHONY: install-git-hooks
 install-git-hooks:
 	@echo "Installing git hooks..."
 	@git config core.hooksPath .githooks
@@ -320,14 +366,19 @@ install-git-hooks:
 	@echo ""
 	@echo "To bypass hooks, use --no-verify flag (e.g., 'git push --no-verify')"
 
+## Data updates
+
+.PHONY: update-html-attributes
 update-html-attributes:
 	@echo "Updating HTML global attributes from MDN browser-compat-data..."
 	@mkdir -p lsp/methods/textDocument/publishDiagnostics/data
 	@curl -s "https://raw.githubusercontent.com/mdn/browser-compat-data/main/html/global_attributes.json" -o lsp/methods/textDocument/publishDiagnostics/data/global_attributes.json
 	@echo "HTML global attributes updated successfully!"
 
-docs-ci: update-html-attributes
-	make build
+## Docs CI
+
+.PHONY: docs-ci
+docs-ci: update-html-attributes dist/cem
 	@echo "Running generate benchmarks with $(RUNS) runs"
 	./scripts/benchmark.sh $(RUNS)
 	@echo "Running LSP benchmarks..."
@@ -340,13 +391,18 @@ docs-ci: update-html-attributes
 	hugo --gc --minify --source docs
 	mv /tmp/cem-contributing.md "$(CONTRIBUTING_PATH)"
 
-vscode-build:
+## VSCode extension
+
+extensions/vscode/out/client/extension.js: extensions/vscode/client/package.json extensions/vscode/build.js
 	@echo "Building VSCode extension..."
 	@cd extensions/vscode/client && npm install
 	@cd extensions/vscode && node build.js
 	@echo "VSCode extension built successfully"
 
-vscode-package: build
+.PHONY: vscode-build vscode-package vscode-publish
+vscode-build: extensions/vscode/out/client/extension.js
+
+vscode-package: dist/cem
 	@echo "Packaging VSCode extension..."
 	@echo "Copying CEM binary for current platform..."
 	@mkdir -p extensions/vscode/dist/bin
@@ -396,13 +452,16 @@ vscode-publish:
 	npm run publish
 
 ## Verify npm packaging structure before release
-verify-npm: build
+
+.PHONY: verify-npm
+verify-npm: dist/cem
 	@./scripts/verify-npm-packaging.sh
 
 ## Make version targets (v*) and bump types no-ops for "make release" syntax
 v%:
 	@:
 
+.PHONY: patch minor major release
 patch minor major:
 	@:
 
@@ -420,8 +479,9 @@ release:
 	@./scripts/release.sh $(VERSION)
 
 ## Examples
-# Generate manifests for all examples
-examples-analyze: build
+
+.PHONY: examples-analyze examples-verify examples-clean
+examples-analyze: dist/cem
 	@echo "Generating manifests for all examples..."
 	@for dir in examples/*/; do \
 		echo "  Generating $$dir"; \
@@ -429,7 +489,6 @@ examples-analyze: build
 	done
 	@echo "✓ All example manifests generated"
 
-# Verify examples manifests are up-to-date (for CI)
 examples-verify: examples-analyze
 	@echo "Verifying example manifests are up-to-date..."
 	@if git diff --exit-code examples/*/custom-elements.json; then \
@@ -439,7 +498,6 @@ examples-verify: examples-analyze
 		exit 1; \
 	fi
 
-# Clean generated example files
 examples-clean:
 	@echo "Cleaning example outputs..."
 	@rm -f examples/*/custom-elements.json
