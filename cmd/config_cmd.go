@@ -28,9 +28,6 @@ var configInitCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Create a CEM configuration file",
 	Long:  "Interactive wizard that detects project settings and generates .config/cem.yaml.",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return fmt.Errorf("not yet implemented")
-	},
 }
 
 var configValidateCmd = &cobra.Command{
