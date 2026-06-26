@@ -205,7 +205,6 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 				huh.NewInput().
 					Title("Demo URL template").
 					Description("Go template for generating public demo URLs from matched parameters (leave empty to skip)").
-					Prompt("?").
 					Placeholder("https://example.com/{{.tag}}/{{.demo}}/").
 					Value(&demoTemplate),
 			))
@@ -788,7 +787,6 @@ func (f *fieldValue) Groups() []*huh.Group {
 			Title(f.Title).
 			Description(f.Description).
 			Placeholder(placeholder).
-			Prompt("?").
 			Value(&f.Result),
 	))
 
