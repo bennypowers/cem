@@ -178,87 +178,41 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 	globFV := fieldValue{Existing: cfg.Generate.DemoDiscovery.FileGlob, Detected: detectedGlob}
 	patternFV := fieldValue{Existing: cfg.Generate.DemoDiscovery.URLPattern, Detected: detectedPattern}
 
-	// Form field values (bound to huh fields)
-	filesInput := filesFV.Value()
-	outputInput := outputFV.Value()
-	scurlInput := scurlFV.Value()
-
 	if interactive && !yes {
 		// Build the main form
 		var groups []*huh.Group
 
-		// Group 1: Generate settings
-		filesDesc := "Glob patterns for files to scan for custom element definitions (comma-separated)"
-		if ann := filesFV.Annotation(); ann != "" {
-			filesDesc += "\n" + ann
-		}
-		outputDesc := "Where to write the generated custom-elements.json manifest"
-		if ann := outputFV.Annotation(); ann != "" {
-			outputDesc += "\n" + ann
-		}
-		scurlDesc := "Base URL for linking manifest entries to source files"
-		if ann := scurlFV.Annotation(); ann != "" {
-			scurlDesc += "\n" + ann
-		}
-		groups = append(groups, huh.NewGroup(
-			huh.NewInput().
-				Title("Source file patterns").
-				Description(filesDesc).
-				Prompt("?").
-				Placeholder(filesFV.Fallback).
-				Value(&filesInput),
-			huh.NewInput().
-				Title("Manifest output path").
-				Description(outputDesc).
-				Prompt("?").
-				Placeholder(outputFV.Fallback).
-				Value(&outputInput),
-			huh.NewInput().
-				Title("Source control root URL").
-				Description(scurlDesc).
-				Prompt("?").
-				Placeholder("https://github.com/user/repo/tree/main/").
-				Value(&scurlInput),
-		).Title("Generate"))
+		// Generate fields -- each detectable field gets its own detect/confirm/edit pages
+		groups = append(groups, filesFV.Groups()...)
+		groups = append(groups, outputFV.Groups()...)
+		groups = append(groups, scurlFV.Groups()...)
 
-		// Group 2: Demo discovery (conditional)
+		// Demo discovery (conditional)
 		hasDemos := globFV.Value() != "" || patternFV.Value() != ""
 		if hasDemos {
-			demoGlob := globFV.Value()
-			demoPattern := patternFV.Value()
-			demoTemplate := cfg.Generate.DemoDiscovery.URLTemplate
-
-			globDesc := "Glob pattern to find demo HTML files"
-			if ann := globFV.Annotation(); ann != "" {
-				globDesc += "\n" + ann
-			}
-			patternDesc := "URL pattern with named params for matching demo paths to elements"
-			if ann := patternFV.Annotation(); ann != "" {
-				patternDesc += "\n" + ann
-			}
-
 			groups = append(groups, huh.NewGroup(
-				huh.NewInput().
-					Title("Demo file glob").
-					Description(globDesc).
-					Value(&demoGlob),
-				huh.NewInput().
-					Title("Demo URL pattern").
-					Description(patternDesc).
-					Placeholder("elements/:tag/demo/:demo.html").
-					Value(&demoPattern),
+				huh.NewNote().
+					Title("Demo Discovery").
+					Description("Demos are HTML partials that showcase your elements. "+
+						"The dev server discovers and serves them with live reload.").
+					Next(true),
+			))
+			groups = append(groups, globFV.Groups()...)
+			groups = append(groups, patternFV.Groups()...)
+
+			demoTemplate := cfg.Generate.DemoDiscovery.URLTemplate
+			groups = append(groups, huh.NewGroup(
 				huh.NewInput().
 					Title("Demo URL template").
 					Description("Go template for generating public demo URLs from matched parameters (leave empty to skip)").
+					Prompt("?").
 					Placeholder("https://example.com/{{.tag}}/{{.demo}}/").
 					Value(&demoTemplate),
-			).Title("Demo Discovery").
-				Description("Demos are HTML partials that showcase your elements. "+
-					"The dev server discovers and serves them with live reload."))
+			))
 
 			defer func() {
-				cfg.Generate.DemoDiscovery.FileGlob = demoGlob
-				cfg.Generate.DemoDiscovery.URLPattern = demoPattern
+				cfg.Generate.DemoDiscovery.FileGlob = globFV.Resolve()
+				cfg.Generate.DemoDiscovery.URLPattern = patternFV.Resolve()
 				cfg.Generate.DemoDiscovery.URLTemplate = demoTemplate
 			}()
 		}
@@ -351,7 +305,10 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		// Run the form
 		km := huh.NewDefaultKeyMap()
 		km.Quit = key.NewBinding(key.WithKeys("esc", "ctrl+c"), key.WithHelp("esc", "quit"))
-		form := huh.NewForm(groups...).WithKeyMap(km)
+		form := huh.
+			NewForm(groups...).
+			WithKeyMap(km).
+			WithShowHelp(true)
 		if formErr := tui.WrapAbort(form.Run()); formErr != nil {
 			if errors.Is(formErr, tui.ErrCancelled) {
 				return nil
@@ -360,9 +317,9 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		}
 
 		// Apply form results
-		cfg.Generate.Files = splitCommaList(filesInput)
-		cfg.Generate.Output = outputInput
-		cfg.SourceControlRootUrl = scurlInput
+		cfg.Generate.Files = splitCommaList(filesFV.Resolve())
+		cfg.Generate.Output = outputFV.Resolve()
+		cfg.SourceControlRootUrl = scurlFV.Resolve()
 
 		port, parseErr := strconv.Atoi(portStr)
 		if parseErr != nil || port < 1 || port > 65535 {
@@ -761,9 +718,14 @@ func splitCommaList(s string) []string {
 }
 
 type fieldValue struct {
-	Existing string
-	Detected string
-	Fallback string
+	Title       string
+	Description string
+	Placeholder string
+	Existing    string
+	Detected    string
+	Fallback    string
+	Result      string
+	useDetected bool
 }
 
 func (f fieldValue) Value() string {
@@ -776,11 +738,58 @@ func (f fieldValue) Value() string {
 	return f.Fallback
 }
 
-func (f fieldValue) Annotation() string {
-	if f.Existing != "" && f.Detected != "" && f.Existing != f.Detected {
-		return "detected: " + f.Detected
+// Groups builds huh form groups for the detect/confirm/edit flow.
+// After form.Run(), read f.Result for the final value.
+func (f *fieldValue) Groups() []*huh.Group {
+	var groups []*huh.Group
+	f.useDetected = true
+	f.Result = f.Value()
+
+	if f.Detected != "" && f.Existing == "" {
+		groups = append(groups, huh.NewGroup(
+			huh.NewConfirm().
+				Title("Use detected "+f.Title+"?").
+				Description(f.Detected).
+				Value(&f.useDetected),
+		))
+	} else if f.Detected != "" && f.Existing != f.Detected {
+		f.useDetected = false
+		groups = append(groups, huh.NewGroup(
+			huh.NewConfirm().
+				Title("Update "+f.Title+" with detected value?").
+				Description("existing: "+f.Existing+"\ndetected: "+f.Detected).
+				Value(&f.useDetected),
+		))
 	}
-	return ""
+
+	placeholder := f.Placeholder
+	if placeholder == "" {
+		placeholder = f.Fallback
+	}
+
+	groups = append(groups, huh.NewGroup(
+		huh.NewInput().
+			Title(f.Title).
+			Description(f.Description).
+			Placeholder(placeholder).
+			Prompt("?").
+			Value(&f.Result),
+	))
+
+	return groups
+}
+
+// Resolve returns the final value after the form has run.
+// If the user accepted detected, returns detected. Otherwise returns
+// whatever was in the input (which may have been edited).
+func (f *fieldValue) Resolve() string {
+	if f.useDetected && f.Detected != "" {
+		return f.Detected
+	}
+	if f.Result != "" {
+		return f.Result
+	}
+	return f.Fallback
 }
 
 func normalizeGitURL(rawURL string) string {

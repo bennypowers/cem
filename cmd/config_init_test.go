@@ -260,53 +260,17 @@ func TestDetectCSSPatterns(t *testing.T) {
 // inline assertions: pure struct methods with simple string returns
 func TestFieldValue(t *testing.T) {
 	tests := []struct {
-		name           string
-		existing       string
-		detected       string
-		fallback       string
-		wantValue      string
-		wantAnnotation string
+		name      string
+		existing  string
+		detected  string
+		fallback  string
+		wantValue string
 	}{
-		{
-			name:           "existing wins",
-			existing:       "elements/**/*.ts",
-			detected:       "src/**/*.ts",
-			fallback:       "**/*.ts",
-			wantValue:      "elements/**/*.ts",
-			wantAnnotation: "detected: src/**/*.ts",
-		},
-		{
-			name:           "detected when no existing",
-			existing:       "",
-			detected:       "src/**/*.ts",
-			fallback:       "**/*.ts",
-			wantValue:      "src/**/*.ts",
-			wantAnnotation: "",
-		},
-		{
-			name:           "fallback when nothing else",
-			existing:       "",
-			detected:       "",
-			fallback:       "**/*.ts",
-			wantValue:      "**/*.ts",
-			wantAnnotation: "",
-		},
-		{
-			name:           "no annotation when existing matches detected",
-			existing:       "src/**/*.ts",
-			detected:       "src/**/*.ts",
-			fallback:       "**/*.ts",
-			wantValue:      "src/**/*.ts",
-			wantAnnotation: "",
-		},
-		{
-			name:           "all empty",
-			existing:       "",
-			detected:       "",
-			fallback:       "",
-			wantValue:      "",
-			wantAnnotation: "",
-		},
+		{"existing wins", "elements/**/*.ts", "src/**/*.ts", "**/*.ts", "elements/**/*.ts"},
+		{"detected when no existing", "", "src/**/*.ts", "**/*.ts", "src/**/*.ts"},
+		{"fallback when nothing else", "", "", "**/*.ts", "**/*.ts"},
+		{"existing matches detected", "src/**/*.ts", "src/**/*.ts", "**/*.ts", "src/**/*.ts"},
+		{"all empty", "", "", "", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -316,7 +280,6 @@ func TestFieldValue(t *testing.T) {
 				Fallback: tt.fallback,
 			}
 			assert.Equal(t, tt.wantValue, fv.Value())
-			assert.Equal(t, tt.wantAnnotation, fv.Annotation())
 		})
 	}
 }
