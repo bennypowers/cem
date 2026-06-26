@@ -91,6 +91,15 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unsupported format %q; valid: %s", format, strings.Join(validFormats, ", "))
 	}
 
+	if interactive && !yes {
+		if err := showWelcomePage(); err != nil {
+			if errors.Is(err, tui.ErrCancelled) {
+				return nil
+			}
+			return err
+		}
+	}
+
 	root, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("unable to get working directory: %w", err)
@@ -242,6 +251,27 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func showWelcomePage() error {
+	width, _, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil || width <= 0 {
+		width = 80
+	}
+
+	logo := renderLogo(width)
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewNote().
+				Title(logo).
+				Description("Interactive wizard for generating .config/cem.yaml\n"+
+					"Detects project settings and creates your configuration.").
+				Next(true),
+		),
+	)
+
+	return tui.WrapAbort(form.Run())
 }
 
 func writeConfigAtomic(outPath string, output []byte) error {

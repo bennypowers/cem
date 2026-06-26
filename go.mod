@@ -22,6 +22,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.9.2
 	github.com/charmbracelet/colorprofile v0.4.3
 	github.com/charmbracelet/x/term v0.2.2
+	github.com/dolmen-go/kittyimg v1.0.0
 	github.com/dunglas/go-urlpattern v0.0.0-20241020164140-716dfa1c80b1
 	github.com/evanw/esbuild v0.27.4
 	github.com/fsnotify/fsnotify v1.9.0

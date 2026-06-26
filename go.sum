@@ -101,6 +101,8 @@ github.com/dlclark/regexp2 v1.11.5 h1:Q/sSnsKerHeCkc/jSTNq1oCm7KiVgUMZRDUoRu0JQZ
 github.com/dlclark/regexp2 v1.11.5/go.mod h1:DHkYz0B9wPfa6wondMfaivmHpzrQ3v9q8cnmRbL6yW8=
 github.com/dnephin/pflag v1.0.7 h1:oxONGlWxhmUct0YzKTgrpQv9AUA1wtPBn7zuSjJqptk=
 github.com/dnephin/pflag v1.0.7/go.mod h1:uxE91IoWURlOiTUIA8Mq5ZZkAv3dPUfZNaT80Zm7OQE=
+github.com/dolmen-go/kittyimg v1.0.0 h1:2XWEaN7q9ProP4snh3PEyXisVgFJEm6aeIBUkVSTLRA=
+github.com/dolmen-go/kittyimg v1.0.0/go.mod h1:2vk7ATPVcI7uW4Sh6PrSQvtO+Czmq8509xcg/y8Osd0=
 github.com/dunglas/go-urlpattern v0.0.0-20241020164140-716dfa1c80b1 h1:RW22Y3QjGrb97NUA8yupdFcaqg//+hMI2fZrETBvQ4s=
 github.com/dunglas/go-urlpattern v0.0.0-20241020164140-716dfa1c80b1/go.mod h1:mnVcdqOeYg0HvT6veRo7wINa1mJ+lC/R4ig2lWcapSI=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=

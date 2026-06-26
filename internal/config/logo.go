@@ -14,16 +14,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
-package cmd
+package config
 
-type FieldValue = fieldValue
+import _ "embed"
 
-var (
-	NormalizeGitURL   = normalizeGitURL
-	DetectSourceFiles = detectSourceFiles
-	DetectDemoFiles   = detectDemoFiles
-	DetectCSSPatterns = detectCSSPatterns
-	DetectIndent      = detectIndent
-	MarshalConfig     = marshalConfig
-	SelectASCIILogo   = selectASCIILogo
-)
+//go:embed logo.ascii.40.txt
+var LogoASCII40 string
+
+//go:embed logo.ascii.60.txt
+var LogoASCII60 string
+
+//go:embed logo.ascii.100.txt
+var LogoASCII100 string
+
+//go:embed logo.png
+var LogoPNG []byte
