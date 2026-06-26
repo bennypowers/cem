@@ -35,8 +35,10 @@ func TestSelectASCIILogo(t *testing.T) {
 		{"medium terminal", 70, IC.LogoASCII60},
 		{"wide terminal", 120, IC.LogoASCII100},
 		{"very narrow", 30, IC.LogoASCII40},
-		{"boundary 50", 50, IC.LogoASCII60},
-		{"boundary 80", 80, IC.LogoASCII100},
+		{"boundary 59", 59, IC.LogoASCII40},
+		{"boundary 60", 60, IC.LogoASCII60},
+		{"boundary 99", 99, IC.LogoASCII60},
+		{"boundary 100", 100, IC.LogoASCII100},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

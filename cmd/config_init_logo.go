@@ -17,51 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	"bytes"
-	"image/png"
-	"os"
-	"strings"
-
 	IC "bennypowers.dev/cem/internal/config"
-	"github.com/dolmen-go/kittyimg"
 	"charm.land/lipgloss/v2"
 )
 
-func isKittyTerminal() bool {
-	return os.Getenv("KITTY_PID") != ""
-}
-
 func selectASCIILogo(width int) string {
 	switch {
-	case width < 50:
-		return IC.LogoASCII40
-	case width < 80:
+	case width >= 100:
+		return IC.LogoASCII100
+	case width >= 60:
 		return IC.LogoASCII60
 	default:
-		return IC.LogoASCII100
+		return IC.LogoASCII40
 	}
-}
-
-func renderLogo(width int) string {
-	if isKittyTerminal() {
-		if rendered := renderKittyLogo(); rendered != "" {
-			return centerBlock(rendered, width)
-		}
-	}
-	return centerBlock(strings.TrimRight(selectASCIILogo(width), "\n"), width)
-}
-
-func renderKittyLogo() string {
-	img, err := png.Decode(bytes.NewReader(IC.LogoPNG))
-	if err != nil {
-		return ""
-	}
-
-	var buf bytes.Buffer
-	if err := kittyimg.Fprint(&buf, img); err != nil {
-		return ""
-	}
-	return buf.String()
 }
 
 func centerBlock(text string, width int) string {

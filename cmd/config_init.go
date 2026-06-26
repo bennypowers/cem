@@ -259,7 +259,7 @@ func showWelcomePage() error {
 		width = 80
 	}
 
-	logo := renderLogo(width)
+	logo := centerBlock(strings.TrimRight(selectASCIILogo(width), "\n"), width)
 
 	form := huh.NewForm(
 		huh.NewGroup(
