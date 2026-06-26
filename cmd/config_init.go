@@ -136,61 +136,272 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		*cfg = *existing
 	}
 
-	if err := initSourceFiles(cfg, dirFS, existing, interactive, yes); err != nil {
-		if errors.Is(err, tui.ErrCancelled) {
-			return nil
-		}
-		return err
-	}
-
-	if err := initOutput(cfg, root, hasPkgJSON, existing, interactive, yes); err != nil {
-		if errors.Is(err, tui.ErrCancelled) {
-			return nil
-		}
-		return err
-	}
-
-	if err := initSourceControlURL(cfg, root, existing, interactive, yes); err != nil {
-		if errors.Is(err, tui.ErrCancelled) {
-			return nil
-		}
-		return err
-	}
-
-	if err := initDemoDiscovery(cfg, dirFS, existing, interactive, yes); err != nil {
-		if errors.Is(err, tui.ErrCancelled) {
-			return nil
-		}
-		return err
-	}
-
+	// Detection phase
+	detectedFiles, _ := detectSourceFiles(dirFS)
+	detectedGitRemote, _ := detectGitRemote(root)
+	detectedGlob, detectedPattern, _ := detectDemoFiles(dirFS)
+	var detectedTokens []*specifier.ResolvedFile
 	if hasPkgJSON {
-		if err := initDesignTokens(cfg, root, osFS, existing, interactive, yes); err != nil {
-			if errors.Is(err, tui.ErrCancelled) {
+		detectedTokens, _ = detectDesignTokens(root, osFS)
+	}
+	var detectedPkgCE string
+	if hasPkgJSON {
+		if data, readErr := os.ReadFile(filepath.Join(root, "package.json")); readErr == nil {
+			var pkg struct {
+				CustomElements string `json:"customElements"`
+			}
+			if json.Unmarshal(data, &pkg) == nil {
+				detectedPkgCE = pkg.CustomElements
+			}
+		}
+	}
+	detectedCSSInclude, detectedCSSExclude := detectCSSPatterns(
+		append(detectedFiles, cfg.Generate.Files...), dirFS)
+	hasTsConfig, _ := detectTypeScript(root, osFS)
+
+	// Resolve field values
+	filesFV := fieldValue{
+		Existing: strings.Join(cfg.Generate.Files, ", "),
+		Detected: strings.Join(detectedFiles, ", "),
+		Fallback: "**/*.ts",
+	}
+	outputFV := fieldValue{
+		Existing: cfg.Generate.Output,
+		Detected: detectedPkgCE,
+		Fallback: "custom-elements.json",
+	}
+	scurlFV := fieldValue{
+		Existing: cfg.SourceControlRootUrl,
+		Detected: detectedGitRemote,
+	}
+	globFV := fieldValue{Existing: cfg.Generate.DemoDiscovery.FileGlob, Detected: detectedGlob}
+	patternFV := fieldValue{Existing: cfg.Generate.DemoDiscovery.URLPattern, Detected: detectedPattern}
+
+	// Form field values (bound to huh fields)
+	filesInput := filesFV.Value()
+	outputInput := outputFV.Value()
+	scurlInput := scurlFV.Value()
+
+	if interactive && !yes {
+		// Build the main form
+		var groups []*huh.Group
+
+		// Group 1: Generate settings
+		genDesc := "Generate"
+		if ann := filesFV.Annotation(); ann != "" {
+			genDesc += " (" + ann + ")"
+		}
+		groups = append(groups, huh.NewGroup(
+			huh.NewInput().
+				Title("Source file patterns").
+				Description("Glob patterns for files to scan for custom element definitions (comma-separated)").
+				Placeholder(filesFV.Fallback).
+				Value(&filesInput),
+			huh.NewInput().
+				Title("Manifest output path").
+				Description("Where to write the generated custom-elements.json manifest").
+				Placeholder(outputFV.Fallback).
+				Value(&outputInput),
+			huh.NewInput().
+				Title("Source control root URL").
+				Description("Base URL for linking manifest entries to source files (e.g. GitHub tree URL)").
+				Placeholder("https://github.com/user/repo/tree/main/").
+				Value(&scurlInput),
+		).Title(genDesc))
+
+		// Group 2: Demo discovery (conditional)
+		hasDemos := globFV.Value() != "" || patternFV.Value() != ""
+		if hasDemos {
+			demoGlob := globFV.Value()
+			demoPattern := patternFV.Value()
+			demoTemplate := cfg.Generate.DemoDiscovery.URLTemplate
+			if demoTemplate == "" {
+				demoTemplate = "https://example.com/{{.tag}}/{{.demo}}/"
+			}
+
+			groups = append(groups, huh.NewGroup(
+				huh.NewInput().
+					Title("Demo file glob").
+					Description("Glob pattern to find demo HTML files").
+					Value(&demoGlob),
+				huh.NewInput().
+					Title("Demo URL pattern").
+					Description("URL pattern with named params for matching demo paths to elements").
+					Placeholder("elements/:tag/demo/:demo.html").
+					Value(&demoPattern),
+				huh.NewInput().
+					Title("Demo URL template").
+					Description("Go template for generating public demo URLs from matched parameters (leave empty to skip)").
+					Placeholder(demoTemplate).
+					Value(&demoTemplate),
+			).Title("Demo Discovery").
+				Description("Demos are HTML partials that showcase your elements. "+
+					"The dev server discovers and serves them with live reload."))
+
+			defer func() {
+				cfg.Generate.DemoDiscovery.FileGlob = demoGlob
+				cfg.Generate.DemoDiscovery.URLPattern = demoPattern
+				cfg.Generate.DemoDiscovery.URLTemplate = demoTemplate
+			}()
+		}
+
+		// Group 3: Design tokens (conditional)
+		var tokenSpec, tokenPrefix string
+		if len(detectedTokens) > 0 || cfg.Generate.DesignTokens.Spec != "" {
+			tokenSpec = cfg.Generate.DesignTokens.Spec
+			if tokenSpec == "" && len(detectedTokens) == 1 {
+				tokenSpec = detectedTokens[0].Specifier
+				if tokenSpec == "" {
+					tokenSpec = detectedTokens[0].Path
+				}
+			}
+			tokenPrefix = cfg.Generate.DesignTokens.Prefix
+
+			groups = append(groups, huh.NewGroup(
+				huh.NewInput().
+					Title("Design token spec").
+					Description("Path or specifier for the DTCG design token file").
+					Value(&tokenSpec),
+				huh.NewInput().
+					Title("Token prefix").
+					Description("CSS custom property prefix (e.g. 'my-ds' for --my-ds-color-primary)").
+					Value(&tokenPrefix),
+			).Title("Design Tokens").
+				Description("Document CSS custom properties from DTCG design token files."))
+
+			defer func() {
+				cfg.Generate.DesignTokens.Spec = tokenSpec
+				cfg.Generate.DesignTokens.Prefix = tokenPrefix
+			}()
+		}
+
+		// Group 4: Serve settings
+		portStr := "8000"
+		if cfg.Serve.Port != 0 {
+			portStr = strconv.Itoa(cfg.Serve.Port)
+		}
+		rendering := cfg.Serve.Demos.Rendering
+		if rendering == "" {
+			rendering = "shadow"
+		}
+		importMapGen := cfg.Serve.ImportMap.Generate
+		if existing == nil {
+			importMapGen = true
+		}
+		enableCSS := cfg.Serve.Transforms.CSS.Enabled || len(detectedCSSInclude) > 0
+
+		serveFields := []huh.Field{
+			huh.NewInput().
+				Title("Dev server port").
+				Value(&portStr),
+			huh.NewSelect[string]().
+				Title("Demo rendering mode").
+				Options(huh.NewOption("Shadow DOM", "shadow"), huh.NewOption("Light DOM", "light")).
+				Value(&rendering),
+			huh.NewConfirm().
+				Title("Auto-generate import maps?").
+				Value(&importMapGen),
+		}
+
+		if len(detectedCSSInclude) > 0 || cfg.Serve.Transforms.CSS.Enabled {
+			serveFields = append(serveFields,
+				huh.NewConfirm().
+					Title("Enable CSS transforms?").
+					Description("Transform CSS files to JavaScript modules ("+strings.Join(detectedCSSInclude, ", ")+")").
+					Value(&enableCSS),
+			)
+		}
+
+		groups = append(groups, huh.NewGroup(serveFields...).
+			Title("Dev Server").
+			Description("The cem dev server serves demos with live reload, TypeScript transforms, and import maps."))
+
+		// Group 5: Output format (if no existing config)
+		if cfgPath == "" {
+			groups = append(groups, huh.NewGroup(
+				huh.NewSelect[string]().
+					Title("Output format").
+					Options(
+						huh.NewOption("YAML", "yaml"),
+						huh.NewOption("JSON", "json"),
+						huh.NewOption("JSON with comments", "jsonc"),
+					).
+					Value(&format),
+			).Title("Output"))
+		}
+
+		// Run the form
+		form := huh.NewForm(groups...)
+		if formErr := tui.WrapAbort(form.Run()); formErr != nil {
+			if errors.Is(formErr, tui.ErrCancelled) {
 				return nil
 			}
-			return err
+			return formErr
 		}
-	}
 
-	if err := initServe(cfg, root, dirFS, existing, interactive, yes); err != nil {
-		if errors.Is(err, tui.ErrCancelled) {
-			return nil
+		// Apply form results
+		cfg.Generate.Files = splitCommaList(filesInput)
+		cfg.Generate.Output = outputInput
+		cfg.SourceControlRootUrl = scurlInput
+
+		port, parseErr := strconv.Atoi(portStr)
+		if parseErr != nil || port < 1 || port > 65535 {
+			return fmt.Errorf("invalid port: %s", portStr)
 		}
-		return err
+		cfg.Serve.Port = port
+		cfg.Serve.Demos.Rendering = rendering
+		cfg.Serve.ImportMap.Generate = importMapGen
+
+		if enableCSS {
+			cssInclude := detectedCSSInclude
+			cssExclude := detectedCSSExclude
+			if cfg.Serve.Transforms.CSS.Enabled {
+				if len(cfg.Serve.Transforms.CSS.Include) > 0 {
+					cssInclude = cfg.Serve.Transforms.CSS.Include
+				}
+				if len(cfg.Serve.Transforms.CSS.Exclude) > 0 {
+					cssExclude = cfg.Serve.Transforms.CSS.Exclude
+				}
+			}
+			cfg.Serve.Transforms.CSS.Enabled = true
+			cfg.Serve.Transforms.CSS.Include = cssInclude
+			cfg.Serve.Transforms.CSS.Exclude = cssExclude
+		} else {
+			cfg.Serve.Transforms.CSS.Enabled = false
+		}
+
+		if hasTsConfig {
+			logging.Info("tsconfig.json detected. URL rewrites (rootDir/outDir) are auto-detected at serve time.")
+		}
+	} else {
+		// --yes mode: apply defaults from detection
+		cfg.Generate.Files = splitCommaList(filesFV.Value())
+		cfg.Generate.Output = outputFV.Value()
+		if scurlFV.Value() != "" {
+			cfg.SourceControlRootUrl = scurlFV.Value()
+		}
+		if globFV.Value() != "" {
+			cfg.Generate.DemoDiscovery.FileGlob = globFV.Value()
+			cfg.Generate.DemoDiscovery.URLPattern = patternFV.Value()
+		}
+		if cfg.Generate.DesignTokens.Spec == "" && len(detectedTokens) == 1 {
+			spec := detectedTokens[0].Specifier
+			if spec == "" {
+				spec = detectedTokens[0].Path
+			}
+			cfg.Generate.DesignTokens.Spec = spec
+		}
+		hasExistingServe := existing != nil && (existing.Serve.Port != 0 ||
+			existing.Serve.ImportMap.Generate)
+		if !hasExistingServe {
+			cfg.Serve.Port = 8000
+			cfg.Serve.ImportMap.Generate = true
+			cfg.Serve.Demos.Rendering = "shadow"
+		}
 	}
 
 	if cfgPath != "" && existingFormat != "" {
 		format = existingFormat
-	} else if interactive && !yes {
-		selected, selectErr := tui.Select("Output format", tui.StringOptions(validFormats...))
-		if selectErr != nil {
-			if errors.Is(selectErr, tui.ErrCancelled) {
-				return nil
-			}
-			return selectErr
-		}
-		format = selected
 	}
 
 	if W.IsWorkspaceMode(root) {
@@ -320,418 +531,6 @@ func writeConfigAtomic(outPath string, output []byte) error {
 	return nil
 }
 
-func initSourceFiles(cfg *IC.CemConfig, fsys fs.FS, existing *IC.CemConfig, interactive, yes bool) error {
-	detected, err := detectSourceFiles(fsys)
-	if err != nil {
-		return err
-	}
-
-	var existingVal string
-	if existing != nil && len(existing.Generate.Files) > 0 {
-		existingVal = strings.Join(existing.Generate.Files, ", ")
-	}
-
-	fv := fieldValue{
-		Existing: existingVal,
-		Detected: strings.Join(detected, ", "),
-		Fallback: "**/*.ts",
-	}
-
-	var files []string
-	if yes {
-		files = splitCommaList(fv.Value())
-	} else if interactive {
-		title := "Glob patterns for source files to scan for custom element definitions (comma-separated)"
-		if ann := fv.Annotation(); ann != "" {
-			title += " (" + ann + ")"
-		}
-		input, inputErr := tui.TextInput(title, fv.Value())
-		if inputErr != nil {
-			return inputErr
-		}
-		if input == "" {
-			input = fv.Value()
-		}
-		files = splitCommaList(input)
-	}
-
-	cfg.Generate.Files = files
-	return nil
-}
-
-func initOutput(cfg *IC.CemConfig, root string, hasPkgJSON bool, existing *IC.CemConfig, interactive, yes bool) error {
-	var detected string
-	if hasPkgJSON {
-		data, err := os.ReadFile(filepath.Join(root, "package.json"))
-		if err == nil {
-			var pkg struct {
-				CustomElements string `json:"customElements"`
-			}
-			if json.Unmarshal(data, &pkg) == nil && pkg.CustomElements != "" {
-				detected = pkg.CustomElements
-			}
-		}
-	}
-
-	var existingVal string
-	if existing != nil && existing.Generate.Output != "" {
-		existingVal = existing.Generate.Output
-	}
-
-	fv := fieldValue{
-		Existing: existingVal,
-		Detected: detected,
-		Fallback: "custom-elements.json",
-	}
-
-	var output string
-	if yes {
-		output = fv.Value()
-	} else if interactive {
-		title := "Output path for the generated custom-elements.json manifest"
-		if ann := fv.Annotation(); ann != "" {
-			title += " (" + ann + ")"
-		}
-		input, err := tui.TextInput(title, fv.Value())
-		if err != nil {
-			return err
-		}
-		if input == "" {
-			input = fv.Value()
-		}
-		output = input
-	}
-
-	cfg.Generate.Output = output
-	return nil
-}
-
-func initSourceControlURL(cfg *IC.CemConfig, root string, existing *IC.CemConfig, interactive, yes bool) error {
-	detected, _ := detectGitRemote(root)
-
-	var existingVal string
-	if existing != nil {
-		existingVal = existing.SourceControlRootUrl
-	}
-
-	fv := fieldValue{
-		Existing: existingVal,
-		Detected: detected,
-	}
-
-	val := fv.Value()
-	if val == "" && yes {
-		return nil
-	}
-
-	if interactive && !yes {
-		title := "Base URL for linking manifest entries to source files (e.g. GitHub tree URL)"
-		if ann := fv.Annotation(); ann != "" {
-			title += " (" + ann + ")"
-		}
-		input, err := tui.TextInput(title, val)
-		if err != nil {
-			return err
-		}
-		if input != "" {
-			val = input
-		}
-	}
-
-	cfg.SourceControlRootUrl = val
-	return nil
-}
-
-func initDemoDiscovery(cfg *IC.CemConfig, fsys fs.FS, existing *IC.CemConfig, interactive, yes bool) error {
-	detectedGlob, detectedPattern, err := detectDemoFiles(fsys)
-	if err != nil {
-		return err
-	}
-
-	var existingGlob, existingPattern, existingTemplate string
-	if existing != nil {
-		existingGlob = existing.Generate.DemoDiscovery.FileGlob
-		existingPattern = existing.Generate.DemoDiscovery.URLPattern
-		existingTemplate = existing.Generate.DemoDiscovery.URLTemplate
-	}
-
-	globFV := fieldValue{Existing: existingGlob, Detected: detectedGlob}
-	patternFV := fieldValue{Existing: existingPattern, Detected: detectedPattern}
-
-	hasDemos := globFV.Value() != "" || patternFV.Value() != ""
-
-	if !hasDemos && interactive && !yes {
-		logging.Info("No demo files detected.")
-		return nil
-	}
-
-	if !hasDemos {
-		return nil
-	}
-
-	if interactive && !yes {
-		want, confirmErr := tui.Confirm(
-			"Demos are HTML partials that showcase your elements. "+
-				"The dev server discovers and serves them with live reload. "+
-				"Configure demo discovery?", true)
-		if confirmErr != nil {
-			return confirmErr
-		}
-		if !want {
-			return nil
-		}
-	}
-
-	if yes {
-		cfg.Generate.DemoDiscovery.FileGlob = globFV.Value()
-		cfg.Generate.DemoDiscovery.URLPattern = patternFV.Value()
-		if existingTemplate != "" {
-			cfg.Generate.DemoDiscovery.URLTemplate = existingTemplate
-		}
-		return nil
-	}
-
-	title := "Glob pattern to find demo HTML files"
-	if ann := globFV.Annotation(); ann != "" {
-		title += " (" + ann + ")"
-	}
-	input, inputErr := tui.TextInput(title, globFV.Value())
-	if inputErr != nil {
-		return inputErr
-	}
-	if input != "" {
-		cfg.Generate.DemoDiscovery.FileGlob = input
-	} else {
-		cfg.Generate.DemoDiscovery.FileGlob = globFV.Value()
-	}
-
-	title = "URL pattern with named parameters for matching demo file paths to elements (e.g. elements/:tag/demo/:demo.html)"
-	if ann := patternFV.Annotation(); ann != "" {
-		title += " (" + ann + ")"
-	}
-	input, inputErr = tui.TextInput(title, patternFV.Value())
-	if inputErr != nil {
-		return inputErr
-	}
-	if input != "" {
-		cfg.Generate.DemoDiscovery.URLPattern = input
-	} else {
-		cfg.Generate.DemoDiscovery.URLPattern = patternFV.Value()
-	}
-
-	templatePlaceholder := existingTemplate
-	if templatePlaceholder == "" {
-		templatePlaceholder = "https://example.com/{{.tag}}/{{.demo}}/"
-	}
-	input, inputErr = tui.TextInput(
-		"Go template for generating public demo URLs from matched parameters (leave empty to skip)",
-		templatePlaceholder)
-	if inputErr != nil {
-		return inputErr
-	}
-	cfg.Generate.DemoDiscovery.URLTemplate = input
-	return nil
-}
-
-func initDesignTokens(cfg *IC.CemConfig, root string, fsys platform.FileSystem, existing *IC.CemConfig, interactive, yes bool) error {
-	tokens, _ := detectDesignTokens(root, fsys)
-
-	var existingSpec, existingPrefix string
-	if existing != nil {
-		existingSpec = existing.Generate.DesignTokens.Spec
-		existingPrefix = existing.Generate.DesignTokens.Prefix
-	}
-
-	var spec string
-	switch {
-	case existingSpec != "":
-		spec = existingSpec
-	case len(tokens) == 1:
-		spec = tokens[0].Specifier
-		if spec == "" {
-			spec = tokens[0].Path
-		}
-	case len(tokens) > 1 && interactive && !yes:
-		options := make([]huh.Option[string], len(tokens))
-		for i, t := range tokens {
-			label := t.Specifier
-			if label == "" {
-				label = t.Path
-			}
-			options[i] = huh.NewOption(label, label)
-		}
-		selected, selectErr := tui.Select("Design tokens spec", options)
-		if selectErr != nil {
-			if errors.Is(selectErr, tui.ErrCancelled) {
-				return nil
-			}
-			return selectErr
-		}
-		spec = selected
-	}
-
-	if spec == "" && interactive && !yes {
-		wantTokens, confirmErr := tui.Confirm(
-			"Document CSS custom properties from DTCG design token files?", false)
-		if confirmErr != nil || !wantTokens {
-			return nil
-		}
-		input, inputErr := tui.TextInput("Path or specifier for the design token spec file", "")
-		if inputErr != nil || input == "" {
-			return nil
-		}
-		spec = input
-	}
-
-	if spec == "" && yes {
-		if existingSpec != "" {
-			spec = existingSpec
-		} else {
-			return nil
-		}
-	}
-
-	if spec == "" {
-		return nil
-	}
-
-	prefix := existingPrefix
-	if interactive && !yes {
-		title := "CSS custom property prefix for design tokens (e.g. 'my-ds' for --my-ds-color-primary)"
-		if existingPrefix != "" {
-			title += " (existing: " + existingPrefix + ")"
-		}
-		input, inputErr := tui.TextInput(title, existingPrefix)
-		if inputErr != nil {
-			return inputErr
-		}
-		if input != "" {
-			prefix = input
-		}
-	}
-
-	cfg.Generate.DesignTokens.Spec = spec
-	cfg.Generate.DesignTokens.Prefix = prefix
-	return nil
-}
-
-func initServe(cfg *IC.CemConfig, root string, fsys fs.FS, existing *IC.CemConfig, interactive, yes bool) error {
-	hasExistingServe := existing != nil && (existing.Serve.Port != 0 ||
-		existing.Serve.ImportMap.Generate ||
-		existing.Serve.ImportMap.OverrideFile != "" ||
-		existing.Serve.Demos.Rendering != "" ||
-		existing.Serve.Transforms.CSS.Enabled ||
-		existing.Serve.Transforms.TypeScript.Enabled ||
-		len(existing.Serve.URLRewrites) > 0 ||
-		existing.Serve.OpenBrowser != nil)
-
-	if !hasExistingServe && yes {
-		cfg.Serve.Port = 8000
-		cfg.Serve.ImportMap.Generate = true
-		cfg.Serve.Demos.Rendering = "shadow"
-		return nil
-	}
-
-	if !hasExistingServe && interactive {
-		want, err := tui.Confirm(
-			"Configure the cem dev server? "+
-				"It serves demos with live reload, TypeScript transforms, and import maps.", true)
-		if err != nil || !want {
-			return nil
-		}
-	}
-
-	existingPort := 8000
-	if existing != nil && existing.Serve.Port != 0 {
-		existingPort = existing.Serve.Port
-	}
-
-	if interactive && !yes {
-		portStr, err := tui.TextInput("Dev server port", strconv.Itoa(existingPort))
-		if err != nil {
-			return err
-		}
-		if portStr == "" {
-			portStr = strconv.Itoa(existingPort)
-		}
-		port, parseErr := strconv.Atoi(portStr)
-		if parseErr != nil {
-			return fmt.Errorf("invalid port: %s", portStr)
-		}
-		if port < 1 || port > 65535 {
-			return fmt.Errorf("port must be between 1 and 65535, got %d", port)
-		}
-		cfg.Serve.Port = port
-	} else {
-		cfg.Serve.Port = existingPort
-	}
-
-	existingRendering := "shadow"
-	if existing != nil && existing.Serve.Demos.Rendering != "" {
-		existingRendering = existing.Serve.Demos.Rendering
-	}
-
-	if interactive && !yes {
-		rendering, err := tui.Select("Demo rendering mode", tui.StringOptions("shadow", "light"))
-		if err != nil {
-			return err
-		}
-		cfg.Serve.Demos.Rendering = rendering
-	} else {
-		cfg.Serve.Demos.Rendering = existingRendering
-	}
-
-	existingImportMapGen := true
-	if existing != nil {
-		existingImportMapGen = existing.Serve.ImportMap.Generate
-	}
-
-	if interactive && !yes {
-		gen, err := tui.Confirm("Auto-generate import maps?", existingImportMapGen)
-		if err != nil {
-			return err
-		}
-		cfg.Serve.ImportMap.Generate = gen
-	} else {
-		cfg.Serve.ImportMap.Generate = existingImportMapGen
-	}
-
-	sourcePatterns := cfg.Generate.Files
-	cssInclude, cssExclude := detectCSSPatterns(sourcePatterns, fsys)
-
-	if existing != nil && existing.Serve.Transforms.CSS.Enabled {
-		if len(existing.Serve.Transforms.CSS.Include) > 0 {
-			cssInclude = existing.Serve.Transforms.CSS.Include
-		}
-		if len(existing.Serve.Transforms.CSS.Exclude) > 0 {
-			cssExclude = existing.Serve.Transforms.CSS.Exclude
-		}
-	}
-
-	if len(cssInclude) > 0 {
-		enableCSS := true
-		if interactive && !yes {
-			logging.Info("Detected CSS files: %s", strings.Join(cssInclude, ", "))
-			var confirmErr error
-			enableCSS, confirmErr = tui.Confirm("Enable CSS transforms?", true)
-			if confirmErr != nil {
-				return confirmErr
-			}
-		}
-		if enableCSS {
-			cfg.Serve.Transforms.CSS.Enabled = true
-			cfg.Serve.Transforms.CSS.Include = cssInclude
-			cfg.Serve.Transforms.CSS.Exclude = cssExclude
-		}
-	}
-
-	hasTsConfig, _ := detectTypeScript(root, &platform.OSFileSystem{})
-	if hasTsConfig && interactive && !yes {
-		logging.Info("tsconfig.json detected. URL rewrites (rootDir/outDir) are auto-detected at serve time.")
-	}
-
-	return nil
-}
 
 func marshalConfig(cfg *IC.CemConfig, format string, existingData []byte) ([]byte, error) {
 	switch format {
