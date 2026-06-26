@@ -748,18 +748,20 @@ func (f *fieldValue) Groups() []*huh.Group {
 	if f.Detected != "" && f.Existing == "" {
 		groups = append(groups, huh.NewGroup(
 			huh.NewConfirm().
-				Title("Use detected "+f.Title+"?").
+				Title("Use detected value?").
 				Description(f.Detected).
 				Value(&f.useDetected),
-		))
+		).Title(f.Title).
+			Description(f.Description))
 	} else if f.Detected != "" && f.Existing != f.Detected {
 		f.useDetected = false
 		groups = append(groups, huh.NewGroup(
 			huh.NewConfirm().
-				Title("Update "+f.Title+" with detected value?").
+				Title("Update with detected value?").
 				Description("existing: "+f.Existing+"\ndetected: "+f.Detected).
 				Value(&f.useDetected),
-		))
+		).Title(f.Title).
+			Description(f.Description))
 	}
 
 	placeholder := f.Placeholder
