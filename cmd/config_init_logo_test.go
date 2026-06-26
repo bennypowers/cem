@@ -27,22 +27,24 @@ import (
 // inline assertions: pure function with simple string equality
 func TestSelectASCIILogo(t *testing.T) {
 	tests := []struct {
-		name  string
-		width int
-		want  string
+		name   string
+		width  int
+		height int
+		want   string
 	}{
-		{"narrow terminal", 40, IC.LogoASCII40},
-		{"medium terminal", 70, IC.LogoASCII60},
-		{"wide terminal", 120, IC.LogoASCII100},
-		{"very narrow", 30, IC.LogoASCII40},
-		{"boundary 59", 59, IC.LogoASCII40},
-		{"boundary 60", 60, IC.LogoASCII60},
-		{"boundary 99", 99, IC.LogoASCII60},
-		{"boundary 100", 100, IC.LogoASCII100},
+		{"narrow terminal", 40, 24, IC.LogoASCII40},
+		{"medium wide enough tall enough", 70, 55, IC.LogoASCII60},
+		{"medium wide but too short", 70, 40, IC.LogoASCII40},
+		{"wide and tall", 120, 90, IC.LogoASCII100},
+		{"wide but short", 120, 40, IC.LogoASCII40},
+		{"wide medium height", 120, 55, IC.LogoASCII60},
+		{"very narrow", 30, 24, IC.LogoASCII40},
+		{"100 cols needs 84 rows for large", 100, 84, IC.LogoASCII100},
+		{"100 cols with 49 rows gets medium", 100, 55, IC.LogoASCII60},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := cmd.SelectASCIILogo(tt.width)
+			got := cmd.SelectASCIILogo(tt.width, tt.height)
 			assert.Equal(t, tt.want, got)
 		})
 	}

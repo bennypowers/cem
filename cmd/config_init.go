@@ -254,12 +254,15 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 }
 
 func showWelcomePage() error {
-	width, _, err := term.GetSize(int(os.Stdout.Fd()))
+	width, height, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil || width <= 0 {
 		width = 80
 	}
+	if height <= 0 {
+		height = 24
+	}
 
-	logo := centerBlock(strings.TrimRight(selectASCIILogo(width), "\n"), width)
+	logo := centerBlock(strings.TrimRight(selectASCIILogo(width, height), "\n"), width)
 
 	form := huh.NewForm(
 		huh.NewGroup(

@@ -21,15 +21,16 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-func selectASCIILogo(width int) string {
-	switch {
-	case width >= 100:
+func selectASCIILogo(width, height int) string {
+	maxLogoHeight := height * 3 / 5
+
+	if width >= 100 && maxLogoHeight >= 50 {
 		return IC.LogoASCII100
-	case width >= 60:
-		return IC.LogoASCII60
-	default:
-		return IC.LogoASCII40
 	}
+	if width >= 60 && maxLogoHeight >= 30 {
+		return IC.LogoASCII60
+	}
+	return IC.LogoASCII40
 }
 
 func centerBlock(text string, width int) string {
