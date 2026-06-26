@@ -40,6 +40,7 @@ import (
 	"bennypowers.dev/cem/internal/set"
 	"bennypowers.dev/cem/internal/tui"
 	W "bennypowers.dev/cem/internal/workspace"
+	"charm.land/bubbles/v2/key"
 	"charm.land/huh/v2"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/gjson"
@@ -203,16 +204,19 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 			huh.NewInput().
 				Title("Source file patterns").
 				Description(filesDesc).
+				Prompt("?").
 				Placeholder(filesFV.Fallback).
 				Value(&filesInput),
 			huh.NewInput().
 				Title("Manifest output path").
 				Description(outputDesc).
+				Prompt("?").
 				Placeholder(outputFV.Fallback).
 				Value(&outputInput),
 			huh.NewInput().
 				Title("Source control root URL").
 				Description(scurlDesc).
+				Prompt("?").
 				Placeholder("https://github.com/user/repo/tree/main/").
 				Value(&scurlInput),
 		).Title("Generate"))
@@ -345,7 +349,9 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		}
 
 		// Run the form
-		form := huh.NewForm(groups...)
+		km := huh.NewDefaultKeyMap()
+		km.Quit = key.NewBinding(key.WithKeys("esc", "ctrl+c"), key.WithHelp("esc", "quit"))
+		form := huh.NewForm(groups...).WithKeyMap(km)
 		if formErr := tui.WrapAbort(form.Run()); formErr != nil {
 			if errors.Is(formErr, tui.ErrCancelled) {
 				return nil
@@ -489,6 +495,9 @@ func showWelcomePage() error {
 
 	logo := centerBlock(strings.TrimRight(selectASCIILogo(width, height), "\n"), width)
 
+	km := huh.NewDefaultKeyMap()
+	km.Quit = key.NewBinding(key.WithKeys("esc", "ctrl+c"), key.WithHelp("esc", "quit"))
+
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewNote().
@@ -499,7 +508,7 @@ Use this interactive wizard to generate or update your cem config files
 `).
 				Next(true),
 		),
-	)
+	).WithKeyMap(km)
 
 	return tui.WrapAbort(form.Run())
 }
@@ -544,7 +553,6 @@ func writeConfigAtomic(outPath string, output []byte) error {
 
 	return nil
 }
-
 
 func marshalConfig(cfg *IC.CemConfig, format string, existingData []byte) ([]byte, error) {
 	switch format {
