@@ -10,11 +10,17 @@ generate:
     fileGlob: elements/**/demo/*.html
     urlPattern: elements/:tag/demo/:demo.html
     urlTemplate: https://example.com/{{.tag}}/{{.demo}}/
+mcp:
+  maxDescriptionLength: 0
+health:
+  failBelow: 0
 serve:
   port: 8000
   importMap:
     generate: true
   transforms:
+    typescript:
+      enabled: false
     css:
       enabled: true
       include:
@@ -25,3 +31,4 @@ serve:
   demos:
     rendering: shadow
 sourceControlRootUrl: https://github.com/example/project/tree/main/
+verbose: false

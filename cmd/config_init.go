@@ -599,7 +599,7 @@ func isZeroJSON(v any) bool {
 	case float64:
 		return val == 0
 	case bool:
-		return !val
+		return false
 	case []any:
 		return len(val) == 0
 	case map[string]any:
@@ -665,6 +665,10 @@ func isZeroYAMLNode(n *yaml.Node) bool {
 	case yaml.ScalarNode:
 		if n.Tag == "!!null" {
 			return true
+		}
+		// Explicit bool/int values are intentional, not zero
+		if n.Tag == "!!bool" || n.Tag == "!!int" {
+			return false
 		}
 		return n.Value == "" || n.Value == "0" || n.Value == "false"
 	case yaml.SequenceNode:
