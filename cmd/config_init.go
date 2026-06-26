@@ -208,6 +208,7 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		groups = append(groups, scurlFV.Groups()...)
 
 		// Demo discovery (conditional)
+		var demoTemplate string
 		hasDemos := globFV.Value() != "" || patternFV.Value() != ""
 		if hasDemos {
 			groups = append(groups, huh.NewGroup(
@@ -220,7 +221,7 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 			groups = append(groups, globFV.Groups()...)
 			groups = append(groups, patternFV.Groups()...)
 
-			demoTemplate := cfg.Generate.DemoDiscovery.URLTemplate
+			demoTemplate = cfg.Generate.DemoDiscovery.URLTemplate
 			groups = append(groups, huh.NewGroup(
 				huh.NewInput().
 					Title("Demo URL template").
@@ -229,11 +230,6 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 					Value(&demoTemplate),
 			))
 
-			defer func() {
-				cfg.Generate.DemoDiscovery.FileGlob = globFV.Resolve()
-				cfg.Generate.DemoDiscovery.URLPattern = patternFV.Resolve()
-				cfg.Generate.DemoDiscovery.URLTemplate = demoTemplate
-			}()
 		}
 
 		// Group 3: Design tokens (conditional)
@@ -260,10 +256,6 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 			).Title("Design Tokens").
 				Description("Document CSS custom properties from DTCG design token files."))
 
-			defer func() {
-				cfg.Generate.DesignTokens.Spec = tokenSpec
-				cfg.Generate.DesignTokens.Prefix = tokenPrefix
-			}()
 		}
 
 		// Group 4: Serve settings
@@ -339,6 +331,16 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		cfg.Generate.Files = splitCommaList(filesFV.Resolve())
 		cfg.Generate.Output = outputFV.Resolve()
 		cfg.SourceControlRootUrl = scurlFV.Resolve()
+
+		if hasDemos {
+			cfg.Generate.DemoDiscovery.FileGlob = globFV.Resolve()
+			cfg.Generate.DemoDiscovery.URLPattern = patternFV.Resolve()
+			cfg.Generate.DemoDiscovery.URLTemplate = demoTemplate
+		}
+		if tokenSpec != "" {
+			cfg.Generate.DesignTokens.Spec = tokenSpec
+			cfg.Generate.DesignTokens.Prefix = tokenPrefix
+		}
 
 		port, parseErr := strconv.Atoi(portStr)
 		if parseErr != nil || port < 1 || port > 65535 {
