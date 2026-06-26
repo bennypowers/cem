@@ -1,0 +1,44 @@
+{
+  "generate": {
+    "demoDiscovery": {
+      "fileGlob": "elements/**/demo/*.html",
+      "urlPattern": "elements/:tag/demo/:demo.html",
+      "urlTemplate": "https://example.com/{{.tag}}/{{.demo}}/"
+    },
+    "designTokens": {
+      "prefix": "demo",
+      "spec": "design-tokens.json"
+    },
+    "files": [
+      "elements/**/*.ts",
+      "base/**/*.ts"
+    ],
+    "output": "custom-elements.json"
+  },
+  "serve": {
+    "demos": {
+      "rendering": "shadow"
+    },
+    "importMap": {
+      "Generate": true
+    },
+    "port": 8000,
+    "transforms": {
+      "css": {
+        "enabled": true,
+        "exclude": [
+          "demo/**/*.css",
+          "**/*.min.css"
+        ],
+        "include": [
+          "elements/**/*.css"
+        ]
+      },
+      "typescript": {
+        "enabled": false
+      }
+    }
+  },
+  "sourceControlRootUrl": "https://github.com/example/project/tree/main/",
+  "verbose": false
+}

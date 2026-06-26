@@ -304,7 +304,7 @@ func TestDetectIndent(t *testing.T) {
 	}
 }
 
-func TestMarshalConfigYAML_Full(t *testing.T) {
+func fullTestConfig() *IC.CemConfig {
 	cfg := &IC.CemConfig{
 		SourceControlRootUrl: "https://github.com/example/project/tree/main/",
 		Generate: IC.GenerateConfig{
@@ -335,35 +335,36 @@ func TestMarshalConfigYAML_Full(t *testing.T) {
 		},
 	}
 	cfg.Serve.ImportMap.Generate = true
-
-	got, err := cmd.MarshalConfig(cfg, "yaml", nil)
-	require.NoError(t, err)
-
-	goldenDir := filepath.Join("testdata", "goldens", "config-init")
-	fs := testutil.LoadTestdataFS(t, goldenDir, goldenDir)
-	testutil.CheckGolden(t, "full", got, testutil.GoldenOptions{
-		Dir:       goldenDir,
-		Extension: ".yaml",
-		FS:        fs,
-	})
+	return cfg
 }
 
-func TestMarshalConfigYAML_Minimal(t *testing.T) {
-	cfg := &IC.CemConfig{
+func minimalTestConfig() *IC.CemConfig {
+	return &IC.CemConfig{
 		Generate: IC.GenerateConfig{
 			Files:  []string{"src/**/*.ts"},
 			Output: "custom-elements.json",
 		},
 	}
+}
 
-	got, err := cmd.MarshalConfig(cfg, "yaml", nil)
+func testMarshalConfig(t *testing.T, cfg *IC.CemConfig, format, goldenName string) {
+	t.Helper()
+	got, err := cmd.MarshalConfig(cfg, format, nil)
 	require.NoError(t, err)
 
+	ext := "." + format
 	goldenDir := filepath.Join("testdata", "goldens", "config-init")
 	fs := testutil.LoadTestdataFS(t, goldenDir, goldenDir)
-	testutil.CheckGolden(t, "minimal", got, testutil.GoldenOptions{
+	testutil.CheckGolden(t, goldenName, got, testutil.GoldenOptions{
 		Dir:       goldenDir,
-		Extension: ".yaml",
+		Extension: ext,
 		FS:        fs,
 	})
 }
+
+func TestMarshalConfigYAML_Full(t *testing.T)    { testMarshalConfig(t, fullTestConfig(), "yaml", "full") }
+func TestMarshalConfigYAML_Minimal(t *testing.T) { testMarshalConfig(t, minimalTestConfig(), "yaml", "minimal") }
+func TestMarshalConfigJSON_Full(t *testing.T)    { testMarshalConfig(t, fullTestConfig(), "json", "full") }
+func TestMarshalConfigJSON_Minimal(t *testing.T) { testMarshalConfig(t, minimalTestConfig(), "json", "minimal") }
+func TestMarshalConfigJSONC_Full(t *testing.T)   { testMarshalConfig(t, fullTestConfig(), "jsonc", "full") }
+func TestMarshalConfigJSONC_Minimal(t *testing.T) { testMarshalConfig(t, minimalTestConfig(), "jsonc", "minimal") }

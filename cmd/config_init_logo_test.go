@@ -22,6 +22,7 @@ import (
 	"bennypowers.dev/cem/cmd"
 	IC "bennypowers.dev/cem/internal/config"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // inline assertions: pure function with simple string equality
@@ -51,7 +52,7 @@ func TestSelectASCIILogo(t *testing.T) {
 }
 
 func TestLogoPNGEmbedded(t *testing.T) {
-	assert.NotEmpty(t, IC.LogoPNG, "logo PNG should be embedded")
+	require.GreaterOrEqual(t, len(IC.LogoPNG), 4, "logo PNG must be at least 4 bytes")
 	assert.Equal(t, byte(0x89), IC.LogoPNG[0], "should start with PNG magic byte")
 	assert.Equal(t, byte('P'), IC.LogoPNG[1])
 	assert.Equal(t, byte('N'), IC.LogoPNG[2])
