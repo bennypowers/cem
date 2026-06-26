@@ -162,21 +162,39 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 
 	// Resolve field values
 	filesFV := fieldValue{
-		Existing: strings.Join(cfg.Generate.Files, ", "),
-		Detected: strings.Join(detectedFiles, ", "),
-		Fallback: "**/*.ts",
+		Title:       "Source file patterns",
+		Description: "Glob patterns for files to scan for custom element definitions (comma-separated)",
+		Existing:    strings.Join(cfg.Generate.Files, ", "),
+		Detected:    strings.Join(detectedFiles, ", "),
+		Fallback:    "**/*.ts",
 	}
 	outputFV := fieldValue{
-		Existing: cfg.Generate.Output,
-		Detected: detectedPkgCE,
-		Fallback: "custom-elements.json",
+		Title:       "Manifest output path",
+		Description: "Where to write the generated custom-elements.json manifest",
+		Existing:    cfg.Generate.Output,
+		Detected:    detectedPkgCE,
+		Fallback:    "custom-elements.json",
 	}
 	scurlFV := fieldValue{
-		Existing: cfg.SourceControlRootUrl,
-		Detected: detectedGitRemote,
+		Title:       "Source control root URL",
+		Description: "Base URL for linking manifest entries to source files",
+		Placeholder: "https://github.com/user/repo/tree/main/",
+		Existing:    cfg.SourceControlRootUrl,
+		Detected:    detectedGitRemote,
 	}
-	globFV := fieldValue{Existing: cfg.Generate.DemoDiscovery.FileGlob, Detected: detectedGlob}
-	patternFV := fieldValue{Existing: cfg.Generate.DemoDiscovery.URLPattern, Detected: detectedPattern}
+	globFV := fieldValue{
+		Title:       "Demo file glob",
+		Description: "Glob pattern to find demo HTML files",
+		Existing:    cfg.Generate.DemoDiscovery.FileGlob,
+		Detected:    detectedGlob,
+	}
+	patternFV := fieldValue{
+		Title:       "Demo URL pattern",
+		Description: "URL pattern with named params for matching demo paths to elements",
+		Placeholder: "elements/:tag/demo/:demo.html",
+		Existing:    cfg.Generate.DemoDiscovery.URLPattern,
+		Detected:    detectedPattern,
+	}
 
 	if interactive && !yes {
 		// Build the main form
