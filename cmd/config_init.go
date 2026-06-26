@@ -187,27 +187,35 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		var groups []*huh.Group
 
 		// Group 1: Generate settings
-		genDesc := "Generate"
+		filesDesc := "Glob patterns for files to scan for custom element definitions (comma-separated)"
 		if ann := filesFV.Annotation(); ann != "" {
-			genDesc += " (" + ann + ")"
+			filesDesc += "\n" + ann
+		}
+		outputDesc := "Where to write the generated custom-elements.json manifest"
+		if ann := outputFV.Annotation(); ann != "" {
+			outputDesc += "\n" + ann
+		}
+		scurlDesc := "Base URL for linking manifest entries to source files"
+		if ann := scurlFV.Annotation(); ann != "" {
+			scurlDesc += "\n" + ann
 		}
 		groups = append(groups, huh.NewGroup(
 			huh.NewInput().
 				Title("Source file patterns").
-				Description("Glob patterns for files to scan for custom element definitions (comma-separated)").
+				Description(filesDesc).
 				Placeholder(filesFV.Fallback).
 				Value(&filesInput),
 			huh.NewInput().
 				Title("Manifest output path").
-				Description("Where to write the generated custom-elements.json manifest").
+				Description(outputDesc).
 				Placeholder(outputFV.Fallback).
 				Value(&outputInput),
 			huh.NewInput().
 				Title("Source control root URL").
-				Description("Base URL for linking manifest entries to source files (e.g. GitHub tree URL)").
+				Description(scurlDesc).
 				Placeholder("https://github.com/user/repo/tree/main/").
 				Value(&scurlInput),
-		).Title(genDesc))
+		).Title("Generate"))
 
 		// Group 2: Demo discovery (conditional)
 		hasDemos := globFV.Value() != "" || patternFV.Value() != ""
@@ -215,24 +223,30 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 			demoGlob := globFV.Value()
 			demoPattern := patternFV.Value()
 			demoTemplate := cfg.Generate.DemoDiscovery.URLTemplate
-			if demoTemplate == "" {
-				demoTemplate = "https://example.com/{{.tag}}/{{.demo}}/"
+
+			globDesc := "Glob pattern to find demo HTML files"
+			if ann := globFV.Annotation(); ann != "" {
+				globDesc += "\n" + ann
+			}
+			patternDesc := "URL pattern with named params for matching demo paths to elements"
+			if ann := patternFV.Annotation(); ann != "" {
+				patternDesc += "\n" + ann
 			}
 
 			groups = append(groups, huh.NewGroup(
 				huh.NewInput().
 					Title("Demo file glob").
-					Description("Glob pattern to find demo HTML files").
+					Description(globDesc).
 					Value(&demoGlob),
 				huh.NewInput().
 					Title("Demo URL pattern").
-					Description("URL pattern with named params for matching demo paths to elements").
+					Description(patternDesc).
 					Placeholder("elements/:tag/demo/:demo.html").
 					Value(&demoPattern),
 				huh.NewInput().
 					Title("Demo URL template").
 					Description("Go template for generating public demo URLs from matched parameters (leave empty to skip)").
-					Placeholder(demoTemplate).
+					Placeholder("https://example.com/{{.tag}}/{{.demo}}/").
 					Value(&demoTemplate),
 			).Title("Demo Discovery").
 				Description("Demos are HTML partials that showcase your elements. "+
