@@ -684,11 +684,10 @@ func isZeroYAMLNode(n *yaml.Node) bool {
 		if n.Tag == "!!null" {
 			return true
 		}
-		// Explicit bool/int values are intentional, not zero
 		if n.Tag == "!!bool" || n.Tag == "!!int" {
 			return false
 		}
-		return n.Value == "" || n.Value == "0" || n.Value == "false"
+		return n.Value == ""
 	case yaml.SequenceNode:
 		return len(n.Content) == 0
 	case yaml.MappingNode:
@@ -742,12 +741,21 @@ func offerPackageJSONUpdate(root string, cfg *IC.CemConfig) error {
 	if marshalErr != nil {
 		return marshalErr
 	}
-	insertion := fmt.Sprintf(",\n  \"customElements\": %s", string(entry))
 
 	lastBrace := bytes.LastIndexByte(data, '}')
 	if lastBrace < 0 {
 		return nil
 	}
+
+	prefix := bytes.TrimSpace(data[:lastBrace])
+	needsComma := len(prefix) > 0 && prefix[len(prefix)-1] != '{'
+	var insertion string
+	if needsComma {
+		insertion = fmt.Sprintf(",\n  \"customElements\": %s", string(entry))
+	} else {
+		insertion = fmt.Sprintf("\n  \"customElements\": %s", string(entry))
+	}
+
 	var buf bytes.Buffer
 	buf.Write(data[:lastBrace])
 	buf.WriteString(insertion)
