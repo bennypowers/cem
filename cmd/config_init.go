@@ -706,6 +706,20 @@ func offerPackageJSONUpdate(root string, cfg *IC.CemConfig) error {
 	return os.WriteFile(pkgPath, buf.Bytes(), 0o644)
 }
 
+func equalFieldValues(a, b string) bool {
+	if a == b {
+		return true
+	}
+	ap := splitCommaList(a)
+	bp := splitCommaList(b)
+	if len(ap) != len(bp) {
+		return false
+	}
+	slices.Sort(ap)
+	slices.Sort(bp)
+	return slices.Equal(ap, bp)
+}
+
 func splitCommaList(s string) []string {
 	var result []string
 	for part := range strings.SplitSeq(s, ",") {
@@ -753,7 +767,7 @@ func (f *fieldValue) Groups() []*huh.Group {
 				Value(&f.useDetected),
 		).Title(f.Title).
 			Description(f.Description))
-	} else if f.Detected != "" && f.Existing != f.Detected {
+	} else if f.Detected != "" && !equalFieldValues(f.Existing, f.Detected) {
 		f.useDetected = false
 		groups = append(groups, huh.NewGroup(
 			huh.NewConfirm().
