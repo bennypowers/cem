@@ -17,16 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd_test
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 	"testing/fstest"
 
 	"bennypowers.dev/cem/cmd"
+	IC "bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/internal/platform/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 )
 
 // inline assertions: pure string->string function, table-driven with simple equality checks
@@ -65,6 +64,16 @@ func TestNormalizeGitURL(t *testing.T) {
 			name: "ssh bitbucket",
 			raw:  "git@bitbucket.org:team/repo.git",
 			want: "https://bitbucket.org/team/repo/",
+		},
+		{
+			name: "ssh:// protocol",
+			raw:  "ssh://git@github.com/bennypowers/cem.git",
+			want: "https://github.com/bennypowers/cem/",
+		},
+		{
+			name: "ssh:// with port",
+			raw:  "ssh://git@github.com:22/bennypowers/cem.git",
+			want: "https://github.com/bennypowers/cem/",
 		},
 		{
 			name: "empty",
@@ -312,75 +321,86 @@ func TestFieldValue(t *testing.T) {
 	}
 }
 
-
-func configInitGolden(name string) string {
-	return filepath.Join("testdata", "goldens", "config-init", name)
+// inline assertions: pure function with simple int return
+func TestDetectIndent(t *testing.T) {
+	tests := []struct {
+		name string
+		data string
+		want int
+	}{
+		{"two space", "key:\n  value: x\n", 2},
+		{"four space", "key:\n    value: x\n", 4},
+		{"tab-like 8", "key:\n        value: x\n", 8},
+		{"empty", "", 2},
+		{"no indent", "key: value\n", 2},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, cmd.DetectIndent([]byte(tt.data)))
+		})
+	}
 }
 
-func TestInitConfigMarshalYAML_Full(t *testing.T) {
-	cfg := cmd.InitConfig{
+func TestMarshalConfigYAML_Full(t *testing.T) {
+	cfg := &IC.CemConfig{
 		SourceControlRootUrl: "https://github.com/example/project/tree/main/",
-		Generate: &cmd.InitGenerateConfig{
+		Generate: IC.GenerateConfig{
 			Files:  []string{"elements/**/*.ts", "base/**/*.ts"},
 			Output: "custom-elements.json",
-			DesignTokens: &cmd.InitDesignTokensConfig{
+			DesignTokens: IC.DesignTokensConfig{
 				Spec:   "design-tokens.json",
 				Prefix: "demo",
 			},
-			DemoDiscovery: &cmd.InitDemoDiscoveryConfig{
+			DemoDiscovery: IC.DemoDiscoveryConfig{
 				FileGlob:    "elements/**/demo/*.html",
 				URLPattern:  "elements/:tag/demo/:demo.html",
 				URLTemplate: "https://example.com/{{.tag}}/{{.demo}}/",
 			},
 		},
-		Serve: &cmd.InitServeConfig{
+		Serve: IC.ServeConfig{
 			Port: 8000,
-			ImportMap: &cmd.InitImportMapConfig{
-				Generate: true,
+			Demos: IC.DemosConfig{
+				Rendering: "shadow",
 			},
-			Transforms: &cmd.InitTransformsConfig{
-				CSS: &cmd.InitCSSConfig{
+			Transforms: IC.TransformsConfig{
+				CSS: IC.CSSTransformConfig{
 					Enabled: true,
 					Include: []string{"elements/**/*.css"},
 					Exclude: []string{"demo/**/*.css", "**/*.min.css"},
 				},
 			},
-			Demos: &cmd.InitDemosConfig{
-				Rendering: "shadow",
-			},
 		},
 	}
+	cfg.Serve.ImportMap.Generate = true
 
-	got, err := yaml.Marshal(cfg)
+	got, err := cmd.MarshalConfig(cfg, "yaml", nil)
 	require.NoError(t, err)
 
-	golden := configInitGolden("full.yaml")
-	if *testutil.Update {
-		require.NoError(t, os.WriteFile(golden, got, 0o644))
-	}
-
-	want, err := os.ReadFile(golden)
-	require.NoError(t, err)
-	assert.Equal(t, string(want), string(got))
+	goldenDir := filepath.Join("testdata", "goldens", "config-init")
+	fs := testutil.LoadTestdataFS(t, goldenDir, goldenDir)
+	testutil.CheckGolden(t, "full", got, testutil.GoldenOptions{
+		Dir:       goldenDir,
+		Extension: ".yaml",
+		FS:        fs,
+	})
 }
 
-func TestInitConfigMarshalYAML_Minimal(t *testing.T) {
-	cfg := cmd.InitConfig{
-		Generate: &cmd.InitGenerateConfig{
+func TestMarshalConfigYAML_Minimal(t *testing.T) {
+	cfg := &IC.CemConfig{
+		Generate: IC.GenerateConfig{
 			Files:  []string{"src/**/*.ts"},
 			Output: "custom-elements.json",
 		},
 	}
 
-	got, err := yaml.Marshal(cfg)
+	got, err := cmd.MarshalConfig(cfg, "yaml", nil)
 	require.NoError(t, err)
 
-	golden := configInitGolden("minimal.yaml")
-	if *testutil.Update {
-		require.NoError(t, os.WriteFile(golden, got, 0o644))
-	}
-
-	want, err := os.ReadFile(golden)
-	require.NoError(t, err)
-	assert.Equal(t, string(want), string(got))
+	goldenDir := filepath.Join("testdata", "goldens", "config-init")
+	fs := testutil.LoadTestdataFS(t, goldenDir, goldenDir)
+	testutil.CheckGolden(t, "minimal", got, testutil.GoldenOptions{
+		Dir:       goldenDir,
+		Extension: ".yaml",
+		FS:        fs,
+	})
 }

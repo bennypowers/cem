@@ -17,19 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 type FieldValue = fieldValue
-type InitConfig = initConfig
-type InitGenerateConfig = initGenerateConfig
-type InitDemoDiscoveryConfig = initDemoDiscoveryConfig
-type InitDesignTokensConfig = initDesignTokensConfig
-type InitServeConfig = initServeConfig
-type InitImportMapConfig = initImportMapConfig
-type InitTransformsConfig = initTransformsConfig
-type InitCSSConfig = initCSSConfig
-type InitDemosConfig = initDemosConfig
 
 var (
 	NormalizeGitURL   = normalizeGitURL
 	DetectSourceFiles = detectSourceFiles
 	DetectDemoFiles   = detectDemoFiles
 	DetectCSSPatterns = detectCSSPatterns
+	DetectIndent      = detectIndent
+	MarshalConfig     = marshalConfig
 )

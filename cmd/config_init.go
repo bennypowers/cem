@@ -25,12 +25,12 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"sync"
-	"syscall"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
+	"syscall"
 
 	asimconfig "bennypowers.dev/asimonim/config"
 	"bennypowers.dev/asimonim/specifier"
@@ -46,6 +46,8 @@ import (
 	"golang.org/x/term"
 	"gopkg.in/yaml.v3"
 )
+
+var validFormats = []string{"yaml", "json", "jsonc"}
 
 func init() {
 	configInitCmd.Flags().BoolP("yes", "y", false, "accept defaults without prompting")
@@ -76,65 +78,6 @@ func init() {
 	}
 }
 
-// Mirrors internal/config.CemConfig with omitempty tags for clean output.
-// Update these types when the canonical config schema changes.
-type initConfig struct {
-	SourceControlRootUrl string              `yaml:"sourceControlRootUrl,omitempty" json:"sourceControlRootUrl,omitempty"`
-	Generate             *initGenerateConfig `yaml:"generate,omitempty" json:"generate,omitempty"`
-	Serve                *initServeConfig    `yaml:"serve,omitempty" json:"serve,omitempty"`
-}
-
-type initGenerateConfig struct {
-	Files         []string                `yaml:"files,omitempty" json:"files,omitempty"`
-	Exclude       []string                `yaml:"exclude,omitempty" json:"exclude,omitempty"`
-	Output        string                  `yaml:"output,omitempty" json:"output,omitempty"`
-	DesignTokens  *initDesignTokensConfig `yaml:"designTokens,omitempty" json:"designTokens,omitempty"`
-	DemoDiscovery *initDemoDiscoveryConfig `yaml:"demoDiscovery,omitempty" json:"demoDiscovery,omitempty"`
-}
-
-type initDemoDiscoveryConfig struct {
-	FileGlob    string `yaml:"fileGlob,omitempty" json:"fileGlob,omitempty"`
-	URLPattern  string `yaml:"urlPattern,omitempty" json:"urlPattern,omitempty"`
-	URLTemplate string `yaml:"urlTemplate,omitempty" json:"urlTemplate,omitempty"`
-}
-
-type initDesignTokensConfig struct {
-	Spec   string `yaml:"spec,omitempty" json:"spec,omitempty"`
-	Prefix string `yaml:"prefix,omitempty" json:"prefix,omitempty"`
-}
-
-type initServeConfig struct {
-	Port       int                  `yaml:"port,omitempty" json:"port,omitempty"`
-	ImportMap  *initImportMapConfig `yaml:"importMap,omitempty" json:"importMap,omitempty"`
-	Transforms *initTransformsConfig `yaml:"transforms,omitempty" json:"transforms,omitempty"`
-	Demos      *initDemosConfig     `yaml:"demos,omitempty" json:"demos,omitempty"`
-}
-
-type initImportMapConfig struct {
-	Generate     bool   `yaml:"generate,omitempty" json:"generate,omitempty"`
-	OverrideFile string `yaml:"overrideFile,omitempty" json:"overrideFile,omitempty"`
-}
-
-type initTransformsConfig struct {
-	TypeScript *initTypeScriptConfig `yaml:"typescript,omitempty" json:"typescript,omitempty"`
-	CSS        *initCSSConfig        `yaml:"css,omitempty" json:"css,omitempty"`
-}
-
-type initTypeScriptConfig struct {
-	Enabled bool   `yaml:"enabled,omitempty" json:"enabled,omitempty"`
-	Target  string `yaml:"target,omitempty" json:"target,omitempty"`
-}
-
-type initCSSConfig struct {
-	Enabled bool     `yaml:"enabled,omitempty" json:"enabled,omitempty"`
-	Include []string `yaml:"include,omitempty" json:"include,omitempty"`
-	Exclude []string `yaml:"exclude,omitempty" json:"exclude,omitempty"`
-}
-
-type initDemosConfig struct {
-	Rendering string `yaml:"rendering,omitempty" json:"rendering,omitempty"`
-}
-
 func runConfigInit(cmd *cobra.Command, args []string) error {
 	yes, _ := cmd.Flags().GetBool("yes")
 	format, _ := cmd.Flags().GetString("format")
@@ -142,6 +85,10 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 
 	if !interactive && !yes {
 		return fmt.Errorf("no TTY detected; use --yes to accept defaults")
+	}
+
+	if !slices.Contains(validFormats, format) {
+		return fmt.Errorf("unsupported format %q; valid: %s", format, strings.Join(validFormats, ", "))
 	}
 
 	root, err := os.Getwd()
@@ -155,14 +102,18 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	var cfgPath string
 	var existing *IC.CemConfig
+	var existingData []byte
 	var existingFormat string
-	if cfgPath := IC.FindConfigFile(root); cfgPath != "" {
+	if found := IC.FindConfigFile(root); found != "" {
+		cfgPath = found
 		existing, err = IC.LoadConfig(cfgPath)
 		if err != nil {
 			logging.Warning("Failed to load existing config: %v", err)
 		} else {
 			existingFormat = IC.FormatFromPath(cfgPath)
+			existingData, _ = os.ReadFile(cfgPath)
 			logging.Info("Found existing config: %s", cfgPath)
 		}
 	}
@@ -171,7 +122,10 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 	hasPkgJSON := osFS.Exists(filepath.Join(root, "package.json"))
 	dirFS := os.DirFS(root)
 
-	cfg := &initConfig{}
+	cfg := &IC.CemConfig{}
+	if existing != nil {
+		*cfg = *existing
+	}
 
 	if err := initSourceFiles(cfg, dirFS, existing, interactive, yes); err != nil {
 		if errors.Is(err, tui.ErrCancelled) {
@@ -217,10 +171,10 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if existing != nil && existingFormat != "" {
+	if cfgPath != "" && existingFormat != "" {
 		format = existingFormat
 	} else if interactive && !yes {
-		selected, selectErr := tui.Select("Output format", tui.StringOptions("yaml", "json", "jsonc"))
+		selected, selectErr := tui.Select("Output format", tui.StringOptions(validFormats...))
 		if selectErr != nil {
 			if errors.Is(selectErr, tui.ErrCancelled) {
 				return nil
@@ -235,7 +189,12 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		logging.Info("Package-level overrides can be added in each package's own .config/cem.yaml")
 	}
 
-	output, marshalErr := marshalInitConfig(cfg, format)
+	// Clear internal-only fields before marshaling
+	cfg.ProjectDir = ""
+	cfg.ConfigFile = ""
+	cfg.PackageName = ""
+
+	output, marshalErr := marshalConfig(cfg, format, existingData)
 	if marshalErr != nil {
 		return marshalErr
 	}
@@ -258,12 +217,34 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	ext := format
-	outPath := filepath.Join(root, ".config", "cem."+ext)
-	if existing != nil && existing.ConfigFile != "" {
-		outPath = existing.ConfigFile
+	outPath := cfgPath
+	if outPath == "" {
+		outPath = filepath.Join(root, ".config", "cem."+format)
 	}
 
+	if err := writeConfigAtomic(outPath, output); err != nil {
+		return err
+	}
+
+	logging.Success("Config written to %s", outPath)
+
+	if hasPkgJSON && interactive && !yes {
+		if err := offerPackageJSONUpdate(root, cfg); err != nil {
+			logging.Warning("package.json update: %v", err)
+		}
+	}
+
+	if interactive && !yes {
+		mcpConfirmed, mcpErr := tui.Confirm("Set up AI tool integration?", false)
+		if mcpErr == nil && mcpConfirmed {
+			logging.Info("Run: cem config mcp")
+		}
+	}
+
+	return nil
+}
+
+func writeConfigAtomic(outPath string, output []byte) error {
 	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
@@ -301,25 +282,10 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
 
-	logging.Success("Config written to %s", outPath)
-
-	if hasPkgJSON && interactive && !yes {
-		if err := offerPackageJSONUpdate(root, cfg); err != nil {
-			logging.Warning("package.json update: %v", err)
-		}
-	}
-
-	if interactive && !yes {
-		mcpConfirmed, mcpErr := tui.Confirm("Set up AI tool integration?", false)
-		if mcpErr == nil && mcpConfirmed {
-			logging.Info("Run: cem config mcp")
-		}
-	}
-
 	return nil
 }
 
-func initSourceFiles(cfg *initConfig, fsys fs.FS, existing *IC.CemConfig, interactive, yes bool) error {
+func initSourceFiles(cfg *IC.CemConfig, fsys fs.FS, existing *IC.CemConfig, interactive, yes bool) error {
 	detected, err := detectSourceFiles(fsys)
 	if err != nil {
 		return err
@@ -340,15 +306,12 @@ func initSourceFiles(cfg *initConfig, fsys fs.FS, existing *IC.CemConfig, intera
 	if yes {
 		files = splitCommaList(fv.Value())
 	} else if interactive {
-		title := "Source file patterns (comma-separated)"
+		title := "Glob patterns for source files to scan for custom element definitions (comma-separated)"
 		if ann := fv.Annotation(); ann != "" {
 			title += " (" + ann + ")"
 		}
 		input, inputErr := tui.TextInput(title, fv.Value())
 		if inputErr != nil {
-			if errors.Is(inputErr, tui.ErrCancelled) {
-				return inputErr
-			}
 			return inputErr
 		}
 		if input == "" {
@@ -357,14 +320,11 @@ func initSourceFiles(cfg *initConfig, fsys fs.FS, existing *IC.CemConfig, intera
 		files = splitCommaList(input)
 	}
 
-	if cfg.Generate == nil {
-		cfg.Generate = &initGenerateConfig{}
-	}
 	cfg.Generate.Files = files
 	return nil
 }
 
-func initOutput(cfg *initConfig, root string, hasPkgJSON bool, existing *IC.CemConfig, interactive, yes bool) error {
+func initOutput(cfg *IC.CemConfig, root string, hasPkgJSON bool, existing *IC.CemConfig, interactive, yes bool) error {
 	var detected string
 	if hasPkgJSON {
 		data, err := os.ReadFile(filepath.Join(root, "package.json"))
@@ -393,15 +353,12 @@ func initOutput(cfg *initConfig, root string, hasPkgJSON bool, existing *IC.CemC
 	if yes {
 		output = fv.Value()
 	} else if interactive {
-		title := "Output file"
+		title := "Output path for the generated custom-elements.json manifest"
 		if ann := fv.Annotation(); ann != "" {
 			title += " (" + ann + ")"
 		}
 		input, err := tui.TextInput(title, fv.Value())
 		if err != nil {
-			if errors.Is(err, tui.ErrCancelled) {
-				return err
-			}
 			return err
 		}
 		if input == "" {
@@ -410,14 +367,11 @@ func initOutput(cfg *initConfig, root string, hasPkgJSON bool, existing *IC.CemC
 		output = input
 	}
 
-	if cfg.Generate == nil {
-		cfg.Generate = &initGenerateConfig{}
-	}
 	cfg.Generate.Output = output
 	return nil
 }
 
-func initSourceControlURL(cfg *initConfig, root string, existing *IC.CemConfig, interactive, yes bool) error {
+func initSourceControlURL(cfg *IC.CemConfig, root string, existing *IC.CemConfig, interactive, yes bool) error {
 	detected, _ := detectGitRemote(root)
 
 	var existingVal string
@@ -436,15 +390,12 @@ func initSourceControlURL(cfg *initConfig, root string, existing *IC.CemConfig, 
 	}
 
 	if interactive && !yes {
-		title := "Source control root URL"
+		title := "Base URL for linking manifest entries to source files (e.g. GitHub tree URL)"
 		if ann := fv.Annotation(); ann != "" {
 			title += " (" + ann + ")"
 		}
 		input, err := tui.TextInput(title, val)
 		if err != nil {
-			if errors.Is(err, tui.ErrCancelled) {
-				return err
-			}
 			return err
 		}
 		if input != "" {
@@ -456,7 +407,7 @@ func initSourceControlURL(cfg *initConfig, root string, existing *IC.CemConfig, 
 	return nil
 }
 
-func initDemoDiscovery(cfg *initConfig, fsys fs.FS, existing *IC.CemConfig, interactive, yes bool) error {
+func initDemoDiscovery(cfg *IC.CemConfig, fsys fs.FS, existing *IC.CemConfig, interactive, yes bool) error {
 	detectedGlob, detectedPattern, err := detectDemoFiles(fsys)
 	if err != nil {
 		return err
@@ -472,77 +423,82 @@ func initDemoDiscovery(cfg *initConfig, fsys fs.FS, existing *IC.CemConfig, inte
 	globFV := fieldValue{Existing: existingGlob, Detected: detectedGlob}
 	patternFV := fieldValue{Existing: existingPattern, Detected: detectedPattern}
 
-	if globFV.Value() == "" && patternFV.Value() == "" {
-		if interactive && !yes {
-			logging.Info("No demo files detected.")
+	hasDemos := globFV.Value() != "" || patternFV.Value() != ""
+
+	if !hasDemos && interactive && !yes {
+		logging.Info("No demo files detected.")
+		return nil
+	}
+
+	if !hasDemos {
+		return nil
+	}
+
+	if interactive && !yes {
+		want, confirmErr := tui.Confirm(
+			"Demos are HTML partials that showcase your elements. "+
+				"The dev server discovers and serves them with live reload. "+
+				"Configure demo discovery?", true)
+		if confirmErr != nil {
+			return confirmErr
+		}
+		if !want {
+			return nil
+		}
+	}
+
+	if yes {
+		cfg.Generate.DemoDiscovery.FileGlob = globFV.Value()
+		cfg.Generate.DemoDiscovery.URLPattern = patternFV.Value()
+		if existingTemplate != "" {
+			cfg.Generate.DemoDiscovery.URLTemplate = existingTemplate
 		}
 		return nil
 	}
 
-	if cfg.Generate == nil {
-		cfg.Generate = &initGenerateConfig{}
+	title := "Glob pattern to find demo HTML files"
+	if ann := globFV.Annotation(); ann != "" {
+		title += " (" + ann + ")"
+	}
+	input, inputErr := tui.TextInput(title, globFV.Value())
+	if inputErr != nil {
+		return inputErr
+	}
+	if input != "" {
+		cfg.Generate.DemoDiscovery.FileGlob = input
+	} else {
+		cfg.Generate.DemoDiscovery.FileGlob = globFV.Value()
 	}
 
-	dd := &initDemoDiscoveryConfig{}
-
-	if yes {
-		dd.FileGlob = globFV.Value()
-		dd.URLPattern = patternFV.Value()
-		dd.URLTemplate = existingTemplate
-	} else if interactive {
-		title := "Demo file glob"
-		if ann := globFV.Annotation(); ann != "" {
-			title += " (" + ann + ")"
-		}
-		input, inputErr := tui.TextInput(title, globFV.Value())
-		if inputErr != nil {
-			if errors.Is(inputErr, tui.ErrCancelled) {
-				return inputErr
-			}
-			return inputErr
-		}
-		if input != "" {
-			dd.FileGlob = input
-		} else {
-			dd.FileGlob = globFV.Value()
-		}
-
-		title = "Demo URL pattern"
-		if ann := patternFV.Annotation(); ann != "" {
-			title += " (" + ann + ")"
-		}
-		input, inputErr = tui.TextInput(title, patternFV.Value())
-		if inputErr != nil {
-			if errors.Is(inputErr, tui.ErrCancelled) {
-				return inputErr
-			}
-			return inputErr
-		}
-		if input != "" {
-			dd.URLPattern = input
-		} else {
-			dd.URLPattern = patternFV.Value()
-		}
-
-		templatePlaceholder := existingTemplate
-		if templatePlaceholder == "" {
-			templatePlaceholder = "https://example.com/{{.tag}}/{{.demo}}/"
-		}
-		input, inputErr = tui.TextInput("Demo URL template (or leave empty to skip)", templatePlaceholder)
-		if inputErr != nil {
-			if errors.Is(inputErr, tui.ErrCancelled) {
-				return inputErr
-			}
-			return inputErr
-		}
-		dd.URLTemplate = input
+	title = "URL pattern with named parameters for matching demo file paths to elements (e.g. elements/:tag/demo/:demo.html)"
+	if ann := patternFV.Annotation(); ann != "" {
+		title += " (" + ann + ")"
+	}
+	input, inputErr = tui.TextInput(title, patternFV.Value())
+	if inputErr != nil {
+		return inputErr
+	}
+	if input != "" {
+		cfg.Generate.DemoDiscovery.URLPattern = input
+	} else {
+		cfg.Generate.DemoDiscovery.URLPattern = patternFV.Value()
 	}
 
-	cfg.Generate.DemoDiscovery = dd
+	templatePlaceholder := existingTemplate
+	if templatePlaceholder == "" {
+		templatePlaceholder = "https://example.com/{{.tag}}/{{.demo}}/"
+	}
+	input, inputErr = tui.TextInput(
+		"Go template for generating public demo URLs from matched parameters (leave empty to skip)",
+		templatePlaceholder)
+	if inputErr != nil {
+		return inputErr
+	}
+	cfg.Generate.DemoDiscovery.URLTemplate = input
 	return nil
 }
 
-func initDesignTokens(cfg *initConfig, root string, fsys platform.FileSystem, existing *IC.CemConfig, interactive, yes bool) error {
+func initDesignTokens(cfg *IC.CemConfig, root string, fsys platform.FileSystem, existing *IC.CemConfig, interactive, yes bool) error {
 	tokens, _ := detectDesignTokens(root, fsys)
 
 	var existingSpec, existingPrefix string
@@ -580,11 +536,12 @@ func initDesignTokens(cfg *initConfig, root string, fsys platform.FileSystem, ex
 	}
 
 	if spec == "" && interactive && !yes {
-		wantTokens, confirmErr := tui.Confirm("Configure design tokens?", false)
+		wantTokens, confirmErr := tui.Confirm(
+			"Document CSS custom properties from DTCG design token files?", false)
 		if confirmErr != nil || !wantTokens {
 			return nil
 		}
-		input, inputErr := tui.TextInput("Design tokens spec path", "")
+		input, inputErr := tui.TextInput("Path or specifier for the design token spec file", "")
 		if inputErr != nil || input == "" {
 			return nil
 		}
@@ -605,15 +562,12 @@ func initDesignTokens(cfg *initConfig, root string, fsys platform.FileSystem, ex
 
 	prefix := existingPrefix
 	if interactive && !yes {
-		title := "Token prefix"
+		title := "CSS custom property prefix for design tokens (e.g. 'my-ds' for --my-ds-color-primary)"
 		if existingPrefix != "" {
 			title += " (existing: " + existingPrefix + ")"
 		}
 		input, inputErr := tui.TextInput(title, existingPrefix)
 		if inputErr != nil {
-			if errors.Is(inputErr, tui.ErrCancelled) {
-				return inputErr
-			}
 			return inputErr
 		}
 		if input != "" {
@@ -621,17 +575,12 @@ func initDesignTokens(cfg *initConfig, root string, fsys platform.FileSystem, ex
 		}
 	}
 
-	if cfg.Generate == nil {
-		cfg.Generate = &initGenerateConfig{}
-	}
-	cfg.Generate.DesignTokens = &initDesignTokensConfig{
-		Spec:   spec,
-		Prefix: prefix,
-	}
+	cfg.Generate.DesignTokens.Spec = spec
+	cfg.Generate.DesignTokens.Prefix = prefix
 	return nil
 }
 
-func initServe(cfg *initConfig, root string, fsys fs.FS, existing *IC.CemConfig, interactive, yes bool) error {
+func initServe(cfg *IC.CemConfig, root string, fsys fs.FS, existing *IC.CemConfig, interactive, yes bool) error {
 	hasExistingServe := existing != nil && (existing.Serve.Port != 0 ||
 		existing.Serve.ImportMap.Generate ||
 		existing.Serve.ImportMap.OverrideFile != "" ||
@@ -642,22 +591,20 @@ func initServe(cfg *initConfig, root string, fsys fs.FS, existing *IC.CemConfig,
 		existing.Serve.OpenBrowser != nil)
 
 	if !hasExistingServe && yes {
-		cfg.Serve = &initServeConfig{
-			Port:      8000,
-			ImportMap: &initImportMapConfig{Generate: true},
-			Demos:     &initDemosConfig{Rendering: "shadow"},
-		}
+		cfg.Serve.Port = 8000
+		cfg.Serve.ImportMap.Generate = true
+		cfg.Serve.Demos.Rendering = "shadow"
 		return nil
 	}
 
 	if !hasExistingServe && interactive {
-		want, err := tui.Confirm("Configure serve settings?", true)
+		want, err := tui.Confirm(
+			"Configure the cem dev server? "+
+				"It serves demos with live reload, TypeScript transforms, and import maps.", true)
 		if err != nil || !want {
 			return nil
 		}
 	}
-
-	serve := &initServeConfig{}
 
 	existingPort := 8000
 	if existing != nil && existing.Serve.Port != 0 {
@@ -665,11 +612,8 @@ func initServe(cfg *initConfig, root string, fsys fs.FS, existing *IC.CemConfig,
 	}
 
 	if interactive && !yes {
-		portStr, err := tui.TextInput("Port", strconv.Itoa(existingPort))
+		portStr, err := tui.TextInput("Dev server port", strconv.Itoa(existingPort))
 		if err != nil {
-			if errors.Is(err, tui.ErrCancelled) {
-				return err
-			}
 			return err
 		}
 		if portStr == "" {
@@ -682,9 +626,9 @@ func initServe(cfg *initConfig, root string, fsys fs.FS, existing *IC.CemConfig,
 		if port < 1 || port > 65535 {
 			return fmt.Errorf("port must be between 1 and 65535, got %d", port)
 		}
-		serve.Port = port
+		cfg.Serve.Port = port
 	} else {
-		serve.Port = existingPort
+		cfg.Serve.Port = existingPort
 	}
 
 	existingRendering := "shadow"
@@ -695,14 +639,11 @@ func initServe(cfg *initConfig, root string, fsys fs.FS, existing *IC.CemConfig,
 	if interactive && !yes {
 		rendering, err := tui.Select("Demo rendering mode", tui.StringOptions("shadow", "light"))
 		if err != nil {
-			if errors.Is(err, tui.ErrCancelled) {
-				return err
-			}
 			return err
 		}
-		serve.Demos = &initDemosConfig{Rendering: rendering}
+		cfg.Serve.Demos.Rendering = rendering
 	} else {
-		serve.Demos = &initDemosConfig{Rendering: existingRendering}
+		cfg.Serve.Demos.Rendering = existingRendering
 	}
 
 	existingImportMapGen := true
@@ -713,36 +654,23 @@ func initServe(cfg *initConfig, root string, fsys fs.FS, existing *IC.CemConfig,
 	if interactive && !yes {
 		gen, err := tui.Confirm("Auto-generate import maps?", existingImportMapGen)
 		if err != nil {
-			if errors.Is(err, tui.ErrCancelled) {
-				return err
-			}
 			return err
 		}
-		if gen {
-			serve.ImportMap = &initImportMapConfig{Generate: true}
-		}
-	} else if existingImportMapGen {
-		serve.ImportMap = &initImportMapConfig{Generate: true}
+		cfg.Serve.ImportMap.Generate = gen
+	} else {
+		cfg.Serve.ImportMap.Generate = existingImportMapGen
 	}
 
-	var sourcePatterns []string
-	if cfg.Generate != nil {
-		sourcePatterns = cfg.Generate.Files
-	}
+	sourcePatterns := cfg.Generate.Files
 	cssInclude, cssExclude := detectCSSPatterns(sourcePatterns, fsys)
 
-	var existingCSSInclude []string
-	var existingCSSExclude []string
 	if existing != nil && existing.Serve.Transforms.CSS.Enabled {
-		existingCSSInclude = existing.Serve.Transforms.CSS.Include
-		existingCSSExclude = existing.Serve.Transforms.CSS.Exclude
-	}
-
-	if len(existingCSSInclude) > 0 {
-		cssInclude = existingCSSInclude
-	}
-	if len(existingCSSExclude) > 0 {
-		cssExclude = existingCSSExclude
+		if len(existing.Serve.Transforms.CSS.Include) > 0 {
+			cssInclude = existing.Serve.Transforms.CSS.Include
+		}
+		if len(existing.Serve.Transforms.CSS.Exclude) > 0 {
+			cssExclude = existing.Serve.Transforms.CSS.Exclude
+		}
 	}
 
 	if len(cssInclude) > 0 {
@@ -752,20 +680,13 @@ func initServe(cfg *initConfig, root string, fsys fs.FS, existing *IC.CemConfig,
 			var confirmErr error
 			enableCSS, confirmErr = tui.Confirm("Enable CSS transforms?", true)
 			if confirmErr != nil {
-				if errors.Is(confirmErr, tui.ErrCancelled) {
-					return confirmErr
-				}
 				return confirmErr
 			}
 		}
 		if enableCSS {
-			serve.Transforms = &initTransformsConfig{
-				CSS: &initCSSConfig{
-					Enabled: true,
-					Include: cssInclude,
-					Exclude: cssExclude,
-				},
-			}
+			cfg.Serve.Transforms.CSS.Enabled = true
+			cfg.Serve.Transforms.CSS.Include = cssInclude
+			cfg.Serve.Transforms.CSS.Exclude = cssExclude
 		}
 	}
 
@@ -774,26 +695,158 @@ func initServe(cfg *initConfig, root string, fsys fs.FS, existing *IC.CemConfig,
 		logging.Info("tsconfig.json detected. URL rewrites (rootDir/outDir) are auto-detected at serve time.")
 	}
 
-	cfg.Serve = serve
 	return nil
 }
 
-func marshalInitConfig(cfg *initConfig, format string) ([]byte, error) {
+func marshalConfig(cfg *IC.CemConfig, format string, existingData []byte) ([]byte, error) {
 	switch format {
 	case "json":
-		return json.MarshalIndent(cfg, "", "  ")
+		data, err := marshalConfigJSON(cfg)
+		if err != nil {
+			return nil, err
+		}
+		return data, nil
 	case "jsonc":
-		data, err := json.MarshalIndent(cfg, "", "  ")
+		data, err := marshalConfigJSON(cfg)
 		if err != nil {
 			return nil, err
 		}
 		return append([]byte("// Generated by cem config init\n"), data...), nil
 	default:
-		return yaml.Marshal(cfg)
+		return marshalConfigYAML(cfg, existingData)
 	}
 }
 
-func offerPackageJSONUpdate(root string, cfg *initConfig) error {
+func marshalConfigJSON(cfg *IC.CemConfig) ([]byte, error) {
+	var intermediate map[string]any
+	raw, err := json.Marshal(cfg)
+	if err != nil {
+		return nil, err
+	}
+	if json.Unmarshal(raw, &intermediate) != nil {
+		return raw, nil
+	}
+	pruneJSONMap(intermediate)
+	return json.MarshalIndent(intermediate, "", "  ")
+}
+
+func pruneJSONMap(m map[string]any) {
+	for k, v := range m {
+		if isZeroJSON(v) {
+			delete(m, k)
+			continue
+		}
+		if sub, ok := v.(map[string]any); ok {
+			pruneJSONMap(sub)
+			if len(sub) == 0 {
+				delete(m, k)
+			}
+		}
+	}
+}
+
+func isZeroJSON(v any) bool {
+	switch val := v.(type) {
+	case nil:
+		return true
+	case string:
+		return val == ""
+	case float64:
+		return val == 0
+	case bool:
+		return !val
+	case []any:
+		return len(val) == 0
+	case map[string]any:
+		return len(val) == 0
+	}
+	return false
+}
+
+func marshalConfigYAML(cfg *IC.CemConfig, existingData []byte) ([]byte, error) {
+	var node yaml.Node
+	if err := node.Encode(cfg); err != nil {
+		return nil, err
+	}
+
+	if node.Kind == yaml.MappingNode {
+		pruneYAMLNode(&node)
+	} else if node.Kind == yaml.DocumentNode && len(node.Content) > 0 {
+		pruneYAMLNode(node.Content[0])
+	}
+
+	indent := detectIndent(existingData)
+
+	var buf bytes.Buffer
+	enc := yaml.NewEncoder(&buf)
+	enc.SetIndent(indent)
+	if err := enc.Encode(&node); err != nil {
+		return nil, err
+	}
+	if err := enc.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func pruneYAMLNode(node *yaml.Node) {
+	if node.Kind != yaml.MappingNode {
+		return
+	}
+
+	var kept []*yaml.Node
+	for i := 0; i+1 < len(node.Content); i += 2 {
+		key := node.Content[i]
+		val := node.Content[i+1]
+
+		if isZeroYAMLNode(val) {
+			continue
+		}
+
+		if val.Kind == yaml.MappingNode {
+			pruneYAMLNode(val)
+			if len(val.Content) == 0 {
+				continue
+			}
+		}
+
+		kept = append(kept, key, val)
+	}
+	node.Content = kept
+}
+
+func isZeroYAMLNode(n *yaml.Node) bool {
+	switch n.Kind {
+	case yaml.ScalarNode:
+		if n.Tag == "!!null" {
+			return true
+		}
+		return n.Value == "" || n.Value == "0" || n.Value == "false"
+	case yaml.SequenceNode:
+		return len(n.Content) == 0
+	case yaml.MappingNode:
+		return len(n.Content) == 0
+	case yaml.AliasNode:
+		return n.Alias != nil && isZeroYAMLNode(n.Alias)
+	}
+	return n.Tag == "!!null"
+}
+
+func detectIndent(data []byte) int {
+	if len(data) == 0 {
+		return 2
+	}
+	for line := range strings.SplitSeq(string(data), "\n") {
+		trimmed := strings.TrimLeft(line, " ")
+		indent := len(line) - len(trimmed)
+		if indent > 0 {
+			return indent
+		}
+	}
+	return 2
+}
+
+func offerPackageJSONUpdate(root string, cfg *IC.CemConfig) error {
 	pkgPath := filepath.Join(root, "package.json")
 	data, err := os.ReadFile(pkgPath)
 	if err != nil {
@@ -808,9 +861,9 @@ func offerPackageJSONUpdate(root string, cfg *initConfig) error {
 		return nil
 	}
 
-	output := "custom-elements.json"
-	if cfg.Generate != nil && cfg.Generate.Output != "" {
-		output = cfg.Generate.Output
+	output := cfg.Generate.Output
+	if output == "" {
+		output = "custom-elements.json"
 	}
 
 	confirmed, err := tui.Confirm(fmt.Sprintf("Add \"customElements\": \"%s\" to package.json?", output), true)
@@ -824,7 +877,6 @@ func offerPackageJSONUpdate(root string, cfg *initConfig) error {
 	}
 	insertion := fmt.Sprintf(",\n  \"customElements\": %s", string(entry))
 
-	// Insert before the last closing brace, preserving existing formatting
 	lastBrace := bytes.LastIndexByte(data, '}')
 	if lastBrace < 0 {
 		return nil
@@ -883,7 +935,17 @@ func normalizeGitURL(rawURL string) string {
 
 	var host, path string
 
-	if after, ok := strings.CutPrefix(rawURL, "git@"); ok {
+	if after, ok := strings.CutPrefix(rawURL, "ssh://"); ok {
+		after = strings.TrimPrefix(after, "git@")
+		host, path, ok = strings.Cut(after, "/")
+		if !ok {
+			return rawURL
+		}
+		// strip optional :port from host
+		if h, _, hasPort := strings.Cut(host, ":"); hasPort {
+			host = h
+		}
+	} else if after, ok := strings.CutPrefix(rawURL, "git@"); ok {
 		host, path, ok = strings.Cut(after, ":")
 		if !ok {
 			return rawURL
@@ -966,7 +1028,6 @@ func detectDemoFiles(fsys fs.FS) (fileGlob string, urlPattern string, err error)
 		}
 
 		parts := strings.Split(filepath.ToSlash(path), "/")
-		// look for demo/ directory in path
 		for i, part := range parts {
 			if part == "demo" && i > 0 && i < len(parts)-1 {
 				topDirs.Add(parts[0])
@@ -1032,6 +1093,11 @@ func detectCSSPatterns(sourcePatterns []string, fsys fs.FS) (include []string, e
 	return include, exclude
 }
 
+type gitRemoteResult struct {
+	url    string
+	branch string
+}
+
 func detectGitRemote(root string) (string, error) {
 	gitCmd := exec.Command("git", "config", "--get", "remote.origin.url")
 	gitCmd.Dir = root
@@ -1044,20 +1110,22 @@ func detectGitRemote(root string) (string, error) {
 		return "", nil
 	}
 
-	repoURL := normalizeGitURL(raw)
-
-	if ghPath, ghErr := exec.LookPath("gh"); ghErr == nil && ghPath != "" {
-		repoURL = detectForkUpstream(root, repoURL)
+	result := gitRemoteResult{
+		url:    normalizeGitURL(raw),
+		branch: detectDefaultBranch(root),
 	}
 
-	branch := detectDefaultBranch(root)
-	return repoURL + "tree/" + branch + "/", nil
+	if ghPath, ghErr := exec.LookPath("gh"); ghErr == nil && ghPath != "" {
+		result = detectForkUpstream(root, result)
+	}
+
+	return result.url + "tree/" + result.branch + "/", nil
 }
 
-func detectForkUpstream(root, fallback string) string {
-	cmd := exec.Command("gh", "repo", "view", "--json", "parent")
-	cmd.Dir = root
-	out, err := cmd.Output()
+func detectForkUpstream(root string, fallback gitRemoteResult) gitRemoteResult {
+	ghCmd := exec.Command("gh", "repo", "view", "--json", "parent,defaultBranchRef")
+	ghCmd.Dir = root
+	out, err := ghCmd.Output()
 	if err != nil {
 		return fallback
 	}
@@ -1066,6 +1134,9 @@ func detectForkUpstream(root, fallback string) string {
 		Parent struct {
 			URL string `json:"url"`
 		} `json:"parent"`
+		DefaultBranchRef struct {
+			Name string `json:"name"`
+		} `json:"defaultBranchRef"`
 	}
 	if json.Unmarshal(out, &result) != nil || result.Parent.URL == "" {
 		return fallback
@@ -1075,7 +1146,13 @@ func detectForkUpstream(root, fallback string) string {
 	if upstream == "" {
 		return fallback
 	}
-	return upstream
+
+	branch := result.DefaultBranchRef.Name
+	if branch == "" {
+		branch = fallback.branch
+	}
+
+	return gitRemoteResult{url: upstream, branch: branch}
 }
 
 func detectDefaultBranch(root string) string {
