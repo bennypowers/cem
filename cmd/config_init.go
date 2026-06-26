@@ -776,20 +776,18 @@ func (f *fieldValue) Groups() []*huh.Group {
 	f.useDetected = true
 	f.Result = f.Value()
 
-	if f.Detected != "" && f.Existing == "" {
+	if f.Detected != "" {
+		confirmTitle := "Use detected value?"
+		confirmDesc := f.Detected
+		if f.Existing != "" && !equalFieldValues(f.Existing, f.Detected) {
+			confirmTitle = "Update with detected value?"
+			confirmDesc = "existing: " + f.Existing + "\ndetected: " + f.Detected
+			f.useDetected = false
+		}
 		groups = append(groups, huh.NewGroup(
 			huh.NewConfirm().
-				Title("Use detected value?").
-				Description(f.Detected).
-				Value(&f.useDetected),
-		).Title(f.Title).
-			Description(f.Description))
-	} else if f.Detected != "" && !equalFieldValues(f.Existing, f.Detected) {
-		f.useDetected = false
-		groups = append(groups, huh.NewGroup(
-			huh.NewConfirm().
-				Title("Update with detected value?").
-				Description("existing: "+f.Existing+"\ndetected: "+f.Detected).
+				Title(confirmTitle).
+				Description(confirmDesc).
 				Value(&f.useDetected),
 		).Title(f.Title).
 			Description(f.Description))
