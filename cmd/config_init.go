@@ -42,6 +42,7 @@ import (
 	W "bennypowers.dev/cem/internal/workspace"
 	"charm.land/bubbles/v2/key"
 	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/gjson"
@@ -423,9 +424,7 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 	if len(existingData) > 0 {
 		diff := unifiedDiff(string(existingData), string(output), cfgPath)
 		if diff != "" {
-			if err := tui.Highlight(cmd.OutOrStdout(), diff, "diff"); err != nil {
-				cmd.Println(diff)
-			}
+			printColorDiff(cmd, diff)
 		} else {
 			cmd.Println("No changes.")
 		}
@@ -751,6 +750,30 @@ func equalFieldValues(a, b string) bool {
 	slices.Sort(ap)
 	slices.Sort(bp)
 	return slices.Equal(ap, bp)
+}
+
+var (
+	diffAddStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("2"))
+	diffRemoveStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("1"))
+	diffHunkStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("6"))
+	diffHeaderStyle = lipgloss.NewStyle().Bold(true)
+)
+
+func printColorDiff(cmd *cobra.Command, diff string) {
+	for line := range strings.SplitSeq(diff, "\n") {
+		switch {
+		case strings.HasPrefix(line, "+++"), strings.HasPrefix(line, "---"):
+			cmd.Println(diffHeaderStyle.Render(line))
+		case strings.HasPrefix(line, "@@"):
+			cmd.Println(diffHunkStyle.Render(line))
+		case strings.HasPrefix(line, "+"):
+			cmd.Println(diffAddStyle.Render(line))
+		case strings.HasPrefix(line, "-"):
+			cmd.Println(diffRemoveStyle.Render(line))
+		default:
+			cmd.Println(line)
+		}
+	}
 }
 
 func unifiedDiff(existing, proposed, filename string) string {
