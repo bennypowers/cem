@@ -42,6 +42,7 @@ import (
 	W "bennypowers.dev/cem/internal/workspace"
 	"charm.land/bubbles/v2/key"
 	"charm.land/huh/v2"
+	"github.com/pmezard/go-difflib/difflib"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/gjson"
 	"golang.org/x/term"
@@ -419,13 +420,28 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 	}
 
 	cmd.Println()
-	if err := tui.Highlight(cmd.OutOrStdout(), string(output), lang); err != nil {
-		cmd.Println(string(output))
+	if len(existingData) > 0 {
+		diff := unifiedDiff(string(existingData), string(output), cfgPath)
+		if diff != "" {
+			if err := tui.Highlight(cmd.OutOrStdout(), diff, "diff"); err != nil {
+				cmd.Println(diff)
+			}
+		} else {
+			cmd.Println("No changes.")
+		}
+	} else {
+		if err := tui.Highlight(cmd.OutOrStdout(), string(output), lang); err != nil {
+			cmd.Println(string(output))
+		}
 	}
 	cmd.Println()
 
 	if interactive && !yes {
-		confirmed, confirmErr := tui.Confirm("Write this config?", true)
+		prompt := "Write this config?"
+		if len(existingData) > 0 {
+			prompt = "Apply these changes?"
+		}
+		confirmed, confirmErr := tui.Confirm(prompt, true)
 		if confirmErr != nil || !confirmed {
 			return nil
 		}
@@ -735,6 +751,21 @@ func equalFieldValues(a, b string) bool {
 	slices.Sort(ap)
 	slices.Sort(bp)
 	return slices.Equal(ap, bp)
+}
+
+func unifiedDiff(existing, proposed, filename string) string {
+	diff := difflib.UnifiedDiff{
+		A:        difflib.SplitLines(existing),
+		B:        difflib.SplitLines(proposed),
+		FromFile: filename,
+		ToFile:   filename,
+		Context:  3,
+	}
+	result, err := difflib.GetUnifiedDiffString(diff)
+	if err != nil {
+		return ""
+	}
+	return result
 }
 
 func splitCommaList(s string) []string {
