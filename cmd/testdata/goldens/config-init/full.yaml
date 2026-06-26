@@ -31,4 +31,3 @@ serve:
   demos:
     rendering: shadow
 sourceControlRootUrl: https://github.com/example/project/tree/main/
-verbose: false

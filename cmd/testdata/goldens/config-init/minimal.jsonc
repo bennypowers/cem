@@ -8,7 +8,7 @@
   },
   "serve": {
     "importMap": {
-      "Generate": false
+      "generate": false
     },
     "transforms": {
       "css": {
@@ -18,6 +18,5 @@
         "enabled": false
       }
     }
-  },
-  "verbose": false
+  }
 }

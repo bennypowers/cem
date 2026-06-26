@@ -15,4 +15,3 @@ serve:
       enabled: false
     css:
       enabled: false
-verbose: false

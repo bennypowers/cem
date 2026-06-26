@@ -405,10 +405,11 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		logging.Info("Package-level overrides can be added in each package's own .config/cem.yaml")
 	}
 
-	// Clear internal-only fields before marshaling
+	// Clear internal-only and deprecated fields before marshaling
 	cfg.ProjectDir = ""
 	cfg.ConfigFile = ""
 	cfg.PackageName = ""
+	cfg.Verbose = false
 
 	output, marshalErr := marshalConfig(cfg, format, existingData)
 	if marshalErr != nil {
@@ -577,7 +578,7 @@ func marshalConfigJSON(cfg *IC.CemConfig) ([]byte, error) {
 
 func pruneJSONMap(m map[string]any) {
 	for k, v := range m {
-		if isZeroJSON(v) {
+		if deprecatedConfigKeys.Has(k) || isZeroJSON(v) {
 			delete(m, k)
 			continue
 		}
@@ -616,8 +617,10 @@ func marshalConfigYAML(cfg *IC.CemConfig, existingData []byte) ([]byte, error) {
 
 	if node.Kind == yaml.MappingNode {
 		pruneYAMLNode(&node)
+		removeYAMLKeys(&node, deprecatedConfigKeys)
 	} else if node.Kind == yaml.DocumentNode && len(node.Content) > 0 {
 		pruneYAMLNode(node.Content[0])
+		removeYAMLKeys(node.Content[0], deprecatedConfigKeys)
 	}
 
 	indent := detectIndent(existingData)
@@ -632,6 +635,21 @@ func marshalConfigYAML(cfg *IC.CemConfig, existingData []byte) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+var deprecatedConfigKeys = set.NewSet("verbose")
+
+func removeYAMLKeys(node *yaml.Node, keys set.Set[string]) {
+	if node.Kind != yaml.MappingNode {
+		return
+	}
+	var kept []*yaml.Node
+	for i := 0; i+1 < len(node.Content); i += 2 {
+		if !keys.Has(node.Content[i].Value) {
+			kept = append(kept, node.Content[i], node.Content[i+1])
+		}
+	}
+	node.Content = kept
 }
 
 func pruneYAMLNode(node *yaml.Node) {

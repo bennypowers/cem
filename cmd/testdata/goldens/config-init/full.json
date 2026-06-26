@@ -20,7 +20,7 @@
       "rendering": "shadow"
     },
     "importMap": {
-      "Generate": true
+      "generate": true
     },
     "port": 8000,
     "transforms": {
@@ -39,6 +39,5 @@
       }
     }
   },
-  "sourceControlRootUrl": "https://github.com/example/project/tree/main/",
-  "verbose": false
+  "sourceControlRootUrl": "https://github.com/example/project/tree/main/"
 }
