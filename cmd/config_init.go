@@ -302,11 +302,21 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		}
 
 		// Run the form
+		termWidth, termHeight, _ := term.GetSize(int(os.Stdout.Fd()))
+		if termWidth <= 0 {
+			termWidth = 80
+		}
+		if termHeight <= 0 {
+			termHeight = 24
+		}
+
 		km := huh.NewDefaultKeyMap()
 		km.Quit = key.NewBinding(key.WithKeys("esc", "ctrl+c"), key.WithHelp("esc", "quit"))
 		form := huh.
 			NewForm(groups...).
 			WithKeyMap(km).
+			WithWidth(termWidth).
+			WithHeight(termHeight).
 			WithShowHelp(true)
 		if formErr := tui.WrapAbort(form.Run()); formErr != nil {
 			if errors.Is(formErr, tui.ErrCancelled) {
