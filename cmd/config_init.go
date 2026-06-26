@@ -268,8 +268,10 @@ func showWelcomePage() error {
 		huh.NewGroup(
 			huh.NewNote().
 				Title(logo).
-				Description("Interactive wizard for generating .config/cem.yaml\n"+
-					"Detects project settings and creates your configuration.").
+				Description(`CEM - The Custom Elements Multitool
+
+Use this interactive wizard to generate or update your cem config files
+`).
 				Next(true),
 		),
 	)

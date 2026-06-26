@@ -19,6 +19,8 @@ else
     RACE_LDFLAGS :=
 endif
 
+.DEFAULT_GOAL := build
+
 LDFLAGS := $(shell ./scripts/ldflags.sh)
 
 # Source file lists for dependency tracking
