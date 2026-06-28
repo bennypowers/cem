@@ -74,14 +74,21 @@
   ; @customElement('custom-element')
   ; export class CustomElement extends CustomBase {}
   ; ```
+  ; also matches:
+  ; ```ts
+  ; const tagName = 'custom-element';
+  ; @customElement(tagName)
+  ; export class CustomElement extends CustomBase {}
+  ; ```
   (comment)* @class.jsdoc . (#match? @class.jsdoc "^/\\*\\*") .
   (export_statement
     (decorator) *
     decorator: (decorator
       (call_expression
         function: (identifier) @class.decorator.name
-        arguments: (arguments (string (string_fragment) @tag-name)
-                              (#eq? @class.decorator.name "customElement"))))
+        arguments: (arguments
+                     [(string (string_fragment) @tag-name) (identifier) @tag-name-ref]
+                     (#eq? @class.decorator.name "customElement"))))
     (decorator) *
     declaration: (class_declaration
       name: (type_identifier) @class.name
@@ -164,8 +171,9 @@
     decorator: (decorator
       (call_expression
         function: (identifier) @class.decorator.name
-        arguments: (arguments (string (string_fragment) @tag-name)
-                              (#eq? @class.decorator.name "customElement"))))
+        arguments: (arguments
+                     [(string (string_fragment) @tag-name) (identifier) @tag-name-ref]
+                     (#eq? @class.decorator.name "customElement"))))
     (decorator) *
     name: (type_identifier) @class.name
     (class_heritage

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-custom-element-let-tagname.js",
+      "declarations": [
+        {
+          "name": "LetElement",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-custom-element-let-tagname.ts#L6"
+          },
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "LetElement",
+          "declaration": {
+            "name": "LetElement",
+            "module": "src/class-custom-element-let-tagname.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-custom-element-variable-tagname.js",
+      "declarations": [
+        {
+          "name": "tagName",
+          "kind": "variable",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-custom-element-variable-tagname.ts#L3"
+          }
+        },
+        {
+          "name": "VariableElement",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-custom-element-variable-tagname.ts#L6"
+          },
+          "kind": "class",
+          "tagName": "variable-element",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "tagName",
+          "declaration": {
+            "name": "tagName",
+            "module": "src/class-custom-element-variable-tagname.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "variable-element",
+          "declaration": {
+            "name": "VariableElement",
+            "module": "src/class-custom-element-variable-tagname.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "VariableElement",
+          "declaration": {
+            "name": "VariableElement",
+            "module": "src/class-custom-element-variable-tagname.js"
+          }
+        }
+      ]
+    }
+  ]
+}
