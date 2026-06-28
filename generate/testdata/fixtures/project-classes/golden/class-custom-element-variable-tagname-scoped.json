@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-custom-element-variable-tagname-scoped.js",
+      "declarations": [
+        {
+          "name": "ScopedElement",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-custom-element-variable-tagname-scoped.ts#L11"
+          },
+          "kind": "class",
+          "tagName": "scoped-right-element",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "scoped-right-element",
+          "declaration": {
+            "name": "ScopedElement",
+            "module": "src/class-custom-element-variable-tagname-scoped.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ScopedElement",
+          "declaration": {
+            "name": "ScopedElement",
+            "module": "src/class-custom-element-variable-tagname-scoped.js"
+          }
+        }
+      ]
+    }
+  ]
+}

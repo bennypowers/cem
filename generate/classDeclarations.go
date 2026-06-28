@@ -312,12 +312,8 @@ func (mp *ModuleProcessor) generateLitElementClassDeclaration(
 		},
 	}
 
-	tagNameNodes, ok := captures["tag-name"]
-	if ok && len(tagNameNodes) > 0 {
-		tagName := tagNameNodes[0].Text
-		if tagName != "" {
-			declaration.TagName = tagName
-		}
+	if tagName := mp.resolveTagName(captures); tagName != "" {
+		declaration.TagName = tagName
 	}
 
 	declaration.CustomElement.Attributes = A.Chain(func(member M.ClassMember) []M.Attribute {
@@ -464,4 +460,34 @@ func (mp *ModuleProcessor) parseHeritageExpression(node *ts.Node) (superclass st
 	}
 
 	return "", nil
+}
+
+func (mp *ModuleProcessor) resolveTagName(captures Q.CaptureMap) string {
+	if nodes, ok := captures["tag-name"]; ok && len(nodes) > 0 {
+		return nodes[0].Text
+	}
+	if refs, ok := captures["tag-name-ref"]; ok && len(refs) > 0 {
+		return mp.resolveConstStringValue(refs[0].Text)
+	}
+	return ""
+}
+
+// see also: typescript.resolveConstStringValue in ecmascript.go
+func (mp *ModuleProcessor) resolveConstStringValue(name string) string {
+	qm, err := Q.NewQueryMatcher(mp.queryManager, "typescript", "constStringValue")
+	if err != nil {
+		return ""
+	}
+	defer qm.Close()
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "const.name") {
+		nameNodes, ok := captures["const.name"]
+		if !ok || len(nameNodes) == 0 || nameNodes[0].Text != name {
+			continue
+		}
+		valueNodes, ok := captures["const.value"]
+		if ok && len(valueNodes) > 0 {
+			return valueNodes[0].Text
+		}
+	}
+	return ""
 }

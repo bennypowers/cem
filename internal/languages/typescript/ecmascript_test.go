@@ -223,6 +223,125 @@ export class ElementTwo extends LitElement {}
 		}
 	})
 
+	t.Run("customElement decorator with const variable", func(t *testing.T) {
+		src := []byte(`import { LitElement } from 'lit';
+import { customElement } from 'lit/decorators.js';
+
+export const tagName = 'variable-element';
+
+@customElement(tagName)
+export class VariableElement extends LitElement {}
+`)
+		tags := FindDefinedElementTags(src, qm)
+		if len(tags) != 1 || tags[0] != "variable-element" {
+			t.Errorf("expected [variable-element], got %v", tags)
+		}
+	})
+
+	t.Run("customElement decorator with unexported const variable", func(t *testing.T) {
+		src := []byte(`import { LitElement } from 'lit';
+import { customElement } from 'lit/decorators.js';
+
+const tagName = 'unexported-variable-element';
+
+@customElement(tagName)
+class UnexportedVariableElement extends LitElement {}
+`)
+		tags := FindDefinedElementTags(src, qm)
+		if len(tags) != 1 || tags[0] != "unexported-variable-element" {
+			t.Errorf("expected [unexported-variable-element], got %v", tags)
+		}
+	})
+
+	t.Run("customElements.define with const variable", func(t *testing.T) {
+		src := []byte(`const tagName = 'define-variable-element';
+class DefineVariableElement extends HTMLElement {}
+customElements.define(tagName, DefineVariableElement);
+`)
+		tags := FindDefinedElementTags(src, qm)
+		if len(tags) != 1 || tags[0] != "define-variable-element" {
+			t.Errorf("expected [define-variable-element], got %v", tags)
+		}
+	})
+
+	t.Run("function-scoped const is not resolved", func(t *testing.T) {
+		src := []byte(`import { LitElement } from 'lit';
+import { customElement } from 'lit/decorators.js';
+
+function getTag() {
+  const tagName = 'scoped-element';
+  return tagName;
+}
+
+@customElement(tagName)
+export class ScopedElement extends LitElement {}
+`)
+		tags := FindDefinedElementTags(src, qm)
+		if len(tags) != 0 {
+			t.Errorf("expected no tags (function-scoped const), got %v", tags)
+		}
+	})
+
+	t.Run("var variable is not resolved", func(t *testing.T) {
+		src := []byte(`import { LitElement } from 'lit';
+import { customElement } from 'lit/decorators.js';
+
+var tagName = 'var-element';
+
+@customElement(tagName)
+export class VarElement extends LitElement {}
+`)
+		tags := FindDefinedElementTags(src, qm)
+		if len(tags) != 0 {
+			t.Errorf("expected no tags (var is not const), got %v", tags)
+		}
+	})
+
+	t.Run("HTMLElement with const variable via customElements.define", func(t *testing.T) {
+		src := []byte(`const tagName = 'html-variable-element';
+export class HtmlVariableElement extends HTMLElement {}
+customElements.define(tagName, HtmlVariableElement);
+`)
+		tags := FindDefinedElementTags(src, qm)
+		if len(tags) != 1 || tags[0] != "html-variable-element" {
+			t.Errorf("expected [html-variable-element], got %v", tags)
+		}
+	})
+
+	t.Run("top-level const shadows function-scoped const", func(t *testing.T) {
+		src := []byte(`import { LitElement } from 'lit';
+import { customElement } from 'lit/decorators.js';
+
+function setup() {
+  const tagName = 'wrong-element';
+}
+
+const tagName = 'right-element';
+
+@customElement(tagName)
+export class ShadowElement extends LitElement {}
+`)
+		tags := FindDefinedElementTags(src, qm)
+		if len(tags) != 1 || tags[0] != "right-element" {
+			t.Errorf("expected [right-element], got %v", tags)
+		}
+	})
+
+	t.Run("let variable is not resolved", func(t *testing.T) {
+		src := []byte(`import { LitElement } from 'lit';
+import { customElement } from 'lit/decorators.js';
+
+let tagName = 'let-element';
+
+@customElement(tagName)
+export class LetElement extends LitElement {}
+`)
+		tags := FindDefinedElementTags(src, qm)
+		if len(tags) != 0 {
+			t.Errorf("expected no tags (let is not const), got %v", tags)
+		}
+	})
+
 	t.Run("no definitions", func(t *testing.T) {
 		src := []byte(`export class PlainClass {}`)
 		tags := FindDefinedElementTags(src, qm)

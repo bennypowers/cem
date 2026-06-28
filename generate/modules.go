@@ -496,12 +496,18 @@ func (mp *ModuleProcessor) processDeclarations() error {
 				Capture: "ce",
 				Query:   "declarations",
 			})
-		} else if tagNameNodes, ok := captures["ce.tagName"]; !ok || len(tagNameNodes) <= 0 {
-			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{Capture: "ce.tagName", Query: "declarations"})
 		} else if classNameNodes, ok := captures["ce.className"]; !ok || len(classNameNodes) <= 0 {
 			mp.errors = errors.Join(mp.errors, &Q.NoCaptureError{Capture: "ce.className", Query: "declarations"})
 		} else {
-			tagName := tagNameNodes[0].Text
+			var tagName string
+			if tagNameNodes, ok := captures["ce.tagName"]; ok && len(tagNameNodes) > 0 {
+				tagName = tagNameNodes[0].Text
+			} else if refNodes, ok := captures["ce.tagNameRef"]; ok && len(refNodes) > 0 {
+				tagName = mp.resolveConstStringValue(refNodes[0].Text)
+			}
+			if tagName == "" {
+				continue
+			}
 			className := classNameNodes[0].Text
 			idx := slices.IndexFunc(mp.module.Declarations, func(decl M.Declaration) bool {
 				d, ok := decl.(*M.ClassDeclaration)
@@ -616,7 +622,7 @@ func (mp *ModuleProcessor) processDeclarations() error {
 		})
 		if index >= 0 {
 			d := mp.module.Declarations[index]
-			if declaration, ok := d.(*M.CustomElementDeclaration); ok {
+			if declaration, ok := d.(*M.CustomElementDeclaration); ok && declaration.TagName != "" {
 				mp.module.Exports = append(mp.module.Exports, M.NewCustomElementExport(
 					declaration.TagName,
 					reference,

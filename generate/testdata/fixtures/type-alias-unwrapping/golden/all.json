@@ -37,14 +37,6 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "",
-          "declaration": {
-            "name": "MyElement",
-            "module": "src/circular-alias.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "MyElement",
           "declaration": {
@@ -99,14 +91,6 @@
         }
       ],
       "exports": [
-        {
-          "kind": "custom-element-definition",
-          "name": "",
-          "declaration": {
-            "name": "MyComponent",
-            "module": "src/cross-module.js"
-          }
-        },
         {
           "kind": "js",
           "name": "MyComponent",
@@ -177,14 +161,6 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "",
-          "declaration": {
-            "name": "MyElement",
-            "module": "src/lowercase-alias.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "MyElement",
           "declaration": {
@@ -233,14 +209,6 @@
         }
       ],
       "exports": [
-        {
-          "kind": "custom-element-definition",
-          "name": "",
-          "declaration": {
-            "name": "MyButton",
-            "module": "src/nested-alias.js"
-          }
-        },
         {
           "kind": "js",
           "name": "MyButton",
@@ -293,14 +261,6 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "",
-          "declaration": {
-            "name": "MyElement",
-            "module": "src/no-alias.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "MyElement",
           "declaration": {
@@ -341,14 +301,6 @@
         }
       ],
       "exports": [
-        {
-          "kind": "custom-element-definition",
-          "name": "",
-          "declaration": {
-            "name": "MyButton",
-            "module": "src/simple-alias.js"
-          }
-        },
         {
           "kind": "js",
           "name": "MyButton",
@@ -472,14 +424,6 @@
         }
       ],
       "exports": [
-        {
-          "kind": "custom-element-definition",
-          "name": "",
-          "declaration": {
-            "name": "MyButton",
-            "module": "src/union-alias.js"
-          }
-        },
         {
           "kind": "js",
           "name": "MyButton",

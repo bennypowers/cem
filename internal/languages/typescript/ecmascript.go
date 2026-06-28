@@ -88,6 +88,18 @@ func FindTagNameDefinitionInSource(content []byte, tagName string, queryManager 
 				}
 			}
 		}
+		if refs, ok := captureMap["tag-name-ref"]; ok {
+			for _, ref := range refs {
+				resolved := resolveConstStringValue(tree.RootNode(), content, ref.Text, queryManager)
+				if resolved == tagName {
+					node := Q.GetDescendantById(tree.RootNode(), ref.NodeId)
+					if node != nil {
+						r := Q.NodeToRange(node, content)
+						return &r, nil
+					}
+				}
+			}
+		}
 	}
 
 	return nil, nil
@@ -208,11 +220,16 @@ func FindDefinedElementTags(code []byte, qm *Q.QueryManager) []string {
 			if int(capture.Index) >= matcher.CaptureCount() {
 				continue
 			}
-			if matcher.GetCaptureNameByIndex(capture.Index) == "defined.tagName" {
-				tag := capture.Node.Utf8Text(code)
-				if !slices.Contains(tags, tag) {
-					tags = append(tags, tag)
-				}
+			name := matcher.GetCaptureNameByIndex(capture.Index)
+			var tag string
+			switch name {
+			case "defined.tagName":
+				tag = capture.Node.Utf8Text(code)
+			case "defined.tagNameRef":
+				tag = resolveConstStringValue(root, code, capture.Node.Utf8Text(code), qm)
+			}
+			if tag != "" && !slices.Contains(tags, tag) {
+				tags = append(tags, tag)
 			}
 		}
 	}
@@ -291,4 +308,24 @@ func adjustTemplateRange(templateRange *Q.Range, templateNode *ts.Node, content 
 			Character: templateStart.Character + templateRange.End.Character,
 		},
 	}
+}
+
+// see also: ModuleProcessor.resolveConstStringValue in classDeclarations.go
+func resolveConstStringValue(root *ts.Node, code []byte, name string, qm *Q.QueryManager) string {
+	matcher, err := Q.NewQueryMatcher(qm, "typescript", "constStringValue")
+	if err != nil {
+		return ""
+	}
+	defer matcher.Close()
+	for captures := range matcher.ParentCaptures(root, code, "const.name") {
+		nameNodes, ok := captures["const.name"]
+		if !ok || len(nameNodes) == 0 || nameNodes[0].Text != name {
+			continue
+		}
+		valueNodes, ok := captures["const.value"]
+		if ok && len(valueNodes) > 0 {
+			return valueNodes[0].Text
+		}
+	}
+	return ""
 }

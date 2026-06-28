@@ -95,21 +95,21 @@
               }
             },
             {
-              "url": "https://bennypowers.dev/cem-demos/demo-discovery/discovery/",
+              "url": "https://bennypowers.dev/cem-demos/discovery/discovery/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-discovery/demos/discovery.html"
               }
             },
             {
               "description": "Demo with YAML frontmatter metadata",
-              "url": "https://bennypowers.dev/cem-demos/demo-discovery/frontmatter/",
+              "url": "https://bennypowers.dev/cem-demos/discovery/frontmatter/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-discovery/demos/frontmatter.html"
               }
             },
             {
               "description": "A complete HTML document demonstrating demo-discovery element",
-              "url": "https://bennypowers.dev/cem-demos/demo-discovery/full-document/",
+              "url": "https://bennypowers.dev/cem-demos/discovery/full-document/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/generate/src/demo-discovery/demos/full-document.html"
               }

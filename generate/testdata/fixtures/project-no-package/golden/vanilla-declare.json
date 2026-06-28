@@ -20,14 +20,6 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "",
-          "declaration": {
-            "name": "VanillaElement",
-            "module": "src/vanilla-declare.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "VanillaElement",
           "declaration": {

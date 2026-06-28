@@ -47,14 +47,6 @@
       ],
       "exports": [
         {
-          "kind": "custom-element-definition",
-          "name": "",
-          "declaration": {
-            "name": "DtsElement",
-            "module": "src/dts-element.js"
-          }
-        },
-        {
           "kind": "js",
           "name": "DtsElement",
           "declaration": {
@@ -95,14 +87,6 @@
         }
       ],
       "exports": [
-        {
-          "kind": "custom-element-definition",
-          "name": "",
-          "declaration": {
-            "name": "JsdocElement",
-            "module": "src/jsdoc-element.js"
-          }
-        },
         {
           "kind": "js",
           "name": "JsdocElement",

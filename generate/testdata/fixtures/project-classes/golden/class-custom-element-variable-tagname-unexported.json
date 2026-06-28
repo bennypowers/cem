@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-custom-element-variable-tagname-unexported.js",
+      "declarations": [
+        {
+          "name": "UnexportedVariableElement",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-custom-element-variable-tagname-unexported.ts#L5"
+          },
+          "kind": "class",
+          "tagName": "unexported-variable-element",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "unexported-variable-element",
+          "declaration": {
+            "name": "UnexportedVariableElement",
+            "module": "src/class-custom-element-variable-tagname-unexported.js"
+          }
+        }
+      ]
+    }
+  ]
+}

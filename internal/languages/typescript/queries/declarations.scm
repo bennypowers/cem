@@ -82,11 +82,15 @@
 ( ; custom element export
   ; case:
   ; customElements.define('tag-name', Class);
+  ; also matches:
+  ; const tagName = 'tag-name';
+  ; customElements.define(tagName, Class);
   call_expression
     function: (member_expression
       object: (identifier) @ce.namespace (#eq? @ce.namespace "customElements")
       property: (property_identifier) @ce.methodname) (#eq? @ce.methodname "define")
     arguments: (arguments
-      (string
-        (string_fragment) @ce.tagName)
+      [(string
+         (string_fragment) @ce.tagName)
+       (identifier) @ce.tagNameRef]
       (identifier) @ce.className)) @ce

@@ -33,11 +33,11 @@ func (l *language) QueryFS() embed.FS        { return queryFiles }
 func (l *language) QueryNames(scope languages.Scope) []string {
 	switch scope {
 	case languages.ScopeLSP:
-		return []string{"htmlTemplates", "completionContext", "imports", "classes", "classMemberDeclaration", "exports", "importAttributes", "definedElements"}
+		return []string{"htmlTemplates", "completionContext", "imports", "classes", "classMemberDeclaration", "exports", "importAttributes", "definedElements", "constStringValue"}
 	case languages.ScopeGenerate:
-		return []string{"classMemberDeclaration", "classes", "declarations", "imports", "typeAliases", "exports"}
+		return []string{"classMemberDeclaration", "classes", "declarations", "imports", "typeAliases", "exports", "constStringValue"}
 	case languages.ScopeAll:
-		return []string{"classMemberDeclaration", "classes", "declarations", "imports", "htmlTemplates", "completionContext", "typeAliases", "exports", "importAttributes", "definedElements"}
+		return []string{"classMemberDeclaration", "classes", "declarations", "imports", "htmlTemplates", "completionContext", "typeAliases", "exports", "importAttributes", "definedElements", "constStringValue"}
 	}
 	return nil
 }
