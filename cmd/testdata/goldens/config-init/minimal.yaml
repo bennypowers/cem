@@ -2,16 +2,3 @@ generate:
   files:
     - src/**/*.ts
   output: custom-elements.json
-mcp:
-  maxDescriptionLength: 0
-health:
-  failBelow: 0
-serve:
-  port: 0
-  importMap:
-    generate: false
-  transforms:
-    typescript:
-      enabled: false
-    css:
-      enabled: false

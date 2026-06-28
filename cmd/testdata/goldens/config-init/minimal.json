@@ -4,18 +4,5 @@
       "src/**/*.ts"
     ],
     "output": "custom-elements.json"
-  },
-  "serve": {
-    "importMap": {
-      "generate": false
-    },
-    "transforms": {
-      "css": {
-        "enabled": false
-      },
-      "typescript": {
-        "enabled": false
-      }
-    }
   }
 }

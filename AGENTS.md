@@ -101,6 +101,15 @@ New LSP methods or MCP tools must include at least Tier 2 tests before merging.
 - **Respect element authors**: Use their documented constraints and intent. Follow documented accessibility patterns, don't add generic ARIA advice.
 - **Template naming**: Use dashes (e.g., `element-attributes.md`), not underscores. Reference subresources (`cem://element/{tagName}/attributes`), not tool names.
 
+### Config
+
+When adding or modifying configuration fields, update all three locations:
+1. **Config struct** in `internal/config/load.go` -- add the field with proper struct tags
+2. **Init wizard** in `cmd/config_init.go` -- add form fields, detection, and apply logic
+3. **Docs** in `docs/content/docs/reference/configuration.md` -- document the new option
+
+If the field is detectable from the project (e.g. file patterns, git remote), add detection in `cmd/config_init_detect.go`. If it needs validation, add it to `internal/config/validate.go` and wire it into the wizard's `ValidateFn`.
+
 ## Git
 
 - Always run `make lint` and address issues before committing

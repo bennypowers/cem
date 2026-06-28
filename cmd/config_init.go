@@ -17,37 +17,25 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
-	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
-	"syscall"
 
-	asimconfig "bennypowers.dev/asimonim/config"
 	"bennypowers.dev/asimonim/specifier"
 	IC "bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/platform"
-	"bennypowers.dev/cem/internal/set"
 	"bennypowers.dev/cem/internal/tui"
 	W "bennypowers.dev/cem/internal/workspace"
 	"charm.land/bubbles/v2/key"
 	"charm.land/huh/v2"
-	"charm.land/lipgloss/v2"
-	"github.com/pmezard/go-difflib/difflib"
 	"github.com/spf13/cobra"
-	"github.com/tidwall/gjson"
 	"golang.org/x/term"
-	"gopkg.in/yaml.v3"
 )
 
 var validFormats = []string{"yaml", "json", "jsonc"}
@@ -140,12 +128,24 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 	}
 
 	// Detection phase
-	detectedFiles, _ := detectSourceFiles(dirFS)
-	detectedGitRemote, _ := detectGitRemote(root)
-	detectedGlob, detectedPattern, _ := detectDemoFiles(dirFS)
+	detectedFiles, detectErr := detectSourceFiles(dirFS)
+	if detectErr != nil {
+		logging.Debug("source file detection: %v", detectErr)
+	}
+	detectedGitRemote, detectErr := detectGitRemote(root)
+	if detectErr != nil {
+		logging.Debug("git remote detection: %v", detectErr)
+	}
+	detectedGlob, detectedPattern, detectErr := detectDemoFiles(dirFS)
+	if detectErr != nil {
+		logging.Debug("demo file detection: %v", detectErr)
+	}
 	var detectedTokens []*specifier.ResolvedFile
 	if hasPkgJSON {
-		detectedTokens, _ = detectDesignTokens(root, osFS)
+		detectedTokens, detectErr = detectDesignTokens(root, osFS)
+		if detectErr != nil {
+			logging.Debug("design token detection: %v", detectErr)
+		}
 	}
 	var detectedPkgCE string
 	if hasPkgJSON {
@@ -164,105 +164,152 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 
 	// Resolve field values
 	filesFV := fieldValue{
-		Title:       "Source file patterns",
-		Description: "Glob patterns for files to scan for custom element definitions (comma-separated)",
-		Existing:    strings.Join(cfg.Generate.Files, ", "),
-		Detected:    strings.Join(detectedFiles, ", "),
-		Fallback:    "**/*.ts",
+		Title: "Source file patterns",
+		Description: "Glob patterns for TypeScript files containing custom element definitions.\n" +
+			"Detected by scanning for .ts files in top-level directories.\n" +
+			"Learn more: https://bennypowers.dev/cem/docs/reference/commands/generate/",
+		Existing: strings.Join(cfg.Generate.Files, ", "),
+		Detected: strings.Join(detectedFiles, ", "),
+		Fallback: "**/*.ts",
 	}
 	outputFV := fieldValue{
-		Title:       "Manifest output path",
-		Description: "Where to write the generated custom-elements.json manifest",
-		Existing:    cfg.Generate.Output,
-		Detected:    detectedPkgCE,
-		Fallback:    "custom-elements.json",
+		Title: "Manifest output path",
+		Description: "Path for the generated custom elements manifest.\n" +
+			"Tools and IDEs use this file for component metadata.\n" +
+			"Learn more: https://bennypowers.dev/cem/docs/reference/configuration/",
+		Existing: cfg.Generate.Output,
+		Detected: detectedPkgCE,
+		Fallback: "custom-elements.json",
 	}
 	scurlFV := fieldValue{
-		Title:       "Source control root URL",
-		Description: "Base URL for linking manifest entries to source files",
+		Title: "Source control root URL",
+		Description: "Base URL for linking manifest entries back to source files in your repository.\n" +
+			"Learn more: https://bennypowers.dev/cem/docs/reference/configuration/",
 		Placeholder: "https://github.com/user/repo/tree/main/",
 		Existing:    cfg.SourceControlRootUrl,
 		Detected:    detectedGitRemote,
 	}
 	globFV := fieldValue{
-		Title:       "Demo file glob",
-		Description: "Glob pattern to find demo HTML files",
-		Existing:    cfg.Generate.DemoDiscovery.FileGlob,
-		Detected:    detectedGlob,
+		Title: "Demo file glob",
+		Description: "Glob pattern to discover demo HTML files in your project.\n" +
+			"Demos are HTML partials that showcase your custom elements.\n" +
+			"Learn more: https://bennypowers.dev/cem/docs/usage/demos/",
+		Existing: cfg.Generate.DemoDiscovery.FileGlob,
+		Detected: detectedGlob,
 	}
 	patternFV := fieldValue{
-		Title:       "Demo URL pattern",
-		Description: "URL pattern with named params for matching demo paths to elements",
+		Title: "Demo URL pattern",
+		Description: "URL pattern with named params for matching demo file paths to elements.\n" +
+			"Used by the dev server to route demo requests.\n" +
+			"Learn more: https://bennypowers.dev/cem/docs/usage/demos/",
 		Placeholder: "elements/:tag/demo/:demo.html",
 		Existing:    cfg.Generate.DemoDiscovery.URLPattern,
 		Detected:    detectedPattern,
+	}
+
+	templateFV := fieldValue{
+		Title: "Demo URL template",
+		Description: "Go template for generating public demo URLs from matched parameters.\n" +
+			"Leave empty if you don't need public demo links in the manifest.",
+		Placeholder: "https://example.com/{{.tag}}/{{.demo}}/",
+		Existing:    cfg.Generate.DemoDiscovery.URLTemplate,
+	}
+
+	var detectedTokenSpec string
+	if len(detectedTokens) == 1 {
+		detectedTokenSpec = detectedTokens[0].Specifier
+		if detectedTokenSpec == "" {
+			detectedTokenSpec = detectedTokens[0].Path
+		}
+	}
+	tokenSpecFV := fieldValue{
+		Title: "Design token spec",
+		Description: "Path or npm specifier for a DTCG design token file.\n" +
+			"CEM documents CSS custom properties from design tokens in the manifest.\n" +
+			"Learn more: https://bennypowers.dev/cem/docs/reference/configuration/",
+		Existing: cfg.Generate.DesignTokens.Spec,
+		Detected: detectedTokenSpec,
+	}
+	tokenPrefixFV := fieldValue{
+		Title: "Token prefix",
+		Description: "CSS custom property prefix applied to token names.\n" +
+			"For example, prefix 'my-ds' produces --my-ds-color-primary.",
+		Existing: cfg.Generate.DesignTokens.Prefix,
+	}
+
+	existingPort := ""
+	if cfg.Serve.Port != 0 {
+		existingPort = strconv.Itoa(cfg.Serve.Port)
+	}
+	portFV := fieldValue{
+		Title: "Dev server port",
+		Description: "Port for the cem dev server.\n" +
+			"Learn more: https://bennypowers.dev/cem/docs/reference/commands/serve/",
+		Existing: existingPort,
+		Fallback: "8000",
 	}
 
 	if interactive && !yes {
 		// Build the main form
 		var groups []*huh.Group
 
-		// Generate fields -- each detectable field gets its own detect/confirm/edit pages
+		// === Generate ===
+		configureGenerate := true
+		groups = append(groups, huh.NewGroup(
+			huh.NewConfirm().
+				Title("Do you want to configure manifest generation?").
+				Value(&configureGenerate),
+		).Title("Generate").
+			Description("CEM analyzes TypeScript source files and produces a custom-elements.json manifest\n"+
+				"describing your web components, their attributes, properties, events, slots, and CSS.\n"+
+				"Learn more: https://bennypowers.dev/cem/docs/reference/commands/generate/"))
+
+		genGate := func() bool { return configureGenerate }
+		filesFV.gate = genGate
+		outputFV.gate = genGate
+		scurlFV.gate = genGate
 		groups = append(groups, filesFV.Groups()...)
 		groups = append(groups, outputFV.Groups()...)
 		groups = append(groups, scurlFV.Groups()...)
 
-		// Demo discovery (conditional)
-		var demoTemplate string
+		// === Demo Discovery ===
 		hasDemos := globFV.Value() != "" || patternFV.Value() != ""
-		if hasDemos {
-			groups = append(groups, huh.NewGroup(
-				huh.NewNote().
-					Title("Demo Discovery").
-					Description("Demos are HTML partials that showcase your elements. "+
-						"The dev server discovers and serves them with live reload.").
-					Next(true),
-			))
-			groups = append(groups, globFV.Groups()...)
-			groups = append(groups, patternFV.Groups()...)
+		configureDemos := hasDemos || len(detectedFiles) > 0
+		groups = append(groups, huh.NewGroup(
+			huh.NewConfirm().
+				Title("Do you want to configure demo discovery?").
+				Value(&configureDemos),
+		).Title("Demo Discovery").
+			Description("Demos are HTML partials that showcase your custom elements.\n"+
+				"The dev server discovers and serves them with live reload.\n"+
+				"Learn more: https://bennypowers.dev/cem/docs/usage/demos/"))
 
-			demoTemplate = cfg.Generate.DemoDiscovery.URLTemplate
-			groups = append(groups, huh.NewGroup(
-				huh.NewInput().
-					Title("Demo URL template").
-					Description("Go template for generating public demo URLs from matched parameters (leave empty to skip)").
-					Placeholder("https://example.com/{{.tag}}/{{.demo}}/").
-					Value(&demoTemplate),
-			))
+		demoGate := func() bool { return configureDemos }
+		globFV.gate = demoGate
+		patternFV.gate = demoGate
+		templateFV.gate = demoGate
+		groups = append(groups, globFV.Groups()...)
+		groups = append(groups, patternFV.Groups()...)
+		groups = append(groups, templateFV.Groups()...)
 
-		}
+		// === Design Tokens ===
+		configureTokens := len(detectedTokens) > 0 || cfg.Generate.DesignTokens.Spec != ""
+		groups = append(groups, huh.NewGroup(
+			huh.NewConfirm().
+				Title("Do you want to configure design tokens?").
+				Value(&configureTokens),
+		).Title("Design Tokens").
+			Description("Document CSS custom properties from DTCG design token files in the manifest.\n"+
+				"Learn more: https://bennypowers.dev/cem/docs/reference/configuration/"))
 
-		// Group 3: Design tokens (conditional)
-		var tokenSpec, tokenPrefix string
-		if len(detectedTokens) > 0 || cfg.Generate.DesignTokens.Spec != "" {
-			tokenSpec = cfg.Generate.DesignTokens.Spec
-			if tokenSpec == "" && len(detectedTokens) == 1 {
-				tokenSpec = detectedTokens[0].Specifier
-				if tokenSpec == "" {
-					tokenSpec = detectedTokens[0].Path
-				}
-			}
-			tokenPrefix = cfg.Generate.DesignTokens.Prefix
+		tokenGate := func() bool { return configureTokens }
+		tokenSpecFV.gate = tokenGate
+		tokenPrefixFV.gate = tokenGate
+		groups = append(groups, tokenSpecFV.Groups()...)
+		groups = append(groups, tokenPrefixFV.Groups()...)
 
-			groups = append(groups, huh.NewGroup(
-				huh.NewInput().
-					Title("Design token spec").
-					Description("Path or specifier for the DTCG design token file").
-					Value(&tokenSpec),
-				huh.NewInput().
-					Title("Token prefix").
-					Description("CSS custom property prefix (e.g. 'my-ds' for --my-ds-color-primary)").
-					Value(&tokenPrefix),
-			).Title("Design Tokens").
-				Description("Document CSS custom properties from DTCG design token files."))
-
-		}
-
-		// Group 4: Serve settings
-		portStr := "8000"
-		if cfg.Serve.Port != 0 {
-			portStr = strconv.Itoa(cfg.Serve.Port)
-		}
+		// === Dev Server ===
+		configureServe := true
 		rendering := cfg.Serve.Demos.Rendering
 		if rendering == "" {
 			rendering = "shadow"
@@ -273,44 +320,246 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		}
 		enableCSS := cfg.Serve.Transforms.CSS.Enabled || len(detectedCSSInclude) > 0
 
-		serveFields := []huh.Field{
-			huh.NewInput().
-				Title("Dev server port").
-				Value(&portStr),
+		groups = append(groups, huh.NewGroup(
+			huh.NewConfirm().
+				Title("Do you want to configure the dev server?").
+				Value(&configureServe),
+		).Title("Dev Server").
+			Description("The cem dev server serves demos with live reload, TypeScript transforms,\n"+
+				"and import maps.\n"+
+				"Learn more: https://bennypowers.dev/cem/docs/reference/commands/serve/"))
+
+		serveGate := func() bool { return configureServe }
+		portFV.gate = serveGate
+		groups = append(groups, portFV.Groups()...)
+
+		groups = append(groups, huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Demo rendering mode").
-				Options(huh.NewOption("Shadow DOM", "shadow"), huh.NewOption("Light DOM", "light")).
+				Options(
+					huh.NewOption("Light -- full dev UI with knobs and event monitoring", "light"),
+					huh.NewOption("Shadow -- demos in shadow DOM for CSS encapsulation testing (default)", "shadow"),
+					huh.NewOption("Iframe -- full isolation, no style/tag leaks between demos", "iframe"),
+					huh.NewOption("Chromeless -- minimal standalone pages for testing/screenshots", "chromeless"),
+				).
 				Value(&rendering),
+		).Title("Demo Rendering Mode").
+			Description("Controls how demo HTML is presented in the dev server.\n"+
+				"Learn more: https://bennypowers.dev/cem/docs/usage/rendering-modes/").
+			WithHideFunc(func() bool { return !configureServe }))
+
+		groups = append(groups, huh.NewGroup(
 			huh.NewConfirm().
 				Title("Auto-generate import maps?").
 				Value(&importMapGen),
+		).Title("Import Maps").
+			Description("Generates import maps from package.json so you can use bare specifiers\n"+
+				"like `import { LitElement } from 'lit'` without bundling.\n"+
+				"Learn more: https://bennypowers.dev/cem/docs/usage/import-maps/").
+			WithHideFunc(func() bool { return !configureServe }))
+
+		cssIncludeFV := fieldValue{
+			Title: "CSS include patterns",
+			Description: "Glob patterns for CSS files to transform to JavaScript modules.\n" +
+				"Learn more: https://bennypowers.dev/cem/docs/usage/buildless-development/",
+			Existing: strings.Join(cfg.Serve.Transforms.CSS.Include, ", "),
+			Detected: strings.Join(detectedCSSInclude, ", "),
+		}
+		cssExcludeFV := fieldValue{
+			Title:       "CSS exclude patterns",
+			Description: "Glob patterns for CSS files to skip during transformation.",
+			Existing:    strings.Join(cfg.Serve.Transforms.CSS.Exclude, ", "),
+			Detected:    strings.Join(detectedCSSExclude, ", "),
 		}
 
 		if len(detectedCSSInclude) > 0 || cfg.Serve.Transforms.CSS.Enabled {
-			serveFields = append(serveFields,
+			groups = append(groups, huh.NewGroup(
 				huh.NewConfirm().
 					Title("Enable CSS transforms?").
-					Description("Transform CSS files to JavaScript modules ("+strings.Join(detectedCSSInclude, ", ")+")").
 					Value(&enableCSS),
-			)
+			).Title("CSS Transforms").
+				Description("Transforms CSS files to JavaScript modules for use in web components.\n"+
+					"Learn more: https://bennypowers.dev/cem/docs/usage/buildless-development/").
+				WithHideFunc(func() bool { return !configureServe }))
+
+			cssGate := func() bool { return configureServe && enableCSS }
+			cssIncludeFV.gate = cssGate
+			cssExcludeFV.gate = cssGate
+			groups = append(groups, cssIncludeFV.Groups()...)
+			groups = append(groups, cssExcludeFV.Groups()...)
 		}
 
-		groups = append(groups, huh.NewGroup(serveFields...).
-			Title("Dev Server").
-			Description("The cem dev server serves demos with live reload, TypeScript transforms, and import maps."))
+		// === Health ===
+		existingFailBelow := ""
+		if cfg.Health.FailBelow != 0 {
+			existingFailBelow = strconv.Itoa(cfg.Health.FailBelow)
+		}
+		failBelowFV := fieldValue{
+			Title: "Minimum health score",
+			Description: "The `cem health` command exits with an error if the manifest health score\n" +
+				"is below this threshold (0-100). Leave empty to skip.",
+			Existing: existingFailBelow,
+		}
+		configureHealth := cfg.Health.FailBelow != 0 || len(cfg.Health.Disable) > 0
+		groups = append(groups, huh.NewGroup(
+			huh.NewConfirm().
+				Title("Do you want to configure health checks?").
+				Value(&configureHealth),
+		).Title("Health Checks").
+			Description("CEM scores your manifest completeness and flags missing descriptions,\n"+
+				"undocumented slots, and other quality issues.\n"+
+				"Learn more: https://bennypowers.dev/cem/docs/reference/configuration/"))
 
-		// Group 5: Output format (if no existing config)
+		failBelowFV.gate = func() bool { return configureHealth }
+		groups = append(groups, failBelowFV.Groups()...)
+
+		// === Export ===
+		configureExport := len(cfg.Export) > 0
+		groups = append(groups, huh.NewGroup(
+			huh.NewConfirm().
+				Title("Do you want to configure framework exports?").
+				Value(&configureExport),
+		).Title("Framework Exports").
+			Description("Generate framework-specific wrapper components (React, Vue, Angular)\n"+
+				"from your custom elements manifest.\n"+
+				"Learn more: https://bennypowers.dev/cem/docs/reference/configuration/"))
+
+		availableFrameworks := []string{"react", "vue", "angular"}
+		var selectedFrameworks []string
+		for _, fw := range availableFrameworks {
+			if _, ok := cfg.Export[fw]; ok {
+				selectedFrameworks = append(selectedFrameworks, fw)
+			}
+		}
+		groups = append(groups, huh.NewGroup(
+			huh.NewMultiSelect[string]().
+				Title("Which frameworks?").
+				Options(
+					huh.NewOption("React", "react"),
+					huh.NewOption("Vue", "vue"),
+					huh.NewOption("Angular", "angular"),
+				).
+				Value(&selectedFrameworks),
+		).Title("Framework Selection").
+			Description("Select one or more frameworks to generate wrapper components for.").
+			WithHideFunc(func() bool { return !configureExport }))
+
+		type exportFVs struct {
+			output      fieldValue
+			stripPrefix fieldValue
+			packageName fieldValue
+		}
+		exportData := map[string]*exportFVs{}
+		for _, fw := range availableFrameworks {
+			fwLabel := strings.ToUpper(fw[:1]) + fw[1:]
+			var existingOutput, existingPrefix, existingPkg string
+			if ec, ok := cfg.Export[fw]; ok {
+				existingOutput = ec.Output
+				existingPrefix = ec.StripPrefix
+				existingPkg = ec.PackageName
+			}
+
+			fwGate := func() bool {
+				return configureExport && slices.Contains(selectedFrameworks, fw)
+			}
+
+			efvs := &exportFVs{
+				output: fieldValue{
+					Title:       "Output directory",
+					Description: "Directory for generated " + fw + " wrapper files.",
+					Existing:    existingOutput,
+					Fallback:    fw + "-wrappers",
+					gate:        fwGate,
+				},
+				stripPrefix: fieldValue{
+					Title: "Strip prefix",
+					Description: "Prefix to remove from tag names when generating component names.\n" +
+						"For example, 'my-' turns <my-button> into <Button>.",
+					Existing: existingPrefix,
+					gate:     fwGate,
+				},
+				packageName: fieldValue{
+					Title:       "Package name",
+					Description: "Override the npm package name used in import paths.",
+					Existing:    existingPkg,
+					gate:        fwGate,
+				},
+			}
+			exportData[fw] = efvs
+
+			groups = append(groups, huh.NewGroup(
+				huh.NewNote().
+					Title(fwLabel+" Export").
+					Description("Configure "+fw+" wrapper generation.").
+					Next(true),
+			).WithHideFunc(func() bool { return !fwGate() }))
+
+			groups = append(groups, efvs.output.Groups()...)
+			groups = append(groups, efvs.stripPrefix.Groups()...)
+			groups = append(groups, efvs.packageName.Groups()...)
+		}
+
+		// === MCP ===
+		existingMaxDesc := ""
+		if cfg.MCP.MaxDescriptionLength != 0 {
+			existingMaxDesc = strconv.Itoa(cfg.MCP.MaxDescriptionLength)
+		}
+		maxDescFV := fieldValue{
+			Title: "Max description length",
+			Description: "Truncate component descriptions in MCP tool responses to this many characters.\n" +
+				"Leave empty for no limit.",
+			Existing: existingMaxDesc,
+		}
+		configureMCP := cfg.MCP.MaxDescriptionLength != 0
+		groups = append(groups, huh.NewGroup(
+			huh.NewConfirm().
+				Title("Do you want to configure MCP settings?").
+				Value(&configureMCP),
+		).Title("MCP").
+			Description("CEM provides an MCP server for AI coding assistants.\n"+
+				"Configure how component metadata is exposed to AI tools."))
+
+		maxDescFV.gate = func() bool { return configureMCP }
+		groups = append(groups, maxDescFV.Groups()...)
+
+		// === Additional Packages ===
+		existingAdditional := strings.Join(cfg.AdditionalPackages, ", ")
+		additionalFV := fieldValue{
+			Title: "Additional packages",
+			Description: "Extra component packages to load for MCP and LSP,\n" +
+				"beyond those listed in package.json.\n" +
+				"Comma-separated absolute paths, URLs, npm:, or jsr: specifiers.\n" +
+				"Learn more: https://bennypowers.dev/cem/docs/reference/configuration/",
+			Existing:   existingAdditional,
+			ValidateFn: validatePackageSpecifiers,
+		}
+		configureAdditional := len(cfg.AdditionalPackages) > 0
+		groups = append(groups, huh.NewGroup(
+			huh.NewConfirm().
+				Title("Do you want to configure additional packages?").
+				Value(&configureAdditional),
+		).Title("Additional Packages").
+			Description("Load extra component packages for MCP and LSP,\n"+
+				"beyond those listed in package.json.\n"+
+				"Useful for consuming third-party design system manifests\n"+
+				"or working without a package.json."))
+
+		additionalFV.gate = func() bool { return configureAdditional }
+		groups = append(groups, additionalFV.Groups()...)
+
+		// === Output Format ===
 		if cfgPath == "" {
 			groups = append(groups, huh.NewGroup(
 				huh.NewSelect[string]().
-					Title("Output format").
+					Title("Config file format").
 					Options(
-						huh.NewOption("YAML", "yaml"),
-						huh.NewOption("JSON", "json"),
-						huh.NewOption("JSON with comments", "jsonc"),
+						huh.NewOption("YAML -- .config/cem.yaml", "yaml"),
+						huh.NewOption("JSON -- .config/cem.json", "json"),
+						huh.NewOption("JSONC -- .config/cem.jsonc (JSON with comments)", "jsonc"),
 					).
 					Value(&format),
-			).Title("Output"))
+			).Title("Output Format").
+				Description("Choose the format for your config file."))
 		}
 
 		// Run the form
@@ -328,44 +577,93 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		}
 
 		// Apply form results
-		cfg.Generate.Files = splitCommaList(filesFV.Resolve())
-		cfg.Generate.Output = outputFV.Resolve()
-		cfg.SourceControlRootUrl = scurlFV.Resolve()
+		if configureGenerate {
+			cfg.Generate.Files = splitCommaList(filesFV.Resolve())
+			cfg.Generate.Output = outputFV.Resolve()
+			cfg.SourceControlRootUrl = scurlFV.Resolve()
+		}
 
-		if hasDemos {
+		if configureDemos {
 			cfg.Generate.DemoDiscovery.FileGlob = globFV.Resolve()
 			cfg.Generate.DemoDiscovery.URLPattern = patternFV.Resolve()
-			cfg.Generate.DemoDiscovery.URLTemplate = demoTemplate
+			cfg.Generate.DemoDiscovery.URLTemplate = templateFV.Resolve()
 		}
-		if tokenSpec != "" {
-			cfg.Generate.DesignTokens.Spec = tokenSpec
-			cfg.Generate.DesignTokens.Prefix = tokenPrefix
-		}
-
-		port, parseErr := strconv.Atoi(portStr)
-		if parseErr != nil || port < 1 || port > 65535 {
-			return fmt.Errorf("invalid port: %s", portStr)
-		}
-		cfg.Serve.Port = port
-		cfg.Serve.Demos.Rendering = rendering
-		cfg.Serve.ImportMap.Generate = importMapGen
-
-		if enableCSS {
-			cssInclude := detectedCSSInclude
-			cssExclude := detectedCSSExclude
-			if cfg.Serve.Transforms.CSS.Enabled {
-				if len(cfg.Serve.Transforms.CSS.Include) > 0 {
-					cssInclude = cfg.Serve.Transforms.CSS.Include
-				}
-				if len(cfg.Serve.Transforms.CSS.Exclude) > 0 {
-					cssExclude = cfg.Serve.Transforms.CSS.Exclude
-				}
+		if configureTokens {
+			if tokenSpecFV.Resolve() != "" {
+				cfg.Generate.DesignTokens.Spec = tokenSpecFV.Resolve()
+				cfg.Generate.DesignTokens.Prefix = tokenPrefixFV.Resolve()
 			}
-			cfg.Serve.Transforms.CSS.Enabled = true
-			cfg.Serve.Transforms.CSS.Include = cssInclude
-			cfg.Serve.Transforms.CSS.Exclude = cssExclude
-		} else {
-			cfg.Serve.Transforms.CSS.Enabled = false
+		}
+
+		if configureServe {
+			portStr := portFV.Resolve()
+			port, parseErr := strconv.Atoi(portStr)
+			if parseErr != nil || port < 1 || port > 65535 {
+				return fmt.Errorf("invalid port: %s", portStr)
+			}
+			cfg.Serve.Port = port
+			cfg.Serve.Demos.Rendering = rendering
+			cfg.Serve.ImportMap.Generate = importMapGen
+
+			if enableCSS {
+				cfg.Serve.Transforms.CSS.Enabled = true
+				cfg.Serve.Transforms.CSS.Include = splitCommaList(cssIncludeFV.Resolve())
+				cfg.Serve.Transforms.CSS.Exclude = splitCommaList(cssExcludeFV.Resolve())
+			} else {
+				cfg.Serve.Transforms.CSS.Enabled = false
+			}
+		}
+
+		if configureExport {
+			prevExport := cfg.Export
+			cfg.Export = map[string]IC.FrameworkExportConfig{}
+			for _, fw := range selectedFrameworks {
+				efvs := exportData[fw]
+				ec := IC.FrameworkExportConfig{
+					Output:      efvs.output.Resolve(),
+					StripPrefix: efvs.stripPrefix.Resolve(),
+					PackageName: efvs.packageName.Resolve(),
+				}
+				if prev, ok := prevExport[fw]; ok {
+					ec.ModuleName = prev.ModuleName
+				}
+				cfg.Export[fw] = ec
+			}
+		}
+
+		if configureHealth {
+			fb := failBelowFV.Resolve()
+			if fb != "" {
+				v, parseErr := strconv.Atoi(fb)
+				if parseErr != nil {
+					return fmt.Errorf("invalid health score %q: must be a number", fb)
+				}
+				if v < 0 || v > 100 {
+					return fmt.Errorf("invalid health score %d: must be 0-100", v)
+				}
+				cfg.Health.FailBelow = v
+			}
+		}
+
+		if configureMCP {
+			md := maxDescFV.Resolve()
+			if md != "" {
+				v, parseErr := strconv.Atoi(md)
+				if parseErr != nil {
+					return fmt.Errorf("invalid max description length %q: must be a number", md)
+				}
+				if v < 0 {
+					return fmt.Errorf("invalid max description length %d: must be non-negative", v)
+				}
+				cfg.MCP.MaxDescriptionLength = v
+			}
+		}
+
+		if configureAdditional {
+			pkgs := splitCommaList(additionalFV.Resolve())
+			if len(pkgs) > 0 {
+				cfg.AdditionalPackages = pkgs
+			}
 		}
 
 		if hasTsConfig {
@@ -389,8 +687,7 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 			}
 			cfg.Generate.DesignTokens.Spec = spec
 		}
-		hasExistingServe := existing != nil && (existing.Serve.Port != 0 ||
-			existing.Serve.ImportMap.Generate)
+		hasExistingServe := existing != nil && existingData != nil && hasConfigKey(existingData, "serve")
 		if !hasExistingServe {
 			cfg.Serve.Port = 8000
 			cfg.Serve.ImportMap.Generate = true
@@ -412,6 +709,7 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 	cfg.ConfigFile = ""
 	cfg.PackageName = ""
 	cfg.Verbose = false
+	cfg.LogLevel = ""
 
 	output, marshalErr := marshalConfig(cfg, format, existingData)
 	if marshalErr != nil {
@@ -423,20 +721,22 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		lang = "json"
 	}
 
-	cmd.Println()
-	if len(existingData) > 0 {
-		diff := unifiedDiff(string(existingData), string(output), cfgPath)
-		if diff != "" {
-			printColorDiff(cmd, diff)
+	if interactive && !yes {
+		cmd.Println()
+		if len(existingData) > 0 {
+			diff := unifiedDiff(string(existingData), string(output), cfgPath)
+			if diff != "" {
+				printColorDiff(cmd, diff)
+			} else {
+				cmd.Println("No changes.")
+			}
 		} else {
-			cmd.Println("No changes.")
+			if err := tui.Highlight(cmd.OutOrStdout(), string(output), lang); err != nil {
+				cmd.Println(string(output))
+			}
 		}
-	} else {
-		if err := tui.Highlight(cmd.OutOrStdout(), string(output), lang); err != nil {
-			cmd.Println(string(output))
-		}
+		cmd.Println()
 	}
-	cmd.Println()
 
 	if interactive && !yes {
 		prompt := "Write this config?"
@@ -503,661 +803,4 @@ Use this interactive wizard to generate or update your cem config files
 	).WithKeyMap(km)
 
 	return tui.WrapAbort(form.Run())
-}
-
-func writeConfigAtomic(outPath string, output []byte) error {
-	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
-		return fmt.Errorf("failed to create config directory: %w", err)
-	}
-
-	tmp, err := os.CreateTemp(filepath.Dir(outPath), ".cem-config-*.tmp")
-	if err != nil {
-		return fmt.Errorf("failed to create temp file: %w", err)
-	}
-	tmpPath := tmp.Name()
-	var cleanedUp sync.Once
-	cleanup := func() {
-		cleanedUp.Do(func() {
-			_ = os.Remove(tmpPath)
-		})
-	}
-	defer cleanup()
-
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-sigCh
-		cleanup()
-		os.Exit(1)
-	}()
-	defer signal.Stop(sigCh)
-
-	if _, err := tmp.Write(output); err != nil {
-		_ = tmp.Close()
-		return fmt.Errorf("failed to write config: %w", err)
-	}
-	if err := tmp.Close(); err != nil {
-		return fmt.Errorf("failed to close temp file: %w", err)
-	}
-	if err := os.Rename(tmpPath, outPath); err != nil {
-		return fmt.Errorf("failed to write config file: %w", err)
-	}
-
-	return nil
-}
-
-func marshalConfig(cfg *IC.CemConfig, format string, existingData []byte) ([]byte, error) {
-	switch format {
-	case "json":
-		data, err := marshalConfigJSON(cfg)
-		if err != nil {
-			return nil, err
-		}
-		return data, nil
-	case "jsonc":
-		data, err := marshalConfigJSON(cfg)
-		if err != nil {
-			return nil, err
-		}
-		return append([]byte("// Generated by cem config init\n"), data...), nil
-	default:
-		return marshalConfigYAML(cfg, existingData)
-	}
-}
-
-func marshalConfigJSON(cfg *IC.CemConfig) ([]byte, error) {
-	var intermediate map[string]any
-	raw, err := json.Marshal(cfg)
-	if err != nil {
-		return nil, err
-	}
-	if json.Unmarshal(raw, &intermediate) != nil {
-		return raw, nil
-	}
-	pruneJSONMap(intermediate)
-	return json.MarshalIndent(intermediate, "", "  ")
-}
-
-func pruneJSONMap(m map[string]any) {
-	for k, v := range m {
-		if deprecatedConfigKeys.Has(k) || isZeroJSON(v) {
-			delete(m, k)
-			continue
-		}
-		if sub, ok := v.(map[string]any); ok {
-			pruneJSONMap(sub)
-			if len(sub) == 0 {
-				delete(m, k)
-			}
-		}
-	}
-}
-
-func isZeroJSON(v any) bool {
-	switch val := v.(type) {
-	case nil:
-		return true
-	case string:
-		return val == ""
-	case float64:
-		return val == 0
-	case bool:
-		return false
-	case []any:
-		return len(val) == 0
-	case map[string]any:
-		return len(val) == 0
-	}
-	return false
-}
-
-func marshalConfigYAML(cfg *IC.CemConfig, existingData []byte) ([]byte, error) {
-	var node yaml.Node
-	if err := node.Encode(cfg); err != nil {
-		return nil, err
-	}
-
-	if node.Kind == yaml.MappingNode {
-		pruneYAMLNode(&node)
-		removeYAMLKeys(&node, deprecatedConfigKeys)
-	} else if node.Kind == yaml.DocumentNode && len(node.Content) > 0 {
-		pruneYAMLNode(node.Content[0])
-		removeYAMLKeys(node.Content[0], deprecatedConfigKeys)
-	}
-
-	indent := detectIndent(existingData)
-
-	var buf bytes.Buffer
-	enc := yaml.NewEncoder(&buf)
-	enc.SetIndent(indent)
-	if err := enc.Encode(&node); err != nil {
-		return nil, err
-	}
-	if err := enc.Close(); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-var deprecatedConfigKeys = set.NewSet("verbose")
-
-func removeYAMLKeys(node *yaml.Node, keys set.Set[string]) {
-	if node.Kind != yaml.MappingNode {
-		return
-	}
-	var kept []*yaml.Node
-	for i := 0; i+1 < len(node.Content); i += 2 {
-		if !keys.Has(node.Content[i].Value) {
-			kept = append(kept, node.Content[i], node.Content[i+1])
-		}
-	}
-	node.Content = kept
-}
-
-func pruneYAMLNode(node *yaml.Node) {
-	if node.Kind != yaml.MappingNode {
-		return
-	}
-
-	var kept []*yaml.Node
-	for i := 0; i+1 < len(node.Content); i += 2 {
-		key := node.Content[i]
-		val := node.Content[i+1]
-
-		if isZeroYAMLNode(val) {
-			continue
-		}
-
-		if val.Kind == yaml.MappingNode {
-			pruneYAMLNode(val)
-			if len(val.Content) == 0 {
-				continue
-			}
-		}
-
-		kept = append(kept, key, val)
-	}
-	node.Content = kept
-}
-
-func isZeroYAMLNode(n *yaml.Node) bool {
-	switch n.Kind {
-	case yaml.ScalarNode:
-		if n.Tag == "!!null" {
-			return true
-		}
-		if n.Tag == "!!bool" || n.Tag == "!!int" {
-			return false
-		}
-		return n.Value == ""
-	case yaml.SequenceNode:
-		return len(n.Content) == 0
-	case yaml.MappingNode:
-		return len(n.Content) == 0
-	case yaml.AliasNode:
-		return n.Alias != nil && isZeroYAMLNode(n.Alias)
-	}
-	return n.Tag == "!!null"
-}
-
-func detectIndent(data []byte) int {
-	if len(data) == 0 {
-		return 2
-	}
-	for line := range strings.SplitSeq(string(data), "\n") {
-		trimmed := strings.TrimLeft(line, " ")
-		indent := len(line) - len(trimmed)
-		if indent > 0 {
-			return indent
-		}
-	}
-	return 2
-}
-
-func offerPackageJSONUpdate(root string, cfg *IC.CemConfig) error {
-	pkgPath := filepath.Join(root, "package.json")
-	data, err := os.ReadFile(pkgPath)
-	if err != nil {
-		return nil
-	}
-
-	if !json.Valid(data) {
-		return nil
-	}
-
-	if gjson.GetBytes(data, "customElements").Exists() {
-		return nil
-	}
-
-	output := cfg.Generate.Output
-	if output == "" {
-		output = "custom-elements.json"
-	}
-
-	confirmed, err := tui.Confirm(fmt.Sprintf("Add \"customElements\": \"%s\" to package.json?", output), true)
-	if err != nil || !confirmed {
-		return nil
-	}
-
-	entry, marshalErr := json.Marshal(output)
-	if marshalErr != nil {
-		return marshalErr
-	}
-
-	lastBrace := bytes.LastIndexByte(data, '}')
-	if lastBrace < 0 {
-		return nil
-	}
-
-	prefix := bytes.TrimSpace(data[:lastBrace])
-	needsComma := len(prefix) > 0 && prefix[len(prefix)-1] != '{'
-	var insertion string
-	if needsComma {
-		insertion = fmt.Sprintf(",\n  \"customElements\": %s", string(entry))
-	} else {
-		insertion = fmt.Sprintf("\n  \"customElements\": %s", string(entry))
-	}
-
-	var buf bytes.Buffer
-	buf.Write(data[:lastBrace])
-	buf.WriteString(insertion)
-	buf.WriteByte('\n')
-	buf.WriteByte('}')
-	if lastBrace+1 < len(data) {
-		buf.Write(data[lastBrace+1:])
-	}
-
-	return os.WriteFile(pkgPath, buf.Bytes(), 0o644)
-}
-
-func equalFieldValues(a, b string) bool {
-	if a == b {
-		return true
-	}
-	ap := splitCommaList(a)
-	bp := splitCommaList(b)
-	if len(ap) != len(bp) {
-		return false
-	}
-	slices.Sort(ap)
-	slices.Sort(bp)
-	return slices.Equal(ap, bp)
-}
-
-var (
-	diffAddStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("2"))
-	diffRemoveStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("1"))
-	diffHunkStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("6"))
-	diffHeaderStyle = lipgloss.NewStyle().Bold(true)
-)
-
-func printColorDiff(cmd *cobra.Command, diff string) {
-	for line := range strings.SplitSeq(diff, "\n") {
-		switch {
-		case strings.HasPrefix(line, "+++"), strings.HasPrefix(line, "---"):
-			cmd.Println(diffHeaderStyle.Render(line))
-		case strings.HasPrefix(line, "@@"):
-			cmd.Println(diffHunkStyle.Render(line))
-		case strings.HasPrefix(line, "+"):
-			cmd.Println(diffAddStyle.Render(line))
-		case strings.HasPrefix(line, "-"):
-			cmd.Println(diffRemoveStyle.Render(line))
-		default:
-			cmd.Println(line)
-		}
-	}
-}
-
-func unifiedDiff(existing, proposed, filename string) string {
-	diff := difflib.UnifiedDiff{
-		A:        difflib.SplitLines(existing),
-		B:        difflib.SplitLines(proposed),
-		FromFile: filename,
-		ToFile:   filename,
-		Context:  3,
-	}
-	result, err := difflib.GetUnifiedDiffString(diff)
-	if err != nil {
-		return ""
-	}
-	return result
-}
-
-func splitCommaList(s string) []string {
-	var result []string
-	for part := range strings.SplitSeq(s, ",") {
-		part = strings.TrimSpace(part)
-		if part != "" {
-			result = append(result, part)
-		}
-	}
-	return result
-}
-
-type fieldValue struct {
-	Title       string
-	Description string
-	Placeholder string
-	Existing    string
-	Detected    string
-	Fallback    string
-	Result      string
-	useDetected bool
-}
-
-func (f fieldValue) Value() string {
-	if f.Existing != "" {
-		return f.Existing
-	}
-	if f.Detected != "" {
-		return f.Detected
-	}
-	return f.Fallback
-}
-
-// Groups builds huh form groups for the detect/confirm/edit flow.
-// After form.Run(), read f.Result for the final value.
-func (f *fieldValue) Groups() []*huh.Group {
-	var groups []*huh.Group
-	f.useDetected = true
-	f.Result = f.Value()
-
-	if f.Detected != "" {
-		confirmTitle := "Use detected value?"
-		confirmDesc := f.Detected
-		if f.Existing != "" && !equalFieldValues(f.Existing, f.Detected) {
-			confirmTitle = "Update with detected value?"
-			confirmDesc = "existing: " + f.Existing + "\ndetected: " + f.Detected
-			f.useDetected = false
-		}
-		groups = append(groups, huh.NewGroup(
-			huh.NewConfirm().
-				Title(confirmTitle).
-				Description(confirmDesc).
-				Value(&f.useDetected),
-		).Title(f.Title).
-			Description(f.Description))
-	}
-
-	placeholder := f.Placeholder
-	if placeholder == "" {
-		placeholder = f.Fallback
-	}
-
-	groups = append(groups, huh.NewGroup(
-		huh.NewInput().
-			Title(f.Title).
-			Description(f.Description).
-			Placeholder(placeholder).
-			Value(&f.Result),
-	))
-
-	return groups
-}
-
-// Resolve returns the final value after the form has run.
-// If the user accepted detected, returns detected. Otherwise returns
-// whatever was in the input (which may have been edited).
-func (f *fieldValue) Resolve() string {
-	if f.useDetected && f.Detected != "" {
-		return f.Detected
-	}
-	if f.Result != "" {
-		return f.Result
-	}
-	return f.Fallback
-}
-
-func normalizeGitURL(rawURL string) string {
-	rawURL = strings.TrimSpace(rawURL)
-	if rawURL == "" {
-		return ""
-	}
-
-	var host, path string
-
-	if after, ok := strings.CutPrefix(rawURL, "ssh://"); ok {
-		after = strings.TrimPrefix(after, "git@")
-		host, path, ok = strings.Cut(after, "/")
-		if !ok {
-			return rawURL
-		}
-		// strip optional :port from host
-		if h, _, hasPort := strings.Cut(host, ":"); hasPort {
-			host = h
-		}
-	} else if after, ok := strings.CutPrefix(rawURL, "git@"); ok {
-		host, path, ok = strings.Cut(after, ":")
-		if !ok {
-			return rawURL
-		}
-	} else if after, ok := strings.CutPrefix(rawURL, "https://"); ok {
-		host, path, ok = strings.Cut(after, "/")
-		if !ok {
-			return rawURL
-		}
-	} else if after, ok := strings.CutPrefix(rawURL, "http://"); ok {
-		host, path, ok = strings.Cut(after, "/")
-		if !ok {
-			return rawURL
-		}
-	} else {
-		return rawURL
-	}
-
-	path = strings.TrimSuffix(path, ".git")
-	path = strings.TrimSuffix(path, "/")
-
-	return fmt.Sprintf("https://%s/%s/", host, path)
-}
-
-var skipDirs = set.NewSet("node_modules", "dist", "test", "demo", ".git", "build", "_site")
-
-func detectSourceFiles(fsys fs.FS) ([]string, error) {
-	topDirs := set.NewSet[string]()
-
-	err := platform.WalkDir(fsys, ".", skipDirs, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return nil
-		}
-		if d.IsDir() {
-			return nil
-		}
-		if !strings.HasSuffix(path, ".ts") {
-			return nil
-		}
-		if strings.HasSuffix(path, ".d.ts") {
-			return nil
-		}
-
-		parts := strings.SplitN(filepath.ToSlash(path), "/", 2)
-		if len(parts) >= 2 {
-			topDirs.Add(parts[0])
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if len(topDirs) == 0 {
-		return nil, nil
-	}
-
-	dirs := topDirs.Members()
-	slices.Sort(dirs)
-
-	patterns := make([]string, len(dirs))
-	for i, dir := range dirs {
-		patterns[i] = dir + "/**/*.ts"
-	}
-	return patterns, nil
-}
-
-func detectDemoFiles(fsys fs.FS) (fileGlob string, urlPattern string, err error) {
-	topDirs := set.NewSet[string]()
-
-	walkErr := platform.WalkDir(fsys, ".", set.NewSet("node_modules", ".git"), func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return nil
-		}
-		if d.IsDir() {
-			return nil
-		}
-		if !strings.HasSuffix(path, ".html") {
-			return nil
-		}
-
-		parts := strings.Split(filepath.ToSlash(path), "/")
-		for i, part := range parts {
-			if part == "demo" && i > 0 && i < len(parts)-1 {
-				topDirs.Add(parts[0])
-				break
-			}
-		}
-		return nil
-	})
-	if walkErr != nil {
-		return "", "", walkErr
-	}
-
-	if len(topDirs) == 0 {
-		return "", "", nil
-	}
-
-	dirs := topDirs.Members()
-	slices.Sort(dirs)
-	topDir := dirs[0]
-
-	fileGlob = topDir + "/**/demo/*.html"
-	urlPattern = topDir + "/:tag/demo/:demo.html"
-	return fileGlob, urlPattern, nil
-}
-
-func detectCSSPatterns(sourcePatterns []string, fsys fs.FS) (include []string, exclude []string) {
-	cssDirs := set.NewSet[string]()
-
-	_ = platform.WalkDir(fsys, ".", skipDirs, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return nil
-		}
-		if !strings.HasSuffix(path, ".css") {
-			return nil
-		}
-
-		parts := strings.SplitN(filepath.ToSlash(path), "/", 2)
-		if len(parts) >= 2 {
-			topDir := parts[0]
-			for _, sp := range sourcePatterns {
-				if strings.HasPrefix(sp, topDir+"/") {
-					cssDirs.Add(topDir)
-					break
-				}
-			}
-		}
-		return nil
-	})
-
-	if len(cssDirs) == 0 {
-		return nil, nil
-	}
-
-	dirs := cssDirs.Members()
-	slices.Sort(dirs)
-
-	include = make([]string, len(dirs))
-	for i, dir := range dirs {
-		include[i] = dir + "/**/*.css"
-	}
-
-	exclude = []string{"demo/**/*.css", "**/*.min.css"}
-	return include, exclude
-}
-
-type gitRemoteResult struct {
-	url    string
-	branch string
-}
-
-func detectGitRemote(root string) (string, error) {
-	gitCmd := exec.Command("git", "config", "--get", "remote.origin.url")
-	gitCmd.Dir = root
-	out, err := gitCmd.Output()
-	if err != nil {
-		return "", nil
-	}
-	raw := strings.TrimSpace(string(out))
-	if raw == "" {
-		return "", nil
-	}
-
-	result := gitRemoteResult{
-		url:    normalizeGitURL(raw),
-		branch: detectDefaultBranch(root),
-	}
-
-	if ghPath, ghErr := exec.LookPath("gh"); ghErr == nil && ghPath != "" {
-		result = detectForkUpstream(root, result)
-	}
-
-	return result.url + "tree/" + result.branch + "/", nil
-}
-
-func detectForkUpstream(root string, fallback gitRemoteResult) gitRemoteResult {
-	ghCmd := exec.Command("gh", "repo", "view", "--json", "parent,defaultBranchRef")
-	ghCmd.Dir = root
-	out, err := ghCmd.Output()
-	if err != nil {
-		return fallback
-	}
-
-	var result struct {
-		Parent struct {
-			URL string `json:"url"`
-		} `json:"parent"`
-		DefaultBranchRef struct {
-			Name string `json:"name"`
-		} `json:"defaultBranchRef"`
-	}
-	if json.Unmarshal(out, &result) != nil || result.Parent.URL == "" {
-		return fallback
-	}
-
-	upstream := normalizeGitURL(result.Parent.URL)
-	if upstream == "" {
-		return fallback
-	}
-
-	branch := result.DefaultBranchRef.Name
-	if branch == "" {
-		branch = fallback.branch
-	}
-
-	return gitRemoteResult{url: upstream, branch: branch}
-}
-
-func detectDefaultBranch(root string) string {
-	refCmd := exec.Command("git", "symbolic-ref", "refs/remotes/origin/HEAD")
-	refCmd.Dir = root
-	out, err := refCmd.Output()
-	if err == nil {
-		ref := strings.TrimSpace(string(out))
-		if _, branch, ok := strings.Cut(ref, "refs/remotes/origin/"); ok && branch != "" {
-			return branch
-		}
-	}
-
-	return "main"
-}
-
-func detectDesignTokens(root string, fsys platform.FileSystem) ([]*specifier.ResolvedFile, error) {
-	return asimconfig.DiscoverDesignTokens(fsys, root)
-}
-
-func detectTypeScript(root string, fsys platform.FileSystem) (hasTsConfig bool, target string) {
-	_, err := fsys.Stat(filepath.Join(root, "tsconfig.json"))
-	if err != nil {
-		return false, ""
-	}
-	return true, ""
 }

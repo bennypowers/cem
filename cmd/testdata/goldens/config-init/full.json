@@ -33,9 +33,6 @@
         "include": [
           "elements/**/*.css"
         ]
-      },
-      "typescript": {
-        "enabled": false
       }
     }
   },

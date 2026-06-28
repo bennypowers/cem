@@ -97,7 +97,7 @@ func TestDetectSourceFiles(t *testing.T) {
 		want  []string
 	}{
 		{
-			name: "single directory",
+			name: "single directory mixed depths uses **",
 			files: map[string]*fstest.MapFile{
 				"src/button.ts":    {},
 				"src/card.ts":      {},
@@ -106,13 +106,21 @@ func TestDetectSourceFiles(t *testing.T) {
 			want: []string{"src/**/*.ts"},
 		},
 		{
-			name: "multiple directories",
+			name: "consistent depth 1 uses *",
+			files: map[string]*fstest.MapFile{
+				"elements/button/button.ts": {},
+				"elements/card/card.ts":     {},
+			},
+			want: []string{"elements/*/*.ts"},
+		},
+		{
+			name: "multiple directories with varying depths",
 			files: map[string]*fstest.MapFile{
 				"elements/button/button.ts": {},
 				"base/base-element.ts":      {},
 				"mixins/resizable.ts":       {},
 			},
-			want: []string{"base/**/*.ts", "elements/**/*.ts", "mixins/**/*.ts"},
+			want: []string{"base/*.ts", "elements/*/*.ts", "mixins/*.ts"},
 		},
 		{
 			name: "skips .d.ts files",
@@ -120,7 +128,7 @@ func TestDetectSourceFiles(t *testing.T) {
 				"src/button.ts":   {},
 				"src/button.d.ts": {},
 			},
-			want: []string{"src/**/*.ts"},
+			want: []string{"src/*.ts"},
 		},
 		{
 			name: "skips node_modules",
@@ -128,7 +136,7 @@ func TestDetectSourceFiles(t *testing.T) {
 				"src/button.ts":                     {},
 				"node_modules/@lit/element/index.ts": {},
 			},
-			want: []string{"src/**/*.ts"},
+			want: []string{"src/*.ts"},
 		},
 		{
 			name: "no ts files",
@@ -144,7 +152,7 @@ func TestDetectSourceFiles(t *testing.T) {
 				"dist/button.ts":      {},
 				"test/button.test.ts": {},
 			},
-			want: []string{"src/**/*.ts"},
+			want: []string{"src/*.ts"},
 		},
 	}
 	for _, tt := range tests {
@@ -172,7 +180,7 @@ func TestDetectDemoFiles(t *testing.T) {
 				"elements/my-button/demo/variants.html": {},
 				"elements/my-card/demo/basic.html":      {},
 			},
-			wantGlob:    "elements/**/demo/*.html",
+			wantGlob:    "elements/*/demo/*.html",
 			wantPattern: "elements/:tag/demo/:demo.html",
 		},
 		{
@@ -181,8 +189,26 @@ func TestDetectDemoFiles(t *testing.T) {
 				"src/button/demo/basic.html": {},
 				"src/card/demo/basic.html":   {},
 			},
-			wantGlob:    "src/**/demo/*.html",
+			wantGlob:    "src/*/demo/*.html",
 			wantPattern: "src/:tag/demo/:demo.html",
+		},
+		{
+			name: "nested layout uses **",
+			files: map[string]*fstest.MapFile{
+				"packages/components/button/demo/basic.html": {},
+				"packages/layout/grid/demo/basic.html":       {},
+			},
+			wantGlob:    "packages/**/demo/*.html",
+			wantPattern: "packages/:tag/demo/:demo.html",
+		},
+		{
+			name: "depth-0 demos detected",
+			files: map[string]*fstest.MapFile{
+				"elements/demo/basic.html":    {},
+				"elements/demo/variants.html": {},
+			},
+			wantGlob:    "elements/demo/*.html",
+			wantPattern: "elements/demo/:demo.html",
 		},
 		{
 			name: "no demo files",
@@ -362,9 +388,114 @@ func testMarshalConfig(t *testing.T, cfg *IC.CemConfig, format, goldenName strin
 	})
 }
 
+// inline assertions: pure function returning string->string, table-driven
+func TestFieldValueResolve(t *testing.T) {
+	tests := []struct {
+		name     string
+		selected string
+		custom   string
+		fallback string
+		want     string
+	}{
+		{"selected value", "src/**/*.ts", "", "**/*.ts", "src/**/*.ts"},
+		{"custom value", cmd.FieldValueCustom, "my-value", "**/*.ts", "my-value"},
+		{"custom empty falls back", cmd.FieldValueCustom, "", "**/*.ts", "**/*.ts"},
+		{"empty selected uses custom", "", "typed-value", "**/*.ts", "typed-value"},
+		{"empty selected empty custom falls back", "", "", "**/*.ts", "**/*.ts"},
+		{"all empty", "", "", "", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fv := cmd.FieldValue{
+				Selected: tt.selected,
+				Custom:   tt.custom,
+				Fallback: tt.fallback,
+			}
+			assert.Equal(t, tt.want, fv.Resolve())
+		})
+	}
+}
+
+// inline assertions: pure function, simple slice return
+func TestSplitCommaList(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want []string
+	}{
+		{"single", "foo", []string{"foo"}},
+		{"multiple", "a, b, c", []string{"a", "b", "c"}},
+		{"trailing comma", "a, b,", []string{"a", "b"}},
+		{"leading comma", ",a, b", []string{"a", "b"}},
+		{"whitespace only", "  ,  ,  ", nil},
+		{"empty", "", nil},
+		{"extra spaces", "  a  ,  b  ", []string{"a", "b"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, cmd.SplitCommaList(tt.in))
+		})
+	}
+}
+
+// inline assertions: pure validation function, simple error checks
+func TestValidatePackageSpecifiers(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantErr bool
+	}{
+		{"npm specifier", "npm:@rhds/elements", false},
+		{"jsr specifier", "jsr:@example/elements", false},
+		{"https URL", "https://cdn.example.com/pkg/", false},
+		{"absolute path", "/usr/local/share/elements", false},
+		{"empty", "", false},
+		{"bare package name", "@rhds/elements", true},
+		{"relative path", "./local-pkg", true},
+		{"multiple valid", "npm:lit, https://example.com/pkg/", false},
+		{"one invalid in list", "npm:lit, @rhds/elements", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := cmd.ValidatePackageSpec(tt.input)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestMarshalConfigYAML_Full(t *testing.T)    { testMarshalConfig(t, fullTestConfig(), "yaml", "full") }
 func TestMarshalConfigYAML_Minimal(t *testing.T) { testMarshalConfig(t, minimalTestConfig(), "yaml", "minimal") }
 func TestMarshalConfigJSON_Full(t *testing.T)    { testMarshalConfig(t, fullTestConfig(), "json", "full") }
 func TestMarshalConfigJSON_Minimal(t *testing.T) { testMarshalConfig(t, minimalTestConfig(), "json", "minimal") }
 func TestMarshalConfigJSONC_Full(t *testing.T)   { testMarshalConfig(t, fullTestConfig(), "jsonc", "full") }
 func TestMarshalConfigJSONC_Minimal(t *testing.T) { testMarshalConfig(t, minimalTestConfig(), "jsonc", "minimal") }
+
+func TestMarshalConfigYAML_PreservesKeyOrder(t *testing.T) {
+	existing := []byte("sourceControlRootUrl: https://example.com/\ngenerate:\n  files:\n    - src/**/*.ts\n  output: custom-elements.json\nserve:\n  importMap:\n    generate: true\n")
+	cfg := &IC.CemConfig{
+		SourceControlRootUrl: "https://example.com/tree/main/",
+		Generate: IC.GenerateConfig{
+			Files:  []string{"src/**/*.ts"},
+			Output: "custom-elements.json",
+		},
+		Serve: IC.ServeConfig{
+			Port: 8000,
+		},
+	}
+	cfg.Serve.ImportMap.Generate = true
+
+	got, err := cmd.MarshalConfig(cfg, "yaml", existing)
+	require.NoError(t, err)
+
+	goldenDir := filepath.Join("testdata", "goldens", "config-init")
+	fs := testutil.LoadTestdataFS(t, goldenDir, goldenDir)
+	testutil.CheckGolden(t, "preserve-order", got, testutil.GoldenOptions{
+		Dir:       goldenDir,
+		Extension: ".yaml",
+		FS:        fs,
+	})
+}

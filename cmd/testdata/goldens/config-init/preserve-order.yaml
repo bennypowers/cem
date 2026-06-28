@@ -1,0 +1,9 @@
+sourceControlRootUrl: https://example.com/tree/main/
+generate:
+  files:
+    - src/**/*.ts
+  output: custom-elements.json
+serve:
+  importMap:
+    generate: true
+  port: 8000

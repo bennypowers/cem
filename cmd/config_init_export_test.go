@@ -18,12 +18,17 @@ package cmd
 
 type FieldValue = fieldValue
 
+const FieldValueCustom = fieldValueCustom
+
 var (
-	NormalizeGitURL   = normalizeGitURL
-	DetectSourceFiles = detectSourceFiles
-	DetectDemoFiles   = detectDemoFiles
-	DetectCSSPatterns = detectCSSPatterns
-	DetectIndent      = detectIndent
-	MarshalConfig     = marshalConfig
-	SelectASCIILogo   = selectASCIILogo
+	NormalizeGitURL     = normalizeGitURL
+	DetectSourceFiles   = detectSourceFiles
+	DetectDemoFiles     = detectDemoFiles
+	DetectCSSPatterns   = detectCSSPatterns
+	DetectIndent        = detectIndent
+	MarshalConfig       = marshalConfig
+	SelectASCIILogo     = selectASCIILogo
+	SplitCommaList      = splitCommaList
+	ReorderYAMLMapping  = reorderYAMLMapping
+	ValidatePackageSpec = validatePackageSpecifiers
 )
