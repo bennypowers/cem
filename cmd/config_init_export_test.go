@@ -31,4 +31,5 @@ var (
 	SplitCommaList      = splitCommaList
 	ReorderYAMLMapping  = reorderYAMLMapping
 	ValidatePackageSpec = validatePackageSpecifiers
+	TreeSegment         = treeSegment
 )

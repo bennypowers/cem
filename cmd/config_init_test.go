@@ -89,6 +89,29 @@ func TestNormalizeGitURL(t *testing.T) {
 	}
 }
 
+// inline assertions: pure string->string function with simple equality checks
+func TestTreeSegment(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+		want string
+	}{
+		{"github", "https://github.com/user/repo/", "tree/"},
+		{"gitlab", "https://gitlab.com/group/project/", "-/tree/"},
+		{"gitlab self-hosted", "https://gitlab.example.com/group/project/", "-/tree/"},
+		{"bitbucket", "https://bitbucket.org/team/repo/", "src/"},
+		{"bitbucket self-hosted", "https://bitbucket.example.com/team/repo/", "src/"},
+		{"unknown host", "https://gitea.example.com/user/repo/", "tree/"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := cmd.TreeSegment(tt.url)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 // inline assertions: pure fs.FS->[]string function, MapFS fixtures with simple slice equality
 func TestDetectSourceFiles(t *testing.T) {
 	tests := []struct {
@@ -193,13 +216,13 @@ func TestDetectDemoFiles(t *testing.T) {
 			wantPattern: "src/:tag/demo/:demo.html",
 		},
 		{
-			name: "nested layout uses **",
+			name: "nested layout uses ** with no pattern",
 			files: map[string]*fstest.MapFile{
 				"packages/components/button/demo/basic.html": {},
 				"packages/layout/grid/demo/basic.html":       {},
 			},
 			wantGlob:    "packages/**/demo/*.html",
-			wantPattern: "packages/:tag/demo/:demo.html",
+			wantPattern: "",
 		},
 		{
 			name: "depth-0 demos detected",

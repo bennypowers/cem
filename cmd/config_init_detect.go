@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"net/url"
 	"os/exec"
 	"path/filepath"
 	"slices"
@@ -204,10 +205,11 @@ func detectDemoFiles(fsys fs.FS) (fileGlob string, urlPattern string, err error)
 	depth := dirMaxDepth[topDir]
 	star := globStars(depth)
 	fileGlob = topDir + "/" + star + "demo/*.html"
-	if depth > 0 {
-		urlPattern = topDir + "/:tag/demo/:demo.html"
-	} else {
+	switch depth {
+	case 0:
 		urlPattern = topDir + "/demo/:demo.html"
+	case 1:
+		urlPattern = topDir + "/:tag/demo/:demo.html"
 	}
 	return fileGlob, urlPattern, nil
 }
@@ -278,7 +280,11 @@ func detectGitRemote(root string) (string, error) {
 		result = detectForkUpstream(root, result)
 	}
 
-	return result.url + "tree/" + result.branch + "/", nil
+	seg, err := treeSegment(result.url)
+	if err != nil {
+		return "", err
+	}
+	return result.url + seg + result.branch + "/", nil
 }
 
 func detectForkUpstream(root string, fallback gitRemoteResult) gitRemoteResult {
@@ -333,6 +339,22 @@ func detectRepoDefaultBranch(owner, name string) string {
 		return ""
 	}
 	return result.DefaultBranchRef.Name
+}
+
+func treeSegment(repoURL string) (string, error) {
+	u, err := url.Parse(repoURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid repo URL %q: %w", repoURL, err)
+	}
+	host := u.Hostname()
+	switch {
+	case host == "gitlab.com" || strings.HasPrefix(host, "gitlab."):
+		return "-/tree/", nil
+	case host == "bitbucket.org" || strings.HasPrefix(host, "bitbucket."):
+		return "src/", nil
+	default:
+		return "tree/", nil
+	}
 }
 
 func detectDefaultBranch(root string) string {
