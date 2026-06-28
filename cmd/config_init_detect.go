@@ -347,6 +347,9 @@ func treeSegment(repoURL string) (string, error) {
 		return "", fmt.Errorf("invalid repo URL %q: %w", repoURL, err)
 	}
 	host := u.Hostname()
+	if host == "" {
+		return "", fmt.Errorf("repo URL %q has no host", repoURL)
+	}
 	switch {
 	case host == "gitlab.com" || strings.HasPrefix(host, "gitlab."):
 		return "-/tree/", nil
