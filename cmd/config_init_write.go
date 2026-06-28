@@ -27,16 +27,17 @@ import (
 	"syscall"
 
 	IC "bennypowers.dev/cem/internal/config"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/tui"
 	"github.com/tidwall/gjson"
 )
 
-func writeConfigAtomic(outPath string, output []byte) error {
-	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+func writeConfigAtomic(fsys platform.FileSystem, outPath string, output []byte) error {
+	if err := fsys.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
-	tmp, err := os.CreateTemp(filepath.Dir(outPath), ".cem-config-*.tmp")
+	tmp, err := fsys.CreateTemp(filepath.Dir(outPath), ".cem-config-*.tmp")
 	if err != nil {
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
@@ -44,7 +45,7 @@ func writeConfigAtomic(outPath string, output []byte) error {
 	var cleanedUp sync.Once
 	cleanup := func() {
 		cleanedUp.Do(func() {
-			_ = os.Remove(tmpPath)
+			_ = fsys.Remove(tmpPath)
 		})
 	}
 	defer cleanup()
@@ -72,16 +73,16 @@ func writeConfigAtomic(outPath string, output []byte) error {
 	if err := tmp.Close(); err != nil {
 		return fmt.Errorf("failed to close temp file: %w", err)
 	}
-	if err := os.Rename(tmpPath, outPath); err != nil {
+	if err := fsys.Rename(tmpPath, outPath); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
 
 	return nil
 }
 
-func offerPackageJSONUpdate(root string, cfg *IC.CemConfig) error {
+func offerPackageJSONUpdate(fsys platform.FileSystem, root string, cfg *IC.CemConfig) error {
 	pkgPath := filepath.Join(root, "package.json")
-	data, err := os.ReadFile(pkgPath)
+	data, err := fsys.ReadFile(pkgPath)
 	if err != nil {
 		return nil
 	}
@@ -132,5 +133,5 @@ func offerPackageJSONUpdate(root string, cfg *IC.CemConfig) error {
 		buf.Write(data[lastBrace+1:])
 	}
 
-	return writeConfigAtomic(pkgPath, buf.Bytes())
+	return writeConfigAtomic(fsys, pkgPath, buf.Bytes())
 }

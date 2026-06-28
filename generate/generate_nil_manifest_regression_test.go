@@ -7,6 +7,7 @@ import (
 	"testing/synctest"
 
 	G "bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/platform"
 	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,7 +56,7 @@ func TestGenerateWithNilManifest(t *testing.T) {
 
 		// Call Generate directly - this should return nil manifest and an error
 		// but should NOT panic when the result is handled properly
-		manifestStr, err := G.Generate(workspace)
+		manifestStr, err := G.Generate(workspace, platform.NewOSFileSystem())
 
 		// The function should return an error (not panic)
 		assert.Error(t, err, "Generate should return an error when files cannot be processed")
@@ -106,7 +107,7 @@ func TestGenerateWithFileReadError(t *testing.T) {
 		require.NoError(t, err)
 
 		// Call Generate - this should return nil manifest and an error
-		manifestStr, err := G.Generate(workspace)
+		manifestStr, err := G.Generate(workspace, platform.NewOSFileSystem())
 
 		assert.Error(t, err, "Generate should return an error when file cannot be read")
 		assert.Nil(t, manifestStr, "Manifest should be nil when generation fails")

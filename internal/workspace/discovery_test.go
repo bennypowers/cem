@@ -20,6 +20,8 @@ package workspace
 import (
 	"path/filepath"
 	"testing"
+
+	"bennypowers.dev/cem/internal/platform"
 )
 
 // TestDiscoverWorkspacePackages_NegatedPattern tests that negated patterns (starting with !)
@@ -33,7 +35,7 @@ func TestDiscoverWorkspacePackages_NegatedPattern(t *testing.T) {
 		"!packages/private",
 	}
 
-	packages, err := DiscoverWorkspacePackages(rootDir, workspacesField)
+	packages, err := DiscoverWorkspacePackages(rootDir, workspacesField, platform.NewOSFileSystem())
 	if err != nil {
 		t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
 	}
@@ -75,7 +77,7 @@ func TestDiscoverWorkspacePackages_NegatedPatternObject(t *testing.T) {
 		},
 	}
 
-	packages, err := DiscoverWorkspacePackages(rootDir, workspacesField)
+	packages, err := DiscoverWorkspacePackages(rootDir, workspacesField, platform.NewOSFileSystem())
 	if err != nil {
 		t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
 	}
@@ -104,7 +106,7 @@ func TestDiscoverWorkspacePackages_MultipleNegations(t *testing.T) {
 		"!packages/internal",
 	}
 
-	packages, err := DiscoverWorkspacePackages(rootDir, workspacesField)
+	packages, err := DiscoverWorkspacePackages(rootDir, workspacesField, platform.NewOSFileSystem())
 	if err != nil {
 		t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
 	}
@@ -135,7 +137,7 @@ func TestDiscoverWorkspacePackages_NoNegation(t *testing.T) {
 		"packages/*",
 	}
 
-	packages, err := DiscoverWorkspacePackages(rootDir, workspacesField)
+	packages, err := DiscoverWorkspacePackages(rootDir, workspacesField, platform.NewOSFileSystem())
 	if err != nil {
 		t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
 	}
@@ -152,7 +154,7 @@ func TestIsWorkspaceMode_SinglePackageWorkspace(t *testing.T) {
 	rootDir := filepath.Join("testdata", "workspace-mode-single-package")
 
 	// Should return true because workspaces field exists in package.json
-	if !IsWorkspaceMode(rootDir) {
+	if !IsWorkspaceMode(rootDir, platform.NewOSFileSystem()) {
 		t.Error("Expected IsWorkspaceMode to return true for workspace with single package")
 	}
 }
@@ -163,7 +165,7 @@ func TestIsWorkspaceMode_NoManifests(t *testing.T) {
 	rootDir := filepath.Join("testdata", "workspace-mode-no-manifest")
 
 	// Should return true because workspaces field exists, even with no manifests
-	if !IsWorkspaceMode(rootDir) {
+	if !IsWorkspaceMode(rootDir, platform.NewOSFileSystem()) {
 		t.Error("Expected IsWorkspaceMode to return true for workspace without manifests")
 	}
 }
@@ -173,7 +175,7 @@ func TestIsWorkspaceMode_NonWorkspace(t *testing.T) {
 	rootDir := filepath.Join("testdata", "non-workspace")
 
 	// Should return false because no workspaces field exists
-	if IsWorkspaceMode(rootDir) {
+	if IsWorkspaceMode(rootDir, platform.NewOSFileSystem()) {
 		t.Error("Expected IsWorkspaceMode to return false for non-workspace directory")
 	}
 }
@@ -183,7 +185,7 @@ func TestIsWorkspaceMode_MultiplePackages(t *testing.T) {
 	rootDir := filepath.Join("testdata", "negation-test")
 
 	// Should return true because workspaces field exists
-	if !IsWorkspaceMode(rootDir) {
+	if !IsWorkspaceMode(rootDir, platform.NewOSFileSystem()) {
 		t.Error("Expected IsWorkspaceMode to return true for workspace with multiple packages")
 	}
 }
@@ -249,7 +251,7 @@ func TestFindPackagesForFiles(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			packages, err := FindPackagesForFiles(rootDir, tt.filePaths)
+			packages, err := FindPackagesForFiles(rootDir, tt.filePaths, platform.NewOSFileSystem())
 			if err != nil {
 				t.Fatalf("FindPackagesForFiles failed: %v", err)
 			}
@@ -282,7 +284,7 @@ func TestFindPackagesForFiles_MultiplePackages(t *testing.T) {
 		filepath.Join(absRootDir, "packages", "beta", "src", "component.ts"),
 	}
 
-	packages, err := FindPackagesForFiles(rootDir, filePaths)
+	packages, err := FindPackagesForFiles(rootDir, filePaths, platform.NewOSFileSystem())
 	if err != nil {
 		t.Fatalf("FindPackagesForFiles failed: %v", err)
 	}

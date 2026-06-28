@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 
 	IC "bennypowers.dev/cem/internal/config"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/types"
 	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
@@ -124,7 +125,8 @@ func getAppropriateContextForSpec(spec, cmdName string) (ctx types.WorkspaceCont
 			return nil, err
 		}
 		localPath := filepath.Join("node_modules", name)
-		if stat, err := os.Stat(localPath); err == nil && stat.IsDir() {
+		fsys := platform.NewOSFileSystem()
+		if stat, err := fsys.Stat(localPath); err == nil && stat.IsDir() {
 			return NewFileSystemWorkspaceContext(localPath), nil
 		}
 		// Fetch from the network
@@ -138,13 +140,12 @@ func getAppropriateContextForSpec(spec, cmdName string) (ctx types.WorkspaceCont
 	return NewFileSystemWorkspaceContext(spec), nil
 }
 
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
+func fileExists(path string, fsys platform.FileSystem) bool {
+	return fsys.Exists(path)
 }
 
-func copyFile(src, dst string) (int64, error) {
-	sourceFileStat, err := os.Stat(src)
+func copyFile(src, dst string, fsys platform.FileSystem) (int64, error) {
+	sourceFileStat, err := fsys.Stat(src)
 	if err != nil {
 		return 0, err
 	}
@@ -153,13 +154,13 @@ func copyFile(src, dst string) (int64, error) {
 		return 0, fmt.Errorf("%s is not a regular file", src)
 	}
 
-	source, err := os.Open(src)
+	source, err := fsys.Open(src)
 	if err != nil {
 		return 0, err
 	}
 	defer func() { _ = source.Close() }()
 
-	destination, err := os.Create(dst)
+	destination, err := fsys.Create(dst)
 	if err != nil {
 		return 0, err
 	}
@@ -170,19 +171,21 @@ func copyFile(src, dst string) (int64, error) {
 
 // findProjectRoot searches for project root by looking for common project files
 // Returns the detected root path and whether it was found
-func findProjectRoot() (string, bool) {
+func findProjectRoot(fsys platform.FileSystem) (string, bool) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return "", false
 	}
-	return findProjectRootFromDir(cwd)
+	return findProjectRootFromDir(cwd, fsys)
 }
 
 // findProjectRootFromCommand attempts to find project root by looking at command arguments
 // for file paths and searching upward from those locations
 func findProjectRootFromCommand(cmd *cobra.Command) (string, bool) {
+	fsys := platform.NewOSFileSystem()
+
 	// First try the standard findProjectRoot from current directory
-	if root, found := findProjectRoot(); found {
+	if root, found := findProjectRoot(fsys); found {
 		return root, true
 	}
 
@@ -201,7 +204,7 @@ func findProjectRootFromCommand(cmd *cobra.Command) (string, bool) {
 				continue // Skip if we can't resolve the path
 			}
 		}
-		if root, found := findProjectRootFromDir(dir); found {
+		if root, found := findProjectRootFromDir(dir, fsys); found {
 			return root, true
 		}
 	}
@@ -218,7 +221,7 @@ func findProjectRootFromCommand(cmd *cobra.Command) (string, bool) {
 			}
 		}
 		if dir != "" {
-			if root, found := findProjectRootFromDir(dir); found {
+			if root, found := findProjectRootFromDir(dir, fsys); found {
 				return root, true
 			}
 		}
@@ -228,11 +231,11 @@ func findProjectRootFromCommand(cmd *cobra.Command) (string, bool) {
 }
 
 // findProjectRootFromDir searches for project root starting from a specific directory
-func findProjectRootFromDir(startDir string) (string, bool) {
+func findProjectRootFromDir(startDir string, fsys platform.FileSystem) (string, bool) {
 	dir := startDir
 	for {
 		for _, file := range projectFiles {
-			if fileExists(filepath.Join(dir, file)) {
+			if fileExists(filepath.Join(dir, file), fsys) {
 				return dir, true
 			}
 		}

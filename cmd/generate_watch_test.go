@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	G "bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/platform"
 	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,7 +60,7 @@ func TestRunWatchMode(t *testing.T) {
 			require.NoError(t, ctx.Init())
 
 			// Test that watch session can be created (we don't actually run the watch loop in tests)
-			session, err := G.NewWatchSession(ctx, tt.globs)
+			session, err := G.NewWatchSession(ctx, tt.globs, platform.NewOSFileSystem())
 			if tt.expectError {
 				assert.Error(t, err)
 				return
@@ -105,7 +106,7 @@ func TestWatchWorkflow_Integration(t *testing.T) {
 	cfg.Generate.Files = files
 
 	// Test that watch session can be created and performs initial generation
-	session, err := G.NewWatchSession(ctx, []string{"src/**/*.ts"})
+	session, err := G.NewWatchSession(ctx, []string{"src/**/*.ts"}, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	defer session.Close()
 

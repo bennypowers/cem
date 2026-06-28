@@ -18,12 +18,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package platform
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing/fstest"
 	"time"
 )
@@ -284,6 +287,30 @@ func (fs *TempDirFileSystem) Exists(path string) bool {
 	return fs.OSFileSystem.Exists(fs.resolvePath(path))
 }
 
+func (fs *TempDirFileSystem) Create(name string) (io.WriteCloser, error) {
+	path := fs.resolvePath(name)
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return nil, err
+	}
+	return os.Create(path)
+}
+
+func (fs *TempDirFileSystem) CreateTemp(dir, pattern string) (TempFile, error) {
+	return os.CreateTemp(fs.resolvePath(dir), pattern)
+}
+
+func (fs *TempDirFileSystem) Rename(oldpath, newpath string) error {
+	return os.Rename(fs.resolvePath(oldpath), fs.resolvePath(newpath))
+}
+
+func (fs *TempDirFileSystem) MkdirTemp(dir, pattern string) (string, error) {
+	return os.MkdirTemp(fs.resolvePath(dir), pattern)
+}
+
+func (fs *TempDirFileSystem) Glob(pattern string) ([]string, error) {
+	return filepath.Glob(fs.resolvePath(pattern))
+}
+
 // Cleanup removes the temporary directory and all its contents.
 // Should be called when done with the filesystem (typically in test cleanup).
 func (fs *TempDirFileSystem) Cleanup() error {
@@ -406,6 +433,40 @@ func (mfs *MapFileSystem) Remove(name string) error {
 	return nil
 }
 
+func (mfs *MapFileSystem) Create(name string) (io.WriteCloser, error) {
+	name = mfs.cleanPath(name)
+	return &mapFileSystemWriter{fs: mfs, name: name}, nil
+}
+
+func (mfs *MapFileSystem) CreateTemp(dir, pattern string) (TempFile, error) {
+	dir = mfs.cleanPath(dir)
+	name := tempName(dir, pattern, &mapFileSystemTempCounter)
+	return &mapFileSystemWriter{fs: mfs, name: name}, nil
+}
+
+func (mfs *MapFileSystem) Rename(oldpath, newpath string) error {
+	mfs.mu.Lock()
+	defer mfs.mu.Unlock()
+
+	oldpath = mfs.cleanPath(oldpath)
+	newpath = mfs.cleanPath(newpath)
+
+	entry, ok := mfs.mapFS[oldpath]
+	if !ok {
+		return &fs.PathError{Op: "rename", Path: oldpath, Err: fs.ErrNotExist}
+	}
+	if err := mfs.ensureParentDirLocked(newpath); err != nil {
+		return err
+	}
+	mfs.mapFS[newpath] = entry
+	delete(mfs.mapFS, oldpath)
+
+	if mfs.watcher != nil {
+		mfs.watcher.TriggerEvent("/"+newpath, Create)
+	}
+	return nil
+}
+
 func (mfs *MapFileSystem) MkdirAll(path string, perm fs.FileMode) error {
 	mfs.mu.Lock()
 	defer mfs.mu.Unlock()
@@ -449,6 +510,25 @@ func (mfs *MapFileSystem) SetTempDir(dir string) {
 	mfs.tempDir = dir
 }
 
+func (mfs *MapFileSystem) MkdirTemp(dir, pattern string) (string, error) {
+	mfs.mu.Lock()
+	defer mfs.mu.Unlock()
+
+	if dir == "" {
+		dir = mfs.tempDir
+	}
+	dir = mfs.cleanPath(dir)
+	name := tempName(dir, pattern, &mapFileSystemTempCounter)
+
+	keepFile := name + "/.keep"
+	mfs.mapFS[keepFile] = &fstest.MapFile{
+		Data:    []byte(""),
+		Mode:    0644,
+		ModTime: mfs.timeProvider.Now(),
+	}
+	return "/" + name, nil
+}
+
 func (mfs *MapFileSystem) Stat(name string) (fs.FileInfo, error) {
 	mfs.mu.RLock()
 	defer mfs.mu.RUnlock()
@@ -486,6 +566,14 @@ func (mfs *MapFileSystem) ReadDir(name string) ([]fs.DirEntry, error) {
 	defer mfs.mu.RUnlock()
 
 	return fs.ReadDir(mfs.mapFS, mfs.cleanPath(name))
+}
+
+func (mfs *MapFileSystem) Glob(pattern string) ([]string, error) {
+	mfs.mu.RLock()
+	defer mfs.mu.RUnlock()
+
+	pattern = mfs.cleanPath(pattern)
+	return fs.Glob(mfs.mapFS, pattern)
 }
 
 func (mfs *MapFileSystem) Open(name string) (fs.File, error) {
@@ -581,6 +669,26 @@ func (mfs *MapFileSystem) AddDir(path string, mode fs.FileMode) {
 		Mode:    0644,
 		ModTime: mfs.timeProvider.Now(),
 	}
+}
+
+var mapFileSystemTempCounter atomic.Int64
+
+type mapFileSystemWriter struct {
+	fs   *MapFileSystem
+	name string
+	buf  bytes.Buffer
+}
+
+func (w *mapFileSystemWriter) Write(p []byte) (int, error) {
+	return w.buf.Write(p)
+}
+
+func (w *mapFileSystemWriter) Close() error {
+	return w.fs.WriteFile("/"+w.name, w.buf.Bytes(), 0644)
+}
+
+func (w *mapFileSystemWriter) Name() string {
+	return "/" + w.name
 }
 
 // MockGenerateWatcher provides controllable generate watching for testing.

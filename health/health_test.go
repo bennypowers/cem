@@ -40,9 +40,9 @@ func TestAnalyze(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fixturePath := filepath.Join("testdata", "fixtures", tt.fixture, "custom-elements.json")
+			fixturePath := filepath.Join("/", "fixtures", tt.fixture, "custom-elements.json")
 
-			result, err := Analyze(fixturePath, Options{})
+			result, err := Analyze(mfs, fixturePath, Options{})
 			if err != nil {
 				t.Fatalf("Analyze() error = %v", err)
 			}
@@ -63,10 +63,11 @@ func TestAnalyze(t *testing.T) {
 }
 
 func TestAnalyze_ComponentFilter(t *testing.T) {
-	fixturePath := filepath.Join("testdata", "fixtures", "well-documented", "custom-elements.json")
+	mfs := testutil.LoadTestdataFS(t, "testdata", "/")
+	fixturePath := filepath.Join("/", "fixtures", "well-documented", "custom-elements.json")
 
 	t.Run("filter by tag name", func(t *testing.T) {
-		result, err := Analyze(fixturePath, Options{Component: "multi-select"})
+		result, err := Analyze(mfs, fixturePath, Options{Component: "multi-select"})
 		if err != nil {
 			t.Fatalf("Analyze() error = %v", err)
 		}
@@ -82,7 +83,7 @@ func TestAnalyze_ComponentFilter(t *testing.T) {
 	})
 
 	t.Run("filter by class name", func(t *testing.T) {
-		result, err := Analyze(fixturePath, Options{Component: "MultiSelect"})
+		result, err := Analyze(mfs, fixturePath, Options{Component: "MultiSelect"})
 		if err != nil {
 			t.Fatalf("Analyze() error = %v", err)
 		}
@@ -95,7 +96,7 @@ func TestAnalyze_ComponentFilter(t *testing.T) {
 	})
 
 	t.Run("filter no match", func(t *testing.T) {
-		result, err := Analyze(fixturePath, Options{Component: "nonexistent"})
+		result, err := Analyze(mfs, fixturePath, Options{Component: "nonexistent"})
 		if err != nil {
 			t.Fatalf("Analyze() error = %v", err)
 		}
@@ -106,10 +107,11 @@ func TestAnalyze_ComponentFilter(t *testing.T) {
 }
 
 func TestAnalyze_ModuleFilter(t *testing.T) {
-	fixturePath := filepath.Join("testdata", "fixtures", "well-documented", "custom-elements.json")
+	mfs := testutil.LoadTestdataFS(t, "testdata", "/")
+	fixturePath := filepath.Join("/", "fixtures", "well-documented", "custom-elements.json")
 
 	t.Run("filter matching module", func(t *testing.T) {
-		result, err := Analyze(fixturePath, Options{Modules: []string{"elements/multi-select/multi-select.js"}})
+		result, err := Analyze(mfs, fixturePath, Options{Modules: []string{"elements/multi-select/multi-select.js"}})
 		if err != nil {
 			t.Fatalf("Analyze() error = %v", err)
 		}
@@ -122,7 +124,7 @@ func TestAnalyze_ModuleFilter(t *testing.T) {
 	})
 
 	t.Run("filter multiple modules", func(t *testing.T) {
-		result, err := Analyze(fixturePath, Options{
+		result, err := Analyze(mfs, fixturePath, Options{
 			Modules: []string{
 				"elements/multi-select/multi-select.js",
 				"nonexistent.js",
@@ -140,7 +142,7 @@ func TestAnalyze_ModuleFilter(t *testing.T) {
 	})
 
 	t.Run("filter no match", func(t *testing.T) {
-		result, err := Analyze(fixturePath, Options{Modules: []string{"nonexistent.js"}})
+		result, err := Analyze(mfs, fixturePath, Options{Modules: []string{"nonexistent.js"}})
 		if err != nil {
 			t.Fatalf("Analyze() error = %v", err)
 		}
@@ -151,9 +153,10 @@ func TestAnalyze_ModuleFilter(t *testing.T) {
 }
 
 func TestAnalyze_DisableCategories(t *testing.T) {
-	fixturePath := filepath.Join("testdata", "fixtures", "well-documented", "custom-elements.json")
+	mfs := testutil.LoadTestdataFS(t, "testdata", "/")
+	fixturePath := filepath.Join("/", "fixtures", "well-documented", "custom-elements.json")
 
-	result, err := Analyze(fixturePath, Options{Disable: []string{"demos"}})
+	result, err := Analyze(mfs, fixturePath, Options{Disable: []string{"demos"}})
 	if err != nil {
 		t.Fatalf("Analyze() error = %v", err)
 	}

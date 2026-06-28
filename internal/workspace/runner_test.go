@@ -106,7 +106,7 @@ func TestFindPackagesForFiles_RoutesToCorrectPackage(t *testing.T) {
 	require.NoError(t, os.WriteFile(alphaFile, []byte("// alpha"), 0644))
 	defer func() { _ = os.RemoveAll(filepath.Join(root, "packages", "alpha", "src")) }()
 
-	pkgs, err := workspace.FindPackagesForFiles(root, []string{alphaFile})
+	pkgs, err := workspace.FindPackagesForFiles(root, []string{alphaFile}, osfs)
 	require.NoError(t, err)
 	require.Len(t, pkgs, 1)
 	assert.Equal(t, "@test/alpha", pkgs[0].Name)
@@ -125,7 +125,7 @@ func TestFindPackagesForFiles_MultipleFilesMultiplePackages(t *testing.T) {
 		_ = os.RemoveAll(filepath.Join(root, "packages", "beta", "src"))
 	}()
 
-	pkgs, err := workspace.FindPackagesForFiles(root, []string{alphaFile, betaFile})
+	pkgs, err := workspace.FindPackagesForFiles(root, []string{alphaFile, betaFile}, osfs)
 	require.NoError(t, err)
 	assert.Len(t, pkgs, 2)
 	names := []string{pkgs[0].Name, pkgs[1].Name}

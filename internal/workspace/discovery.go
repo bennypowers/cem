@@ -21,13 +21,13 @@ import (
 	"cmp"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 
 	C "bennypowers.dev/cem/cmd/config"
 	IC "bennypowers.dev/cem/internal/config"
+	"bennypowers.dev/cem/internal/platform"
 )
 
 // PackageInfo represents a discovered workspace package
@@ -47,7 +47,7 @@ type packageJSON struct {
 // DiscoverWorkspacePackages discovers all workspace packages from workspace patterns
 // Returns map of package name -> absolute path to package directory
 // Supports negated patterns (prefixed with !) to exclude packages
-func DiscoverWorkspacePackages(rootDir string, workspacesField any) (map[string]string, error) {
+func DiscoverWorkspacePackages(rootDir string, workspacesField any, fsys platform.FileSystem) (map[string]string, error) {
 	result := make(map[string]string)
 
 	var patterns []string
@@ -85,20 +85,20 @@ func DiscoverWorkspacePackages(rootDir string, workspacesField any) (map[string]
 
 	// Process include patterns to find all matching directories
 	for _, pattern := range includePatterns {
-		matches, err := filepath.Glob(filepath.Join(rootDir, pattern))
+		matches, err := fsys.Glob(filepath.Join(rootDir, pattern))
 		if err != nil {
 			continue
 		}
 
 		for _, match := range matches {
-			info, err := os.Stat(match)
+			info, err := fsys.Stat(match)
 			if err != nil || !info.IsDir() {
 				continue
 			}
 
 			// Read package.json in this workspace
 			pkgPath := filepath.Join(match, "package.json")
-			pkg, err := readPackageJSON(pkgPath)
+			pkg, err := readPackageJSON(pkgPath, fsys)
 			if err != nil {
 				continue
 			}
@@ -115,7 +115,7 @@ func DiscoverWorkspacePackages(rootDir string, workspacesField any) (map[string]
 
 	// Remove packages that match exclude patterns
 	for _, excludePattern := range excludePatterns {
-		matches, err := filepath.Glob(filepath.Join(rootDir, excludePattern))
+		matches, err := fsys.Glob(filepath.Join(rootDir, excludePattern))
 		if err != nil {
 			continue
 		}
@@ -123,7 +123,7 @@ func DiscoverWorkspacePackages(rootDir string, workspacesField any) (map[string]
 		for _, match := range matches {
 			// Read package.json to get the package name
 			pkgPath := filepath.Join(match, "package.json")
-			pkg, err := readPackageJSON(pkgPath)
+			pkg, err := readPackageJSON(pkgPath, fsys)
 			if err != nil {
 				continue
 			}
@@ -138,10 +138,10 @@ func DiscoverWorkspacePackages(rootDir string, workspacesField any) (map[string]
 
 // FindPackagesWithManifests finds all workspace packages that have a customElements field
 // This is what the serve command uses to auto-discover packages to serve
-func FindPackagesWithManifests(rootDir string) ([]PackageInfo, error) {
+func FindPackagesWithManifests(rootDir string, fsys platform.FileSystem) ([]PackageInfo, error) {
 	// Read root package.json to get workspaces
 	rootPkgPath := filepath.Join(rootDir, "package.json")
-	rootPkg, err := readPackageJSON(rootPkgPath)
+	rootPkg, err := readPackageJSON(rootPkgPath, fsys)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func FindPackagesWithManifests(rootDir string) ([]PackageInfo, error) {
 	}
 
 	// Discover all workspace packages
-	packages, err := DiscoverWorkspacePackages(rootDir, rootPkg.Workspaces)
+	packages, err := DiscoverWorkspacePackages(rootDir, rootPkg.Workspaces, fsys)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func FindPackagesWithManifests(rootDir string) ([]PackageInfo, error) {
 	var result []PackageInfo
 	for name, path := range packages {
 		pkgPath := filepath.Join(path, "package.json")
-		pkg, err := readPackageJSON(pkgPath)
+		pkg, err := readPackageJSON(pkgPath, fsys)
 		if err != nil {
 			continue
 		}
@@ -183,8 +183,8 @@ func FindPackagesWithManifests(rootDir string) ([]PackageInfo, error) {
 }
 
 // readPackageJSON reads and parses a package.json file
-func readPackageJSON(path string) (*packageJSON, error) {
-	data, err := os.ReadFile(path)
+func readPackageJSON(path string, fsys platform.FileSystem) (*packageJSON, error) {
+	data, err := fsys.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -199,19 +199,19 @@ func readPackageJSON(path string) (*packageJSON, error) {
 
 // LoadWorkspaceConfig loads config from workspace root
 // Returns nil if no workspace root found or no config file exists
-func LoadWorkspaceConfig(packageDir string) (*C.CemConfig, error) {
+func LoadWorkspaceConfig(packageDir string, fsys platform.FileSystem) (*C.CemConfig, error) {
 	// Find workspace root by looking for package.json with workspaces field
-	workspaceRoot := findWorkspaceRootWithWorkspaces(packageDir)
+	workspaceRoot := findWorkspaceRootWithWorkspaces(packageDir, fsys)
 	if workspaceRoot == "" {
 		return nil, nil // Not in a workspace
 	}
 
-	configPath := IC.FindConfigFile(workspaceRoot)
+	configPath := IC.FindConfigFile(workspaceRoot, fsys)
 	if configPath == "" {
 		return nil, nil // No workspace config
 	}
 
-	config, err := IC.LoadConfig(configPath)
+	config, err := IC.LoadConfig(configPath, fsys)
 	if err != nil {
 		return nil, err
 	}
@@ -224,22 +224,22 @@ func LoadWorkspaceConfig(packageDir string) (*C.CemConfig, error) {
 
 // LoadPackageConfigWithWorkspaceDefaults loads package config and merges with workspace defaults
 // Package settings override workspace settings
-func LoadPackageConfigWithWorkspaceDefaults(packageDir string) (*C.CemConfig, error) {
+func LoadPackageConfigWithWorkspaceDefaults(packageDir string, fsys platform.FileSystem) (*C.CemConfig, error) {
 	// Load workspace config (if exists)
-	workspaceConfig, err := LoadWorkspaceConfig(packageDir)
+	workspaceConfig, err := LoadWorkspaceConfig(packageDir, fsys)
 	if err != nil {
 		return nil, err
 	}
 
 	// Load package config
-	packageConfigPath := IC.FindConfigFile(packageDir)
+	packageConfigPath := IC.FindConfigFile(packageDir, fsys)
 	packageConfig := &C.CemConfig{
 		ProjectDir: packageDir,
 		ConfigFile: packageConfigPath,
 	}
 
 	if packageConfigPath != "" {
-		loaded, err := IC.LoadConfig(packageConfigPath)
+		loaded, err := IC.LoadConfig(packageConfigPath, fsys)
 		if err != nil {
 			return nil, err
 		}
@@ -298,18 +298,18 @@ func mergeConfigDefaults(pkg, ws *C.CemConfig) {
 
 // findWorkspaceRootWithWorkspaces finds workspace root by looking for package.json with workspaces field
 // Returns empty string if not in a workspace
-func findWorkspaceRootWithWorkspaces(startDir string) string {
+func findWorkspaceRootWithWorkspaces(startDir string, fsys platform.FileSystem) string {
 	dir := startDir
 	for {
 		// Check if there's a package.json with workspaces field
 		pkgPath := filepath.Join(dir, "package.json")
-		if pkg, err := readPackageJSON(pkgPath); err == nil && pkg.Workspaces != nil {
+		if pkg, err := readPackageJSON(pkgPath, fsys); err == nil && pkg.Workspaces != nil {
 			return dir
 		}
 
 		// Stop if we've reached a git repository root (don't go higher)
 		gitDir := filepath.Join(dir, ".git")
-		if stat, err := os.Stat(gitDir); err == nil && stat.IsDir() {
+		if stat, err := fsys.Stat(gitDir); err == nil && stat.IsDir() {
 			return "" // Hit git boundary without finding workspace
 		}
 
@@ -325,9 +325,9 @@ func findWorkspaceRootWithWorkspaces(startDir string) string {
 
 // FindPackagesForFiles determines which workspace packages are affected by a set of changed files.
 // Returns a deduplicated list of PackageInfo for all affected packages.
-func FindPackagesForFiles(rootDir string, filePaths []string) ([]PackageInfo, error) {
+func FindPackagesForFiles(rootDir string, filePaths []string, fsys platform.FileSystem) ([]PackageInfo, error) {
 	// Get all packages with manifests
-	packages, err := FindPackagesWithManifests(rootDir)
+	packages, err := FindPackagesWithManifests(rootDir, fsys)
 	if err != nil {
 		return nil, err
 	}
@@ -361,10 +361,10 @@ func FindPackagesForFiles(rootDir string, filePaths []string) ([]PackageInfo, er
 
 // IsWorkspaceMode determines if a directory is a monorepo workspace
 // Returns true if the directory has a workspaces field in package.json
-func IsWorkspaceMode(dir string) bool {
+func IsWorkspaceMode(dir string, fsys platform.FileSystem) bool {
 	// Read root package.json to check for workspaces field
 	rootPkgPath := filepath.Join(dir, "package.json")
-	rootPkg, err := readPackageJSON(rootPkgPath)
+	rootPkg, err := readPackageJSON(rootPkgPath, fsys)
 	if err != nil {
 		return false
 	}
@@ -382,8 +382,8 @@ type PackageWithManifest struct {
 
 // LoadWorkspaceManifests loads manifest data for all workspace packages
 // Returns packages with their manifests loaded, skipping any that fail to load
-func LoadWorkspaceManifests(rootDir string) ([]PackageWithManifest, error) {
-	packages, err := FindPackagesWithManifests(rootDir)
+func LoadWorkspaceManifests(rootDir string, fsys platform.FileSystem) ([]PackageWithManifest, error) {
+	packages, err := FindPackagesWithManifests(rootDir, fsys)
 	if err != nil {
 		return nil, err
 	}
@@ -392,7 +392,7 @@ func LoadWorkspaceManifests(rootDir string) ([]PackageWithManifest, error) {
 	for _, pkg := range packages {
 		// Load package's manifest
 		manifestPath := filepath.Join(pkg.Path, pkg.CustomElementsRef)
-		manifestData, err := os.ReadFile(manifestPath)
+		manifestData, err := fsys.ReadFile(manifestPath)
 		if err != nil {
 			// Skip packages with missing manifests
 			continue

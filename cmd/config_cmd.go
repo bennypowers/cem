@@ -46,7 +46,8 @@ var configValidateCmd = &cobra.Command{
 			return fmt.Errorf("no config file found (searched %s)", ctx.Root())
 		}
 
-		rawData, err := os.ReadFile(cfgFile)
+		osFS := platform.NewOSFileSystem()
+		rawData, err := osFS.ReadFile(cfgFile)
 		if err != nil {
 			return fmt.Errorf("failed to read config file: %w", err)
 		}

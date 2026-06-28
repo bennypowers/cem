@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"gopkg.in/yaml.v3"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware/types"
 )
 
@@ -100,8 +100,8 @@ type HealthConfig struct {
 
 // LoadConfig reads and parses a CEM config file. The format is detected from
 // the file extension. JSONC files have comments stripped before parsing.
-func LoadConfig(path string) (*CemConfig, error) {
-	data, err := os.ReadFile(path)
+func LoadConfig(path string, fsys platform.FileSystem) (*CemConfig, error) {
+	data, err := fsys.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file %s: %w", path, err)
 	}

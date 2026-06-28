@@ -19,13 +19,13 @@ package demodiscovery
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	htmllang "bennypowers.dev/cem/internal/languages/html"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	S "bennypowers.dev/cem/internal/set"
 	"bennypowers.dev/cem/types"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -40,8 +40,9 @@ func NewDemoMap(
 	ctx types.WorkspaceContext,
 	demoFiles []string,
 	elementAliases map[string]string,
+	fsys platform.FileSystem,
 ) (demoMap DemoMap, errs error) {
-	return NewDemoMapWithPattern(ctx, demoFiles, "", elementAliases)
+	return NewDemoMapWithPattern(ctx, demoFiles, "", elementAliases, fsys)
 }
 
 // NewDemoMapWithPattern builds the index like NewDemoMap but uses URLPattern for precise path matching.
@@ -50,10 +51,11 @@ func NewDemoMapWithPattern(
 	demoFiles []string,
 	urlPattern string,
 	elementAliases map[string]string,
+	fsys platform.FileSystem,
 ) (demoMap DemoMap, errs error) {
 	demoMap = make(DemoMap)
 	for _, file := range demoFiles {
-		tags, err := extractDemoTagsWithPattern(ctx, file, urlPattern, elementAliases)
+		tags, err := extractDemoTagsWithPattern(ctx, file, urlPattern, elementAliases, fsys)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		} else {
@@ -73,8 +75,9 @@ func extractDemoTags(
 	ctx types.WorkspaceContext,
 	path string,
 	elementAliases map[string]string,
+	fsys platform.FileSystem,
 ) ([]string, error) {
-	return extractDemoTagsWithPattern(ctx, path, "", elementAliases)
+	return extractDemoTagsWithPattern(ctx, path, "", elementAliases, fsys)
 }
 
 // extractDemoTagsWithPattern extracts element associations using explicit methods only.
@@ -86,6 +89,7 @@ func extractDemoTagsWithPattern(
 	ctx types.WorkspaceContext,
 	path, urlPattern string,
 	elementAliases map[string]string,
+	fsys platform.FileSystem,
 ) ([]string, error) {
 	// Resolve path relative to workspace root if it's not absolute
 	var absPath string
@@ -95,7 +99,7 @@ func extractDemoTagsWithPattern(
 		absPath = filepath.Join(ctx.Root(), path)
 	}
 
-	code, err := os.ReadFile(absPath)
+	code, err := fsys.ReadFile(absPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not extract demo tags from file: %w", err)
 	}

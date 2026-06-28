@@ -25,6 +25,7 @@ import (
 
 	G "bennypowers.dev/cem/generate"
 	C "bennypowers.dev/cem/internal/config"
+	"bennypowers.dev/cem/internal/platform"
 	W "bennypowers.dev/cem/internal/workspace"
 	"bennypowers.dev/cem/serve/middleware"
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
@@ -89,7 +90,7 @@ func (s *Server) InitializeWorkspaceMode() error {
 	}
 
 	// Check if this is a workspace
-	if !W.IsWorkspaceMode(s.watchDir) {
+	if !W.IsWorkspaceMode(s.watchDir, platform.NewOSFileSystem()) {
 		s.isWorkspace = false
 		return nil
 	}
@@ -214,7 +215,7 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo, rootCfg *C.Ce
 	}
 
 	// Create generate session
-	session, err := G.NewGenerateSession(workspace)
+	session, err := G.NewGenerateSession(workspace, platform.NewOSFileSystem())
 	if err != nil {
 		return nil, fmt.Errorf("creating session for %s: %w", pkgInfo.Name, err)
 	}
@@ -246,7 +247,7 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo, rootCfg *C.Ce
 // Used during server initialization. Returns packages with freshly generated manifests.
 func (s *Server) generateInitialWorkspaceManifests(watchDir string) ([]middleware.WorkspacePackage, error) {
 	// Find all workspace packages
-	packageDirs, err := W.FindPackagesWithManifests(watchDir)
+	packageDirs, err := W.FindPackagesWithManifests(watchDir, platform.NewOSFileSystem())
 	if err != nil {
 		return nil, fmt.Errorf("finding workspace packages: %w", err)
 	}
@@ -291,7 +292,7 @@ func (s *Server) regenerateAffectedWorkspacePackages(changedFiles []string) (int
 
 	if changedFiles == nil {
 		// Full regeneration: get all packages
-		affectedPkgInfos, err = W.FindPackagesWithManifests(watchDir)
+		affectedPkgInfos, err = W.FindPackagesWithManifests(watchDir, platform.NewOSFileSystem())
 		if err != nil {
 			return 0, fmt.Errorf("finding workspace packages: %w", err)
 		}
@@ -301,7 +302,7 @@ func (s *Server) regenerateAffectedWorkspacePackages(changedFiles []string) (int
 		}
 	} else {
 		// Incremental: only affected packages
-		affectedPkgInfos, err = W.FindPackagesForFiles(watchDir, changedFiles)
+		affectedPkgInfos, err = W.FindPackagesForFiles(watchDir, changedFiles, platform.NewOSFileSystem())
 		if err != nil {
 			return 0, fmt.Errorf("finding affected packages: %w", err)
 		}

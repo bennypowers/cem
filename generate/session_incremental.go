@@ -148,7 +148,7 @@ func (gs *GenerateSession) processSpecificModules(ctx context.Context, result pr
 	}
 
 	// Use parallel processor with dependency tracking and optimized worker count
-	processor := NewModuleBatchProcessor(gs.setupCtx.QueryManager(), gs.setupCtx.DependencyTracker(), gs.setupCtx.CssCache())
+	processor := NewModuleBatchProcessor(gs.setupCtx.QueryManager(), gs.setupCtx.DependencyTracker(), gs.setupCtx.CssCache(), gs.setupCtx.FileSystem())
 	processor.SetWorkerCount(len(validJobs)) // Optimize for small incremental builds
 
 	logging.Debug("Starting incremental processing with optimized workers for %d modules", len(validJobs))
@@ -215,7 +215,7 @@ func (gs *GenerateSession) applyPostProcessingToModules(ctx context.Context, res
 		if cfgErr == nil {
 			urlPattern = cfg.Generate.DemoDiscovery.URLPattern
 		}
-		demoMap, err = DD.NewDemoMapWithPattern(gs.setupCtx.WorkspaceContext, result.demoFiles, urlPattern, allTagAliases)
+		demoMap, err = DD.NewDemoMapWithPattern(gs.setupCtx.WorkspaceContext, result.demoFiles, urlPattern, allTagAliases, gs.setupCtx.FileSystem())
 		if err != nil {
 			errsList = append(errsList, err)
 		}
@@ -234,7 +234,7 @@ func (gs *GenerateSession) applyPostProcessingToModules(ctx context.Context, res
 
 			// Discover demos and attach to module if available
 			if len(demoMap) > 0 {
-				err := DD.DiscoverDemos(gs.setupCtx.WorkspaceContext, allTagAliases, module, gs.setupCtx.QueryManager(), demoMap)
+				err := DD.DiscoverDemos(gs.setupCtx.WorkspaceContext, allTagAliases, module, gs.setupCtx.QueryManager(), demoMap, gs.setupCtx.FileSystem())
 				if err != nil {
 					errsMu.Lock()
 					errsList = append(errsList, err)

@@ -274,7 +274,7 @@ func (s *Server) UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []prot
 	// Search upward for the actual workspace root
 	// This handles cases where the LSP client opens a file in a subdirectory
 	// like /path/to/repo/elements/ instead of /path/to/repo/
-	workspaceRoot, err := W.FindWorkspaceRoot(newRoot)
+	workspaceRoot, err := W.FindWorkspaceRoot(newRoot, platform.NewOSFileSystem())
 	if err != nil {
 		helpers.SafeDebugLog("[SERVER_ADAPTER] Warning: Could not find workspace root, using provided path: %v", err)
 		// Keep newRoot as-is when search fails

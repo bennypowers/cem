@@ -61,7 +61,7 @@ func NewModuleGraph(queryManager *treesitter.QueryManager) *ModuleGraph {
 	return &ModuleGraph{
 		exportTracker:      NewExportTracker(),
 		dependencyTracker:  NewDependencyTracker(),
-		fileParser:         &OSFileParser{},
+		fileParser:         NewOSFileParser(nil),
 		exportParser:       &DefaultExportParser{},
 		manifestResolver:   &NoOpManifestResolver{},
 		metrics:            &NoOpMetricsCollector{}, // Default to no-op for performance
@@ -76,7 +76,7 @@ func NewModuleGraphWithMetrics(queryManager *treesitter.QueryManager) *ModuleGra
 	return &ModuleGraph{
 		exportTracker:      NewExportTracker(),
 		dependencyTracker:  NewDependencyTracker(),
-		fileParser:         &OSFileParser{},
+		fileParser:         NewOSFileParser(nil),
 		exportParser:       &DefaultExportParser{},
 		manifestResolver:   &NoOpManifestResolver{},
 		metrics:            NewDefaultMetricsCollector(),
@@ -91,7 +91,7 @@ func NewModuleGraphWithMetrics(queryManager *treesitter.QueryManager) *ModuleGra
 func NewModuleGraphWithDependencies(fileParser FileParser, exportParser ExportParser, manifestResolver ManifestResolver, metrics MetricsCollector, queryManager *treesitter.QueryManager) *ModuleGraph {
 	// Validate all parameters and provide safe defaults
 	if fileParser == nil {
-		fileParser = &OSFileParser{}
+		fileParser = NewOSFileParser(nil)
 	}
 	if exportParser == nil {
 		exportParser = &DefaultExportParser{}

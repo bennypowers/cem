@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/config"
+	"bennypowers.dev/cem/internal/platform"
 )
 
 func mkdirAll(t *testing.T, path string) {
@@ -28,7 +29,7 @@ func TestFindConfigFile_YamlInDotConfig(t *testing.T) {
 	mkdirAll(t, cfgDir)
 	writeFile(t, filepath.Join(cfgDir, "cem.yaml"), []byte("generate:\n  files: ['*.ts']"))
 
-	got := config.FindConfigFile(root)
+	got := config.FindConfigFile(root, platform.NewOSFileSystem())
 	want := filepath.Join(root, ".config", "cem.yaml")
 	if got != want {
 		t.Errorf("FindConfigFile() = %q, want %q", got, want)
@@ -41,7 +42,7 @@ func TestFindConfigFile_YmlInDotConfig(t *testing.T) {
 	mkdirAll(t, cfgDir)
 	writeFile(t, filepath.Join(cfgDir, "cem.yml"), []byte("generate:\n  files: ['*.ts']"))
 
-	got := config.FindConfigFile(root)
+	got := config.FindConfigFile(root, platform.NewOSFileSystem())
 	want := filepath.Join(root, ".config", "cem.yml")
 	if got != want {
 		t.Errorf("FindConfigFile() = %q, want %q", got, want)
@@ -54,7 +55,7 @@ func TestFindConfigFile_JsonInDotConfig(t *testing.T) {
 	mkdirAll(t, cfgDir)
 	writeFile(t, filepath.Join(cfgDir, "cem.json"), []byte(`{"generate":{"files":["*.ts"]}}`))
 
-	got := config.FindConfigFile(root)
+	got := config.FindConfigFile(root, platform.NewOSFileSystem())
 	want := filepath.Join(root, ".config", "cem.json")
 	if got != want {
 		t.Errorf("FindConfigFile() = %q, want %q", got, want)
@@ -67,7 +68,7 @@ func TestFindConfigFile_JsoncInDotConfig(t *testing.T) {
 	mkdirAll(t, cfgDir)
 	writeFile(t, filepath.Join(cfgDir, "cem.jsonc"), []byte("// comment\n{\"generate\":{}}"))
 
-	got := config.FindConfigFile(root)
+	got := config.FindConfigFile(root, platform.NewOSFileSystem())
 	want := filepath.Join(root, ".config", "cem.jsonc")
 	if got != want {
 		t.Errorf("FindConfigFile() = %q, want %q", got, want)
@@ -78,7 +79,7 @@ func TestFindConfigFile_DotCemYaml(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, ".cem.yaml"), []byte("generate:\n  files: ['*.ts']"))
 
-	got := config.FindConfigFile(root)
+	got := config.FindConfigFile(root, platform.NewOSFileSystem())
 	want := filepath.Join(root, ".cem.yaml")
 	if got != want {
 		t.Errorf("FindConfigFile() = %q, want %q", got, want)
@@ -89,7 +90,7 @@ func TestFindConfigFile_DotCemYml(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, ".cem.yml"), []byte("generate:\n  files: ['*.ts']"))
 
-	got := config.FindConfigFile(root)
+	got := config.FindConfigFile(root, platform.NewOSFileSystem())
 	want := filepath.Join(root, ".cem.yml")
 	if got != want {
 		t.Errorf("FindConfigFile() = %q, want %q", got, want)
@@ -100,7 +101,7 @@ func TestFindConfigFile_DotCemJson(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, ".cem.json"), []byte(`{"generate":{}}`))
 
-	got := config.FindConfigFile(root)
+	got := config.FindConfigFile(root, platform.NewOSFileSystem())
 	want := filepath.Join(root, ".cem.json")
 	if got != want {
 		t.Errorf("FindConfigFile() = %q, want %q", got, want)
@@ -111,7 +112,7 @@ func TestFindConfigFile_DotCemJsonc(t *testing.T) {
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, ".cem.jsonc"), []byte("// comment\n{}"))
 
-	got := config.FindConfigFile(root)
+	got := config.FindConfigFile(root, platform.NewOSFileSystem())
 	want := filepath.Join(root, ".cem.jsonc")
 	if got != want {
 		t.Errorf("FindConfigFile() = %q, want %q", got, want)
@@ -125,7 +126,7 @@ func TestFindConfigFile_SkipsDirectories(t *testing.T) {
 	// Create a directory named "cem.yaml" — should be skipped
 	mkdirAll(t, filepath.Join(cfgDir, "cem.yaml"))
 
-	got := config.FindConfigFile(root)
+	got := config.FindConfigFile(root, platform.NewOSFileSystem())
 	if got != "" {
 		t.Errorf("FindConfigFile() = %q, want empty (should skip directories)", got)
 	}
@@ -138,7 +139,7 @@ func TestFindConfigFile_Precedence_DotConfigWinsOverDotFile(t *testing.T) {
 	writeFile(t, filepath.Join(cfgDir, "cem.yaml"), []byte("# primary"))
 	writeFile(t, filepath.Join(root, ".cem.yaml"), []byte("# secondary"))
 
-	got := config.FindConfigFile(root)
+	got := config.FindConfigFile(root, platform.NewOSFileSystem())
 	want := filepath.Join(root, ".config", "cem.yaml")
 	if got != want {
 		t.Errorf("FindConfigFile() = %q, want %q (should prefer .config/ over dotfile)", got, want)
@@ -152,7 +153,7 @@ func TestFindConfigFile_Precedence_YamlWinsOverYml(t *testing.T) {
 	writeFile(t, filepath.Join(cfgDir, "cem.yaml"), []byte("# yaml"))
 	writeFile(t, filepath.Join(cfgDir, "cem.yml"), []byte("# yml"))
 
-	got := config.FindConfigFile(root)
+	got := config.FindConfigFile(root, platform.NewOSFileSystem())
 	want := filepath.Join(root, ".config", "cem.yaml")
 	if got != want {
 		t.Errorf("FindConfigFile() = %q, want %q (should prefer .yaml over .yml)", got, want)
@@ -162,7 +163,7 @@ func TestFindConfigFile_Precedence_YamlWinsOverYml(t *testing.T) {
 func TestFindConfigFile_NoneFound(t *testing.T) {
 	root := t.TempDir()
 
-	got := config.FindConfigFile(root)
+	got := config.FindConfigFile(root, platform.NewOSFileSystem())
 	if got != "" {
 		t.Errorf("FindConfigFile() = %q, want empty string", got)
 	}

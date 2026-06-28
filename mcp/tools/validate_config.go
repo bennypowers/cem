@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 
 	IC "bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/internal/platform"
@@ -37,7 +36,7 @@ func handleValidateConfig(
 		}, nil
 	}
 
-	rawData, err := os.ReadFile(cfgFile)
+	rawData, err := platform.NewOSFileSystem().ReadFile(cfgFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}

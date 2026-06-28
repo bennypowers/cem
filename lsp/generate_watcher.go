@@ -66,7 +66,7 @@ func NewInProcessGenerateWatcher(
 	helpers.SafeDebugLog("Creating InProcessGenerateWatcher for workspace: %s, globs: %v", workspace.Root(), globs)
 
 	// Create the generate session (NOT watch session - we manage watching ourselves)
-	generateSession, err := G.NewGenerateSession(workspace)
+	generateSession, err := G.NewGenerateSession(workspace, platform.NewOSFileSystem())
 	if err != nil {
 		cancel()
 		helpers.SafeDebugLog("Failed to create generate session: %v", err)
@@ -313,7 +313,7 @@ func (w *InProcessGenerateWatcher) generateFullAndCallback() error {
 
 	// Create a fresh GenerateSession to avoid any caching issues
 	// that might prevent updated file content from being parsed correctly
-	freshSession, err := G.NewGenerateSession(w.workspace)
+	freshSession, err := G.NewGenerateSession(w.workspace, platform.NewOSFileSystem())
 	if err != nil {
 		return fmt.Errorf("create fresh generate session: %w", err)
 	}

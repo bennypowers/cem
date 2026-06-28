@@ -22,10 +22,12 @@ import (
 	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/platform/testutil"
 )
 
 func TestValidateGolden(t *testing.T) {
+	fsys := platform.NewOSFileSystem()
 	testCases := []struct {
 		fixture string
 		name    string
@@ -60,7 +62,7 @@ func TestValidateGolden(t *testing.T) {
 			}
 
 			// Validate the manifest
-			result, err := Validate(fixturePath, ValidationOptions{
+			result, err := Validate(fsys, fixturePath, ValidationOptions{
 				IncludeWarnings: true,
 				DisabledRules:   []string{},
 			})
@@ -88,13 +90,14 @@ func TestValidateGolden(t *testing.T) {
 }
 
 func TestValidateWithDisabledWarnings(t *testing.T) {
+	fsys := platform.NewOSFileSystem()
 	fixturePath := filepath.Join("..", "cmd", "testdata", "fixtures", "warning-lifecycle-methods", "custom-elements.json")
 	if _, err := os.Stat(fixturePath); os.IsNotExist(err) {
 		t.Skip("warning-lifecycle-methods fixture does not exist")
 	}
 
 	// Test with warnings disabled by category
-	result, err := Validate(fixturePath, ValidationOptions{
+	result, err := Validate(fsys, fixturePath, ValidationOptions{
 		IncludeWarnings: true,
 		DisabledRules:   []string{"lifecycle"},
 	})
@@ -110,7 +113,7 @@ func TestValidateWithDisabledWarnings(t *testing.T) {
 	}
 
 	// Test with warnings disabled by specific ID
-	result2, err := Validate(fixturePath, ValidationOptions{
+	result2, err := Validate(fsys, fixturePath, ValidationOptions{
 		IncludeWarnings: true,
 		DisabledRules:   []string{"private-underscore-methods"},
 	})
@@ -119,7 +122,7 @@ func TestValidateWithDisabledWarnings(t *testing.T) {
 	}
 
 	// Should have fewer warnings than the original (which had all warnings)
-	originalResult, err := Validate(fixturePath, ValidationOptions{
+	originalResult, err := Validate(fsys, fixturePath, ValidationOptions{
 		IncludeWarnings: true,
 		DisabledRules:   []string{},
 	})
@@ -137,6 +140,7 @@ func TestValidateWithDisabledWarnings(t *testing.T) {
 // discriminated union issues in the upstream CEM schema.
 // See: https://github.com/webcomponents/custom-elements-manifest/issues/138
 func TestGetSchemaUpgrade210(t *testing.T) {
+	fsys := platform.NewOSFileSystem()
 	testCases := []struct {
 		version    string
 		expected   string
@@ -151,7 +155,7 @@ func TestGetSchemaUpgrade210(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.version, func(t *testing.T) {
-			schemaData, err := getSchema(tc.version)
+			schemaData, err := getSchema(fsys, tc.version)
 			if err != nil {
 				t.Fatalf("getSchema(%q) returned error: %v", tc.version, err)
 			}

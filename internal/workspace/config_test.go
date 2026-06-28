@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -147,7 +148,7 @@ func TestInit_ProjectDirSet(t *testing.T) {
 
 func TestLoadWorkspaceConfig_WithConfig(t *testing.T) {
 	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
-	cfg, err := workspace.LoadWorkspaceConfig(pkgDir)
+	cfg, err := workspace.LoadWorkspaceConfig(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 	assert.Equal(t, 9000, cfg.Serve.Port)
@@ -156,21 +157,21 @@ func TestLoadWorkspaceConfig_WithConfig(t *testing.T) {
 func TestLoadWorkspaceConfig_WorkspaceNoConfig(t *testing.T) {
 	// workspace-mode-no-manifest has a workspaces field but no .config/cem.yaml
 	pkgDir := absFixture(t, "workspace-mode-no-manifest/packages/util")
-	cfg, err := workspace.LoadWorkspaceConfig(pkgDir)
+	cfg, err := workspace.LoadWorkspaceConfig(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	assert.Nil(t, cfg)
 }
 
 func TestLoadWorkspaceConfig_NoWorkspace(t *testing.T) {
 	root := absFixture(t, "config-yaml")
-	cfg, err := workspace.LoadWorkspaceConfig(root)
+	cfg, err := workspace.LoadWorkspaceConfig(root, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	assert.Nil(t, cfg)
 }
 
 func TestLoadPackageConfigWithWorkspaceDefaults_Merges(t *testing.T) {
 	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
-	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 	// Package overrides workspace port
@@ -188,14 +189,14 @@ func TestInit_InvalidConfig(t *testing.T) {
 
 func TestLoadWorkspaceConfig_InvalidConfig(t *testing.T) {
 	pkgDir := absFixture(t, "workspace-invalid-config/packages/elements")
-	_, err := workspace.LoadWorkspaceConfig(pkgDir)
+	_, err := workspace.LoadWorkspaceConfig(pkgDir, platform.NewOSFileSystem())
 	assert.Error(t, err)
 }
 
 func TestLoadPackageConfigWithWorkspaceDefaults_NoPackageConfig(t *testing.T) {
 	// Package has no config, workspace has port 9000 and openBrowser: true
 	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
-	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 	// Should inherit workspace port since package has none
@@ -208,7 +209,7 @@ func TestLoadPackageConfigWithWorkspaceDefaults_NoPackageConfig(t *testing.T) {
 func TestLoadPackageConfigWithWorkspaceDefaults_NoWorkspace(t *testing.T) {
 	// Not in a workspace at all
 	root := absFixture(t, "config-yaml")
-	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(root)
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(root, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 	assert.Equal(t, []string{"elements/**/*.ts"}, cfg.Generate.Files)
@@ -244,13 +245,13 @@ func TestInit_LogLevelConfig(t *testing.T) {
 
 func TestLoadPackageConfigWithWorkspaceDefaults_InvalidPackageConfig(t *testing.T) {
 	pkgDir := absFixture(t, "workspace-with-config/packages/broken")
-	_, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	_, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	assert.Error(t, err)
 }
 
 func TestLoadPackageConfigWithWorkspaceDefaults_InvalidWorkspaceConfig(t *testing.T) {
 	pkgDir := absFixture(t, "workspace-invalid-config/packages/elements")
-	_, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	_, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	assert.Error(t, err)
 }
 
@@ -258,21 +259,21 @@ func TestLoadPackageConfigWithWorkspaceDefaults_DoesNotCascadeGenerateFiles(t *t
 	// generate.files are root-relative paths -- they must not cascade to packages
 	// because they resolve incorrectly from package roots
 	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
-	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	assert.Empty(t, cfg.Generate.Files)
 }
 
 func TestLoadPackageConfigWithWorkspaceDefaults_DoesNotCascadeGenerateExclude(t *testing.T) {
 	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
-	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	assert.Empty(t, cfg.Generate.Exclude)
 }
 
 func TestLoadPackageConfigWithWorkspaceDefaults_CascadesDesignTokens(t *testing.T) {
 	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
-	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	assert.Equal(t, "tokens.json", cfg.Generate.DesignTokens.Spec)
 	assert.Equal(t, "rh", cfg.Generate.DesignTokens.Prefix)
@@ -281,14 +282,14 @@ func TestLoadPackageConfigWithWorkspaceDefaults_CascadesDesignTokens(t *testing.
 func TestLoadPackageConfigWithWorkspaceDefaults_DoesNotCascadeDemoDiscovery(t *testing.T) {
 	// DemoDiscovery.FileGlob is root-relative, not cascaded
 	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
-	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	assert.Empty(t, cfg.Generate.DemoDiscovery.FileGlob)
 }
 
 func TestLoadPackageConfigWithWorkspaceDefaults_CascadesHealthConfig(t *testing.T) {
 	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
-	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	assert.Equal(t, 80, cfg.Health.FailBelow)
 	assert.Equal(t, []string{"no-description"}, cfg.Health.Disable)
@@ -296,7 +297,7 @@ func TestLoadPackageConfigWithWorkspaceDefaults_CascadesHealthConfig(t *testing.
 
 func TestLoadPackageConfigWithWorkspaceDefaults_CascadesExportConfig(t *testing.T) {
 	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
-	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	require.NotNil(t, cfg.Export)
 	react, ok := cfg.Export["react"]
@@ -309,7 +310,7 @@ func TestLoadPackageConfigWithWorkspaceDefaults_PackageOverridesGenerateFiles(t 
 	// elements package has generate.files: ["src/**/*.ts"] in its own config
 	// workspace also has generate.files - package should win
 	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
-	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	assert.Equal(t, []string{"src/**/*.ts"}, cfg.Generate.Files)
 }
@@ -318,7 +319,7 @@ func TestLoadPackageConfigWithWorkspaceDefaults_PartialOverride(t *testing.T) {
 	// elements package has generate.files but not generate.exclude
 	// Should keep its own files; exclude does NOT cascade (root-relative paths)
 	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
-	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	assert.Equal(t, []string{"src/**/*.ts"}, cfg.Generate.Files)
 	assert.Empty(t, cfg.Generate.Exclude)
@@ -327,7 +328,7 @@ func TestLoadPackageConfigWithWorkspaceDefaults_PartialOverride(t *testing.T) {
 func TestLoadPackageConfigWithWorkspaceDefaults_PartialOverrideHealth(t *testing.T) {
 	// elements package has no health config - inherits workspace health
 	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
-	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	assert.Equal(t, 80, cfg.Health.FailBelow)
 	assert.Equal(t, []string{"no-description"}, cfg.Health.Disable)
@@ -336,7 +337,7 @@ func TestLoadPackageConfigWithWorkspaceDefaults_PartialOverrideHealth(t *testing
 func TestLoadPackageConfigWithWorkspaceDefaults_PartialOverrideDesignTokens(t *testing.T) {
 	// elements package has no design tokens config - inherits workspace
 	pkgDir := absFixture(t, "workspace-with-config/packages/elements")
-	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	assert.Equal(t, "tokens.json", cfg.Generate.DesignTokens.Spec)
 	assert.Equal(t, "rh", cfg.Generate.DesignTokens.Prefix)
@@ -348,7 +349,7 @@ func TestLoadPackageConfigWithWorkspaceDefaults_DesignTokensSpecIsWorkspaceRelat
 	// the path "tokens.json" must be understood as workspace-root-relative.
 	// The caller (generate pipeline) is responsible for resolving it.
 	pkgDir := absFixture(t, "workspace-with-config/packages/utils")
-	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir)
+	cfg, err := workspace.LoadPackageConfigWithWorkspaceDefaults(pkgDir, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	// The spec value is cascaded as-is (workspace-root-relative)
 	assert.Equal(t, "tokens.json", cfg.Generate.DesignTokens.Spec)

@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	G "bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/evanw/esbuild/pkg/api"
@@ -92,7 +93,7 @@ func generateManifests() error {
 		}
 		cfg.Generate.Files = []string{pkg.glob}
 
-		session, err := G.NewGenerateSession(wsCtx)
+		session, err := G.NewGenerateSession(wsCtx, platform.NewOSFileSystem())
 		if err != nil {
 			return fmt.Errorf("session for %s: %w", pkg.glob, err)
 		}

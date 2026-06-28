@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	G "bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
@@ -60,7 +61,7 @@ func TestServerLevelIntegration(t *testing.T) {
 	}
 
 	// Run initial generation to create the manifest
-	generateSession, err := G.NewGenerateSession(workspace)
+	generateSession, err := G.NewGenerateSession(workspace, platform.NewOSFileSystem())
 	if err != nil {
 		t.Fatalf("Failed to create generate session: %v", err)
 	}
@@ -190,7 +191,7 @@ func TestServerLevelIntegration(t *testing.T) {
 
 	// Instead of waiting for the file watcher, manually generate the updated manifest
 	// This is more reliable and faster than depending on async file watching
-	genSession, err := G.NewGenerateSession(workspace)
+	genSession, err := G.NewGenerateSession(workspace, platform.NewOSFileSystem())
 	if err != nil {
 		t.Fatalf("Failed to create generate session: %v", err)
 	}

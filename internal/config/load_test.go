@@ -5,14 +5,17 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/config"
+	"bennypowers.dev/cem/internal/platform"
 )
+
+var osFS = platform.NewOSFileSystem()
 
 func fixture(name string) string {
 	return filepath.Join("testdata", name)
 }
 
 func TestLoadConfig_Yaml(t *testing.T) {
-	cfg, err := config.LoadConfig(fixture("valid.yaml"))
+	cfg, err := config.LoadConfig(fixture("valid.yaml"), osFS)
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
@@ -25,7 +28,7 @@ func TestLoadConfig_Yaml(t *testing.T) {
 }
 
 func TestLoadConfig_Json(t *testing.T) {
-	cfg, err := config.LoadConfig(fixture("valid.json"))
+	cfg, err := config.LoadConfig(fixture("valid.json"), osFS)
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
@@ -35,7 +38,7 @@ func TestLoadConfig_Json(t *testing.T) {
 }
 
 func TestLoadConfig_Jsonc(t *testing.T) {
-	cfg, err := config.LoadConfig(fixture("valid.jsonc"))
+	cfg, err := config.LoadConfig(fixture("valid.jsonc"), osFS)
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
@@ -45,7 +48,7 @@ func TestLoadConfig_Jsonc(t *testing.T) {
 }
 
 func TestLoadConfig_JsoncTrailingCommas(t *testing.T) {
-	cfg, err := config.LoadConfig(fixture("trailing-commas.jsonc"))
+	cfg, err := config.LoadConfig(fixture("trailing-commas.jsonc"), osFS)
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
@@ -55,35 +58,35 @@ func TestLoadConfig_JsoncTrailingCommas(t *testing.T) {
 }
 
 func TestLoadConfig_MissingFile(t *testing.T) {
-	_, err := config.LoadConfig("/nonexistent/path/cem.yaml")
+	_, err := config.LoadConfig("/nonexistent/path/cem.yaml", osFS)
 	if err == nil {
 		t.Error("LoadConfig() expected error for missing file, got nil")
 	}
 }
 
 func TestLoadConfig_InvalidYaml(t *testing.T) {
-	_, err := config.LoadConfig(fixture("invalid.yaml"))
+	_, err := config.LoadConfig(fixture("invalid.yaml"), osFS)
 	if err == nil {
 		t.Error("LoadConfig() expected error for invalid yaml, got nil")
 	}
 }
 
 func TestLoadConfig_InvalidJson(t *testing.T) {
-	_, err := config.LoadConfig(fixture("invalid.json"))
+	_, err := config.LoadConfig(fixture("invalid.json"), osFS)
 	if err == nil {
 		t.Error("LoadConfig() expected error for invalid json, got nil")
 	}
 }
 
 func TestLoadConfig_InvalidJsonc(t *testing.T) {
-	_, err := config.LoadConfig(fixture("invalid.jsonc"))
+	_, err := config.LoadConfig(fixture("invalid.jsonc"), osFS)
 	if err == nil {
 		t.Error("LoadConfig() expected error for invalid jsonc, got nil")
 	}
 }
 
 func TestLoadConfig_EmptyYaml(t *testing.T) {
-	cfg, err := config.LoadConfig(fixture("empty.yaml"))
+	cfg, err := config.LoadConfig(fixture("empty.yaml"), osFS)
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
@@ -93,7 +96,7 @@ func TestLoadConfig_EmptyYaml(t *testing.T) {
 }
 
 func TestLoadConfig_EmptyJson(t *testing.T) {
-	cfg, err := config.LoadConfig(fixture("empty.json"))
+	cfg, err := config.LoadConfig(fixture("empty.json"), osFS)
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
@@ -103,7 +106,7 @@ func TestLoadConfig_EmptyJson(t *testing.T) {
 }
 
 func TestLoadConfig_EmptyJsonc(t *testing.T) {
-	cfg, err := config.LoadConfig(fixture("empty.jsonc"))
+	cfg, err := config.LoadConfig(fixture("empty.jsonc"), osFS)
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
@@ -113,7 +116,7 @@ func TestLoadConfig_EmptyJsonc(t *testing.T) {
 }
 
 func TestLoadConfig_JsoncOnlyComments(t *testing.T) {
-	cfg, err := config.LoadConfig(fixture("comments-only.jsonc"))
+	cfg, err := config.LoadConfig(fixture("comments-only.jsonc"), osFS)
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
@@ -123,14 +126,14 @@ func TestLoadConfig_JsoncOnlyComments(t *testing.T) {
 }
 
 func TestLoadConfig_UnsupportedFormat(t *testing.T) {
-	_, err := config.LoadConfig(fixture("unsupported.toml"))
+	_, err := config.LoadConfig(fixture("unsupported.toml"), osFS)
 	if err == nil {
 		t.Error("LoadConfig() expected error for unsupported format, got nil")
 	}
 }
 
 func TestLoadConfig_AllFields(t *testing.T) {
-	cfg, err := config.LoadConfig(fixture("all-fields.yaml"))
+	cfg, err := config.LoadConfig(fixture("all-fields.yaml"), osFS)
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}

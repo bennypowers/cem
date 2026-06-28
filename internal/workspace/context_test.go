@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -81,7 +82,7 @@ func TestFileSystemWorkspaceContext_FSPathToModule(t *testing.T) {
 func TestLoadWorkspaceManifests(t *testing.T) {
 	root := absFixture(t, "workspace-mode-single-package")
 
-	pkgs, err := workspace.LoadWorkspaceManifests(root)
+	pkgs, err := workspace.LoadWorkspaceManifests(root, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	require.Len(t, pkgs, 1)
 	assert.Equal(t, "@test/elements", pkgs[0].Name)
@@ -90,7 +91,7 @@ func TestLoadWorkspaceManifests(t *testing.T) {
 
 func TestLoadWorkspaceManifests_NonWorkspace(t *testing.T) {
 	root := absFixture(t, "non-workspace")
-	_, err := workspace.LoadWorkspaceManifests(root)
+	_, err := workspace.LoadWorkspaceManifests(root, platform.NewOSFileSystem())
 	assert.Error(t, err)
 }
 

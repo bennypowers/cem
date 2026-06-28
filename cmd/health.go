@@ -26,6 +26,7 @@ import (
 	lipgloss "charm.land/lipgloss/v2"
 
 	"bennypowers.dev/cem/health"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/tui"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/internal/workspace"
@@ -102,7 +103,7 @@ func healthWorkspace(cmd *cobra.Command, args []string) error {
 			Modules:   allModules,
 			Disable:   allDisabled,
 		}
-		result, err := health.Analyze(manifestPath, options)
+		result, err := health.Analyze(platform.NewOSFileSystem(), manifestPath, options)
 		if err != nil {
 			return err
 		}
@@ -245,7 +246,7 @@ package.json exports map, replicating the same logic used by cem generate.`,
 			Disable:   allDisabled,
 		}
 
-		result, err := health.Analyze(manifestPath, options)
+		result, err := health.Analyze(platform.NewOSFileSystem(), manifestPath, options)
 		if err != nil {
 			return err
 		}

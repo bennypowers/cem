@@ -27,6 +27,7 @@ import (
 
 	"bennypowers.dev/cem/internal/jsoncmerge"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/tui"
 	W "bennypowers.dev/cem/internal/workspace"
 	"charm.land/huh/v2"
@@ -74,6 +75,11 @@ In non-interactive mode, use --tool to specify tools directly.`,
 		toolFlags, _ := cmd.Flags().GetStringSlice("tool")
 		additionalPackages, _ := cmd.Flags().GetStringSlice("additional-packages")
 		interactive := term.IsTerminal(int(os.Stdin.Fd()))
+		osFS := platform.NewOSFileSystem()
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("unable to determine home directory: %w", err)
+		}
 
 		var selectedTools []aiTool
 
@@ -100,7 +106,7 @@ In non-interactive mode, use --tool to specify tools directly.`,
 		}
 
 		if interactive && len(additionalPackages) == 0 {
-			hasManifest := projectHasManifest(cmd)
+			hasManifest := projectHasManifest(cmd, osFS)
 			if !hasManifest {
 				pkgs, err := promptAdditionalPackages()
 				if err != nil {
@@ -113,7 +119,7 @@ In non-interactive mode, use --tool to specify tools directly.`,
 		cemPath := resolveCemPath(cmd)
 		mcpArgs := buildMCPArgs(additionalPackages)
 
-		actions := buildActions(selectedTools, cemPath, mcpArgs, interactive)
+		actions := buildActions(osFS, homeDir, selectedTools, cemPath, mcpArgs, interactive)
 
 		for i, action := range actions {
 			if i > 0 {
@@ -216,7 +222,7 @@ func promptAdditionalPackages() ([]string, error) {
 	return packages, nil
 }
 
-func projectHasManifest(cmd *cobra.Command) bool {
+func projectHasManifest(cmd *cobra.Command, fsys platform.FileSystem) bool {
 	ctx, err := W.GetWorkspaceContext(cmd)
 	if err != nil {
 		return false
@@ -225,8 +231,7 @@ func projectHasManifest(cmd *cobra.Command) bool {
 	if manifestPath == "" {
 		return false
 	}
-	_, err = os.Stat(manifestPath)
-	return err == nil
+	return fsys.Exists(manifestPath)
 }
 
 func resolveCemPath(cmd *cobra.Command) string {
@@ -251,26 +256,26 @@ func buildMCPArgs(additionalPackages []string) []string {
 	return args
 }
 
-func buildActions(tools []aiTool, cemPath string, args []string, interactive bool) []mcpAction {
+func buildActions(fsys platform.FileSystem, homeDir string, tools []aiTool, cemPath string, args []string, interactive bool) []mcpAction {
 	var actions []mcpAction
 	for _, tool := range tools {
-		actions = append(actions, buildAction(tool, cemPath, args, interactive))
+		actions = append(actions, buildAction(fsys, homeDir, tool, cemPath, args, interactive))
 	}
 	return actions
 }
 
-func buildAction(tool aiTool, cemPath string, args []string, interactive bool) mcpAction {
+func buildAction(fsys platform.FileSystem, homeDir string, tool aiTool, cemPath string, args []string, interactive bool) mcpAction {
 	switch tool {
 	case toolClaudeCode:
 		return claudeCodeAction(cemPath, args)
 	case toolClaudeDesktop:
-		return claudeDesktopAction(cemPath, args)
+		return claudeDesktopAction(fsys, homeDir, cemPath, args)
 	case toolCursor:
-		return cursorAction(cemPath, args, interactive)
+		return cursorAction(fsys, homeDir, cemPath, args, interactive)
 	case toolVSCode:
-		return vscodeAction(cemPath, args, interactive)
+		return vscodeAction(fsys, homeDir, cemPath, args, interactive)
 	case toolZed:
-		return zedAction(interactive)
+		return zedAction(fsys, interactive)
 	default:
 		return mcpAction{tool: tool, preview: genericSnippet(cemPath, args)}
 	}
@@ -298,8 +303,8 @@ func claudeCodeAction(cemPath string, args []string) mcpAction {
 	}
 }
 
-func claudeDesktopAction(cemPath string, args []string) mcpAction {
-	paths := claudeDesktopConfigPaths()
+func claudeDesktopAction(fsys platform.FileSystem, homeDir string, cemPath string, args []string) mcpAction {
+	paths := claudeDesktopConfigPaths(homeDir)
 	snippet := mcpServersJSON(cemPath, args)
 	var b strings.Builder
 	b.WriteString("Claude Desktop\n\n")
@@ -311,7 +316,7 @@ func claudeDesktopAction(cemPath string, args []string) mcpAction {
 
 	var targetPath string
 	for _, p := range paths {
-		if _, err := os.Stat(filepath.Dir(p.path)); err == nil {
+		if fsys.Exists(filepath.Dir(p.path)) {
 			targetPath = p.path
 			break
 		}
@@ -320,7 +325,7 @@ func claudeDesktopAction(cemPath string, args []string) mcpAction {
 	var applyFn func() error
 	if targetPath != "" {
 		applyFn = func() error {
-			return mergeJSONConfig(targetPath, "mcpServers", "cem", mcpServerEntry{
+			return mergeJSONConfig(fsys, targetPath, "mcpServers", "cem", mcpServerEntry{
 				Command: cemPath,
 				Args:    args,
 			})
@@ -329,18 +334,17 @@ func claudeDesktopAction(cemPath string, args []string) mcpAction {
 	return mcpAction{tool: toolClaudeDesktop, preview: b.String(), apply: applyFn}
 }
 
-func cursorAction(cemPath string, args []string, interactive bool) mcpAction {
+func cursorAction(fsys platform.FileSystem, homeDir string, cemPath string, args []string, interactive bool) mcpAction {
 	snippet := mcpServersJSON(cemPath, args)
-	home, _ := os.UserHomeDir()
 	projectPath := filepath.Join(".cursor", "mcp.json")
-	globalPath := filepath.Join(home, ".cursor", "mcp.json")
-	targetPath := chooseScope(interactive, ".cursor", projectPath, globalPath)
+	globalPath := filepath.Join(homeDir, ".cursor", "mcp.json")
+	targetPath := chooseScope(fsys, interactive, ".cursor", projectPath, globalPath)
 	preview := fmt.Sprintf("Cursor\n\n  Write to %s:\n\n%s\n", targetPath, indentJSON(snippet, "    "))
 	return mcpAction{
 		tool:    toolCursor,
 		preview: preview,
 		apply: func() error {
-			return mergeJSONConfig(targetPath, "mcpServers", "cem", mcpServerEntry{
+			return mergeJSONConfig(fsys, targetPath, "mcpServers", "cem", mcpServerEntry{
 				Command: cemPath,
 				Args:    args,
 			})
@@ -348,15 +352,15 @@ func cursorAction(cemPath string, args []string, interactive bool) mcpAction {
 	}
 }
 
-func vscodeAction(cemPath string, args []string, interactive bool) mcpAction {
+func vscodeAction(fsys platform.FileSystem, homeDir string, cemPath string, args []string, interactive bool) mcpAction {
 	entry := vscodeServerEntry{Type: "stdio", Command: cemPath, Args: args}
 	config := vscodeServersWrapper{
 		Servers: map[string]vscodeServerEntry{"cem": entry},
 	}
 	snippet, _ := json.MarshalIndent(config, "", "  ")
 	projectPath := filepath.Join(".vscode", "mcp.json")
-	globalPath := vscodeGlobalConfigPath()
-	targetPath := chooseScope(interactive, ".vscode", projectPath, globalPath)
+	globalPath := vscodeGlobalConfigPath(homeDir)
+	targetPath := chooseScope(fsys, interactive, ".vscode", projectPath, globalPath)
 	preview := fmt.Sprintf(`VS Code (Copilot)
 
   Run: code --add-mcp '%s'
@@ -380,10 +384,10 @@ func vscodeAction(cemPath string, args []string, interactive bool) mcpAction {
 	}
 }
 
-func zedAction(interactive bool) mcpAction {
+func zedAction(fsys platform.FileSystem, interactive bool) mcpAction {
 	projectPath := filepath.Join(".zed", "settings.json")
 	globalPath := filepath.Join(xdg.ConfigHome, "zed", "settings.json")
-	targetPath := chooseScope(interactive, ".zed", projectPath, globalPath)
+	targetPath := chooseScope(fsys, interactive, ".zed", projectPath, globalPath)
 	preview := fmt.Sprintf(`Zed
   The cem extension provides both LSP and MCP support.
 
@@ -399,16 +403,15 @@ func zedAction(interactive bool) mcpAction {
 		tool:    toolZed,
 		preview: preview,
 		apply: func() error {
-			return mergeJSONConfig(targetPath, "auto_install_extensions", "cem", true)
+			return mergeJSONConfig(fsys, targetPath, "auto_install_extensions", "cem", true)
 		},
 	}
 }
 
-func vscodeGlobalConfigPath() string {
-	home, _ := os.UserHomeDir()
+func vscodeGlobalConfigPath(homeDir string) string {
 	switch runtime.GOOS {
 	case "darwin":
-		return filepath.Join(home, "Library", "Application Support", "Code", "User", "mcp.json")
+		return filepath.Join(homeDir, "Library", "Application Support", "Code", "User", "mcp.json")
 	case "windows":
 		return filepath.Join(os.Getenv("APPDATA"), "Code", "User", "mcp.json")
 	default:
@@ -419,22 +422,22 @@ func vscodeGlobalConfigPath() string {
 // chooseScope prompts for project vs global scope in interactive mode.
 // If the project dir exists, defaults to project. Otherwise defaults to global.
 // Non-interactive mode always uses project path.
-func chooseScope(interactive bool, projectDir, projectPath, globalPath string) string {
+func chooseScope(fsys platform.FileSystem, interactive bool, projectDir, projectPath, globalPath string) string {
 	if !interactive {
 		return projectPath
 	}
-	_, projectExists := os.Stat(projectDir)
+	projectExists := fsys.Exists(projectDir)
 	projectLabel := "Project (" + projectPath + ")"
 	globalLabel := "Global (" + globalPath + ")"
 	var options []string
-	if projectExists == nil {
+	if projectExists {
 		options = []string{projectLabel, globalLabel}
 	} else {
 		options = []string{globalLabel, projectLabel}
 	}
 	result, err := tui.Select("Configure for this project or globally?", tui.StringOptions(options...))
 	if err != nil {
-		if projectExists == nil {
+		if projectExists {
 			return projectPath
 		}
 		return globalPath
@@ -461,13 +464,13 @@ func genericSnippet(cemPath string, args []string) string {
 // Uses hujson only for JSONC validation.
 // Creates the file and parent directories if they don't exist.
 // Backs up existing files before writing.
-func mergeJSONConfig(path, topKey, subKey string, value any) error {
-	data, err := os.ReadFile(path)
+func mergeJSONConfig(fsys platform.FileSystem, path, topKey, subKey string, value any) error {
+	data, err := fsys.ReadFile(path)
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to read %s: %w", path, err)
 	}
 	if err == nil {
-		if err := backupFile(path, data); err != nil {
+		if err := backupFile(fsys, path, data); err != nil {
 			return err
 		}
 	} else {
@@ -480,32 +483,32 @@ func mergeJSONConfig(path, topKey, subKey string, value any) error {
 	}
 
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := fsys.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", dir, err)
 	}
-	tmp, err := os.CreateTemp(dir, ".cem-config-*.tmp")
+	tmp, err := fsys.CreateTemp(dir, ".cem-config-*.tmp")
 	if err != nil {
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 	tmpPath := tmp.Name()
 	if _, err := tmp.Write(result); err != nil {
 		_ = tmp.Close()
-		_ = os.Remove(tmpPath)
+		_ = fsys.Remove(tmpPath)
 		return fmt.Errorf("failed to write config: %w", err)
 	}
 	if err := tmp.Close(); err != nil {
-		_ = os.Remove(tmpPath)
+		_ = fsys.Remove(tmpPath)
 		return fmt.Errorf("failed to close temp file: %w", err)
 	}
-	if err := os.Rename(tmpPath, path); err != nil {
-		_ = os.Remove(tmpPath)
+	if err := fsys.Rename(tmpPath, path); err != nil {
+		_ = fsys.Remove(tmpPath)
 		return fmt.Errorf("failed to rename temp file: %w", err)
 	}
 	return nil
 }
 
-func backupFile(path string, data []byte) error {
-	backup, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".backup-*")
+func backupFile(fsys platform.FileSystem, path string, data []byte) error {
+	backup, err := fsys.CreateTemp(filepath.Dir(path), filepath.Base(path)+".backup-*")
 	if err != nil {
 		return fmt.Errorf("failed to create backup: %w", err)
 	}
@@ -554,12 +557,11 @@ type configPathInfo struct {
 	path  string
 }
 
-func claudeDesktopConfigPaths() []configPathInfo {
-	home, _ := os.UserHomeDir()
+func claudeDesktopConfigPaths(homeDir string) []configPathInfo {
 	switch runtime.GOOS {
 	case "darwin":
 		return []configPathInfo{
-			{"macOS", filepath.Join(home, "Library", "Application Support", "Claude", "claude_desktop_config.json")},
+			{"macOS", filepath.Join(homeDir, "Library", "Application Support", "Claude", "claude_desktop_config.json")},
 		}
 	case "windows":
 		return []configPathInfo{
@@ -568,7 +570,7 @@ func claudeDesktopConfigPaths() []configPathInfo {
 	default:
 		return []configPathInfo{
 			{"Linux (native)", filepath.Join(xdg.ConfigHome, "Claude", "claude_desktop_config.json")},
-			{"Linux (Flatpak)", filepath.Join(home, ".var", "app", "com.anthropic.Claude", "config", "Claude", "claude_desktop_config.json")},
+			{"Linux (Flatpak)", filepath.Join(homeDir, ".var", "app", "com.anthropic.Claude", "config", "Claude", "claude_desktop_config.json")},
 		}
 	}
 }

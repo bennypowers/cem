@@ -23,6 +23,7 @@ import (
 	"sync"
 
 	IC "bennypowers.dev/cem/internal/config"
+	"bennypowers.dev/cem/internal/platform"
 	LSP "bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/helpers"
@@ -462,7 +463,7 @@ func (ctx *MCPContext) GetManifestSchema() (map[string]any, error) {
 	}
 
 	// Get the actual JSON schema using the same method as the validate command and schema resource
-	schemaData, err := V.GetSchema(schemaVersion)
+	schemaData, err := V.GetSchema(platform.NewOSFileSystem(), schemaVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load schema: %w", err)
 	}

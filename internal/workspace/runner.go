@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	"github.com/bmatcuk/doublestar"
 	"github.com/spf13/cobra"
 )
@@ -44,14 +45,14 @@ func ShouldUseWorkspaceMode(cmd *cobra.Command) bool {
 	if err != nil {
 		return false
 	}
-	return IsWorkspaceMode(ctx.Root())
+	return IsWorkspaceMode(ctx.Root(), platform.NewOSFileSystem())
 }
 
 // ForEachPackage discovers workspace packages with customElements fields
 // and runs fn for each sequentially.
 // Returns results for all packages, never short-circuits on error.
 func ForEachPackage(rootDir string, fn func(pkg PackageInfo) error) []PackageResult {
-	packages, err := FindPackagesWithManifests(rootDir)
+	packages, err := FindPackagesWithManifests(rootDir, platform.NewOSFileSystem())
 	if err != nil {
 		return []PackageResult{{Err: fmt.Errorf("discovering workspace packages: %w", err)}}
 	}

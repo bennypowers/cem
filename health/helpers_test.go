@@ -20,6 +20,7 @@ import (
 	"regexp"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform"
 	lipgloss "charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
@@ -101,7 +102,8 @@ func TestScoreStyle(t *testing.T) {
 }
 
 func TestAnalyze_FileNotFound(t *testing.T) {
-	_, err := Analyze("/nonexistent/path/manifest.json", Options{})
+	emptyFS := platform.NewMapFileSystem(nil)
+	_, err := Analyze(emptyFS, "/nonexistent/path/manifest.json", Options{})
 	assert.Error(t, err)
 }
 

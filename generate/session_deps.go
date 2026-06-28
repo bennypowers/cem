@@ -21,11 +21,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"slices"
 	"sync"
 	"time"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/types"
 )
 
@@ -65,6 +65,7 @@ type FileDependencyTracker struct {
 	cssDepReverse CssReverseDepMap    // CSS FS path -> module paths that depend on it (reverse mapping)
 	lastScanTime  time.Time
 	ctx           types.WorkspaceContext
+	fs            platform.FileSystem
 }
 
 // ModuleDependencies tracks dependencies for a specific module
@@ -81,19 +82,20 @@ type ModuleDependencies struct {
 // - session_core.go:55 (GenerateSession initialization)
 //
 // Returns: Initialized tracker with empty dependency maps
-func NewFileDependencyTracker(ctx types.WorkspaceContext) *FileDependencyTracker {
+func NewFileDependencyTracker(ctx types.WorkspaceContext, fsys platform.FileSystem) *FileDependencyTracker {
 	return &FileDependencyTracker{
 		fileHashes:    make(FileHashMap),
 		moduleDeps:    make(ModuleDependencyMap),
 		cssDepReverse: make(CssReverseDepMap),
 		ctx:           ctx,
+		fs:            fsys,
 	}
 }
 
 // UpdateFileHash computes and stores the hash for a file (expects FS path)
 func (fdt *FileDependencyTracker) UpdateFileHash(fsPath string) ([32]byte, error) {
 	// Check the file's modification time
-	fileInfo, err := os.Stat(fsPath)
+	fileInfo, err := fdt.fs.Stat(fsPath)
 	if err != nil {
 		return [32]byte{}, err
 	}
@@ -109,7 +111,7 @@ func (fdt *FileDependencyTracker) UpdateFileHash(fsPath string) ([32]byte, error
 	fdt.mu.Lock()
 	defer fdt.mu.Unlock()
 
-	file, err := os.Open(fsPath)
+	file, err := fdt.fs.Open(fsPath)
 	if err != nil {
 		return [32]byte{}, err
 	}

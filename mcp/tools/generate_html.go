@@ -23,11 +23,12 @@ import (
 	"sort"
 	"strings"
 
+	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/validations"
 	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/mcp/helpers"
 	"bennypowers.dev/cem/mcp/types"
 	V "bennypowers.dev/cem/validate"
-	"bennypowers.dev/cem/internal/validations"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -371,7 +372,7 @@ func getSchemaDefinitions(registry types.MCPContext) (SchemaDefinitionMap, error
 
 	// Use the first version to load schema
 	schemaVersion := versions[0]
-	schemaData, err := V.GetSchema(schemaVersion)
+	schemaData, err := V.GetSchema(platform.NewOSFileSystem(), schemaVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load schema %s: %w", schemaVersion, err)
 	}

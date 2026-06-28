@@ -24,6 +24,7 @@ import (
 	"testing"
 	"testing/synctest"
 
+	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/internal/workspace"
 )
@@ -44,7 +45,7 @@ func TestSourceHrefGeneration(t *testing.T) {
 		}
 		cfg.Generate.Files = []string{"src/source-hrefs.ts"}
 
-		manifestJSON, err := Generate(ctx)
+		manifestJSON, err := Generate(ctx, platform.NewOSFileSystem())
 		if err != nil {
 			t.Fatalf("Failed to generate manifest: %v", err)
 		}
@@ -160,7 +161,7 @@ func TestSourceHrefGenerationWithoutConfig(t *testing.T) {
 		}
 		cfg.Generate.Files = []string{"src/test.ts"}
 
-		manifestJSON, err := Generate(ctx)
+		manifestJSON, err := Generate(ctx, platform.NewOSFileSystem())
 		if err != nil {
 			t.Fatalf("Failed to generate manifest: %v", err)
 		}

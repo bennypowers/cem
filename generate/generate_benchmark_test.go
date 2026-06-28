@@ -23,6 +23,7 @@ import (
 
 	"bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	W "bennypowers.dev/cem/internal/workspace"
 	DS "github.com/bmatcuk/doublestar"
 )
@@ -64,7 +65,7 @@ func BenchmarkGenerate(b *testing.B) {
 	var lastOut string
 
 	for b.Loop() {
-		out, err := generate.Generate(ctx)
+		out, err := generate.Generate(ctx, platform.NewOSFileSystem())
 		if err != nil {
 			b.Errorf("BenchmarkGenerate generate returned error: %v", err)
 		}

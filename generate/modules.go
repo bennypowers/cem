@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"bennypowers.dev/cem/generate/jsdoc"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/tui"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
@@ -65,6 +66,7 @@ type ModuleProcessor struct {
 	errors                       error
 	packageJSON                  *M.PackageJSON
 	ctx                          types.WorkspaceContext
+	fs                           platform.FileSystem
 	cssCache                     CssCache // CSS parsing cache for performance
 	lineOffsets                  []uint   // Cache of newline byte offsets for fast line number lookup
 }
@@ -75,12 +77,13 @@ func NewModuleProcessor(
 	parser *ts.Parser,
 	queryManager *Q.QueryManager,
 	cssCache CssCache,
+	fsys platform.FileSystem,
 ) (*ModuleProcessor, error) {
 	path := file
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(ctx.Root(), file)
 	}
-	code, err := os.ReadFile(path)
+	code, err := fsys.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("NewModuleProcessor: %w", err)
 	}
@@ -135,6 +138,7 @@ func NewModuleProcessor(
 		classNamesAdded:              S.NewSet[string](),
 		packageJSON:                  packageJson,
 		ctx:                          ctx,
+		fs:                           fsys,
 		cssCache:                     cssCache,
 	}, nil
 }

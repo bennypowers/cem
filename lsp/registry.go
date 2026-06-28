@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -120,6 +119,8 @@ type Registry struct {
 	localWorkspace  types.WorkspaceContext // Track the local workspace for generate watching
 	// Module graph for tracking re-export relationships
 	moduleGraph *modulegraph.ModuleGraph
+	// Filesystem abstraction for file operations
+	fs platform.FileSystem
 }
 
 // NewRegistry creates a new empty registry with the given file watcher.
@@ -145,6 +146,7 @@ func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
 		ManifestPackageNames: make(map[string]string),
 		fileWatcher:          fileWatcher,
 		moduleGraph:          moduleGraph,
+		fs:                   platform.NewOSFileSystem(),
 	}
 }
 
@@ -631,7 +633,7 @@ func (r *Registry) generateInMemoryManifest(packagePath string, packageName stri
 	logging.Debug("[IN-MEMORY] Successfully initialized workspace context for %s", packageName)
 
 	// Create a generate session
-	session, err := generate.NewGenerateSession(wsCtx)
+	session, err := generate.NewGenerateSession(wsCtx, platform.NewOSFileSystem())
 	if err != nil {
 		logging.Warning("[IN-MEMORY] Failed to create generate session for %s: %v", packageName, err)
 		return nil
@@ -718,8 +720,8 @@ func (r *Registry) loadAdditionalPackage(spec string) error {
 }
 
 // readFileViaWorkspace reads a file through the workspace interface when available,
-// falling back to os.ReadFile for absolute paths (e.g. ReloadManifestsDirectly).
-func readFileViaWorkspace(path string, workspace types.WorkspaceContext) ([]byte, error) {
+// falling back to the given FileSystem for absolute paths (e.g. ReloadManifestsDirectly).
+func readFileViaWorkspace(path string, workspace types.WorkspaceContext, fsys platform.FileSystem) ([]byte, error) {
 	if workspace != nil {
 		rc, err := workspace.ReadFile(path)
 		if err != nil {
@@ -728,11 +730,11 @@ func readFileViaWorkspace(path string, workspace types.WorkspaceContext) ([]byte
 		defer func() { _ = rc.Close() }()
 		return io.ReadAll(rc)
 	}
-	return os.ReadFile(path)
+	return fsys.ReadFile(path)
 }
 
 func (r *Registry) readPackageJSON(path string, workspace types.WorkspaceContext) (*M.PackageJSON, error) {
-	data, err := readFileViaWorkspace(path, workspace)
+	data, err := readFileViaWorkspace(path, workspace, r.fs)
 	if err != nil {
 		return nil, err
 	}
@@ -750,7 +752,7 @@ func (r *Registry) readPackageJSON(path string, workspace types.WorkspaceContext
 }
 
 func (r *Registry) loadManifestFileWithPackageName(path string, packageName string, workspace types.WorkspaceContext) (*M.Package, error) {
-	data, err := readFileViaWorkspace(path, workspace)
+	data, err := readFileViaWorkspace(path, workspace, r.fs)
 	if err != nil {
 		return nil, err
 	}
@@ -765,9 +767,8 @@ func (r *Registry) loadManifestFileWithPackageName(path string, packageName stri
 	return &pkg, nil
 }
 
-// loadManifestFile loads a custom elements manifest from a file
 func (r *Registry) loadManifestFile(path string) (*M.Package, error) {
-	data, err := os.ReadFile(path)
+	data, err := r.fs.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

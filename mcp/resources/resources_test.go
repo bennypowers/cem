@@ -24,6 +24,7 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/platform/testutil"
 	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"bennypowers.dev/cem/mcp"
@@ -108,7 +109,7 @@ func TestSchemaResource_Integration(t *testing.T) {
 	assert.NotEmpty(t, content.Text)
 
 	// Validate that it matches the canonical schema from validate package
-	expectedSchema, err := V.GetSchema("2.1.1-speculative") // Use the expected version from test fixtures
+	expectedSchema, err := V.GetSchema(platform.NewOSFileSystem(), "2.1.1-speculative") // Use the expected version from test fixtures
 	require.NoError(t, err, "Should be able to get canonical schema")
 
 	// Parse both schemas to compare content rather than string formatting

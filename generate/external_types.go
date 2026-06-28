@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"io/fs"
 	"maps"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -59,23 +58,25 @@ type ExternalTypeResolver struct {
 	workspacePackages map[string]string // pkg name → abs path
 	queryManager      *Q.QueryManager
 	cache             sync.Map // import specifier → map[string]string
+	fs                platform.FileSystem
 }
 
 // NewExternalTypeResolver creates a resolver that can look up type aliases
 // in workspace sibling packages and node_modules dependencies.
-func NewExternalTypeResolver(ctx types.WorkspaceContext, qm *Q.QueryManager) *ExternalTypeResolver {
+func NewExternalTypeResolver(ctx types.WorkspaceContext, qm *Q.QueryManager, fsys platform.FileSystem) *ExternalTypeResolver {
 	r := &ExternalTypeResolver{
 		projectRoot:  ctx.Root(),
 		queryManager: qm,
+		fs:           fsys,
 	}
 
 	// Detect workspace mode and discover sibling packages
-	wsRoot, err := workspace.FindWorkspaceRoot(ctx.Root())
+	wsRoot, err := workspace.FindWorkspaceRoot(ctx.Root(), fsys)
 	if err != nil {
 		L.Debug("ExternalTypeResolver: no workspace root found: %v", err)
 	} else if wsRoot != "" {
 		pkgPath := filepath.Join(wsRoot, "package.json")
-		data, err := os.ReadFile(pkgPath)
+		data, err := fsys.ReadFile(pkgPath)
 		if err != nil {
 			L.Debug("ExternalTypeResolver: cannot read workspace package.json: %v", err)
 		} else {
@@ -87,7 +88,7 @@ func NewExternalTypeResolver(ctx types.WorkspaceContext, qm *Q.QueryManager) *Ex
 			} else if pkg.Workspaces == nil {
 				L.Debug("ExternalTypeResolver: no workspaces field in %s", pkgPath)
 			} else {
-				packages, err := workspace.DiscoverWorkspacePackages(wsRoot, pkg.Workspaces)
+				packages, err := workspace.DiscoverWorkspacePackages(wsRoot, pkg.Workspaces, fsys)
 				if err != nil {
 					L.Debug("ExternalTypeResolver: workspace discovery failed: %v", err)
 				} else {
@@ -202,7 +203,7 @@ func (r *ExternalTypeResolver) resolveFromWorkspaceSibling(pkgName string) map[s
 
 	aliases := make(map[string]aliasDefinition)
 
-	err := platform.WalkDir(os.DirFS(siblingPath), ".", set.NewSet("node_modules", "dist"), func(path string, d fs.DirEntry, err error) error {
+	err := platform.WalkDir(platform.DirFS(r.fs, siblingPath), ".", set.NewSet("node_modules", "dist"), func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil // skip errors
 		}
@@ -244,7 +245,7 @@ func (r *ExternalTypeResolver) resolveFromNodeModules(importSpec string) map[str
 
 	// Read the dependency's package.json
 	pkgJSONPath := filepath.Join(pkgDir, "package.json")
-	data, err := os.ReadFile(pkgJSONPath)
+	data, err := r.fs.ReadFile(pkgJSONPath)
 	if err != nil {
 		L.Debug("ExternalTypeResolver: cannot read %s: %v", pkgJSONPath, err)
 		return nil
@@ -300,7 +301,7 @@ func (r *ExternalTypeResolver) resolveFromNodeModules(importSpec string) map[str
 	// Fall back to .js file with JSDoc
 	jsPath := r.toJSPath(absResolved)
 	if jsPath != "" {
-		content, err := os.ReadFile(jsPath)
+		content, err := r.fs.ReadFile(jsPath)
 		if err == nil {
 			jsdocAliases := parseJSDocTypedefs(content)
 			if len(jsdocAliases) > 0 {
@@ -329,7 +330,7 @@ func (r *ExternalTypeResolver) tryConventionalPaths(pkgDir, basePath string) str
 	}
 	for _, candidate := range candidates {
 		abs := filepath.Join(pkgDir, candidate)
-		if _, err := os.Stat(abs); err == nil {
+		if _, err := r.fs.Stat(abs); err == nil {
 			return candidate
 		}
 	}
@@ -347,7 +348,7 @@ func (r *ExternalTypeResolver) toDTSPath(filePath string) string {
 		base = strings.TrimSuffix(filePath, ext)
 	}
 	dts := base + ".d.ts"
-	if _, err := os.Stat(dts); err == nil {
+	if _, err := r.fs.Stat(dts); err == nil {
 		return dts
 	}
 	return ""
@@ -363,7 +364,7 @@ func (r *ExternalTypeResolver) toJSPath(filePath string) string {
 		base = strings.TrimSuffix(filePath, filepath.Ext(filePath))
 	}
 	js := base + ".js"
-	if _, err := os.Stat(js); err == nil {
+	if _, err := r.fs.Stat(js); err == nil {
 		return js
 	}
 	return ""
@@ -372,7 +373,7 @@ func (r *ExternalTypeResolver) toJSPath(filePath string) string {
 // scanTypeAliasesFromFile parses a TypeScript file using tree-sitter
 // and extracts type alias declarations.
 func (r *ExternalTypeResolver) scanTypeAliasesFromFile(filePath string) (map[string]aliasDefinition, error) {
-	content, err := os.ReadFile(filePath)
+	content, err := r.fs.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}

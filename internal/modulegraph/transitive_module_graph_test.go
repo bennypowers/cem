@@ -392,7 +392,7 @@ func TestModuleGraph_RecursiveDependencyBuilding(t *testing.T) {
 
 	// Create module graph with workspace root
 	mg := modulegraph.NewModuleGraphWithDependencies(
-		&modulegraph.OSFileParser{},
+		modulegraph.NewOSFileParser(nil),
 		&modulegraph.DefaultExportParser{},
 		&modulegraph.NoOpManifestResolver{}, // Use no-op since we're testing file-based dependency building
 		&modulegraph.NoOpMetricsCollector{},

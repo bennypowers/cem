@@ -23,10 +23,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
+	"bennypowers.dev/cem/internal/platform"
 	"github.com/adrg/xdg"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/spf13/viper"
@@ -59,13 +59,13 @@ type ValidationOptions struct {
 }
 
 // Validate validates a custom-elements.json manifest
-func Validate(manifestPath string, options ValidationOptions) (*ValidationResult, error) {
-	manifestData, err := os.ReadFile(manifestPath)
+func Validate(fsys platform.FileSystem, manifestPath string, options ValidationOptions) (*ValidationResult, error) {
+	manifestData, err := fsys.ReadFile(manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading manifest file: %w", err)
 	}
 
-	pipeline, err := NewValidationPipeline(manifestData)
+	pipeline, err := NewValidationPipeline(fsys, manifestData)
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +75,7 @@ func Validate(manifestPath string, options ValidationOptions) (*ValidationResult
 
 // ValidationPipeline orchestrates the validation process
 type ValidationPipeline struct {
+	fsys             platform.FileSystem
 	manifestData     []byte
 	schemaVersion    string
 	navigator        *ManifestNavigator
@@ -83,7 +84,7 @@ type ValidationPipeline struct {
 }
 
 // NewValidationPipeline creates a new validation pipeline
-func NewValidationPipeline(manifestData []byte) (*ValidationPipeline, error) {
+func NewValidationPipeline(fsys platform.FileSystem, manifestData []byte) (*ValidationPipeline, error) {
 	// Parse manifest once for efficiency
 	var manifestJSON map[string]any
 	if err := json.Unmarshal(manifestData, &manifestJSON); err != nil {
@@ -108,6 +109,7 @@ func NewValidationPipeline(manifestData []byte) (*ValidationPipeline, error) {
 	errorProcessor := NewErrorProcessor(navigator)
 
 	return &ValidationPipeline{
+		fsys:             fsys,
 		manifestData:     manifestData,
 		schemaVersion:    versionStruct.SchemaVersion,
 		navigator:        navigator,
@@ -174,7 +176,7 @@ func isSemverLessThan(version1, version2 string) bool {
 }
 
 func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
-	schemaData, err := getSchema(p.schemaVersion)
+	schemaData, err := getSchema(p.fsys, p.schemaVersion)
 	if err != nil {
 		return fmt.Errorf("error getting schema: %w", err)
 	}
@@ -359,11 +361,11 @@ func isWarningDisabled(warning ValidationWarning, disabledRules []string) bool {
 
 // GetSchema returns the JSON schema for a given version, using embedded schemas
 // and falling back to fetching from external sources if needed
-func GetSchema(version string) ([]byte, error) {
-	return getSchema(version)
+func GetSchema(fsys platform.FileSystem, version string) ([]byte, error) {
+	return getSchema(fsys, version)
 }
 
-func getSchema(version string) ([]byte, error) {
+func getSchema(fsys platform.FileSystem, version string) ([]byte, error) {
 	// Upgrade known problematic versions to speculative schema first
 	if version == "2.1.0" || version == "2.1.1" {
 		return getEmbeddedSchema("2.1.1-speculative")
@@ -375,7 +377,7 @@ func getSchema(version string) ([]byte, error) {
 	}
 
 	// For other versions, try fetching from CDN
-	return tryFetchSchema(version)
+	return tryFetchSchema(fsys, version)
 }
 
 func getEmbeddedSchema(version string) ([]byte, error) {
@@ -383,7 +385,7 @@ func getEmbeddedSchema(version string) ([]byte, error) {
 	return embeddedSchemas.ReadFile(schemaPath)
 }
 
-func tryFetchSchema(version string) ([]byte, error) {
+func tryFetchSchema(fsys platform.FileSystem, version string) ([]byte, error) {
 	cacheDir, err := xdg.CacheFile(filepath.Join("cem", "schemas"))
 	if err != nil {
 		return nil, fmt.Errorf("could not get cache directory: %w", err)
@@ -391,8 +393,8 @@ func tryFetchSchema(version string) ([]byte, error) {
 
 	schemaPath := filepath.Join(cacheDir, version+".json")
 
-	if _, err := os.Stat(schemaPath); err == nil {
-		return os.ReadFile(schemaPath)
+	if _, err := fsys.Stat(schemaPath); err == nil {
+		return fsys.ReadFile(schemaPath)
 	}
 
 	url := fmt.Sprintf("https://unpkg.com/custom-elements-manifest@%s/schema.json", version)
@@ -411,11 +413,11 @@ func tryFetchSchema(version string) ([]byte, error) {
 		return nil, fmt.Errorf("could not read schema from response body: %w", err)
 	}
 
-	if err := os.MkdirAll(filepath.Dir(schemaPath), 0755); err != nil {
+	if err := fsys.MkdirAll(filepath.Dir(schemaPath), 0755); err != nil {
 		return nil, fmt.Errorf("could not create cache directory: %w", err)
 	}
 
-	if err := os.WriteFile(schemaPath, schemaData, 0644); err != nil {
+	if err := fsys.WriteFile(schemaPath, schemaData, 0644); err != nil {
 		return nil, fmt.Errorf("could not write schema to cache: %w", err)
 	}
 

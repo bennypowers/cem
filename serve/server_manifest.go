@@ -28,6 +28,7 @@ import (
 	"runtime"
 
 	G "bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/routes"
 	W "bennypowers.dev/cem/internal/workspace"
@@ -218,7 +219,7 @@ func (s *Server) RegenerateManifest() (int, error) {
 		return 0, fmt.Errorf("initializing workspace: %w", err)
 	}
 
-	session, err := G.NewGenerateSession(workspace)
+	session, err := G.NewGenerateSession(workspace, platform.NewOSFileSystem())
 	if err != nil {
 		return 0, fmt.Errorf("creating generate session: %w", err)
 	}

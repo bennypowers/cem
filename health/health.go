@@ -20,9 +20,9 @@ import (
 	"cmp"
 	"encoding/json"
 	"fmt"
-	"os"
 	"slices"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/validate"
 )
 
@@ -65,8 +65,8 @@ type Options struct {
 }
 
 // Analyze performs health analysis on a manifest file.
-func Analyze(manifestPath string, options Options) (*HealthResult, error) {
-	manifestData, err := os.ReadFile(manifestPath)
+func Analyze(fsys platform.FileSystem, manifestPath string, options Options) (*HealthResult, error) {
+	manifestData, err := fsys.ReadFile(manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading manifest file: %w", err)
 	}

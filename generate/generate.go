@@ -27,6 +27,7 @@ import (
 	DT "bennypowers.dev/cem/internal/designtokens"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
@@ -113,9 +114,10 @@ func processModule(
 	parser *ts.Parser,
 	depTracker *FileDependencyTracker,
 	cssCache CssCache,
+	fsys platform.FileSystem,
 ) (module *M.Module, tagAliases map[string]string, typeAliases map[string]string, imports map[string]importInfo, logCtx *LogCtx, errs error) {
 	defer parser.Reset()
-	mp, err := NewModuleProcessor(job.ctx, job.file, parser, qm, cssCache)
+	mp, err := NewModuleProcessor(job.ctx, job.file, parser, qm, cssCache, fsys)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
@@ -154,6 +156,7 @@ func postprocess(
 	imports moduleImportsMap,
 	qm *Q.QueryManager,
 	modules []M.Module,
+	fsys platform.FileSystem,
 ) (pkg M.Package, errs error) {
 	var wg sync.WaitGroup
 	var errsMu sync.Mutex
@@ -179,7 +182,7 @@ func postprocess(
 	if cfgErr == nil {
 		urlPattern = cfg.Generate.DemoDiscovery.URLPattern
 	}
-	demoMap, err := DD.NewDemoMapWithPattern(ctx, result.demoFiles, urlPattern, allTagAliases)
+	demoMap, err := DD.NewDemoMapWithPattern(ctx, result.demoFiles, urlPattern, allTagAliases, fsys)
 	if err != nil {
 		errsList = append(errsList, err)
 	}
@@ -194,7 +197,7 @@ func postprocess(
 			}
 			// Discover demos and attach to manifest
 			if len(demoMap) > 0 {
-				err := DD.DiscoverDemos(ctx, allTagAliases, module, qm, demoMap)
+				err := DD.DiscoverDemos(ctx, allTagAliases, module, qm, demoMap, fsys)
 				if err != nil {
 					errsMu.Lock()
 					errsList = append(errsList, err)
@@ -213,7 +216,7 @@ func postprocess(
 	resolveReExportedCEDefinitions(&pkg)
 
 	// Resolve type aliases (including cross-package external types)
-	externalResolver := NewExternalTypeResolver(ctx, qm)
+	externalResolver := NewExternalTypeResolver(ctx, qm, fsys)
 	if err := ResolveTypeAliases(&pkg, typeAliases, imports, externalResolver); err != nil {
 		errsList = append(errsList, fmt.Errorf("type resolution failed: %w", err))
 	}
@@ -224,8 +227,8 @@ func postprocess(
 }
 
 // Generates a custom-elements manifest from a list of typescript files
-func Generate(ctx types.WorkspaceContext) (manifest *string, errs error) {
-	session, err := NewGenerateSession(ctx)
+func Generate(ctx types.WorkspaceContext, fsys platform.FileSystem) (manifest *string, errs error) {
+	session, err := NewGenerateSession(ctx, fsys)
 	if err != nil {
 		return nil, err
 	}

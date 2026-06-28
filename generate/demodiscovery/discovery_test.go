@@ -25,6 +25,7 @@ import (
 
 	C "bennypowers.dev/cem/cmd/config"
 	htmllang "bennypowers.dev/cem/internal/languages/html"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/platform/testutil"
 	W "bennypowers.dev/cem/internal/workspace"
 )
@@ -80,7 +81,7 @@ func TestExtractDemoMetadata(t *testing.T) {
 
 		// Extract metadata
 		ctx := W.NewFileSystemWorkspaceContext(tmpDir)
-		result, err := extractDemoMetadata(ctx, tmpPath)
+		result, err := extractDemoMetadata(ctx, tmpPath, platform.NewOSFileSystem())
 		if err != nil {
 			t.Fatalf("extractDemoMetadata failed: %v", err)
 		}
@@ -378,7 +379,7 @@ func TestExtractDemoTags(t *testing.T) {
 
 		// Extract tags
 		ctx := W.NewFileSystemWorkspaceContext(tmpDir)
-		result, err := extractDemoTags(ctx, tmpPath, config.ElementAliases)
+		result, err := extractDemoTags(ctx, tmpPath, config.ElementAliases, platform.NewOSFileSystem())
 		if err != nil {
 			t.Fatalf("extractDemoTags failed: %v", err)
 		}
@@ -420,7 +421,7 @@ func TestExtractDemoTagsWithPattern_WorkspaceFallback(t *testing.T) {
 	}
 
 	ctx := W.NewFileSystemWorkspaceContext(pkgDir)
-	tags, err := extractDemoTagsWithPattern(ctx, "demo/basic.html", ":tag/demo/:demo.html", nil)
+	tags, err := extractDemoTagsWithPattern(ctx, "demo/basic.html", ":tag/demo/:demo.html", nil, platform.NewOSFileSystem())
 	if err != nil {
 		t.Fatalf("extractDemoTagsWithPattern failed: %v", err)
 	}
@@ -537,7 +538,7 @@ func TestNewDemoMap(t *testing.T) {
 	// Create workspace context for test
 	ctx := W.NewFileSystemWorkspaceContext(tmpDir)
 
-	demoMap, err := NewDemoMap(ctx, []string{demo1Path, demo2Path}, config.ElementAliases)
+	demoMap, err := NewDemoMap(ctx, []string{demo1Path, demo2Path}, config.ElementAliases, platform.NewOSFileSystem())
 	if err != nil {
 		t.Fatalf("NewDemoMap failed: %v", err)
 	}

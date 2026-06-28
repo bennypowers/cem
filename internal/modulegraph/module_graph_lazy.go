@@ -18,14 +18,13 @@ package modulegraph
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"bennypowers.dev/cem/internal/languages/typescript"
-	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/internal/treesitter"
+	"bennypowers.dev/cem/lsp/helpers"
 )
 
 // Lazy Module Graph Building Methods
@@ -207,10 +206,8 @@ func (mg *ModuleGraph) resolveImportPathToFilesRelativeTo(importPath, currentFil
 	return filePaths
 }
 
-// fileExists checks if a file exists
 func (mg *ModuleGraph) fileExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
+	return mg.fileParser.Exists(path)
 }
 
 // processFile processes a single file and adds its exports to the module graph
