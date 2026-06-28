@@ -1,0 +1,27 @@
+generate:
+  files:
+    - elements/**/*.ts
+    - base/**/*.ts
+  output: custom-elements.json
+  designTokens:
+    spec: design-tokens.json
+    prefix: demo
+  demoDiscovery:
+    fileGlob: elements/**/demo/*.html
+    urlPattern: elements/:tag/demo/:demo.html
+    urlTemplate: https://example.com/{{.tag}}/{{.demo}}/
+serve:
+  port: 8000
+  importMap:
+    generate: true
+  transforms:
+    css:
+      enabled: true
+      include:
+        - elements/**/*.css
+      exclude:
+        - demo/**/*.css
+        - '**/*.min.css'
+  demos:
+    rendering: shadow
+sourceControlRootUrl: https://github.com/example/project/tree/main/

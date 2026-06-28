@@ -39,7 +39,7 @@ type ImportMapOverride struct {
 // ImportMapConfig holds import map configuration
 // This is shared between cmd/config and serve packages to avoid duplication
 type ImportMapConfig struct {
-	Generate     bool              `mapstructure:"generate" yaml:"generate"`
-	OverrideFile string            `mapstructure:"overrideFile" yaml:"overrideFile"`
-	Override     ImportMapOverride `mapstructure:"override" yaml:"override"`
+	Generate     bool              `mapstructure:"generate" yaml:"generate" json:"generate"`
+	OverrideFile string            `mapstructure:"overrideFile" yaml:"overrideFile" json:"overrideFile"`
+	Override     ImportMapOverride `mapstructure:"override" yaml:"override" json:"override"`
 }
