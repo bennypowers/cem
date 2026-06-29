@@ -113,7 +113,7 @@ export class TestElement extends LitElement {
 
 		// Create mock file watcher for instant events
 		mockFileWatcher := platform.NewMockFileWatcher()
-		registry := lsp.NewRegistry(mockFileWatcher)
+		registry := lsp.NewRegistry(mockFileWatcher, nil)
 
 		// Load initial manifest
 		var pkg M.Package

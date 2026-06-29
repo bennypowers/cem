@@ -143,8 +143,9 @@ func DirFS(fsys FileSystem, dir string) fs.FS {
 }
 
 func (d *dirFS) Open(name string) (fs.File, error) {
-	full := filepath.Join(d.dir, name)
-	if !strings.HasPrefix(filepath.Clean(full), filepath.Clean(d.dir)) {
+	full := filepath.Clean(filepath.Join(d.dir, name))
+	rel, err := filepath.Rel(filepath.Clean(d.dir), full)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return nil, &fs.PathError{Op: "open", Path: name, Err: fs.ErrPermission}
 	}
 	return d.fsys.Open(full)

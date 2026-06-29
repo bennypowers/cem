@@ -95,6 +95,7 @@ func (m *MapFS) MkdirAll(path string, perm fs.FileMode) error {
 
 func (m *MapFS) MkdirTemp(dir, pattern string) (string, error) {
 	name := tempName(dir, pattern, &mapFSTempCounter)
+	m.MapFS[name] = &fstest.MapFile{Mode: fs.ModeDir | 0755}
 	return name, nil
 }
 

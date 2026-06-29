@@ -336,6 +336,22 @@ func TestDirFS_RejectsPathTraversal(t *testing.T) {
 	assert.Error(t, err, "path traversal should be rejected")
 }
 
+func TestDirFS_RejectsSiblingDirectory(t *testing.T) {
+	fs := platform.NewMapFS(map[string]string{
+		"foobar/secret.txt": "secret",
+	})
+	dirFS := platform.DirFS(fs, "foo")
+	_, err := dirFS.Open("../foobar/secret.txt")
+	assert.Error(t, err)
+}
+
+func TestMapFS_MkdirTemp_Exists(t *testing.T) {
+	fs := platform.NewMapFS(nil)
+	dir, err := fs.MkdirTemp("", "test-*")
+	require.NoError(t, err)
+	assert.True(t, fs.Exists(dir))
+}
+
 func TestMapFS_Create_AbsolutePath(t *testing.T) {
 	fs := platform.NewMapFS(nil)
 

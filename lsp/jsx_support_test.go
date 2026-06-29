@@ -68,7 +68,7 @@ func TestJSXCustomElementDetection(t *testing.T) {
 
 	// Create mock file watcher for testing
 	mockWatcher := platform.NewMockFileWatcher()
-	registry := lsp.NewRegistry(mockWatcher)
+	registry := lsp.NewRegistry(mockWatcher, nil)
 
 	manifestPath := filepath.Join(fixtureDir, "custom-elements.json")
 	registry.AddManifestPath(manifestPath)
@@ -123,7 +123,7 @@ func TestJSXAttributeDetection(t *testing.T) {
 
 	// Create mock file watcher for testing
 	mockWatcher := platform.NewMockFileWatcher()
-	registry := lsp.NewRegistry(mockWatcher)
+	registry := lsp.NewRegistry(mockWatcher, nil)
 
 	manifestPath := filepath.Join(fixtureDir, "custom-elements.json")
 	registry.AddManifestPath(manifestPath)

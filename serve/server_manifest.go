@@ -28,7 +28,6 @@ import (
 	"runtime"
 
 	G "bennypowers.dev/cem/generate"
-	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
 	"bennypowers.dev/cem/serve/middleware/routes"
 	W "bennypowers.dev/cem/internal/workspace"
@@ -219,10 +218,17 @@ func (s *Server) RegenerateManifest() (int, error) {
 		return 0, fmt.Errorf("initializing workspace: %w", err)
 	}
 
-	session, err := G.NewGenerateSession(workspace, platform.NewOSFileSystem())
+	session, err := G.NewGenerateSession(workspace, s.fs)
 	if err != nil {
 		return 0, fmt.Errorf("creating generate session: %w", err)
 	}
+	// Ensure session is cleaned up if we return before storing it in s.generateSession
+	sessionStored := false
+	defer func() {
+		if !sessionStored {
+			session.Close()
+		}
+	}()
 
 	// Configure adaptive worker count to prevent goroutine explosion under concurrent load
 	// Use same formula as transform pool for consistency
@@ -270,6 +276,7 @@ func (s *Server) RegenerateManifest() (int, error) {
 	}
 
 	s.generateSession = session
+	sessionStored = true
 	s.sourceFiles = sourceFiles
 
 	// Defensive copy (though json.MarshalIndent already returns a new slice)

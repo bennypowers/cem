@@ -76,10 +76,6 @@ In non-interactive mode, use --tool to specify tools directly.`,
 		additionalPackages, _ := cmd.Flags().GetStringSlice("additional-packages")
 		interactive := term.IsTerminal(int(os.Stdin.Fd()))
 		osFS := platform.NewOSFileSystem()
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("unable to determine home directory: %w", err)
-		}
 
 		var selectedTools []aiTool
 
@@ -119,7 +115,22 @@ In non-interactive mode, use --tool to specify tools directly.`,
 		cemPath := resolveCemPath(cmd)
 		mcpArgs := buildMCPArgs(additionalPackages)
 
-		actions := buildActions(osFS, homeDir, selectedTools, cemPath, mcpArgs, interactive)
+		var homeDir string
+		resolveHomeDir := func() (string, error) {
+			if homeDir == "" {
+				var err error
+				homeDir, err = os.UserHomeDir()
+				if err != nil {
+					return "", fmt.Errorf("unable to determine home directory: %w", err)
+				}
+			}
+			return homeDir, nil
+		}
+
+		actions, err := buildActions(osFS, resolveHomeDir, selectedTools, cemPath, mcpArgs, interactive)
+		if err != nil {
+			return err
+		}
 
 		for i, action := range actions {
 			if i > 0 {
@@ -256,28 +267,44 @@ func buildMCPArgs(additionalPackages []string) []string {
 	return args
 }
 
-func buildActions(fsys platform.FileSystem, homeDir string, tools []aiTool, cemPath string, args []string, interactive bool) []mcpAction {
+func buildActions(fsys platform.FileSystem, resolveHomeDir func() (string, error), tools []aiTool, cemPath string, args []string, interactive bool) ([]mcpAction, error) {
 	var actions []mcpAction
 	for _, tool := range tools {
-		actions = append(actions, buildAction(fsys, homeDir, tool, cemPath, args, interactive))
+		action, err := buildAction(fsys, resolveHomeDir, tool, cemPath, args, interactive)
+		if err != nil {
+			return nil, err
+		}
+		actions = append(actions, action)
 	}
-	return actions
+	return actions, nil
 }
 
-func buildAction(fsys platform.FileSystem, homeDir string, tool aiTool, cemPath string, args []string, interactive bool) mcpAction {
+func buildAction(fsys platform.FileSystem, resolveHomeDir func() (string, error), tool aiTool, cemPath string, args []string, interactive bool) (mcpAction, error) {
 	switch tool {
 	case toolClaudeCode:
-		return claudeCodeAction(cemPath, args)
+		return claudeCodeAction(cemPath, args), nil
 	case toolClaudeDesktop:
-		return claudeDesktopAction(fsys, homeDir, cemPath, args)
+		homeDir, err := resolveHomeDir()
+		if err != nil {
+			return mcpAction{}, err
+		}
+		return claudeDesktopAction(fsys, homeDir, cemPath, args), nil
 	case toolCursor:
-		return cursorAction(fsys, homeDir, cemPath, args, interactive)
+		homeDir, err := resolveHomeDir()
+		if err != nil {
+			return mcpAction{}, err
+		}
+		return cursorAction(fsys, homeDir, cemPath, args, interactive), nil
 	case toolVSCode:
-		return vscodeAction(fsys, homeDir, cemPath, args, interactive)
+		homeDir, err := resolveHomeDir()
+		if err != nil {
+			return mcpAction{}, err
+		}
+		return vscodeAction(fsys, homeDir, cemPath, args, interactive), nil
 	case toolZed:
-		return zedAction(fsys, interactive)
+		return zedAction(fsys, interactive), nil
 	default:
-		return mcpAction{tool: tool, preview: genericSnippet(cemPath, args)}
+		return mcpAction{tool: tool, preview: genericSnippet(cemPath, args)}, nil
 	}
 }
 

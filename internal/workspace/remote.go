@@ -372,9 +372,14 @@ func setupTempdirFromCache(cacheDir string, fsys platform.FileSystem) (string, e
 		return "", err
 	}
 	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
 		src := filepath.Join(cacheDir, f.Name())
 		dst := filepath.Join(tempdir, f.Name())
-		_, _ = copyFile(src, dst, fsys)
+		if _, err := copyFile(src, dst, fsys); err != nil {
+			return "", fmt.Errorf("copying %s to tempdir: %w", f.Name(), err)
+		}
 	}
 	return tempdir, nil
 }

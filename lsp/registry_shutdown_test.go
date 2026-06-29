@@ -41,7 +41,7 @@ func TestRegistryFileWatcherShutdown(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		// Create a mock file watcher
 		mockWatcher := platform.NewMockFileWatcher()
-		registry := LSP.NewRegistry(mockWatcher)
+		registry := LSP.NewRegistry(mockWatcher, nil)
 
 		// Track if reload callback was called
 		reloadCalled := false
@@ -84,7 +84,7 @@ func TestRegistryFileWatcherShutdownWithManifests(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		// Create a mock file watcher
 		mockWatcher := platform.NewMockFileWatcher()
-		registry := LSP.NewRegistry(mockWatcher)
+		registry := LSP.NewRegistry(mockWatcher, nil)
 
 		// Add a manifest path manually for testing
 		registry.AddManifestPath("/test/manifest.json")
@@ -131,7 +131,7 @@ func TestRegistryFileWatcherShutdownWithManifests(t *testing.T) {
 func TestRegistryFileWatcherStopWithTimeout(t *testing.T) {
 	// Create a mock file watcher
 	mockWatcher := platform.NewMockFileWatcher()
-	registry := LSP.NewRegistry(mockWatcher)
+	registry := LSP.NewRegistry(mockWatcher, nil)
 
 	// Start file watching
 	err := registry.StartFileWatching(func() {})

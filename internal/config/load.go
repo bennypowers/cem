@@ -101,6 +101,9 @@ type HealthConfig struct {
 // LoadConfig reads and parses a CEM config file. The format is detected from
 // the file extension. JSONC files have comments stripped before parsing.
 func LoadConfig(path string, fsys platform.FileSystem) (*CemConfig, error) {
+	if fsys == nil {
+		return nil, fmt.Errorf("filesystem is required to load config %s", path)
+	}
 	data, err := fsys.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file %s: %w", path, err)

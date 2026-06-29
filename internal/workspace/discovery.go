@@ -309,7 +309,7 @@ func findWorkspaceRootWithWorkspaces(startDir string, fsys platform.FileSystem) 
 
 		// Stop if we've reached a git repository root (don't go higher)
 		gitDir := filepath.Join(dir, ".git")
-		if stat, err := fsys.Stat(gitDir); err == nil && stat.IsDir() {
+		if _, err := fsys.Stat(gitDir); err == nil {
 			return "" // Hit git boundary without finding workspace
 		}
 

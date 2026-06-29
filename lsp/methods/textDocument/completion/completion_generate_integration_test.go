@@ -150,7 +150,7 @@ export class TestAlert extends LitElement {
 		}
 
 		mockFileWatcher := platform.NewMockFileWatcher()
-		registry := lsp.NewRegistry(mockFileWatcher)
+		registry := lsp.NewRegistry(mockFileWatcher, nil)
 
 		// Load initial manifests
 		err = registry.LoadFromWorkspace(workspace)

@@ -124,9 +124,14 @@ type Registry struct {
 }
 
 // NewRegistry creates a new empty registry with the given file watcher.
+// If fsys is nil, it defaults to platform.NewOSFileSystem().
 // For production use, pass platform.NewFSNotifyFileWatcher().
 // For testing, pass platform.NewMockFileWatcher().
-func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
+func NewRegistry(fileWatcher platform.FileWatcher, fsys platform.FileSystem) *Registry {
+	if fsys == nil {
+		fsys = platform.NewOSFileSystem()
+	}
+
 	// Get QueryManager for dependency injection
 	queryManager, err := treesitter.GetGlobalQueryManager()
 	if err != nil {
@@ -134,7 +139,7 @@ func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
 		queryManager = nil
 	}
 
-	moduleGraph := modulegraph.NewModuleGraph(queryManager)
+	moduleGraph := modulegraph.NewModuleGraph(fsys, queryManager)
 
 	return &Registry{
 		Elements:             make(map[string]*M.CustomElement),
@@ -146,7 +151,7 @@ func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
 		ManifestPackageNames: make(map[string]string),
 		fileWatcher:          fileWatcher,
 		moduleGraph:          moduleGraph,
-		fs:                   platform.NewOSFileSystem(),
+		fs:                   fsys,
 	}
 }
 
@@ -157,7 +162,7 @@ func NewRegistryWithDefaults() (*Registry, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create file watcher: %w", err)
 	}
-	return NewRegistry(fileWatcher), nil
+	return NewRegistry(fileWatcher, nil), nil
 }
 
 // LoadFromWorkspace loads all available custom elements manifests from
@@ -213,7 +218,7 @@ func (r *Registry) clear() {
 		// For production, this should not happen, but handle gracefully
 		queryManager = nil
 	}
-	r.moduleGraph = modulegraph.NewModuleGraph(queryManager)
+	r.moduleGraph = modulegraph.NewModuleGraph(r.fs, queryManager)
 }
 
 // clearDataOnly resets the registry data but preserves manifest paths for watching
@@ -231,7 +236,7 @@ func (r *Registry) clearDataOnly() {
 		// For production, this should not happen, but handle gracefully
 		queryManager = nil
 	}
-	r.moduleGraph = modulegraph.NewModuleGraph(queryManager)
+	r.moduleGraph = modulegraph.NewModuleGraph(r.fs, queryManager)
 	// Note: ManifestPaths are preserved for file watching
 }
 
@@ -633,7 +638,7 @@ func (r *Registry) generateInMemoryManifest(packagePath string, packageName stri
 	logging.Debug("[IN-MEMORY] Successfully initialized workspace context for %s", packageName)
 
 	// Create a generate session
-	session, err := generate.NewGenerateSession(wsCtx, platform.NewOSFileSystem())
+	session, err := generate.NewGenerateSession(wsCtx, r.fs)
 	if err != nil {
 		logging.Warning("[IN-MEMORY] Failed to create generate session for %s: %v", packageName, err)
 		return nil

@@ -84,7 +84,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 	t.Run("file watching triggers reload", func(t *testing.T) {
 		// Create registry with MockFileWatcher for testing
 		mockFileWatcher := platform.NewMockFileWatcher()
-		testRegistry := lsp.NewRegistry(mockFileWatcher)
+		testRegistry := lsp.NewRegistry(mockFileWatcher, nil)
 		err = testRegistry.LoadFromWorkspace(workspace)
 		if err != nil {
 			t.Fatalf("Failed to load from workspace: %v", err)
@@ -157,7 +157,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			// Create registry with MockFileWatcher for testing
 			mockFileWatcher := platform.NewMockFileWatcher()
-			testRegistry := lsp.NewRegistry(mockFileWatcher)
+			testRegistry := lsp.NewRegistry(mockFileWatcher, nil)
 			err = testRegistry.LoadFromWorkspace(workspace)
 			if err != nil {
 				t.Fatalf("Failed to load from workspace: %v", err)
@@ -304,7 +304,7 @@ func TestPackageJSONWatching(t *testing.T) {
 	t.Run("package.json changes trigger reload", func(t *testing.T) {
 		// Create registry with MockFileWatcher for testing
 		mockFileWatcher := platform.NewMockFileWatcher()
-		testRegistry := lsp.NewRegistry(mockFileWatcher)
+		testRegistry := lsp.NewRegistry(mockFileWatcher, nil)
 
 		// Load workspace to populate manifest paths
 		workspace := W.NewFileSystemWorkspaceContext(tempDir)

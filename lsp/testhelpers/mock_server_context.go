@@ -418,7 +418,7 @@ func (m *MockServerContext) ModuleGraph() *modulegraph.ModuleGraph {
 	// Return the persistent module graph instance
 	if m.ModuleGraphInst == nil {
 		// Initialize with a mock manifest resolver and QueryManager
-		m.ModuleGraphInst = modulegraph.NewModuleGraph(m.QueryMgr)
+		m.ModuleGraphInst = modulegraph.NewModuleGraph(nil, m.QueryMgr)
 		// Set workspace root if available
 		if m.WorkspaceRootStr != "" {
 			m.ModuleGraphInst.SetWorkspaceRoot(m.WorkspaceRootStr)

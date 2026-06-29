@@ -239,6 +239,25 @@ func NewTempDirFileSystem() (*TempDirFileSystem, error) {
 	}, nil
 }
 
+// logicalPath strips the tempDir prefix from a host-absolute path,
+// returning the logical path that callers of this filesystem expect.
+func (fs *TempDirFileSystem) logicalPath(hostPath string) string {
+	rel, err := filepath.Rel(fs.tempDir, hostPath)
+	if err != nil {
+		return hostPath
+	}
+	return rel
+}
+
+// tempDirTempFile wraps an os.File so that Name() returns the logical path
+// rather than the host-absolute path.
+type tempDirTempFile struct {
+	*os.File
+	logical string
+}
+
+func (t *tempDirTempFile) Name() string { return t.logical }
+
 // resolvePath converts relative paths to absolute paths within the temp directory
 func (fs *TempDirFileSystem) resolvePath(name string) string {
 	if filepath.IsAbs(name) {
@@ -296,7 +315,11 @@ func (fs *TempDirFileSystem) Create(name string) (io.WriteCloser, error) {
 }
 
 func (fs *TempDirFileSystem) CreateTemp(dir, pattern string) (TempFile, error) {
-	return os.CreateTemp(fs.resolvePath(dir), pattern)
+	f, err := os.CreateTemp(fs.resolvePath(dir), pattern)
+	if err != nil {
+		return nil, err
+	}
+	return &tempDirTempFile{File: f, logical: fs.logicalPath(f.Name())}, nil
 }
 
 func (fs *TempDirFileSystem) Rename(oldpath, newpath string) error {
@@ -304,11 +327,23 @@ func (fs *TempDirFileSystem) Rename(oldpath, newpath string) error {
 }
 
 func (fs *TempDirFileSystem) MkdirTemp(dir, pattern string) (string, error) {
-	return os.MkdirTemp(fs.resolvePath(dir), pattern)
+	hostPath, err := os.MkdirTemp(fs.resolvePath(dir), pattern)
+	if err != nil {
+		return "", err
+	}
+	return fs.logicalPath(hostPath), nil
 }
 
 func (fs *TempDirFileSystem) Glob(pattern string) ([]string, error) {
-	return filepath.Glob(fs.resolvePath(pattern))
+	matches, err := filepath.Glob(fs.resolvePath(pattern))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]string, len(matches))
+	for i, m := range matches {
+		result[i] = fs.logicalPath(m)
+	}
+	return result, nil
 }
 
 // Cleanup removes the temporary directory and all its contents.
