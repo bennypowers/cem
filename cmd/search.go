@@ -56,7 +56,8 @@ Examples:
 			return errors.New("search pattern cannot be empty")
 		}
 
-		if W.ShouldUseWorkspaceMode(cmd, platform.NewOSFileSystem()) {
+		fsys := platform.NewOSFileSystem()
+		if W.ShouldUseWorkspaceMode(cmd, fsys) {
 			return searchWorkspace(cmd, pattern)
 		}
 
@@ -96,7 +97,8 @@ func searchWorkspace(cmd *cobra.Command, pattern string) error {
 		return err
 	}
 
-	results := W.ForEachPackage(ctx.Root(), platform.NewOSFileSystem(), func(pkg W.PackageInfo) error {
+	fsys := platform.NewOSFileSystem()
+	results := W.ForEachPackage(ctx.Root(), fsys, func(pkg W.PackageInfo) error {
 		pkgCtx := W.NewFileSystemWorkspaceContext(pkg.Path)
 		if err := pkgCtx.Init(); err != nil {
 			return err
