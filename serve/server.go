@@ -290,7 +290,7 @@ func (s *Server) Start() error {
 
 	// Start file watcher if watch directory is set
 	if s.watchDir != "" {
-		fw, err := newFileWatcher(s.DebounceDuration(), s.logger)
+		fw, err := newFileWatcher(s.DebounceDuration(), s.logger, s.fs)
 		if err != nil {
 			_ = listener.Close()
 			return fmt.Errorf("failed to create file watcher: %w", err)

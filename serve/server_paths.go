@@ -21,10 +21,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
-	"os"
 	"path/filepath"
 
 	"bennypowers.dev/cem/cmd/config"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/serve/middleware"
 	importmappkg "bennypowers.dev/cem/serve/middleware/importmap"
 	"bennypowers.dev/cem/serve/middleware/transform"
@@ -43,18 +43,18 @@ type packageJSON struct {
 // node_modules or workspace config without the VCS preference logic. It shares logic with
 // serve/middleware/importmap/generate.go:findWorkspaceRoot (which accepts FileSystem for testing).
 // Consider consolidating these implementations in the future.
-func findWorkspaceRootForServe(startDir string) string {
+func findWorkspaceRootForServe(startDir string, fsys platform.FileSystem) string {
 	dir := startDir
 	for {
 		// Check if node_modules exists in this directory
 		nodeModulesPath := filepath.Join(dir, "node_modules")
-		if stat, err := os.Stat(nodeModulesPath); err == nil && stat.IsDir() {
+		if stat, err := fsys.Stat(nodeModulesPath); err == nil && stat.IsDir() {
 			return dir
 		}
 
 		// Check if there's a package.json with workspaces field
 		pkgPath := filepath.Join(dir, "package.json")
-		if data, err := os.ReadFile(pkgPath); err == nil {
+		if data, err := fsys.ReadFile(pkgPath); err == nil {
 			var pkg packageJSON
 			if json.Unmarshal(data, &pkg) == nil && pkg.Workspaces != nil {
 				return dir
@@ -63,7 +63,7 @@ func findWorkspaceRootForServe(startDir string) string {
 
 		// Stop if we've reached a git repository root (don't go higher)
 		gitDir := filepath.Join(dir, ".git")
-		if stat, err := os.Stat(gitDir); err == nil && stat.IsDir() {
+		if stat, err := fsys.Stat(gitDir); err == nil && stat.IsDir() {
 			// Hit git boundary without finding workspace root, return start dir
 			return startDir
 		}
@@ -257,7 +257,7 @@ func (s *Server) SetWatchDir(dir string) error {
 	// In single-package mode, store workspace root separately so /node_modules/
 	// can be served from workspace root while keeping package isolation
 	if !s.isWorkspace {
-		workspaceRoot := findWorkspaceRootForServe(absDir)
+		workspaceRoot := findWorkspaceRootForServe(absDir, s.fs)
 		if workspaceRoot != absDir {
 			s.logger.Debug("Detected workspace root at %s", workspaceRoot)
 			s.logger.Debug("Will serve /node_modules/ from workspace root while keeping package isolation")

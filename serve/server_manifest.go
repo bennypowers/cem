@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"runtime"
 
@@ -91,15 +90,7 @@ func (s *Server) PackageJSON() (*middleware.PackageJSON, error) {
 
 	packageJSONPath := filepath.Join(watchDir, "package.json")
 
-	var data []byte
-	var err error
-
-	// Use injected filesystem if available, otherwise fall back to os.ReadFile
-	if filesystem := s.FileSystem(); filesystem != nil {
-		data, err = filesystem.ReadFile(packageJSONPath)
-	} else {
-		data, err = os.ReadFile(packageJSONPath)
-	}
+	data, err := s.fs.ReadFile(packageJSONPath)
 
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
