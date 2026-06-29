@@ -31,7 +31,7 @@ import (
 func TestMCPContext_NewRegistry(t *testing.T) {
 	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/multiple-elements-integration")
 
-	registry, err := mcp.NewMCPContext(workspace, nil)
+	registry, err := mcp.NewMCPContext(workspace, workspace.FileSystem())
 	require.NoError(t, err, "Failed to create registry")
 	assert.NotNil(t, registry, "Registry should not be nil")
 }
@@ -41,7 +41,7 @@ func TestMCPContext_LoadManifests(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace, nil)
+	registry, err := mcp.NewMCPContext(workspace, workspace.FileSystem())
 	require.NoError(t, err, "Failed to create registry")
 
 	err = registry.LoadManifests()
@@ -53,7 +53,7 @@ func TestMCPContext_GetElementInfo(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace, nil)
+	registry, err := mcp.NewMCPContext(workspace, workspace.FileSystem())
 	require.NoError(t, err, "Failed to create registry")
 
 	err = registry.LoadManifests()
@@ -212,7 +212,7 @@ func TestMCPContext_GetAllElements(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace, nil)
+	registry, err := mcp.NewMCPContext(workspace, workspace.FileSystem())
 	require.NoError(t, err, "Failed to create registry")
 
 	err = registry.LoadManifests()
@@ -239,7 +239,7 @@ func TestMCPContext_GetManifestSchema(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace, nil)
+	registry, err := mcp.NewMCPContext(workspace, workspace.FileSystem())
 	require.NoError(t, err, "Failed to create registry")
 
 	schema, err := registry.GetManifestSchema()
@@ -299,7 +299,7 @@ func TestMCPContext_AttributeConversion(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace, nil)
+	registry, err := mcp.NewMCPContext(workspace, workspace.FileSystem())
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -388,7 +388,7 @@ func TestMCPContext_SlotConversion(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace, nil)
+	registry, err := mcp.NewMCPContext(workspace, workspace.FileSystem())
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -457,7 +457,7 @@ func TestMCPContext_CssPropertyConversion(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace, nil)
+	registry, err := mcp.NewMCPContext(workspace, workspace.FileSystem())
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -527,7 +527,7 @@ func TestMCPContext_CssPartConversion(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace, nil)
+	registry, err := mcp.NewMCPContext(workspace, workspace.FileSystem())
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
