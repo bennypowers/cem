@@ -22,24 +22,27 @@ import (
 
 func TestTSCursorParser(t *testing.T) {
 	tests := []struct {
-		name     string
-		content  string
-		wantLine uint32
-		wantChar uint32
-		wantNil  bool
+		name      string
+		content   string
+		wantLine  uint32
+		wantChar  uint32
+		wantClean string
+		wantNil   bool
 	}{
 		{
 			name: "caret under property binding",
 			content: "const tpl = html`<test-element .prop>`;\n" +
 				"/*                              ^cursor */\n",
-			wantLine: 0,
-			wantChar: 32,
+			wantLine:  0,
+			wantChar:  32,
+			wantClean: "const tpl = html`<test-element .prop>`;\n",
 		},
 		{
-			name:    "caret under import",
-			content: "import { html } from 'lit';\n/*        ^cursor */\nconst x = 1;\n",
-			wantLine: 0,
-			wantChar: 10,
+			name:      "caret under import",
+			content:   "import { html } from 'lit';\n/*        ^cursor */\nconst x = 1;\n",
+			wantLine:  0,
+			wantChar:  10,
+			wantClean: "import { html } from 'lit';\nconst x = 1;\n",
 		},
 		{
 			name:    "no marker",
@@ -65,7 +68,9 @@ func TestTSCursorParser(t *testing.T) {
 			if cursor.Character != tt.wantChar {
 				t.Errorf("Character: want %d, got %d", tt.wantChar, cursor.Character)
 			}
-			_ = cleaned
+			if cleaned != tt.wantClean {
+				t.Errorf("Cleaned content mismatch.\nWant:\n%q\nGot:\n%q", tt.wantClean, cleaned)
+			}
 		})
 	}
 }
@@ -86,5 +91,8 @@ func TestCSSCursorParser(t *testing.T) {
 	if cursor.Character != 18 {
 		t.Errorf("Character: want 18, got %d", cursor.Character)
 	}
-	_ = cleaned
+	wantClean := "my-element::part(button) {\n  color: red;\n}\n"
+	if cleaned != wantClean {
+		t.Errorf("Cleaned content mismatch.\nWant:\n%q\nGot:\n%q", wantClean, cleaned)
+	}
 }

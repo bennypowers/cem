@@ -25,6 +25,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/textutil"
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 	"golang.org/x/net/html"
 	"gopkg.in/yaml.v3"
@@ -244,7 +245,7 @@ func extractHTMLCursorMarker(content string) (string, *protocol.Position) {
 				continue
 			}
 			caretGlobal := byteOffset + caretInRaw
-			caretLine, caretCol := byteOffsetToLineCol(content, caretGlobal)
+			caretLine, caretChar := byteOffsetToPosition(content, caretGlobal)
 			if caretLine == 0 {
 				byteOffset += len(raw)
 				continue
@@ -261,7 +262,7 @@ func extractHTMLCursorMarker(content string) (string, *protocol.Position) {
 			cleaned := content[:lineStart] + content[lineEnd:]
 			return cleaned, &protocol.Position{
 				Line:      uint32(caretLine - 1),
-				Character: uint32(caretCol),
+				Character: caretChar,
 			}
 		}
 		byteOffset += len(raw)
@@ -269,21 +270,22 @@ func extractHTMLCursorMarker(content string) (string, *protocol.Position) {
 	return content, nil
 }
 
-func byteOffsetToLineCol(content string, offset int) (int, int) {
-	line := 0
-	col := 0
+// byteOffsetToPosition converts a byte offset in content to an LSP-compatible
+// (line, character) pair where character is in UTF-16 code units.
+func byteOffsetToPosition(content string, offset int) (line int, character uint32) {
+	lineStart := 0
 	for i := range offset {
 		if i >= len(content) {
 			break
 		}
 		if content[i] == '\n' {
 			line++
-			col = 0
-		} else {
-			col++
+			lineStart = i + 1
 		}
 	}
-	return line, col
+	byteCol := uint(offset - lineStart)
+	character = textutil.ByteOffsetToUTF16(content[lineStart:], byteCol)
+	return line, character
 }
 
 // cursorFrontmatter is the YAML structure for cursor position in frontmatter.

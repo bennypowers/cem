@@ -19,6 +19,7 @@ package testhelpers
 import (
 	"strings"
 
+	"bennypowers.dev/cem/internal/textutil"
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsCss "github.com/tree-sitter/tree-sitter-css/bindings/go"
@@ -64,16 +65,18 @@ func treeSitterCursorParser(content string, lang *ts.Language) (string, *protoco
 	}
 
 	caretRow := node.StartPosition().Row
-	caretCol := node.StartPosition().Column + uint(caretInNode)
 	if caretRow == 0 {
 		return content, nil
 	}
 
-	// Strip the entire line containing the comment
+	// Find the start of the line containing the comment for UTF-16 conversion
 	lineStart := int(node.StartByte())
 	for lineStart > 0 && content[lineStart-1] != '\n' {
 		lineStart--
 	}
+	caretByteCol := int(node.StartByte()) - lineStart + caretInNode
+	caretChar := textutil.ByteOffsetToUTF16(content[lineStart:], uint(caretByteCol))
+
 	lineEnd := int(node.EndByte())
 	if lineEnd < len(content) && content[lineEnd] == '\n' {
 		lineEnd++
@@ -82,7 +85,7 @@ func treeSitterCursorParser(content string, lang *ts.Language) (string, *protoco
 
 	return cleaned, &protocol.Position{
 		Line:      uint32(caretRow - 1),
-		Character: uint32(caretCol),
+		Character: caretChar,
 	}
 }
 
