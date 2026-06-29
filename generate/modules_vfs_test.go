@@ -33,11 +33,11 @@ import (
 // This verifies that code reading modules through the FS abstraction does not
 // depend on the host filesystem.
 func TestModuleProcessor_VirtualFS_PathHandling(t *testing.T) {
-	// MapFileSystem (mocks.go) cleans paths in all methods, stripping leading "/".
-	// MapFS (mapfs.go) does NOT clean paths in ReadFile/Open/Stat/Exists.
-	// NewModuleProcessor builds: path = filepath.Join(ctx.Root(), file)
+	// Both MapFileSystem (mocks.go) and MapFS (mapfs.go) clean paths in all
+	// methods, stripping leading "/". NewModuleProcessor builds:
+	//   path = filepath.Join(ctx.Root(), file)
 	// When root is "/project", this produces "/project/src/my-element.ts".
-	// MapFileSystem handles this; MapFS does not.
+	// Both handle this correctly via cleanMapFSPath / cleanPath.
 
 	const root = "/project"
 	const relFile = "src/my-element.ts"

@@ -627,7 +627,7 @@ func (r *Registry) generateInMemoryManifest(packagePath string, packageName stri
 	logging.Debug("[IN-MEMORY] Starting in-memory generation for package '%s' at path: %s", packageName, packagePath)
 
 	// Create a workspace context for the package directory
-	wsCtx := workspace.NewFileSystemWorkspaceContext(packagePath)
+	wsCtx := workspace.NewFileSystemWorkspaceContext(packagePath, workspace.WithFileSystem(r.fs))
 
 	// Initialize the workspace context to load config
 	if err := wsCtx.Init(); err != nil {

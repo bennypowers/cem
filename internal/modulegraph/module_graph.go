@@ -75,6 +75,9 @@ func NewModuleGraph(fsys platform.FileSystem, queryManager *treesitter.QueryMana
 // NewModuleGraphWithMetrics creates a new module graph with metrics collection enabled.
 // If fsys is nil, it defaults to platform.NewOSFileSystem().
 func NewModuleGraphWithMetrics(fsys platform.FileSystem, metrics MetricsCollector, queryManager *treesitter.QueryManager) *ModuleGraph {
+	if metrics == nil {
+		metrics = &NoOpMetricsCollector{}
+	}
 	return &ModuleGraph{
 		exportTracker:      NewExportTracker(),
 		dependencyTracker:  NewDependencyTracker(),

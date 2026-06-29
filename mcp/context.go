@@ -95,8 +95,12 @@ func NewMCPCustomElementDeclaration(element *M.CustomElement, tagName string) *M
 
 // getTypeString safely extracts type text from manifest Type
 
-// NewMCPContext creates a new MCP context
-func NewMCPContext(workspace types.WorkspaceContext) (*MCPContext, error) {
+// NewMCPContext creates a new MCP context.
+// If fsys is nil, it defaults to platform.NewOSFileSystem().
+func NewMCPContext(workspace types.WorkspaceContext, fsys platform.FileSystem) (*MCPContext, error) {
+	if fsys == nil {
+		fsys = platform.NewOSFileSystem()
+	}
 	helpers.SafeDebugLog("Creating MCP registry for workspace: %s", workspace.Root())
 
 	// Create the underlying LSP registry for reuse
@@ -115,7 +119,7 @@ func NewMCPContext(workspace types.WorkspaceContext) (*MCPContext, error) {
 		workspace:       workspace,
 		lspRegistry:     lspRegistry,
 		documentManager: documentManager,
-		fs:              platform.NewOSFileSystem(),
+		fs:              fsys,
 		mcpCache:        make(map[string]MCPTypes.ElementInfo),
 	}
 

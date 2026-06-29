@@ -60,7 +60,8 @@ func listFromWorkspaceManifests(cmd *cobra.Command, fn func(pkg W.PackageInfo, m
 	if err != nil {
 		return err
 	}
-	results := W.ForEachPackage(ctx.Root(), platform.NewOSFileSystem(), func(pkg W.PackageInfo) error {
+	fsys := platform.NewOSFileSystem()
+	results := W.ForEachPackage(ctx.Root(), fsys, func(pkg W.PackageInfo) error {
 		pkgCtx := W.NewFileSystemWorkspaceContext(pkg.Path)
 		if err := pkgCtx.Init(); err != nil {
 			return err

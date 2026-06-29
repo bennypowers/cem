@@ -41,7 +41,7 @@ func getTestRegistry(t *testing.T) *mcp.MCPContext {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()

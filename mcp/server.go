@@ -63,7 +63,7 @@ func NewServer(workspace types.WorkspaceContext) (*Server, error) {
 func NewServerWithConfig(workspace types.WorkspaceContext, config ServerConfig) (*Server, error) {
 	helpers.SafeDebugLog("Creating CEM MCP server for workspace: %s", workspace.Root())
 
-	registry, err := NewMCPContext(workspace)
+	registry, err := NewMCPContext(workspace, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create registry: %w", err)
 	}

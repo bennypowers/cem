@@ -204,7 +204,7 @@ func (s *Server) RegenerateManifest() (int, error) {
 	// Perform expensive operations without holding lock
 	// Create fresh workspace context and session for live reload
 	// This ensures we always read the latest file contents
-	workspace := W.NewFileSystemWorkspaceContext(watchDir)
+	workspace := W.NewFileSystemWorkspaceContext(watchDir, W.WithFileSystem(s.fs))
 	if err := workspace.Init(); err != nil {
 		return 0, fmt.Errorf("initializing workspace: %w", err)
 	}

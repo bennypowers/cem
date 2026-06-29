@@ -179,7 +179,7 @@ func (s *Server) loadWorkspaceRootConfig() *C.CemConfig {
 // rootCfg is the workspace root config (may be nil if unavailable).
 func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo, rootCfg *C.CemConfig) (*middleware.WorkspacePackage, error) {
 	s.logger.Debug("Generating manifest for workspace package %s", pkgInfo.Name)
-	workspace := W.NewFileSystemWorkspaceContext(pkgInfo.Path)
+	workspace := W.NewFileSystemWorkspaceContext(pkgInfo.Path, W.WithFileSystem(s.fs))
 	if err := workspace.Init(); err != nil {
 		return nil, fmt.Errorf("initializing workspace for %s: %w", pkgInfo.Name, err)
 	}

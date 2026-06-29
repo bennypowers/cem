@@ -79,7 +79,7 @@ func NewMapWorkspaceContextWithRoot(t testing.TB, dir string, rootPath string) *
 }
 
 func (c *MapWorkspaceContext) Init() error {
-	data, err := c.mfs.ReadFile("package.json")
+	data, err := c.mfs.ReadFile(filepath.Join(c.root, "package.json"))
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("MapWorkspaceContext: reading package.json: %w", err)
 	}

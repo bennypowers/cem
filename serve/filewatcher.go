@@ -61,6 +61,9 @@ func getDefaultIgnorePatterns() []string {
 
 // newFileWatcher creates a new file watcher with debouncing
 func newFileWatcher(debounceWindow time.Duration, logger Logger, fsys platform.FileSystem) (FileWatcher, error) {
+	if fsys == nil {
+		fsys = platform.NewOSFileSystem()
+	}
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err

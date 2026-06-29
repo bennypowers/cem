@@ -18,7 +18,7 @@ func TestMCPContext_Config(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	cfg, err := registry.Config()
@@ -32,7 +32,7 @@ func TestMCPContext_ConfigFile(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	// MapWorkspaceContext returns empty string for ConfigFile
@@ -44,7 +44,7 @@ func TestMCPContext_ConfigSchemaJSON(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	schemaBytes := registry.ConfigSchemaJSON()
@@ -61,7 +61,7 @@ func TestMCPContext_Root(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	assert.Equal(t, workspace.Root(), registry.Root())
@@ -72,7 +72,7 @@ func TestMCPContextAdapter_ImplementsConfigInterface(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	adapter := mcp.NewMCPContextAdapter(registry)
@@ -94,7 +94,7 @@ func TestMCPContextAdapter_ConfigSchemaIsValidJSON(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	adapter := mcp.NewMCPContextAdapter(registry)
