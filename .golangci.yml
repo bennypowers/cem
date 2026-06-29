@@ -71,7 +71,7 @@ linters:
       - path: internal/config/schema_test\.go
         linters:
           - forbidigo
-      - path: internal/modulegraph/.*_test\.go
+      - path: internal/modulegraph/transitive_module_graph_test\.go
         linters:
           - forbidigo
       - path: internal/workspace/httpcache_test\.go
@@ -80,7 +80,10 @@ linters:
       - path: lsp/document_test\.go
         linters:
           - forbidigo
-      - path: lsp/methods/textDocument/publishDiagnostics/.*_test\.go
+      - path: lsp/methods/textDocument/publishDiagnostics/tagDiagnostics_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/methods/textDocument/publishDiagnostics/transitive_integration_test\.go
         linters:
           - forbidigo
       - path: lsp/methods/textDocument/references/references_test\.go
@@ -92,7 +95,16 @@ linters:
       - path: serve/middleware/importmap/.*_test\.go
         linters:
           - forbidigo
-      - path: lsp/methods/textDocument/completion/.*_test\.go
+      - path: lsp/methods/textDocument/completion/completion_button_element_regression_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/methods/textDocument/completion/completion_generate_integration_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/methods/textDocument/completion/completion_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/methods/textDocument/completion/completion_test_helpers_test\.go
         linters:
           - forbidigo
       - path: lsp/methods/textDocument/codeAction/.*_test\.go
@@ -107,10 +119,7 @@ linters:
       - path: validate/validate_test\.go
         linters:
           - forbidigo
-      - path: mcp/tools/generate_html_test\.go
-        linters:
-          - forbidigo
-      - path: serve/middleware/routes/.*_test\.go
+      - path: serve/middleware/routes/chrome_test\.go
         linters:
           - forbidigo
       - path: lsp/incremental_integration_test\.go
@@ -119,10 +128,16 @@ linters:
       - path: mcp/context_config_reload_test\.go
         linters:
           - forbidigo
-      - path: mcp/resources/.*_test\.go
+      - path: mcp/resources/multiple_schemas_test\.go
         linters:
           - forbidigo
-      - path: mcp/tools/.*_test\.go
+      - path: mcp/resources/resources_test\.go
+        linters:
+          - forbidigo
+      - path: mcp/tools/generate_html_test\.go
+        linters:
+          - forbidigo
+      - path: mcp/tools/tools_test\.go
         linters:
           - forbidigo
       - path: generate/generate_benchmark_test\.go

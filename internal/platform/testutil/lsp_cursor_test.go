@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package testutil
 
 import (
+	"strings"
 	"testing"
 
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
@@ -167,15 +168,24 @@ title: test
 }
 
 func TestExtractCursor_HTMLMarkerOverFrontmatter(t *testing.T) {
-	content := "<test-element></test-element>\n<!-- ^cursor -->\n"
+	content := "---\ncursor:\n  line: 99\n  character: 99\n---\n<test-element></test-element>\n<!-- ^cursor -->\n"
 	cleaned, cursor := extractCursor(content, "html")
 	if cursor == nil {
 		t.Fatal("Expected cursor from HTML marker, got nil")
 	}
 	if cursor.Line != 0 {
-		t.Errorf("Line: want 0, got %d", cursor.Line)
+		t.Errorf("Line: want 0 (from marker), got %d", cursor.Line)
 	}
-	_ = cleaned
+	if cursor.Character == 99 {
+		t.Error("Cursor came from frontmatter, not marker")
+	}
+	if strings.Contains(cleaned, "---") {
+		t.Errorf("Frontmatter not stripped from cleaned content: %q", cleaned)
+	}
+	wantClean := "<test-element></test-element>\n"
+	if cleaned != wantClean {
+		t.Errorf("Cleaned content mismatch.\nWant: %q\nGot:  %q", wantClean, cleaned)
+	}
 }
 
 func TestExtractCursor_FrontmatterFallbackForTS(t *testing.T) {

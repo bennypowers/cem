@@ -30,6 +30,9 @@ import (
 
 func TestHover_Fixtures(t *testing.T) {
 	testutil.RunLSPFixtures(t, "testdata", func(t *testing.T, fixture *testutil.LSPFixture) {
+		if fixture.InputType == "ts" {
+			fixture.ParseCursor(testhelpers.TSCursorParser)
+		}
 		if fixture.Cursor == nil {
 			t.Fatalf("No cursor position in fixture %s (add <!-- ^cursor --> or frontmatter)", fixture.Name)
 		}
