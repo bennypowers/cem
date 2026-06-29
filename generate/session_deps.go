@@ -29,8 +29,15 @@ import (
 	"bennypowers.dev/cem/types"
 )
 
+// fileState bundles a file's content hash with the time it was last scanned,
+// so each file tracks its own scan timestamp independently.
+type fileState struct {
+	hash      [32]byte
+	scannedAt time.Time
+}
+
 // Type aliases for dependency tracking maps
-type FileHashMap map[string][32]byte
+type FileStateMap map[string]fileState
 type ModuleDependencyMap map[string]*ModuleDependencies
 type CssReverseDepMap map[string][]string
 
@@ -38,17 +45,17 @@ type CssReverseDepMap map[string][]string
 // Maintains three interconnected dependency maps for efficient change detection:
 //
 // Dependency Relationships:
-// - fileHashes: Maps filesystem paths to SHA256 hashes for change detection
+// - fileStates: Maps filesystem paths to per-file state (hash + scan time) for change detection
 // - moduleDeps: Maps module paths to their ModuleDependencies (what each module imports)
 // - cssDepReverse: Reverse mapping from CSS filesystem paths to modules that depend on them
 //
 // Data Flow:
 // 1. RecordModuleDependencies() populates moduleDeps and builds cssDepReverse
-// 2. UpdateFileHash() and HasFileChanged() use fileHashes for change detection
+// 2. UpdateFileHash() and HasFileChanged() use fileStates for change detection
 // 3. GetModulesAffectedByFiles() uses both moduleDeps and cssDepReverse to find rebuild targets
 //
 // Path Conventions:
-// - fileHashes and cssDepReverse use filesystem paths (absolute)
+// - fileStates and cssDepReverse use filesystem paths (absolute)
 // - moduleDeps uses module paths (relative to workspace root)
 // - Workspace context handles conversions between path types
 //
@@ -60,10 +67,9 @@ type CssReverseDepMap map[string][]string
 // Thread Safety: Protected by sync.RWMutex for concurrent read/write access
 type FileDependencyTracker struct {
 	mu            sync.RWMutex
-	fileHashes    FileHashMap         // FS path -> SHA256 hash for change detection
+	fileStates    FileStateMap        // FS path -> per-file hash + scan time for change detection
 	moduleDeps    ModuleDependencyMap // Module path -> dependencies (forward mapping)
 	cssDepReverse CssReverseDepMap    // CSS FS path -> module paths that depend on it (reverse mapping)
-	lastScanTime  time.Time
 	ctx           types.WorkspaceContext
 	fs            platform.FileSystem
 }
@@ -84,7 +90,7 @@ type ModuleDependencies struct {
 // Returns: Initialized tracker with empty dependency maps
 func NewFileDependencyTracker(ctx types.WorkspaceContext, fsys platform.FileSystem) *FileDependencyTracker {
 	return &FileDependencyTracker{
-		fileHashes:    make(FileHashMap),
+		fileStates:    make(FileStateMap),
 		moduleDeps:    make(ModuleDependencyMap),
 		cssDepReverse: make(CssReverseDepMap),
 		ctx:           ctx,
@@ -99,13 +105,13 @@ func (fdt *FileDependencyTracker) UpdateFileHash(fsPath string) ([32]byte, error
 	if err != nil {
 		return [32]byte{}, err
 	}
-	// Acquire read lock to check if the file hash is up-to-date
+	// Acquire read lock to check if this file's hash is up-to-date
 	fdt.mu.RLock()
-	lastHash, exists := fdt.fileHashes[fsPath]
+	state, exists := fdt.fileStates[fsPath]
 	fdt.mu.RUnlock()
-	if exists && fileInfo.ModTime().Before(fdt.lastScanTime) {
-		// File hasn't changed since the last scan; return the existing hash
-		return lastHash, nil
+	if exists && fileInfo.ModTime().Before(state.scannedAt) {
+		// File hasn't changed since its own last scan; return the existing hash
+		return state.hash, nil
 	}
 	// Compute the new hash
 	fdt.mu.Lock()
@@ -123,10 +129,10 @@ func (fdt *FileDependencyTracker) UpdateFileHash(fsPath string) ([32]byte, error
 	}
 
 	hash := [32]byte(hasher.Sum(nil))
-	fdt.fileHashes[fsPath] = hash
-
-	// Update last scan time to now for future optimization
-	fdt.lastScanTime = time.Now()
+	fdt.fileStates[fsPath] = fileState{
+		hash:      hash,
+		scannedAt: time.Now(),
+	}
 
 	return hash, nil
 }
@@ -134,7 +140,7 @@ func (fdt *FileDependencyTracker) UpdateFileHash(fsPath string) ([32]byte, error
 // HasFileChanged checks if a file has changed since last scan (expects FS path)
 func (fdt *FileDependencyTracker) HasFileChanged(fsPath string) (bool, error) {
 	fdt.mu.RLock()
-	lastHash, exists := fdt.fileHashes[fsPath]
+	state, exists := fdt.fileStates[fsPath]
 	fdt.mu.RUnlock()
 
 	if !exists {
@@ -146,7 +152,7 @@ func (fdt *FileDependencyTracker) HasFileChanged(fsPath string) (bool, error) {
 		return true, err // Assume changed if we can't read it
 	}
 
-	return currentHash != lastHash, nil
+	return currentHash != state.hash, nil
 }
 
 // GetModulesAffectedByFiles returns modules that need rebuilding due to file changes.

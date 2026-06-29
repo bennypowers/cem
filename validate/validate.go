@@ -386,15 +386,16 @@ func getEmbeddedSchema(version string) ([]byte, error) {
 }
 
 func tryFetchSchema(fsys platform.FileSystem, version string) ([]byte, error) {
-	cacheDir, err := xdg.CacheFile(filepath.Join("cem", "schemas"))
-	if err != nil {
-		return nil, fmt.Errorf("could not get cache directory: %w", err)
-	}
-
-	schemaPath := filepath.Join(cacheDir, version+".json")
-
-	if _, err := fsys.Stat(schemaPath); err == nil {
-		return fsys.ReadFile(schemaPath)
+	// Skip file cache when no cache directory is available (e.g. wasm)
+	// TODO(#371): wasm targets may want their own cache backed by IndexedDB or similar
+	if xdg.CacheHome != "" {
+		cacheDir, err := xdg.CacheFile(filepath.Join("cem", "schemas"))
+		if err == nil {
+			schemaPath := filepath.Join(cacheDir, version+".json")
+			if _, err := fsys.Stat(schemaPath); err == nil {
+				return fsys.ReadFile(schemaPath)
+			}
+		}
 	}
 
 	url := fmt.Sprintf("https://unpkg.com/custom-elements-manifest@%s/schema.json", version)
@@ -413,12 +414,14 @@ func tryFetchSchema(fsys platform.FileSystem, version string) ([]byte, error) {
 		return nil, fmt.Errorf("could not read schema from response body: %w", err)
 	}
 
-	if err := fsys.MkdirAll(filepath.Dir(schemaPath), 0755); err != nil {
-		return nil, fmt.Errorf("could not create cache directory: %w", err)
-	}
-
-	if err := fsys.WriteFile(schemaPath, schemaData, 0644); err != nil {
-		return nil, fmt.Errorf("could not write schema to cache: %w", err)
+	// Cache the result if cache directory available
+	if xdg.CacheHome != "" {
+		cacheDir, err := xdg.CacheFile(filepath.Join("cem", "schemas"))
+		if err == nil {
+			schemaPath := filepath.Join(cacheDir, version+".json")
+			_ = fsys.MkdirAll(filepath.Dir(schemaPath), 0755)
+			_ = fsys.WriteFile(schemaPath, schemaData, 0644)
+		}
 	}
 
 	return schemaData, nil

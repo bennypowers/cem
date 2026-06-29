@@ -19,6 +19,7 @@ package workspace
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform"
@@ -190,10 +191,11 @@ func TestIsWorkspaceMode_MultiplePackages(t *testing.T) {
 	}
 }
 
-// TestFindPackagesForFiles tests that files are correctly mapped to packages
+// TestFindPackagesForFiles tests that files are correctly mapped to packages.
+// Both rootDir and filePaths must use consistent path forms -- either both
+// absolute or both relative -- since package paths come from fsys.Glob.
 func TestFindPackagesForFiles(t *testing.T) {
-	rootDir := filepath.Join("testdata", "workspace-mode-single-package")
-	absRootDir, err := filepath.Abs(rootDir)
+	rootDir, err := filepath.Abs(filepath.Join("testdata", "workspace-mode-single-package"))
 	if err != nil {
 		t.Fatalf("Failed to get absolute path: %v", err)
 	}
@@ -207,7 +209,7 @@ func TestFindPackagesForFiles(t *testing.T) {
 		{
 			name: "single file in package",
 			filePaths: []string{
-				filepath.Join(absRootDir, "packages", "elements", "src", "my-element.ts"),
+				filepath.Join(rootDir, "packages", "elements", "src", "my-element.ts"),
 			},
 			expectedCount: 1,
 			expectedName:  "@test/elements",
@@ -215,30 +217,30 @@ func TestFindPackagesForFiles(t *testing.T) {
 		{
 			name: "multiple files in same package",
 			filePaths: []string{
-				filepath.Join(absRootDir, "packages", "elements", "src", "my-element.ts"),
-				filepath.Join(absRootDir, "packages", "elements", "src", "another-element.ts"),
+				filepath.Join(rootDir, "packages", "elements", "src", "my-element.ts"),
+				filepath.Join(rootDir, "packages", "elements", "src", "another-element.ts"),
 			},
 			expectedCount: 1, // Both files in same package, should deduplicate
 		},
 		{
 			name: "file outside all packages",
 			filePaths: []string{
-				filepath.Join(absRootDir, "some-other-file.ts"),
+				filepath.Join(rootDir, "some-other-file.ts"),
 			},
 			expectedCount: 0,
 		},
 		{
 			name: "file in root node_modules",
 			filePaths: []string{
-				filepath.Join(absRootDir, "node_modules", "some-dep", "index.js"),
+				filepath.Join(rootDir, "node_modules", "some-dep", "index.js"),
 			},
 			expectedCount: 0,
 		},
 		{
 			name: "mixed files in and outside packages",
 			filePaths: []string{
-				filepath.Join(absRootDir, "packages", "elements", "src", "my-element.ts"),
-				filepath.Join(absRootDir, "some-file.ts"),
+				filepath.Join(rootDir, "packages", "elements", "src", "my-element.ts"),
+				filepath.Join(rootDir, "some-file.ts"),
 			},
 			expectedCount: 1, // Only one file is in a package
 		},
@@ -272,16 +274,15 @@ func TestFindPackagesForFiles(t *testing.T) {
 // TestFindPackagesForFiles_MultiplePackages tests that files in different packages
 // correctly returns all affected packages
 func TestFindPackagesForFiles_MultiplePackages(t *testing.T) {
-	rootDir := filepath.Join("testdata", "multi-package-workspace")
-	absRootDir, err := filepath.Abs(rootDir)
+	rootDir, err := filepath.Abs(filepath.Join("testdata", "multi-package-workspace"))
 	if err != nil {
 		t.Fatalf("Failed to get absolute path: %v", err)
 	}
 
 	// Files in two different packages
 	filePaths := []string{
-		filepath.Join(absRootDir, "packages", "alpha", "src", "component.ts"),
-		filepath.Join(absRootDir, "packages", "beta", "src", "component.ts"),
+		filepath.Join(rootDir, "packages", "alpha", "src", "component.ts"),
+		filepath.Join(rootDir, "packages", "beta", "src", "component.ts"),
 	}
 
 	packages, err := FindPackagesForFiles(rootDir, filePaths, platform.NewOSFileSystem())
@@ -310,5 +311,170 @@ func TestFindPackagesForFiles_MultiplePackages(t *testing.T) {
 	}
 	if !foundBeta {
 		t.Error("Expected to find @test/beta package")
+	}
+}
+
+// TestDiscoverWorkspacePackages_MapFS verifies workspace discovery works with an
+// in-memory filesystem, ensuring no host filesystem dependency (filepath.Abs).
+func TestDiscoverWorkspacePackages_MapFS(t *testing.T) {
+	fsys := platform.NewMapFS(map[string]string{
+		"workspace/package.json": `{
+			"name": "root",
+			"workspaces": ["packages/*"]
+		}`,
+		"workspace/packages/alpha/package.json": `{
+			"name": "@test/alpha",
+			"customElements": "custom-elements.json"
+		}`,
+		"workspace/packages/beta/package.json": `{
+			"name": "@test/beta",
+			"customElements": "custom-elements.json"
+		}`,
+		"workspace/packages/gamma/package.json": `{
+			"name": "@test/gamma"
+		}`,
+	})
+
+	workspacesField := []any{"packages/*"}
+	packages, err := DiscoverWorkspacePackages("workspace", workspacesField, fsys)
+	if err != nil {
+		t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
+	}
+
+	if len(packages) != 3 {
+		t.Fatalf("expected 3 packages, got %d: %v", len(packages), packages)
+	}
+
+	// Paths should match what fsys.Glob returns -- no filepath.Abs transformation
+	for name, path := range packages {
+		wantPrefix := "workspace/packages/"
+		if !strings.HasPrefix(path, wantPrefix) {
+			t.Errorf("package %s: path %q does not start with %q", name, path, wantPrefix)
+		}
+	}
+
+	expectedPaths := map[string]string{
+		"@test/alpha": "workspace/packages/alpha",
+		"@test/beta":  "workspace/packages/beta",
+		"@test/gamma": "workspace/packages/gamma",
+	}
+	for name, wantPath := range expectedPaths {
+		gotPath, ok := packages[name]
+		if !ok {
+			t.Errorf("expected package %s not found", name)
+			continue
+		}
+		if gotPath != wantPath {
+			t.Errorf("package %s: got path %q, want %q", name, gotPath, wantPath)
+		}
+	}
+}
+
+// TestDiscoverWorkspacePackages_MapFS_NegatedPattern verifies negated patterns
+// work with an in-memory filesystem.
+func TestDiscoverWorkspacePackages_MapFS_NegatedPattern(t *testing.T) {
+	fsys := platform.NewMapFS(map[string]string{
+		"workspace/packages/public/package.json":   `{"name": "@test/public"}`,
+		"workspace/packages/private/package.json":  `{"name": "@test/private"}`,
+		"workspace/packages/internal/package.json": `{"name": "@test/internal"}`,
+	})
+
+	workspacesField := []any{"packages/*", "!packages/private"}
+	packages, err := DiscoverWorkspacePackages("workspace", workspacesField, fsys)
+	if err != nil {
+		t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
+	}
+
+	if _, found := packages["@test/private"]; found {
+		t.Error("negated package @test/private should be excluded")
+	}
+	if _, found := packages["@test/public"]; !found {
+		t.Error("expected @test/public to be included")
+	}
+	if _, found := packages["@test/internal"]; !found {
+		t.Error("expected @test/internal to be included")
+	}
+	if len(packages) != 2 {
+		t.Errorf("expected 2 packages, got %d: %v", len(packages), packages)
+	}
+}
+
+// TestFindPackagesForFiles_MapFS verifies that FindPackagesForFiles works with
+// an in-memory filesystem, ensuring no host filesystem dependency (filepath.Abs).
+func TestFindPackagesForFiles_MapFS(t *testing.T) {
+	fsys := platform.NewMapFS(map[string]string{
+		"workspace/package.json": `{
+			"name": "root",
+			"workspaces": ["packages/*"]
+		}`,
+		"workspace/packages/alpha/package.json": `{
+			"name": "@test/alpha",
+			"customElements": "custom-elements.json"
+		}`,
+		"workspace/packages/alpha/custom-elements.json": `{"schemaVersion": "2.1.0"}`,
+		"workspace/packages/alpha/src/component.ts":     `export class Alpha {}`,
+		"workspace/packages/beta/package.json": `{
+			"name": "@test/beta",
+			"customElements": "custom-elements.json"
+		}`,
+		"workspace/packages/beta/custom-elements.json": `{"schemaVersion": "2.1.0"}`,
+		"workspace/packages/beta/src/component.ts":     `export class Beta {}`,
+	})
+
+	tests := []struct {
+		name          string
+		filePaths     []string
+		expectedCount int
+		expectedNames []string
+	}{
+		{
+			name:          "file in alpha package",
+			filePaths:     []string{"workspace/packages/alpha/src/component.ts"},
+			expectedCount: 1,
+			expectedNames: []string{"@test/alpha"},
+		},
+		{
+			name: "files in both packages",
+			filePaths: []string{
+				"workspace/packages/alpha/src/component.ts",
+				"workspace/packages/beta/src/component.ts",
+			},
+			expectedCount: 2,
+			expectedNames: []string{"@test/alpha", "@test/beta"},
+		},
+		{
+			name:          "file outside any package",
+			filePaths:     []string{"workspace/README.md"},
+			expectedCount: 0,
+		},
+		{
+			name:          "empty file list",
+			filePaths:     []string{},
+			expectedCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			packages, err := FindPackagesForFiles("workspace", tt.filePaths, fsys)
+			if err != nil {
+				t.Fatalf("FindPackagesForFiles failed: %v", err)
+			}
+			if len(packages) != tt.expectedCount {
+				t.Errorf("expected %d packages, got %d: %v", tt.expectedCount, len(packages), packages)
+			}
+			for _, wantName := range tt.expectedNames {
+				found := false
+				for _, pkg := range packages {
+					if pkg.Name == wantName {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("expected to find package %s", wantName)
+				}
+			}
+		})
 	}
 }

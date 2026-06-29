@@ -22,9 +22,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"os"
+
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/platform"
-	"github.com/bmatcuk/doublestar"
+	doublestar "github.com/bmatcuk/doublestar/v4"
 	"github.com/spf13/cobra"
 )
 
@@ -76,28 +78,35 @@ func ResolveWorkspaceFiles(workspaceRoot string, patterns []string, packageDir s
 	if err != nil {
 		return nil, err
 	}
-	prefix := absPackageDir + string(filepath.Separator)
+	absRoot, err := filepath.Abs(workspaceRoot)
+	if err != nil {
+		return nil, err
+	}
+
+	// Compute packageDir relative to workspaceRoot for prefix matching
+	relPkgDir, err := filepath.Rel(absRoot, absPackageDir)
+	if err != nil {
+		return nil, err
+	}
+	relPkgPrefix := filepath.ToSlash(relPkgDir) + "/"
+
+	rootFS := os.DirFS(absRoot)
 
 	var result []string
 	seen := make(map[string]bool)
 	for _, pattern := range patterns {
-		absPattern := filepath.Join(workspaceRoot, pattern)
-		matches, err := doublestar.Glob(absPattern)
+		fsPattern := filepath.ToSlash(pattern)
+		matches, err := doublestar.Glob(rootFS, fsPattern)
 		if err != nil {
 			return nil, fmt.Errorf("glob %q: %w", pattern, err)
 		}
 		for _, match := range matches {
-			absMatch, err := filepath.Abs(match)
-			if err != nil {
+			// match is relative to workspaceRoot with forward slashes
+			if !strings.HasPrefix(match, relPkgPrefix) {
 				continue
 			}
-			if !strings.HasPrefix(absMatch, prefix) {
-				continue
-			}
-			rel, err := filepath.Rel(absPackageDir, absMatch)
-			if err != nil {
-				continue
-			}
+			// Strip the package prefix to get package-relative path
+			rel := filepath.FromSlash(strings.TrimPrefix(match, relPkgPrefix))
 			if !seen[rel] {
 				seen[rel] = true
 				result = append(result, rel)

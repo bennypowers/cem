@@ -43,6 +43,7 @@ type MCPContext struct {
 	workspace            types.WorkspaceContext
 	lspRegistry          *LSP.Registry
 	documentManager      lspTypes.DocumentManager
+	fs                   platform.FileSystem
 	mcpCache             map[string]MCPTypes.ElementInfo // Cache for converted MCP elements
 	relationshipDetector *relationships.Detector         // Detects relationships between elements
 
@@ -114,6 +115,7 @@ func NewMCPContext(workspace types.WorkspaceContext) (*MCPContext, error) {
 		workspace:       workspace,
 		lspRegistry:     lspRegistry,
 		documentManager: documentManager,
+		fs:              platform.NewOSFileSystem(),
 		mcpCache:        make(map[string]MCPTypes.ElementInfo),
 	}
 
@@ -389,6 +391,10 @@ func (ctx *MCPContext) Root() string {
 	return ctx.workspace.Root()
 }
 
+func (ctx *MCPContext) FileSystem() platform.FileSystem {
+	return ctx.fs
+}
+
 func (ctx *MCPContext) InvalidateConfig() {
 	type invalidatable interface {
 		InvalidateConfig()
@@ -463,7 +469,7 @@ func (ctx *MCPContext) GetManifestSchema() (map[string]any, error) {
 	}
 
 	// Get the actual JSON schema using the same method as the validate command and schema resource
-	schemaData, err := V.GetSchema(platform.NewOSFileSystem(), schemaVersion)
+	schemaData, err := V.GetSchema(ctx.fs, schemaVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load schema: %w", err)
 	}
@@ -625,6 +631,10 @@ func (ctx *MCPContextAdapter) ConfigSchemaJSON() []byte {
 
 func (ctx *MCPContextAdapter) Root() string {
 	return ctx.MCPContext.Root()
+}
+
+func (ctx *MCPContextAdapter) FileSystem() platform.FileSystem {
+	return ctx.MCPContext.FileSystem()
 }
 
 // ElementInfoAdapter implements MCPTypes.ElementInfo interface

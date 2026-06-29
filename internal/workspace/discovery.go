@@ -104,11 +104,7 @@ func DiscoverWorkspacePackages(rootDir string, workspacesField any, fsys platfor
 			}
 
 			if pkg.Name != "" {
-				absPath, err := filepath.Abs(match)
-				if err != nil {
-					absPath = match
-				}
-				result[pkg.Name] = absPath
+				result[pkg.Name] = match
 			}
 		}
 	}
@@ -336,15 +332,9 @@ func FindPackagesForFiles(rootDir string, filePaths []string, fsys platform.File
 	affectedSet := make(map[string]PackageInfo)
 
 	for _, filePath := range filePaths {
-		// Make file path absolute for comparison
-		absFilePath, err := filepath.Abs(filePath)
-		if err != nil {
-			absFilePath = filePath
-		}
-
 		for _, pkg := range packages {
 			// Check if the file is under this package's directory
-			if strings.HasPrefix(absFilePath, pkg.Path+string(filepath.Separator)) {
+			if strings.HasPrefix(filePath, pkg.Path+string(filepath.Separator)) {
 				affectedSet[pkg.Path] = pkg
 			}
 		}

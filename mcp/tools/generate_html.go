@@ -23,7 +23,6 @@ import (
 	"sort"
 	"strings"
 
-	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/validations"
 	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/mcp/helpers"
@@ -372,7 +371,7 @@ func getSchemaDefinitions(registry types.MCPContext) (SchemaDefinitionMap, error
 
 	// Use the first version to load schema
 	schemaVersion := versions[0]
-	schemaData, err := V.GetSchema(platform.NewOSFileSystem(), schemaVersion)
+	schemaData, err := V.GetSchema(registry.FileSystem(), schemaVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load schema %s: %w", schemaVersion, err)
 	}

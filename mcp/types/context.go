@@ -18,6 +18,7 @@ package types
 
 import (
 	"bennypowers.dev/cem/internal/config"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/mcp/relationships"
@@ -41,6 +42,9 @@ type MCPContext interface {
 	ConfigFile() string
 	ConfigSchemaJSON() []byte
 	Root() string
+
+	// Filesystem access
+	FileSystem() platform.FileSystem
 }
 
 // ElementInfo represents element information using manifest types directly

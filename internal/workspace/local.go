@@ -35,7 +35,7 @@ import (
 	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
-	"github.com/bmatcuk/doublestar"
+	doublestar "github.com/bmatcuk/doublestar/v4"
 )
 
 var _ types.WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
@@ -292,36 +292,35 @@ func (c *FileSystemWorkspaceContext) Glob(pattern string) ([]string, error) {
 			baseDir = abs
 		}
 
-		// For glob patterns, join with base directory and execute glob
-		globPath := filepath.Join(baseDir, pattern)
-		result, err := doublestar.Glob(globPath)
+		// Check if the pattern escapes the project root before globbing.
+		// v4 doublestar.Glob silently returns no results for patterns
+		// containing /../ or starting with ../, so detect this upfront.
+		cleaned := filepath.Clean(pattern)
+		if cleaned == ".." || strings.HasPrefix(cleaned, ".."+string(filepath.Separator)) {
+			// Pattern escapes project root entirely
+			return nil, fmt.Errorf("pattern %q matched %d files outside project root %q: %w",
+				pattern, 0, baseDir, ErrGlobAllOutsideRoot)
+		}
+
+		// Use a directory-scoped fs.FS so doublestar.Glob receives relative
+		// patterns and returns relative results, eliminating the need for
+		// post-glob filepath.Rel conversion.
+		dirFS := platform.DirFS(c.fs, baseDir)
+		// Normalize to forward slashes for fs.FS compatibility
+		fsPattern := filepath.ToSlash(pattern)
+		result, err := doublestar.Glob(dirFS, fsPattern)
 		if err != nil {
 			return nil, fmt.Errorf("glob pattern %q failed: %w", pattern, err)
 		}
 
-		relativeResult := make([]string, 0, len(result))
-		skippedOutsideRoot := 0
-		for _, absPath := range result {
-			rel, err := filepath.Rel(baseDir, absPath)
-			if err != nil {
-				continue
-			}
-			if strings.HasPrefix(rel, ".."+string(filepath.Separator)) || rel == ".." {
-				skippedOutsideRoot++
-				continue
-			}
-			relativeResult = append(relativeResult, rel)
-		}
-		if skippedOutsideRoot > 0 && len(relativeResult) == 0 {
-			return relativeResult, fmt.Errorf("pattern %q matched %d files outside project root %q: %w",
-				pattern, skippedOutsideRoot, baseDir, ErrGlobAllOutsideRoot)
-		}
-		if skippedOutsideRoot > 0 {
-			return relativeResult, fmt.Errorf("pattern %q: %d of %d matched files are outside project root %q: %w",
-				pattern, skippedOutsideRoot, len(result), baseDir, ErrGlobSomeOutsideRoot)
-		}
 		if len(result) == 0 {
-			return relativeResult, fmt.Errorf("pattern %q: %w", pattern, ErrGlobNoneMatched)
+			return nil, fmt.Errorf("pattern %q: %w", pattern, ErrGlobNoneMatched)
+		}
+
+		// Convert forward slashes back to OS separators
+		relativeResult := make([]string, 0, len(result))
+		for _, p := range result {
+			relativeResult = append(relativeResult, filepath.FromSlash(p))
 		}
 		return relativeResult, nil
 	}

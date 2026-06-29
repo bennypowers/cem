@@ -38,7 +38,7 @@ import (
 	"bennypowers.dev/cem/types"
 	"bennypowers.dev/cem/internal/tui"
 	"github.com/adrg/xdg"
-	"github.com/bmatcuk/doublestar"
+	doublestar "github.com/bmatcuk/doublestar/v4"
 	"gopkg.in/yaml.v3"
 )
 
@@ -302,8 +302,18 @@ func (c *RemoteWorkspaceContext) ReadDir(path string) ([]fs.DirEntry, error) {
 }
 
 func (c *RemoteWorkspaceContext) Glob(pattern string) ([]string, error) {
-	rooted := filepath.Join(c.cacheDir, pattern)
-	return doublestar.Glob(rooted)
+	dirFS := platform.DirFS(c.fs, c.cacheDir)
+	fsPattern := filepath.ToSlash(pattern)
+	matches, err := doublestar.Glob(dirFS, fsPattern)
+	if err != nil {
+		return nil, err
+	}
+	// Convert forward slashes back to OS separators
+	result := make([]string, len(matches))
+	for i, m := range matches {
+		result[i] = filepath.FromSlash(m)
+	}
+	return result, nil
 }
 
 func (c *RemoteWorkspaceContext) OutputWriter(path string) (io.WriteCloser, error) {

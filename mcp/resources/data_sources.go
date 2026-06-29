@@ -23,7 +23,6 @@ import (
 	"sort"
 	"strings"
 
-	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/mcp/constants"
 	"bennypowers.dev/cem/mcp/relationships"
@@ -247,7 +246,7 @@ func (p *DataSourceProvider) createSchemaDataSource() (map[string]any, error) {
 	}
 
 	// Get the actual schema data
-	schemaData, err := V.GetSchema(platform.NewOSFileSystem(), selectedVersion)
+	schemaData, err := V.GetSchema(p.registry.FileSystem(), selectedVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load schema: %w", err)
 	}

@@ -241,17 +241,15 @@ func TestGlob_SomeOutsideRoot(t *testing.T) {
 	projectRoot := filepath.Join(tmpDir, "website")
 	ctx := NewFileSystemWorkspaceContext(projectRoot)
 
-	// Pattern that matches both inside and outside root
+	// Patterns starting with ".." are rejected upfront as outside-root
+	// with DirFS-scoped globbing -- they cannot partially match inside root.
 	result, err := ctx.Glob("../**/*.ts")
 
-	if len(result) != 1 {
-		t.Fatalf("Expected 1 result (local file only), got %d: %v", len(result), result)
+	if len(result) != 0 {
+		t.Errorf("Expected empty result, got %v", result)
 	}
-	if result[0] != filepath.Join("src", "local.ts") {
-		t.Errorf("Expected src/local.ts, got %s", result[0])
-	}
-	if !errors.Is(err, ErrGlobSomeOutsideRoot) {
-		t.Errorf("Expected ErrGlobSomeOutsideRoot, got %v", err)
+	if !errors.Is(err, ErrGlobAllOutsideRoot) {
+		t.Errorf("Expected ErrGlobAllOutsideRoot, got %v", err)
 	}
 }
 

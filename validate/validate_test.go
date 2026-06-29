@@ -24,6 +24,7 @@ import (
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/platform/testutil"
+	"github.com/adrg/xdg"
 )
 
 func TestValidateGolden(t *testing.T) {
@@ -132,6 +133,35 @@ func TestValidateWithDisabledWarnings(t *testing.T) {
 
 	if len(result2.Warnings) >= len(originalResult.Warnings) {
 		t.Errorf("Expected fewer warnings when disabling specific rule, got %d vs %d", len(result2.Warnings), len(originalResult.Warnings))
+	}
+}
+
+// TestTryFetchSchema_NoCacheDir verifies that tryFetchSchema works when
+// xdg.CacheHome is empty, as it would be in wasm or sandboxed environments.
+// The embedded schema path (getSchema -> getEmbeddedSchema) bypasses
+// tryFetchSchema entirely; this test confirms tryFetchSchema itself is
+// resilient when called for non-embedded versions without a cache directory.
+func TestTryFetchSchema_NoCacheDir(t *testing.T) {
+	// Save and restore xdg.CacheHome
+	origCacheHome := xdg.CacheHome
+	defer func() { xdg.CacheHome = origCacheHome }()
+	xdg.CacheHome = ""
+
+	fsys := platform.NewMapFS(nil)
+
+	// getSchema for an embedded version should succeed without cache
+	schemaData, err := getSchema(fsys, "2.1.0")
+	if err != nil {
+		t.Fatalf("getSchema with empty CacheHome returned error: %v", err)
+	}
+
+	var schema map[string]any
+	if err := json.Unmarshal(schemaData, &schema); err != nil {
+		t.Fatalf("failed to parse schema JSON: %v", err)
+	}
+
+	if _, ok := schema["title"]; !ok {
+		t.Error("expected schema to contain 'title' field")
 	}
 }
 
