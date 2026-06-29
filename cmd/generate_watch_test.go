@@ -46,31 +46,37 @@ func TestRunWatchMode(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tempDir := t.TempDir()
-			srcDir := filepath.Join(tempDir, "src")
-			require.NoError(t, os.MkdirAll(srcDir, 0755))
-			packageJSON := filepath.Join(tempDir, "package.json")
-			require.NoError(t, os.WriteFile(packageJSON, []byte(`{"name": "test"}`), 0644))
-			testFile := filepath.Join(srcDir, "test.ts")
-			require.NoError(t, os.WriteFile(testFile, []byte("export class Test {}"), 0644))
+	t.Run("os", func(t *testing.T) {
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				tempDir := t.TempDir()
+				srcDir := filepath.Join(tempDir, "src")
+				require.NoError(t, os.MkdirAll(srcDir, 0755))
+				packageJSON := filepath.Join(tempDir, "package.json")
+				require.NoError(t, os.WriteFile(packageJSON, []byte(`{"name": "test"}`), 0644))
+				testFile := filepath.Join(srcDir, "test.ts")
+				require.NoError(t, os.WriteFile(testFile, []byte("export class Test {}"), 0644))
 
-			ctx := W.NewFileSystemWorkspaceContext(tempDir)
-			require.NoError(t, ctx.Init())
+				ctx := W.NewFileSystemWorkspaceContext(tempDir)
+				require.NoError(t, ctx.Init())
 
-			// Test that watch session can be created (we don't actually run the watch loop in tests)
-			session, err := G.NewWatchSession(ctx, tt.globs, platform.NewOSFileSystem())
-			if tt.expectError {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			defer session.Close()
+				// Test that watch session can be created (we don't actually run the watch loop in tests)
+				session, err := G.NewWatchSession(ctx, tt.globs, platform.NewOSFileSystem())
+				if tt.expectError {
+					assert.Error(t, err)
+					return
+				}
+				require.NoError(t, err)
+				defer session.Close()
 
-			assert.NotNil(t, session)
-		})
-	}
+				assert.NotNil(t, session)
+			})
+		}
+	})
+
+	t.Run("mapfs", func(t *testing.T) {
+		t.Skip("requires real filesystem for file watching")
+	})
 }
 
 // Integration test for the complete watch workflow
@@ -79,36 +85,42 @@ func TestWatchWorkflow_Integration(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
-	tempDir := t.TempDir()
-	srcDir := filepath.Join(tempDir, "src")
-	require.NoError(t, os.MkdirAll(srcDir, 0755))
+	t.Run("os", func(t *testing.T) {
+		tempDir := t.TempDir()
+		srcDir := filepath.Join(tempDir, "src")
+		require.NoError(t, os.MkdirAll(srcDir, 0755))
 
-	// Create package.json
-	packageJSON := filepath.Join(tempDir, "package.json")
-	require.NoError(t, os.WriteFile(packageJSON, []byte(`{"name": "test", "customElements": "custom-elements.json"}`), 0644))
+		// Create package.json
+		packageJSON := filepath.Join(tempDir, "package.json")
+		require.NoError(t, os.WriteFile(packageJSON, []byte(`{"name": "test", "customElements": "custom-elements.json"}`), 0644))
 
-	// Create initial TypeScript file
-	testFile := filepath.Join(srcDir, "test.ts")
-	initialContent := `export class TestElement extends HTMLElement {
+		// Create initial TypeScript file
+		testFile := filepath.Join(srcDir, "test.ts")
+		initialContent := `export class TestElement extends HTMLElement {
 		static get observedAttributes() { return ['test']; }
 	}`
-	require.NoError(t, os.WriteFile(testFile, []byte(initialContent), 0644))
+		require.NoError(t, os.WriteFile(testFile, []byte(initialContent), 0644))
 
-	ctx := W.NewFileSystemWorkspaceContext(tempDir)
-	require.NoError(t, ctx.Init())
+		ctx := W.NewFileSystemWorkspaceContext(tempDir)
+		require.NoError(t, ctx.Init())
 
-	cfg, err := ctx.Config()
-	require.NoError(t, err)
+		cfg, err := ctx.Config()
+		require.NoError(t, err)
 
-	// Expand globs to actual file paths (like the main command does)
-	files, err := ctx.Glob("src/**/*.ts")
-	require.NoError(t, err)
-	cfg.Generate.Files = files
+		// Expand globs to actual file paths (like the main command does)
+		files, err := ctx.Glob("src/**/*.ts")
+		require.NoError(t, err)
+		cfg.Generate.Files = files
 
-	// Test that watch session can be created and performs initial generation
-	session, err := G.NewWatchSession(ctx, []string{"src/**/*.ts"}, platform.NewOSFileSystem())
-	require.NoError(t, err)
-	defer session.Close()
+		// Test that watch session can be created and performs initial generation
+		session, err := G.NewWatchSession(ctx, []string{"src/**/*.ts"}, platform.NewOSFileSystem())
+		require.NoError(t, err)
+		defer session.Close()
 
-	assert.NotNil(t, session)
+		assert.NotNil(t, session)
+	})
+
+	t.Run("mapfs", func(t *testing.T) {
+		t.Skip("requires real filesystem for file watching")
+	})
 }

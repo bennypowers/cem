@@ -32,7 +32,7 @@ import (
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
 
-	DS "github.com/bmatcuk/doublestar"
+	DS "github.com/bmatcuk/doublestar/v4"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 

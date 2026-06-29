@@ -23,6 +23,7 @@ import (
 	lipgloss "charm.land/lipgloss/v2"
 	"github.com/spf13/cobra"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/search"
 	W "bennypowers.dev/cem/internal/workspace"
 )
@@ -55,7 +56,7 @@ Examples:
 			return errors.New("search pattern cannot be empty")
 		}
 
-		if W.ShouldUseWorkspaceMode(cmd) {
+		if W.ShouldUseWorkspaceMode(cmd, platform.NewOSFileSystem()) {
 			return searchWorkspace(cmd, pattern)
 		}
 
@@ -95,7 +96,7 @@ func searchWorkspace(cmd *cobra.Command, pattern string) error {
 		return err
 	}
 
-	results := W.ForEachPackage(ctx.Root(), func(pkg W.PackageInfo) error {
+	results := W.ForEachPackage(ctx.Root(), platform.NewOSFileSystem(), func(pkg W.PackageInfo) error {
 		pkgCtx := W.NewFileSystemWorkspaceContext(pkg.Path)
 		if err := pkgCtx.Init(); err != nil {
 			return err

@@ -56,7 +56,7 @@ func healthWorkspace(cmd *cobra.Command, args []string) error {
 
 	collected := make([]health.PackageHealthResult, 0)
 
-	results := workspace.ForEachPackage(ctx.Root(), func(pkg workspace.PackageInfo) error {
+	results := workspace.ForEachPackage(ctx.Root(), platform.NewOSFileSystem(), func(pkg workspace.PackageInfo) error {
 		pkgCtx := workspace.NewFileSystemWorkspaceContext(pkg.Path)
 		if err := pkgCtx.Init(); err != nil {
 			return err
@@ -175,7 +175,7 @@ package.json exports map, replicating the same logic used by cem generate.`,
 	Args:         cobra.ArbitraryArgs,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if workspace.ShouldUseWorkspaceMode(cmd) {
+		if workspace.ShouldUseWorkspaceMode(cmd, platform.NewOSFileSystem()) {
 			return healthWorkspace(cmd, args)
 		}
 

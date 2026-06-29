@@ -43,7 +43,7 @@ func validateWorkspace(cmd *cobra.Command) error {
 	fsys := platform.NewOSFileSystem()
 	var collected []*V.ValidationResult
 
-	results := workspace.ForEachPackage(ctx.Root(), func(pkg workspace.PackageInfo) error {
+	results := workspace.ForEachPackage(ctx.Root(), fsys, func(pkg workspace.PackageInfo) error {
 		manifestPath := filepath.Join(pkg.Path, pkg.CustomElementsRef)
 		options := V.ValidationOptions{
 			IncludeWarnings: true,
@@ -98,7 +98,7 @@ var validateCmd = &cobra.Command{
 	Args:         cobra.MaximumNArgs(1),
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if workspace.ShouldUseWorkspaceMode(cmd) && len(args) == 0 {
+		if workspace.ShouldUseWorkspaceMode(cmd, platform.NewOSFileSystem()) && len(args) == 0 {
 			return validateWorkspace(cmd)
 		}
 

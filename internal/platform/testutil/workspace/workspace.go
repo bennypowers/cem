@@ -35,7 +35,7 @@ import (
 	"bennypowers.dev/cem/internal/platform/testutil"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
-	"github.com/bmatcuk/doublestar"
+	"github.com/bmatcuk/doublestar/v4"
 )
 
 var _ types.WorkspaceContext = (*MapWorkspaceContext)(nil)

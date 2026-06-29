@@ -32,7 +32,7 @@ import (
 	"bennypowers.dev/cem/internal/tui"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
-	DS "github.com/bmatcuk/doublestar"
+	DS "github.com/bmatcuk/doublestar/v4"
 	"github.com/fsnotify/fsnotify"
 )
 

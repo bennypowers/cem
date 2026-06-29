@@ -15,7 +15,7 @@ import (
 func TestForEachPackage_RunsAllPackages(t *testing.T) {
 	root := absFixture(t, "multi-package-workspace")
 	var count int
-	results := workspace.ForEachPackage(root, func(pkg workspace.PackageInfo) error {
+	results := workspace.ForEachPackage(root, osfs, func(pkg workspace.PackageInfo) error {
 		count++
 		return nil
 	})
@@ -28,7 +28,7 @@ func TestForEachPackage_RunsAllPackages(t *testing.T) {
 
 func TestForEachPackage_CollectsErrors(t *testing.T) {
 	root := absFixture(t, "multi-package-workspace")
-	results := workspace.ForEachPackage(root, func(pkg workspace.PackageInfo) error {
+	results := workspace.ForEachPackage(root, osfs, func(pkg workspace.PackageInfo) error {
 		if pkg.Name == "@test/alpha" {
 			return errors.New("alpha broke")
 		}
@@ -48,7 +48,7 @@ func TestForEachPackage_CollectsErrors(t *testing.T) {
 
 func TestForEachPackage_NoPackages(t *testing.T) {
 	root := absFixture(t, "workspace-mode-no-manifest")
-	results := workspace.ForEachPackage(root, func(pkg workspace.PackageInfo) error {
+	results := workspace.ForEachPackage(root, osfs, func(pkg workspace.PackageInfo) error {
 		t.Fatal("should not be called")
 		return nil
 	})
@@ -56,7 +56,7 @@ func TestForEachPackage_NoPackages(t *testing.T) {
 }
 
 func TestForEachPackage_InvalidRoot(t *testing.T) {
-	results := workspace.ForEachPackage("/nonexistent/path", func(pkg workspace.PackageInfo) error {
+	results := workspace.ForEachPackage("/nonexistent/path", osfs, func(pkg workspace.PackageInfo) error {
 		t.Fatal("should not be called")
 		return nil
 	})

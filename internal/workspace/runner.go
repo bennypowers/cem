@@ -39,7 +39,7 @@ type PackageResult struct {
 // ShouldUseWorkspaceMode returns true when the command should iterate over
 // workspace packages instead of operating on a single package.
 // True when the project root is a workspace and -p was not explicitly set.
-func ShouldUseWorkspaceMode(cmd *cobra.Command) bool {
+func ShouldUseWorkspaceMode(cmd *cobra.Command, fsys platform.FileSystem) bool {
 	if cmd.Flags().Changed("package") {
 		return false
 	}
@@ -47,14 +47,14 @@ func ShouldUseWorkspaceMode(cmd *cobra.Command) bool {
 	if err != nil {
 		return false
 	}
-	return IsWorkspaceMode(ctx.Root(), platform.NewOSFileSystem())
+	return IsWorkspaceMode(ctx.Root(), fsys)
 }
 
 // ForEachPackage discovers workspace packages with customElements fields
 // and runs fn for each sequentially.
 // Returns results for all packages, never short-circuits on error.
-func ForEachPackage(rootDir string, fn func(pkg PackageInfo) error) []PackageResult {
-	packages, err := FindPackagesWithManifests(rootDir, platform.NewOSFileSystem())
+func ForEachPackage(rootDir string, fsys platform.FileSystem, fn func(pkg PackageInfo) error) []PackageResult {
+	packages, err := FindPackagesWithManifests(rootDir, fsys)
 	if err != nil {
 		return []PackageResult{{Err: fmt.Errorf("discovering workspace packages: %w", err)}}
 	}

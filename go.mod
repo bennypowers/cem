@@ -18,7 +18,6 @@ require (
 	github.com/agext/levenshtein v1.2.3
 	github.com/alecthomas/chroma/v2 v2.20.0
 	github.com/bennypowers/glsp v0.0.0-20260511074857-83c7f674baea
-	github.com/bmatcuk/doublestar v1.3.4
 	github.com/bmatcuk/doublestar/v4 v4.9.2
 	github.com/charmbracelet/colorprofile v0.4.3
 	github.com/charmbracelet/x/term v0.2.2

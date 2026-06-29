@@ -42,7 +42,7 @@ var generateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) (errs error) {
 		start = time.Now()
 
-		if W.ShouldUseWorkspaceMode(cmd) {
+		if W.ShouldUseWorkspaceMode(cmd, platform.NewOSFileSystem()) {
 			return generateWorkspace(cmd)
 		}
 
@@ -283,7 +283,7 @@ func generateWorkspace(cmd *cobra.Command) error {
 	rootFiles := rootCfg.Generate.Files
 	rootExclude := rootCfg.Generate.Exclude
 
-	results := W.ForEachPackage(baseCtx.Root(), func(pkg W.PackageInfo) error {
+	results := W.ForEachPackage(baseCtx.Root(), platform.NewOSFileSystem(), func(pkg W.PackageInfo) error {
 		ctx := W.NewFileSystemWorkspaceContext(pkg.Path)
 		if err := ctx.Init(); err != nil {
 			return fmt.Errorf("initializing context: %w", err)

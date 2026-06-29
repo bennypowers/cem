@@ -25,7 +25,7 @@ import (
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/platform"
 	W "bennypowers.dev/cem/internal/workspace"
-	DS "github.com/bmatcuk/doublestar"
+	DS "github.com/bmatcuk/doublestar/v4"
 )
 
 // BenchmarkGenerate runs the Generate function on all test fixtures to measure performance.
@@ -45,7 +45,7 @@ func BenchmarkGenerate(b *testing.B) {
 	}
 
 	// Gather all .ts files in the test-fixtures directory as input.
-	matches, err := DS.Glob(filepath.Join(path, "**/*.ts"))
+	matches, err := DS.FilepathGlob(filepath.Join(path, "**/*.ts"))
 	if err != nil {
 		b.Fatal(err)
 	}
