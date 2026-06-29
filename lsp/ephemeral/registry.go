@@ -146,6 +146,57 @@ func (r *Registry) Attributes(tagName string) (map[string]*M.Attribute, bool) {
 	return attrMap, true
 }
 
+// Fields returns the class fields for a tag name.
+func (r *Registry) Fields(tagName string) (map[string]*M.ClassField, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	entry, ok := r.byTag[tagName]
+	if !ok {
+		return nil, false
+	}
+
+	if len(entry.decl.Members) == 0 {
+		return nil, false
+	}
+
+	fieldMap := make(map[string]*M.ClassField)
+	for _, member := range entry.decl.Members {
+		switch f := member.(type) {
+		case *M.ClassField:
+			fieldMap[f.Name] = f
+		case *M.CustomElementField:
+			fieldMap[f.Name] = &f.ClassField
+		}
+	}
+	if len(fieldMap) == 0 {
+		return nil, false
+	}
+	return fieldMap, true
+}
+
+// Events returns the events for a tag name.
+func (r *Registry) Events(tagName string) (map[string]*M.Event, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	entry, ok := r.byTag[tagName]
+	if !ok {
+		return nil, false
+	}
+
+	events := entry.decl.Events()
+	if len(events) == 0 {
+		return nil, false
+	}
+
+	eventMap := make(map[string]*M.Event, len(events))
+	for i := range events {
+		eventMap[events[i].Name] = &events[i]
+	}
+	return eventMap, true
+}
+
 // Slots returns the slots for a tag name.
 func (r *Registry) Slots(tagName string) ([]M.Slot, bool) {
 	r.mu.RLock()

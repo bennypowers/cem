@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test/fixtures/typescript-templates/manifest.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A test component for boolean binding hover testing",
+          "name": "TestComponent",
+          "customElement": true,
+          "tagName": "test-component",
+          "attributes": [
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether the component is disabled",
+              "fieldName": "disabled"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "test-component",
+          "declaration": {
+            "name": "TestComponent"
+          }
+        }
+      ]
+    }
+  ]
+}

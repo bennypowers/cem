@@ -1,0 +1,17 @@
+{
+  "attributes": {
+    "my-button": {
+      "disabled": {"name": "disabled", "type": {"text": "boolean"}}
+    }
+  },
+  "fields": {
+    "my-button": {
+      "label": {"name": "label", "type": {"text": "string"}}
+    }
+  },
+  "events": {
+    "my-button": {
+      "change": {"name": "change", "type": {"text": "CustomEvent"}}
+    }
+  }
+}

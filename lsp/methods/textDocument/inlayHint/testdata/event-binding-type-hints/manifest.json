@@ -1,0 +1,7 @@
+{
+  "events": {
+    "my-button": {
+      "change": {"name": "change", "type": {"text": "CustomEvent"}}
+    }
+  }
+}

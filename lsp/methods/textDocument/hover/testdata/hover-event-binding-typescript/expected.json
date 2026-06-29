@@ -1,0 +1,6 @@
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "## `change` event\n\n**On `<test-component>` element**\n\n**Type:** `CustomEvent`\n\nFired when the value changes\n\n"
+  }
+}

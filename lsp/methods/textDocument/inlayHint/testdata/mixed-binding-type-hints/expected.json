@@ -1,0 +1,5 @@
+[
+  {"label": ": string"},
+  {"label": ": boolean"},
+  {"label": ": CustomEvent"}
+]

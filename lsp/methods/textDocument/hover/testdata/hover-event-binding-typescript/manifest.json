@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "test/fixtures/typescript-templates/manifest.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "A test component for event binding hover testing",
+          "name": "TestComponent",
+          "customElement": true,
+          "tagName": "test-component",
+          "events": [
+            {
+              "name": "change",
+              "type": {
+                "text": "CustomEvent"
+              },
+              "description": "Fired when the value changes"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "test-component",
+          "declaration": {
+            "name": "TestComponent"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "## `disabled` attribute\n\n**On `<test-component>` element**\n\n**Type:** `boolean`\n\nWhether the component is disabled\n\n"
+  }
+}

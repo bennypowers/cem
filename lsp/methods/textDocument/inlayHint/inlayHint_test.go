@@ -32,8 +32,10 @@ import (
 )
 
 type manifestFixture struct {
-	Attributes map[string]map[string]M.Attribute `json:"attributes"`
-	Slots      map[string][]M.Slot               `json:"slots"`
+	Attributes map[string]map[string]M.Attribute  `json:"attributes"`
+	Fields     map[string]map[string]M.ClassField `json:"fields"`
+	Events     map[string]map[string]M.Event      `json:"events"`
+	Slots      map[string][]M.Slot                `json:"slots"`
 }
 
 func fullRange() protocol.Range {
@@ -52,8 +54,15 @@ func TestInlayHint_Fixtures(t *testing.T) {
 		defer dm.Close()
 		ctx.SetDocumentManager(dm)
 
-		doc := dm.OpenDocument("test.html", fixture.InputHTML, 1)
-		ctx.AddDocument("test.html", doc)
+		var uri string
+		if fixture.InputType == "ts" {
+			uri = "file:///test.ts"
+		} else {
+			uri = "test.html"
+		}
+
+		doc := dm.OpenDocument(uri, fixture.InputContent, 1)
+		ctx.AddDocument(uri, doc)
 
 		if len(fixture.Manifest) > 0 {
 			var mf manifestFixture
@@ -67,6 +76,26 @@ func TestInlayHint_Fixtures(t *testing.T) {
 					attrMap[attrName] = &a
 				}
 				ctx.AddAttributes(tagName, attrMap)
+			}
+
+			for tagName, events := range mf.Events {
+				eventMap := make(map[string]*M.Event)
+				for eventName, event := range events {
+					event.Name = eventName
+					e := event
+					eventMap[eventName] = &e
+				}
+				ctx.AddEvents(tagName, eventMap)
+			}
+
+			for tagName, fields := range mf.Fields {
+				fieldMap := make(map[string]*M.ClassField)
+				for fieldName, field := range fields {
+					field.Name = fieldName
+					f := field
+					fieldMap[fieldName] = &f
+				}
+				ctx.AddFields(tagName, fieldMap)
 			}
 
 			for tagName, slots := range mf.Slots {
@@ -85,7 +114,7 @@ func TestInlayHint_Fixtures(t *testing.T) {
 		}
 
 		result, err := inlayHint.InlayHint(ctx, nil, &protocol.InlayHintParams{
-			TextDocument: protocol.TextDocumentIdentifier{URI: "test.html"},
+			TextDocument: protocol.TextDocumentIdentifier{URI: uri},
 			Range:        fullRange(),
 		})
 		require.NoError(t, err)

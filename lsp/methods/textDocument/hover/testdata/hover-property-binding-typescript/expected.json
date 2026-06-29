@@ -1,0 +1,6 @@
+{
+  "contents": {
+    "kind": "markdown",
+    "value": "## `prop` property\n\n**On `<test-component>` element**\n\n**Type:** `string`\n\nA test property\n\n"
+  }
+}

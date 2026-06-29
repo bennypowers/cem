@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/test.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "TestComponent",
+          "customElement": true,
+          "tagName": "test-component",
+          "events": [
+            {
+              "name": "known-event",
+              "type": {"text": "CustomEvent"}
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "test-component",
+          "declaration": {"name": "TestComponent"}
+        }
+      ]
+    }
+  ]
+}
