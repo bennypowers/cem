@@ -25,7 +25,9 @@ import (
 
 	C "bennypowers.dev/cem/cmd/config"
 	htmllang "bennypowers.dev/cem/internal/languages/html"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/platform/testutil"
+	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	W "bennypowers.dev/cem/internal/workspace"
 )
 
@@ -67,40 +69,65 @@ func runFixtureTest[T any](t *testing.T, fixtureDir string, test func(t *testing
 	}
 }
 
-func TestExtractDemoMetadata(t *testing.T) {
-	runFixtureTest[DemoMetadata](t, "extract-metadata", func(t *testing.T, inputPath string, expected *DemoMetadata) {
-		// Create temporary copy for testing
-		tmpDir := t.TempDir()
-		tmpPath := filepath.Join(tmpDir, "input.html")
-
-		input := testutil.LoadFixtureFile(t, inputPath)
-		if err := os.WriteFile(tmpPath, input, 0644); err != nil {
-			t.Fatalf("Failed to write test file: %v", err)
-		}
-
-		// Extract metadata
-		ctx := W.NewFileSystemWorkspaceContext(tmpDir)
-		result, err := extractDemoMetadata(ctx, tmpPath)
-		if err != nil {
-			t.Fatalf("extractDemoMetadata failed: %v", err)
-		}
-
-		// Compare results
-		if result.URL != expected.URL {
-			t.Errorf("URL mismatch: got %q, want %q", result.URL, expected.URL)
-		}
-		if result.Description != expected.Description {
-			t.Errorf("Description mismatch: got %q, want %q", result.Description, expected.Description)
-		}
-		if len(result.DemoFor) != len(expected.DemoFor) {
-			t.Errorf("DemoFor length mismatch: got %d, want %d", len(result.DemoFor), len(expected.DemoFor))
-		} else {
-			for i, elem := range result.DemoFor {
-				if elem != expected.DemoFor[i] {
-					t.Errorf("DemoFor[%d] mismatch: got %q, want %q", i, elem, expected.DemoFor[i])
-				}
+func verifyDemoMetadata(t *testing.T, result, expected DemoMetadata) {
+	t.Helper()
+	if result.URL != expected.URL {
+		t.Errorf("URL mismatch: got %q, want %q", result.URL, expected.URL)
+	}
+	if result.Description != expected.Description {
+		t.Errorf("Description mismatch: got %q, want %q", result.Description, expected.Description)
+	}
+	if len(result.DemoFor) != len(expected.DemoFor) {
+		t.Errorf("DemoFor length mismatch: got %d, want %d", len(result.DemoFor), len(expected.DemoFor))
+	} else {
+		for i, elem := range result.DemoFor {
+			if elem != expected.DemoFor[i] {
+				t.Errorf("DemoFor[%d] mismatch: got %q, want %q", i, elem, expected.DemoFor[i])
 			}
 		}
+	}
+}
+
+func TestExtractDemoMetadata(t *testing.T) {
+	t.Run("os", func(t *testing.T) {
+		runFixtureTest[DemoMetadata](t, "extract-metadata", func(t *testing.T, inputPath string, expected *DemoMetadata) {
+			tmpDir := t.TempDir()
+			tmpPath := filepath.Join(tmpDir, "input.html")
+
+			input := testutil.LoadFixtureFile(t, inputPath)
+			if err := os.WriteFile(tmpPath, input, 0644); err != nil {
+				t.Fatalf("Failed to write test file: %v", err)
+			}
+
+			ctx := W.NewFileSystemWorkspaceContext(tmpDir)
+			result, err := extractDemoMetadata(ctx, tmpPath, platform.NewOSFileSystem())
+			if err != nil {
+				t.Fatalf("extractDemoMetadata failed: %v", err)
+			}
+
+			verifyDemoMetadata(t, result, *expected)
+		})
+	})
+
+	t.Run("mapfs", func(t *testing.T) {
+		runFixtureTest[DemoMetadata](t, "extract-metadata", func(t *testing.T, inputPath string, expected *DemoMetadata) {
+			// Stage fixture on disk for NewMapWorkspaceContext to load
+			tmpDir := t.TempDir()
+			tmpPath := filepath.Join(tmpDir, "input.html")
+
+			input := testutil.LoadFixtureFile(t, inputPath)
+			if err := os.WriteFile(tmpPath, input, 0644); err != nil {
+				t.Fatalf("Failed to write test file: %v", err)
+			}
+
+			ctx := testworkspace.NewMapWorkspaceContext(t, tmpDir)
+			result, err := extractDemoMetadata(ctx, "/input.html", ctx.FileSystem())
+			if err != nil {
+				t.Fatalf("extractDemoMetadata failed: %v", err)
+			}
+
+			verifyDemoMetadata(t, result, *expected)
+		})
 	})
 }
 
@@ -353,53 +380,89 @@ type extractTagsConfig struct {
 	DemoPath       string            `json:"demoPath"`
 }
 
+func verifyDemoTags(t *testing.T, result []string, expected []string) {
+	t.Helper()
+	if len(result) != len(expected) {
+		t.Errorf("Tag count mismatch: got %d (%v), want %d (%v)",
+			len(result), result, len(expected), expected)
+		return
+	}
+
+	resultSet := make(map[string]bool)
+	for _, tag := range result {
+		resultSet[tag] = true
+	}
+	for _, expectedTag := range expected {
+		if !resultSet[expectedTag] {
+			t.Errorf("Expected tag %q not found in result %v", expectedTag, result)
+		}
+	}
+}
+
 func TestExtractDemoTags(t *testing.T) {
-	runFixtureTest[[]string](t, "extract-tags", func(t *testing.T, inputPath string, expected *[]string) {
-		// Read config
-		configPath := filepath.Join(filepath.Dir(inputPath), "config.json")
-		configBytes := testutil.LoadFixtureFile(t, configPath)
+	t.Run("os", func(t *testing.T) {
+		runFixtureTest[[]string](t, "extract-tags", func(t *testing.T, inputPath string, expected *[]string) {
+			configPath := filepath.Join(filepath.Dir(inputPath), "config.json")
+			configBytes := testutil.LoadFixtureFile(t, configPath)
 
-		var config extractTagsConfig
-		if err := json.Unmarshal(configBytes, &config); err != nil {
-			t.Fatalf("Failed to unmarshal config JSON: %v", err)
-		}
-
-		// Create temporary directory structure
-		tmpDir := t.TempDir()
-		tmpPath := filepath.Join(tmpDir, config.DemoPath)
-		if err := os.MkdirAll(filepath.Dir(tmpPath), 0755); err != nil {
-			t.Fatalf("Failed to create directories: %v", err)
-		}
-
-		input := testutil.LoadFixtureFile(t, inputPath)
-		if err := os.WriteFile(tmpPath, input, 0644); err != nil {
-			t.Fatalf("Failed to write test file: %v", err)
-		}
-
-		// Extract tags
-		ctx := W.NewFileSystemWorkspaceContext(tmpDir)
-		result, err := extractDemoTags(ctx, tmpPath, config.ElementAliases)
-		if err != nil {
-			t.Fatalf("extractDemoTags failed: %v", err)
-		}
-
-		// Compare results (order-independent for content-based fallback)
-		if len(result) != len(*expected) {
-			t.Errorf("Tag count mismatch: got %d (%v), want %d (%v)",
-				len(result), result, len(*expected), *expected)
-			return
-		}
-
-		// Use order-independent comparison for content-based tests
-		resultSet := make(map[string]bool)
-		for _, tag := range result {
-			resultSet[tag] = true
-		}
-		for _, expectedTag := range *expected {
-			if !resultSet[expectedTag] {
-				t.Errorf("Expected tag %q not found in result %v", expectedTag, result)
+			var config extractTagsConfig
+			if err := json.Unmarshal(configBytes, &config); err != nil {
+				t.Fatalf("Failed to unmarshal config JSON: %v", err)
 			}
-		}
+
+			tmpDir := t.TempDir()
+			tmpPath := filepath.Join(tmpDir, config.DemoPath)
+			if err := os.MkdirAll(filepath.Dir(tmpPath), 0755); err != nil {
+				t.Fatalf("Failed to create directories: %v", err)
+			}
+
+			input := testutil.LoadFixtureFile(t, inputPath)
+			if err := os.WriteFile(tmpPath, input, 0644); err != nil {
+				t.Fatalf("Failed to write test file: %v", err)
+			}
+
+			ctx := W.NewFileSystemWorkspaceContext(tmpDir)
+			result, err := extractDemoTags(ctx, tmpPath, config.ElementAliases, platform.NewOSFileSystem())
+			if err != nil {
+				t.Fatalf("extractDemoTags failed: %v", err)
+			}
+
+			verifyDemoTags(t, result, *expected)
+		})
+	})
+
+	t.Run("mapfs", func(t *testing.T) {
+		runFixtureTest[[]string](t, "extract-tags", func(t *testing.T, inputPath string, expected *[]string) {
+			configPath := filepath.Join(filepath.Dir(inputPath), "config.json")
+			configBytes := testutil.LoadFixtureFile(t, configPath)
+
+			var config extractTagsConfig
+			if err := json.Unmarshal(configBytes, &config); err != nil {
+				t.Fatalf("Failed to unmarshal config JSON: %v", err)
+			}
+
+			// Stage fixture on disk for NewMapWorkspaceContext to load
+			tmpDir := t.TempDir()
+			tmpPath := filepath.Join(tmpDir, config.DemoPath)
+			if err := os.MkdirAll(filepath.Dir(tmpPath), 0755); err != nil {
+				t.Fatalf("Failed to create directories: %v", err)
+			}
+
+			input := testutil.LoadFixtureFile(t, inputPath)
+			if err := os.WriteFile(tmpPath, input, 0644); err != nil {
+				t.Fatalf("Failed to write test file: %v", err)
+			}
+
+			ctx := testworkspace.NewMapWorkspaceContext(t, tmpDir)
+			// Use virtual path matching MapFS layout (rooted at "/")
+			virtualPath := filepath.Join("/", config.DemoPath)
+			result, err := extractDemoTags(ctx, virtualPath, config.ElementAliases, ctx.FileSystem())
+			if err != nil {
+				t.Fatalf("extractDemoTags failed: %v", err)
+			}
+
+			verifyDemoTags(t, result, *expected)
+		})
 	})
 }
 
@@ -407,29 +470,53 @@ func TestExtractDemoTagsWithPattern_WorkspaceFallback(t *testing.T) {
 	// Simulate workspace mode: demo file contains multiple elements but the
 	// URLPattern should precisely select only the package element (pf-v5-button).
 	// Without the workspace fallback, content-based discovery returns ALL tags.
-	pkgDir := filepath.Join(t.TempDir(), "pf-v5-button")
-	demoDir := filepath.Join(pkgDir, "demo")
-	if err := os.MkdirAll(demoDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	// Demo contains both pf-v5-button and pf-v5-icon
 	html := "<pf-v5-button><pf-v5-icon></pf-v5-icon>Click</pf-v5-button>"
-	demoFile := filepath.Join(demoDir, "basic.html")
-	if err := os.WriteFile(demoFile, []byte(html), 0644); err != nil {
-		t.Fatal(err)
-	}
 
-	ctx := W.NewFileSystemWorkspaceContext(pkgDir)
-	tags, err := extractDemoTagsWithPattern(ctx, "demo/basic.html", ":tag/demo/:demo.html", nil)
-	if err != nil {
-		t.Fatalf("extractDemoTagsWithPattern failed: %v", err)
-	}
+	t.Run("os", func(t *testing.T) {
+		pkgDir := filepath.Join(t.TempDir(), "pf-v5-button")
+		demoDir := filepath.Join(pkgDir, "demo")
+		if err := os.MkdirAll(demoDir, 0755); err != nil {
+			t.Fatal(err)
+		}
+		demoFile := filepath.Join(demoDir, "basic.html")
+		if err := os.WriteFile(demoFile, []byte(html), 0644); err != nil {
+			t.Fatal(err)
+		}
 
-	// URLPattern matching should precisely return only pf-v5-button (from dir name),
-	// not both pf-v5-button and pf-v5-icon from content scanning.
-	if len(tags) != 1 || tags[0] != "pf-v5-button" {
-		t.Errorf("expected [pf-v5-button], got %v", tags)
-	}
+		ctx := W.NewFileSystemWorkspaceContext(pkgDir)
+		tags, err := extractDemoTagsWithPattern(ctx, "demo/basic.html", ":tag/demo/:demo.html", nil, platform.NewOSFileSystem())
+		if err != nil {
+			t.Fatalf("extractDemoTagsWithPattern failed: %v", err)
+		}
+
+		if len(tags) != 1 || tags[0] != "pf-v5-button" {
+			t.Errorf("expected [pf-v5-button], got %v", tags)
+		}
+	})
+
+	t.Run("mapfs", func(t *testing.T) {
+		// Stage files on disk for NewMapWorkspaceContextWithRoot to load.
+		// Use WithRoot so filepath.Base(root) returns "pf-v5-button",
+		// which the workspace fallback logic needs.
+		pkgDir := filepath.Join(t.TempDir(), "pf-v5-button")
+		demoDir := filepath.Join(pkgDir, "demo")
+		if err := os.MkdirAll(demoDir, 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(demoDir, "basic.html"), []byte(html), 0644); err != nil {
+			t.Fatal(err)
+		}
+
+		ctx := testworkspace.NewMapWorkspaceContextWithRoot(t, pkgDir, "/pf-v5-button")
+		tags, err := extractDemoTagsWithPattern(ctx, "demo/basic.html", ":tag/demo/:demo.html", nil, ctx.FileSystem())
+		if err != nil {
+			t.Fatalf("extractDemoTagsWithPattern failed: %v", err)
+		}
+
+		if len(tags) != 1 || tags[0] != "pf-v5-button" {
+			t.Errorf("expected [pf-v5-button], got %v", tags)
+		}
+	})
 }
 
 func TestExtractParameterValues(t *testing.T) {
@@ -509,8 +596,19 @@ type newDemoMapConfig struct {
 	ElementAliases map[string]string `json:"elementAliases"`
 }
 
+func verifyDemoMap(t *testing.T, demoMap DemoMap) {
+	t.Helper()
+	buttonDemos := demoMap["rh-button"]
+	if len(buttonDemos) != 1 || !strings.Contains(buttonDemos[0], "demo1.html") {
+		t.Errorf("Expected rh-button to map to demo1.html, got: %v", buttonDemos)
+	}
+	cardDemos := demoMap["rh-card"]
+	if len(cardDemos) != 1 || !strings.Contains(cardDemos[0], "demo2.html") {
+		t.Errorf("Expected rh-card to map to demo2.html, got: %v", cardDemos)
+	}
+}
+
 func TestNewDemoMap(t *testing.T) {
-	// Read config
 	configPath := filepath.Join("new-demo-map", "config.json")
 	configBytes := testutil.LoadFixtureFile(t, configPath)
 
@@ -519,40 +617,51 @@ func TestNewDemoMap(t *testing.T) {
 		t.Fatalf("Failed to unmarshal config JSON: %v", err)
 	}
 
-	// Create temporary directory and copy fixtures
-	tmpDir := t.TempDir()
-
 	demo1Input := testutil.LoadFixtureFile(t, filepath.Join("new-demo-map", "demo1", "input.html"))
-	demo1Path := filepath.Join(tmpDir, "demo1.html")
-	if err := os.WriteFile(demo1Path, demo1Input, 0644); err != nil {
-		t.Fatalf("Failed to write demo1: %v", err)
-	}
-
 	demo2Input := testutil.LoadFixtureFile(t, filepath.Join("new-demo-map", "demo2", "input.html"))
-	demo2Path := filepath.Join(tmpDir, "demo2.html")
-	if err := os.WriteFile(demo2Path, demo2Input, 0644); err != nil {
-		t.Fatalf("Failed to write demo2: %v", err)
-	}
 
-	// Create workspace context for test
-	ctx := W.NewFileSystemWorkspaceContext(tmpDir)
+	t.Run("os", func(t *testing.T) {
+		tmpDir := t.TempDir()
 
-	demoMap, err := NewDemoMap(ctx, []string{demo1Path, demo2Path}, config.ElementAliases)
-	if err != nil {
-		t.Fatalf("NewDemoMap failed: %v", err)
-	}
+		demo1Path := filepath.Join(tmpDir, "demo1.html")
+		if err := os.WriteFile(demo1Path, demo1Input, 0644); err != nil {
+			t.Fatalf("Failed to write demo1: %v", err)
+		}
 
-	// Check rh-button mapping
-	buttonDemos := demoMap["rh-button"]
-	if len(buttonDemos) != 1 || !strings.Contains(buttonDemos[0], "demo1.html") {
-		t.Errorf("Expected rh-button to map to demo1.html, got: %v", buttonDemos)
-	}
+		demo2Path := filepath.Join(tmpDir, "demo2.html")
+		if err := os.WriteFile(demo2Path, demo2Input, 0644); err != nil {
+			t.Fatalf("Failed to write demo2: %v", err)
+		}
 
-	// Check rh-card mapping
-	cardDemos := demoMap["rh-card"]
-	if len(cardDemos) != 1 || !strings.Contains(cardDemos[0], "demo2.html") {
-		t.Errorf("Expected rh-card to map to demo2.html, got: %v", cardDemos)
-	}
+		ctx := W.NewFileSystemWorkspaceContext(tmpDir)
+
+		demoMap, err := NewDemoMap(ctx, []string{demo1Path, demo2Path}, config.ElementAliases, platform.NewOSFileSystem())
+		if err != nil {
+			t.Fatalf("NewDemoMap failed: %v", err)
+		}
+
+		verifyDemoMap(t, demoMap)
+	})
+
+	t.Run("mapfs", func(t *testing.T) {
+		// Stage files on disk for NewMapWorkspaceContext to load
+		tmpDir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(tmpDir, "demo1.html"), demo1Input, 0644); err != nil {
+			t.Fatalf("Failed to write demo1: %v", err)
+		}
+		if err := os.WriteFile(filepath.Join(tmpDir, "demo2.html"), demo2Input, 0644); err != nil {
+			t.Fatalf("Failed to write demo2: %v", err)
+		}
+
+		ctx := testworkspace.NewMapWorkspaceContext(t, tmpDir)
+
+		demoMap, err := NewDemoMap(ctx, []string{"/demo1.html", "/demo2.html"}, config.ElementAliases, ctx.FileSystem())
+		if err != nil {
+			t.Fatalf("NewDemoMap failed: %v", err)
+		}
+
+		verifyDemoMap(t, demoMap)
+	})
 }
 
 func TestMicrodataExtraction(t *testing.T) {

@@ -1,9 +1,10 @@
 package config
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
+
+	"bennypowers.dev/cem/internal/platform"
 )
 
 // ConfigPaths lists the config file paths to search, in order of precedence.
@@ -20,10 +21,13 @@ var ConfigPaths = []string{
 
 // FindConfigFile searches for a CEM config file in the given root directory.
 // Returns the absolute path of the first match, or "" if none found.
-func FindConfigFile(root string) string {
+func FindConfigFile(root string, fsys platform.FileSystem) string {
+	if fsys == nil {
+		fsys = platform.NewOSFileSystem()
+	}
 	for _, relPath := range ConfigPaths {
 		absPath := filepath.Join(root, relPath)
-		if info, err := os.Stat(absPath); err == nil && !info.IsDir() {
+		if info, err := fsys.Stat(absPath); err == nil && !info.IsDir() {
 			return absPath
 		}
 	}

@@ -76,7 +76,7 @@ func TestNoOpMetricsCollector(t *testing.T) {
 }
 
 func TestModuleGraph_SettersAndGetters(t *testing.T) {
-	mg := modulegraph.NewModuleGraph(nil)
+	mg := modulegraph.NewModuleGraph(nil, nil)
 
 	t.Run("GetMetrics returns collector", func(t *testing.T) {
 		assert.NotNil(t, mg.GetMetrics())
@@ -110,7 +110,7 @@ func TestModuleGraph_SettersAndGetters(t *testing.T) {
 }
 
 func TestModuleGraphWithMetrics(t *testing.T) {
-	mg := modulegraph.NewModuleGraphWithMetrics(nil)
+	mg := modulegraph.NewModuleGraphWithMetrics(nil, modulegraph.NewDefaultMetricsCollector(), nil)
 	assert.NotNil(t, mg)
 	metrics := mg.GetMetrics()
 	_, ok := metrics.(*modulegraph.DefaultMetricsCollector)
@@ -190,12 +190,12 @@ func (m *mockManifestResolver) GetElementsFromManifestModule(manifestModulePath 
 
 func TestGetTransitiveElements(t *testing.T) {
 	t.Run("empty path returns nil", func(t *testing.T) {
-		mg := modulegraph.NewModuleGraph(nil)
+		mg := modulegraph.NewModuleGraph(nil, nil)
 		assert.Nil(t, mg.GetTransitiveElements(""))
 	})
 
 	t.Run("single module with resolver", func(t *testing.T) {
-		mg := modulegraph.NewModuleGraphWithMetrics(nil)
+		mg := modulegraph.NewModuleGraphWithMetrics(nil, modulegraph.NewDefaultMetricsCollector(), nil)
 		mg.SetManifestResolver(&mockManifestResolver{
 			elements: map[string][]string{
 				"button.js": {"x-button"},
@@ -208,7 +208,7 @@ func TestGetTransitiveElements(t *testing.T) {
 	})
 
 	t.Run("transitive chain", func(t *testing.T) {
-		mg := modulegraph.NewModuleGraphWithMetrics(nil)
+		mg := modulegraph.NewModuleGraphWithMetrics(nil, modulegraph.NewDefaultMetricsCollector(), nil)
 		mg.SetManifestResolver(&mockManifestResolver{
 			elements: map[string][]string{
 				"tab.js":  {"x-tab"},
@@ -225,7 +225,7 @@ func TestGetTransitiveElements(t *testing.T) {
 	})
 
 	t.Run("caches results", func(t *testing.T) {
-		mg := modulegraph.NewModuleGraphWithMetrics(nil)
+		mg := modulegraph.NewModuleGraphWithMetrics(nil, modulegraph.NewDefaultMetricsCollector(), nil)
 		mg.SetManifestResolver(&mockManifestResolver{
 			elements: map[string][]string{
 				"a.js": {"x-a"},
@@ -243,13 +243,13 @@ func TestGetTransitiveElements(t *testing.T) {
 	})
 
 	t.Run("no manifest resolver returns empty", func(t *testing.T) {
-		mg := modulegraph.NewModuleGraph(nil)
+		mg := modulegraph.NewModuleGraph(nil, nil)
 		result := mg.GetTransitiveElements("index.js")
 		assert.Empty(t, result)
 	})
 
 	t.Run("circular dependency handled", func(t *testing.T) {
-		mg := modulegraph.NewModuleGraphWithMetrics(nil)
+		mg := modulegraph.NewModuleGraphWithMetrics(nil, modulegraph.NewDefaultMetricsCollector(), nil)
 		mg.SetManifestResolver(&mockManifestResolver{
 			elements: map[string][]string{
 				"a.js": {"x-a"},

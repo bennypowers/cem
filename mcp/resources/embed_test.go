@@ -38,7 +38,7 @@ func TestResourceDefinitions_Embedded(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()

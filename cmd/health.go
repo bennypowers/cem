@@ -26,6 +26,7 @@ import (
 	lipgloss "charm.land/lipgloss/v2"
 
 	"bennypowers.dev/cem/health"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/tui"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/internal/workspace"
@@ -55,7 +56,7 @@ func healthWorkspace(cmd *cobra.Command, args []string) error {
 
 	collected := make([]health.PackageHealthResult, 0)
 
-	results := workspace.ForEachPackage(ctx.Root(), func(pkg workspace.PackageInfo) error {
+	results := workspace.ForEachPackage(ctx.Root(), platform.NewOSFileSystem(), func(pkg workspace.PackageInfo) error {
 		pkgCtx := workspace.NewFileSystemWorkspaceContext(pkg.Path)
 		if err := pkgCtx.Init(); err != nil {
 			return err
@@ -102,7 +103,7 @@ func healthWorkspace(cmd *cobra.Command, args []string) error {
 			Modules:   allModules,
 			Disable:   allDisabled,
 		}
-		result, err := health.Analyze(manifestPath, options)
+		result, err := health.Analyze(platform.NewOSFileSystem(), manifestPath, options)
 		if err != nil {
 			return err
 		}
@@ -174,7 +175,7 @@ package.json exports map, replicating the same logic used by cem generate.`,
 	Args:         cobra.ArbitraryArgs,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if workspace.ShouldUseWorkspaceMode(cmd) {
+		if workspace.ShouldUseWorkspaceMode(cmd, platform.NewOSFileSystem()) {
 			return healthWorkspace(cmd, args)
 		}
 
@@ -245,7 +246,7 @@ package.json exports map, replicating the same logic used by cem generate.`,
 			Disable:   allDisabled,
 		}
 
-		result, err := health.Analyze(manifestPath, options)
+		result, err := health.Analyze(platform.NewOSFileSystem(), manifestPath, options)
 		if err != nil {
 			return err
 		}

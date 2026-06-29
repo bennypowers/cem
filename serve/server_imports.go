@@ -19,7 +19,6 @@ package serve
 
 import (
 	"net/url"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -44,11 +43,7 @@ func (s *Server) resolveSourceFile(path string) string {
 		watchDir := s.WatchDir()
 		if watchDir != "" {
 			fullTsPath := filepath.Join(watchDir, tsPath)
-			if fs := s.FileSystem(); fs != nil {
-				if _, err := fs.Stat(fullTsPath); err == nil {
-					return tsPath
-				}
-			} else if _, err := os.Stat(fullTsPath); err == nil {
+			if _, err := s.fs.Stat(fullTsPath); err == nil {
 				return tsPath
 			}
 		}

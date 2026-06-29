@@ -20,8 +20,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	V "bennypowers.dev/cem/validate"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/workspace"
+	V "bennypowers.dev/cem/validate"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -39,15 +40,16 @@ func validateWorkspace(cmd *cobra.Command) error {
 	allDisabled = append(allDisabled, configDisabled...)
 	allDisabled = append(allDisabled, disableFlags...)
 
+	fsys := platform.NewOSFileSystem()
 	var collected []*V.ValidationResult
 
-	results := workspace.ForEachPackage(ctx.Root(), func(pkg workspace.PackageInfo) error {
+	results := workspace.ForEachPackage(ctx.Root(), fsys, func(pkg workspace.PackageInfo) error {
 		manifestPath := filepath.Join(pkg.Path, pkg.CustomElementsRef)
 		options := V.ValidationOptions{
 			IncludeWarnings: true,
 			DisabledRules:   allDisabled,
 		}
-		result, err := V.Validate(manifestPath, options)
+		result, err := V.Validate(fsys, manifestPath, options)
 		if err != nil {
 			return err
 		}
@@ -96,7 +98,7 @@ var validateCmd = &cobra.Command{
 	Args:         cobra.MaximumNArgs(1),
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if workspace.ShouldUseWorkspaceMode(cmd) && len(args) == 0 {
+		if workspace.ShouldUseWorkspaceMode(cmd, platform.NewOSFileSystem()) && len(args) == 0 {
 			return validateWorkspace(cmd)
 		}
 
@@ -120,12 +122,13 @@ var validateCmd = &cobra.Command{
 		configDisabled := viper.GetStringSlice("warnings.disable")
 		allDisabled := append(configDisabled, disableFlags...)
 
+		fsys := platform.NewOSFileSystem()
 		options := V.ValidationOptions{
 			IncludeWarnings: true,
 			DisabledRules:   allDisabled,
 		}
 
-		result, err := V.Validate(manifestPath, options)
+		result, err := V.Validate(fsys, manifestPath, options)
 		if err != nil {
 			return err
 		}

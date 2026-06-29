@@ -19,7 +19,6 @@ package serve
 
 import (
 	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -39,6 +38,7 @@ type fileWatcher struct {
 	debounceTimer      *time.Timer
 	mu                 sync.Mutex
 	logger             Logger
+	fsys               platform.FileSystem // Filesystem abstraction for testability
 	done               chan struct{}
 	wg                 sync.WaitGroup
 	ignorePatterns     []string        // Glob patterns to ignore
@@ -60,7 +60,10 @@ func getDefaultIgnorePatterns() []string {
 }
 
 // newFileWatcher creates a new file watcher with debouncing
-func newFileWatcher(debounceWindow time.Duration, logger Logger) (FileWatcher, error) {
+func newFileWatcher(debounceWindow time.Duration, logger Logger, fsys platform.FileSystem) (FileWatcher, error) {
+	if fsys == nil {
+		fsys = platform.NewOSFileSystem()
+	}
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -72,6 +75,7 @@ func newFileWatcher(debounceWindow time.Duration, logger Logger) (FileWatcher, e
 		debounceWindow: debounceWindow,
 		debouncedFiles: make(map[string]time.Time),
 		logger:         logger,
+		fsys:           fsys,
 		done:           make(chan struct{}),
 		ignorePatterns: getDefaultIgnorePatterns(),
 	}
@@ -135,7 +139,7 @@ func (fw *fileWatcher) WatchPaths(paths []string) error {
 	// Add parent directories to the watcher
 	for dir := range dirsToWatch {
 		// Check if directory exists before watching
-		if info, err := os.Stat(dir); err == nil && info.IsDir() {
+		if info, err := fw.fsys.Stat(dir); err == nil && info.IsDir() {
 			if err := fw.watcher.Add(dir); err != nil {
 				if fw.logger != nil {
 					fw.logger.Debug("Failed to watch config directory %s: %v", dir, err)
@@ -158,7 +162,7 @@ func (fw *fileWatcher) Watch(path string) error {
 	}
 
 	// Walk subdirectories and add them to the watcher
-	return platform.WalkDir(os.DirFS(path), ".", nil, func(p string, d fs.DirEntry, err error) error {
+	return platform.WalkDir(platform.DirFS(fw.fsys, path), ".", nil, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -247,8 +251,8 @@ func (fw *fileWatcher) processEvents() {
 			// directories to the watcher and record any files already present
 			// as create changes (handles mkdir + immediate file write race)
 			if event.Op&fsnotify.Create == fsnotify.Create {
-				if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
-					_ = platform.WalkDir(os.DirFS(event.Name), ".", nil, func(p string, d fs.DirEntry, walkErr error) error {
+				if info, err := fw.fsys.Stat(event.Name); err == nil && info.IsDir() {
+					_ = platform.WalkDir(platform.DirFS(fw.fsys, event.Name), ".", nil, func(p string, d fs.DirEntry, walkErr error) error {
 						if walkErr != nil {
 							return walkErr
 						}

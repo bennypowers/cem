@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/internal/workspace"
@@ -63,7 +64,7 @@ func TestNewGenerateSession(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := setupTestContext(t, tt.fixture)
 
-			session, err := NewGenerateSession(ctx)
+			session, err := NewGenerateSession(ctx, platform.NewOSFileSystem())
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -133,7 +134,7 @@ func TestGenerateSession_GenerateFullManifest(t *testing.T) {
 			require.NoError(t, err)
 			cfg.Generate.Files = tt.files
 
-			session, err := NewGenerateSession(ctx)
+			session, err := NewGenerateSession(ctx, platform.NewOSFileSystem())
 			require.NoError(t, err)
 			defer session.Close()
 
@@ -215,7 +216,7 @@ func TestGenerateSession_GetInMemoryManifest(t *testing.T) {
 				cfg.Generate.Files = tt.files
 			}
 
-			session, err := NewGenerateSession(ctx)
+			session, err := NewGenerateSession(ctx, platform.NewOSFileSystem())
 			require.NoError(t, err)
 			defer session.Close()
 
@@ -269,7 +270,7 @@ func TestGenerateSession_QueryManagerReuse(t *testing.T) {
 	require.NoError(t, err)
 	cfg.Generate.Files = []string{"elements/hello-world/hello-world.ts"}
 
-	session, err := NewGenerateSession(ctx)
+	session, err := NewGenerateSession(ctx, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	defer session.Close()
 
@@ -497,7 +498,7 @@ func BenchmarkGenerateSession_SingleGeneration(b *testing.B) {
 	cfg.Generate.Files = []string{"elements/hello-world/hello-world.ts"}
 
 	for b.Loop() {
-		session, err := NewGenerateSession(ctx)
+		session, err := NewGenerateSession(ctx, platform.NewOSFileSystem())
 		require.NoError(b, err)
 
 		_, err = session.GenerateFullManifest(context.Background())
@@ -510,7 +511,7 @@ func BenchmarkGenerateSession_SingleGeneration(b *testing.B) {
 func TestSetMaxWorkers(t *testing.T) {
 	ctx := setupTestContext(t, "../examples/minimal")
 
-	session, err := NewGenerateSession(ctx)
+	session, err := NewGenerateSession(ctx, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	defer session.Close()
 
@@ -529,7 +530,7 @@ func TestSetMaxWorkers_BeforeProcessing(t *testing.T) {
 	require.NoError(t, err)
 	cfg.Generate.Files = []string{"elements/hello-world/hello-world.ts"}
 
-	session, err := NewGenerateSession(ctx)
+	session, err := NewGenerateSession(ctx, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	defer session.Close()
 
@@ -548,7 +549,7 @@ func TestSetMaxWorkers_BeforeProcessing(t *testing.T) {
 func TestSetMaxWorkers_ConcurrentAccess(t *testing.T) {
 	ctx := setupTestContext(t, "../examples/minimal")
 
-	session, err := NewGenerateSession(ctx)
+	session, err := NewGenerateSession(ctx, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	defer session.Close()
 
@@ -581,7 +582,7 @@ func TestSetMaxWorkers_ConcurrentAccess(t *testing.T) {
 func TestSetMaxWorkers_ZeroValue(t *testing.T) {
 	ctx := setupTestContext(t, "../examples/minimal")
 
-	session, err := NewGenerateSession(ctx)
+	session, err := NewGenerateSession(ctx, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	defer session.Close()
 
@@ -605,7 +606,7 @@ func BenchmarkGenerateSession_ReusedSession(b *testing.B) {
 	require.NoError(b, err)
 	cfg.Generate.Files = []string{"elements/hello-world/hello-world.ts"}
 
-	session, err := NewGenerateSession(ctx)
+	session, err := NewGenerateSession(ctx, platform.NewOSFileSystem())
 	require.NoError(b, err)
 	defer session.Close()
 
@@ -623,7 +624,7 @@ func TestGenerateSession_IncrementalAutoDeriveAliases(t *testing.T) {
 	cfg.Generate.Files = []string{"elements/**/*.ts"}
 	cfg.Generate.DemoDiscovery.URLTemplate = "https://example.com/elements/{{.tag | alias}}/demo/{{.demo}}/"
 
-	session, err := NewGenerateSession(ctx)
+	session, err := NewGenerateSession(ctx, platform.NewOSFileSystem())
 	require.NoError(t, err)
 	defer session.Close()
 

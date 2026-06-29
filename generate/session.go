@@ -22,6 +22,7 @@ import (
 	"sync"
 
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
 )
@@ -52,8 +53,8 @@ type GenerateSession struct {
 // - generate/generate.go:234 (single generation)
 //
 // Performance: Expensive operation (~10-50ms) due to tree-sitter query compilation
-func NewGenerateSession(ctx types.WorkspaceContext) (*GenerateSession, error) {
-	setupCtx, err := NewGenerateContext(ctx)
+func NewGenerateSession(ctx types.WorkspaceContext, fsys platform.FileSystem) (*GenerateSession, error) {
+	setupCtx, err := NewGenerateContext(ctx, fsys)
 	if err != nil {
 		return nil, fmt.Errorf("initialize setup context: %w", err)
 	}
@@ -222,7 +223,7 @@ func (gs *GenerateSession) SetMaxWorkers(count int) {
 // WorkerCount returns the number of workers that would be used for parallel processing.
 // This creates a temporary processor to get the actual configured worker count.
 func (gs *GenerateSession) WorkerCount() int {
-	processor := NewModuleBatchProcessor(gs.setupCtx.QueryManager(), gs.setupCtx.DependencyTracker(), gs.setupCtx.CssCache())
+	processor := NewModuleBatchProcessor(gs.setupCtx.QueryManager(), gs.setupCtx.DependencyTracker(), gs.setupCtx.CssCache(), gs.setupCtx.FileSystem())
 	gs.mu.RLock()
 	maxWorkers := gs.maxWorkers
 	gs.mu.RUnlock()
@@ -264,7 +265,7 @@ func (gs *GenerateSession) processWithDeps(ctx context.Context, result preproces
 	}
 
 	// Use parallel processor with dependency tracking
-	processor := NewModuleBatchProcessor(gs.setupCtx.QueryManager(), gs.setupCtx.DependencyTracker(), gs.setupCtx.CssCache())
+	processor := NewModuleBatchProcessor(gs.setupCtx.QueryManager(), gs.setupCtx.DependencyTracker(), gs.setupCtx.CssCache(), gs.setupCtx.FileSystem())
 
 	// Apply configured worker limit if set
 	gs.mu.RLock()
@@ -289,5 +290,5 @@ func (gs *GenerateSession) postprocessWithContext(ctx context.Context, result pr
 
 	// TODO: Add cancellation points within the postprocess function
 	// For now, we'll use the existing postprocess function
-	return postprocess(gs.setupCtx.WorkspaceContext, result, aliases, typeAliases, imports, gs.setupCtx.QueryManager(), modules)
+	return postprocess(gs.setupCtx.WorkspaceContext, result, aliases, typeAliases, imports, gs.setupCtx.QueryManager(), modules, gs.setupCtx.FileSystem())
 }

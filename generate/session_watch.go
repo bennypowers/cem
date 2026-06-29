@@ -22,23 +22,24 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
 	C "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/tui"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
-	DS "github.com/bmatcuk/doublestar"
+	DS "github.com/bmatcuk/doublestar/v4"
 	"github.com/fsnotify/fsnotify"
 )
 
 // WatchSession manages the long-lived watch mode state
 type WatchSession struct {
 	ctx             types.WorkspaceContext
+	fs              platform.FileSystem
 	globs           []string
 	generateSession *GenerateSession
 	debounceTimer   *time.Timer
@@ -53,14 +54,15 @@ type WatchSession struct {
 }
 
 // NewWatchSession creates a new watch session with the given workspace context and globs
-func NewWatchSession(ctx types.WorkspaceContext, globs []string) (*WatchSession, error) {
-	generateSession, err := NewGenerateSession(ctx)
+func NewWatchSession(ctx types.WorkspaceContext, globs []string, fsys platform.FileSystem) (*WatchSession, error) {
+	generateSession, err := NewGenerateSession(ctx, fsys)
 	if err != nil {
 		return nil, fmt.Errorf("create generate session: %w", err)
 	}
 
 	return &WatchSession{
 		ctx:             ctx,
+		fs:              fsys,
 		globs:           globs,
 		generateSession: generateSession,
 		lastWrittenHash: make(map[string][32]byte),
@@ -228,7 +230,7 @@ func (ws *WatchSession) isOurWrite(filePath string) bool {
 	cleanPath := filepath.Clean(filePath)
 
 	// Fast path: Check filesystem stat first (much faster than hash computation)
-	fileInfo, err := os.Stat(filePath)
+	fileInfo, err := ws.fs.Stat(filePath)
 	if err != nil {
 		return false // If we can't stat it, assume it's not our write
 	}
@@ -254,7 +256,7 @@ func (ws *WatchSession) isOurWrite(filePath string) bool {
 	}
 
 	// Fallback: Compute hash for definitive answer (expensive but reliable)
-	file, err := os.Open(filePath)
+	file, err := ws.fs.Open(filePath)
 	if err != nil {
 		return false // If we can't read it, assume it's not our write
 	}
@@ -471,7 +473,7 @@ func (ws *WatchSession) writeManifest(manifestStr string) error {
 	hash := sha256.Sum256(contentBytes)
 
 	// Get the file's modification time after writing
-	fileInfo, err := os.Stat(outputPath)
+	fileInfo, err := ws.fs.Stat(outputPath)
 	var modTime time.Time
 	if err == nil {
 		modTime = fileInfo.ModTime()

@@ -123,7 +123,7 @@ export class TestButton extends LitElement {
 
 		// Create mock file watcher for instant events
 		mockFileWatcher := platform.NewMockFileWatcher()
-		registry := lsp.NewRegistry(mockFileWatcher)
+		registry := lsp.NewRegistry(mockFileWatcher, mapFS)
 
 		// Load initial manifest
 		var pkg M.Package
@@ -341,7 +341,7 @@ export class MyApp extends LitElement {
 
 		// Create registry with mock file watcher
 		mockFileWatcher := platform.NewMockFileWatcher()
-		registry := lsp.NewRegistry(mockFileWatcher)
+		registry := lsp.NewRegistry(mockFileWatcher, mapFS)
 
 		// Load initial manifest
 		var pkg M.Package

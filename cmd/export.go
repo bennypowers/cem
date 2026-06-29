@@ -22,6 +22,7 @@ import (
 
 	C "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/export"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/workspace"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -39,7 +40,8 @@ func exportWorkspace(cmd *cobra.Command) error {
 		return err
 	}
 
-	results := workspace.ForEachPackage(ctx.Root(), func(pkg workspace.PackageInfo) error {
+	fsys := platform.NewOSFileSystem()
+	results := workspace.ForEachPackage(ctx.Root(), fsys, func(pkg workspace.PackageInfo) error {
 		pkgCtx := workspace.NewFileSystemWorkspaceContext(pkg.Path)
 		if err := pkgCtx.Init(); err != nil {
 			return err
@@ -124,7 +126,8 @@ with compile-time type checking and IDE autocomplete.
 Frameworks can be configured in .config/cem.yaml under the 'export' key, or
 selected via the --format flag for one-off usage.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if workspace.ShouldUseWorkspaceMode(cmd) {
+		fsys := platform.NewOSFileSystem()
+		if workspace.ShouldUseWorkspaceMode(cmd, fsys) {
 			return exportWorkspace(cmd)
 		}
 

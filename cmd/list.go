@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/list"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/internal/workspace"
@@ -59,7 +60,8 @@ func listFromWorkspaceManifests(cmd *cobra.Command, fn func(pkg W.PackageInfo, m
 	if err != nil {
 		return err
 	}
-	results := W.ForEachPackage(ctx.Root(), func(pkg W.PackageInfo) error {
+	fsys := platform.NewOSFileSystem()
+	results := W.ForEachPackage(ctx.Root(), fsys, func(pkg W.PackageInfo) error {
 		pkgCtx := W.NewFileSystemWorkspaceContext(pkg.Path)
 		if err := pkgCtx.Init(); err != nil {
 			return err
@@ -89,7 +91,7 @@ func makeListSectionCmd(use, short, long string, includeSection string, aliases 
 				return err
 			}
 
-			if W.ShouldUseWorkspaceMode(cmd) {
+			if W.ShouldUseWorkspaceMode(cmd, platform.NewOSFileSystem()) {
 				format, err := requireFormat(cmd, []string{"table", "markdown"})
 				if err != nil {
 					return err
@@ -330,7 +332,7 @@ Example:
   cem list tags --format table --columns Class --columns Module --columns Summary
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if W.ShouldUseWorkspaceMode(cmd) {
+		if W.ShouldUseWorkspaceMode(cmd, platform.NewOSFileSystem()) {
 			format, err := requireFormat(cmd, []string{"table", "markdown"})
 			if err != nil {
 				return err
@@ -408,7 +410,7 @@ Example:
   cem list modules --format table --columns Name
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if W.ShouldUseWorkspaceMode(cmd) {
+		if W.ShouldUseWorkspaceMode(cmd, platform.NewOSFileSystem()) {
 			format, err := requireFormat(cmd, []string{"table", "markdown"})
 			if err != nil {
 				return err
@@ -496,7 +498,7 @@ Examples:
   cem list methods --tag-name my-button
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if W.ShouldUseWorkspaceMode(cmd) {
+		if W.ShouldUseWorkspaceMode(cmd, platform.NewOSFileSystem()) {
 			format, err := requireFormat(cmd, []string{"table", "tree", "markdown"})
 			if err != nil {
 				return err

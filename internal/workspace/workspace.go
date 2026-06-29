@@ -38,7 +38,6 @@ var ErrNoPackageCustomElements = errors.New("package does not specify a custom e
 var ErrManifestNotFound = errors.New("manifest not found")
 var ErrPackageNotFound = errors.New("package not found")
 var ErrGlobAllOutsideRoot = errors.New("all matched files are outside project root")
-var ErrGlobSomeOutsideRoot = errors.New("some matched files are outside project root")
 var ErrGlobNoneMatched = errors.New("no files matched glob pattern")
 
 // designTokensCacheImpl implements DesignTokensCache

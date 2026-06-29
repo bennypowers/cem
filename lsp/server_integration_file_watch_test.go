@@ -44,7 +44,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 	fixturePath := filepath.Join("testdata", "integration", "file-watch-integration", "initial-manifest.json")
 	manifestPath := filepath.Join(tempDir, "custom-elements.json")
 
-	err = testhelpers.CopyFile(fixturePath, manifestPath)
+	err = testhelpers.CopyFile(platform.NewOSFileSystem(),fixturePath, manifestPath)
 	if err != nil {
 		t.Fatalf("Failed to copy initial manifest fixture: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 	t.Run("file watching triggers reload", func(t *testing.T) {
 		// Create registry with MockFileWatcher for testing
 		mockFileWatcher := platform.NewMockFileWatcher()
-		testRegistry := lsp.NewRegistry(mockFileWatcher)
+		testRegistry := lsp.NewRegistry(mockFileWatcher, nil)
 		err = testRegistry.LoadFromWorkspace(workspace)
 		if err != nil {
 			t.Fatalf("Failed to load from workspace: %v", err)
@@ -118,7 +118,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 
 		// Copy updated manifest fixture to trigger file change
 		updatedFixturePath := filepath.Join("testdata", "integration", "file-watch-integration", "updated-manifest.json")
-		err = testhelpers.CopyFile(updatedFixturePath, manifestPath)
+		err = testhelpers.CopyFile(platform.NewOSFileSystem(),updatedFixturePath, manifestPath)
 		if err != nil {
 			t.Fatalf("Failed to copy updated manifest fixture: %v", err)
 		}
@@ -157,7 +157,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			// Create registry with MockFileWatcher for testing
 			mockFileWatcher := platform.NewMockFileWatcher()
-			testRegistry := lsp.NewRegistry(mockFileWatcher)
+			testRegistry := lsp.NewRegistry(mockFileWatcher, nil)
 			err = testRegistry.LoadFromWorkspace(workspace)
 			if err != nil {
 				t.Fatalf("Failed to load from workspace: %v", err)
@@ -201,7 +201,7 @@ func TestManifestFileWatchingIntegration(t *testing.T) {
 			for i := 0; i < 3; i++ {
 				fixtureName := fixtures[i%2]
 				fixturePath := filepath.Join("testdata", "integration", "file-watch-integration", fixtureName)
-				err = testhelpers.CopyFile(fixturePath, manifestPath)
+				err = testhelpers.CopyFile(platform.NewOSFileSystem(),fixturePath, manifestPath)
 				if err != nil {
 					t.Fatalf("Failed to copy manifest fixture %s: %v", fixtureName, err)
 				}
@@ -243,7 +243,7 @@ func TestPackageJSONWatching(t *testing.T) {
 	// Copy manifest to the referenced location
 	manifestPath := filepath.Join(tempDir, "custom-elements.json")
 	fixturePath := filepath.Join("testdata", "integration", "file-watch-integration", "initial-manifest.json")
-	err = testhelpers.CopyFile(fixturePath, manifestPath)
+	err = testhelpers.CopyFile(platform.NewOSFileSystem(),fixturePath, manifestPath)
 	if err != nil {
 		t.Fatalf("Failed to copy manifest fixture: %v", err)
 	}
@@ -258,14 +258,14 @@ func TestPackageJSONWatching(t *testing.T) {
 	// Copy package.json fixture to the mock package
 	packagePath := filepath.Join(nodeModulesPath, "package.json")
 	packageFixturePath := filepath.Join("testdata", "integration", "file-watch-integration", "package.json")
-	err = testhelpers.CopyFile(packageFixturePath, packagePath)
+	err = testhelpers.CopyFile(platform.NewOSFileSystem(),packageFixturePath, packagePath)
 	if err != nil {
 		t.Fatalf("Failed to copy package.json fixture: %v", err)
 	}
 
 	// Copy the manifest to the location referenced by package.json
 	manifestInPackagePath := filepath.Join(nodeModulesPath, "custom-elements.json")
-	err = testhelpers.CopyFile(fixturePath, manifestInPackagePath)
+	err = testhelpers.CopyFile(platform.NewOSFileSystem(),fixturePath, manifestInPackagePath)
 	if err != nil {
 		t.Fatalf("Failed to copy manifest to package location: %v", err)
 	}
@@ -304,7 +304,7 @@ func TestPackageJSONWatching(t *testing.T) {
 	t.Run("package.json changes trigger reload", func(t *testing.T) {
 		// Create registry with MockFileWatcher for testing
 		mockFileWatcher := platform.NewMockFileWatcher()
-		testRegistry := lsp.NewRegistry(mockFileWatcher)
+		testRegistry := lsp.NewRegistry(mockFileWatcher, nil)
 
 		// Load workspace to populate manifest paths
 		workspace := W.NewFileSystemWorkspaceContext(tempDir)

@@ -154,7 +154,7 @@ func TestValidationTemplateData_WithFixtures(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -187,7 +187,7 @@ func TestValidateHtml_UnknownAttributeDetection(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -242,7 +242,7 @@ func TestValidateHtml_ValidAttributes(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -284,7 +284,7 @@ func TestValidateHtml_InvalidAttributeValue(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -330,7 +330,7 @@ func TestValidateHtml_AttributeValueParsing_Regression(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -390,7 +390,7 @@ func TestValidateHtml_UnknownElement(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -432,7 +432,7 @@ func TestValidateHtml_MultipleIssues(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -477,7 +477,7 @@ func TestValidateHtml_GlobalAttributesAllowed(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -555,7 +555,7 @@ func TestValidateHtml_GlobalAttributesWithUnknownCustomAttribute(t *testing.T) {
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()
@@ -610,7 +610,7 @@ func testValidateHtmlWithGolden(t *testing.T, fixtureFile, contextStr, goldenFil
 	err := workspace.Init()
 	require.NoError(t, err)
 
-	registry, err := mcp.NewMCPContext(workspace)
+	registry, err := mcp.NewMCPContext(workspace, nil)
 	require.NoError(t, err)
 
 	err = registry.LoadManifests()

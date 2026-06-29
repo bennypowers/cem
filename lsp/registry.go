@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -120,12 +119,19 @@ type Registry struct {
 	localWorkspace  types.WorkspaceContext // Track the local workspace for generate watching
 	// Module graph for tracking re-export relationships
 	moduleGraph *modulegraph.ModuleGraph
+	// Filesystem abstraction for file operations
+	fs platform.FileSystem
 }
 
 // NewRegistry creates a new empty registry with the given file watcher.
+// If fsys is nil, it defaults to platform.NewOSFileSystem().
 // For production use, pass platform.NewFSNotifyFileWatcher().
 // For testing, pass platform.NewMockFileWatcher().
-func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
+func NewRegistry(fileWatcher platform.FileWatcher, fsys platform.FileSystem) *Registry {
+	if fsys == nil {
+		fsys = platform.NewOSFileSystem()
+	}
+
 	// Get QueryManager for dependency injection
 	queryManager, err := treesitter.GetGlobalQueryManager()
 	if err != nil {
@@ -133,7 +139,7 @@ func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
 		queryManager = nil
 	}
 
-	moduleGraph := modulegraph.NewModuleGraph(queryManager)
+	moduleGraph := modulegraph.NewModuleGraph(fsys, queryManager)
 
 	return &Registry{
 		Elements:             make(map[string]*M.CustomElement),
@@ -145,6 +151,7 @@ func NewRegistry(fileWatcher platform.FileWatcher) *Registry {
 		ManifestPackageNames: make(map[string]string),
 		fileWatcher:          fileWatcher,
 		moduleGraph:          moduleGraph,
+		fs:                   fsys,
 	}
 }
 
@@ -155,7 +162,7 @@ func NewRegistryWithDefaults() (*Registry, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create file watcher: %w", err)
 	}
-	return NewRegistry(fileWatcher), nil
+	return NewRegistry(fileWatcher, nil), nil
 }
 
 // LoadFromWorkspace loads all available custom elements manifests from
@@ -211,7 +218,7 @@ func (r *Registry) clear() {
 		// For production, this should not happen, but handle gracefully
 		queryManager = nil
 	}
-	r.moduleGraph = modulegraph.NewModuleGraph(queryManager)
+	r.moduleGraph = modulegraph.NewModuleGraph(r.fs, queryManager)
 }
 
 // clearDataOnly resets the registry data but preserves manifest paths for watching
@@ -229,7 +236,7 @@ func (r *Registry) clearDataOnly() {
 		// For production, this should not happen, but handle gracefully
 		queryManager = nil
 	}
-	r.moduleGraph = modulegraph.NewModuleGraph(queryManager)
+	r.moduleGraph = modulegraph.NewModuleGraph(r.fs, queryManager)
 	// Note: ManifestPaths are preserved for file watching
 }
 
@@ -620,7 +627,7 @@ func (r *Registry) generateInMemoryManifest(packagePath string, packageName stri
 	logging.Debug("[IN-MEMORY] Starting in-memory generation for package '%s' at path: %s", packageName, packagePath)
 
 	// Create a workspace context for the package directory
-	wsCtx := workspace.NewFileSystemWorkspaceContext(packagePath)
+	wsCtx := workspace.NewFileSystemWorkspaceContext(packagePath, workspace.WithFileSystem(r.fs))
 
 	// Initialize the workspace context to load config
 	if err := wsCtx.Init(); err != nil {
@@ -631,7 +638,7 @@ func (r *Registry) generateInMemoryManifest(packagePath string, packageName stri
 	logging.Debug("[IN-MEMORY] Successfully initialized workspace context for %s", packageName)
 
 	// Create a generate session
-	session, err := generate.NewGenerateSession(wsCtx)
+	session, err := generate.NewGenerateSession(wsCtx, r.fs)
 	if err != nil {
 		logging.Warning("[IN-MEMORY] Failed to create generate session for %s: %v", packageName, err)
 		return nil
@@ -718,8 +725,8 @@ func (r *Registry) loadAdditionalPackage(spec string) error {
 }
 
 // readFileViaWorkspace reads a file through the workspace interface when available,
-// falling back to os.ReadFile for absolute paths (e.g. ReloadManifestsDirectly).
-func readFileViaWorkspace(path string, workspace types.WorkspaceContext) ([]byte, error) {
+// falling back to the given FileSystem for absolute paths (e.g. ReloadManifestsDirectly).
+func readFileViaWorkspace(path string, workspace types.WorkspaceContext, fsys platform.FileSystem) ([]byte, error) {
 	if workspace != nil {
 		rc, err := workspace.ReadFile(path)
 		if err != nil {
@@ -728,11 +735,11 @@ func readFileViaWorkspace(path string, workspace types.WorkspaceContext) ([]byte
 		defer func() { _ = rc.Close() }()
 		return io.ReadAll(rc)
 	}
-	return os.ReadFile(path)
+	return fsys.ReadFile(path)
 }
 
 func (r *Registry) readPackageJSON(path string, workspace types.WorkspaceContext) (*M.PackageJSON, error) {
-	data, err := readFileViaWorkspace(path, workspace)
+	data, err := readFileViaWorkspace(path, workspace, r.fs)
 	if err != nil {
 		return nil, err
 	}
@@ -750,7 +757,7 @@ func (r *Registry) readPackageJSON(path string, workspace types.WorkspaceContext
 }
 
 func (r *Registry) loadManifestFileWithPackageName(path string, packageName string, workspace types.WorkspaceContext) (*M.Package, error) {
-	data, err := readFileViaWorkspace(path, workspace)
+	data, err := readFileViaWorkspace(path, workspace, r.fs)
 	if err != nil {
 		return nil, err
 	}
@@ -765,9 +772,8 @@ func (r *Registry) loadManifestFileWithPackageName(path string, packageName stri
 	return &pkg, nil
 }
 
-// loadManifestFile loads a custom elements manifest from a file
 func (r *Registry) loadManifestFile(path string) (*M.Package, error) {
-	data, err := os.ReadFile(path)
+	data, err := r.fs.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -1244,7 +1250,7 @@ func (r *Registry) StartGenerateWatcher() error {
 
 	// Create and start the in-process generate watcher
 	helpers.SafeDebugLog("About to create InProcessGenerateWatcher with globs: %v", globs)
-	watcher, err := NewInProcessGenerateWatcher(r.localWorkspace, globs, callback)
+	watcher, err := NewInProcessGenerateWatcher(r.localWorkspace, globs, callback, r.fs)
 	if err != nil {
 		helpers.SafeDebugLog("Failed to create InProcessGenerateWatcher: %v", err)
 		return fmt.Errorf("failed to create generate watcher: %w", err)

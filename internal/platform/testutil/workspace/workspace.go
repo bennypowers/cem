@@ -35,7 +35,7 @@ import (
 	"bennypowers.dev/cem/internal/platform/testutil"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
-	"github.com/bmatcuk/doublestar"
+	"github.com/bmatcuk/doublestar/v4"
 )
 
 var _ types.WorkspaceContext = (*MapWorkspaceContext)(nil)
@@ -64,8 +64,22 @@ func NewMapWorkspaceContext(t testing.TB, dir string) *MapWorkspaceContext {
 	}
 }
 
+// NewMapWorkspaceContextWithRoot loads dir into MapFS rooted at rootPath
+// and returns a WorkspaceContext backed by it. Use this when the test depends
+// on the workspace root directory name (e.g., workspace fallback logic that
+// uses filepath.Base(root) as a package name).
+func NewMapWorkspaceContextWithRoot(t testing.TB, dir string, rootPath string) *MapWorkspaceContext {
+	t.Helper()
+	mfs := testutil.LoadTestdataFS(t, dir, rootPath)
+	return &MapWorkspaceContext{
+		mfs:               mfs,
+		root:              rootPath,
+		designTokensCache: &noopDesignTokensCache{},
+	}
+}
+
 func (c *MapWorkspaceContext) Init() error {
-	data, err := c.mfs.ReadFile("package.json")
+	data, err := c.mfs.ReadFile(filepath.Join(c.root, "package.json"))
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("MapWorkspaceContext: reading package.json: %w", err)
 	}
@@ -86,12 +100,28 @@ func (c *MapWorkspaceContext) Init() error {
 		c.customElementsManifestPath = filepath.Join(c.root, "custom-elements.json")
 	}
 
-	c.config = &IC.CemConfig{
-		ProjectDir: c.root,
-		Generate: IC.GenerateConfig{
-			Files:   make([]string, 0),
-			Exclude: make([]string, 0),
-		},
+	// Discover and load config from MapFS, mirroring FileSystemWorkspaceContext.initConfig
+	if configPath := IC.FindConfigFile(c.root, c.mfs); configPath != "" {
+		cfg, err := IC.LoadConfig(configPath, c.mfs)
+		if err != nil {
+			return fmt.Errorf("MapWorkspaceContext: loading config: %w", err)
+		}
+		cfg.ProjectDir = c.root
+		if cfg.Generate.Files == nil {
+			cfg.Generate.Files = make([]string, 0)
+		}
+		if cfg.Generate.Exclude == nil {
+			cfg.Generate.Exclude = make([]string, 0)
+		}
+		c.config = cfg
+	} else {
+		c.config = &IC.CemConfig{
+			ProjectDir: c.root,
+			Generate: IC.GenerateConfig{
+				Files:   make([]string, 0),
+				Exclude: make([]string, 0),
+			},
+		}
 	}
 
 	return nil
@@ -231,6 +261,12 @@ func (c *MapWorkspaceContext) ResolveModuleDependency(modulePath, dependencyPath
 
 func (c *MapWorkspaceContext) DesignTokensCache() types.DesignTokensCache {
 	return c.designTokensCache
+}
+
+// FileSystem returns the underlying MapFileSystem for use as a platform.FileSystem
+// argument in functions that require both a WorkspaceContext and a FileSystem.
+func (c *MapWorkspaceContext) FileSystem() *platform.MapFileSystem {
+	return c.mfs
 }
 
 func (c *MapWorkspaceContext) cleanPath(path string) string {

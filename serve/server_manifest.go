@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"runtime"
 
@@ -91,15 +90,7 @@ func (s *Server) PackageJSON() (*middleware.PackageJSON, error) {
 
 	packageJSONPath := filepath.Join(watchDir, "package.json")
 
-	var data []byte
-	var err error
-
-	// Use injected filesystem if available, otherwise fall back to os.ReadFile
-	if filesystem := s.FileSystem(); filesystem != nil {
-		data, err = filesystem.ReadFile(packageJSONPath)
-	} else {
-		data, err = os.ReadFile(packageJSONPath)
-	}
+	data, err := s.fs.ReadFile(packageJSONPath)
 
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -213,15 +204,22 @@ func (s *Server) RegenerateManifest() (int, error) {
 	// Perform expensive operations without holding lock
 	// Create fresh workspace context and session for live reload
 	// This ensures we always read the latest file contents
-	workspace := W.NewFileSystemWorkspaceContext(watchDir)
+	workspace := W.NewFileSystemWorkspaceContext(watchDir, W.WithFileSystem(s.fs))
 	if err := workspace.Init(); err != nil {
 		return 0, fmt.Errorf("initializing workspace: %w", err)
 	}
 
-	session, err := G.NewGenerateSession(workspace)
+	session, err := G.NewGenerateSession(workspace, s.fs)
 	if err != nil {
 		return 0, fmt.Errorf("creating generate session: %w", err)
 	}
+	// Ensure session is cleaned up if we return before storing it in s.generateSession
+	sessionStored := false
+	defer func() {
+		if !sessionStored {
+			session.Close()
+		}
+	}()
 
 	// Configure adaptive worker count to prevent goroutine explosion under concurrent load
 	// Use same formula as transform pool for consistency
@@ -269,6 +267,7 @@ func (s *Server) RegenerateManifest() (int, error) {
 	}
 
 	s.generateSession = session
+	sessionStored = true
 	s.sourceFiles = sourceFiles
 
 	// Defensive copy (though json.MarshalIndent already returns a new slice)

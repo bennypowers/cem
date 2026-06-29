@@ -25,6 +25,7 @@ import (
 	G "bennypowers.dev/cem/generate"
 	DD "bennypowers.dev/cem/generate/demodiscovery"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/tui"
 	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/internal/workspace"
@@ -41,7 +42,7 @@ var generateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) (errs error) {
 		start = time.Now()
 
-		if W.ShouldUseWorkspaceMode(cmd) {
+		if W.ShouldUseWorkspaceMode(cmd, platform.NewOSFileSystem()) {
 			return generateWorkspace(cmd)
 		}
 
@@ -147,7 +148,7 @@ var generateCmd = &cobra.Command{
 		}
 
 		// generate the manifest
-		manifestStr, err := G.Generate(ctx)
+		manifestStr, err := G.Generate(ctx, platform.NewOSFileSystem())
 		if err != nil {
 			errs = errors.Join(errs, err)
 			// Print warnings for non-fatal errors
@@ -282,7 +283,8 @@ func generateWorkspace(cmd *cobra.Command) error {
 	rootFiles := rootCfg.Generate.Files
 	rootExclude := rootCfg.Generate.Exclude
 
-	results := W.ForEachPackage(baseCtx.Root(), func(pkg W.PackageInfo) error {
+	fsys := platform.NewOSFileSystem()
+	results := W.ForEachPackage(baseCtx.Root(), fsys, func(pkg W.PackageInfo) error {
 		ctx := W.NewFileSystemWorkspaceContext(pkg.Path)
 		if err := ctx.Init(); err != nil {
 			return fmt.Errorf("initializing context: %w", err)
@@ -296,14 +298,14 @@ func generateWorkspace(cmd *cobra.Command) error {
 		// Resolve root-level file patterns: expand from workspace root,
 		// filter to files under this package, return package-relative paths.
 		if len(rootFiles) > 0 {
-			resolved, err := W.ResolveWorkspaceFiles(baseCtx.Root(), rootFiles, pkg.Path)
+			resolved, err := W.ResolveWorkspaceFiles(baseCtx.Root(), rootFiles, pkg.Path, fsys)
 			if err != nil {
 				return fmt.Errorf("resolving workspace files: %w", err)
 			}
 			cfg.Generate.Files = append(cfg.Generate.Files, resolved...)
 		}
 		if len(rootExclude) > 0 {
-			resolved, err := W.ResolveWorkspaceFiles(baseCtx.Root(), rootExclude, pkg.Path)
+			resolved, err := W.ResolveWorkspaceFiles(baseCtx.Root(), rootExclude, pkg.Path, fsys)
 			if err != nil {
 				return fmt.Errorf("resolving workspace excludes: %w", err)
 			}
@@ -313,7 +315,7 @@ func generateWorkspace(cmd *cobra.Command) error {
 		// Resolve root-level demo discovery: expand from root, filter to this package,
 		// then derive a package-local glob from the matched file paths.
 		if rootCfg.Generate.DemoDiscovery.FileGlob != "" && cfg.Generate.DemoDiscovery.FileGlob == "" {
-			demoFiles, err := W.ResolveWorkspaceFiles(baseCtx.Root(), []string{rootCfg.Generate.DemoDiscovery.FileGlob}, pkg.Path)
+			demoFiles, err := W.ResolveWorkspaceFiles(baseCtx.Root(), []string{rootCfg.Generate.DemoDiscovery.FileGlob}, pkg.Path, fsys)
 			if err == nil && len(demoFiles) > 0 {
 				cfg.Generate.DemoDiscovery = rootCfg.Generate.DemoDiscovery
 				cfg.Generate.DemoDiscovery.FileGlob = W.DerivePackageGlob(demoFiles)
@@ -349,7 +351,7 @@ func generateWorkspace(cmd *cobra.Command) error {
 			return nil
 		}
 
-		manifestStr, err := G.Generate(ctx)
+		manifestStr, err := G.Generate(ctx, platform.NewOSFileSystem())
 		if err != nil {
 			return err
 		}
@@ -375,7 +377,7 @@ func generateWorkspace(cmd *cobra.Command) error {
 
 // runWatchMode starts the file watching mode - delegates to generate package
 func runWatchMode(ctx types.WorkspaceContext, globs []string) error {
-	session, err := G.NewWatchSession(ctx, globs)
+	session, err := G.NewWatchSession(ctx, globs, platform.NewOSFileSystem())
 	if err != nil {
 		return err
 	}

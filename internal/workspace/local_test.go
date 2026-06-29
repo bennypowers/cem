@@ -21,10 +21,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var osfs = platform.NewOSFileSystem()
 
 // Inline: integration test, scalar assertions
 
@@ -74,21 +77,21 @@ func TestFindWorkspaceRoot(t *testing.T) {
 
 	t.Run("Find workspace root from subdirectory", func(t *testing.T) {
 		// Start from elements/src/ and should find tmpDir
-		root, err := workspace.FindWorkspaceRoot(srcDir)
+		root, err := workspace.FindWorkspaceRoot(srcDir, osfs)
 		require.NoError(t, err)
 		assert.Equal(t, tmpDir, root, "Expected to find workspace root at tmpDir")
 	})
 
 	t.Run("Find workspace root from workspace package", func(t *testing.T) {
 		// Start from elements/ and should find tmpDir (parent with .git)
-		root, err := workspace.FindWorkspaceRoot(elementsDir)
+		root, err := workspace.FindWorkspaceRoot(elementsDir, osfs)
 		require.NoError(t, err)
 		assert.Equal(t, tmpDir, root, "Expected to find workspace root at tmpDir, not elements/")
 	})
 
 	t.Run("Find workspace root from workspace root itself", func(t *testing.T) {
 		// Start from tmpDir and should find tmpDir
-		root, err := workspace.FindWorkspaceRoot(tmpDir)
+		root, err := workspace.FindWorkspaceRoot(tmpDir, osfs)
 		require.NoError(t, err)
 		assert.Equal(t, tmpDir, root, "Expected to find workspace root at tmpDir")
 	})
@@ -100,7 +103,7 @@ func TestFindWorkspaceRoot(t *testing.T) {
 		require.NoError(t, err)
 
 		// Start from file path and should find tmpDir
-		root, err := workspace.FindWorkspaceRoot(testFile)
+		root, err := workspace.FindWorkspaceRoot(testFile, osfs)
 		require.NoError(t, err)
 		assert.Equal(t, tmpDir, root, "Expected to find workspace root from file path")
 	})
@@ -123,7 +126,7 @@ func TestFindWorkspaceRoot_PnpmWorkspace(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("Find pnpm workspace root", func(t *testing.T) {
-		root, err := workspace.FindWorkspaceRoot(packagesDir)
+		root, err := workspace.FindWorkspaceRoot(packagesDir, osfs)
 		require.NoError(t, err)
 		assert.Equal(t, tmpDir, root, "Expected to find pnpm workspace root")
 	})
@@ -139,7 +142,7 @@ func TestFindWorkspaceRoot_NoWorkspace(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("Return original path when no workspace found", func(t *testing.T) {
-		root, err := workspace.FindWorkspaceRoot(subDir)
+		root, err := workspace.FindWorkspaceRoot(subDir, osfs)
 		require.NoError(t, err)
 		// Should return the original path as fallback
 		assert.Equal(t, subDir, root, "Expected to return original path when no workspace found")
@@ -207,7 +210,7 @@ func TestFindWorkspaceRoot_GitSubmoduleBoundary(t *testing.T) {
 		// Start from submodule/src/ and should find submoduleDir, NOT tmpDir
 		// This is because submoduleDir has .git (VCS marker) even though it doesn't
 		// have workspace metadata (pnpm-workspace.yaml or package.json with workspaces)
-		root, err := workspace.FindWorkspaceRoot(srcDir)
+		root, err := workspace.FindWorkspaceRoot(srcDir, osfs)
 		require.NoError(t, err)
 		assert.Equal(t, submoduleDir, root,
 			"Expected to stop at Git submodule boundary, not climb to parent repo")
@@ -215,7 +218,7 @@ func TestFindWorkspaceRoot_GitSubmoduleBoundary(t *testing.T) {
 
 	t.Run("Starting from submodule root should return submodule root", func(t *testing.T) {
 		// Start from submoduleDir itself
-		root, err := workspace.FindWorkspaceRoot(submoduleDir)
+		root, err := workspace.FindWorkspaceRoot(submoduleDir, osfs)
 		require.NoError(t, err)
 		assert.Equal(t, submoduleDir, root,
 			"Expected to return submodule root, not climb to parent")
@@ -275,7 +278,7 @@ func TestFindWorkspaceRoot_SimplePackageInGitRepo(t *testing.T) {
 	t.Run("Find nearest package.json, not git root", func(t *testing.T) {
 		// Start from test file in fixture directory
 		// Should find fixtureDir (nearest package.json), not tmpDir (git root)
-		root, err := workspace.FindWorkspaceRoot(testFile)
+		root, err := workspace.FindWorkspaceRoot(testFile, osfs)
 		require.NoError(t, err)
 		assert.Equal(t, fixtureDir, root,
 			"Expected to find nearest package.json at fixture dir, not git root")
@@ -283,7 +286,7 @@ func TestFindWorkspaceRoot_SimplePackageInGitRepo(t *testing.T) {
 
 	t.Run("Find nearest package.json from directory", func(t *testing.T) {
 		// Start from fixture directory itself
-		root, err := workspace.FindWorkspaceRoot(fixtureDir)
+		root, err := workspace.FindWorkspaceRoot(fixtureDir, osfs)
 		require.NoError(t, err)
 		assert.Equal(t, fixtureDir, root,
 			"Expected to return fixture dir with package.json, not git root")
@@ -345,7 +348,7 @@ func TestFindWorkspaceRoot_WorkspaceMetadataClimb(t *testing.T) {
 		// Start from elements/ and should climb to tmpDir
 		// Because both myPackageDir and tmpDir have workspace metadata,
 		// we should prefer the topmost workspace
-		root, err := workspace.FindWorkspaceRoot(elementsDir)
+		root, err := workspace.FindWorkspaceRoot(elementsDir, osfs)
 		require.NoError(t, err)
 		assert.Equal(t, tmpDir, root,
 			"Expected to climb to topmost workspace when workspace metadata is present")

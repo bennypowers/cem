@@ -39,9 +39,9 @@ func TestWriteMarkdownReport(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fixturePath := filepath.Join("testdata", "fixtures", tt.fixture, "custom-elements.json")
+			fixturePath := filepath.Join("/", "fixtures", tt.fixture, "custom-elements.json")
 
-			result, err := Analyze(fixturePath, Options{})
+			result, err := Analyze(mfs, fixturePath, Options{})
 			if err != nil {
 				t.Fatalf("Analyze() error = %v", err)
 			}

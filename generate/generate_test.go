@@ -26,6 +26,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/generate"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/platform/testutil"
 	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/nsf/jsondiff"
@@ -127,7 +128,7 @@ func TestGenerate(t *testing.T) {
 			if *testutil.Update {
 				if manifestPath := ctx.CustomElementsManifestPath(); manifestPath != "" {
 					cfg.Generate.Files = originalFiles
-					actual, err := generate.Generate(ctx)
+					actual, err := generate.Generate(ctx, platform.NewOSFileSystem())
 					if err != nil {
 						t.Fatalf("failed to generate full manifest: %v", err)
 					}
@@ -148,7 +149,7 @@ func TestGenerate(t *testing.T) {
 						cfg.Generate.Files = []string{tc.path}
 					}
 					// else: use config file patterns
-					actual, err := generate.Generate(ctx)
+					actual, err := generate.Generate(ctx, platform.NewOSFileSystem())
 					if err != nil {
 						t.Fatal(err)
 					}

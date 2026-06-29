@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/config"
+	"bennypowers.dev/cem/internal/platform"
 )
 
 func mkdirAll(t *testing.T, path string) {
@@ -23,149 +24,285 @@ func writeFile(t *testing.T, path string, data []byte) {
 }
 
 func TestFindConfigFile_YamlInDotConfig(t *testing.T) {
-	root := t.TempDir()
-	cfgDir := filepath.Join(root, ".config")
-	mkdirAll(t, cfgDir)
-	writeFile(t, filepath.Join(cfgDir, "cem.yaml"), []byte("generate:\n  files: ['*.ts']"))
+	t.Run("os", func(t *testing.T) {
+		root := t.TempDir()
+		cfgDir := filepath.Join(root, ".config")
+		mkdirAll(t, cfgDir)
+		writeFile(t, filepath.Join(cfgDir, "cem.yaml"), []byte("generate:\n  files: ['*.ts']"))
 
-	got := config.FindConfigFile(root)
-	want := filepath.Join(root, ".config", "cem.yaml")
-	if got != want {
-		t.Errorf("FindConfigFile() = %q, want %q", got, want)
-	}
+		got := config.FindConfigFile(root, platform.NewOSFileSystem())
+		want := filepath.Join(root, ".config", "cem.yaml")
+		if got != want {
+			t.Errorf("FindConfigFile() = %q, want %q", got, want)
+		}
+	})
+	t.Run("mapfs", func(t *testing.T) {
+		mfs := platform.NewMapFileSystem(nil)
+		mfs.AddFile("project/.config/cem.yaml", "generate:\n  files: ['*.ts']", 0644)
+
+		got := config.FindConfigFile("/project", mfs)
+		if got != "/project/.config/cem.yaml" {
+			t.Errorf("FindConfigFile() = %q, want %q", got, "/project/.config/cem.yaml")
+		}
+	})
 }
 
 func TestFindConfigFile_YmlInDotConfig(t *testing.T) {
-	root := t.TempDir()
-	cfgDir := filepath.Join(root, ".config")
-	mkdirAll(t, cfgDir)
-	writeFile(t, filepath.Join(cfgDir, "cem.yml"), []byte("generate:\n  files: ['*.ts']"))
+	t.Run("os", func(t *testing.T) {
+		root := t.TempDir()
+		cfgDir := filepath.Join(root, ".config")
+		mkdirAll(t, cfgDir)
+		writeFile(t, filepath.Join(cfgDir, "cem.yml"), []byte("generate:\n  files: ['*.ts']"))
 
-	got := config.FindConfigFile(root)
-	want := filepath.Join(root, ".config", "cem.yml")
-	if got != want {
-		t.Errorf("FindConfigFile() = %q, want %q", got, want)
-	}
+		got := config.FindConfigFile(root, platform.NewOSFileSystem())
+		want := filepath.Join(root, ".config", "cem.yml")
+		if got != want {
+			t.Errorf("FindConfigFile() = %q, want %q", got, want)
+		}
+	})
+	t.Run("mapfs", func(t *testing.T) {
+		mfs := platform.NewMapFileSystem(nil)
+		mfs.AddFile("project/.config/cem.yml", "generate:\n  files: ['*.ts']", 0644)
+
+		got := config.FindConfigFile("/project", mfs)
+		if got != "/project/.config/cem.yml" {
+			t.Errorf("FindConfigFile() = %q, want %q", got, "/project/.config/cem.yml")
+		}
+	})
 }
 
 func TestFindConfigFile_JsonInDotConfig(t *testing.T) {
-	root := t.TempDir()
-	cfgDir := filepath.Join(root, ".config")
-	mkdirAll(t, cfgDir)
-	writeFile(t, filepath.Join(cfgDir, "cem.json"), []byte(`{"generate":{"files":["*.ts"]}}`))
+	t.Run("os", func(t *testing.T) {
+		root := t.TempDir()
+		cfgDir := filepath.Join(root, ".config")
+		mkdirAll(t, cfgDir)
+		writeFile(t, filepath.Join(cfgDir, "cem.json"), []byte(`{"generate":{"files":["*.ts"]}}`))
 
-	got := config.FindConfigFile(root)
-	want := filepath.Join(root, ".config", "cem.json")
-	if got != want {
-		t.Errorf("FindConfigFile() = %q, want %q", got, want)
-	}
+		got := config.FindConfigFile(root, platform.NewOSFileSystem())
+		want := filepath.Join(root, ".config", "cem.json")
+		if got != want {
+			t.Errorf("FindConfigFile() = %q, want %q", got, want)
+		}
+	})
+	t.Run("mapfs", func(t *testing.T) {
+		mfs := platform.NewMapFileSystem(nil)
+		mfs.AddFile("project/.config/cem.json", `{"generate":{"files":["*.ts"]}}`, 0644)
+
+		got := config.FindConfigFile("/project", mfs)
+		if got != "/project/.config/cem.json" {
+			t.Errorf("FindConfigFile() = %q, want %q", got, "/project/.config/cem.json")
+		}
+	})
 }
 
 func TestFindConfigFile_JsoncInDotConfig(t *testing.T) {
-	root := t.TempDir()
-	cfgDir := filepath.Join(root, ".config")
-	mkdirAll(t, cfgDir)
-	writeFile(t, filepath.Join(cfgDir, "cem.jsonc"), []byte("// comment\n{\"generate\":{}}"))
+	t.Run("os", func(t *testing.T) {
+		root := t.TempDir()
+		cfgDir := filepath.Join(root, ".config")
+		mkdirAll(t, cfgDir)
+		writeFile(t, filepath.Join(cfgDir, "cem.jsonc"), []byte("// comment\n{\"generate\":{}}"))
 
-	got := config.FindConfigFile(root)
-	want := filepath.Join(root, ".config", "cem.jsonc")
-	if got != want {
-		t.Errorf("FindConfigFile() = %q, want %q", got, want)
-	}
+		got := config.FindConfigFile(root, platform.NewOSFileSystem())
+		want := filepath.Join(root, ".config", "cem.jsonc")
+		if got != want {
+			t.Errorf("FindConfigFile() = %q, want %q", got, want)
+		}
+	})
+	t.Run("mapfs", func(t *testing.T) {
+		mfs := platform.NewMapFileSystem(nil)
+		mfs.AddFile("project/.config/cem.jsonc", "// comment\n{\"generate\":{}}", 0644)
+
+		got := config.FindConfigFile("/project", mfs)
+		if got != "/project/.config/cem.jsonc" {
+			t.Errorf("FindConfigFile() = %q, want %q", got, "/project/.config/cem.jsonc")
+		}
+	})
 }
 
 func TestFindConfigFile_DotCemYaml(t *testing.T) {
-	root := t.TempDir()
-	writeFile(t, filepath.Join(root, ".cem.yaml"), []byte("generate:\n  files: ['*.ts']"))
+	t.Run("os", func(t *testing.T) {
+		root := t.TempDir()
+		writeFile(t, filepath.Join(root, ".cem.yaml"), []byte("generate:\n  files: ['*.ts']"))
 
-	got := config.FindConfigFile(root)
-	want := filepath.Join(root, ".cem.yaml")
-	if got != want {
-		t.Errorf("FindConfigFile() = %q, want %q", got, want)
-	}
+		got := config.FindConfigFile(root, platform.NewOSFileSystem())
+		want := filepath.Join(root, ".cem.yaml")
+		if got != want {
+			t.Errorf("FindConfigFile() = %q, want %q", got, want)
+		}
+	})
+	t.Run("mapfs", func(t *testing.T) {
+		mfs := platform.NewMapFileSystem(nil)
+		mfs.AddFile("project/.cem.yaml", "generate:\n  files: ['*.ts']", 0644)
+
+		got := config.FindConfigFile("/project", mfs)
+		if got != "/project/.cem.yaml" {
+			t.Errorf("FindConfigFile() = %q, want %q", got, "/project/.cem.yaml")
+		}
+	})
 }
 
 func TestFindConfigFile_DotCemYml(t *testing.T) {
-	root := t.TempDir()
-	writeFile(t, filepath.Join(root, ".cem.yml"), []byte("generate:\n  files: ['*.ts']"))
+	t.Run("os", func(t *testing.T) {
+		root := t.TempDir()
+		writeFile(t, filepath.Join(root, ".cem.yml"), []byte("generate:\n  files: ['*.ts']"))
 
-	got := config.FindConfigFile(root)
-	want := filepath.Join(root, ".cem.yml")
-	if got != want {
-		t.Errorf("FindConfigFile() = %q, want %q", got, want)
-	}
+		got := config.FindConfigFile(root, platform.NewOSFileSystem())
+		want := filepath.Join(root, ".cem.yml")
+		if got != want {
+			t.Errorf("FindConfigFile() = %q, want %q", got, want)
+		}
+	})
+	t.Run("mapfs", func(t *testing.T) {
+		mfs := platform.NewMapFileSystem(nil)
+		mfs.AddFile("project/.cem.yml", "generate:\n  files: ['*.ts']", 0644)
+
+		got := config.FindConfigFile("/project", mfs)
+		if got != "/project/.cem.yml" {
+			t.Errorf("FindConfigFile() = %q, want %q", got, "/project/.cem.yml")
+		}
+	})
 }
 
 func TestFindConfigFile_DotCemJson(t *testing.T) {
-	root := t.TempDir()
-	writeFile(t, filepath.Join(root, ".cem.json"), []byte(`{"generate":{}}`))
+	t.Run("os", func(t *testing.T) {
+		root := t.TempDir()
+		writeFile(t, filepath.Join(root, ".cem.json"), []byte(`{"generate":{}}`))
 
-	got := config.FindConfigFile(root)
-	want := filepath.Join(root, ".cem.json")
-	if got != want {
-		t.Errorf("FindConfigFile() = %q, want %q", got, want)
-	}
+		got := config.FindConfigFile(root, platform.NewOSFileSystem())
+		want := filepath.Join(root, ".cem.json")
+		if got != want {
+			t.Errorf("FindConfigFile() = %q, want %q", got, want)
+		}
+	})
+	t.Run("mapfs", func(t *testing.T) {
+		mfs := platform.NewMapFileSystem(nil)
+		mfs.AddFile("project/.cem.json", `{"generate":{}}`, 0644)
+
+		got := config.FindConfigFile("/project", mfs)
+		if got != "/project/.cem.json" {
+			t.Errorf("FindConfigFile() = %q, want %q", got, "/project/.cem.json")
+		}
+	})
 }
 
 func TestFindConfigFile_DotCemJsonc(t *testing.T) {
-	root := t.TempDir()
-	writeFile(t, filepath.Join(root, ".cem.jsonc"), []byte("// comment\n{}"))
+	t.Run("os", func(t *testing.T) {
+		root := t.TempDir()
+		writeFile(t, filepath.Join(root, ".cem.jsonc"), []byte("// comment\n{}"))
 
-	got := config.FindConfigFile(root)
-	want := filepath.Join(root, ".cem.jsonc")
-	if got != want {
-		t.Errorf("FindConfigFile() = %q, want %q", got, want)
-	}
+		got := config.FindConfigFile(root, platform.NewOSFileSystem())
+		want := filepath.Join(root, ".cem.jsonc")
+		if got != want {
+			t.Errorf("FindConfigFile() = %q, want %q", got, want)
+		}
+	})
+	t.Run("mapfs", func(t *testing.T) {
+		mfs := platform.NewMapFileSystem(nil)
+		mfs.AddFile("project/.cem.jsonc", "// comment\n{}", 0644)
+
+		got := config.FindConfigFile("/project", mfs)
+		if got != "/project/.cem.jsonc" {
+			t.Errorf("FindConfigFile() = %q, want %q", got, "/project/.cem.jsonc")
+		}
+	})
 }
 
 func TestFindConfigFile_SkipsDirectories(t *testing.T) {
-	root := t.TempDir()
-	cfgDir := filepath.Join(root, ".config")
-	mkdirAll(t, cfgDir)
-	// Create a directory named "cem.yaml" — should be skipped
-	mkdirAll(t, filepath.Join(cfgDir, "cem.yaml"))
+	t.Run("os", func(t *testing.T) {
+		root := t.TempDir()
+		cfgDir := filepath.Join(root, ".config")
+		mkdirAll(t, cfgDir)
+		// Create a directory named "cem.yaml" — should be skipped
+		mkdirAll(t, filepath.Join(cfgDir, "cem.yaml"))
 
-	got := config.FindConfigFile(root)
-	if got != "" {
-		t.Errorf("FindConfigFile() = %q, want empty (should skip directories)", got)
-	}
+		got := config.FindConfigFile(root, platform.NewOSFileSystem())
+		if got != "" {
+			t.Errorf("FindConfigFile() = %q, want empty (should skip directories)", got)
+		}
+	})
+	t.Run("mapfs", func(t *testing.T) {
+		mfs := platform.NewMapFileSystem(nil)
+		// Create a directory named "cem.yaml" — should be skipped
+		mfs.AddDir("project/.config/cem.yaml", 0755)
+
+		got := config.FindConfigFile("/project", mfs)
+		if got != "" {
+			t.Errorf("FindConfigFile() = %q, want empty (should skip directories)", got)
+		}
+	})
 }
 
 func TestFindConfigFile_Precedence_DotConfigWinsOverDotFile(t *testing.T) {
-	root := t.TempDir()
-	cfgDir := filepath.Join(root, ".config")
-	mkdirAll(t, cfgDir)
-	writeFile(t, filepath.Join(cfgDir, "cem.yaml"), []byte("# primary"))
-	writeFile(t, filepath.Join(root, ".cem.yaml"), []byte("# secondary"))
+	t.Run("os", func(t *testing.T) {
+		root := t.TempDir()
+		cfgDir := filepath.Join(root, ".config")
+		mkdirAll(t, cfgDir)
+		writeFile(t, filepath.Join(cfgDir, "cem.yaml"), []byte("# primary"))
+		writeFile(t, filepath.Join(root, ".cem.yaml"), []byte("# secondary"))
 
-	got := config.FindConfigFile(root)
-	want := filepath.Join(root, ".config", "cem.yaml")
-	if got != want {
-		t.Errorf("FindConfigFile() = %q, want %q (should prefer .config/ over dotfile)", got, want)
-	}
+		got := config.FindConfigFile(root, platform.NewOSFileSystem())
+		want := filepath.Join(root, ".config", "cem.yaml")
+		if got != want {
+			t.Errorf("FindConfigFile() = %q, want %q (should prefer .config/ over dotfile)", got, want)
+		}
+	})
+	t.Run("mapfs", func(t *testing.T) {
+		mfs := platform.NewMapFileSystem(nil)
+		mfs.AddFile("project/.config/cem.yaml", "# primary", 0644)
+		mfs.AddFile("project/.cem.yaml", "# secondary", 0644)
+
+		got := config.FindConfigFile("/project", mfs)
+		if got != "/project/.config/cem.yaml" {
+			t.Errorf("FindConfigFile() = %q, want %q (should prefer .config/ over dotfile)", got, "/project/.config/cem.yaml")
+		}
+	})
 }
 
 func TestFindConfigFile_Precedence_YamlWinsOverYml(t *testing.T) {
-	root := t.TempDir()
-	cfgDir := filepath.Join(root, ".config")
-	mkdirAll(t, cfgDir)
-	writeFile(t, filepath.Join(cfgDir, "cem.yaml"), []byte("# yaml"))
-	writeFile(t, filepath.Join(cfgDir, "cem.yml"), []byte("# yml"))
+	t.Run("os", func(t *testing.T) {
+		root := t.TempDir()
+		cfgDir := filepath.Join(root, ".config")
+		mkdirAll(t, cfgDir)
+		writeFile(t, filepath.Join(cfgDir, "cem.yaml"), []byte("# yaml"))
+		writeFile(t, filepath.Join(cfgDir, "cem.yml"), []byte("# yml"))
 
-	got := config.FindConfigFile(root)
-	want := filepath.Join(root, ".config", "cem.yaml")
-	if got != want {
-		t.Errorf("FindConfigFile() = %q, want %q (should prefer .yaml over .yml)", got, want)
-	}
+		got := config.FindConfigFile(root, platform.NewOSFileSystem())
+		want := filepath.Join(root, ".config", "cem.yaml")
+		if got != want {
+			t.Errorf("FindConfigFile() = %q, want %q (should prefer .yaml over .yml)", got, want)
+		}
+	})
+	t.Run("mapfs", func(t *testing.T) {
+		mfs := platform.NewMapFileSystem(nil)
+		mfs.AddFile("project/.config/cem.yaml", "# yaml", 0644)
+		mfs.AddFile("project/.config/cem.yml", "# yml", 0644)
+
+		got := config.FindConfigFile("/project", mfs)
+		if got != "/project/.config/cem.yaml" {
+			t.Errorf("FindConfigFile() = %q, want %q (should prefer .yaml over .yml)", got, "/project/.config/cem.yaml")
+		}
+	})
 }
 
 func TestFindConfigFile_NoneFound(t *testing.T) {
-	root := t.TempDir()
+	t.Run("os", func(t *testing.T) {
+		root := t.TempDir()
 
-	got := config.FindConfigFile(root)
-	if got != "" {
-		t.Errorf("FindConfigFile() = %q, want empty string", got)
-	}
+		got := config.FindConfigFile(root, platform.NewOSFileSystem())
+		if got != "" {
+			t.Errorf("FindConfigFile() = %q, want empty string", got)
+		}
+	})
+	t.Run("mapfs", func(t *testing.T) {
+		mfs := platform.NewMapFileSystem(nil)
+		// Add an unrelated file so the FS isn't completely empty
+		mfs.AddFile("project/package.json", "{}", 0644)
+
+		got := config.FindConfigFile("/project", mfs)
+		if got != "" {
+			t.Errorf("FindConfigFile() = %q, want empty string", got)
+		}
+	})
 }
 
 func TestFormatFromPath_Yaml(t *testing.T) {

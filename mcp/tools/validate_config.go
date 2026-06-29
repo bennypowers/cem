@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 
 	IC "bennypowers.dev/cem/internal/config"
-	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/sourcepos"
 	mcpTypes "bennypowers.dev/cem/mcp/types"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -37,7 +35,7 @@ func handleValidateConfig(
 		}, nil
 	}
 
-	rawData, err := os.ReadFile(cfgFile)
+	rawData, err := registry.FileSystem().ReadFile(cfgFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
@@ -53,7 +51,7 @@ func handleValidateConfig(
 	semanticErrs := IC.Validate(cfg, IC.ValidateOptions{
 		CheckIO: true,
 		Root:    registry.Root(),
-		IO:      &platform.OSFileSystem{},
+		IO:      registry.FileSystem(),
 		ValidateURLRewrites: func(rewrites []IC.URLRewrite) error {
 			return transform.ValidateURLRewrites(rewrites)
 		},

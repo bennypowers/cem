@@ -32,9 +32,10 @@ import (
 	DT "bennypowers.dev/cem/internal/designtokens"
 	IC "bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
-	"github.com/bmatcuk/doublestar"
+	doublestar "github.com/bmatcuk/doublestar/v4"
 )
 
 var _ types.WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
@@ -51,18 +52,19 @@ type FileSystemWorkspaceContext struct {
 	manifest                   *M.Package
 	packageJSON                *M.PackageJSON
 	designTokensCache          types.DesignTokensCache
+	fs                         platform.FileSystem
 }
 
 func (c *FileSystemWorkspaceContext) initConfig() (*C.CemConfig, error) {
 	var cfg *C.CemConfig
 	if c.configFilePath != "" {
-		loaded, err := IC.LoadConfig(c.configFilePath)
+		loaded, err := IC.LoadConfig(c.configFilePath, c.fs)
 		if err != nil {
 			return nil, err
 		}
 		cfg = loaded
 	} else {
-		loaded, err := LoadPackageConfigWithWorkspaceDefaults(c.Root())
+		loaded, err := LoadPackageConfigWithWorkspaceDefaults(c.Root(), c.fs)
 		if err != nil {
 			return nil, err
 		}
@@ -120,14 +122,24 @@ func WithConfigFile(path string) Option {
 	}
 }
 
+// WithFileSystem injects a filesystem abstraction. Defaults to OSFileSystem.
+func WithFileSystem(fsys platform.FileSystem) Option {
+	return func(c *FileSystemWorkspaceContext) {
+		c.fs = fsys
+	}
+}
+
 func NewFileSystemWorkspaceContext(root string, opts ...Option) *FileSystemWorkspaceContext {
 	ctx := &FileSystemWorkspaceContext{
 		root:              root,
-		configFilePath:    IC.FindConfigFile(root),
+		fs:                platform.NewOSFileSystem(),
 		designTokensCache: NewDesignTokensCache(DT.NewLoader()),
 	}
 	for _, opt := range opts {
 		opt(ctx)
+	}
+	if ctx.configFilePath == "" {
+		ctx.configFilePath = IC.FindConfigFile(root, ctx.fs)
 	}
 	return ctx
 }
@@ -243,7 +255,7 @@ func (c *FileSystemWorkspaceContext) Init() error {
 }
 
 func (c *FileSystemWorkspaceContext) ReadFile(path string) (io.ReadCloser, error) {
-	rc, err := os.Open(path)
+	rc, err := c.fs.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("FileSystemWorkspaceContext could not open: %w", err)
 	}
@@ -251,11 +263,11 @@ func (c *FileSystemWorkspaceContext) ReadFile(path string) (io.ReadCloser, error
 }
 
 func (c *FileSystemWorkspaceContext) Stat(path string) (fs.FileInfo, error) {
-	return os.Stat(path)
+	return c.fs.Stat(path)
 }
 
 func (c *FileSystemWorkspaceContext) ReadDir(path string) ([]fs.DirEntry, error) {
-	return os.ReadDir(path)
+	return c.fs.ReadDir(path)
 }
 
 func (c *FileSystemWorkspaceContext) Glob(pattern string) ([]string, error) {
@@ -272,45 +284,43 @@ func (c *FileSystemWorkspaceContext) Glob(pattern string) ([]string, error) {
 			baseDir = c.config.ProjectDir
 		}
 
-		// Ensure baseDir is absolute
 		if !filepath.IsAbs(baseDir) {
-			cwd, err := os.Getwd()
+			abs, err := filepath.Abs(baseDir)
 			if err != nil {
-				return nil, fmt.Errorf("failed to get current directory: %w", err)
+				return nil, fmt.Errorf("expanding glob %s: %w", pattern, err)
 			}
-			baseDir = filepath.Join(cwd, baseDir)
+			baseDir = abs
 		}
 
-		// For glob patterns, join with base directory and execute glob
-		globPath := filepath.Join(baseDir, pattern)
-		result, err := doublestar.Glob(globPath)
+		// Check if the pattern escapes the project root before globbing.
+		// v4 doublestar.Glob silently returns no results for patterns
+		// containing /../ or starting with ../, so detect this upfront.
+		cleaned := filepath.Clean(pattern)
+		if cleaned == ".." || strings.HasPrefix(cleaned, ".."+string(filepath.Separator)) {
+			// Pattern escapes project root entirely
+			return nil, fmt.Errorf("pattern %q matched %d files outside project root %q: %w",
+				pattern, 0, baseDir, ErrGlobAllOutsideRoot)
+		}
+
+		// Use a directory-scoped fs.FS so doublestar.Glob receives relative
+		// patterns and returns relative results, eliminating the need for
+		// post-glob filepath.Rel conversion.
+		dirFS := platform.DirFS(c.fs, baseDir)
+		// Normalize to forward slashes for fs.FS compatibility
+		fsPattern := filepath.ToSlash(pattern)
+		result, err := doublestar.Glob(dirFS, fsPattern)
 		if err != nil {
 			return nil, fmt.Errorf("glob pattern %q failed: %w", pattern, err)
 		}
 
-		relativeResult := make([]string, 0, len(result))
-		skippedOutsideRoot := 0
-		for _, absPath := range result {
-			rel, err := filepath.Rel(baseDir, absPath)
-			if err != nil {
-				continue
-			}
-			if strings.HasPrefix(rel, ".."+string(filepath.Separator)) || rel == ".." {
-				skippedOutsideRoot++
-				continue
-			}
-			relativeResult = append(relativeResult, rel)
-		}
-		if skippedOutsideRoot > 0 && len(relativeResult) == 0 {
-			return relativeResult, fmt.Errorf("pattern %q matched %d files outside project root %q: %w",
-				pattern, skippedOutsideRoot, baseDir, ErrGlobAllOutsideRoot)
-		}
-		if skippedOutsideRoot > 0 {
-			return relativeResult, fmt.Errorf("pattern %q: %d of %d matched files are outside project root %q: %w",
-				pattern, skippedOutsideRoot, len(result), baseDir, ErrGlobSomeOutsideRoot)
-		}
 		if len(result) == 0 {
-			return relativeResult, fmt.Errorf("pattern %q: %w", pattern, ErrGlobNoneMatched)
+			return nil, fmt.Errorf("pattern %q: %w", pattern, ErrGlobNoneMatched)
+		}
+
+		// Convert forward slashes back to OS separators
+		relativeResult := make([]string, 0, len(result))
+		for _, p := range result {
+			relativeResult = append(relativeResult, filepath.FromSlash(p))
 		}
 		return relativeResult, nil
 	}
@@ -363,11 +373,11 @@ func (c *FileSystemWorkspaceContext) handleNonGlobPattern(pattern string) ([]str
 
 func (c *FileSystemWorkspaceContext) OutputWriter(path string) (io.WriteCloser, error) {
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := c.fs.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
 	logging.Debug("Output: %q", path)
-	return os.Create(path)
+	return c.fs.Create(path)
 }
 
 func (c *FileSystemWorkspaceContext) Root() string {
@@ -430,15 +440,18 @@ func (c *FileSystemWorkspaceContext) ResolveModuleDependency(
 //   - This prevents crossing Git submodule boundaries
 //   - If a directory has workspace metadata (pnpm-workspace.yaml, package.json with workspaces),
 //     continue climbing to find the topmost workspace root
-func FindWorkspaceRoot(startPath string) (string, error) {
-	// Resolve to absolute path
-	absPath, err := filepath.Abs(startPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to resolve path: %w", err)
+func FindWorkspaceRoot(startPath string, fsys platform.FileSystem) (string, error) {
+	absPath := startPath
+	if !filepath.IsAbs(startPath) {
+		var err error
+		absPath, err = filepath.Abs(startPath)
+		if err != nil {
+			return "", fmt.Errorf("failed to resolve path: %w", err)
+		}
 	}
 
 	// Ensure we're starting from a directory
-	info, err := os.Stat(absPath)
+	info, err := fsys.Stat(absPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to stat path: %w", err)
 	}
@@ -457,14 +470,14 @@ func FindWorkspaceRoot(startPath string) (string, error) {
 		checked[current] = true
 
 		// Check for package.json - record first one we find
-		if packageJSONCandidate == "" && hasPackageJSON(current) {
+		if packageJSONCandidate == "" && hasPackageJSON(current, fsys) {
 			packageJSONCandidate = current
 		}
 
 		// Check if current directory has VCS marker
-		hasVCS := isVCSRoot(current)
+		hasVCS := isVCSRoot(current, fsys)
 		// Check if current directory has workspace metadata (monorepo indicators)
-		hasWorkspaceMeta := hasWorkspaceMetadata(current)
+		hasWorkspaceMeta := hasWorkspaceMetadata(current, fsys)
 
 		// If we have workspace metadata, this is a monorepo root candidate
 		if hasWorkspaceMeta {
@@ -476,7 +489,7 @@ func FindWorkspaceRoot(startPath string) (string, error) {
 			// Prefer package.json with customElements over workspace metadata without it
 			// This ensures nested packages with actual manifests are used instead of
 			// parent monorepo roots without manifests
-			if workspaceRootCandidate != "" && hasPackageJSON(workspaceRootCandidate) {
+			if workspaceRootCandidate != "" && hasPackageJSON(workspaceRootCandidate, fsys) {
 				// Workspace root has customElements, use it
 				return workspaceRootCandidate, nil
 			}
@@ -497,7 +510,7 @@ func FindWorkspaceRoot(startPath string) (string, error) {
 		if parent == current {
 			// Reached filesystem root without finding VCS
 			// Prefer package.json with customElements over workspace metadata without it
-			if workspaceRootCandidate != "" && hasPackageJSON(workspaceRootCandidate) {
+			if workspaceRootCandidate != "" && hasPackageJSON(workspaceRootCandidate, fsys) {
 				return workspaceRootCandidate, nil
 			}
 			if packageJSONCandidate != "" {
@@ -513,7 +526,7 @@ func FindWorkspaceRoot(startPath string) (string, error) {
 
 	// If we exhausted all directories, return best candidate
 	// Prefer package.json with customElements over workspace metadata without it
-	if workspaceRootCandidate != "" && hasPackageJSON(workspaceRootCandidate) {
+	if workspaceRootCandidate != "" && hasPackageJSON(workspaceRootCandidate, fsys) {
 		return workspaceRootCandidate, nil
 	}
 	if packageJSONCandidate != "" {
@@ -528,9 +541,9 @@ func FindWorkspaceRoot(startPath string) (string, error) {
 
 // isVCSRoot checks if a directory contains VCS markers (version control root)
 // Currently only checks for .git directory
-func isVCSRoot(dir string) bool {
+func isVCSRoot(dir string, fsys platform.FileSystem) bool {
 	// Check for .git directory
-	if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
+	if _, err := fsys.Stat(filepath.Join(dir, ".git")); err == nil {
 		return true
 	}
 	return false
@@ -538,9 +551,9 @@ func isVCSRoot(dir string) bool {
 
 // hasPackageJSON checks if a directory contains a package.json file
 // This indicates a package boundary that LSP should respect
-func hasPackageJSON(dir string) bool {
+func hasPackageJSON(dir string, fsys platform.FileSystem) bool {
 	packageJSONPath := filepath.Join(dir, "package.json")
-	data, err := os.ReadFile(packageJSONPath)
+	data, err := fsys.ReadFile(packageJSONPath)
 	if err != nil {
 		return false
 	}
@@ -559,15 +572,15 @@ func hasPackageJSON(dir string) bool {
 
 // hasWorkspaceMetadata checks if a directory contains workspace metadata files
 // These indicate actual workspace structure (not just VCS)
-func hasWorkspaceMetadata(dir string) bool {
+func hasWorkspaceMetadata(dir string, fsys platform.FileSystem) bool {
 	// Check for pnpm-workspace.yaml
-	if _, err := os.Stat(filepath.Join(dir, "pnpm-workspace.yaml")); err == nil {
+	if _, err := fsys.Stat(filepath.Join(dir, "pnpm-workspace.yaml")); err == nil {
 		return true
 	}
 
 	// Check for package.json with workspaces field
 	packageJSONPath := filepath.Join(dir, "package.json")
-	if data, err := os.ReadFile(packageJSONPath); err == nil {
+	if data, err := fsys.ReadFile(packageJSONPath); err == nil {
 		var pkg struct {
 			Workspaces any `json:"workspaces"`
 		}

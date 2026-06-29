@@ -23,7 +23,8 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/internal/logging"
-	"github.com/bmatcuk/doublestar"
+	"bennypowers.dev/cem/internal/platform"
+	doublestar "github.com/bmatcuk/doublestar/v4"
 	"github.com/spf13/cobra"
 )
 
@@ -36,7 +37,7 @@ type PackageResult struct {
 // ShouldUseWorkspaceMode returns true when the command should iterate over
 // workspace packages instead of operating on a single package.
 // True when the project root is a workspace and -p was not explicitly set.
-func ShouldUseWorkspaceMode(cmd *cobra.Command) bool {
+func ShouldUseWorkspaceMode(cmd *cobra.Command, fsys platform.FileSystem) bool {
 	if cmd.Flags().Changed("package") {
 		return false
 	}
@@ -44,14 +45,14 @@ func ShouldUseWorkspaceMode(cmd *cobra.Command) bool {
 	if err != nil {
 		return false
 	}
-	return IsWorkspaceMode(ctx.Root())
+	return IsWorkspaceMode(ctx.Root(), fsys)
 }
 
 // ForEachPackage discovers workspace packages with customElements fields
 // and runs fn for each sequentially.
 // Returns results for all packages, never short-circuits on error.
-func ForEachPackage(rootDir string, fn func(pkg PackageInfo) error) []PackageResult {
-	packages, err := FindPackagesWithManifests(rootDir)
+func ForEachPackage(rootDir string, fsys platform.FileSystem, fn func(pkg PackageInfo) error) []PackageResult {
+	packages, err := FindPackagesWithManifests(rootDir, fsys)
 	if err != nil {
 		return []PackageResult{{Err: fmt.Errorf("discovering workspace packages: %w", err)}}
 	}
@@ -70,33 +71,34 @@ func ForEachPackage(rootDir string, fn func(pkg PackageInfo) error) []PackageRes
 // returns only the files that fall under packageDir, with paths relative to
 // packageDir. This correctly partitions root-relative file patterns across
 // workspace packages.
-func ResolveWorkspaceFiles(workspaceRoot string, patterns []string, packageDir string) ([]string, error) {
-	absPackageDir, err := filepath.Abs(packageDir)
+func ResolveWorkspaceFiles(workspaceRoot string, patterns []string, packageDir string, fsys platform.FileSystem) ([]string, error) {
+	// Compute packageDir relative to workspaceRoot for prefix matching.
+	// Both paths should share the same base (both absolute or both relative
+	// to the same root). No filepath.Abs — that injects host CWD dependency
+	// which breaks virtual filesystems and wasm targets.
+	relPkgDir, err := filepath.Rel(workspaceRoot, packageDir)
 	if err != nil {
 		return nil, err
 	}
-	prefix := absPackageDir + string(filepath.Separator)
+	relPkgPrefix := filepath.ToSlash(relPkgDir) + "/"
+
+	rootFS := platform.DirFS(fsys, workspaceRoot)
 
 	var result []string
 	seen := make(map[string]bool)
 	for _, pattern := range patterns {
-		absPattern := filepath.Join(workspaceRoot, pattern)
-		matches, err := doublestar.Glob(absPattern)
+		fsPattern := filepath.ToSlash(pattern)
+		matches, err := doublestar.Glob(rootFS, fsPattern)
 		if err != nil {
 			return nil, fmt.Errorf("glob %q: %w", pattern, err)
 		}
 		for _, match := range matches {
-			absMatch, err := filepath.Abs(match)
-			if err != nil {
+			// match is relative to workspaceRoot with forward slashes
+			if !strings.HasPrefix(match, relPkgPrefix) {
 				continue
 			}
-			if !strings.HasPrefix(absMatch, prefix) {
-				continue
-			}
-			rel, err := filepath.Rel(absPackageDir, absMatch)
-			if err != nil {
-				continue
-			}
+			// Strip the package prefix to get package-relative path
+			rel := filepath.FromSlash(strings.TrimPrefix(match, relPkgPrefix))
 			if !seen[rel] {
 				seen[rel] = true
 				result = append(result, rel)

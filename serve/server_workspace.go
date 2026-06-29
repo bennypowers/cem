@@ -89,7 +89,7 @@ func (s *Server) InitializeWorkspaceMode() error {
 	}
 
 	// Check if this is a workspace
-	if !W.IsWorkspaceMode(s.watchDir) {
+	if !W.IsWorkspaceMode(s.watchDir, s.fs) {
 		s.isWorkspace = false
 		return nil
 	}
@@ -179,7 +179,7 @@ func (s *Server) loadWorkspaceRootConfig() *C.CemConfig {
 // rootCfg is the workspace root config (may be nil if unavailable).
 func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo, rootCfg *C.CemConfig) (*middleware.WorkspacePackage, error) {
 	s.logger.Debug("Generating manifest for workspace package %s", pkgInfo.Name)
-	workspace := W.NewFileSystemWorkspaceContext(pkgInfo.Path)
+	workspace := W.NewFileSystemWorkspaceContext(pkgInfo.Path, W.WithFileSystem(s.fs))
 	if err := workspace.Init(); err != nil {
 		return nil, fmt.Errorf("initializing workspace for %s: %w", pkgInfo.Name, err)
 	}
@@ -190,7 +190,7 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo, rootCfg *C.Ce
 			return nil, fmt.Errorf("loading config for %s: %w", pkgInfo.Name, err)
 		}
 		if len(rootCfg.Generate.Files) > 0 {
-			resolved, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Files, pkgInfo.Path)
+			resolved, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Files, pkgInfo.Path, s.fs)
 			if err != nil {
 				s.logger.Debug("ResolveWorkspaceFiles failed for %s: %v", pkgInfo.Name, err)
 			} else {
@@ -199,13 +199,13 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo, rootCfg *C.Ce
 			}
 		}
 		if len(rootCfg.Generate.Exclude) > 0 {
-			resolvedExclude, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Exclude, pkgInfo.Path)
+			resolvedExclude, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Exclude, pkgInfo.Path, s.fs)
 			if err == nil {
 				pkgCfg.Generate.Exclude = append(pkgCfg.Generate.Exclude, resolvedExclude...)
 			}
 		}
 		if rootCfg.Generate.DemoDiscovery.FileGlob != "" && pkgCfg.Generate.DemoDiscovery.FileGlob == "" {
-			demoFiles, err := W.ResolveWorkspaceFiles(s.watchDir, []string{rootCfg.Generate.DemoDiscovery.FileGlob}, pkgInfo.Path)
+			demoFiles, err := W.ResolveWorkspaceFiles(s.watchDir, []string{rootCfg.Generate.DemoDiscovery.FileGlob}, pkgInfo.Path, s.fs)
 			if err == nil && len(demoFiles) > 0 {
 				pkgCfg.Generate.DemoDiscovery = rootCfg.Generate.DemoDiscovery
 				pkgCfg.Generate.DemoDiscovery.FileGlob = W.DerivePackageGlob(demoFiles)
@@ -214,7 +214,7 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo, rootCfg *C.Ce
 	}
 
 	// Create generate session
-	session, err := G.NewGenerateSession(workspace)
+	session, err := G.NewGenerateSession(workspace, s.fs)
 	if err != nil {
 		return nil, fmt.Errorf("creating session for %s: %w", pkgInfo.Name, err)
 	}
@@ -246,7 +246,7 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo, rootCfg *C.Ce
 // Used during server initialization. Returns packages with freshly generated manifests.
 func (s *Server) generateInitialWorkspaceManifests(watchDir string) ([]middleware.WorkspacePackage, error) {
 	// Find all workspace packages
-	packageDirs, err := W.FindPackagesWithManifests(watchDir)
+	packageDirs, err := W.FindPackagesWithManifests(watchDir, s.fs)
 	if err != nil {
 		return nil, fmt.Errorf("finding workspace packages: %w", err)
 	}
@@ -291,7 +291,7 @@ func (s *Server) regenerateAffectedWorkspacePackages(changedFiles []string) (int
 
 	if changedFiles == nil {
 		// Full regeneration: get all packages
-		affectedPkgInfos, err = W.FindPackagesWithManifests(watchDir)
+		affectedPkgInfos, err = W.FindPackagesWithManifests(watchDir, s.fs)
 		if err != nil {
 			return 0, fmt.Errorf("finding workspace packages: %w", err)
 		}
@@ -301,7 +301,7 @@ func (s *Server) regenerateAffectedWorkspacePackages(changedFiles []string) (int
 		}
 	} else {
 		// Incremental: only affected packages
-		affectedPkgInfos, err = W.FindPackagesForFiles(watchDir, changedFiles)
+		affectedPkgInfos, err = W.FindPackagesForFiles(watchDir, changedFiles, s.fs)
 		if err != nil {
 			return 0, fmt.Errorf("finding affected packages: %w", err)
 		}

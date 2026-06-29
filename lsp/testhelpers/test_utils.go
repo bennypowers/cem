@@ -17,8 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package testhelpers
 
 import (
-	"os"
-
+	"bennypowers.dev/cem/internal/platform"
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
@@ -31,11 +30,11 @@ func GetCompletionLabels(completions []protocol.CompletionItem) []string {
 	return labels
 }
 
-// CopyFile copies a file from src to dst
-func CopyFile(src, dst string) error {
-	data, err := os.ReadFile(src)
+// CopyFile copies a file from src to dst using the provided filesystem.
+func CopyFile(fsys platform.FileSystem, src, dst string) error {
+	data, err := fsys.ReadFile(src)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(dst, data, 0644)
+	return fsys.WriteFile(dst, data, 0644)
 }

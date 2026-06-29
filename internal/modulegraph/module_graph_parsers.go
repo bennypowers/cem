@@ -19,26 +19,37 @@ package modulegraph
 import (
 	"fmt"
 	"io/fs"
-	"os"
 	"strings"
 
 	"bennypowers.dev/cem/internal/languages/typescript"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/lsp/helpers"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-// OSFileParser implements FileParser using standard OS operations
-type OSFileParser struct{}
-
-// ReadFile implements FileParser using os.ReadFile
-func (p *OSFileParser) ReadFile(path string) ([]byte, error) {
-	return os.ReadFile(path)
+// OSFileParser implements FileParser using the platform.FileSystem abstraction.
+type OSFileParser struct {
+	FS platform.FileSystem
 }
 
-// WorkspaceFS returns an os.DirFS rooted at the workspace directory.
+func NewOSFileParser(fsys platform.FileSystem) *OSFileParser {
+	if fsys == nil {
+		fsys = platform.NewOSFileSystem()
+	}
+	return &OSFileParser{FS: fsys}
+}
+
+func (p *OSFileParser) ReadFile(path string) ([]byte, error) {
+	return p.FS.ReadFile(path)
+}
+
+func (p *OSFileParser) Exists(path string) bool {
+	return p.FS.Exists(path)
+}
+
 func (p *OSFileParser) WorkspaceFS(workspaceRoot string) fs.FS {
-	return os.DirFS(workspaceRoot)
+	return platform.DirFS(p.FS, workspaceRoot)
 }
 
 

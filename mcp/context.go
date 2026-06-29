@@ -23,6 +23,7 @@ import (
 	"sync"
 
 	IC "bennypowers.dev/cem/internal/config"
+	"bennypowers.dev/cem/internal/platform"
 	LSP "bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/helpers"
@@ -42,6 +43,7 @@ type MCPContext struct {
 	workspace            types.WorkspaceContext
 	lspRegistry          *LSP.Registry
 	documentManager      lspTypes.DocumentManager
+	fs                   platform.FileSystem
 	mcpCache             map[string]MCPTypes.ElementInfo // Cache for converted MCP elements
 	relationshipDetector *relationships.Detector         // Detects relationships between elements
 
@@ -93,8 +95,12 @@ func NewMCPCustomElementDeclaration(element *M.CustomElement, tagName string) *M
 
 // getTypeString safely extracts type text from manifest Type
 
-// NewMCPContext creates a new MCP context
-func NewMCPContext(workspace types.WorkspaceContext) (*MCPContext, error) {
+// NewMCPContext creates a new MCP context.
+// If fsys is nil, it defaults to platform.NewOSFileSystem().
+func NewMCPContext(workspace types.WorkspaceContext, fsys platform.FileSystem) (*MCPContext, error) {
+	if fsys == nil {
+		fsys = platform.NewOSFileSystem()
+	}
 	helpers.SafeDebugLog("Creating MCP registry for workspace: %s", workspace.Root())
 
 	// Create the underlying LSP registry for reuse
@@ -113,6 +119,7 @@ func NewMCPContext(workspace types.WorkspaceContext) (*MCPContext, error) {
 		workspace:       workspace,
 		lspRegistry:     lspRegistry,
 		documentManager: documentManager,
+		fs:              fsys,
 		mcpCache:        make(map[string]MCPTypes.ElementInfo),
 	}
 
@@ -388,6 +395,10 @@ func (ctx *MCPContext) Root() string {
 	return ctx.workspace.Root()
 }
 
+func (ctx *MCPContext) FileSystem() platform.FileSystem {
+	return ctx.fs
+}
+
 func (ctx *MCPContext) InvalidateConfig() {
 	type invalidatable interface {
 		InvalidateConfig()
@@ -462,7 +473,7 @@ func (ctx *MCPContext) GetManifestSchema() (map[string]any, error) {
 	}
 
 	// Get the actual JSON schema using the same method as the validate command and schema resource
-	schemaData, err := V.GetSchema(schemaVersion)
+	schemaData, err := V.GetSchema(ctx.fs, schemaVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load schema: %w", err)
 	}
@@ -624,6 +635,10 @@ func (ctx *MCPContextAdapter) ConfigSchemaJSON() []byte {
 
 func (ctx *MCPContextAdapter) Root() string {
 	return ctx.MCPContext.Root()
+}
+
+func (ctx *MCPContextAdapter) FileSystem() platform.FileSystem {
+	return ctx.MCPContext.FileSystem()
 }
 
 // ElementInfoAdapter implements MCPTypes.ElementInfo interface

@@ -56,12 +56,13 @@ type ModuleGraph struct {
 	queryManager     *treesitter.QueryManager
 }
 
-// NewModuleGraph creates a new empty module graph with default dependencies
-func NewModuleGraph(queryManager *treesitter.QueryManager) *ModuleGraph {
+// NewModuleGraph creates a new empty module graph with default dependencies.
+// If fsys is nil, it defaults to platform.NewOSFileSystem().
+func NewModuleGraph(fsys platform.FileSystem, queryManager *treesitter.QueryManager) *ModuleGraph {
 	return &ModuleGraph{
 		exportTracker:      NewExportTracker(),
 		dependencyTracker:  NewDependencyTracker(),
-		fileParser:         &OSFileParser{},
+		fileParser:         NewOSFileParser(fsys),
 		exportParser:       &DefaultExportParser{},
 		manifestResolver:   &NoOpManifestResolver{},
 		metrics:            &NoOpMetricsCollector{}, // Default to no-op for performance
@@ -71,15 +72,19 @@ func NewModuleGraph(queryManager *treesitter.QueryManager) *ModuleGraph {
 	}
 }
 
-// NewModuleGraphWithMetrics creates a new module graph with metrics collection enabled
-func NewModuleGraphWithMetrics(queryManager *treesitter.QueryManager) *ModuleGraph {
+// NewModuleGraphWithMetrics creates a new module graph with metrics collection enabled.
+// If fsys is nil, it defaults to platform.NewOSFileSystem().
+func NewModuleGraphWithMetrics(fsys platform.FileSystem, metrics MetricsCollector, queryManager *treesitter.QueryManager) *ModuleGraph {
+	if metrics == nil {
+		metrics = &NoOpMetricsCollector{}
+	}
 	return &ModuleGraph{
 		exportTracker:      NewExportTracker(),
 		dependencyTracker:  NewDependencyTracker(),
-		fileParser:         &OSFileParser{},
+		fileParser:         NewOSFileParser(fsys),
 		exportParser:       &DefaultExportParser{},
 		manifestResolver:   &NoOpManifestResolver{},
-		metrics:            NewDefaultMetricsCollector(),
+		metrics:            metrics,
 		queryManager:       queryManager, // Required parameter for dependency injection
 		MaxTransitiveDepth: DefaultMaxTransitiveDepth,
 		// TransitiveElementsCache is initialized as zero value (ready to use)
@@ -91,7 +96,7 @@ func NewModuleGraphWithMetrics(queryManager *treesitter.QueryManager) *ModuleGra
 func NewModuleGraphWithDependencies(fileParser FileParser, exportParser ExportParser, manifestResolver ManifestResolver, metrics MetricsCollector, queryManager *treesitter.QueryManager) *ModuleGraph {
 	// Validate all parameters and provide safe defaults
 	if fileParser == nil {
-		fileParser = &OSFileParser{}
+		fileParser = NewOSFileParser(nil)
 	}
 	if exportParser == nil {
 		exportParser = &DefaultExportParser{}

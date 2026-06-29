@@ -36,7 +36,7 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 	wctx := testworkspace.NewMapWorkspaceContext(t, "testdata/fixtures/malicious-manifest-security")
 	require.NoError(t, wctx.Init())
 
-	registry, err := mcp.NewMCPContext(wctx)
+	registry, err := mcp.NewMCPContext(wctx, nil)
 	require.NoError(t, err)
 
 	// Load the malicious manifest
@@ -138,7 +138,7 @@ func TestTemplateRenderingWithMaliciousData(t *testing.T) {
 	wctx := testworkspace.NewMapWorkspaceContext(t, "testdata/fixtures/malicious-manifest-security")
 	require.NoError(t, wctx.Init())
 
-	registry, err := mcp.NewMCPContext(wctx)
+	registry, err := mcp.NewMCPContext(wctx, nil)
 	require.NoError(t, err)
 	require.NoError(t, registry.LoadManifests())
 

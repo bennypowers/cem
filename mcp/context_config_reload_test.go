@@ -71,7 +71,7 @@ func TestMCPContext_InvalidateConfig(t *testing.T) {
 	ws := workspace.NewFileSystemWorkspaceContext(dir)
 	require.NoError(t, ws.Init())
 
-	ctx, err := mcp.NewMCPContext(ws)
+	ctx, err := mcp.NewMCPContext(ws, nil)
 	require.NoError(t, err)
 	require.NoError(t, ctx.LoadManifests())
 

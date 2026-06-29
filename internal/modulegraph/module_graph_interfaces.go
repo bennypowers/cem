@@ -38,6 +38,8 @@ const DefaultMaxTransitiveDepth = 5
 type FileParser interface {
 	// ReadFile reads the content of a file at the given path
 	ReadFile(path string) ([]byte, error)
+	// Exists checks whether a file exists without reading its content.
+	Exists(path string) bool
 	// WorkspaceFS returns an fs.FS rooted at the given workspace directory.
 	// Callers must use platform.WalkDir to walk it.
 	WorkspaceFS(workspaceRoot string) fs.FS

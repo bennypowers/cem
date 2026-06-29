@@ -106,21 +106,21 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 	var existing *IC.CemConfig
 	var existingData []byte
 	var existingFormat string
-	if found := IC.FindConfigFile(root); found != "" {
+	osFS := platform.NewOSFileSystem()
+	if found := IC.FindConfigFile(root, osFS); found != "" {
 		cfgPath = found
-		existing, err = IC.LoadConfig(cfgPath)
+		existing, err = IC.LoadConfig(cfgPath, osFS)
 		if err != nil {
 			logging.Warning("Failed to load existing config: %v", err)
 		} else {
 			existingFormat = IC.FormatFromPath(cfgPath)
-			existingData, _ = os.ReadFile(cfgPath)
+			existingData, _ = osFS.ReadFile(cfgPath)
 			logging.Info("Found existing config: %s", cfgPath)
 		}
 	}
 
-	osFS := &platform.OSFileSystem{}
 	hasPkgJSON := osFS.Exists(filepath.Join(root, "package.json"))
-	dirFS := os.DirFS(root)
+	dirFS := platform.DirFS(osFS, root)
 
 	cfg := &IC.CemConfig{}
 	if existing != nil {
@@ -149,7 +149,7 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 	}
 	var detectedPkgCE string
 	if hasPkgJSON {
-		if data, readErr := os.ReadFile(filepath.Join(root, "package.json")); readErr == nil {
+		if data, readErr := osFS.ReadFile(filepath.Join(root, "package.json")); readErr == nil {
 			var pkg struct {
 				CustomElements string `json:"customElements"`
 			}
@@ -699,7 +699,7 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		format = existingFormat
 	}
 
-	if W.IsWorkspaceMode(root) {
+	if W.IsWorkspaceMode(root, platform.NewOSFileSystem()) {
 		logging.Info("This is a workspace root. Config will apply to all packages.")
 		logging.Info("Package-level overrides can be added in each package's own .config/cem.yaml")
 	}
@@ -754,14 +754,14 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		outPath = filepath.Join(root, ".config", "cem."+format)
 	}
 
-	if err := writeConfigAtomic(outPath, output); err != nil {
+	if err := writeConfigAtomic(osFS, outPath, output); err != nil {
 		return err
 	}
 
 	logging.Success("Config written to %s", outPath)
 
 	if hasPkgJSON && interactive && !yes {
-		if err := offerPackageJSONUpdate(root, cfg); err != nil {
+		if err := offerPackageJSONUpdate(osFS, root, cfg); err != nil {
 			logging.Warning("package.json update: %v", err)
 		}
 	}

@@ -20,7 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -227,7 +226,7 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 					if cached, found := mp.cssCache.Get(absPath); found {
 						maps.Copy(props, cached)
 					} else {
-						content, err := os.ReadFile(absPath)
+						content, err := mp.fs.ReadFile(absPath)
 						if err != nil {
 							errs = errors.Join(errs, fmt.Errorf(`could not open css file
 	imported as %s

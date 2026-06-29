@@ -19,6 +19,7 @@ package generate
 import (
 	"fmt"
 
+	"bennypowers.dev/cem/internal/platform"
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
 )
@@ -39,10 +40,11 @@ import (
 // - Testing with mock implementations
 // - Future extension points for additional setup objects
 type GenerateContext struct {
-	types.WorkspaceContext                        // Embedded workspace context
-	cssCache               CssCache               // CSS parsing cache for performance
-	queryManager           *Q.QueryManager        // Tree-sitter query manager (expensive to initialize)
-	depTracker             *FileDependencyTracker // File dependency tracker for incremental builds
+	types.WorkspaceContext                          // Embedded workspace context
+	cssCache               CssCache                 // CSS parsing cache for performance
+	queryManager           *Q.QueryManager          // Tree-sitter query manager (expensive to initialize)
+	depTracker             *FileDependencyTracker   // File dependency tracker for incremental builds
+	fs                     platform.FileSystem      // Filesystem abstraction for testability
 }
 
 // NewGenerateContext creates a new generate context with initialized components.
@@ -50,7 +52,7 @@ type GenerateContext struct {
 // and should be done once per generation session.
 //
 // Performance: Expensive operation (~10-50ms) due to tree-sitter query compilation
-func NewGenerateContext(ctx types.WorkspaceContext) (*GenerateContext, error) {
+func NewGenerateContext(ctx types.WorkspaceContext, fsys platform.FileSystem) (*GenerateContext, error) {
 	qm, err := Q.NewQueryManager(Q.GenerateQueries())
 	if err != nil {
 		return nil, fmt.Errorf("initialize QueryManager: %w", err)
@@ -60,7 +62,8 @@ func NewGenerateContext(ctx types.WorkspaceContext) (*GenerateContext, error) {
 		WorkspaceContext: ctx,
 		cssCache:         NewCssParseCache(),
 		queryManager:     qm,
-		depTracker:       NewFileDependencyTracker(ctx),
+		depTracker:       NewFileDependencyTracker(ctx, fsys),
+		fs:               fsys,
 	}, nil
 }
 
@@ -86,6 +89,11 @@ func (gsc *GenerateContext) DependencyTracker() *FileDependencyTracker {
 	return gsc.depTracker
 }
 
+// FileSystem returns the filesystem abstraction
+func (gsc *GenerateContext) FileSystem() platform.FileSystem {
+	return gsc.fs
+}
+
 // WithCssCache returns a new generate context with a different CSS cache.
 // This enables dependency injection and testing with mock implementations.
 func (gsc *GenerateContext) WithCssCache(cache CssCache) *GenerateContext {
@@ -94,6 +102,7 @@ func (gsc *GenerateContext) WithCssCache(cache CssCache) *GenerateContext {
 		cssCache:         cache,
 		queryManager:     gsc.queryManager,
 		depTracker:       gsc.depTracker,
+		fs:               gsc.fs,
 	}
 }
 
@@ -105,5 +114,6 @@ func (gsc *GenerateContext) WithDependencyTracker(tracker *FileDependencyTracker
 		cssCache:         gsc.cssCache,
 		queryManager:     gsc.queryManager,
 		depTracker:       tracker,
+		fs:               gsc.fs,
 	}
 }

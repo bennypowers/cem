@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -31,6 +30,7 @@ import (
 	C "bennypowers.dev/cem/cmd/config"
 	htmllang "bennypowers.dev/cem/internal/languages/html"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
@@ -146,7 +146,7 @@ func extractMicrodata(root *ts.Node, code []byte, property string) string {
 // extractDemoMetadata extracts metadata from a demo file.
 // It first checks for YAML frontmatter, then falls back to HTML5 microdata.
 // Frontmatter values take precedence over microdata when both are present.
-func extractDemoMetadata(ctx types.WorkspaceContext, path string) (DemoMetadata, error) {
+func extractDemoMetadata(ctx types.WorkspaceContext, path string, fsys platform.FileSystem) (DemoMetadata, error) {
 	// Resolve path relative to workspace root if it's not absolute
 	var absPath string
 	if filepath.IsAbs(path) {
@@ -155,7 +155,7 @@ func extractDemoMetadata(ctx types.WorkspaceContext, path string) (DemoMetadata,
 		absPath = filepath.Join(ctx.Root(), path)
 	}
 
-	code, err := os.ReadFile(absPath)
+	code, err := fsys.ReadFile(absPath)
 	if err != nil {
 		return DemoMetadata{}, fmt.Errorf("could not read demo file: %w", err)
 	}
@@ -446,6 +446,7 @@ func DiscoverDemos(
 	module *M.Module,
 	qm *Q.QueryManager,
 	demoMap DemoMap,
+	fsys platform.FileSystem,
 ) (errs error) {
 	cfg, err := ctx.Config()
 	if err != nil {
@@ -485,7 +486,7 @@ func DiscoverDemos(
 		})
 		for _, demoPath := range demoFiles {
 			// Extract metadata (microdata first, then fallbacks)
-			metadata, err := extractDemoMetadata(ctx, demoPath)
+			metadata, err := extractDemoMetadata(ctx, demoPath, fsys)
 			if err != nil {
 				errs = errors.Join(errs, err)
 				continue

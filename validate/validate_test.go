@@ -22,8 +22,25 @@ import (
 	"path/filepath"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/platform/testutil"
+	"github.com/adrg/xdg"
 )
+
+// loadValidateFixtureMapFS loads a fixture manifest into a MapFileSystem at a virtual path
+// and returns the MapFileSystem and virtual path.
+func loadValidateFixtureMapFS(t *testing.T, fixture string) (*platform.MapFileSystem, string) {
+	t.Helper()
+	fixturePath := filepath.Join("..", "cmd", "testdata", "fixtures", fixture, "custom-elements.json")
+	data, err := os.ReadFile(fixturePath)
+	if err != nil {
+		t.Fatalf("Failed to read fixture %s: %v", fixturePath, err)
+	}
+	mfs := platform.NewMapFileSystem(nil)
+	virtualPath := filepath.Join(fixture, "custom-elements.json")
+	mfs.AddFile(virtualPath, string(data), 0644)
+	return mfs, virtualPath
+}
 
 func TestValidateGolden(t *testing.T) {
 	testCases := []struct {
@@ -51,50 +68,74 @@ func TestValidateGolden(t *testing.T) {
 		{"schema-upgrade-2-1-0", "schema_upgrade_2_1_0"},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			// Check if fixture exists
-			fixturePath := filepath.Join("..", "cmd", "testdata", "fixtures", tc.fixture, "custom-elements.json")
-			if _, err := os.Stat(fixturePath); os.IsNotExist(err) {
-				t.Skipf("Fixture %s does not exist", fixturePath)
-			}
+	t.Run("os", func(t *testing.T) {
+		fsys := platform.NewOSFileSystem()
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				fixturePath := filepath.Join("..", "cmd", "testdata", "fixtures", tc.fixture, "custom-elements.json")
+				if _, err := os.Stat(fixturePath); os.IsNotExist(err) {
+					t.Skipf("Fixture %s does not exist", fixturePath)
+				}
 
-			// Validate the manifest
-			result, err := Validate(fixturePath, ValidationOptions{
-				IncludeWarnings: true,
-				DisabledRules:   []string{},
+				result, err := Validate(fsys, fixturePath, ValidationOptions{
+					IncludeWarnings: true,
+					DisabledRules:   []string{},
+				})
+				if err != nil {
+					t.Fatalf("Validate returned error: %v", err)
+				}
+
+				result.Path = ""
+
+				jsonBytes, err := json.MarshalIndent(result, "", "  ")
+				if err != nil {
+					t.Fatalf("Failed to marshal result to JSON: %v", err)
+				}
+
+				testutil.CheckGolden(t, tc.name, jsonBytes, testutil.GoldenOptions{
+					Dir:         "testdata/goldens",
+					Extension:   ".json",
+					UseJSONDiff: true,
+				})
 			})
-			if err != nil {
-				t.Fatalf("Validate returned error: %v", err)
-			}
+		}
+	})
 
-			// Clear the Path field since it contains absolute paths that vary by system
-			result.Path = ""
+	t.Run("mapfs", func(t *testing.T) {
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				mfs, virtualPath := loadValidateFixtureMapFS(t, tc.fixture)
 
-			// Marshal to JSON with consistent formatting
-			jsonBytes, err := json.MarshalIndent(result, "", "  ")
-			if err != nil {
-				t.Fatalf("Failed to marshal result to JSON: %v", err)
-			}
+				result, err := Validate(mfs, virtualPath, ValidationOptions{
+					IncludeWarnings: true,
+					DisabledRules:   []string{},
+				})
+				if err != nil {
+					t.Fatalf("Validate returned error: %v", err)
+				}
 
-			// Check against golden file
-			testutil.CheckGolden(t, tc.name, jsonBytes, testutil.GoldenOptions{
-				Dir:         "testdata/goldens",
-				Extension:   ".json",
-				UseJSONDiff: true,
+				result.Path = ""
+
+				jsonBytes, err := json.MarshalIndent(result, "", "  ")
+				if err != nil {
+					t.Fatalf("Failed to marshal result to JSON: %v", err)
+				}
+
+				testutil.CheckGolden(t, tc.name, jsonBytes, testutil.GoldenOptions{
+					Dir:         "testdata/goldens",
+					Extension:   ".json",
+					UseJSONDiff: true,
+				})
 			})
-		})
-	}
+		}
+	})
 }
 
-func TestValidateWithDisabledWarnings(t *testing.T) {
-	fixturePath := filepath.Join("..", "cmd", "testdata", "fixtures", "warning-lifecycle-methods", "custom-elements.json")
-	if _, err := os.Stat(fixturePath); os.IsNotExist(err) {
-		t.Skip("warning-lifecycle-methods fixture does not exist")
-	}
+func testValidateWithDisabledWarnings(t *testing.T, fsys platform.FileSystem, fixturePath string) {
+	t.Helper()
 
 	// Test with warnings disabled by category
-	result, err := Validate(fixturePath, ValidationOptions{
+	result, err := Validate(fsys, fixturePath, ValidationOptions{
 		IncludeWarnings: true,
 		DisabledRules:   []string{"lifecycle"},
 	})
@@ -102,7 +143,6 @@ func TestValidateWithDisabledWarnings(t *testing.T) {
 		t.Fatalf("Validate returned error: %v", err)
 	}
 
-	// Should have no lifecycle warnings
 	for _, warning := range result.Warnings {
 		if warning.Category == "lifecycle" {
 			t.Errorf("Found lifecycle warning when it should be disabled: %s", warning.Message)
@@ -110,7 +150,7 @@ func TestValidateWithDisabledWarnings(t *testing.T) {
 	}
 
 	// Test with warnings disabled by specific ID
-	result2, err := Validate(fixturePath, ValidationOptions{
+	result2, err := Validate(fsys, fixturePath, ValidationOptions{
 		IncludeWarnings: true,
 		DisabledRules:   []string{"private-underscore-methods"},
 	})
@@ -118,8 +158,7 @@ func TestValidateWithDisabledWarnings(t *testing.T) {
 		t.Fatalf("Validate returned error: %v", err)
 	}
 
-	// Should have fewer warnings than the original (which had all warnings)
-	originalResult, err := Validate(fixturePath, ValidationOptions{
+	originalResult, err := Validate(fsys, fixturePath, ValidationOptions{
 		IncludeWarnings: true,
 		DisabledRules:   []string{},
 	})
@@ -132,11 +171,58 @@ func TestValidateWithDisabledWarnings(t *testing.T) {
 	}
 }
 
+func TestValidateWithDisabledWarnings(t *testing.T) {
+	osFixturePath := filepath.Join("..", "cmd", "testdata", "fixtures", "warning-lifecycle-methods", "custom-elements.json")
+	if _, err := os.Stat(osFixturePath); os.IsNotExist(err) {
+		t.Skip("warning-lifecycle-methods fixture does not exist")
+	}
+
+	t.Run("os", func(t *testing.T) {
+		testValidateWithDisabledWarnings(t, platform.NewOSFileSystem(), osFixturePath)
+	})
+
+	t.Run("mapfs", func(t *testing.T) {
+		mfs, virtualPath := loadValidateFixtureMapFS(t, "warning-lifecycle-methods")
+		testValidateWithDisabledWarnings(t, mfs, virtualPath)
+	})
+}
+
+// TestTryFetchSchema_NoCacheDir verifies that tryFetchSchema works when
+// xdg.CacheHome is empty, as it would be in wasm or sandboxed environments.
+// The embedded schema path (getSchema -> getEmbeddedSchema) bypasses
+// tryFetchSchema entirely; this test confirms tryFetchSchema itself is
+// resilient when called for non-embedded versions without a cache directory.
+func TestTryFetchSchema_NoCacheDir(t *testing.T) {
+	// Save and restore xdg.CacheHome
+	origCacheHome := xdg.CacheHome
+	defer func() { xdg.CacheHome = origCacheHome }()
+	xdg.CacheHome = ""
+
+	fsys := platform.NewMapFS(nil)
+
+	// getSchema for an embedded version should succeed without cache
+	schemaData, err := getSchema(fsys, "2.1.0")
+	if err != nil {
+		t.Fatalf("getSchema with empty CacheHome returned error: %v", err)
+	}
+
+	var schema map[string]any
+	if err := json.Unmarshal(schemaData, &schema); err != nil {
+		t.Fatalf("failed to parse schema JSON: %v", err)
+	}
+
+	if _, ok := schema["title"]; !ok {
+		t.Error("expected schema to contain 'title' field")
+	}
+}
+
 // TestGetSchemaUpgrade210 verifies that 2.1.0 and 2.1.1 manifests are
 // automatically upgraded to use the 2.1.1-speculative schema to work around
 // discriminated union issues in the upstream CEM schema.
 // See: https://github.com/webcomponents/custom-elements-manifest/issues/138
-func TestGetSchemaUpgrade210(t *testing.T) {
+func testGetSchemaUpgrade210(t *testing.T, fsys platform.FileSystem) {
+	t.Helper()
+
 	testCases := []struct {
 		version    string
 		expected   string
@@ -151,13 +237,12 @@ func TestGetSchemaUpgrade210(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.version, func(t *testing.T) {
-			schemaData, err := getSchema(tc.version)
+			schemaData, err := getSchema(fsys, tc.version)
 			if err != nil {
 				t.Fatalf("getSchema(%q) returned error: %v", tc.version, err)
 			}
 
 			if !tc.checkTitle {
-				// For older schemas, just verify we got valid JSON
 				var schema map[string]any
 				if err := json.Unmarshal(schemaData, &schema); err != nil {
 					t.Fatalf("Failed to parse schema JSON: %v", err)
@@ -165,13 +250,11 @@ func TestGetSchemaUpgrade210(t *testing.T) {
 				return
 			}
 
-			// Parse the schema to verify which version was actually loaded
 			var schema map[string]any
 			if err := json.Unmarshal(schemaData, &schema); err != nil {
 				t.Fatalf("Failed to parse schema JSON: %v", err)
 			}
 
-			// Check the title field which contains the schema version (2.1.x only)
 			title, ok := schema["title"].(string)
 			if !ok {
 				t.Fatalf("Schema missing 'title' field")
@@ -183,4 +266,16 @@ func TestGetSchemaUpgrade210(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetSchemaUpgrade210(t *testing.T) {
+	t.Run("os", func(t *testing.T) {
+		testGetSchemaUpgrade210(t, platform.NewOSFileSystem())
+	})
+
+	t.Run("mapfs", func(t *testing.T) {
+		// getSchema uses embedded schemas for known versions, so MapFS works
+		// without needing to load any fixture files
+		testGetSchemaUpgrade210(t, platform.NewMapFileSystem(nil))
+	})
 }

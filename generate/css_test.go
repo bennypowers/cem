@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	M "bennypowers.dev/cem/manifest"
+	"bennypowers.dev/cem/internal/platform"
 	W "bennypowers.dev/cem/internal/workspace"
 )
 
@@ -106,7 +107,7 @@ func TestCssCache_ThreadSafety(t *testing.T) {
 func TestGenerateSession_CssCache_Integration(t *testing.T) {
 	// Test CSS cache initialization in GenerateSession
 	ctx := W.NewFileSystemWorkspaceContext("testdata")
-	setupCtx, err := NewGenerateContext(ctx)
+	setupCtx, err := NewGenerateContext(ctx, platform.NewOSFileSystem())
 	if err != nil {
 		t.Fatalf("Failed to create setup context: %v", err)
 	}

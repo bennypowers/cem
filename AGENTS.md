@@ -17,6 +17,8 @@ All diagnostic logging (debug, info, warning, error, success, trace) must go thr
 
 Verbosity levels: `-q` (quiet: warnings/errors only), default (+ success), `-v` (+ info), `-vv` (+ debug), `-vvv` (+ trace per-file detail). Use `logging.AtLevel(level)` as a guard before expensive debug computations.
 
+Use `platform.FileSystem` for all filesystem I/O in library code. Never call `os.ReadFile`, `os.WriteFile`, `os.Stat`, `os.MkdirAll`, `os.Create`, `os.Open`, `os.Remove`, `os.Rename`, `os.ReadDir`, `filepath.Glob`, or `os.DirFS` directly -- thread `platform.FileSystem` through function parameters instead. Use `platform.DirFS(fsys, dir)` instead of `os.DirFS(dir)`. For `os.Getwd`/`os.UserHomeDir`, pass the result as a parameter from CLI entry points rather than calling from internal packages. Exception: `cmd/` package entry points may call `os.Getwd()`/`os.UserHomeDir()` since they are CLI-specific and pass results downward. Build tools with `//go:build ignore` (e.g., `serve/generate_elements.go`, `mcp/tools/gen-adapters/`) are also exempt.
+
 Use `platform.WalkDir` for all directory traversals. It silently prunes `.git` directories and accepts additional dirs to skip via `set.Set[string]`. Never use `filepath.WalkDir` or `fs.WalkDir` directly -- those bypass `.git` pruning.
 
 Run `go vet` to surface gopls suggestions. Common examples:

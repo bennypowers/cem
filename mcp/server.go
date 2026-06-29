@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/version"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/mcp/resources"
@@ -42,6 +43,8 @@ type ServerConfig struct {
 	MaxDescriptionLength int
 	// Additional packages to load manifests from (URLs, npm:, or jsr: specifiers)
 	AdditionalPackages []string
+	// FileSystem to use for filesystem operations. If nil, defaults to OSFileSystem.
+	FileSystem platform.FileSystem
 }
 
 // Server implements an MCP server for custom elements
@@ -63,7 +66,7 @@ func NewServer(workspace types.WorkspaceContext) (*Server, error) {
 func NewServerWithConfig(workspace types.WorkspaceContext, config ServerConfig) (*Server, error) {
 	helpers.SafeDebugLog("Creating CEM MCP server for workspace: %s", workspace.Root())
 
-	registry, err := NewMCPContext(workspace)
+	registry, err := NewMCPContext(workspace, config.FileSystem)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create registry: %w", err)
 	}

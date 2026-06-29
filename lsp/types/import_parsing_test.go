@@ -24,7 +24,7 @@ import (
 
 func TestModuleGraph_ImportParsing_Simple(t *testing.T) {
 	// Create module graph and populate from manifest data (like production LSP server)
-	mg := modulegraph.NewModuleGraph(nil) // No QueryManager needed for direct element tracking tests
+	mg := modulegraph.NewModuleGraph(nil, nil) // No QueryManager needed for direct element tracking tests
 
 	// Simulate manifest data for elements
 	elementMap := map[string]any{

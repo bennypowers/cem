@@ -25,6 +25,7 @@ import (
 
 	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
 
@@ -32,10 +33,10 @@ import (
 )
 
 // ModuleProcessorFunc represents a function that processes a single module
-type ModuleProcessorFunc func(job processJob, qm *Q.QueryManager, parser *ts.Parser, depTracker *FileDependencyTracker, cssCache CssCache) (*M.Module, map[string]string, map[string]string, map[string]importInfo, *LogCtx, error)
+type ModuleProcessorFunc func(job processJob, qm *Q.QueryManager, parser *ts.Parser, depTracker *FileDependencyTracker, cssCache CssCache, fsys platform.FileSystem) (*M.Module, map[string]string, map[string]string, map[string]importInfo, *LogCtx, error)
 
 // ModuleProcessorSimpleFunc represents a function that processes a single module (without dependency tracking)
-type ModuleProcessorSimpleFunc func(job processJob, qm *Q.QueryManager, parser *ts.Parser, cssCache CssCache) (*M.Module, map[string]string, map[string]string, map[string]importInfo, *LogCtx, error)
+type ModuleProcessorSimpleFunc func(job processJob, qm *Q.QueryManager, parser *ts.Parser, cssCache CssCache, fsys platform.FileSystem) (*M.Module, map[string]string, map[string]string, map[string]importInfo, *LogCtx, error)
 
 // ModuleBatchProcessor handles batch/parallel processing of modules with common patterns.
 // Abstracts the worker pool pattern used throughout the codebase for module processing.
@@ -52,6 +53,7 @@ type ModuleBatchProcessor struct {
 	queryManager *Q.QueryManager
 	depTracker   *FileDependencyTracker
 	cssCache     CssCache
+	fs           platform.FileSystem
 }
 
 // ProcessingResult holds the results of parallel module processing.
@@ -81,12 +83,13 @@ type moduleTypeAliasesMap map[string]map[string]string
 // - queryManager: Shared tree-sitter queries (expensive to create)
 // - depTracker: Optional dependency tracker (nil for simple processing)
 // - cssCache: CSS parsing cache for performance
-func NewModuleBatchProcessor(queryManager *Q.QueryManager, depTracker *FileDependencyTracker, cssCache CssCache) *ModuleBatchProcessor {
+func NewModuleBatchProcessor(queryManager *Q.QueryManager, depTracker *FileDependencyTracker, cssCache CssCache, fsys platform.FileSystem) *ModuleBatchProcessor {
 	return &ModuleBatchProcessor{
 		numWorkers:   runtime.NumCPU(),
 		queryManager: queryManager,
 		depTracker:   depTracker,
 		cssCache:     cssCache,
+		fs:           fsys,
 	}
 }
 
@@ -109,7 +112,7 @@ func (mbp *ModuleBatchProcessor) ProcessModules(
 	processor ModuleProcessorFunc,
 ) ProcessingResult {
 	return mbp.processModulesInternal(ctx, jobs, func(job processJob, qm *Q.QueryManager, parser *ts.Parser) (*M.Module, map[string]string, map[string]string, map[string]importInfo, *LogCtx, error) {
-		return processor(job, qm, parser, mbp.depTracker, mbp.cssCache)
+		return processor(job, qm, parser, mbp.depTracker, mbp.cssCache, mbp.fs)
 	})
 }
 
@@ -120,7 +123,7 @@ func (mbp *ModuleBatchProcessor) ProcessModulesSimple(
 	processor ModuleProcessorSimpleFunc,
 ) ProcessingResult {
 	return mbp.processModulesInternal(ctx, jobs, func(job processJob, qm *Q.QueryManager, parser *ts.Parser) (*M.Module, map[string]string, map[string]string, map[string]importInfo, *LogCtx, error) {
-		return processor(job, qm, parser, mbp.cssCache)
+		return processor(job, qm, parser, mbp.cssCache, mbp.fs)
 	})
 }
 

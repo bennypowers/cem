@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	_ "bennypowers.dev/cem/internal/languages/registry"
+	"bennypowers.dev/cem/internal/platform"
 	Q "bennypowers.dev/cem/internal/treesitter"
 	M "bennypowers.dev/cem/manifest"
 )
@@ -135,7 +136,7 @@ export type Size = 'sm' | 'md' | 'lg';
 	}
 	defer qm.Close()
 
-	resolver := &ExternalTypeResolver{queryManager: qm}
+	resolver := &ExternalTypeResolver{queryManager: qm, fs: platform.NewOSFileSystem()}
 	aliases, err := resolver.scanTypeAliasesFromFile(tsFile)
 	if err != nil {
 		t.Fatal(err)
@@ -179,6 +180,7 @@ func TestResolveType_DTS(t *testing.T) {
 	resolver := &ExternalTypeResolver{
 		projectRoot:  dir,
 		queryManager: qm,
+		fs:           platform.NewOSFileSystem(),
 	}
 
 	def, pkg, found := resolver.ResolveType("@tokens/core", "ThemeVariant")
@@ -224,6 +226,7 @@ export {};`,
 	resolver := &ExternalTypeResolver{
 		projectRoot:  dir,
 		queryManager: qm,
+		fs:           platform.NewOSFileSystem(),
 	}
 
 	def, pkg, found := resolver.ResolveType("@tokens/colors", "ColorVariant")
@@ -267,6 +270,7 @@ func TestResolveType_CacheHit(t *testing.T) {
 	resolver := &ExternalTypeResolver{
 		projectRoot:  dir,
 		queryManager: qm,
+		fs:           platform.NewOSFileSystem(),
 	}
 
 	// First call populates cache
@@ -322,6 +326,7 @@ export type Placement = Side | AlignedPlacement;
 	resolver := &ExternalTypeResolver{
 		projectRoot:  dir,
 		queryManager: qm,
+		fs:           platform.NewOSFileSystem(),
 	}
 
 	def, pkg, found := resolver.ResolveType("@pfe/core", "Placement")
@@ -372,6 +377,7 @@ export type ButtonType = SubmitType | ResetType | 'button';
 	resolver := &ExternalTypeResolver{
 		projectRoot:  dir,
 		queryManager: qm,
+		fs:           platform.NewOSFileSystem(),
 	}
 
 	def, _, found := resolver.ResolveType("my-types", "ButtonType")
@@ -419,6 +425,7 @@ func TestResolveType_TemplateLiteralExpansion(t *testing.T) {
 	resolver := &ExternalTypeResolver{
 		projectRoot:  dir,
 		queryManager: qm,
+		fs:           platform.NewOSFileSystem(),
 	}
 
 	def, _, found := resolver.ResolveType("@float/utils", "Placement")
@@ -463,6 +470,7 @@ func TestResolveType_TemplateUnresolvableExpr(t *testing.T) {
 	resolver := &ExternalTypeResolver{
 		projectRoot:  dir,
 		queryManager: qm,
+		fs:           platform.NewOSFileSystem(),
 	}
 
 	def, _, found := resolver.ResolveType("bail-pkg", "X")
@@ -507,6 +515,7 @@ func TestResolveType_TemplateBroadString(t *testing.T) {
 	resolver := &ExternalTypeResolver{
 		projectRoot:  dir,
 		queryManager: qm,
+		fs:           platform.NewOSFileSystem(),
 	}
 
 	def, _, found := resolver.ResolveType("broad-pkg", "X")
@@ -550,6 +559,7 @@ func TestResolveType_TemplateBroadNumber(t *testing.T) {
 	resolver := &ExternalTypeResolver{
 		projectRoot:  dir,
 		queryManager: qm,
+		fs:           platform.NewOSFileSystem(),
 	}
 
 	def, _, found := resolver.ResolveType("num-pkg", "X")
@@ -593,6 +603,7 @@ func TestResolveType_TemplateNumericLiterals(t *testing.T) {
 	resolver := &ExternalTypeResolver{
 		projectRoot:  dir,
 		queryManager: qm,
+		fs:           platform.NewOSFileSystem(),
 	}
 
 	def, _, found := resolver.ResolveType("numlit-pkg", "X")
@@ -637,6 +648,7 @@ func TestResolveType_TemplateMixedBroadAndLiteral(t *testing.T) {
 	resolver := &ExternalTypeResolver{
 		projectRoot:  dir,
 		queryManager: qm,
+		fs:           platform.NewOSFileSystem(),
 	}
 
 	def, _, found := resolver.ResolveType("mixed-pkg", "X")
@@ -680,6 +692,7 @@ func TestResolveType_TemplateUndefinedNull(t *testing.T) {
 	resolver := &ExternalTypeResolver{
 		projectRoot:  dir,
 		queryManager: qm,
+		fs:           platform.NewOSFileSystem(),
 	}
 
 	def, _, found := resolver.ResolveType("undef-pkg", "X")
@@ -723,6 +736,7 @@ func TestResolveType_TemplateLiteralSimple(t *testing.T) {
 	resolver := &ExternalTypeResolver{
 		projectRoot:  dir,
 		queryManager: qm,
+		fs:           platform.NewOSFileSystem(),
 	}
 
 	def, _, found := resolver.ResolveType("my-ui", "PrefixedSize")
@@ -739,6 +753,7 @@ func TestResolveType_TemplateLiteralSimple(t *testing.T) {
 func TestResolveType_NotFound(t *testing.T) {
 	resolver := &ExternalTypeResolver{
 		projectRoot: t.TempDir(),
+		fs:          platform.NewOSFileSystem(),
 	}
 
 	_, _, found := resolver.ResolveType("nonexistent-pkg", "SomeType")
@@ -750,6 +765,7 @@ func TestResolveType_NotFound(t *testing.T) {
 func TestResolveType_RelativeImport(t *testing.T) {
 	resolver := &ExternalTypeResolver{
 		projectRoot: t.TempDir(),
+		fs:          platform.NewOSFileSystem(),
 	}
 
 	_, _, found := resolver.ResolveType("./local", "SomeType")

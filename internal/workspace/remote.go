@@ -27,18 +27,18 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
 	C "bennypowers.dev/cem/cmd/config"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/types"
 	"bennypowers.dev/cem/internal/tui"
 	"github.com/adrg/xdg"
-	"github.com/bmatcuk/doublestar"
+	doublestar "github.com/bmatcuk/doublestar/v4"
 	"gopkg.in/yaml.v3"
 )
 
@@ -54,12 +54,14 @@ type RemoteWorkspaceContext struct {
 	packageJSON        *M.PackageJSON
 	customElementsPath string
 	designTokensCache  types.DesignTokensCache
+	fs                 platform.FileSystem
 }
 
 func NewRemoteWorkspaceContext(spec string) *RemoteWorkspaceContext {
 	return &RemoteWorkspaceContext{
 		spec:              spec,
 		designTokensCache: NewDesignTokensCache(nil), // Remote contexts don't need design tokens loading
+		fs:                platform.NewOSFileSystem(),
 	}
 }
 
@@ -74,17 +76,17 @@ func (c *RemoteWorkspaceContext) Init() error {
 	c.packageJSONPath = filepath.Join(c.cacheDir, "package.json")
 
 	// Check cache first
-	if fileExists(c.packageJSONPath) {
+	if c.fs.Exists(c.packageJSONPath) {
 		if err := c.readInPackageJSON(); err == nil {
 			c.customElementsPath = filepath.Join(c.cacheDir, c.packageJSON.CustomElements)
-			if fileExists(c.customElementsPath) {
+			if c.fs.Exists(c.customElementsPath) {
 				logging.Debug("Using cached remote package %s", c.spec)
 				return nil // Fully cached
 			}
 		}
 	}
 
-	if err := os.MkdirAll(c.cacheDir, 0755); err != nil {
+	if err := c.fs.MkdirAll(c.cacheDir, 0755); err != nil {
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
 
@@ -210,11 +212,11 @@ func (c *RemoteWorkspaceContext) fetchFromNpm(ctx context.Context, name, version
 		return err
 	}
 	defer func() { _ = resp.Body.Close() }()
-	err = extractFilesFromTarGz(resp.Body, c.cacheDir, []string{"package.json", "custom-elements.json"})
+	err = extractFilesFromTarGz(resp.Body, c.cacheDir, []string{"package.json", "custom-elements.json"}, c.fs)
 	if err != nil {
 		return err
 	}
-	c.cacheDir, err = setupTempdirFromCache(c.cacheDir)
+	c.cacheDir, err = setupTempdirFromCache(c.cacheDir, c.fs)
 	if err != nil {
 		return err
 	}
@@ -227,7 +229,7 @@ func (c *RemoteWorkspaceContext) CustomElementsManifestPath() string {
 
 func (c *RemoteWorkspaceContext) ConfigFile() string {
 	configPath := filepath.Join(c.cacheDir, ".config", "cem.yaml")
-	if _, err := os.Stat(configPath); err == nil {
+	if _, err := c.fs.Stat(configPath); err == nil {
 		return configPath
 	}
 	return ""
@@ -238,7 +240,7 @@ func (c *RemoteWorkspaceContext) Config() (*C.CemConfig, error) {
 	if configFile == "" {
 		return nil, errors.New("no config file found in remote workspace")
 	}
-	f, err := os.Open(configFile)
+	f, err := c.fs.Open(configFile)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +259,7 @@ func (c *RemoteWorkspaceContext) Manifest() (*M.Package, error) {
 	}
 	if pkg != nil && pkg.CustomElements != "" {
 		manifestPath := filepath.Join(c.cacheDir, pkg.CustomElements)
-		rc, err := os.Open(manifestPath)
+		rc, err := c.fs.Open(manifestPath)
 		if err == nil {
 			defer func() { _ = rc.Close() }()
 			return decodeJSON[M.Package](rc)
@@ -267,7 +269,7 @@ func (c *RemoteWorkspaceContext) Manifest() (*M.Package, error) {
 }
 
 func (c *RemoteWorkspaceContext) PackageJSON() (*M.PackageJSON, error) {
-	rc, err := os.Open(c.packageJSONPath)
+	rc, err := c.fs.Open(c.packageJSONPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not open package.json in remote workspace: %w", err)
 	}
@@ -280,7 +282,7 @@ func (c *RemoteWorkspaceContext) ReadFile(path string) (io.ReadCloser, error) {
 	if !filepath.IsAbs(path) {
 		absPath = filepath.Join(c.cacheDir, path)
 	}
-	return os.Open(absPath)
+	return c.fs.Open(absPath)
 }
 
 func (c *RemoteWorkspaceContext) Stat(path string) (fs.FileInfo, error) {
@@ -288,7 +290,7 @@ func (c *RemoteWorkspaceContext) Stat(path string) (fs.FileInfo, error) {
 	if !filepath.IsAbs(path) {
 		absPath = filepath.Join(c.cacheDir, path)
 	}
-	return os.Stat(absPath)
+	return c.fs.Stat(absPath)
 }
 
 func (c *RemoteWorkspaceContext) ReadDir(path string) ([]fs.DirEntry, error) {
@@ -296,21 +298,31 @@ func (c *RemoteWorkspaceContext) ReadDir(path string) ([]fs.DirEntry, error) {
 	if !filepath.IsAbs(path) {
 		absPath = filepath.Join(c.cacheDir, path)
 	}
-	return os.ReadDir(absPath)
+	return c.fs.ReadDir(absPath)
 }
 
 func (c *RemoteWorkspaceContext) Glob(pattern string) ([]string, error) {
-	rooted := filepath.Join(c.cacheDir, pattern)
-	return doublestar.Glob(rooted)
+	dirFS := platform.DirFS(c.fs, c.cacheDir)
+	fsPattern := filepath.ToSlash(pattern)
+	matches, err := doublestar.Glob(dirFS, fsPattern)
+	if err != nil {
+		return nil, err
+	}
+	// Convert forward slashes back to OS separators
+	result := make([]string, len(matches))
+	for i, m := range matches {
+		result[i] = filepath.FromSlash(m)
+	}
+	return result, nil
 }
 
 func (c *RemoteWorkspaceContext) OutputWriter(path string) (io.WriteCloser, error) {
 	absPath := filepath.Join(c.cacheDir, path)
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	dir := filepath.Dir(absPath)
+	if err := c.fs.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
-	return os.Create(absPath)
+	return c.fs.Create(absPath)
 }
 
 func (c *RemoteWorkspaceContext) Cleanup() error {
@@ -360,19 +372,24 @@ func (c *RemoteWorkspaceContext) DesignTokensCache() types.DesignTokensCache {
 	return c.designTokensCache
 }
 
-func setupTempdirFromCache(cacheDir string) (string, error) {
-	tempdir, err := os.MkdirTemp("", "cem-remote-*")
+func setupTempdirFromCache(cacheDir string, fsys platform.FileSystem) (string, error) {
+	tempdir, err := fsys.MkdirTemp("", "cem-remote-*")
 	if err != nil {
 		return "", err
 	}
-	files, err := os.ReadDir(cacheDir)
+	files, err := fsys.ReadDir(cacheDir)
 	if err != nil {
 		return "", err
 	}
 	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
 		src := filepath.Join(cacheDir, f.Name())
 		dst := filepath.Join(tempdir, f.Name())
-		_, _ = copyFile(src, dst)
+		if _, err := copyFile(src, dst, fsys); err != nil {
+			return "", fmt.Errorf("copying %s to tempdir: %w", f.Name(), err)
+		}
 	}
 	return tempdir, nil
 }
@@ -400,11 +417,11 @@ func (c *RemoteWorkspaceContext) fetch(ctx context.Context, url, dest string) er
 		return fmt.Errorf("failed to fetch %s: status %s", url, resp.Status)
 	}
 
-	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+	if err := c.fs.MkdirAll(filepath.Dir(dest), 0755); err != nil {
 		return err
 	}
 
-	out, err := os.Create(dest)
+	out, err := c.fs.Create(dest)
 	if err != nil {
 		return err
 	}
@@ -413,7 +430,7 @@ func (c *RemoteWorkspaceContext) fetch(ctx context.Context, url, dest string) er
 	return err
 }
 
-func extractFilesFromTarGz(r io.Reader, dest string, wanted []string) error {
+func extractFilesFromTarGz(r io.Reader, dest string, wanted []string, fsys platform.FileSystem) error {
 	gzr, err := gzip.NewReader(r)
 	if err != nil {
 		return err
@@ -430,7 +447,7 @@ func extractFilesFromTarGz(r io.Reader, dest string, wanted []string) error {
 		}
 		for _, w := range wanted {
 			if path.Base(hdr.Name) == w {
-				out, err := os.Create(filepath.Join(dest, w))
+				out, err := fsys.Create(filepath.Join(dest, w))
 				if err != nil {
 					return err
 				}

@@ -41,7 +41,7 @@ func TestRegistryFileWatcherShutdown(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		// Create a mock file watcher
 		mockWatcher := platform.NewMockFileWatcher()
-		registry := LSP.NewRegistry(mockWatcher)
+		registry := LSP.NewRegistry(mockWatcher, nil)
 
 		// Track if reload callback was called
 		reloadCalled := false
@@ -84,7 +84,7 @@ func TestRegistryFileWatcherShutdownWithManifests(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		// Create a mock file watcher
 		mockWatcher := platform.NewMockFileWatcher()
-		registry := LSP.NewRegistry(mockWatcher)
+		registry := LSP.NewRegistry(mockWatcher, nil)
 
 		// Add a manifest path manually for testing
 		registry.AddManifestPath("/test/manifest.json")
@@ -131,7 +131,7 @@ func TestRegistryFileWatcherShutdownWithManifests(t *testing.T) {
 func TestRegistryFileWatcherStopWithTimeout(t *testing.T) {
 	// Create a mock file watcher
 	mockWatcher := platform.NewMockFileWatcher()
-	registry := LSP.NewRegistry(mockWatcher)
+	registry := LSP.NewRegistry(mockWatcher, nil)
 
 	// Start file watching
 	err := registry.StartFileWatching(func() {})
@@ -173,7 +173,7 @@ func TestGenerateWatcherShutdown(t *testing.T) {
 	}
 
 	// Create generate watcher
-	watcher, err := LSP.NewInProcessGenerateWatcher(workspace, []string{"**/*.ts"}, callback)
+	watcher, err := LSP.NewInProcessGenerateWatcher(workspace, []string{"**/*.ts"}, callback, nil)
 	require.NoError(t, err)
 
 	// Start the watcher
@@ -207,7 +207,7 @@ func TestGenerateWatcherDoubleStart(t *testing.T) {
 
 	watcher, err := LSP.NewInProcessGenerateWatcher(workspace, []string{"**/*.ts"}, func(pkg *M.Package) error {
 		return nil
-	})
+	}, nil)
 	require.NoError(t, err)
 
 	// First start should succeed

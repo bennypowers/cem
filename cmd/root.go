@@ -26,6 +26,7 @@ import (
 	IC "bennypowers.dev/cem/internal/config"
 	_ "bennypowers.dev/cem/internal/languages/registry"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/platform"
 	W "bennypowers.dev/cem/internal/workspace"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -88,11 +89,12 @@ func rootPersistentPreRunE(cmd *cobra.Command, args []string) error {
 		// The workspace context already discovered the file via internal/config.FindConfigFile.
 		cfgFile := wctx.ConfigFile()
 		if cfgFile != "" {
+			osFS := platform.NewOSFileSystem()
 			format := IC.FormatFromPath(cfgFile)
 			if format == "jsonc" {
 				// Viper doesn't support JSONC natively. Read the file,
 				// strip comments, and feed clean JSON to viper.
-				data, readErr := os.ReadFile(cfgFile)
+				data, readErr := osFS.ReadFile(cfgFile)
 				if readErr != nil {
 					return fmt.Errorf("failed to read config file %s: %w", cfgFile, readErr)
 				}

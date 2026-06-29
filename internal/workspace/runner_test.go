@@ -15,7 +15,7 @@ import (
 func TestForEachPackage_RunsAllPackages(t *testing.T) {
 	root := absFixture(t, "multi-package-workspace")
 	var count int
-	results := workspace.ForEachPackage(root, func(pkg workspace.PackageInfo) error {
+	results := workspace.ForEachPackage(root, osfs, func(pkg workspace.PackageInfo) error {
 		count++
 		return nil
 	})
@@ -28,7 +28,7 @@ func TestForEachPackage_RunsAllPackages(t *testing.T) {
 
 func TestForEachPackage_CollectsErrors(t *testing.T) {
 	root := absFixture(t, "multi-package-workspace")
-	results := workspace.ForEachPackage(root, func(pkg workspace.PackageInfo) error {
+	results := workspace.ForEachPackage(root, osfs, func(pkg workspace.PackageInfo) error {
 		if pkg.Name == "@test/alpha" {
 			return errors.New("alpha broke")
 		}
@@ -48,7 +48,7 @@ func TestForEachPackage_CollectsErrors(t *testing.T) {
 
 func TestForEachPackage_NoPackages(t *testing.T) {
 	root := absFixture(t, "workspace-mode-no-manifest")
-	results := workspace.ForEachPackage(root, func(pkg workspace.PackageInfo) error {
+	results := workspace.ForEachPackage(root, osfs, func(pkg workspace.PackageInfo) error {
 		t.Fatal("should not be called")
 		return nil
 	})
@@ -56,7 +56,7 @@ func TestForEachPackage_NoPackages(t *testing.T) {
 }
 
 func TestForEachPackage_InvalidRoot(t *testing.T) {
-	results := workspace.ForEachPackage("/nonexistent/path", func(pkg workspace.PackageInfo) error {
+	results := workspace.ForEachPackage("/nonexistent/path", osfs, func(pkg workspace.PackageInfo) error {
 		t.Fatal("should not be called")
 		return nil
 	})
@@ -81,11 +81,11 @@ func TestResolveWorkspaceFiles_PartitionsByPackage(t *testing.T) {
 	}()
 
 	// Root-relative pattern should partition files by package
-	alphaFiles, err := workspace.ResolveWorkspaceFiles(root, []string{"packages/*/src/**/*.ts"}, alphaDir)
+	alphaFiles, err := workspace.ResolveWorkspaceFiles(root, []string{"packages/*/src/**/*.ts"}, alphaDir, osfs)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"src/alpha.ts"}, alphaFiles)
 
-	betaFiles, err := workspace.ResolveWorkspaceFiles(root, []string{"packages/*/src/**/*.ts"}, betaDir)
+	betaFiles, err := workspace.ResolveWorkspaceFiles(root, []string{"packages/*/src/**/*.ts"}, betaDir, osfs)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"src/beta.ts"}, betaFiles)
 }
@@ -94,7 +94,7 @@ func TestResolveWorkspaceFiles_NoMatchReturnsEmpty(t *testing.T) {
 	root := absFixture(t, "multi-package-workspace")
 	alphaDir := filepath.Join(root, "packages", "alpha")
 
-	files, err := workspace.ResolveWorkspaceFiles(root, []string{"nonexistent/**/*.ts"}, alphaDir)
+	files, err := workspace.ResolveWorkspaceFiles(root, []string{"nonexistent/**/*.ts"}, alphaDir, osfs)
 	require.NoError(t, err)
 	assert.Empty(t, files)
 }
@@ -106,7 +106,7 @@ func TestFindPackagesForFiles_RoutesToCorrectPackage(t *testing.T) {
 	require.NoError(t, os.WriteFile(alphaFile, []byte("// alpha"), 0644))
 	defer func() { _ = os.RemoveAll(filepath.Join(root, "packages", "alpha", "src")) }()
 
-	pkgs, err := workspace.FindPackagesForFiles(root, []string{alphaFile})
+	pkgs, err := workspace.FindPackagesForFiles(root, []string{alphaFile}, osfs)
 	require.NoError(t, err)
 	require.Len(t, pkgs, 1)
 	assert.Equal(t, "@test/alpha", pkgs[0].Name)
@@ -125,7 +125,7 @@ func TestFindPackagesForFiles_MultipleFilesMultiplePackages(t *testing.T) {
 		_ = os.RemoveAll(filepath.Join(root, "packages", "beta", "src"))
 	}()
 
-	pkgs, err := workspace.FindPackagesForFiles(root, []string{alphaFile, betaFile})
+	pkgs, err := workspace.FindPackagesForFiles(root, []string{alphaFile, betaFile}, osfs)
 	require.NoError(t, err)
 	assert.Len(t, pkgs, 2)
 	names := []string{pkgs[0].Name, pkgs[1].Name}
@@ -145,7 +145,7 @@ func TestDemoDiscoveryResolution(t *testing.T) {
 	require.NoError(t, err)
 	buttonDir := filepath.Join(root, "packages", "button")
 
-	demoFiles, err := workspace.ResolveWorkspaceFiles(root, []string{"packages/*/demo/*.html"}, buttonDir)
+	demoFiles, err := workspace.ResolveWorkspaceFiles(root, []string{"packages/*/demo/*.html"}, buttonDir, osfs)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"demo/basic.html"}, demoFiles)
 
