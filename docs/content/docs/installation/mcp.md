@@ -144,13 +144,13 @@ The inspector provides a web UI for:
 Enable detailed logging to troubleshoot issues:
 
 ```bash
-cem mcp --verbose
+cem mcp -vv
 ```
 
 Or with the inspector:
 
 ```bash
-mcp-inspector cem mcp --verbose
+mcp-inspector cem mcp -vv
 ```
 
 ### Debug Specific Projects

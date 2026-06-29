@@ -9,7 +9,7 @@ Common issues and solutions when working with CEM.
 
 Make sure your glob pattern matches your files:
 ```sh
-cem generate --verbose
+cem generate -v
 ```
 
 Check the `.config/cem.yaml` `generate.files` glob pattern matches your source files.

@@ -17,7 +17,7 @@ By default, `cem validate` will look for a `custom-elements.json` file in the cu
 
 ## Options
 
-- `--verbose`, `-v`: Show detailed information including schema version
+- `--verbose`, `-v`: Increase verbosity (`-v` info, `-vv` debug, `-vvv` trace)
 - `--disable`: Disable specific warning rules or categories (can be used multiple times)
 - `--format`: Output format, either `text` (default) or `json`
 
@@ -130,6 +130,9 @@ that has a `customElements` field. Results are reported per-package.
 cem validate           # validate all packages
 cem validate -p pkg/a  # validate one package
 ```
+
+With `--format json`, workspace mode emits a single JSON document containing
+results for all packages, rather than separate JSON objects per package.
 
 ### Available Warning Categories
 

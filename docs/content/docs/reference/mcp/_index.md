@@ -21,6 +21,9 @@ Model Context Protocol server for custom elements. See [MCP Integration](/docs/i
 | `cem://element/{tagName}/css/states`            | CSS custom states documentation                                                                  |
 | `cem://guidelines`                              | Design system guidelines and best practices                                                            |
 | `cem://accessibility`                           | Accessibility patterns and validation rules                                                         |
+| `cem://config`                                  | Current resolved configuration (merged from file + workspace cascade)                               |
+| `cem://config/schema`                           | Overview of all config schema sections with links to per-section detail                             |
+| `cem://config/schema/{section}`                 | JSON schema for a specific config section (generate, serve, health, mcp, export, warnings)          |
 
 ## MCP Tools
 
@@ -49,6 +52,20 @@ Validates custom element usage based on manifest guidelines.
 - Attribute conflicts (e.g., `loading="eager"` + `lazy="true"`)
 - Content/attribute redundancy
 - Manifest compliance
+
+### `generate_config`
+
+Generate or update CEM configuration for a project. Returns the current config, config file path, full JSON schema, and guidance for each config section. Use with an optional `focus` parameter to narrow to a specific section.
+
+| Parameter | Type   | Required | Description                                                                                              |
+| --------- | ------ | -------- | -------------------------------------------------------------------------------------------------------- |
+| `focus`   | string |          | Config section to focus on: `generate`, `serve`, `health`, `mcp`, `export`, or `warnings`. Omit for all sections. |
+
+### `validate_config`
+
+Validate the current CEM configuration file. Runs schema validation and semantic checks (glob reachability, output path existence, URL rewrite validation). Returns structured JSON with errors and warnings, each with field path and source position.
+
+No parameters required.
 
 ## Configuration
 
@@ -79,7 +96,8 @@ cem mcp [flags]
 - `--package <path>` - Specify project directory or package specifier (npm:, jsr:, or URL)
 - `--additional-packages <specs>` - Load additional packages alongside local project (repeatable)
 - `--max-description-length <num>` - Override 2000 character description limit
-- `--verbose` - Enable detailed logging
+- `--verbose`, `-v` - Increase verbosity (`-v` info, `-vv` debug, `-vvv` trace)
+- `--quiet`, `-q` - Quiet output (warnings and errors only)
 
 ### Loading Additional Packages
 

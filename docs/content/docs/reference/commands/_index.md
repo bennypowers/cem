@@ -33,5 +33,9 @@ The `cem` command-line tool has several commands to help you generate and query 
   {{< card title="Health" href="health" icon="/images/sections/health.svg" >}}
   Score documentation quality in your custom elements manifest and get actionable recommendations for improvement.
   {{< /card >}}
+
+  {{< card title="Config" href="config" icon="/images/sections/configuration.svg" >}}
+  Create, inspect, and validate CEM configuration files, and generate MCP snippets for AI tools.
+  {{< /card >}}
 {{< /card-grid >}}
 
