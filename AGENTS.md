@@ -60,13 +60,45 @@ IMPORTANT: When writing tests, **always** use fixture/golden pattern. We **alway
   - `expected.json` or `expected-*.json` (optional, for assertions)
   - `package.json` pointing `customElements` block to `manifest.json`
 
+- **Cursor Positions via `^cursor` Marker**: Position-dependent LSP tests (hover, completion, definition, references) embed cursor position directly in the fixture input file using a comment marker. The `^` column is the cursor character; the line above is the cursor line. Use language-appropriate comment syntax:
+
+  HTML:
+  ```html
+  <test-element .testAttr="hello"></test-element>
+                <!-- ^cursor -->
+  ```
+
+  TypeScript:
+  ```typescript
+  const tpl = html`<test-element .`;
+                                  /* ^cursor */
+  ```
+
+  CSS:
+  ```css
+  my-element::part(button) {
+                /* ^cursor */
+  ```
+
+  The fixture loader strips the marker line from `InputContent` and populates `fixture.Cursor *protocol.Position`. Tests use `fixture.Cursor` directly instead of maintaining a separate Go map of cursor positions. When no marker is present, `Cursor` is nil.
+
+  **Fallback**: When a comment marker isn't practical (cursor inside a value, ambiguous column), use YAML frontmatter:
+  ```html
+  ---
+  cursor:
+    line: 0
+    character: 14
+  ---
+  <test-element .testAttr="hello"></test-element>
+  ```
+
 - **RunLSPFixtures Pattern**:
   ```go
   testutil.RunLSPFixtures(t, "testdata/my-test-suite", func(t *testing.T, fixture *testutil.LSPFixture) {
       // Setup context
       ctx := testhelpers.NewMockServerContext()
 
-      // Use fixture.InputContent, fixture.Manifest, etc.
+      // Use fixture.InputContent, fixture.Manifest, fixture.Cursor, etc.
       // Load expected data with fixture.GetExpected("key", &expected)
   })
   ```
@@ -74,6 +106,10 @@ IMPORTANT: When writing tests, **always** use fixture/golden pattern. We **alway
 - **Multiple Expected Files**: Use `expected-variant.json`, `expected-size.json` pattern for testing multiple positions/cases in one fixture
 
 - **Regression Test Isolation**: Keep regression test fixtures in separate directories (e.g., `testdata-regression/`) to avoid interference with standard test discovery
+
+- **Filesystem in Tests**: Test code follows the same `platform.FileSystem` rules as production code. Load fixture data via `testutil.NewFixtureFS()`, `testutil.LoadTestdataFS()`, or `testutil.LoadFixtureFile()` -- never via direct `os.ReadFile`/`os.Open` calls. When constructing `MCPContext` or similar objects that accept a `platform.FileSystem`, pass the workspace's `MapFileSystem` instead of `nil` to exercise the injected FS path. The only exception is OS integration subtests (e.g., filewatcher tests) that must write to real temp dirs via `t.TempDir()`.
+
+- **Error Path Testing**: When testing filesystem error paths that rely on OS permissions (e.g., unreadable files), use an error-injecting `FileSystem` wrapper instead of `os.Chmod`. MapFS does not enforce permissions, so permission-based error tests need a wrapper that returns errors for specific paths.
 
 ### Testing Tiers
 

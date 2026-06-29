@@ -28,28 +28,12 @@ import (
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
-// Cursor positions for each test fixture
-var cursorPositions = map[string]protocol.Position{
-	"element-hover-html":                     {Line: 6, Character: 5},
-	"element-hover-typescript":               {Line: 5, Character: 10},
-	"hover-attribute-html":                   {Line: 6, Character: 20},
-	"hover-boolean-binding-typescript":       {Line: 5, Character: 23},
-	"hover-dotted-attr-not-field-html":       {Line: 6, Character: 20},
-	"hover-dotted-attribute-html":            {Line: 6, Character: 20},
-	"hover-event-binding-typescript":         {Line: 5, Character: 23},
-	"hover-property-binding-typescript":      {Line: 5, Character: 23},
-	"hover-unknown-event-typescript":         {Line: 5, Character: 23},
-	"hover-unknown-property-typescript":      {Line: 5, Character: 23},
-	"multiline-attributes-hover-html":        {Line: 6, Character: 13},
-}
-
 func TestHover_Fixtures(t *testing.T) {
 	testutil.RunLSPFixtures(t, "testdata", func(t *testing.T, fixture *testutil.LSPFixture) {
-		// Get cursor position from map
-		cursor, ok := cursorPositions[fixture.Name]
-		if !ok {
-			t.Fatalf("No cursor position defined for fixture %s", fixture.Name)
+		if fixture.Cursor == nil {
+			t.Fatalf("No cursor position in fixture %s (add <!-- ^cursor --> or frontmatter)", fixture.Name)
 		}
+		cursor := *fixture.Cursor
 
 		// Parse manifest if present
 		ctx := testhelpers.NewMockServerContext()

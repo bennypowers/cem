@@ -25,17 +25,21 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform"
+	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"golang.org/x/net/html"
+	"gopkg.in/yaml.v3"
 )
 
 // LSPFixture represents a single LSP test scenario loaded from fixtures
 type LSPFixture struct {
-	Name            string            // Test scenario name (directory name)
-	InputHTML       string            // HTML content from input.html (deprecated: use InputContent)
-	InputContent    string            // Content from input.html or input.ts
-	InputType       string            // File type: "html" or "ts"
-	Manifest        json.RawMessage   // Optional manifest data from manifest.json
-	ExpectedMap     map[string]any    // Expected results from expected-*.json or expected.json
-	AdditionalFiles map[string]string // Additional source files in the fixture directory (filename → content)
+	Name            string              // Test scenario name (directory name)
+	InputHTML       string              // HTML content from input.html (deprecated: use InputContent)
+	InputContent    string              // Content from input.html or input.ts
+	InputType       string              // File type: "html" or "ts"
+	Manifest        json.RawMessage     // Optional manifest data from manifest.json
+	ExpectedMap     map[string]any      // Expected results from expected-*.json or expected.json
+	AdditionalFiles map[string]string   // Additional source files in the fixture directory (filename → content)
+	Cursor          *protocol.Position  // Cursor position extracted from ^cursor marker or YAML frontmatter
 }
 
 // RunLSPFixtures discovers and runs LSP tests from a testdata directory.
@@ -106,9 +110,12 @@ func loadLSPFixtureFromMapFS(t *testing.T, mfs *platform.MapFileSystem, scenario
 		path := filepath.Join(scenarioName, candidate.name)
 		data, err := mfs.ReadFile(path)
 		if err == nil {
-			fixture.InputContent = string(data)
-			fixture.InputHTML = string(data)
+			content := string(data)
+			cleaned, cursor := extractCursor(content, candidate.fileType)
+			fixture.InputContent = cleaned
+			fixture.InputHTML = cleaned
 			fixture.InputType = candidate.fileType
+			fixture.Cursor = cursor
 			found = true
 			break
 		}
@@ -187,4 +194,127 @@ func (f *LSPFixture) GetExpected(key string, v any) error {
 		return err
 	}
 	return json.Unmarshal(bytes, v)
+}
+
+// CursorParser extracts a ^cursor marker from file content.
+// Returns cleaned content (marker stripped) and cursor position (nil if not found).
+type CursorParser func(content string) (string, *protocol.Position)
+
+// ParseCursor extracts cursor position using the given parser.
+// Skips if Cursor is already set (e.g., by frontmatter or HTML extraction during load).
+func (f *LSPFixture) ParseCursor(parser CursorParser) {
+	if f.Cursor != nil {
+		return
+	}
+	cleaned, cursor := parser(f.InputContent)
+	if cursor != nil {
+		f.InputContent = cleaned
+		f.InputHTML = cleaned
+		f.Cursor = cursor
+	}
+}
+
+// extractCursor checks content for a ^cursor comment marker or YAML frontmatter.
+// For HTML, uses golang.org/x/net/html tokenizer to find comment nodes.
+// For TS/CSS, only checks frontmatter; use ParseCursor with a tree-sitter parser.
+func extractCursor(content string, fileType string) (string, *protocol.Position) {
+	if fileType == "html" {
+		cleaned, cursor := extractHTMLCursorMarker(content)
+		if cursor != nil {
+			return cleaned, cursor
+		}
+	}
+	return extractCursorFrontmatter(content)
+}
+
+// extractHTMLCursorMarker uses the Go HTML tokenizer to find <!-- ^cursor --> comments.
+func extractHTMLCursorMarker(content string) (string, *protocol.Position) {
+	tokenizer := html.NewTokenizer(strings.NewReader(content))
+	byteOffset := 0
+	for {
+		tt := tokenizer.Next()
+		if tt == html.ErrorToken {
+			break
+		}
+		raw := string(tokenizer.Raw())
+		if tt == html.CommentToken && strings.Contains(raw, "^cursor") {
+			caretInRaw := strings.Index(raw, "^")
+			if caretInRaw < 0 {
+				byteOffset += len(raw)
+				continue
+			}
+			caretGlobal := byteOffset + caretInRaw
+			caretLine, caretCol := byteOffsetToLineCol(content, caretGlobal)
+			if caretLine == 0 {
+				byteOffset += len(raw)
+				continue
+			}
+			// Strip the entire line containing the comment
+			lineStart := byteOffset
+			for lineStart > 0 && content[lineStart-1] != '\n' {
+				lineStart--
+			}
+			lineEnd := byteOffset + len(raw)
+			if lineEnd < len(content) && content[lineEnd] == '\n' {
+				lineEnd++
+			}
+			cleaned := content[:lineStart] + content[lineEnd:]
+			return cleaned, &protocol.Position{
+				Line:      uint32(caretLine - 1),
+				Character: uint32(caretCol),
+			}
+		}
+		byteOffset += len(raw)
+	}
+	return content, nil
+}
+
+func byteOffsetToLineCol(content string, offset int) (int, int) {
+	line := 0
+	col := 0
+	for i := range offset {
+		if i >= len(content) {
+			break
+		}
+		if content[i] == '\n' {
+			line++
+			col = 0
+		} else {
+			col++
+		}
+	}
+	return line, col
+}
+
+// cursorFrontmatter is the YAML structure for cursor position in frontmatter.
+type cursorFrontmatter struct {
+	Cursor *struct {
+		Line      uint32 `yaml:"line"`
+		Character uint32 `yaml:"character"`
+	} `yaml:"cursor"`
+}
+
+// extractCursorFrontmatter checks for YAML frontmatter with cursor position.
+func extractCursorFrontmatter(content string) (string, *protocol.Position) {
+	if !strings.HasPrefix(content, "---\n") {
+		return content, nil
+	}
+	end := strings.Index(content[4:], "\n---\n")
+	if end < 0 {
+		return content, nil
+	}
+	fmContent := content[4 : 4+end]
+	body := content[4+end+5:]
+
+	var fm cursorFrontmatter
+	if err := yaml.Unmarshal([]byte(fmContent), &fm); err != nil {
+		return content, nil
+	}
+	if fm.Cursor == nil {
+		return content, nil
+	}
+	return body, &protocol.Position{
+		Line:      fm.Cursor.Line,
+		Character: fm.Cursor.Character,
+	}
 }

@@ -1,3 +1,8 @@
+---
+cursor:
+  line: 5
+  character: 23
+---
 import { html } from 'lit';
 
 export class MyComponent {
