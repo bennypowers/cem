@@ -4,6 +4,7 @@ export class MyComponent {
   render() {
     return html`
       <test-component .prop=${this.prop}></test-component>
+      <!--             ^cursor -->
     `;
   }
 }

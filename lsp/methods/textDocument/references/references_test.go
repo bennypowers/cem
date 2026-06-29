@@ -30,22 +30,12 @@ import (
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
-// Cursor positions for each test fixture (in Go code, not JSON)
-var cursorPositions = map[string]protocol.Position{
-	"basic-references":    {Line: 0, Character: 5},
-	"workspace-search":    {Line: 0, Character: 5},
-	"gitignore-filtering": {Line: 0, Character: 5},
-	"no-element":          {Line: 0, Character: 5},
-	"missing-document":    {Line: 0, Character: 0},
-}
-
 func TestReferences_Fixtures(t *testing.T) {
 	testutil.RunLSPFixtures(t, "testdata", func(t *testing.T, fixture *testutil.LSPFixture) {
-		// Get cursor position from map
-		cursor, ok := cursorPositions[fixture.Name]
-		if !ok {
-			t.Fatalf("No cursor position defined for fixture %s", fixture.Name)
+		if fixture.Cursor == nil {
+			t.Fatalf("No cursor position in fixture %s (add <!-- ^cursor --> or frontmatter)", fixture.Name)
 		}
+		cursor := *fixture.Cursor
 
 		// Create MockServerContext with proper DocumentManager
 		ctx := testhelpers.NewMockServerContext()

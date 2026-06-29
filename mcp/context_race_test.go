@@ -32,7 +32,7 @@ func TestMCPContext_ConcurrentCacheAccess(t *testing.T) {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
 
-	ctx, err := NewMCPContext(workspace, nil)
+	ctx, err := NewMCPContext(workspace, workspace.FileSystem())
 	if err != nil {
 		t.Fatalf("Failed to create MCP context: %v", err)
 	}
@@ -91,7 +91,7 @@ func TestMCPContext_ConcurrentLoadManifestsAndCacheAccess(t *testing.T) {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
 
-	ctx, err := NewMCPContext(workspace, nil)
+	ctx, err := NewMCPContext(workspace, workspace.FileSystem())
 	if err != nil {
 		t.Fatalf("Failed to create MCP context: %v", err)
 	}
@@ -167,7 +167,7 @@ func TestMCPContext_SnapshotConsistency(t *testing.T) {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
 
-	ctx, err := NewMCPContext(workspace, nil)
+	ctx, err := NewMCPContext(workspace, workspace.FileSystem())
 	if err != nil {
 		t.Fatalf("Failed to create MCP context: %v", err)
 	}
@@ -215,7 +215,7 @@ func TestMCPContext_CacheInvalidationRace(t *testing.T) {
 		t.Fatalf("Failed to initialize workspace: %v", err)
 	}
 
-	ctx, err := NewMCPContext(workspace, nil)
+	ctx, err := NewMCPContext(workspace, workspace.FileSystem())
 	if err != nil {
 		t.Fatalf("Failed to create MCP context: %v", err)
 	}

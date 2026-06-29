@@ -21,35 +21,28 @@ import (
 	"path/filepath"
 	"testing"
 
-	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/lsp"
-	"bennypowers.dev/cem/lsp/testhelpers"
 	W "bennypowers.dev/cem/internal/workspace"
 )
 
 func TestGenerateWatcherIntegration(t *testing.T) {
 	// Create a temporary directory for test files
-	tempDir, err := os.MkdirTemp("", "lsp-generate-watch-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer func() { _ = os.RemoveAll(tempDir) }()
+	tempDir := t.TempDir()
 
-	// Copy fixture files to create a realistic project structure
-	fixtureDir := filepath.Join("testdata", "integration", "generate-watch-test")
+	// Load fixture files and write to temp dir for a realistic project structure
+	fixtureDir := filepath.Join("integration", "generate-watch-test")
 
-	sourceFixture := filepath.Join(fixtureDir, "test-element.ts")
-	sourceFile := filepath.Join(tempDir, "test-element.ts")
-	err = testhelpers.CopyFile(platform.NewOSFileSystem(),sourceFixture, sourceFile)
+	sourceBytes := testutil.LoadFixtureFile(t, filepath.Join(fixtureDir, "test-element.ts"))
+	err := os.WriteFile(filepath.Join(tempDir, "test-element.ts"), sourceBytes, 0644)
 	if err != nil {
-		t.Fatalf("Failed to copy source fixture: %v", err)
+		t.Fatalf("Failed to write source fixture: %v", err)
 	}
 
-	packageFixture := filepath.Join(fixtureDir, "package.json")
-	packageJSON := filepath.Join(tempDir, "package.json")
-	err = testhelpers.CopyFile(platform.NewOSFileSystem(),packageFixture, packageJSON)
+	packageBytes := testutil.LoadFixtureFile(t, filepath.Join(fixtureDir, "package.json"))
+	err = os.WriteFile(filepath.Join(tempDir, "package.json"), packageBytes, 0644)
 	if err != nil {
-		t.Fatalf("Failed to copy package.json fixture: %v", err)
+		t.Fatalf("Failed to write package.json fixture: %v", err)
 	}
 
 	t.Run("generate watcher starts for local project", func(t *testing.T) {

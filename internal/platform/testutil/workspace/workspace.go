@@ -64,6 +64,16 @@ func NewMapWorkspaceContext(t testing.TB, dir string) *MapWorkspaceContext {
 	}
 }
 
+// NewMapWorkspaceContextFromFS creates a MapWorkspaceContext from an existing MapFileSystem.
+// Use when building the filesystem directly with AddFile instead of loading from disk.
+func NewMapWorkspaceContextFromFS(mfs *platform.MapFileSystem, root string) *MapWorkspaceContext {
+	return &MapWorkspaceContext{
+		mfs:               mfs,
+		root:              root,
+		designTokensCache: &noopDesignTokensCache{},
+	}
+}
+
 // NewMapWorkspaceContextWithRoot loads dir into MapFS rooted at rootPath
 // and returns a WorkspaceContext backed by it. Use this when the test depends
 // on the workspace root directory name (e.g., workspace fallback logic that

@@ -1,6 +1,7 @@
 package generate_test
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,6 +13,25 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type errorFileSystem struct {
+	*platform.MapFileSystem
+	errorPaths map[string]error
+}
+
+func (e *errorFileSystem) ReadFile(name string) ([]byte, error) {
+	if err, ok := e.errorPaths[name]; ok {
+		return nil, err
+	}
+	return e.MapFileSystem.ReadFile(name)
+}
+
+func (e *errorFileSystem) Open(name string) (fs.File, error) {
+	if err, ok := e.errorPaths[name]; ok {
+		return nil, err
+	}
+	return e.MapFileSystem.Open(name)
+}
 
 // Inline: regression test, verifying specific fix
 
@@ -152,7 +172,32 @@ func TestGenerateWithFileReadError(t *testing.T) {
 	})
 
 	t.Run("mapfs", func(t *testing.T) {
-		t.Skip("MapFS does not enforce file permissions, cannot simulate read errors")
+		synctest.Test(t, func(t *testing.T) {
+			mapFS := platform.NewMapFileSystem(nil)
+			root := "/test-workspace"
+
+			mapFS.AddFile(root+"/package.json", `{"name": "test-package"}`, 0644)
+			mapFS.AddFile(root+"/.config/cem.yaml", "generate:\n  files:\n    - restricted.ts\n", 0644)
+			mapFS.AddFile(root+"/restricted.ts", "export class Test {}", 0644)
+
+			errFS := &errorFileSystem{
+				MapFileSystem: mapFS,
+				errorPaths: map[string]error{
+					root + "/restricted.ts": fs.ErrPermission,
+					"restricted.ts":         fs.ErrPermission,
+				},
+			}
+
+			workspace := W.NewFileSystemWorkspaceContext(root, W.WithFileSystem(errFS))
+			err := workspace.Init()
+			require.NoError(t, err)
+
+			manifestStr, err := G.Generate(workspace, errFS)
+
+			assert.Error(t, err, "Generate should return an error when file cannot be read")
+			assert.Nil(t, manifestStr, "Manifest should be nil when generation fails")
+			assert.Contains(t, err.Error(), "NewModuleProcessor", "Error should indicate NewModuleProcessor failure")
+		})
 	})
 }
 

@@ -27,19 +27,12 @@ import (
 	"github.com/adrg/xdg"
 )
 
-// loadValidateFixtureMapFS loads a fixture manifest into a MapFileSystem at a virtual path
+// loadValidateFixtureMapFS loads a fixture manifest into a MapFileSystem
 // and returns the MapFileSystem and virtual path.
 func loadValidateFixtureMapFS(t *testing.T, fixture string) (*platform.MapFileSystem, string) {
 	t.Helper()
-	fixturePath := filepath.Join("..", "cmd", "testdata", "fixtures", fixture, "custom-elements.json")
-	data, err := os.ReadFile(fixturePath)
-	if err != nil {
-		t.Fatalf("Failed to read fixture %s: %v", fixturePath, err)
-	}
-	mfs := platform.NewMapFileSystem(nil)
-	virtualPath := filepath.Join(fixture, "custom-elements.json")
-	mfs.AddFile(virtualPath, string(data), 0644)
-	return mfs, virtualPath
+	mfs := testutil.LoadTestdataFS(t, filepath.Join("..", "cmd", "testdata", "fixtures", fixture), "/")
+	return mfs, "custom-elements.json"
 }
 
 func TestValidateGolden(t *testing.T) {
