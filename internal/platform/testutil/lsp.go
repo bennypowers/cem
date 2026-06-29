@@ -216,7 +216,7 @@ func (f *LSPFixture) ParseCursor(parser CursorParser) {
 }
 
 // extractCursor checks content for a ^cursor comment marker or YAML frontmatter.
-// Marker always takes precedence. Frontmatter is always stripped if present.
+// Marker always takes precedence. Frontmatter is stripped when it contains a cursor key.
 // For HTML, uses golang.org/x/net/html tokenizer to find comment nodes.
 // For TS/CSS, only checks frontmatter; use ParseCursor with a tree-sitter parser.
 func extractCursor(content string, fileType string) (string, *protocol.Position) {

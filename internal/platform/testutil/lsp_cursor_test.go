@@ -209,6 +209,37 @@ const y = 2;
 	}
 }
 
+func TestExtractCursor_HTMLFrontmatterFallback(t *testing.T) {
+	content := "---\ncursor:\n  line: 2\n  character: 5\n---\n<html>\n<body>\n  <test-el></test-el>\n</body>\n</html>\n"
+	cleaned, cursor := extractCursor(content, "html")
+	if cursor == nil {
+		t.Fatal("Expected cursor from frontmatter fallback, got nil")
+	}
+	if cursor.Line != 2 || cursor.Character != 5 {
+		t.Errorf("Want (2,5), got (%d,%d)", cursor.Line, cursor.Character)
+	}
+	if strings.Contains(cleaned, "---") {
+		t.Errorf("Frontmatter not stripped: %q", cleaned)
+	}
+}
+
+func TestExtractHTMLCursorMarker_CRLF(t *testing.T) {
+	content := "<!DOCTYPE html>\r\n<html>\r\n<body>\r\n  <test-element></test-element>\r\n<!-- ^cursor -->\r\n</body>\r\n</html>\r\n"
+	cleaned, cursor := extractHTMLCursorMarker(content)
+	if cursor == nil {
+		t.Fatal("Expected cursor, got nil")
+	}
+	if cursor.Line != 3 {
+		t.Errorf("Line: want 3, got %d", cursor.Line)
+	}
+	if cursor.Character != 5 {
+		t.Errorf("Character: want 5, got %d", cursor.Character)
+	}
+	if strings.Contains(cleaned, "^cursor") {
+		t.Errorf("Cursor marker not stripped from cleaned content")
+	}
+}
+
 func TestExtractCursor_NilWhenNoMarkerOrFrontmatter(t *testing.T) {
 	_, cursor := extractCursor("<test-element></test-element>\n", "html")
 	if cursor != nil {
