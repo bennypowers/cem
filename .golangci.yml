@@ -40,7 +40,125 @@ linters:
         text: doublestar\.Glob
         linters:
           - forbidigo
-      - path: _test\.go
+      # Per-file test exclusions (blanket _test.go exclusion removed in #399)
+      # E2E tests run the binary as a subprocess -- direct os.* calls expected
+      - path: cmd/.*_test\.go
+        linters:
+          - forbidigo
+      # Integration tests that write to real temp dirs for file watching / OS behavior
+      - path: lsp/server_integration_(file_watch|generate_watch)_test\.go
+        linters:
+          - forbidigo
+      - path: serve/filewatcher.*_test\.go
+        linters:
+          - forbidigo
+      # OS integration subtests and golden file update logic
+      - path: generate/demodiscovery/discovery_test\.go
+        linters:
+          - forbidigo
+      - path: generate/generate_nil_manifest_regression_test\.go
+        linters:
+          - forbidigo
+      - path: generate/generate_test\.go
+        linters:
+          - forbidigo
+      - path: generate/external_types_test\.go
+        linters:
+          - forbidigo
+      - path: export/export_test\.go
+        linters:
+          - forbidigo
+      - path: internal/config/schema_test\.go
+        linters:
+          - forbidigo
+      - path: internal/modulegraph/.*_test\.go
+        linters:
+          - forbidigo
+      - path: internal/workspace/httpcache_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/document_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/methods/textDocument/publishDiagnostics/.*_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/methods/textDocument/references/references_test\.go
+        linters:
+          - forbidigo
+      - path: serve/build_test\.go
+        linters:
+          - forbidigo
+      - path: serve/middleware/importmap/.*_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/methods/textDocument/completion/.*_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/methods/textDocument/codeAction/.*_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/ephemeral_hover_test\.go
+        linters:
+          - forbidigo
+      - path: internal/workspace/.*_test\.go
+        linters:
+          - forbidigo
+      - path: validate/validate_test\.go
+        linters:
+          - forbidigo
+      - path: mcp/tools/generate_html_test\.go
+        linters:
+          - forbidigo
+      - path: serve/middleware/routes/.*_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/incremental_integration_test\.go
+        linters:
+          - forbidigo
+      - path: mcp/context_config_reload_test\.go
+        linters:
+          - forbidigo
+      - path: mcp/resources/.*_test\.go
+        linters:
+          - forbidigo
+      - path: mcp/tools/.*_test\.go
+        linters:
+          - forbidigo
+      - path: generate/generate_benchmark_test\.go
+        linters:
+          - forbidigo
+      - path: generate/source_href_integration_test\.go
+        linters:
+          - forbidigo
+      - path: internal/config/discovery_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/jsx_support_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/php_twig_support_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/server_context_test\.go
+        linters:
+          - forbidigo
+      - path: mcp/integration_test\.go
+        linters:
+          - forbidigo
+      - path: serve/server_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/simple_repo_inmemory_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/template_support_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/workspace_inmemory_test\.go
+        linters:
+          - forbidigo
+      - path: lsp/workspace_single_package_test\.go
         linters:
           - forbidigo
       - path: mcp/tools/gen-adapters/
