@@ -441,10 +441,13 @@ func (c *FileSystemWorkspaceContext) ResolveModuleDependency(
 //   - If a directory has workspace metadata (pnpm-workspace.yaml, package.json with workspaces),
 //     continue climbing to find the topmost workspace root
 func FindWorkspaceRoot(startPath string, fsys platform.FileSystem) (string, error) {
-	// Resolve to absolute path
-	absPath, err := filepath.Abs(startPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to resolve path: %w", err)
+	absPath := startPath
+	if !filepath.IsAbs(startPath) {
+		var err error
+		absPath, err = filepath.Abs(startPath)
+		if err != nil {
+			return "", fmt.Errorf("failed to resolve path: %w", err)
+		}
 	}
 
 	// Ensure we're starting from a directory

@@ -68,6 +68,11 @@ func (s *Server) Build(config BuildConfig) error {
 		config.WorkDir = cwd
 	}
 
+	// Resolve OutputDir relative to WorkDir so path comparisons are consistent
+	if !filepath.IsAbs(config.OutputDir) {
+		config.OutputDir = filepath.Join(config.WorkDir, config.OutputDir)
+	}
+
 	// Normalize base path: ensure leading slash, no trailing slash
 	if config.BasePath != "" {
 		config.BasePath = "/" + strings.Trim(config.BasePath, "/")
@@ -379,12 +384,6 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 		return fmt.Errorf("watchDir %s is outside working directory %s", watchDir, config.WorkDir)
 	}
 
-	// Resolve output directory to an absolute path for skipping during walk
-	absOutputDir, err := filepath.Abs(config.OutputDir)
-	if err != nil {
-		return err
-	}
-
 	// Build set of demo source file paths to skip (already rendered with chrome by buildPage)
 	demoSourceFiles := make(map[string]bool, len(demoRoutes))
 	for _, entry := range demoRoutes {
@@ -397,10 +396,10 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 			return err
 		}
 
-		// Skip the output directory to avoid infinite recursion
+		// Skip the output directory to avoid infinite recursion.
+		// config.OutputDir is already absolute (normalized in Build).
 		fullPath := filepath.Join(watchDir, path)
-		absPath, _ := filepath.Abs(fullPath)
-		if d.IsDir() && absPath == absOutputDir {
+		if d.IsDir() && fullPath == config.OutputDir {
 			return fs.SkipDir
 		}
 

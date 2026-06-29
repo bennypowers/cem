@@ -72,23 +72,17 @@ func ForEachPackage(rootDir string, fsys platform.FileSystem, fn func(pkg Packag
 // packageDir. This correctly partitions root-relative file patterns across
 // workspace packages.
 func ResolveWorkspaceFiles(workspaceRoot string, patterns []string, packageDir string, fsys platform.FileSystem) ([]string, error) {
-	absPackageDir, err := filepath.Abs(packageDir)
-	if err != nil {
-		return nil, err
-	}
-	absRoot, err := filepath.Abs(workspaceRoot)
-	if err != nil {
-		return nil, err
-	}
-
-	// Compute packageDir relative to workspaceRoot for prefix matching
-	relPkgDir, err := filepath.Rel(absRoot, absPackageDir)
+	// Compute packageDir relative to workspaceRoot for prefix matching.
+	// Both paths should share the same base (both absolute or both relative
+	// to the same root). No filepath.Abs — that injects host CWD dependency
+	// which breaks virtual filesystems and wasm targets.
+	relPkgDir, err := filepath.Rel(workspaceRoot, packageDir)
 	if err != nil {
 		return nil, err
 	}
 	relPkgPrefix := filepath.ToSlash(relPkgDir) + "/"
 
-	rootFS := platform.DirFS(fsys, absRoot)
+	rootFS := platform.DirFS(fsys, workspaceRoot)
 
 	var result []string
 	seen := make(map[string]bool)
