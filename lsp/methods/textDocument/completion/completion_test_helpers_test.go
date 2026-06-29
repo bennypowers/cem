@@ -18,12 +18,12 @@ package completion_test
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/types"
@@ -130,86 +130,26 @@ func completionTypeString(t types.CompletionContextType) string {
 	}
 }
 
-// CopyFixtureFiles copies files from the fixture directory to the target directory,
-// preserving directory structure
+// CopyFixtureFiles loads fixtures from fixtureDir via testutil and writes
+// them to targetDir, preserving directory structure.
 func CopyFixtureFiles(t *testing.T, fixtureDir, targetDir string) {
 	t.Helper()
-
-	err := filepath.Walk(fixtureDir, func(path string, info os.FileInfo, err error) error {
+	mfs := testutil.LoadTestdataFS(t, fixtureDir, "/")
+	entries := mfs.GetMapFS()
+	for path, file := range entries {
+		if file.Mode.IsDir() || strings.HasSuffix(path, "README.md") {
+			continue
+		}
+		data, err := mfs.ReadFile(path)
 		if err != nil {
-			return err
+			t.Fatalf("Failed to read fixture %s: %v", path, err)
 		}
-
-		// Skip README files
-		if strings.HasSuffix(path, "README.md") {
-			return nil
+		targetPath := filepath.Join(targetDir, path)
+		if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+			t.Fatalf("Failed to create directory for %s: %v", targetPath, err)
 		}
-
-		// Get relative path from fixture directory
-		relPath, err := filepath.Rel(fixtureDir, path)
-		if err != nil {
-			return err
+		if err := os.WriteFile(targetPath, data, 0644); err != nil {
+			t.Fatalf("Failed to write %s: %v", targetPath, err)
 		}
-
-		targetPath := filepath.Join(targetDir, relPath)
-
-		if info.IsDir() {
-			return os.MkdirAll(targetPath, info.Mode())
-		}
-
-		// Copy file
-		src, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer func() { _ = src.Close() }()
-
-		err = os.MkdirAll(filepath.Dir(targetPath), 0755)
-		if err != nil {
-			return err
-		}
-
-		dst, err := os.Create(targetPath)
-		if err != nil {
-			return err
-		}
-		defer func() { _ = dst.Close() }()
-
-		_, err = io.Copy(dst, src)
-		return err
-	})
-
-	if err != nil {
-		t.Fatalf("Failed to copy fixture files: %v", err)
-	}
-}
-
-// CopyFixtureFile copies a single file from the fixture directory to the target location
-func CopyFixtureFile(t *testing.T, fixtureDir, filename, targetDir, targetFilename string) {
-	t.Helper()
-
-	src := filepath.Join(fixtureDir, filename)
-	dst := filepath.Join(targetDir, targetFilename)
-
-	srcFile, err := os.Open(src)
-	if err != nil {
-		t.Fatalf("Failed to open source file %s: %v", src, err)
-	}
-	defer func() { _ = srcFile.Close() }()
-
-	err = os.MkdirAll(filepath.Dir(dst), 0755)
-	if err != nil {
-		t.Fatalf("Failed to create target directory: %v", err)
-	}
-
-	dstFile, err := os.Create(dst)
-	if err != nil {
-		t.Fatalf("Failed to create target file %s: %v", dst, err)
-	}
-	defer func() { _ = dstFile.Close() }()
-
-	_, err = io.Copy(dstFile, srcFile)
-	if err != nil {
-		t.Fatalf("Failed to copy file content: %v", err)
 	}
 }
