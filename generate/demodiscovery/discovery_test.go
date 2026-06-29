@@ -111,16 +111,11 @@ func TestExtractDemoMetadata(t *testing.T) {
 
 	t.Run("mapfs", func(t *testing.T) {
 		runFixtureTest[DemoMetadata](t, "extract-metadata", func(t *testing.T, inputPath string, expected *DemoMetadata) {
-			// Stage fixture on disk for NewMapWorkspaceContext to load
-			tmpDir := t.TempDir()
-			tmpPath := filepath.Join(tmpDir, "input.html")
-
 			input := testutil.LoadFixtureFile(t, inputPath)
-			if err := os.WriteFile(tmpPath, input, 0644); err != nil {
-				t.Fatalf("Failed to write test file: %v", err)
-			}
+			mfs := platform.NewMapFileSystem(nil)
+			mfs.AddFile("/input.html", string(input), 0644)
 
-			ctx := testworkspace.NewMapWorkspaceContext(t, tmpDir)
+			ctx := testworkspace.NewMapWorkspaceContextFromFS(mfs, "/")
 			result, err := extractDemoMetadata(ctx, "/input.html", ctx.FileSystem())
 			if err != nil {
 				t.Fatalf("extractDemoMetadata failed: %v", err)
@@ -441,21 +436,12 @@ func TestExtractDemoTags(t *testing.T) {
 				t.Fatalf("Failed to unmarshal config JSON: %v", err)
 			}
 
-			// Stage fixture on disk for NewMapWorkspaceContext to load
-			tmpDir := t.TempDir()
-			tmpPath := filepath.Join(tmpDir, config.DemoPath)
-			if err := os.MkdirAll(filepath.Dir(tmpPath), 0755); err != nil {
-				t.Fatalf("Failed to create directories: %v", err)
-			}
-
 			input := testutil.LoadFixtureFile(t, inputPath)
-			if err := os.WriteFile(tmpPath, input, 0644); err != nil {
-				t.Fatalf("Failed to write test file: %v", err)
-			}
-
-			ctx := testworkspace.NewMapWorkspaceContext(t, tmpDir)
-			// Use virtual path matching MapFS layout (rooted at "/")
+			mfs := platform.NewMapFileSystem(nil)
 			virtualPath := filepath.Join("/", config.DemoPath)
+			mfs.AddFile(virtualPath, string(input), 0644)
+
+			ctx := testworkspace.NewMapWorkspaceContextFromFS(mfs, "/")
 			result, err := extractDemoTags(ctx, virtualPath, config.ElementAliases, ctx.FileSystem())
 			if err != nil {
 				t.Fatalf("extractDemoTags failed: %v", err)
@@ -495,19 +481,10 @@ func TestExtractDemoTagsWithPattern_WorkspaceFallback(t *testing.T) {
 	})
 
 	t.Run("mapfs", func(t *testing.T) {
-		// Stage files on disk for NewMapWorkspaceContextWithRoot to load.
-		// Use WithRoot so filepath.Base(root) returns "pf-v5-button",
-		// which the workspace fallback logic needs.
-		pkgDir := filepath.Join(t.TempDir(), "pf-v5-button")
-		demoDir := filepath.Join(pkgDir, "demo")
-		if err := os.MkdirAll(demoDir, 0755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(filepath.Join(demoDir, "basic.html"), []byte(html), 0644); err != nil {
-			t.Fatal(err)
-		}
+		mfs := platform.NewMapFileSystem(nil)
+		mfs.AddFile("/pf-v5-button/demo/basic.html", html, 0644)
 
-		ctx := testworkspace.NewMapWorkspaceContextWithRoot(t, pkgDir, "/pf-v5-button")
+		ctx := testworkspace.NewMapWorkspaceContextFromFS(mfs, "/pf-v5-button")
 		tags, err := extractDemoTagsWithPattern(ctx, "demo/basic.html", ":tag/demo/:demo.html", nil, ctx.FileSystem())
 		if err != nil {
 			t.Fatalf("extractDemoTagsWithPattern failed: %v", err)
@@ -644,16 +621,11 @@ func TestNewDemoMap(t *testing.T) {
 	})
 
 	t.Run("mapfs", func(t *testing.T) {
-		// Stage files on disk for NewMapWorkspaceContext to load
-		tmpDir := t.TempDir()
-		if err := os.WriteFile(filepath.Join(tmpDir, "demo1.html"), demo1Input, 0644); err != nil {
-			t.Fatalf("Failed to write demo1: %v", err)
-		}
-		if err := os.WriteFile(filepath.Join(tmpDir, "demo2.html"), demo2Input, 0644); err != nil {
-			t.Fatalf("Failed to write demo2: %v", err)
-		}
+		mfs := platform.NewMapFileSystem(nil)
+		mfs.AddFile("/demo1.html", string(demo1Input), 0644)
+		mfs.AddFile("/demo2.html", string(demo2Input), 0644)
 
-		ctx := testworkspace.NewMapWorkspaceContext(t, tmpDir)
+		ctx := testworkspace.NewMapWorkspaceContextFromFS(mfs, "/")
 
 		demoMap, err := NewDemoMap(ctx, []string{"/demo1.html", "/demo2.html"}, config.ElementAliases, ctx.FileSystem())
 		if err != nil {
