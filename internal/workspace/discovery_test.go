@@ -28,49 +28,64 @@ import (
 // TestDiscoverWorkspacePackages_NegatedPattern tests that negated patterns (starting with !)
 // are properly excluded from the workspace discovery
 func TestDiscoverWorkspacePackages_NegatedPattern(t *testing.T) {
-	// Test with array format: ["packages/*", "!packages/private"]
-	rootDir := filepath.Join("testdata", "negation-test")
-
 	workspacesField := []any{
 		"packages/*",
 		"!packages/private",
 	}
 
-	packages, err := DiscoverWorkspacePackages(rootDir, workspacesField, platform.NewOSFileSystem())
-	if err != nil {
-		t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
-	}
-
-	// Should find @test/public and @test/internal, but NOT @test/private
-	expectedPackages := map[string]bool{
-		"@test/public":   false,
-		"@test/internal": false,
-	}
-
-	for name := range packages {
-		if name == "@test/private" {
-			t.Errorf("Found excluded package @test/private - negated pattern not respected")
+	assertNegatedPattern := func(t *testing.T, packages map[string]string) {
+		t.Helper()
+		// Should find @test/public and @test/internal, but NOT @test/private
+		expectedPackages := map[string]bool{
+			"@test/public":   false,
+			"@test/internal": false,
 		}
-		if _, expected := expectedPackages[name]; expected {
-			expectedPackages[name] = true
-		} else if name != "@test/private" {
-			t.Errorf("Found unexpected package %s", name)
-		}
-	}
 
-	// Verify we found all expected packages
-	for name, found := range expectedPackages {
-		if !found {
-			t.Errorf("Expected to find package %s but it was not discovered", name)
+		for name := range packages {
+			if name == "@test/private" {
+				t.Errorf("Found excluded package @test/private - negated pattern not respected")
+			}
+			if _, expected := expectedPackages[name]; expected {
+				expectedPackages[name] = true
+			} else if name != "@test/private" {
+				t.Errorf("Found unexpected package %s", name)
+			}
+		}
+
+		// Verify we found all expected packages
+		for name, found := range expectedPackages {
+			if !found {
+				t.Errorf("Expected to find package %s but it was not discovered", name)
+			}
 		}
 	}
+
+	t.Run("os", func(t *testing.T) {
+		rootDir := filepath.Join("testdata", "negation-test")
+		packages, err := DiscoverWorkspacePackages(rootDir, workspacesField, platform.NewOSFileSystem())
+		if err != nil {
+			t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
+		}
+		assertNegatedPattern(t, packages)
+	})
+
+	t.Run("mapfs", func(t *testing.T) {
+		fsys := platform.NewMapFS(map[string]string{
+			"workspace/packages/public/package.json":   `{"name": "@test/public", "version": "1.0.0"}`,
+			"workspace/packages/private/package.json":  `{"name": "@test/private", "version": "1.0.0"}`,
+			"workspace/packages/internal/package.json": `{"name": "@test/internal", "version": "1.0.0"}`,
+		})
+		packages, err := DiscoverWorkspacePackages("workspace", workspacesField, fsys)
+		if err != nil {
+			t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
+		}
+		assertNegatedPattern(t, packages)
+	})
 }
 
 // TestDiscoverWorkspacePackages_NegatedPatternObject tests negated patterns with object format
 func TestDiscoverWorkspacePackages_NegatedPatternObject(t *testing.T) {
 	// Test with object format: { "packages": ["apps/*", "!apps/internal-*"] }
-	rootDir := filepath.Join("testdata", "negation-object-test")
-
 	workspacesField := map[string]any{
 		"packages": []any{
 			"apps/*",
@@ -78,117 +93,203 @@ func TestDiscoverWorkspacePackages_NegatedPatternObject(t *testing.T) {
 		},
 	}
 
-	packages, err := DiscoverWorkspacePackages(rootDir, workspacesField, platform.NewOSFileSystem())
-	if err != nil {
-		t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
+	assertNegatedObject := func(t *testing.T, packages map[string]string) {
+		t.Helper()
+		if _, found := packages["@test/internal-app"]; found {
+			t.Errorf("Found excluded package @test/internal-app - negated pattern not respected")
+		}
+		if _, found := packages["@test/app1"]; !found {
+			t.Errorf("Expected to find package @test/app1")
+		}
+		if len(packages) != 1 {
+			t.Errorf("Expected 1 package, found %d: %v", len(packages), packages)
+		}
 	}
 
-	// Should find @test/app1, but NOT @test/internal-app
-	if _, found := packages["@test/internal-app"]; found {
-		t.Errorf("Found excluded package @test/internal-app - negated pattern not respected")
-	}
+	t.Run("os", func(t *testing.T) {
+		rootDir := filepath.Join("testdata", "negation-object-test")
+		packages, err := DiscoverWorkspacePackages(rootDir, workspacesField, platform.NewOSFileSystem())
+		if err != nil {
+			t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
+		}
+		assertNegatedObject(t, packages)
+	})
 
-	if _, found := packages["@test/app1"]; !found {
-		t.Errorf("Expected to find package @test/app1")
-	}
-
-	if len(packages) != 1 {
-		t.Errorf("Expected 1 package, found %d: %v", len(packages), packages)
-	}
+	t.Run("mapfs", func(t *testing.T) {
+		fsys := platform.NewMapFS(map[string]string{
+			"workspace/apps/app1/package.json":         `{"name": "@test/app1", "version": "1.0.0"}`,
+			"workspace/apps/internal-app/package.json": `{"name": "@test/internal-app", "version": "1.0.0"}`,
+		})
+		packages, err := DiscoverWorkspacePackages("workspace", workspacesField, fsys)
+		if err != nil {
+			t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
+		}
+		assertNegatedObject(t, packages)
+	})
 }
 
 // TestDiscoverWorkspacePackages_MultipleNegations tests multiple negation patterns
 func TestDiscoverWorkspacePackages_MultipleNegations(t *testing.T) {
-	rootDir := filepath.Join("testdata", "negation-test")
-
 	workspacesField := []any{
 		"packages/*",
 		"!packages/private",
 		"!packages/internal",
 	}
 
-	packages, err := DiscoverWorkspacePackages(rootDir, workspacesField, platform.NewOSFileSystem())
-	if err != nil {
-		t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
+	assertMultipleNegations := func(t *testing.T, packages map[string]string) {
+		t.Helper()
+		if len(packages) != 1 {
+			t.Errorf("Expected 1 package, found %d: %v", len(packages), packages)
+		}
+		if _, found := packages["@test/public"]; !found {
+			t.Errorf("Expected to find package @test/public")
+		}
+		if _, found := packages["@test/private"]; found {
+			t.Errorf("Found excluded package @test/private")
+		}
+		if _, found := packages["@test/internal"]; found {
+			t.Errorf("Found excluded package @test/internal")
+		}
 	}
 
-	// Should only find @test/public
-	if len(packages) != 1 {
-		t.Errorf("Expected 1 package, found %d: %v", len(packages), packages)
-	}
+	t.Run("os", func(t *testing.T) {
+		rootDir := filepath.Join("testdata", "negation-test")
+		packages, err := DiscoverWorkspacePackages(rootDir, workspacesField, platform.NewOSFileSystem())
+		if err != nil {
+			t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
+		}
+		assertMultipleNegations(t, packages)
+	})
 
-	if _, found := packages["@test/public"]; !found {
-		t.Errorf("Expected to find package @test/public")
-	}
-
-	if _, found := packages["@test/private"]; found {
-		t.Errorf("Found excluded package @test/private")
-	}
-
-	if _, found := packages["@test/internal"]; found {
-		t.Errorf("Found excluded package @test/internal")
-	}
+	t.Run("mapfs", func(t *testing.T) {
+		fsys := platform.NewMapFS(map[string]string{
+			"workspace/packages/public/package.json":   `{"name": "@test/public", "version": "1.0.0"}`,
+			"workspace/packages/private/package.json":  `{"name": "@test/private", "version": "1.0.0"}`,
+			"workspace/packages/internal/package.json": `{"name": "@test/internal", "version": "1.0.0"}`,
+		})
+		packages, err := DiscoverWorkspacePackages("workspace", workspacesField, fsys)
+		if err != nil {
+			t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
+		}
+		assertMultipleNegations(t, packages)
+	})
 }
 
 // TestDiscoverWorkspacePackages_NoNegation tests that normal patterns still work
 func TestDiscoverWorkspacePackages_NoNegation(t *testing.T) {
-	rootDir := filepath.Join("testdata", "negation-test")
-
 	workspacesField := []any{
 		"packages/*",
 	}
 
-	packages, err := DiscoverWorkspacePackages(rootDir, workspacesField, platform.NewOSFileSystem())
-	if err != nil {
-		t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
-	}
+	t.Run("os", func(t *testing.T) {
+		rootDir := filepath.Join("testdata", "negation-test")
+		packages, err := DiscoverWorkspacePackages(rootDir, workspacesField, platform.NewOSFileSystem())
+		if err != nil {
+			t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
+		}
+		if len(packages) != 3 {
+			t.Errorf("Expected 3 packages, found %d: %v", len(packages), packages)
+		}
+	})
 
-	// Should find all 3 packages when no negation patterns exist
-	if len(packages) != 3 {
-		t.Errorf("Expected 3 packages, found %d: %v", len(packages), packages)
-	}
+	t.Run("mapfs", func(t *testing.T) {
+		fsys := platform.NewMapFS(map[string]string{
+			"workspace/packages/public/package.json":   `{"name": "@test/public", "version": "1.0.0"}`,
+			"workspace/packages/private/package.json":  `{"name": "@test/private", "version": "1.0.0"}`,
+			"workspace/packages/internal/package.json": `{"name": "@test/internal", "version": "1.0.0"}`,
+		})
+		packages, err := DiscoverWorkspacePackages("workspace", workspacesField, fsys)
+		if err != nil {
+			t.Fatalf("DiscoverWorkspacePackages failed: %v", err)
+		}
+		if len(packages) != 3 {
+			t.Errorf("Expected 3 packages, found %d: %v", len(packages), packages)
+		}
+	})
 }
 
 // TestIsWorkspaceMode_SinglePackageWorkspace tests that workspace mode is detected
 // even when only one package has a customElements manifest
 func TestIsWorkspaceMode_SinglePackageWorkspace(t *testing.T) {
-	rootDir := filepath.Join("testdata", "workspace-mode-single-package")
+	t.Run("os", func(t *testing.T) {
+		rootDir := filepath.Join("testdata", "workspace-mode-single-package")
+		if !IsWorkspaceMode(rootDir, platform.NewOSFileSystem()) {
+			t.Error("Expected IsWorkspaceMode to return true for workspace with single package")
+		}
+	})
 
-	// Should return true because workspaces field exists in package.json
-	if !IsWorkspaceMode(rootDir, platform.NewOSFileSystem()) {
-		t.Error("Expected IsWorkspaceMode to return true for workspace with single package")
-	}
+	t.Run("mapfs", func(t *testing.T) {
+		fsys := platform.NewMapFS(map[string]string{
+			"workspace/package.json": `{"name": "single-package-workspace", "workspaces": ["packages/*"]}`,
+			"workspace/packages/elements/package.json":        `{"name": "@test/elements", "version": "1.0.0", "customElements": "custom-elements.json"}`,
+			"workspace/packages/elements/custom-elements.json": `{"schemaVersion": "2.0.0", "readme": "", "modules": []}`,
+		})
+		if !IsWorkspaceMode("workspace", fsys) {
+			t.Error("Expected IsWorkspaceMode to return true for workspace with single package")
+		}
+	})
 }
 
 // TestIsWorkspaceMode_NoManifests tests that workspace mode is detected
 // even when no packages have customElements manifests
 func TestIsWorkspaceMode_NoManifests(t *testing.T) {
-	rootDir := filepath.Join("testdata", "workspace-mode-no-manifest")
+	t.Run("os", func(t *testing.T) {
+		rootDir := filepath.Join("testdata", "workspace-mode-no-manifest")
+		if !IsWorkspaceMode(rootDir, platform.NewOSFileSystem()) {
+			t.Error("Expected IsWorkspaceMode to return true for workspace without manifests")
+		}
+	})
 
-	// Should return true because workspaces field exists, even with no manifests
-	if !IsWorkspaceMode(rootDir, platform.NewOSFileSystem()) {
-		t.Error("Expected IsWorkspaceMode to return true for workspace without manifests")
-	}
+	t.Run("mapfs", func(t *testing.T) {
+		fsys := platform.NewMapFS(map[string]string{
+			"workspace/package.json":                  `{"name": "workspace-no-manifests", "workspaces": ["packages/*"]}`,
+			"workspace/packages/util/package.json":    `{"name": "@test/util", "version": "1.0.0"}`,
+		})
+		if !IsWorkspaceMode("workspace", fsys) {
+			t.Error("Expected IsWorkspaceMode to return true for workspace without manifests")
+		}
+	})
 }
 
 // TestIsWorkspaceMode_NonWorkspace tests that non-workspace directories are detected
 func TestIsWorkspaceMode_NonWorkspace(t *testing.T) {
-	rootDir := filepath.Join("testdata", "non-workspace")
+	t.Run("os", func(t *testing.T) {
+		rootDir := filepath.Join("testdata", "non-workspace")
+		if IsWorkspaceMode(rootDir, platform.NewOSFileSystem()) {
+			t.Error("Expected IsWorkspaceMode to return false for non-workspace directory")
+		}
+	})
 
-	// Should return false because no workspaces field exists
-	if IsWorkspaceMode(rootDir, platform.NewOSFileSystem()) {
-		t.Error("Expected IsWorkspaceMode to return false for non-workspace directory")
-	}
+	t.Run("mapfs", func(t *testing.T) {
+		fsys := platform.NewMapFS(map[string]string{
+			"workspace/package.json": `{"name": "regular-package", "version": "1.0.0"}`,
+		})
+		if IsWorkspaceMode("workspace", fsys) {
+			t.Error("Expected IsWorkspaceMode to return false for non-workspace directory")
+		}
+	})
 }
 
 // TestIsWorkspaceMode_MultiplePackages tests that workspace mode works with multiple packages
 func TestIsWorkspaceMode_MultiplePackages(t *testing.T) {
-	rootDir := filepath.Join("testdata", "negation-test")
+	t.Run("os", func(t *testing.T) {
+		rootDir := filepath.Join("testdata", "negation-test")
+		if !IsWorkspaceMode(rootDir, platform.NewOSFileSystem()) {
+			t.Error("Expected IsWorkspaceMode to return true for workspace with multiple packages")
+		}
+	})
 
-	// Should return true because workspaces field exists
-	if !IsWorkspaceMode(rootDir, platform.NewOSFileSystem()) {
-		t.Error("Expected IsWorkspaceMode to return true for workspace with multiple packages")
-	}
+	t.Run("mapfs", func(t *testing.T) {
+		fsys := platform.NewMapFS(map[string]string{
+			"workspace/package.json":                           `{"name": "test-workspace", "workspaces": ["packages/*", "!packages/private"]}`,
+			"workspace/packages/public/package.json":           `{"name": "@test/public", "version": "1.0.0"}`,
+			"workspace/packages/private/package.json":          `{"name": "@test/private", "version": "1.0.0"}`,
+			"workspace/packages/internal/package.json":         `{"name": "@test/internal", "version": "1.0.0"}`,
+		})
+		if !IsWorkspaceMode("workspace", fsys) {
+			t.Error("Expected IsWorkspaceMode to return true for workspace with multiple packages")
+		}
+	})
 }
 
 // TestFindPackagesForFiles tests that files are correctly mapped to packages.

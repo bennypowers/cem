@@ -25,6 +25,7 @@ import (
 
 	G "bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/internal/platform"
+	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
@@ -36,78 +37,267 @@ import (
 // TestServerLevelIntegration tests the complete server integration including
 // manifest reloading behavior exactly as it would work in real usage
 func TestServerLevelIntegration(t *testing.T) {
-	// Create a temporary workspace directory that mimics a real project
-	tempDir := t.TempDir()
-
-	// Copy fixture files to temporary directory
 	fixtureDir := filepath.Join("testdata", "integration", "server-integration")
-	CopyFixtureFiles(t, fixtureDir, tempDir)
 
-	// Create dist directory
-	distDir := filepath.Join(tempDir, "dist")
-	err := os.MkdirAll(distDir, 0755)
-	if err != nil {
-		t.Fatalf("Failed to create dist directory: %v", err)
-	}
+	t.Run("os", func(t *testing.T) {
+		// Create a temporary workspace directory that mimics a real project
+		tempDir := t.TempDir()
 
-	// Get paths for later use
-	tsFilePath := filepath.Join(tempDir, "src", "test-alert.ts")
+		// Copy fixture files to temporary directory
+		CopyFixtureFiles(t, fixtureDir, tempDir)
 
-	// Create initial manifest by running generate manually
-	workspace := W.NewFileSystemWorkspaceContext(tempDir)
-	err = workspace.Init()
-	if err != nil {
-		t.Fatalf("Failed to initialize workspace: %v", err)
-	}
+		// Create dist directory
+		distDir := filepath.Join(tempDir, "dist")
+		err := os.MkdirAll(distDir, 0755)
+		if err != nil {
+			t.Fatalf("Failed to create dist directory: %v", err)
+		}
 
-	// Run initial generation to create the manifest
-	generateSession, err := G.NewGenerateSession(workspace, platform.NewOSFileSystem())
-	if err != nil {
-		t.Fatalf("Failed to create generate session: %v", err)
-	}
-	defer generateSession.Close()
+		// Get paths for later use
+		tsFilePath := filepath.Join(tempDir, "src", "test-alert.ts")
 
-	pkg, err := generateSession.GenerateFullManifest(context.Background())
-	if err != nil {
-		t.Fatalf("Failed to generate initial manifest: %v", err)
-	}
+		// Create initial manifest by running generate manually
+		osWorkspace := W.NewFileSystemWorkspaceContext(tempDir)
+		err = osWorkspace.Init()
+		if err != nil {
+			t.Fatalf("Failed to initialize workspace: %v", err)
+		}
 
-	// Write initial manifest to file
-	manifestStr, err := M.SerializeToString(pkg)
-	if err != nil {
-		t.Fatalf("Failed to serialize manifest: %v", err)
-	}
+		// Run initial generation to create the manifest
+		generateSession, err := G.NewGenerateSession(osWorkspace, platform.NewOSFileSystem())
+		if err != nil {
+			t.Fatalf("Failed to create generate session: %v", err)
+		}
+		defer generateSession.Close()
 
-	manifestPath := filepath.Join(distDir, "custom-elements.json")
-	err = os.WriteFile(manifestPath, []byte(manifestStr), 0644)
-	if err != nil {
-		t.Fatalf("Failed to write manifest: %v", err)
-	}
+		pkg, err := generateSession.GenerateFullManifest(context.Background())
+		if err != nil {
+			t.Fatalf("Failed to generate initial manifest: %v", err)
+		}
 
-	// Now create a full LSP server instance - this simulates real usage
-	server, err := lsp.NewServer(workspace, lsp.TransportStdio)
-	if err != nil {
-		t.Fatalf("Failed to create LSP server: %v", err)
-	}
-	defer func() { _ = server.Close() }()
+		// Write initial manifest to file
+		manifestStr, err := M.SerializeToString(pkg)
+		if err != nil {
+			t.Fatalf("Failed to serialize manifest: %v", err)
+		}
 
-	// Initialize the server (this loads manifests and starts file watching)
-	err = server.InitializeForTesting()
-	if err != nil {
-		t.Fatalf("Failed to initialize server: %v", err)
-	}
+		manifestPath := filepath.Join(distDir, "custom-elements.json")
+		err = os.WriteFile(manifestPath, []byte(manifestStr), 0644)
+		if err != nil {
+			t.Fatalf("Failed to write manifest: %v", err)
+		}
 
-	// Create document manager
+		// Now create a full LSP server instance - this simulates real usage
+		server, err := lsp.NewServer(osWorkspace, lsp.TransportStdio)
+		if err != nil {
+			t.Fatalf("Failed to create LSP server: %v", err)
+		}
+		defer func() { _ = server.Close() }()
+
+		// Initialize the server (this loads manifests and starts file watching)
+		err = server.InitializeForTesting()
+		if err != nil {
+			t.Fatalf("Failed to initialize server: %v", err)
+		}
+
+		ctx := buildMockServerContext(t, server.Registry())
+
+		htmlFilePath := filepath.Join(tempDir, "index.html")
+		htmlContentBytes, err := os.ReadFile(htmlFilePath)
+		if err != nil {
+			t.Fatalf("Failed to read HTML file: %v", err)
+		}
+		htmlContent := string(htmlContentBytes)
+
+		htmlURI := "file://" + htmlFilePath
+		dm, dmErr := ctx.DocumentManager()
+		if dmErr != nil {
+			t.Fatalf("Failed to get document manager: %v", dmErr)
+		}
+		doc := dm.OpenDocument(htmlURI, htmlContent, 1)
+		if doc == nil {
+			t.Fatalf("Failed to open HTML document")
+		}
+
+		// Test initial completions - should have info, success, warning
+		verifyInitialCompletions(t, ctx)
+
+		// Now simulate the user editing the TypeScript file to add 'error'
+		t.Logf("=== User edits test-alert.ts to add 'error' ===")
+
+		// Copy the updated version from fixtures
+		updatedTSPath := filepath.Join(fixtureDir, "src", "test-alert-updated.ts")
+		updatedTSContent, err := os.ReadFile(updatedTSPath)
+		if err != nil {
+			t.Fatalf("Failed to read updated TypeScript file: %v", err)
+		}
+
+		err = os.WriteFile(tsFilePath, updatedTSContent, 0644)
+		if err != nil {
+			t.Fatalf("Failed to update TypeScript file: %v", err)
+		}
+
+		// Verify the file was actually updated on disk
+		verifyContent, err := os.ReadFile(tsFilePath)
+		if err != nil {
+			t.Fatalf("Failed to read back updated file: %v", err)
+		}
+		if !strings.Contains(string(verifyContent), "error") {
+			t.Fatalf("File was not properly updated - missing 'error' in content: %s", string(verifyContent))
+		}
+		t.Logf("Verified file was updated on disk with 'error' in union type")
+
+		t.Logf("File updated, manually generating updated manifest...")
+
+		// Instead of waiting for the file watcher, manually generate the updated manifest
+		genSession, err := G.NewGenerateSession(osWorkspace, platform.NewOSFileSystem())
+		if err != nil {
+			t.Fatalf("Failed to create generate session: %v", err)
+		}
+		defer genSession.Close()
+
+		updatedManifest, err := genSession.GenerateFullManifest(context.Background())
+		if err != nil {
+			t.Fatalf("Failed to generate updated manifest: %v", err)
+		}
+
+		ctx.AddManifest(updatedManifest)
+		t.Logf("Manually updated registry with new manifest")
+
+		// Test updated completions - should now include 'error'
+		verifyUpdatedCompletions(t, ctx)
+	})
+
+	t.Run("mapfs", func(t *testing.T) {
+		// Create workspace from MapFS -- loads fixture files into MapFS rooted at "/"
+		mapWorkspace := testworkspace.NewMapWorkspaceContext(t, fixtureDir)
+
+		// Create dist directory in MapFS
+		err := mapWorkspace.FileSystem().MkdirAll("dist", 0755)
+		if err != nil {
+			t.Fatalf("Failed to create dist directory in MapFS: %v", err)
+		}
+		err = mapWorkspace.Init()
+		if err != nil {
+			t.Fatalf("Failed to initialize workspace: %v", err)
+		}
+
+		// Run initial generation using the MapFS
+		generateSession, err := G.NewGenerateSession(mapWorkspace, mapWorkspace.FileSystem())
+		if err != nil {
+			t.Fatalf("Failed to create generate session: %v", err)
+		}
+		defer generateSession.Close()
+
+		pkg, err := generateSession.GenerateFullManifest(context.Background())
+		if err != nil {
+			t.Fatalf("Failed to generate initial manifest: %v", err)
+		}
+
+		// Write initial manifest to MapFS
+		manifestStr, err := M.SerializeToString(pkg)
+		if err != nil {
+			t.Fatalf("Failed to serialize manifest: %v", err)
+		}
+
+		err = mapWorkspace.FileSystem().WriteFile("dist/custom-elements.json", []byte(manifestStr), 0644)
+		if err != nil {
+			t.Fatalf("Failed to write manifest to MapFS: %v", err)
+		}
+
+		// Create LSP server with the MapWorkspaceContext
+		server, err := lsp.NewServer(mapWorkspace, lsp.TransportStdio)
+		if err != nil {
+			t.Fatalf("Failed to create LSP server: %v", err)
+		}
+		defer func() { _ = server.Close() }()
+
+		// Initialize the server (file watching may warn but won't fail)
+		err = server.InitializeForTesting()
+		if err != nil {
+			t.Fatalf("Failed to initialize server: %v", err)
+		}
+
+		ctx := buildMockServerContext(t, server.Registry())
+
+		// Read HTML content from MapFS
+		htmlContentBytes, err := mapWorkspace.FileSystem().ReadFile("index.html")
+		if err != nil {
+			t.Fatalf("Failed to read HTML file from MapFS: %v", err)
+		}
+		htmlContent := string(htmlContentBytes)
+
+		htmlURI := "file:///index.html"
+		dm, dmErr := ctx.DocumentManager()
+		if dmErr != nil {
+			t.Fatalf("Failed to get document manager: %v", dmErr)
+		}
+		doc := dm.OpenDocument(htmlURI, htmlContent, 1)
+		if doc == nil {
+			t.Fatalf("Failed to open HTML document")
+		}
+
+		// Test initial completions - should have info, success, warning
+		verifyInitialCompletions(t, ctx)
+
+		// Now simulate the user editing the TypeScript file to add 'error'
+		t.Logf("=== User edits test-alert.ts to add 'error' ===")
+
+		// Read the updated TS content from MapFS (loaded as part of fixtures)
+		updatedTSContent, err := mapWorkspace.FileSystem().ReadFile("src/test-alert-updated.ts")
+		if err != nil {
+			t.Fatalf("Failed to read updated TypeScript file from MapFS: %v", err)
+		}
+
+		// Write the updated content over the original file in MapFS
+		err = mapWorkspace.FileSystem().WriteFile("src/test-alert.ts", updatedTSContent, 0644)
+		if err != nil {
+			t.Fatalf("Failed to update TypeScript file in MapFS: %v", err)
+		}
+
+		// Verify the file was actually updated in MapFS
+		verifyContent, err := mapWorkspace.FileSystem().ReadFile("src/test-alert.ts")
+		if err != nil {
+			t.Fatalf("Failed to read back updated file from MapFS: %v", err)
+		}
+		if !strings.Contains(string(verifyContent), "error") {
+			t.Fatalf("File was not properly updated - missing 'error' in content: %s", string(verifyContent))
+		}
+		t.Logf("Verified file was updated in MapFS with 'error' in union type")
+
+		t.Logf("File updated, manually generating updated manifest...")
+
+		// Generate updated manifest using MapFS
+		genSession, err := G.NewGenerateSession(mapWorkspace, mapWorkspace.FileSystem())
+		if err != nil {
+			t.Fatalf("Failed to create generate session: %v", err)
+		}
+		defer genSession.Close()
+
+		updatedManifest, err := genSession.GenerateFullManifest(context.Background())
+		if err != nil {
+			t.Fatalf("Failed to generate updated manifest: %v", err)
+		}
+
+		ctx.AddManifest(updatedManifest)
+		t.Logf("Manually updated registry with new manifest")
+
+		// Test updated completions - should now include 'error'
+		verifyUpdatedCompletions(t, ctx)
+	})
+}
+
+// buildMockServerContext creates a MockServerContext populated from the given registry.
+func buildMockServerContext(t *testing.T, registry *lsp.Registry) *testhelpers.MockServerContext {
+	t.Helper()
+
 	dm, err := document.NewDocumentManager()
 	if err != nil {
 		t.Fatalf("Failed to create document manager: %v", err)
 	}
-	defer dm.Close()
+	t.Cleanup(func() { dm.Close() })
 
-	// Set up the server context using centralized MockServerContext
 	ctx := testhelpers.NewMockServerContext()
-	// Copy registry data to mock context for interface compatibility
-	registry := server.Registry()
 	for _, tagName := range registry.AllTagNames() {
 		if element, exists := registry.Element(tagName); exists {
 			ctx.AddElement(tagName, element)
@@ -120,34 +310,20 @@ func TestServerLevelIntegration(t *testing.T) {
 		}
 	}
 	ctx.SetDocumentManager(dm)
+	return ctx
+}
 
-	// Get paths for HTML file (already copied from fixtures)
-	htmlFilePath := filepath.Join(tempDir, "index.html")
+// verifyInitialCompletions checks that the initial completions contain info, success, and warning.
+func verifyInitialCompletions(t *testing.T, ctx *testhelpers.MockServerContext) {
+	t.Helper()
 
-	// Read the HTML content
-	htmlContentBytes, err := os.ReadFile(htmlFilePath)
-	if err != nil {
-		t.Fatalf("Failed to read HTML file: %v", err)
-	}
-	htmlContent := string(htmlContentBytes)
+	items := completion.GetAttributeValueCompletions(ctx, "test-alert", "state")
+	t.Logf("Initial completions: %v", testhelpers.GetCompletionLabels(items))
 
-	// Open the HTML document in document manager
-	htmlURI := "file://" + htmlFilePath
-	doc := dm.OpenDocument(htmlURI, htmlContent, 1)
-	if doc == nil {
-		t.Fatalf("Failed to open HTML document")
-	}
-
-	// Test initial completions - should have info, success, warning
-	initialItems := completion.GetAttributeValueCompletions(ctx, "test-alert", "state")
-
-	t.Logf("Initial completions: %v", testhelpers.GetCompletionLabels(initialItems))
-
-	// Verify initial completions contain expected values
 	hasInfo := false
 	hasSuccess := false
 	hasWarning := false
-	for _, item := range initialItems {
+	for _, item := range items {
 		switch item.Label {
 		case "info":
 			hasInfo = true
@@ -159,99 +335,47 @@ func TestServerLevelIntegration(t *testing.T) {
 	}
 
 	if !hasInfo || !hasSuccess || !hasWarning {
-		t.Fatalf("Initial completions missing expected values. Got: %v", testhelpers.GetCompletionLabels(initialItems))
+		t.Fatalf("Initial completions missing expected values. Got: %v", testhelpers.GetCompletionLabels(items))
 	}
+}
 
-	// Now simulate the user editing the TypeScript file to add 'error'
-	t.Logf("=== User edits test-alert.ts to add 'error' ===")
+// verifyUpdatedCompletions checks that updated completions contain info, success, warning, and error.
+func verifyUpdatedCompletions(t *testing.T, ctx *testhelpers.MockServerContext) {
+	t.Helper()
 
-	// Copy the updated version from fixtures
-	updatedTSPath := filepath.Join(fixtureDir, "src", "test-alert-updated.ts")
-	updatedTSContent, err := os.ReadFile(updatedTSPath)
-	if err != nil {
-		t.Fatalf("Failed to read updated TypeScript file: %v", err)
-	}
+	items := completion.GetAttributeValueCompletions(ctx, "test-alert", "state")
+	t.Logf("Updated completions: %v", testhelpers.GetCompletionLabels(items))
 
-	err = os.WriteFile(tsFilePath, updatedTSContent, 0644)
-	if err != nil {
-		t.Fatalf("Failed to update TypeScript file: %v", err)
-	}
-
-	// Verify the file was actually updated on disk
-	verifyContent, err := os.ReadFile(tsFilePath)
-	if err != nil {
-		t.Fatalf("Failed to read back updated file: %v", err)
-	}
-	if !strings.Contains(string(verifyContent), "error") {
-		t.Fatalf("File was not properly updated - missing 'error' in content: %s", string(verifyContent))
-	}
-	t.Logf("✅ Verified file was updated on disk with 'error' in union type")
-
-	t.Logf("File updated, manually generating updated manifest...")
-
-	// Instead of waiting for the file watcher, manually generate the updated manifest
-	// This is more reliable and faster than depending on async file watching
-	genSession, err := G.NewGenerateSession(workspace, platform.NewOSFileSystem())
-	if err != nil {
-		t.Fatalf("Failed to create generate session: %v", err)
-	}
-	defer genSession.Close()
-
-	// Generate the manifest with the updated file content
-	updatedManifest, err := genSession.GenerateFullManifest(context.Background())
-	if err != nil {
-		t.Fatalf("Failed to generate updated manifest: %v", err)
-	}
-
-	// Manually update the registry with the new manifest
-	// Use the MockServerContext's AddManifest method
-	ctx.AddManifest(updatedManifest)
-
-	t.Logf("✅ Manually updated registry with new manifest")
-
-	// Test updated completions - should now include 'error'
-	updatedItems := completion.GetAttributeValueCompletions(ctx, "test-alert", "state")
-
-	t.Logf("Updated completions: %v", testhelpers.GetCompletionLabels(updatedItems))
-
-	// Verify updated completions contain 'error'
-	hasUpdatedInfo := false
-	hasUpdatedSuccess := false
-	hasUpdatedWarning := false
+	hasInfo := false
+	hasSuccess := false
+	hasWarning := false
 	hasError := false
-	for _, item := range updatedItems {
+	for _, item := range items {
 		switch item.Label {
 		case "info":
-			hasUpdatedInfo = true
+			hasInfo = true
 		case "success":
-			hasUpdatedSuccess = true
+			hasSuccess = true
 		case "warning":
-			hasUpdatedWarning = true
+			hasWarning = true
 		case "error":
 			hasError = true
 		}
 	}
 
-	if !hasUpdatedInfo || !hasUpdatedSuccess || !hasUpdatedWarning {
-		t.Errorf("Updated completions missing original values. Got: %v", testhelpers.GetCompletionLabels(updatedItems))
+	if !hasInfo || !hasSuccess || !hasWarning {
+		t.Errorf("Updated completions missing original values. Got: %v", testhelpers.GetCompletionLabels(items))
 	}
 
 	if !hasError {
-		t.Errorf("Updated completions missing 'error' value. Got: %v", testhelpers.GetCompletionLabels(updatedItems))
+		t.Errorf("Updated completions missing 'error' value. Got: %v", testhelpers.GetCompletionLabels(items))
 
-		// Debug: Check what's in the registry
 		if attrs, exists := ctx.Attributes("test-alert"); exists {
 			if stateAttr, hasState := attrs["state"]; hasState {
 				t.Logf("Registry shows state attribute type: %s", stateAttr.Type.Text)
 			}
 		}
-
-		// Debug: Check the manifest file content (note: disk file won't be updated by manual registry update)
-		manifestContent, err := os.ReadFile(manifestPath)
-		if err == nil {
-			t.Logf("Disk manifest content (will be stale): %s", string(manifestContent))
-		}
 	} else {
-		t.Logf("✅ SUCCESS: 'error' found in completions!")
+		t.Logf("SUCCESS: 'error' found in completions!")
 	}
 }

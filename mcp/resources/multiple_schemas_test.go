@@ -66,8 +66,9 @@ func loadManifestFromFixture(t *testing.T, version string) ManifestContext {
 		}
 	}
 
-	// Load schema for this version
-	schemaData, err := V.GetSchema(platform.NewOSFileSystem(), version)
+	// Load schema for this version.
+	// GetSchema uses embedded schemas for known versions, so MapFileSystem works.
+	schemaData, err := V.GetSchema(platform.NewMapFileSystem(nil), version)
 	require.NoError(t, err, "Should be able to load schema %s", version)
 
 	// Parse schema

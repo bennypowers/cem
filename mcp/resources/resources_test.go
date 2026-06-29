@@ -108,8 +108,9 @@ func TestSchemaResource_Integration(t *testing.T) {
 	assert.Equal(t, "application/json", content.MIMEType)
 	assert.NotEmpty(t, content.Text)
 
-	// Validate that it matches the canonical schema from validate package
-	expectedSchema, err := V.GetSchema(platform.NewOSFileSystem(), "2.1.1-speculative") // Use the expected version from test fixtures
+	// Validate that it matches the canonical schema from validate package.
+	// GetSchema uses embedded schemas for known versions, so MapFileSystem works.
+	expectedSchema, err := V.GetSchema(platform.NewMapFileSystem(nil), "2.1.1-speculative")
 	require.NoError(t, err, "Should be able to get canonical schema")
 
 	// Parse both schemas to compare content rather than string formatting
