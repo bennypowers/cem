@@ -58,7 +58,7 @@ func (m *MapFS) WriteFile(name string, data []byte, perm fs.FileMode) error {
 }
 
 func (m *MapFS) ReadFile(name string) ([]byte, error) {
-	return fs.ReadFile(m.MapFS, name)
+	return fs.ReadFile(m.MapFS, cleanMapFSPath(name))
 }
 
 func (m *MapFS) Create(name string) (io.WriteCloser, error) {
@@ -84,7 +84,7 @@ func (m *MapFS) Rename(oldpath, newpath string) error {
 }
 
 func (m *MapFS) Remove(name string) error {
-	delete(m.MapFS, name)
+	delete(m.MapFS, cleanMapFSPath(name))
 	return nil
 }
 
@@ -95,12 +95,12 @@ func (m *MapFS) MkdirAll(path string, perm fs.FileMode) error {
 
 func (m *MapFS) MkdirTemp(dir, pattern string) (string, error) {
 	name := tempName(dir, pattern, &mapFSTempCounter)
-	m.MapFS[name] = &fstest.MapFile{Mode: fs.ModeDir | 0755}
+	m.MapFS[cleanMapFSPath(name)] = &fstest.MapFile{Mode: fs.ModeDir | 0755}
 	return name, nil
 }
 
 func (m *MapFS) ReadDir(name string) ([]fs.DirEntry, error) {
-	return fs.ReadDir(m.MapFS, name)
+	return fs.ReadDir(m.MapFS, cleanMapFSPath(name))
 }
 
 func (m *MapFS) TempDir() string {
@@ -108,20 +108,20 @@ func (m *MapFS) TempDir() string {
 }
 
 func (m *MapFS) Stat(name string) (fs.FileInfo, error) {
-	return fs.Stat(m.MapFS, name)
+	return fs.Stat(m.MapFS, cleanMapFSPath(name))
 }
 
 func (m *MapFS) Exists(path string) bool {
-	_, err := fs.Stat(m.MapFS, path)
+	_, err := fs.Stat(m.MapFS, cleanMapFSPath(path))
 	return err == nil
 }
 
 func (m *MapFS) Glob(pattern string) ([]string, error) {
-	return fs.Glob(m.MapFS, pattern)
+	return fs.Glob(m.MapFS, cleanMapFSPath(pattern))
 }
 
 func (m *MapFS) Open(name string) (fs.File, error) {
-	return m.MapFS.Open(name)
+	return m.MapFS.Open(cleanMapFSPath(name))
 }
 
 var mapFSTempCounter atomic.Int64
@@ -137,7 +137,7 @@ func (w *mapFSWriter) Write(p []byte) (int, error) {
 }
 
 func (w *mapFSWriter) Close() error {
-	w.fs.MapFS[w.name] = &fstest.MapFile{
+	w.fs.MapFS[cleanMapFSPath(w.name)] = &fstest.MapFile{
 		Data: w.buf.Bytes(),
 		Mode: 0644,
 	}

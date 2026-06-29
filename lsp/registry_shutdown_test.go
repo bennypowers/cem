@@ -173,7 +173,7 @@ func TestGenerateWatcherShutdown(t *testing.T) {
 	}
 
 	// Create generate watcher
-	watcher, err := LSP.NewInProcessGenerateWatcher(workspace, []string{"**/*.ts"}, callback)
+	watcher, err := LSP.NewInProcessGenerateWatcher(workspace, []string{"**/*.ts"}, callback, nil)
 	require.NoError(t, err)
 
 	// Start the watcher
@@ -207,7 +207,7 @@ func TestGenerateWatcherDoubleStart(t *testing.T) {
 
 	watcher, err := LSP.NewInProcessGenerateWatcher(workspace, []string{"**/*.ts"}, func(pkg *M.Package) error {
 		return nil
-	})
+	}, nil)
 	require.NoError(t, err)
 
 	// First start should succeed

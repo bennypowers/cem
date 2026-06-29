@@ -364,3 +364,284 @@ func TestMapFS_Create_AbsolutePath(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "content", string(data))
 }
+
+// TestMapFS_AtomicWriteRoundTrip verifies the atomic write pattern (CreateTemp → Write → Close → Rename).
+// Inline assertions justified: scalar path/data comparisons testing MapFS internal consistency.
+func TestMapFS_AtomicWriteRoundTrip(t *testing.T) {
+	tests := []struct {
+		name       string
+		dir        string
+		pattern    string
+		content    string
+		finalPath  string
+	}{
+		{
+			name:      "absolute temp dir",
+			dir:       "/tmp",
+			pattern:   "test-*.txt",
+			content:   "atomic write test",
+			finalPath: "/final/output.txt",
+		},
+		{
+			name:      "relative temp dir",
+			dir:       "tmp",
+			pattern:   "cem-*.json",
+			content:   `{"test": true}`,
+			finalPath: "output.json",
+		},
+		{
+			name:      "nested final path",
+			dir:       "temp",
+			pattern:   "data-*",
+			content:   "nested content",
+			finalPath: "nested/deep/file.dat",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fs := platform.NewMapFS(nil)
+
+			// CreateTemp
+			tf, err := fs.CreateTemp(tt.dir, tt.pattern)
+			require.NoError(t, err)
+			tempPath := tf.Name()
+
+			// Write
+			_, err = io.WriteString(tf, tt.content)
+			require.NoError(t, err)
+
+			// Close
+			require.NoError(t, tf.Close())
+
+			// Verify temp file exists and has correct content
+			data, err := fs.ReadFile(tempPath)
+			require.NoError(t, err)
+			assert.Equal(t, tt.content, string(data))
+
+			// Rename to final path
+			err = fs.Rename(tempPath, tt.finalPath)
+			require.NoError(t, err)
+
+			// Verify final file has correct content
+			data, err = fs.ReadFile(tt.finalPath)
+			require.NoError(t, err)
+			assert.Equal(t, tt.content, string(data))
+
+			// Verify temp file is gone
+			assert.False(t, fs.Exists(tempPath))
+		})
+	}
+}
+
+// TestMapFS_PathConsistency_AbsolutePaths verifies absolute paths work consistently across operations.
+// Inline assertions justified: scalar path/data comparisons testing MapFS internal consistency.
+func TestMapFS_PathConsistency_AbsolutePaths(t *testing.T) {
+	tests := []struct {
+		name    string
+		path    string
+		content string
+	}{
+		{
+			name:    "root level",
+			path:    "/file.txt",
+			content: "root content",
+		},
+		{
+			name:    "nested absolute",
+			path:    "/foo/bar/baz.txt",
+			content: "nested content",
+		},
+		{
+			name:    "deep nesting",
+			path:    "/a/b/c/d/e/f.txt",
+			content: "deep content",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fs := platform.NewMapFS(nil)
+
+			// WriteFile with absolute path
+			err := fs.WriteFile(tt.path, []byte(tt.content), 0644)
+			require.NoError(t, err)
+
+			// ReadFile with same absolute path
+			data, err := fs.ReadFile(tt.path)
+			require.NoError(t, err)
+			assert.Equal(t, tt.content, string(data))
+
+			// Verify Exists
+			assert.True(t, fs.Exists(tt.path))
+
+			// Remove with absolute path
+			err = fs.Remove(tt.path)
+			require.NoError(t, err)
+
+			// Verify gone
+			assert.False(t, fs.Exists(tt.path))
+		})
+	}
+}
+
+// TestMapFS_Glob_AbsolutePattern verifies Glob works with absolute path patterns.
+// Inline assertions justified: scalar path/data comparisons testing MapFS internal consistency.
+func TestMapFS_Glob_AbsolutePattern(t *testing.T) {
+	fs := platform.NewMapFS(nil)
+
+	// Create test files
+	require.NoError(t, fs.WriteFile("/tmp/a.txt", []byte("a"), 0644))
+	require.NoError(t, fs.WriteFile("/tmp/b.txt", []byte("b"), 0644))
+	require.NoError(t, fs.WriteFile("/tmp/c.json", []byte("c"), 0644))
+	require.NoError(t, fs.WriteFile("/other/d.txt", []byte("d"), 0644))
+
+	tests := []struct {
+		name     string
+		pattern  string
+		expected []string
+	}{
+		{
+			name:     "absolute wildcard",
+			pattern:  "/tmp/*.txt",
+			expected: []string{"tmp/a.txt", "tmp/b.txt"},
+		},
+		{
+			name:     "absolute all files",
+			pattern:  "/tmp/*",
+			expected: []string{"tmp/a.txt", "tmp/b.txt", "tmp/c.json"},
+		},
+		{
+			name:     "different directory",
+			pattern:  "/other/*.txt",
+			expected: []string{"other/d.txt"},
+		},
+		{
+			name:     "no matches",
+			pattern:  "/tmp/*.md",
+			expected: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			matches, err := fs.Glob(tt.pattern)
+			require.NoError(t, err)
+			assert.ElementsMatch(t, tt.expected, matches)
+		})
+	}
+}
+
+// TestMapFS_CreateTemp_Remove verifies CreateTemp followed by Remove.
+// Inline assertions justified: scalar path/data comparisons testing MapFS internal consistency.
+func TestMapFS_CreateTemp_Remove(t *testing.T) {
+	tests := []struct {
+		name    string
+		dir     string
+		pattern string
+	}{
+		{
+			name:    "absolute dir",
+			dir:     "/tmp",
+			pattern: "test-*.txt",
+		},
+		{
+			name:    "relative dir",
+			dir:     "temp",
+			pattern: "file-*",
+		},
+		{
+			name:    "nested dir",
+			dir:     "a/b/c",
+			pattern: "data-*.json",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fs := platform.NewMapFS(nil)
+
+			// CreateTemp
+			tf, err := fs.CreateTemp(tt.dir, tt.pattern)
+			require.NoError(t, err)
+			tempPath := tf.Name()
+
+			// Write some data
+			_, err = io.WriteString(tf, "temp data")
+			require.NoError(t, err)
+			require.NoError(t, tf.Close())
+
+			// Verify it exists
+			assert.True(t, fs.Exists(tempPath))
+
+			// Remove it
+			err = fs.Remove(tempPath)
+			require.NoError(t, err)
+
+			// Verify it's gone
+			assert.False(t, fs.Exists(tempPath))
+		})
+	}
+}
+
+// TestMapFS_MkdirTemp_ReadDir verifies MkdirTemp followed by file operations and ReadDir.
+// Inline assertions justified: scalar path/data comparisons testing MapFS internal consistency.
+func TestMapFS_MkdirTemp_ReadDir(t *testing.T) {
+	tests := []struct {
+		name    string
+		dir     string
+		pattern string
+		files   map[string]string // filename -> content
+	}{
+		{
+			name:    "single file",
+			dir:     "",
+			pattern: "test-*",
+			files: map[string]string{
+				"file.txt": "content",
+			},
+		},
+		{
+			name:    "multiple files",
+			dir:     "base",
+			pattern: "temp-*",
+			files: map[string]string{
+				"a.txt":  "a",
+				"b.json": "b",
+				"c.dat":  "c",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fs := platform.NewMapFS(nil)
+
+			// MkdirTemp
+			tempDir, err := fs.MkdirTemp(tt.dir, tt.pattern)
+			require.NoError(t, err)
+			assert.True(t, fs.Exists(tempDir))
+
+			// Write files inside
+			for filename, content := range tt.files {
+				path := tempDir + "/" + filename
+				err := fs.WriteFile(path, []byte(content), 0644)
+				require.NoError(t, err)
+			}
+
+			// ReadDir
+			entries, err := fs.ReadDir(tempDir)
+			require.NoError(t, err)
+			assert.Len(t, entries, len(tt.files))
+
+			// Verify all files are listed
+			names := make(map[string]bool)
+			for _, entry := range entries {
+				names[entry.Name()] = true
+			}
+			for filename := range tt.files {
+				assert.True(t, names[filename], "file %s should be in directory listing", filename)
+			}
+		})
+	}
+}

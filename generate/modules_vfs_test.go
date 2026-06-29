@@ -92,16 +92,14 @@ export class MyElement extends LitElement {
 		require.NoError(t, f.Close())
 	})
 
-	t.Run("simple MapFS fails with absolute paths", func(t *testing.T) {
-		// This documents the limitation: the simple MapFS (mapfs.go) does not
-		// clean paths in read methods, so absolute paths fail. Code that calls
-		// NewModuleProcessor must use MapFileSystem, not MapFS.
+	t.Run("simple MapFS handles absolute paths", func(t *testing.T) {
 		simpleFS := platform.NewMapFS(map[string]string{
 			"project/src/my-element.ts": moduleContent,
 		})
 
-		_, err := simpleFS.ReadFile(absPath)
-		assert.Error(t, err,
-			"simple MapFS should fail on absolute path %q because it does not strip leading /", absPath)
+		data, err := simpleFS.ReadFile(absPath)
+		require.NoError(t, err,
+			"MapFS should handle absolute path %q via cleanMapFSPath", absPath)
+		assert.Equal(t, moduleContent, string(data))
 	})
 }

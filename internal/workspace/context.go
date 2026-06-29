@@ -171,11 +171,7 @@ func copyFile(src, dst string, fsys platform.FileSystem) (int64, error) {
 
 // findProjectRoot searches for project root by looking for common project files
 // Returns the detected root path and whether it was found
-func findProjectRoot(fsys platform.FileSystem) (string, bool) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", false
-	}
+func findProjectRoot(cwd string, fsys platform.FileSystem) (string, bool) {
 	return findProjectRootFromDir(cwd, fsys)
 }
 
@@ -183,9 +179,13 @@ func findProjectRoot(fsys platform.FileSystem) (string, bool) {
 // for file paths and searching upward from those locations
 func findProjectRootFromCommand(cmd *cobra.Command) (string, bool) {
 	fsys := platform.NewOSFileSystem()
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", false
+	}
 
 	// First try the standard findProjectRoot from current directory
-	if root, found := findProjectRoot(fsys); found {
+	if root, found := findProjectRoot(cwd, fsys); found {
 		return root, true
 	}
 

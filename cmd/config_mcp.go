@@ -18,7 +18,9 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -493,7 +495,7 @@ func genericSnippet(cemPath string, args []string) string {
 // Backs up existing files before writing.
 func mergeJSONConfig(fsys platform.FileSystem, path, topKey, subKey string, value any) error {
 	data, err := fsys.ReadFile(path)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("failed to read %s: %w", path, err)
 	}
 	if err == nil {

@@ -190,7 +190,7 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo, rootCfg *C.Ce
 			return nil, fmt.Errorf("loading config for %s: %w", pkgInfo.Name, err)
 		}
 		if len(rootCfg.Generate.Files) > 0 {
-			resolved, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Files, pkgInfo.Path)
+			resolved, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Files, pkgInfo.Path, s.fs)
 			if err != nil {
 				s.logger.Debug("ResolveWorkspaceFiles failed for %s: %v", pkgInfo.Name, err)
 			} else {
@@ -199,13 +199,13 @@ func (s *Server) generateManifestForPackage(pkgInfo W.PackageInfo, rootCfg *C.Ce
 			}
 		}
 		if len(rootCfg.Generate.Exclude) > 0 {
-			resolvedExclude, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Exclude, pkgInfo.Path)
+			resolvedExclude, err := W.ResolveWorkspaceFiles(s.watchDir, rootCfg.Generate.Exclude, pkgInfo.Path, s.fs)
 			if err == nil {
 				pkgCfg.Generate.Exclude = append(pkgCfg.Generate.Exclude, resolvedExclude...)
 			}
 		}
 		if rootCfg.Generate.DemoDiscovery.FileGlob != "" && pkgCfg.Generate.DemoDiscovery.FileGlob == "" {
-			demoFiles, err := W.ResolveWorkspaceFiles(s.watchDir, []string{rootCfg.Generate.DemoDiscovery.FileGlob}, pkgInfo.Path)
+			demoFiles, err := W.ResolveWorkspaceFiles(s.watchDir, []string{rootCfg.Generate.DemoDiscovery.FileGlob}, pkgInfo.Path, s.fs)
 			if err == nil && len(demoFiles) > 0 {
 				pkgCfg.Generate.DemoDiscovery = rootCfg.Generate.DemoDiscovery
 				pkgCfg.Generate.DemoDiscovery.FileGlob = W.DerivePackageGlob(demoFiles)

@@ -22,8 +22,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"os"
-
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/platform"
 	doublestar "github.com/bmatcuk/doublestar/v4"
@@ -73,7 +71,7 @@ func ForEachPackage(rootDir string, fsys platform.FileSystem, fn func(pkg Packag
 // returns only the files that fall under packageDir, with paths relative to
 // packageDir. This correctly partitions root-relative file patterns across
 // workspace packages.
-func ResolveWorkspaceFiles(workspaceRoot string, patterns []string, packageDir string) ([]string, error) {
+func ResolveWorkspaceFiles(workspaceRoot string, patterns []string, packageDir string, fsys platform.FileSystem) ([]string, error) {
 	absPackageDir, err := filepath.Abs(packageDir)
 	if err != nil {
 		return nil, err
@@ -90,7 +88,7 @@ func ResolveWorkspaceFiles(workspaceRoot string, patterns []string, packageDir s
 	}
 	relPkgPrefix := filepath.ToSlash(relPkgDir) + "/"
 
-	rootFS := os.DirFS(absRoot)
+	rootFS := platform.DirFS(fsys, absRoot)
 
 	var result []string
 	seen := make(map[string]bool)

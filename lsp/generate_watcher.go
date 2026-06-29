@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -52,6 +51,7 @@ type InProcessGenerateWatcher struct {
 	globs           []string
 	callback        ManifestUpdateCallback
 	debounceTimer   *time.Timer // Track debounce timer for cleanup
+	fsys            platform.FileSystem
 }
 
 // NewInProcessGenerateWatcher creates a new in-process generate watcher
@@ -59,14 +59,19 @@ func NewInProcessGenerateWatcher(
 	workspace types.WorkspaceContext,
 	globs []string,
 	callback ManifestUpdateCallback,
+	fsys platform.FileSystem,
 ) (*InProcessGenerateWatcher, error) {
+	if fsys == nil {
+		fsys = platform.NewOSFileSystem()
+	}
+
 	// Create cancellable context for clean shutdown
 	ctx, cancel := context.WithCancel(context.Background())
 
 	helpers.SafeDebugLog("Creating InProcessGenerateWatcher for workspace: %s, globs: %v", workspace.Root(), globs)
 
 	// Create the generate session (NOT watch session - we manage watching ourselves)
-	generateSession, err := G.NewGenerateSession(workspace, platform.NewOSFileSystem())
+	generateSession, err := G.NewGenerateSession(workspace, fsys)
 	if err != nil {
 		cancel()
 		helpers.SafeDebugLog("Failed to create generate session: %v", err)
@@ -82,6 +87,7 @@ func NewInProcessGenerateWatcher(
 		workspace:       workspace,
 		globs:           globs,
 		callback:        callback,
+		fsys:            fsys,
 	}, nil
 }
 
@@ -165,7 +171,7 @@ func (w *InProcessGenerateWatcher) watchFiles() error {
 	var filesToWatch []string
 	rootDir := w.workspace.Root()
 
-	err = platform.WalkDir(os.DirFS(rootDir), ".", set.NewSet("node_modules"), func(path string, d fs.DirEntry, err error) error {
+	err = platform.WalkDir(platform.DirFS(w.fsys, rootDir), ".", set.NewSet("node_modules"), func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -313,7 +319,7 @@ func (w *InProcessGenerateWatcher) generateFullAndCallback() error {
 
 	// Create a fresh GenerateSession to avoid any caching issues
 	// that might prevent updated file content from being parsed correctly
-	freshSession, err := G.NewGenerateSession(w.workspace, platform.NewOSFileSystem())
+	freshSession, err := G.NewGenerateSession(w.workspace, w.fsys)
 	if err != nil {
 		return fmt.Errorf("create fresh generate session: %w", err)
 	}

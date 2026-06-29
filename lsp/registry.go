@@ -1250,7 +1250,7 @@ func (r *Registry) StartGenerateWatcher() error {
 
 	// Create and start the in-process generate watcher
 	helpers.SafeDebugLog("About to create InProcessGenerateWatcher with globs: %v", globs)
-	watcher, err := NewInProcessGenerateWatcher(r.localWorkspace, globs, callback)
+	watcher, err := NewInProcessGenerateWatcher(r.localWorkspace, globs, callback, r.fs)
 	if err != nil {
 		helpers.SafeDebugLog("Failed to create InProcessGenerateWatcher: %v", err)
 		return fmt.Errorf("failed to create generate watcher: %w", err)

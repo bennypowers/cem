@@ -37,6 +37,9 @@ type BuildConfig struct {
 	BasePath string
 	// ImportMode controls dependency resolution: vendor (default), esm, jspm, unpkg.
 	ImportMode string
+	// WorkDir is the working directory for resolving relative paths.
+	// If empty, defaults to os.Getwd() at build time.
+	WorkDir string
 }
 
 // siteRoot returns the output directory including the base path.
@@ -54,6 +57,15 @@ func (c BuildConfig) siteRoot() string {
 func (s *Server) Build(config BuildConfig) error {
 	if config.OutputDir == "" {
 		config.OutputDir = "dist"
+	}
+
+	// Default WorkDir to os.Getwd() if not provided by caller
+	if config.WorkDir == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("getting working directory: %w", err)
+		}
+		config.WorkDir = cwd
 	}
 
 	// Normalize base path: ensure leading slash, no trailing slash
@@ -359,16 +371,12 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 	}
 
 	// Compute the URL prefix: the relative path from CWD to watchDir
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	relDir, err := filepath.Rel(cwd, watchDir)
+	relDir, err := filepath.Rel(config.WorkDir, watchDir)
 	if err != nil {
 		return err
 	}
 	if relDir == ".." || strings.HasPrefix(relDir, ".."+string(filepath.Separator)) {
-		return fmt.Errorf("watchDir %s is outside working directory %s", watchDir, cwd)
+		return fmt.Errorf("watchDir %s is outside working directory %s", watchDir, config.WorkDir)
 	}
 
 	// Resolve output directory to an absolute path for skipping during walk
@@ -384,7 +392,7 @@ func (s *Server) buildUserSources(handler http.Handler, config BuildConfig, demo
 	}
 
 	count := 0
-	err = platform.WalkDir(os.DirFS(watchDir), ".", set.NewSet("node_modules"), func(path string, d fs.DirEntry, err error) error {
+	err = platform.WalkDir(platform.DirFS(s.fs, watchDir), ".", set.NewSet("node_modules"), func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -570,7 +578,7 @@ func (s *Server) rewriteImportMapToCDN(config BuildConfig) error {
 	root := config.siteRoot()
 	count := 0
 
-	err := platform.WalkDir(os.DirFS(root), ".", nil, func(path string, d fs.DirEntry, err error) error {
+	err := platform.WalkDir(platform.DirFS(s.fs, root), ".", nil, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".html") {
 			return err
 		}

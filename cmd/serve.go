@@ -413,6 +413,10 @@ func runBuild(config serve.Config, root string, cmd *cobra.Command) error {
 		}
 	}
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("getting working directory: %w", err)
+	}
 	outputDir, _ := cmd.Flags().GetString("output")
 	basePath, _ := cmd.Flags().GetString("base-path")
 	importMode, _ := cmd.Flags().GetString("import")
@@ -420,6 +424,7 @@ func runBuild(config serve.Config, root string, cmd *cobra.Command) error {
 		OutputDir:  outputDir,
 		BasePath:   basePath,
 		ImportMode: importMode,
+		WorkDir:    cwd,
 	})
 }
 

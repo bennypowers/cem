@@ -81,11 +81,11 @@ func TestResolveWorkspaceFiles_PartitionsByPackage(t *testing.T) {
 	}()
 
 	// Root-relative pattern should partition files by package
-	alphaFiles, err := workspace.ResolveWorkspaceFiles(root, []string{"packages/*/src/**/*.ts"}, alphaDir)
+	alphaFiles, err := workspace.ResolveWorkspaceFiles(root, []string{"packages/*/src/**/*.ts"}, alphaDir, osfs)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"src/alpha.ts"}, alphaFiles)
 
-	betaFiles, err := workspace.ResolveWorkspaceFiles(root, []string{"packages/*/src/**/*.ts"}, betaDir)
+	betaFiles, err := workspace.ResolveWorkspaceFiles(root, []string{"packages/*/src/**/*.ts"}, betaDir, osfs)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"src/beta.ts"}, betaFiles)
 }
@@ -94,7 +94,7 @@ func TestResolveWorkspaceFiles_NoMatchReturnsEmpty(t *testing.T) {
 	root := absFixture(t, "multi-package-workspace")
 	alphaDir := filepath.Join(root, "packages", "alpha")
 
-	files, err := workspace.ResolveWorkspaceFiles(root, []string{"nonexistent/**/*.ts"}, alphaDir)
+	files, err := workspace.ResolveWorkspaceFiles(root, []string{"nonexistent/**/*.ts"}, alphaDir, osfs)
 	require.NoError(t, err)
 	assert.Empty(t, files)
 }
@@ -145,7 +145,7 @@ func TestDemoDiscoveryResolution(t *testing.T) {
 	require.NoError(t, err)
 	buttonDir := filepath.Join(root, "packages", "button")
 
-	demoFiles, err := workspace.ResolveWorkspaceFiles(root, []string{"packages/*/demo/*.html"}, buttonDir)
+	demoFiles, err := workspace.ResolveWorkspaceFiles(root, []string{"packages/*/demo/*.html"}, buttonDir, osfs)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"demo/basic.html"}, demoFiles)
 

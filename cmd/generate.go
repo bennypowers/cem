@@ -283,7 +283,8 @@ func generateWorkspace(cmd *cobra.Command) error {
 	rootFiles := rootCfg.Generate.Files
 	rootExclude := rootCfg.Generate.Exclude
 
-	results := W.ForEachPackage(baseCtx.Root(), platform.NewOSFileSystem(), func(pkg W.PackageInfo) error {
+	fsys := platform.NewOSFileSystem()
+	results := W.ForEachPackage(baseCtx.Root(), fsys, func(pkg W.PackageInfo) error {
 		ctx := W.NewFileSystemWorkspaceContext(pkg.Path)
 		if err := ctx.Init(); err != nil {
 			return fmt.Errorf("initializing context: %w", err)
@@ -297,14 +298,14 @@ func generateWorkspace(cmd *cobra.Command) error {
 		// Resolve root-level file patterns: expand from workspace root,
 		// filter to files under this package, return package-relative paths.
 		if len(rootFiles) > 0 {
-			resolved, err := W.ResolveWorkspaceFiles(baseCtx.Root(), rootFiles, pkg.Path)
+			resolved, err := W.ResolveWorkspaceFiles(baseCtx.Root(), rootFiles, pkg.Path, fsys)
 			if err != nil {
 				return fmt.Errorf("resolving workspace files: %w", err)
 			}
 			cfg.Generate.Files = append(cfg.Generate.Files, resolved...)
 		}
 		if len(rootExclude) > 0 {
-			resolved, err := W.ResolveWorkspaceFiles(baseCtx.Root(), rootExclude, pkg.Path)
+			resolved, err := W.ResolveWorkspaceFiles(baseCtx.Root(), rootExclude, pkg.Path, fsys)
 			if err != nil {
 				return fmt.Errorf("resolving workspace excludes: %w", err)
 			}
@@ -314,7 +315,7 @@ func generateWorkspace(cmd *cobra.Command) error {
 		// Resolve root-level demo discovery: expand from root, filter to this package,
 		// then derive a package-local glob from the matched file paths.
 		if rootCfg.Generate.DemoDiscovery.FileGlob != "" && cfg.Generate.DemoDiscovery.FileGlob == "" {
-			demoFiles, err := W.ResolveWorkspaceFiles(baseCtx.Root(), []string{rootCfg.Generate.DemoDiscovery.FileGlob}, pkg.Path)
+			demoFiles, err := W.ResolveWorkspaceFiles(baseCtx.Root(), []string{rootCfg.Generate.DemoDiscovery.FileGlob}, pkg.Path, fsys)
 			if err == nil && len(demoFiles) > 0 {
 				cfg.Generate.DemoDiscovery = rootCfg.Generate.DemoDiscovery
 				cfg.Generate.DemoDiscovery.FileGlob = W.DerivePackageGlob(demoFiles)
