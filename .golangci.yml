@@ -1,1 +1,53 @@
 version: "2"
+
+linters:
+  enable:
+    - forbidigo
+  settings:
+    forbidigo:
+      analyze-types: true
+      forbid:
+        # Filesystem abstraction (see AGENTS.md § Go)
+        - pattern: ^os\.(ReadFile|WriteFile|Create|Stat|Lstat|MkdirAll|Remove|Rename|ReadDir|Open|CreateTemp|MkdirTemp)$
+          pkg: ^os$
+          msg: "use platform.FileSystem instead of direct os.* calls (see AGENTS.md)"
+        - pattern: ^os\.DirFS$
+          pkg: ^os$
+          msg: "use platform.DirFS(fsys, dir) instead of os.DirFS (see AGENTS.md)"
+        - pattern: ^filepath\.Glob$
+          pkg: ^path/filepath$
+          msg: "use platform.FileSystem.Glob instead of filepath.Glob (see AGENTS.md)"
+        - pattern: ^doublestar\.Glob$
+          pkg: ^github\.com/bmatcuk/doublestar/v4$
+          msg: "use WorkspaceContext.Glob via platform.DirFS (see AGENTS.md)"
+        # Directory traversal (see AGENTS.md § Go)
+        - pattern: ^filepath\.WalkDir$
+          pkg: ^path/filepath$
+          msg: "use platform.WalkDir which prunes .git directories (see AGENTS.md)"
+        - pattern: ^fs\.WalkDir$
+          pkg: ^io/fs$
+          msg: "use platform.WalkDir which prunes .git directories (see AGENTS.md)"
+        # Logging — pterm was removed; prevent reintroduction (see AGENTS.md § Go)
+        - pattern: ^pterm\.(Warning|Info|Error|Success|Debug)$
+          pkg: ^github\.com/pterm/pterm$
+          msg: "use internal/logging instead of direct pterm calls (see AGENTS.md)"
+  exclusions:
+    rules:
+      - path: internal/platform/
+        linters:
+          - forbidigo
+      - path: internal/workspace/
+        text: doublestar\.Glob
+        linters:
+          - forbidigo
+      - path: _test\.go
+        linters:
+          - forbidigo
+      - path: mcp/tools/gen-adapters/
+        linters:
+          - forbidigo
+      # serve/build.go uses fs.WalkDir on embedded FS (no .git to prune)
+      - path: serve/build\.go
+        text: fs\.WalkDir
+        linters:
+          - forbidigo
