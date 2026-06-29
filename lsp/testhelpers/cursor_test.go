@@ -20,6 +20,8 @@ import (
 	"testing"
 )
 
+// Inline: these test the cursor parser itself, which is a pure function.
+// Fixture/golden pattern would be circular since the parser is part of the fixture loader.
 func TestTSCursorParser(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -209,6 +211,18 @@ func TestTSCursorParser(t *testing.T) {
 			wantClean: "const tpl = html`\n" +
 				"  <my-element attr=\"value\"></my-element>\n" +
 				"`;\n",
+		},
+		{
+			name: "CRLF line endings",
+			content: "const tpl = html`\r\n" +
+				"  <my-element attr=\"v\"></my-element>\r\n" +
+				"  <!-- ^cursor -->\r\n" +
+				"`;\r\n",
+			wantLine: 1,
+			wantChar: 7,
+			wantClean: "const tpl = html`\r\n" +
+				"  <my-element attr=\"v\"></my-element>\r\n" +
+				"`;\r\n",
 		},
 		{
 			name:    "no marker",

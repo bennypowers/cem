@@ -102,12 +102,15 @@ func findCursorInTemplateStrings(root *ts.Node, content string) (string, *protoc
 					htmlOffset += len(raw)
 					continue
 				}
-				// Strip the entire line containing the comment
+				// Strip the entire line containing the comment (LF and CRLF)
 				lineStart := fragStart + htmlOffset
 				for lineStart > 0 && content[lineStart-1] != '\n' {
 					lineStart--
 				}
 				lineEnd := fragStart + htmlOffset + len(raw)
+				if lineEnd < len(content) && content[lineEnd] == '\r' {
+					lineEnd++
+				}
 				if lineEnd < len(content) && content[lineEnd] == '\n' {
 					lineEnd++
 				}
@@ -163,6 +166,9 @@ func treeSitterCursorParser(content string, tree *ts.Tree) (string, *protocol.Po
 	caretChar := textutil.ByteOffsetToUTF16(content[lineStart:], uint(caretByteCol))
 
 	lineEnd := int(node.EndByte())
+	if lineEnd < len(content) && content[lineEnd] == '\r' {
+		lineEnd++
+	}
 	if lineEnd < len(content) && content[lineEnd] == '\n' {
 		lineEnd++
 	}

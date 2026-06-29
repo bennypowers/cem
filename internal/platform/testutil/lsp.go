@@ -256,12 +256,15 @@ func extractHTMLCursorMarker(content string) (string, *protocol.Position) {
 				byteOffset += len(raw)
 				continue
 			}
-			// Strip the entire line containing the comment
+			// Strip the entire line containing the comment (LF and CRLF)
 			lineStart := byteOffset
 			for lineStart > 0 && content[lineStart-1] != '\n' {
 				lineStart--
 			}
 			lineEnd := byteOffset + len(raw)
+			if lineEnd < len(content) && content[lineEnd] == '\r' {
+				lineEnd++
+			}
 			if lineEnd < len(content) && content[lineEnd] == '\n' {
 				lineEnd++
 			}
