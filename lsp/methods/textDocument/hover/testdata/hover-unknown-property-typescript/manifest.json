@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/test.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "TestComponent",
+          "customElement": true,
+          "tagName": "test-component",
+          "members": [
+            {
+              "kind": "field",
+              "name": "knownProp",
+              "type": {"text": "string"}
+            }
+          ],
+          "attributes": [
+            {
+              "name": "known-attr",
+              "type": {"text": "string"},
+              "fieldName": "knownAttr"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "test-component",
+          "declaration": {"name": "TestComponent"}
+        }
+      ]
+    }
+  ]
+}

@@ -132,17 +132,15 @@ func analyzeDefinitionTarget(doc types.Document, position protocol.Position, dm 
 				}
 			}
 
-			// Check for event bindings in Lit templates (e.g., @click, @input)
-			if strings.HasPrefix(attr.Name, "@") && len(attr.Name) > 1 {
+			if attr.BindingPrefix == "@" {
 				return &DefinitionRequest{
 					Position:    position,
 					TargetType:  DefinitionTargetEvent,
 					ElementName: element.TagName,
-					EventName:   attr.Name[1:], // Remove @ prefix
+					EventName:   attr.Name,
 				}
 			}
 
-			// Regular attribute definition
 			return &DefinitionRequest{
 				Position:      position,
 				TargetType:    DefinitionTargetAttribute,
@@ -172,12 +170,12 @@ func analyzeDefinitionTarget(doc types.Document, position protocol.Position, dm 
 				SlotName:    attr.Value,
 			}
 		}
-		if strings.HasPrefix(attr.Name, "@") && len(attr.Name) > 1 {
+		if attr.BindingPrefix == "@" {
 			return &DefinitionRequest{
 				Position:    position,
 				TargetType:  DefinitionTargetEvent,
 				ElementName: tagName,
-				EventName:   attr.Name[1:],
+				EventName:   attr.Name,
 			}
 		}
 		return &DefinitionRequest{

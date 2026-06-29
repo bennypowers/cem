@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/test.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "TestElement",
+          "customElement": true,
+          "tagName": "test-element",
+          "members": [
+            {
+              "kind": "field",
+              "name": "testAttr",
+              "type": {"text": "string"},
+              "description": "A field that should NOT match .testAttr in plain HTML",
+              "attribute": "test-attr"
+            }
+          ],
+          "attributes": [
+            {
+              "name": "test-attr",
+              "type": {"text": "string"},
+              "fieldName": "testAttr"
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "test-element",
+          "declaration": {"name": "TestElement"}
+        }
+      ]
+    }
+  ]
+}

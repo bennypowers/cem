@@ -77,35 +77,48 @@ func Hover(ctx types.ServerContext, context *glsp.Context, params *protocol.Hove
 
 	attribute, tagName := doc.FindAttributeAtPosition(params.Position, dm)
 	if attribute != nil && tagName != "" {
-		helpers.SafeDebugLog("[HOVER] Found attribute at position: name=%s, tagName=%s, range=%+v\n", attribute.Name, tagName, attribute.Range)
+		helpers.SafeDebugLog("[HOVER] Found attribute at position: name=%s, tagName=%s, bindingPrefix=%s, range=%+v\n", attribute.Name, tagName, attribute.BindingPrefix, attribute.Range)
 
-		if attrs, exists := ctx.Attributes(tagName); exists {
-			helpers.SafeDebugLog("[HOVER] Found %d attributes for element %s\n", len(attrs), tagName)
-
-			if attr, exists := attrs[attribute.Name]; exists {
-				helpers.SafeDebugLog("[HOVER] Found attribute %s in registry for element %s\n", attribute.Name, tagName)
-
-				content := CreateAttributeHoverContent(attr, tagName)
-				result := &protocol.Hover{
-					Contents: protocol.MarkupContent{
-						Kind:  protocol.MarkupKindMarkdown,
-						Value: content,
-					},
-					Range: &attribute.Range,
+		switch attribute.BindingPrefix {
+		case "@":
+			if events, exists := ctx.Events(tagName); exists {
+				if event, exists := events[attribute.Name]; exists {
+					content := CreateEventHoverContent(event, tagName)
+					return &protocol.Hover{
+						Contents: protocol.MarkupContent{
+							Kind:  protocol.MarkupKindMarkdown,
+							Value: content,
+						},
+						Range: &attribute.Range,
+					}, nil
 				}
-				helpers.SafeDebugLog("[HOVER] Returning attribute hover content (length=%d)\n", len(content))
-				return result, nil
-			} else {
-				helpers.SafeDebugLog("[HOVER] Attribute %s not found in registry for element %s\n", attribute.Name, tagName)
 			}
-		} else {
-			helpers.SafeDebugLog("[HOVER] No attributes found in registry for element %s\n", tagName)
-		}
-	} else {
-		if attribute == nil {
-			helpers.SafeDebugLog("[HOVER] No attribute found at position\n")
-		} else {
-			helpers.SafeDebugLog("[HOVER] Found attribute but no tagName: %+v\n", attribute)
+		case ".":
+			if fields, exists := ctx.Fields(tagName); exists {
+				if field, exists := fields[attribute.Name]; exists {
+					content := CreateFieldHoverContent(field, tagName)
+					return &protocol.Hover{
+						Contents: protocol.MarkupContent{
+							Kind:  protocol.MarkupKindMarkdown,
+							Value: content,
+						},
+						Range: &attribute.Range,
+					}, nil
+				}
+			}
+		default:
+			if attrs, exists := ctx.Attributes(tagName); exists {
+				if attr, exists := attrs[attribute.Name]; exists {
+					content := CreateAttributeHoverContent(attr, tagName)
+					return &protocol.Hover{
+						Contents: protocol.MarkupContent{
+							Kind:  protocol.MarkupKindMarkdown,
+							Value: content,
+						},
+						Range: &attribute.Range,
+					}, nil
+				}
+			}
 		}
 	}
 
@@ -272,6 +285,41 @@ func CreateAttributeHoverContent(attr *M.Attribute, tagName string) string {
 			content.WriteString("⚠️ **Deprecated**\n\n")
 		case M.DeprecatedReason:
 			fmt.Fprintf(&content, "⚠️ **Deprecated**: %s\n\n", attr.Deprecated)
+		}
+	}
+
+	return content.String()
+}
+
+// CreateFieldHoverContent creates markdown content for class field hover
+func CreateFieldHoverContent(field *M.ClassField, tagName string) string {
+	var content strings.Builder
+
+	fmt.Fprintf(&content, "## `%s` property\n\n", field.Name)
+	fmt.Fprintf(&content, "**On `<%s>` element**\n\n", tagName)
+
+	if field.InheritedFrom != nil {
+		fmt.Fprintf(&content, "_Inherited from %s_\n\n", field.InheritedFrom.Name)
+	}
+
+	if field.Type != nil && field.Type.Text != "" {
+		fmt.Fprintf(&content, "**Type:** `%s`\n\n", field.Type.Text)
+	}
+
+	if field.Description != "" {
+		fmt.Fprintf(&content, "%s\n\n", field.Description)
+	}
+
+	if field.Default != "" {
+		fmt.Fprintf(&content, "**Default:** `%s`\n\n", field.Default)
+	}
+
+	if field.IsDeprecated() {
+		switch field.Deprecated.(type) {
+		case M.DeprecatedFlag:
+			content.WriteString("⚠️ **Deprecated**\n\n")
+		case M.DeprecatedReason:
+			fmt.Fprintf(&content, "⚠️ **Deprecated**: %s\n\n", field.Deprecated)
 		}
 	}
 

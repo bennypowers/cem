@@ -166,9 +166,10 @@ func (h *Handler) FindAttributeAtPosition(doc types.Document, position protocol.
 		for _, attr := range element.Attributes {
 			if helpers.IsPositionInRange(position, attr.Range) {
 				return &types.AttributeMatch{
-					Name:  attr.Name,
-					Value: attr.Value,
-					Range: attr.Range,
+					Name:          attr.Name,
+					Value:         attr.Value,
+					Range:         attr.Range,
+					BindingPrefix: attr.BindingPrefix,
 				}, element.TagName
 			}
 		}

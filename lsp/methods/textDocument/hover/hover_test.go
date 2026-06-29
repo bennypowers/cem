@@ -30,10 +30,17 @@ import (
 
 // Cursor positions for each test fixture
 var cursorPositions = map[string]protocol.Position{
-	"element-hover-html":              {Line: 6, Character: 5},
-	"element-hover-typescript":        {Line: 5, Character: 10},
-	"hover-attribute-html":            {Line: 6, Character: 20},
-	"multiline-attributes-hover-html": {Line: 6, Character: 13},
+	"element-hover-html":                     {Line: 6, Character: 5},
+	"element-hover-typescript":               {Line: 5, Character: 10},
+	"hover-attribute-html":                   {Line: 6, Character: 20},
+	"hover-boolean-binding-typescript":       {Line: 5, Character: 23},
+	"hover-dotted-attr-not-field-html":       {Line: 6, Character: 20},
+	"hover-dotted-attribute-html":            {Line: 6, Character: 20},
+	"hover-event-binding-typescript":         {Line: 5, Character: 23},
+	"hover-property-binding-typescript":      {Line: 5, Character: 23},
+	"hover-unknown-event-typescript":         {Line: 5, Character: 23},
+	"hover-unknown-property-typescript":      {Line: 5, Character: 23},
+	"multiline-attributes-hover-html":        {Line: 6, Character: 13},
 }
 
 func TestHover_Fixtures(t *testing.T) {
@@ -94,6 +101,13 @@ func TestHover_Fixtures(t *testing.T) {
 		result, err := hover.Hover(ctx, nil, params)
 		if err != nil {
 			t.Fatalf("Hover failed: %v", err)
+		}
+
+		if _, hasExpected := fixture.ExpectedMap["expected"]; !hasExpected {
+			if result != nil {
+				t.Fatalf("Expected nil hover result, got: %+v", result)
+			}
+			return
 		}
 
 		if result == nil {

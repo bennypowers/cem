@@ -1,0 +1,12 @@
+{
+  "attributes": {
+    "my-button": {
+      "disabled": {"name": "disabled", "type": {"text": "Boolean"}, "fieldName": "disabled"}
+    }
+  },
+  "fields": {
+    "my-button": {
+      "disabled": {"name": "disabled", "type": {"text": "Boolean"}}
+    }
+  }
+}

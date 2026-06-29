@@ -457,9 +457,17 @@ func (d *TypeScriptDocument) collectTemplateAttributes(
 	}
 
 	for _, attrName := range attrNames {
+		name := attrName.Text
+		var bindingPrefix string
+		if len(name) > 1 && (name[0] == '.' || name[0] == '?' || name[0] == '@') {
+			bindingPrefix = name[:1]
+			name = name[1:]
+		}
+
 		attrMatch := types.AttributeMatch{
-			Name:  attrName.Text,
-			Range: d.adjustRangeToTemplate(attrName, template, docContent),
+			Name:          name,
+			Range:         d.adjustRangeToTemplate(attrName, template, docContent),
+			BindingPrefix: bindingPrefix,
 		}
 
 		var closestValue string

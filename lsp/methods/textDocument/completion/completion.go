@@ -582,20 +582,20 @@ func getLitPropertyCompletions(ctx types.ServerContext, tagName string) []protoc
 		return items
 	}
 
-	if attrs, exists := ctx.Attributes(tagName); exists {
-		for attrName, attr := range attrs {
-			// Only show properties (attributes that can be bound to properties)
+	if fields, exists := ctx.Fields(tagName); exists {
+		for fieldName, field := range fields {
 			description := fmt.Sprintf("Property binding for <%s>", tagName)
-			if attr.Type != nil && attr.Type.Text != "" {
-				description += fmt.Sprintf(" (%s)", attr.Type.Text)
+			if field.Type != nil && field.Type.Text != "" {
+				description += fmt.Sprintf(" (%s)", field.Type.Text)
 			}
 
+			name := fieldName
 			items = append(items, protocol.CompletionItem{
-				Label:      "." + attrName,
+				Label:      "." + fieldName,
 				Kind:       &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
 				Detail:     &description,
-				Data:       createCompletionData("property", tagName, attrName),
-				InsertText: &attrName, // Just insert the property name, . is already typed
+				Data:       createCompletionData("property", tagName, fieldName),
+				InsertText: &name,
 			})
 		}
 	}

@@ -99,6 +99,10 @@ type Registry struct {
 	ElementDefinitions map[string]*ElementDefinition
 	// Attributes maps element tag names to their available attributes
 	attributes map[string]map[string]*M.Attribute
+	// Fields maps element tag names to their class fields (keyed by field name)
+	fields map[string]map[string]*M.ClassField
+	// Events maps element tag names to their available events
+	events map[string]map[string]*M.Event
 	// Manifests stores all loaded manifest packages
 	Manifests []*M.Package
 	// ManifestPaths tracks the file paths of loaded CEM manifests for reload
@@ -145,6 +149,8 @@ func NewRegistry(fileWatcher platform.FileWatcher, fsys platform.FileSystem) *Re
 		Elements:             make(map[string]*M.CustomElement),
 		ElementDefinitions:   make(map[string]*ElementDefinition),
 		attributes:           make(map[string]map[string]*M.Attribute),
+		fields:               make(map[string]map[string]*M.ClassField),
+		events:               make(map[string]map[string]*M.Event),
 		Manifests:            make([]*M.Package, 0),
 		ManifestPaths:        make([]string, 0),
 		WatchPaths:           make([]string, 0),
@@ -208,6 +214,8 @@ func (r *Registry) clear() {
 	r.Elements = make(map[string]*M.CustomElement)
 	r.ElementDefinitions = make(map[string]*ElementDefinition)
 	r.attributes = make(map[string]map[string]*M.Attribute)
+	r.fields = make(map[string]map[string]*M.ClassField)
+	r.events = make(map[string]map[string]*M.Event)
 	r.Manifests = r.Manifests[:0]
 	r.ManifestPaths = r.ManifestPaths[:0]
 	r.WatchPaths = r.WatchPaths[:0]
@@ -229,6 +237,8 @@ func (r *Registry) clearDataOnly() {
 	r.Elements = make(map[string]*M.CustomElement)
 	r.ElementDefinitions = make(map[string]*ElementDefinition)
 	r.attributes = make(map[string]map[string]*M.Attribute)
+	r.fields = make(map[string]map[string]*M.ClassField)
+	r.events = make(map[string]map[string]*M.Event)
 	r.Manifests = r.Manifests[:0]
 	// Get QueryManager for dependency injection
 	queryManager, err := treesitter.GetGlobalQueryManager()
@@ -837,6 +847,33 @@ func (r *Registry) addManifest(manifest *M.Package, packageName string) {
 						}
 						r.attributes[element.TagName] = attrMap
 					}
+
+					// Index fields for this element
+					if len(customElementDecl.Members) > 0 {
+						fieldMap := make(map[string]*M.ClassField)
+						for _, member := range customElementDecl.Members {
+							switch f := member.(type) {
+							case *M.ClassField:
+								fieldMap[f.Name] = f
+							case *M.CustomElementField:
+								fieldMap[f.Name] = &f.ClassField
+							}
+						}
+						if len(fieldMap) > 0 {
+							r.fields[element.TagName] = fieldMap
+						}
+					}
+
+					// Index events for this element
+					events := customElementDecl.Events()
+					if len(events) > 0 {
+						eventMap := make(map[string]*M.Event)
+						for i := range events {
+							event := &events[i]
+							eventMap[event.Name] = event
+						}
+						r.events[element.TagName] = eventMap
+					}
 				}
 			}
 		}
@@ -878,6 +915,24 @@ func (r *Registry) Attributes(tagName string) (map[string]*M.Attribute, bool) {
 		}
 	}
 	return attrs, exists
+}
+
+// Fields returns the class fields for a custom element tag
+func (r *Registry) Fields(tagName string) (map[string]*M.ClassField, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	fields, exists := r.fields[tagName]
+	return fields, exists
+}
+
+// Events returns the available events for a custom element tag
+func (r *Registry) Events(tagName string) (map[string]*M.Event, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	events, exists := r.events[tagName]
+	return events, exists
 }
 
 // Slots returns the available slots for a custom element tag

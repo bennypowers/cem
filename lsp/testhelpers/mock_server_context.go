@@ -36,6 +36,8 @@ type MockServerContext struct {
 	TagNames           []string
 	Elements           map[string]*M.CustomElement
 	AttributesMap      map[string]map[string]*M.Attribute
+	FieldsMap          map[string]map[string]*M.ClassField
+	EventsMap          map[string]map[string]*M.Event
 	SlotsMap           map[string][]M.Slot
 	ElementDefsMap     map[string]types.ElementDefinition
 	DescriptionsMap    map[string]string
@@ -152,6 +154,8 @@ func NewMockServerContext() *MockServerContext {
 		TagNames:         []string{},
 		Elements:         make(map[string]*M.CustomElement),
 		AttributesMap:    make(map[string]map[string]*M.Attribute),
+		FieldsMap:        make(map[string]map[string]*M.ClassField),
+		EventsMap:        make(map[string]map[string]*M.Event),
 		SlotsMap:         make(map[string][]M.Slot),
 		ElementDefsMap:   make(map[string]types.ElementDefinition),
 		DescriptionsMap:  make(map[string]string),
@@ -259,6 +263,26 @@ func (m *MockServerContext) Attributes(tagName string) (map[string]*M.Attribute,
 	return attrs, exists
 }
 
+func (m *MockServerContext) Fields(tagName string) (map[string]*M.ClassField, bool) {
+	if m.Registry != nil {
+		return m.Registry.Fields(tagName)
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	fields, exists := m.FieldsMap[tagName]
+	return fields, exists
+}
+
+func (m *MockServerContext) Events(tagName string) (map[string]*M.Event, bool) {
+	if m.Registry != nil {
+		return m.Registry.Events(tagName)
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	events, exists := m.EventsMap[tagName]
+	return events, exists
+}
+
 func (m *MockServerContext) Slots(tagName string) ([]M.Slot, bool) {
 	if m.Registry != nil {
 		return m.Registry.Slots(tagName)
@@ -328,6 +352,33 @@ func (m *MockServerContext) AddManifest(manifest *M.Package) {
 						attrMap[attr.Name] = attr
 					}
 					m.AttributesMap[tagName] = attrMap
+				}
+
+				// Add fields
+				if len(customElement.Members) > 0 {
+					fieldMap := make(map[string]*M.ClassField)
+					for _, member := range customElement.Members {
+						switch f := member.(type) {
+						case *M.ClassField:
+							fieldMap[f.Name] = f
+						case *M.CustomElementField:
+							fieldMap[f.Name] = &f.ClassField
+						}
+					}
+					if len(fieldMap) > 0 {
+						m.FieldsMap[tagName] = fieldMap
+					}
+				}
+
+				// Add events
+				events := customElement.Events()
+				if len(events) > 0 {
+					eventMap := make(map[string]*M.Event)
+					for i := range events {
+						event := &events[i]
+						eventMap[event.Name] = event
+					}
+					m.EventsMap[tagName] = eventMap
 				}
 
 				// Add slots
@@ -454,6 +505,20 @@ func (m *MockServerContext) AddAttributes(tagName string, attrs map[string]*M.At
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.AttributesMap[tagName] = attrs
+}
+
+// AddFields adds fields for a tag name
+func (m *MockServerContext) AddFields(tagName string, fields map[string]*M.ClassField) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.FieldsMap[tagName] = fields
+}
+
+// AddEvents adds events for a tag name
+func (m *MockServerContext) AddEvents(tagName string, events map[string]*M.Event) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.EventsMap[tagName] = events
 }
 
 // AddSlots adds slots for a tag name

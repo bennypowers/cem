@@ -49,6 +49,8 @@ type Registry interface {
 	AllTagNames() []string
 	Element(tagName string) (*M.CustomElement, bool)
 	Attributes(tagName string) (map[string]*M.Attribute, bool)
+	Fields(tagName string) (map[string]*M.ClassField, bool)
+	Events(tagName string) (map[string]*M.Event, bool)
 	Slots(tagName string) ([]M.Slot, bool)
 	ElementDefinition(tagName string) (ElementDefinition, bool)
 	FindCustomElementDeclaration(tagName string) *M.CustomElementDeclaration

@@ -55,21 +55,43 @@ func InlayHint(ctx types.ServerContext, context *glsp.Context, params *protocol.
 			continue
 		}
 
-		attrs, exists := ctx.Attributes(elem.TagName)
-		if !exists {
+		attrs, attrsExist := ctx.Attributes(elem.TagName)
+		fields, fieldsExist := ctx.Fields(elem.TagName)
+		events, eventsExist := ctx.Events(elem.TagName)
+		if !attrsExist && !fieldsExist && !eventsExist {
 			continue
 		}
 
-		for attrName, attrMatch := range elem.Attributes {
-			attr, ok := attrs[attrName]
-			if !ok || attr == nil || attr.Type == nil || attr.Type.Text == "" {
+		for _, attrMatch := range elem.Attributes {
+			var typeText string
+
+			switch attrMatch.BindingPrefix {
+			case "@":
+				if events != nil {
+					if event, ok := events[attrMatch.Name]; ok && event.Type != nil {
+						typeText = event.Type.Text
+					}
+				}
+			case ".":
+				if fields != nil {
+					if field, ok := fields[attrMatch.Name]; ok && field.Type != nil {
+						typeText = field.Type.Text
+					}
+				}
+			default:
+				if attr, ok := attrs[attrMatch.Name]; ok && attr != nil && attr.Type != nil {
+					typeText = attr.Type.Text
+				}
+			}
+
+			if typeText == "" {
 				continue
 			}
 
 			typeKind := protocol.InlayHintKindType
 			hints = append(hints, protocol.InlayHint{
 				Position:    attrMatch.Range.End,
-				Label:       fmt.Sprintf(": %s", attr.Type.Text),
+				Label:       fmt.Sprintf(": %s", typeText),
 				Kind:        &typeKind,
 				PaddingLeft: boolPtr(true),
 			})

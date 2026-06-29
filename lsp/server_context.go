@@ -136,6 +136,20 @@ func (s *Server) Attributes(tagName string) (map[string]*M.Attribute, bool) {
 	return s.ephemeralRegistry.Attributes(tagName)
 }
 
+func (s *Server) Fields(tagName string) (map[string]*M.ClassField, bool) {
+	if fields, ok := s.registry.Fields(tagName); ok {
+		return fields, true
+	}
+	return s.ephemeralRegistry.Fields(tagName)
+}
+
+func (s *Server) Events(tagName string) (map[string]*M.Event, bool) {
+	if events, ok := s.registry.Events(tagName); ok {
+		return events, true
+	}
+	return s.ephemeralRegistry.Events(tagName)
+}
+
 func (s *Server) Slots(tagName string) ([]M.Slot, bool) {
 	if slots, ok := s.registry.Slots(tagName); ok {
 		return slots, true
