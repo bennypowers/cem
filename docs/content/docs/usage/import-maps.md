@@ -103,10 +103,10 @@ Look in the HTML source of any demo page:
 
 ### Check server logs
 
-With `--verbose` flag, see import map generation:
+With verbose flags, see import map generation:
 
 ```sh
-cem serve --verbose
+cem serve -vv
 ```
 
 Look for log entries like:

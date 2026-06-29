@@ -184,7 +184,11 @@ serve:
 ```
 
 {{<tip "warning">}}
-Without glob patterns, plain CSS imports won't transform—only imports with `with { type: 'css' }` work. This prevents `<link rel="stylesheet">` tags from breaking unexpectedly.
+Without glob patterns, plain CSS imports won't transform -- only imports with `with { type: 'css' }` work. This prevents `<link rel="stylesheet">` tags from breaking unexpectedly.
+{{</tip>}}
+
+{{<tip>}}
+The dev server warns when it detects a CSS import without `with { type: 'css' }` that is not covered by your glob patterns. If you see this warning, either add the import attribute or configure `serve.transforms.css.include` to cover the file.
 {{</tip>}}
 
 ## Debugging

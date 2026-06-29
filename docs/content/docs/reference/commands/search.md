@@ -151,7 +151,7 @@ The search command also supports all global `cem` options:
 
 - `-p, --package string` - Package specifier or path
 - `--config string` - Config file path
-- `-v, --verbose` - Verbose output
+- `-v, --verbose` - Increase verbosity (`-v` info, `-vv` debug, `-vvv` trace)
 
 ## Workspace Mode
 

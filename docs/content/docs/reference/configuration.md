@@ -508,10 +508,10 @@ serve:
 
 ### Debugging URL Rewrites
 
-Use verbose logging to see path resolution in action:
+Use debug logging to see path resolution in action:
 
 ```sh
-cem serve --verbose
+cem serve -vv
 ```
 
 Look for log messages like:
@@ -682,8 +682,9 @@ These flags can be used with any `cem` command.
 | --------------- | --------------------------------------------------------------------- |
 | `--config`      | Path to a custom config file.                                         |
 | `--package`     | Package specifier: `npm:@scope/package`, URL (`https://cdn.example.com/pkg/`), or local path. |
-| `--verbose`, -v | Enable verbose logging output.                                        |
-| `--help`, -h    | Show help for a command.                                              |
+| `--verbose`, `-v` | Increase verbosity (`-v` info, `-vv` debug, `-vvv` trace).          |
+| `--quiet`, `-q`   | Quiet output (warnings and errors only).                             |
+| `--help`, `-h`    | Show help for a command.                                             |
 
 ### Package Specifier Examples
 
