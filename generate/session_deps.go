@@ -29,11 +29,11 @@ import (
 	"bennypowers.dev/cem/types"
 )
 
-// fileState bundles a file's content hash with the time it was last scanned,
-// so each file tracks its own scan timestamp independently.
+// fileState bundles a file's content hash with the observed ModTime,
+// so change detection compares file metadata against itself rather than wall-clock.
 type fileState struct {
-	hash      [32]byte
-	scannedAt time.Time
+	hash    [32]byte
+	modTime time.Time
 }
 
 // Type aliases for dependency tracking maps
@@ -45,7 +45,7 @@ type CssReverseDepMap map[string][]string
 // Maintains three interconnected dependency maps for efficient change detection:
 //
 // Dependency Relationships:
-// - fileStates: Maps filesystem paths to per-file state (hash + scan time) for change detection
+// - fileStates: Maps filesystem paths to per-file state (hash + modtime) for change detection
 // - moduleDeps: Maps module paths to their ModuleDependencies (what each module imports)
 // - cssDepReverse: Reverse mapping from CSS filesystem paths to modules that depend on them
 //
@@ -67,7 +67,7 @@ type CssReverseDepMap map[string][]string
 // Thread Safety: Protected by sync.RWMutex for concurrent read/write access
 type FileDependencyTracker struct {
 	mu            sync.RWMutex
-	fileStates    FileStateMap        // FS path -> per-file hash + scan time for change detection
+	fileStates    FileStateMap        // FS path -> per-file hash + modtime for change detection
 	moduleDeps    ModuleDependencyMap // Module path -> dependencies (forward mapping)
 	cssDepReverse CssReverseDepMap    // CSS FS path -> module paths that depend on it (reverse mapping)
 	ctx           types.WorkspaceContext
@@ -109,8 +109,7 @@ func (fdt *FileDependencyTracker) UpdateFileHash(fsPath string) ([32]byte, error
 	fdt.mu.RLock()
 	state, exists := fdt.fileStates[fsPath]
 	fdt.mu.RUnlock()
-	if exists && fileInfo.ModTime().Before(state.scannedAt) {
-		// File hasn't changed since its own last scan; return the existing hash
+	if exists && fileInfo.ModTime().Equal(state.modTime) {
 		return state.hash, nil
 	}
 	// Compute the new hash
@@ -130,8 +129,8 @@ func (fdt *FileDependencyTracker) UpdateFileHash(fsPath string) ([32]byte, error
 
 	hash := [32]byte(hasher.Sum(nil))
 	fdt.fileStates[fsPath] = fileState{
-		hash:      hash,
-		scannedAt: time.Now(),
+		hash:    hash,
+		modTime: fileInfo.ModTime(),
 	}
 
 	return hash, nil
