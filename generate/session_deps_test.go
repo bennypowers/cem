@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package generate
 
 import (
+	"sync"
 	"testing"
 	"testing/fstest"
 	"time"
@@ -26,24 +27,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Inline: unit tests for per-file scan time tracking; scalar hash comparisons
-// don't benefit from golden files.
-
-func TestFileDependencyTracker_UpdateFileHash_SharedTimestampBug(t *testing.T) {
-	// Regression: a shared lastScanTime field caused one file's scan to push the
-	// timestamp forward, making a different file's modification appear stale.
-	//
-	// Timeline (wall clock order):
-	//   1. Scan A, scan B              -- both hashed
-	//   2. Modify B on disk            -- new content, ModTime = time of write
-	//   3. Re-scan A (A unchanged)     -- with the bug, this bumps the shared
-	//                                     lastScanTime past B's ModTime
-	//   4. Re-scan B                   -- BUG: B's ModTime < shared lastScanTime
-	//                                     so the tracker returns the stale hash
-	//
-	// Fix: each file tracks its own scannedAt, so scanning A cannot affect B.
-
+func TestFileDependencyTracker_UpdateFileHash_ModTimeBasedCaching(t *testing.T) {
+	// Inline: scalar hash equality checks don't benefit from golden files.
 	t0 := time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC)
+	t1 := t0.Add(time.Second)
 
 	mapFS := &platform.MapFS{
 		MapFS: fstest.MapFS{
@@ -62,47 +49,34 @@ func TestFileDependencyTracker_UpdateFileHash_SharedTimestampBug(t *testing.T) {
 
 	tracker := NewFileDependencyTracker(nil, mapFS)
 
-	// Step 1: Initial scan of both files.
+	// Initial scan of both files.
 	hashA1, err := tracker.UpdateFileHash("src/a.ts")
 	require.NoError(t, err)
 	hashB1, err := tracker.UpdateFileHash("src/b.ts")
 	require.NoError(t, err)
 
-	// Step 2: Modify file B. Give it a ModTime slightly in the future so the
-	// filesystem reports a newer timestamp, but still before time.Now() when
-	// we re-scan A in step 3.
-	time.Sleep(10 * time.Millisecond) // ensure ModTime ordering
-	tMod := time.Now()
+	// Modify B with new modtime.
 	mapFS.MapFS["src/b.ts"] = &fstest.MapFile{
 		Data:    []byte("content-b-v2"),
 		Mode:    0644,
-		ModTime: tMod,
+		ModTime: t1,
 	}
 
-	// Step 3: Touch file A so it needs a rescan (ModTime must be newer than A's
-	// scannedAt). This re-scan sets lastScanTime = time.Now() in the buggy code.
-	time.Sleep(10 * time.Millisecond)
-	mapFS.MapFS["src/a.ts"] = &fstest.MapFile{
-		Data:    []byte("content-a-v1"), // same content
-		Mode:    0644,
-		ModTime: time.Now(),
-	}
+	// Re-scan A (unchanged modtime) -- cached hash returned.
 	hashA2, err := tracker.UpdateFileHash("src/a.ts")
 	require.NoError(t, err)
-	assert.Equal(t, hashA1, hashA2, "file A content unchanged, hash should match")
+	assert.Equal(t, hashA1, hashA2, "same modtime = cached hash")
 
-	// Step 4: Re-scan file B. With the shared-timestamp bug, B's ModTime (tMod)
-	// is before the lastScanTime that A's re-scan just set, so the tracker
-	// incorrectly returns the stale hash.
-	time.Sleep(10 * time.Millisecond)
+	// Re-scan B -- new modtime triggers rehash.
 	hashB2, err := tracker.UpdateFileHash("src/b.ts")
 	require.NoError(t, err)
-	assert.NotEqual(t, hashB1, hashB2,
-		"file B hash should differ after content change; shared scan timestamp leaked from file A")
+	assert.NotEqual(t, hashB1, hashB2, "different modtime = rehash")
 }
 
 func TestFileDependencyTracker_HasFileChanged_PerFileTracking(t *testing.T) {
+	// Inline: boolean changed/unchanged checks don't benefit from golden files.
 	t0 := time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC)
+	t1 := t0.Add(time.Second)
 
 	mapFS := &platform.MapFS{
 		MapFS: fstest.MapFS{
@@ -116,29 +90,93 @@ func TestFileDependencyTracker_HasFileChanged_PerFileTracking(t *testing.T) {
 
 	tracker := NewFileDependencyTracker(nil, mapFS)
 
-	// First check: file is new (no stored hash), should be reported as changed.
+	// New file (no stored hash) reports changed.
 	changed, err := tracker.HasFileChanged("src/x.ts")
 	require.NoError(t, err)
 	assert.True(t, changed, "new file should be reported as changed")
 
-	// Seed the hash via UpdateFileHash (as production callers do after processing).
+	// Seed hash.
 	_, err = tracker.UpdateFileHash("src/x.ts")
 	require.NoError(t, err)
 
-	// Second check without modification: should not be changed.
+	// Same modtime = unchanged.
 	changed, err = tracker.HasFileChanged("src/x.ts")
 	require.NoError(t, err)
 	assert.False(t, changed, "unmodified file should not be reported as changed")
 
-	// Modify the file with a ModTime after the scan time.
-	time.Sleep(10 * time.Millisecond)
+	// New modtime + new content = changed.
 	mapFS.MapFS["src/x.ts"] = &fstest.MapFile{
 		Data:    []byte("modified"),
 		Mode:    0644,
-		ModTime: time.Now(),
+		ModTime: t1,
 	}
 
 	changed, err = tracker.HasFileChanged("src/x.ts")
 	require.NoError(t, err)
 	assert.True(t, changed, "modified file should be reported as changed")
+}
+
+func TestFileDependencyTracker_UpdateFileHash_SameModTimeCachesHash(t *testing.T) {
+	// Inline: scalar hash equality documents design trade-off, not golden-file material.
+	t0 := time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC)
+
+	mapFS := &platform.MapFS{
+		MapFS: fstest.MapFS{
+			"file.ts": &fstest.MapFile{
+				Data:    []byte("original"),
+				Mode:    0644,
+				ModTime: t0,
+			},
+		},
+	}
+
+	tracker := NewFileDependencyTracker(nil, mapFS)
+
+	hash1, err := tracker.UpdateFileHash("file.ts")
+	require.NoError(t, err)
+
+	// Change content but keep same modtime.
+	mapFS.MapFS["file.ts"] = &fstest.MapFile{
+		Data:    []byte("modified"),
+		Mode:    0644,
+		ModTime: t0,
+	}
+
+	hash2, err := tracker.UpdateFileHash("file.ts")
+	require.NoError(t, err)
+	assert.Equal(t, hash1, hash2,
+		"same modtime returns cached hash; content-only changes with preserved mtime are not detected")
+}
+
+func TestFileDependencyTracker_UpdateFileHash_Concurrent(t *testing.T) {
+	// Inline: verifying all goroutines return identical hashes is a scalar check.
+	t0 := time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC)
+
+	mapFS := &platform.MapFS{
+		MapFS: fstest.MapFS{
+			"file.ts": &fstest.MapFile{
+				Data:    []byte("content"),
+				Mode:    0644,
+				ModTime: t0,
+			},
+		},
+	}
+
+	tracker := NewFileDependencyTracker(nil, mapFS)
+
+	var wg sync.WaitGroup
+	hashes := make([][32]byte, 10)
+	errs := make([]error, 10)
+
+	for i := range 10 {
+		wg.Go(func() {
+			hashes[i], errs[i] = tracker.UpdateFileHash("file.ts")
+		})
+	}
+	wg.Wait()
+
+	for i := range 10 {
+		require.NoError(t, errs[i])
+		assert.Equal(t, hashes[0], hashes[i], "concurrent calls should return same hash")
+	}
 }
