@@ -99,11 +99,11 @@
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;code>--quiet&lt;/code>, &lt;code>-q&lt;/code>&lt;/td>
- &lt;td>Quiet output (only warnings and errors)&lt;/td>
+ &lt;td>Quiet output (warnings and errors only)&lt;/td>
  &lt;/tr>
  &lt;tr>
  &lt;td>&lt;code>--verbose&lt;/code>, &lt;code>-v&lt;/code>&lt;/td>
- &lt;td>Verbose logging output&lt;/td>
+ &lt;td>Increase verbosity (&lt;code>-v&lt;/code> info, &lt;code>-vv&lt;/code> debug, &lt;code>-vvv&lt;/code> trace)&lt;/td>
  &lt;/tr>
  &lt;/tbody>
 &lt;/table>
@@ -112,7 +112,50 @@
 
 &lt;code-highlighter>
  &lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">cem serve&lt;/span>&lt;/span>&lt;/code>&lt;/pre>
-&lt;/code-highlighter>&lt;p>Starts the server on &lt;code>http://localhost:8000&lt;/code>.&lt;/p></description></item><item><title>Export</title><link>https://bennypowers.dev/cem/docs/reference/commands/export/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/export/</guid><description>&lt;p>Generates framework-specific wrapper components (React, Vue, Angular) from a custom-elements manifest. The generated wrappers provide native framework DX with compile-time type checking and IDE autocomplete.&lt;/p>
+&lt;/code-highlighter>&lt;p>Starts the server on &lt;code>http://localhost:8000&lt;/code>.&lt;/p></description></item><item><title>Config</title><link>https://bennypowers.dev/cem/docs/reference/commands/config/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/config/</guid><description>&lt;info-callout type="info">
+ &lt;template shadowrootmode="open">
+ &lt;style>
+ #content {
+ display: block;
+ margin: 1rem 0;
+ border-radius: 0.5rem;
+ background: var(--color-accent);
+ border-left: 4px solid var(--callout-color);
+ overflow: hidden;
+
+ &amp;.info { --callout-color: var(--color-theme); }
+ &amp;.warning { --callout-color: #fbbf24; }
+ &amp;.error { --callout-color: #ef4444; }
+ &amp;.success { --callout-color: #10b981; }
+
+ .inner {
+ padding: 1rem;
+ color: var(--color-text);
+
+ ::slotted(*:first-child) {
+ margin-top: 0;
+ }
+
+ ::slotted(*:last-child) {
+ margin-bottom: 0;
+ }
+ }
+ }
+ &lt;/style>
+
+ &lt;div id="content" class="info" part="callout">
+ &lt;div class="inner" part="content">
+ &lt;slot>&lt;/slot>
+ &lt;/div>
+ &lt;/div>
+ &lt;/template>
+
+ &lt;strong>TL;DR&lt;/strong>: Use &lt;code>cem config init&lt;/code> to set up a new project, &lt;code>cem config show&lt;/code> to see your resolved config, &lt;code>cem config validate&lt;/code> to check for problems, and &lt;code>cem config mcp&lt;/code> to generate MCP snippets for your AI tools.
+&lt;/info-callout>
+
+&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
+
+&lt;p>The &lt;code>cem config&lt;/code> command group helps you create, inspect, and validate CEM configuration files.&lt;/p></description></item><item><title>Export</title><link>https://bennypowers.dev/cem/docs/reference/commands/export/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/export/</guid><description>&lt;p>Generates framework-specific wrapper components (React, Vue, Angular) from a custom-elements manifest. The generated wrappers provide native framework DX with compile-time type checking and IDE autocomplete.&lt;/p>
 &lt;h2 id="syntax">Syntax&lt;/h2>
 
 &lt;code-highlighter>

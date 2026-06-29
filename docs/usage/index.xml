@@ -478,7 +478,7 @@ component knowledge you document for humans.&lt;/p></description></item><item><t
 &lt;p>Make sure your glob pattern matches your files:&lt;/p>
 
 &lt;code-highlighter>
- &lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">cem generate --verbose&lt;/span>&lt;/span>&lt;/code>&lt;/pre>
+ &lt;pre tabindex="0" class="chroma">&lt;code class="language-sh" data-lang="sh">&lt;span class="line">&lt;span class="cl">cem generate -v&lt;/span>&lt;/span>&lt;/code>&lt;/pre>
 &lt;/code-highlighter>&lt;p>Check the &lt;code>.config/cem.yaml&lt;/code> &lt;code>generate.files&lt;/code> glob pattern matches your source files.&lt;/p>
 &lt;h2 id="component-not-showing-in-dev-server">Component not showing in dev server&lt;/h2>
 &lt;ol>
