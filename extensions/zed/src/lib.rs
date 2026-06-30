@@ -29,13 +29,9 @@ impl zed::Extension for CemExtension {
     fn context_server_command(
         &mut self,
         _context_server_id: &ContextServerId,
-        project: &zed::Project,
+        _project: &zed::Project,
     ) -> Result<zed::Command> {
-        let worktree = project
-            .worktrees()
-            .first()
-            .ok_or_else(|| "no worktree found".to_string())?;
-        let binary_path = self.cem_binary(&worktree)?;
+        let binary_path = self.cem_binary_from_cache_or_download()?;
 
         Ok(zed::Command {
             command: binary_path,
@@ -70,9 +66,11 @@ impl CemExtension {
         Ok(binary_path)
     }
 
-    fn cem_binary(&mut self, worktree: &zed::Worktree) -> Result<String> {
-        if let Some(path) = self.cem_binary_cached(worktree) {
-            return Ok(path);
+    fn cem_binary_from_cache_or_download(&mut self) -> Result<String> {
+        if let Some(path) = &self.cached_binary_path {
+            if fs::metadata(path).map_or(false, |stat| stat.is_file()) {
+                return Ok(path.clone());
+            }
         }
         self.download_cem_binary()
     }
