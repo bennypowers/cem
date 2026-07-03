@@ -95,13 +95,22 @@ func (*cssPropertyDefaultChangedRule) Check(base, head map[string]*M.CustomEleme
 			if !ok {
 				continue
 			}
-			if baseProp.Default != "" && headProp.Default != "" && baseProp.Default != headProp.Default {
+			if baseProp.Default != headProp.Default {
+				var msg string
+				switch {
+				case baseProp.Default != "" && headProp.Default != "":
+					msg = fmt.Sprintf("CSS custom property %q default changed from %s to %s in <%s>", baseProp.Name, baseProp.Default, headProp.Default, tag)
+				case baseProp.Default != "":
+					msg = fmt.Sprintf("CSS custom property %q default %s removed in <%s>", baseProp.Name, baseProp.Default, tag)
+				default:
+					msg = fmt.Sprintf("CSS custom property %q default set to %s in <%s>", baseProp.Name, headProp.Default, tag)
+				}
 				changes = append(changes, Change{
 					Rule:     "css-custom-property-default-changed",
 					Severity: Dangerous,
 					Element:  tag,
 					Subject:  baseProp.Name,
-					Message:  fmt.Sprintf("CSS custom property %q default changed from %s to %s in <%s>", baseProp.Name, baseProp.Default, headProp.Default, tag),
+					Message:  msg,
 				})
 			}
 		}

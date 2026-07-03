@@ -16,7 +16,7 @@ No breaking changes detected.
 | Element | Change |
 |---------|--------|
 {{- range $items}}
-| `<{{.Element}}>` | {{.Message}} |
+| `<{{.Element}}>` | {{escapeCell .Message}} |
 {{- end}}
 {{- end}}{{end}}
 {{- end}}

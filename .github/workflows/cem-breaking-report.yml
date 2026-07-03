@@ -36,6 +36,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup cem
         uses: bennypowers/cem/.github/actions/setup-cem@main
@@ -46,6 +47,7 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Generate breaking change report
+        id: breaking
         uses: bennypowers/cem/.github/actions/pr-breaking-report@main
         with:
           package-path: ${{ inputs.package-path || '.' }}

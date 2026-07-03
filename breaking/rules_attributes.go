@@ -126,13 +126,22 @@ func (*attributeDefaultChangedRule) Check(base, head map[string]*M.CustomElement
 			if !ok {
 				continue
 			}
-			if baseAttr.Default != "" && headAttr.Default != "" && baseAttr.Default != headAttr.Default {
+			if baseAttr.Default != headAttr.Default {
+				var msg string
+				switch {
+				case baseAttr.Default != "" && headAttr.Default != "":
+					msg = fmt.Sprintf("attribute %q default changed from %s to %s in <%s>", baseAttr.Name, baseAttr.Default, headAttr.Default, tag)
+				case baseAttr.Default != "":
+					msg = fmt.Sprintf("attribute %q default %s removed in <%s>", baseAttr.Name, baseAttr.Default, tag)
+				default:
+					msg = fmt.Sprintf("attribute %q default set to %s in <%s>", baseAttr.Name, headAttr.Default, tag)
+				}
 				changes = append(changes, Change{
 					Rule:     "attribute-default-changed",
 					Severity: Dangerous,
 					Element:  tag,
 					Subject:  baseAttr.Name,
-					Message:  fmt.Sprintf("attribute %q default changed from %s to %s in <%s>", baseAttr.Name, baseAttr.Default, headAttr.Default, tag),
+					Message:  msg,
 				})
 			}
 		}

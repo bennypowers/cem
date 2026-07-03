@@ -11,7 +11,7 @@
 | Element | Change |
 |---------|--------|
 | `<my-element>` | event "change" type changed from CustomEvent to Event in <my-element> |
-| `<my-element>` | method "doStuff" parameters changed from (name: string) to (name: string, value: number) in <my-element> |
+| `<my-element>` | method "doStuff" parameters changed from (string) to (string, number) in <my-element> |
 | `<my-element>` | method "doStuff" return type changed from void to Promise<void> in <my-element> |
 | `<my-element>` | slot "header" removed from <my-element> |
 

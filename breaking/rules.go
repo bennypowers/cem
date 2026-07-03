@@ -48,6 +48,7 @@ func AllRules() []BreakingRule {
 		&methodReturnTypeChangedRule{},
 		&methodParameterChangedRule{},
 		&fieldRemovedRule{},
+		&fieldAddedRule{},
 		&fieldTypeChangedRule{},
 	}
 }

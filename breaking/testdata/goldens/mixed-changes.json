@@ -12,7 +12,7 @@
       "severity": "breaking",
       "element": "my-element",
       "subject": "doStuff",
-      "message": "method \"doStuff\" parameters changed from (name: string) to (name: string, value: number) in \u003cmy-element\u003e"
+      "message": "method \"doStuff\" parameters changed from (string) to (string, number) in \u003cmy-element\u003e"
     },
     {
       "rule": "method-return-type-changed",

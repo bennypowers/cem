@@ -109,8 +109,8 @@ cem breaking --disable css-custom-property-removed --disable slot-removed
 
 | Code | Meaning |
 |------|---------|
-| 0 | No breaking changes (or `--fail-on` not triggered) |
-| 1 | Breaking changes detected (when `--fail-on` is set) |
+| 0 | No breaking changes (or `--fail-on` threshold not reached) |
+| 1 | Changes detected at or above `--fail-on` severity (breaking or dangerous) |
 | 2 | Input error (missing files, invalid manifests, etc.) |
 
 ## Configuration

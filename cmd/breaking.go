@@ -47,7 +47,15 @@ in component APIs. Changes are classified as breaking, dangerous, or safe.
 When given two file arguments, compares them directly. When given --base
 (and optionally --head), resolves manifests from git refs. With no arguments,
 auto-detects the baseline from the latest semver tag.`,
-	Args:         cobra.MaximumNArgs(2),
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 1 {
+			return fmt.Errorf("expected 0 or 2 manifest files, got 1")
+		}
+		if len(args) > 2 {
+			return fmt.Errorf("expected at most 2 manifest files, got %d", len(args))
+		}
+		return nil
+	},
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		format, _ := cmd.Flags().GetString("format")
@@ -67,6 +75,16 @@ auto-detects the baseline from the latest semver tag.`,
 		allDisabled := make([]string, 0, len(configDisabled)+len(disableFlags))
 		allDisabled = append(allDisabled, configDisabled...)
 		allDisabled = append(allDisabled, disableFlags...)
+
+		validRules := make(map[string]bool)
+		for _, r := range breaking.AllRules() {
+			validRules[r.ID()] = true
+		}
+		for _, id := range allDisabled {
+			if !validRules[id] {
+				return fmt.Errorf("unknown breaking rule %q; run 'cem breaking --help' for available rules", id)
+			}
+		}
 
 		var basePkg, headPkg *M.Package
 		var err error

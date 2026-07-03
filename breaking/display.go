@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 	"text/template"
 
 	lipgloss "charm.land/lipgloss/v2"
@@ -101,6 +102,9 @@ func printResultText(w io.Writer, result *Result) error {
 }
 
 var markdownTmpl = template.Must(template.New("report").Funcs(template.FuncMap{
+	"escapeCell": func(s string) string {
+		return strings.ReplaceAll(s, "|", "\\|")
+	},
 	"severities": func() []Severity {
 		return []Severity{Breaking, Dangerous, Safe}
 	},

@@ -10,14 +10,21 @@ BASE_REF="${GITHUB_BASE_REF:-main}"
 git fetch origin "$BASE_REF" --depth=1 2>/dev/null || true
 
 # shellcheck disable=SC2086
-if cem breaking -p "$PACKAGE_PATH" \
+rc=0
+cem breaking -p "$PACKAGE_PATH" \
   --base "origin/${BASE_REF}" \
-  --format markdown $BREAKING_ARGS > breaking_report.md; then
-  # No breaking changes -- check if the report is empty/trivial
-  if grep -q 'No breaking changes detected' breaking_report.md; then
-    printf '### Breaking Change Report\n\nNo breaking changes detected.\n' > breaking_report.md
+  --format markdown $BREAKING_ARGS > breaking_report.md || rc=$?
+
+if [ "$rc" -ne 0 ]; then
+  if [ -s breaking_report.md ] && grep -q '### Breaking Change Report' breaking_report.md; then
+    # --fail-on threshold hit: report was generated, non-zero exit is expected
+    true
+  else
+    echo "cem breaking failed with exit code $rc" >&2
+    exit "$rc"
   fi
-else
-  # cem breaking may exit non-zero from --fail-on; the report is still valid
-  true
+fi
+
+if grep -q 'No breaking changes detected' breaking_report.md; then
+  printf '### Breaking Change Report\n\nNo breaking changes detected.\n' > breaking_report.md
 fi

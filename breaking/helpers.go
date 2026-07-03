@@ -40,6 +40,13 @@ func typeText(t *M.Type) string {
 	return t.Text
 }
 
+func returnTypeText(m *M.ClassMethod) string {
+	if m.Return == nil {
+		return ""
+	}
+	return typeText(m.Return.Type)
+}
+
 func isPublic(privacy M.Privacy) bool {
 	return privacy == "" || privacy == M.Public
 }

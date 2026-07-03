@@ -53,11 +53,7 @@ func publicFields(ced *M.CustomElementDeclaration) map[string]*M.ClassField {
 func paramSignature(m *M.ClassMethod) string {
 	var params []string
 	for _, p := range m.Parameters {
-		s := p.Name
-		if p.Type != nil && p.Type.Text != "" {
-			s += ": " + p.Type.Text
-		}
-		params = append(params, s)
+		params = append(params, typeText(p.Type))
 	}
 	return "(" + strings.Join(params, ", ") + ")"
 }
@@ -135,14 +131,8 @@ func (*methodReturnTypeChangedRule) Check(base, head map[string]*M.CustomElement
 			if !ok {
 				continue
 			}
-			baseReturn := ""
-			headReturn := ""
-			if baseMethod.Return != nil && baseMethod.Return.Type != nil {
-				baseReturn = baseMethod.Return.Type.Text
-			}
-			if headMethod.Return != nil && headMethod.Return.Type != nil {
-				headReturn = headMethod.Return.Type.Text
-			}
+			baseReturn := returnTypeText(baseMethod)
+			headReturn := returnTypeText(headMethod)
 			if baseReturn != "" && headReturn != "" && baseReturn != headReturn {
 				changes = append(changes, Change{
 					Rule:     "method-return-type-changed",
@@ -212,6 +202,33 @@ func (*fieldRemovedRule) Check(base, head map[string]*M.CustomElementDeclaration
 					Element:  tag,
 					Subject:  name,
 					Message:  fmt.Sprintf("field %q removed from <%s>", name, tag),
+				})
+			}
+		}
+	}
+	return changes
+}
+
+type fieldAddedRule struct{}
+
+func (*fieldAddedRule) ID() string { return "field-added" }
+
+func (*fieldAddedRule) Check(base, head map[string]*M.CustomElementDeclaration) []Change {
+	var changes []Change
+	for tag, headEl := range head {
+		baseEl, ok := base[tag]
+		if !ok {
+			continue
+		}
+		baseFields := publicFields(baseEl)
+		for name := range publicFields(headEl) {
+			if _, ok := baseFields[name]; !ok {
+				changes = append(changes, Change{
+					Rule:     "field-added",
+					Severity: Safe,
+					Element:  tag,
+					Subject:  name,
+					Message:  fmt.Sprintf("field %q added to <%s>", name, tag),
 				})
 			}
 		}

@@ -173,6 +173,7 @@ func param(name string, typeText string) M.Parameter {
 	return p
 }
 
+// Tier 1 pure-function tests: inline assertions validate individual rule logic
 func TestElementRules(t *testing.T) {
 	t.Run("element-removed", func(t *testing.T) {
 		base := makeElements(ced("my-element"))
@@ -419,6 +420,14 @@ func TestMemberRules(t *testing.T) {
 		)))
 		changes := findRule("method-parameter-changed").Check(base, head)
 		assert.Empty(t, changes)
+	})
+
+	t.Run("field-added", func(t *testing.T) {
+		base := makeElements(ced("my-el"))
+		head := makeElements(ced("my-el", withMembers(field("value", M.Public, "string"))))
+		changes := findRule("field-added").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Safe, changes[0].Severity)
 	})
 
 	t.Run("field-removed", func(t *testing.T) {

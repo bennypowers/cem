@@ -17,9 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package breaking
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIsSemverTag(t *testing.T) {
@@ -48,4 +50,24 @@ func TestIsSemverTag(t *testing.T) {
 			assert.Equal(t, tt.want, isSemverTag(tt.tag))
 		})
 	}
+}
+
+func TestResolveGitPath(t *testing.T) {
+	// inline assertions: testing path resolution logic with real git repo
+	root, err := gitTopLevel(".")
+	require.NoError(t, err)
+
+	t.Run("relative path", func(t *testing.T) {
+		got, err := resolveGitPath(".", "custom-elements.json")
+		require.NoError(t, err)
+		assert.NotEmpty(t, got)
+		assert.NotContains(t, got, root)
+	})
+
+	t.Run("absolute path within repo", func(t *testing.T) {
+		absPath := filepath.Join(root, "custom-elements.json")
+		got, err := resolveGitPath(".", absPath)
+		require.NoError(t, err)
+		assert.Equal(t, "custom-elements.json", got)
+	})
 }

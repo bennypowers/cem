@@ -17,30 +17,31 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package breaking
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	M "bennypowers.dev/cem/manifest"
 )
 
 func ResolveManifestFromGit(ref, manifestPath, workDir string) (*M.Package, error) {
-	gitPath := manifestPath
-	if workDir != "" {
-		rel, err := relativeToGitRoot(workDir, manifestPath)
-		if err == nil && rel != "" {
-			gitPath = rel
-		}
+	gitPath, err := resolveGitPath(workDir, manifestPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve manifest path: %w", err)
 	}
 
-	gitCmd := exec.Command("git", "show", ref+":"+gitPath)
+	var stderr bytes.Buffer
+	gitCmd := exec.Command("git", "show", "--", ref+":"+gitPath)
+	gitCmd.Stderr = &stderr
 	if workDir != "" {
 		gitCmd.Dir = workDir
 	}
 	out, err := gitCmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read manifest at %s from git ref %q: %w", gitPath, ref, err)
+		return nil, fmt.Errorf("failed to read manifest at %s from git ref %q: %w\n%s", gitPath, ref, err, stderr.String())
 	}
 
 	var pkg M.Package
@@ -52,13 +53,15 @@ func ResolveManifestFromGit(ref, manifestPath, workDir string) (*M.Package, erro
 }
 
 func FindLatestSemverTag(workDir string) (string, error) {
+	var stderr bytes.Buffer
 	gitCmd := exec.Command("git", "tag", "--list", "--sort=-v:refname")
+	gitCmd.Stderr = &stderr
 	if workDir != "" {
 		gitCmd.Dir = workDir
 	}
 	out, err := gitCmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to list git tags: %w", err)
+		return "", fmt.Errorf("failed to list git tags: %w\n%s", err, stderr.String())
 	}
 
 	for line := range strings.SplitSeq(strings.TrimSpace(string(out)), "\n") {
@@ -94,16 +97,45 @@ func isSemverTag(tag string) bool {
 	return true
 }
 
+func resolveGitPath(workDir, manifestPath string) (string, error) {
+	if !filepath.IsAbs(manifestPath) {
+		return relativeToGitRoot(workDir, manifestPath)
+	}
+	root, err := gitTopLevel(workDir)
+	if err != nil {
+		return "", err
+	}
+	rel, err := filepath.Rel(root, manifestPath)
+	if err != nil {
+		return "", fmt.Errorf("manifest path %s is outside git root %s", manifestPath, root)
+	}
+	return filepath.ToSlash(rel), nil
+}
+
 func relativeToGitRoot(workDir, path string) (string, error) {
+	var stderr bytes.Buffer
 	gitCmd := exec.Command("git", "rev-parse", "--show-prefix")
+	gitCmd.Stderr = &stderr
 	gitCmd.Dir = workDir
 	out, err := gitCmd.Output()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to get git prefix: %w\n%s", err, stderr.String())
 	}
 	prefix := strings.TrimSpace(string(out))
 	if prefix == "" {
 		return path, nil
 	}
 	return prefix + path, nil
+}
+
+func gitTopLevel(workDir string) (string, error) {
+	gitCmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	if workDir != "" {
+		gitCmd.Dir = workDir
+	}
+	out, err := gitCmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get git root: %w", err)
+	}
+	return strings.TrimSpace(string(out)), nil
 }
