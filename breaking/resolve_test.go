@@ -60,8 +60,7 @@ func TestResolveGitPath(t *testing.T) {
 	t.Run("relative path", func(t *testing.T) {
 		got, err := resolveGitPath(".", "custom-elements.json")
 		require.NoError(t, err)
-		assert.NotEmpty(t, got)
-		assert.NotContains(t, got, root)
+		assert.Equal(t, "breaking/custom-elements.json", got)
 	})
 
 	t.Run("absolute path within repo", func(t *testing.T) {
