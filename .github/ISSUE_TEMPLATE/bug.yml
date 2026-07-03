@@ -1,0 +1,91 @@
+name: Bug Report
+description: Report a bug in cem
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please fill out the sections below so we can reproduce and fix it.
+
+  - type: input
+    id: version
+    attributes:
+      label: cem version
+      description: Output of `cem version`
+      placeholder: "0.11.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: subcommand
+    attributes:
+      label: Subcommand
+      description: Which cem subcommand were you running?
+      options:
+        - analyze
+        - validate
+        - serve
+        - lsp
+        - mcp
+        - config
+        - don't know / other / n/a
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug. What did you **expect** vs what **actually** happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: |
+        Minimal steps to reproduce the bug. Include the command you ran
+        and any relevant file contents (component source, manifest, config).
+      placeholder: |
+        1. Create a file `my-element.ts` with this content: ...
+        2. Run `cem analyze`
+        3. See error ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: manifest
+    attributes:
+      label: Relevant manifest snippet
+      description: If applicable, paste the relevant portion of your custom-elements.json.
+      render: json
+
+  - type: textarea
+    id: config
+    attributes:
+      label: cem config
+      description: If applicable, paste output of `cem config show`.
+      render: yaml
+
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: "macOS 15.1 / Ubuntu 24.04 / Windows 11"
+    validations:
+      required: true
+
+  - type: input
+    id: editor
+    attributes:
+      label: Editor / IDE
+      description: If this is an LSP or editor integration issue
+      placeholder: "VS Code 1.96, Zed 0.170, Neovim 0.10"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / error output
+      description: Paste any error messages or logs. Use `-vv` for debug output.
+      render: text
