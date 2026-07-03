@@ -155,7 +155,50 @@
 
 &lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
 
-&lt;p>The &lt;code>cem config&lt;/code> command group helps you create, inspect, and validate CEM configuration files.&lt;/p></description></item><item><title>Export</title><link>https://bennypowers.dev/cem/docs/reference/commands/export/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/export/</guid><description>&lt;p>Generates framework-specific wrapper components (React, Vue, Angular) from a custom-elements manifest. The generated wrappers provide native framework DX with compile-time type checking and IDE autocomplete.&lt;/p>
+&lt;p>The &lt;code>cem config&lt;/code> command group helps you create, inspect, and validate CEM configuration files.&lt;/p></description></item><item><title>Breaking</title><link>https://bennypowers.dev/cem/docs/reference/commands/breaking/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/breaking/</guid><description>&lt;info-callout type="info">
+ &lt;template shadowrootmode="open">
+ &lt;style>
+ #content {
+ display: block;
+ margin: 1rem 0;
+ border-radius: 0.5rem;
+ background: var(--color-accent);
+ border-left: 4px solid var(--callout-color);
+ overflow: hidden;
+
+ &amp;.info { --callout-color: var(--color-theme); }
+ &amp;.warning { --callout-color: #fbbf24; }
+ &amp;.error { --callout-color: #ef4444; }
+ &amp;.success { --callout-color: #10b981; }
+
+ .inner {
+ padding: 1rem;
+ color: var(--color-text);
+
+ ::slotted(*:first-child) {
+ margin-top: 0;
+ }
+
+ ::slotted(*:last-child) {
+ margin-bottom: 0;
+ }
+ }
+ }
+ &lt;/style>
+
+ &lt;div id="content" class="info" part="callout">
+ &lt;div class="inner" part="content">
+ &lt;slot>&lt;/slot>
+ &lt;/div>
+ &lt;/div>
+ &lt;/template>
+
+ &lt;strong>TL;DR&lt;/strong>: Run &lt;code>cem breaking&lt;/code> to detect breaking API changes between manifest versions. Use &lt;code>--fail-on breaking&lt;/code> in CI to block breaking changes, &lt;code>--format markdown&lt;/code> for PR comments.
+&lt;/info-callout>
+
+&lt;script type="module" src="https://bennypowers.dev/cem/js/info-callout.js">&lt;/script>
+
+&lt;p>The &lt;code>cem breaking&lt;/code> command compares two &lt;code>custom-elements.json&lt;/code> manifests and detects breaking changes in component APIs. Changes are classified as &lt;strong>breaking&lt;/strong>, &lt;strong>dangerous&lt;/strong>, or &lt;strong>safe&lt;/strong>.&lt;/p></description></item><item><title>Export</title><link>https://bennypowers.dev/cem/docs/reference/commands/export/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://bennypowers.dev/cem/docs/reference/commands/export/</guid><description>&lt;p>Generates framework-specific wrapper components (React, Vue, Angular) from a custom-elements manifest. The generated wrappers provide native framework DX with compile-time type checking and IDE autocomplete.&lt;/p>
 &lt;h2 id="syntax">Syntax&lt;/h2>
 
 &lt;code-highlighter>
