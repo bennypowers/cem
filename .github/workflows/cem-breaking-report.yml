@@ -1,0 +1,84 @@
+name: Breaking Change Report
+
+on:
+  workflow_call:
+    inputs:
+      package-path:
+        description: "Path to the package"
+        type: string
+        default: "."
+      cem-version:
+        description: "cem version to install (semver, without v prefix). If empty, reads from package.json or uses latest."
+        type: string
+        default: ""
+      fail-on:
+        description: "Exit 1 if changes at this severity or above: breaking or dangerous"
+        type: string
+        default: ""
+      generate-args:
+        description: "Additional arguments for cem generate"
+        type: string
+        default: ""
+      breaking-args:
+        description: "Additional arguments for cem breaking"
+        type: string
+        default: ""
+
+jobs:
+  breaking:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup cem
+        uses: bennypowers/cem/.github/actions/setup-cem@main
+        with:
+          package-path: ${{ inputs.package-path || '.' }}
+          cem-version: ${{ inputs.cem-version }}
+          generate-args: ${{ inputs.generate-args }}
+          github-token: ${{ github.token }}
+
+      - name: Generate breaking change report
+        uses: bennypowers/cem/.github/actions/pr-breaking-report@main
+        with:
+          package-path: ${{ inputs.package-path || '.' }}
+          breaking-args: ${{ inputs.breaking-args }}
+
+      - name: Log breaking report
+        run: cat breaking_report.md
+
+      - name: Find previous breaking comment
+        id: find-comment
+        uses: peter-evans/find-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "### Breaking Change Report"
+
+      - name: Post or update breaking comment
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-file: breaking_report.md
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace
+
+      - name: Check fail-on threshold
+        if: inputs.fail-on != ''
+        env:
+          PKG_PATH: ${{ inputs.package-path || '.' }}
+          FAIL_ON: ${{ inputs.fail-on }}
+          BREAKING_ARGS: ${{ inputs.breaking-args }}
+        run: |
+          # shellcheck disable=SC2086
+          cem breaking -p "$PKG_PATH" \
+            --base "origin/${GITHUB_BASE_REF:-main}" \
+            --fail-on "$FAIL_ON" \
+            --format text $BREAKING_ARGS > /dev/null

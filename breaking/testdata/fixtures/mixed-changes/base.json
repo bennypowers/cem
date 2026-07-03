@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "tagName": "my-element",
+          "name": "MyElement",
+          "attributes": [
+            { "name": "variant", "type": { "text": "string" } }
+          ],
+          "slots": [
+            { "name": "header" },
+            { "name": "" }
+          ],
+          "events": [
+            { "name": "change", "type": { "text": "CustomEvent" } }
+          ],
+          "cssProperties": [
+            { "name": "--bg-color", "default": "white" }
+          ],
+          "cssParts": [
+            { "name": "button" }
+          ],
+          "members": [
+            {
+              "kind": "method",
+              "name": "doStuff",
+              "privacy": "public",
+              "parameters": [
+                { "name": "name", "type": { "text": "string" } }
+              ],
+              "return": { "type": { "text": "void" } }
+            },
+            {
+              "kind": "field",
+              "name": "value",
+              "privacy": "public",
+              "type": { "text": "string" }
+            }
+          ]
+        }
+      ],
+      "exports": []
+    }
+  ]
+}

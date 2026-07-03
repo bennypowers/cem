@@ -1,0 +1,13 @@
+{
+  "changes": [
+    {
+      "rule": "element-removed",
+      "severity": "breaking",
+      "element": "my-element",
+      "message": "element \u003cmy-element\u003e removed"
+    }
+  ],
+  "breaking": 1,
+  "dangerous": 0,
+  "safe": 0
+}

@@ -1,0 +1,18 @@
+Breaking Changes (4)
+  ✗ event "change" type changed from CustomEvent to Event in <my-element>
+  ✗ method "doStuff" parameters changed from (name: string) to (name: string, value: number) in <my-element>
+  ✗ method "doStuff" return type changed from void to Promise<void> in <my-element>
+  ✗ slot "header" removed from <my-element>
+
+Dangerous Changes (2)
+  ⚠ CSS custom property "--bg-color" default changed from white to black in <my-element>
+  ⚠ field "value" type changed from string to number in <my-element>
+
+Safe Changes (6)
+  ✓ attribute "color" added to <my-element>
+  ✓ CSS custom property "--text-color" added to <my-element>
+  ✓ CSS part "icon" added to <my-element>
+  ✓ event "input" added to <my-element>
+  ✓ method "reset" added to <my-element>
+  ✓ element <new-element> added
+

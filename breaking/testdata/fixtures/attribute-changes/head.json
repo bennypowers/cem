@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "tagName": "my-element",
+          "name": "MyElement",
+          "attributes": [
+            { "name": "size", "type": { "text": "number" }, "default": "\"large\"" },
+            { "name": "disabled", "type": { "text": "boolean" } },
+            { "name": "color", "type": { "text": "string" } }
+          ]
+        }
+      ],
+      "exports": []
+    }
+  ]
+}

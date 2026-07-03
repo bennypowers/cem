@@ -1,0 +1,90 @@
+{
+  "changes": [
+    {
+      "rule": "event-type-changed",
+      "severity": "breaking",
+      "element": "my-element",
+      "subject": "change",
+      "message": "event \"change\" type changed from CustomEvent to Event in \u003cmy-element\u003e"
+    },
+    {
+      "rule": "method-parameter-changed",
+      "severity": "breaking",
+      "element": "my-element",
+      "subject": "doStuff",
+      "message": "method \"doStuff\" parameters changed from (name: string) to (name: string, value: number) in \u003cmy-element\u003e"
+    },
+    {
+      "rule": "method-return-type-changed",
+      "severity": "breaking",
+      "element": "my-element",
+      "subject": "doStuff",
+      "message": "method \"doStuff\" return type changed from void to Promise\u003cvoid\u003e in \u003cmy-element\u003e"
+    },
+    {
+      "rule": "slot-removed",
+      "severity": "breaking",
+      "element": "my-element",
+      "subject": "header",
+      "message": "slot \"header\" removed from \u003cmy-element\u003e"
+    },
+    {
+      "rule": "css-custom-property-default-changed",
+      "severity": "dangerous",
+      "element": "my-element",
+      "subject": "--bg-color",
+      "message": "CSS custom property \"--bg-color\" default changed from white to black in \u003cmy-element\u003e"
+    },
+    {
+      "rule": "field-type-changed",
+      "severity": "dangerous",
+      "element": "my-element",
+      "subject": "value",
+      "message": "field \"value\" type changed from string to number in \u003cmy-element\u003e"
+    },
+    {
+      "rule": "attribute-added",
+      "severity": "safe",
+      "element": "my-element",
+      "subject": "color",
+      "message": "attribute \"color\" added to \u003cmy-element\u003e"
+    },
+    {
+      "rule": "css-custom-property-added",
+      "severity": "safe",
+      "element": "my-element",
+      "subject": "--text-color",
+      "message": "CSS custom property \"--text-color\" added to \u003cmy-element\u003e"
+    },
+    {
+      "rule": "css-part-added",
+      "severity": "safe",
+      "element": "my-element",
+      "subject": "icon",
+      "message": "CSS part \"icon\" added to \u003cmy-element\u003e"
+    },
+    {
+      "rule": "event-added",
+      "severity": "safe",
+      "element": "my-element",
+      "subject": "input",
+      "message": "event \"input\" added to \u003cmy-element\u003e"
+    },
+    {
+      "rule": "method-added",
+      "severity": "safe",
+      "element": "my-element",
+      "subject": "reset",
+      "message": "method \"reset\" added to \u003cmy-element\u003e"
+    },
+    {
+      "rule": "element-added",
+      "severity": "safe",
+      "element": "new-element",
+      "message": "element \u003cnew-element\u003e added"
+    }
+  ],
+  "breaking": 4,
+  "dangerous": 2,
+  "safe": 6
+}

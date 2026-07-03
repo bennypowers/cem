@@ -36,6 +36,7 @@ type DemosConfig = IC.DemosConfig
 type URLRewrite = IC.URLRewrite
 type FrameworkExportConfig = IC.FrameworkExportConfig
 type HealthConfig = IC.HealthConfig
+type BreakingConfig = IC.BreakingConfig
 
 // Validate validates the configuration and returns an error if invalid.
 func Validate(c *CemConfig) error {

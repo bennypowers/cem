@@ -1,0 +1,10 @@
+Breaking Changes (2)
+  ✗ attribute "variant" removed from <my-element>
+  ✗ attribute "size" type changed from string to number in <my-element>
+
+Dangerous Changes (1)
+  ⚠ attribute "size" default changed from "medium" to "large" in <my-element>
+
+Safe Changes (1)
+  ✓ attribute "color" added to <my-element>
+

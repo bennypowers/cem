@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "tagName": "my-element",
+          "name": "MyElement",
+          "attributes": [
+            { "name": "variant", "type": { "text": "string" } },
+            { "name": "color", "type": { "text": "string" } }
+          ],
+          "slots": [
+            { "name": "" }
+          ],
+          "events": [
+            { "name": "change", "type": { "text": "Event" } },
+            { "name": "input", "type": { "text": "InputEvent" } }
+          ],
+          "cssProperties": [
+            { "name": "--bg-color", "default": "black" },
+            { "name": "--text-color" }
+          ],
+          "cssParts": [
+            { "name": "button" },
+            { "name": "icon" }
+          ],
+          "members": [
+            {
+              "kind": "method",
+              "name": "doStuff",
+              "privacy": "public",
+              "parameters": [
+                { "name": "name", "type": { "text": "string" } },
+                { "name": "value", "type": { "text": "number" } }
+              ],
+              "return": { "type": { "text": "Promise<void>" } }
+            },
+            {
+              "kind": "field",
+              "name": "value",
+              "privacy": "public",
+              "type": { "text": "number" }
+            },
+            {
+              "kind": "method",
+              "name": "reset",
+              "privacy": "public"
+            }
+          ]
+        }
+      ],
+      "exports": []
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/new-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "tagName": "new-element",
+          "name": "NewElement"
+        }
+      ],
+      "exports": []
+    }
+  ]
+}
