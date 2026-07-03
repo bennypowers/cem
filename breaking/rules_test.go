@@ -173,7 +173,7 @@ func param(name string, typeText string) M.Parameter {
 	return p
 }
 
-// Tier 1 pure-function tests: inline assertions validate individual rule logic
+// Tier 1: inline assertions on pure rule logic
 func TestElementRules(t *testing.T) {
 	t.Run("element-removed", func(t *testing.T) {
 		base := makeElements(ced("my-element"))
@@ -205,6 +205,7 @@ func TestElementRules(t *testing.T) {
 	})
 }
 
+// Tier 1: inline assertions on pure rule logic
 func TestAttributeRules(t *testing.T) {
 	t.Run("attribute-removed", func(t *testing.T) {
 		base := makeElements(ced("my-el", withAttributes(attr("variant"))))
@@ -253,6 +254,7 @@ func TestAttributeRules(t *testing.T) {
 	})
 }
 
+// Tier 1: inline assertions on pure rule logic
 func TestSlotRules(t *testing.T) {
 	t.Run("slot-removed", func(t *testing.T) {
 		base := makeElements(ced("my-el", withSlots(slot("header"))))
@@ -279,6 +281,7 @@ func TestSlotRules(t *testing.T) {
 	})
 }
 
+// Tier 1: inline assertions on pure rule logic
 func TestEventRules(t *testing.T) {
 	t.Run("event-removed", func(t *testing.T) {
 		base := makeElements(ced("my-el", withEvents(event("change"))))
@@ -305,6 +308,7 @@ func TestEventRules(t *testing.T) {
 	})
 }
 
+// Tier 1: inline assertions on pure rule logic
 func TestCssRules(t *testing.T) {
 	t.Run("css-custom-property-removed", func(t *testing.T) {
 		base := makeElements(ced("my-el", withCssProperties(cssProp("--bg"))))
@@ -363,6 +367,7 @@ func TestCssRules(t *testing.T) {
 	})
 }
 
+// Tier 1: inline assertions on pure rule logic
 func TestMemberRules(t *testing.T) {
 	t.Run("method-removed", func(t *testing.T) {
 		base := makeElements(ced("my-el", withMembers(method("doStuff", M.Public, nil, nil))))

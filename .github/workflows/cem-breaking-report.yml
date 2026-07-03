@@ -47,11 +47,11 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Generate breaking change report
-        id: breaking
         uses: bennypowers/cem/.github/actions/pr-breaking-report@main
         with:
           package-path: ${{ inputs.package-path || '.' }}
           breaking-args: ${{ inputs.breaking-args }}
+          fail-on: ${{ inputs.fail-on }}
 
       - name: Log breaking report
         run: cat breaking_report.md
@@ -74,13 +74,9 @@ jobs:
 
       - name: Check fail-on threshold
         if: inputs.fail-on != ''
-        env:
-          PKG_PATH: ${{ inputs.package-path || '.' }}
-          FAIL_ON: ${{ inputs.fail-on }}
-          BREAKING_ARGS: ${{ inputs.breaking-args }}
         run: |
-          # shellcheck disable=SC2086
-          cem breaking -p "$PKG_PATH" \
-            --base "origin/${GITHUB_BASE_REF:-main}" \
-            --fail-on "$FAIL_ON" \
-            --format text $BREAKING_ARGS > /dev/null
+          rc=$(cat breaking_exitcode.txt 2>/dev/null || echo "0")
+          if [ "$rc" -ne 0 ]; then
+            echo "Breaking change threshold exceeded (exit code $rc)"
+            exit "$rc"
+          fi

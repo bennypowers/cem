@@ -8,6 +8,9 @@ inputs:
   breaking-args:
     description: "Additional arguments for cem breaking"
     default: ""
+  fail-on:
+    description: "Severity threshold for exit code (breaking or dangerous)"
+    default: ""
 
 runs:
   using: composite
@@ -17,4 +20,5 @@ runs:
       env:
         PACKAGE_PATH: ${{ inputs.package-path }}
         BREAKING_ARGS: ${{ inputs.breaking-args }}
+        FAIL_ON: ${{ inputs.fail-on }}
       run: ${{ github.action_path }}/pr-breaking-report.sh
