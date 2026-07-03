@@ -1,0 +1,141 @@
+/*
+Copyright © 2026 Benny Powers <web@bennypowers.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+package breaking
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"os/exec"
+	"path/filepath"
+	"strings"
+
+	M "bennypowers.dev/cem/manifest"
+)
+
+func ResolveManifestFromGit(ref, manifestPath, workDir string) (*M.Package, error) {
+	gitPath, err := resolveGitPath(workDir, manifestPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve manifest path: %w", err)
+	}
+
+	var stderr bytes.Buffer
+	gitCmd := exec.Command("git", "show", "--", ref+":"+gitPath)
+	gitCmd.Stderr = &stderr
+	if workDir != "" {
+		gitCmd.Dir = workDir
+	}
+	out, err := gitCmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read manifest at %s from git ref %q: %w\n%s", gitPath, ref, err, stderr.String())
+	}
+
+	var pkg M.Package
+	if err := json.Unmarshal(out, &pkg); err != nil {
+		return nil, fmt.Errorf("failed to parse manifest at %s from git ref %q: %w", gitPath, ref, err)
+	}
+
+	return &pkg, nil
+}
+
+func FindLatestSemverTag(workDir string) (string, error) {
+	var stderr bytes.Buffer
+	gitCmd := exec.Command("git", "tag", "--list", "--sort=-v:refname")
+	gitCmd.Stderr = &stderr
+	if workDir != "" {
+		gitCmd.Dir = workDir
+	}
+	out, err := gitCmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to list git tags: %w\n%s", err, stderr.String())
+	}
+
+	for line := range strings.SplitSeq(strings.TrimSpace(string(out)), "\n") {
+		tag := strings.TrimSpace(line)
+		if tag == "" {
+			continue
+		}
+		if isSemverTag(tag) {
+			return tag, nil
+		}
+	}
+
+	return "", fmt.Errorf("no semver tags found")
+}
+
+func isSemverTag(tag string) bool {
+	tag = strings.TrimPrefix(tag, "v")
+	parts := strings.SplitN(tag, ".", 3)
+	if len(parts) < 3 {
+		return false
+	}
+	for _, part := range parts {
+		p := strings.SplitN(part, "-", 2)[0]
+		if p == "" {
+			return false
+		}
+		for _, c := range p {
+			if c < '0' || c > '9' {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func resolveGitPath(workDir, manifestPath string) (string, error) {
+	if !filepath.IsAbs(manifestPath) {
+		return relativeToGitRoot(workDir, manifestPath)
+	}
+	root, err := gitTopLevel(workDir)
+	if err != nil {
+		return "", err
+	}
+	rel, err := filepath.Rel(root, manifestPath)
+	if err != nil {
+		return "", fmt.Errorf("manifest path %s is outside git root %s", manifestPath, root)
+	}
+	return filepath.ToSlash(rel), nil
+}
+
+func relativeToGitRoot(workDir, path string) (string, error) {
+	var stderr bytes.Buffer
+	gitCmd := exec.Command("git", "rev-parse", "--show-prefix")
+	gitCmd.Stderr = &stderr
+	gitCmd.Dir = workDir
+	out, err := gitCmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get git prefix: %w\n%s", err, stderr.String())
+	}
+	prefix := strings.TrimSpace(string(out))
+	if prefix == "" {
+		return path, nil
+	}
+	return prefix + path, nil
+}
+
+func gitTopLevel(workDir string) (string, error) {
+	gitCmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	if workDir != "" {
+		gitCmd.Dir = workDir
+	}
+	out, err := gitCmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get git root: %w", err)
+	}
+	return strings.TrimSpace(string(out)), nil
+}

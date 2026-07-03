@@ -413,6 +413,30 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 		failBelowFV.gate = func() bool { return configureHealth }
 		groups = append(groups, failBelowFV.Groups()...)
 
+		// === Breaking ===
+		existingBreakingDisable := ""
+		if len(cfg.Breaking.Disable) > 0 {
+			existingBreakingDisable = strings.Join(cfg.Breaking.Disable, ", ")
+		}
+		breakingDisableFV := fieldValue{
+			Title: "Disabled breaking change rules",
+			Description: "Comma-separated list of rule IDs to skip when running `cem breaking`.\n" +
+				"Examples: element-removed, attribute-removed, css-custom-property-removed",
+			Existing: existingBreakingDisable,
+		}
+		configureBreaking := len(cfg.Breaking.Disable) > 0
+		groups = append(groups, huh.NewGroup(
+			huh.NewConfirm().
+				Title("Do you want to configure breaking change detection?").
+				Value(&configureBreaking),
+		).Title("Breaking Changes").
+			Description("CEM detects breaking API changes between manifest versions.\n"+
+				"You can disable specific rules here.\n"+
+				"Learn more: https://bennypowers.dev/cem/docs/reference/configuration/"))
+
+		breakingDisableFV.gate = func() bool { return configureBreaking }
+		groups = append(groups, breakingDisableFV.Groups()...)
+
 		// === Export ===
 		configureExport := len(cfg.Export) > 0
 		groups = append(groups, huh.NewGroup(
@@ -642,6 +666,20 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 					return fmt.Errorf("invalid health score %d: must be 0-100", v)
 				}
 				cfg.Health.FailBelow = v
+			}
+		}
+
+		if configureBreaking {
+			bd := breakingDisableFV.Resolve()
+			if bd != "" {
+				var rules []string
+				for r := range strings.SplitSeq(bd, ",") {
+					r = strings.TrimSpace(r)
+					if r != "" {
+						rules = append(rules, r)
+					}
+				}
+				cfg.Breaking.Disable = rules
 			}
 		}
 

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "tagName": "my-element",
+          "name": "MyElement",
+          "attributes": [
+            { "name": "variant", "type": { "text": "string" } }
+          ],
+          "slots": [
+            { "name": "", "description": "Default slot" }
+          ]
+        }
+      ],
+      "exports": []
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/other-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "tagName": "other-element",
+          "name": "OtherElement"
+        }
+      ],
+      "exports": []
+    }
+  ]
+}

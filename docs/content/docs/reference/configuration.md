@@ -108,6 +108,21 @@ warnings:
     - "lifecycle-lit-render"
     - "implementation-static-styles"
 
+# Configuration for breaking change detection.
+breaking:
+  disable:
+    # Disable specific breaking change rules
+    - "css-custom-property-removed"
+    - "slot-removed"
+
+# Health check configuration.
+health:
+  # Minimum health score percentage (0-100).
+  failBelow: 60
+  # Health check rule IDs to skip.
+  disable:
+    - "demos"
+
 # Configuration for the `serve` command.
 serve:
   # Port to listen on
@@ -205,7 +220,7 @@ its values take precedence, and any unset fields fall back to the root config.
 
 Cascaded fields include `generate.files`, `generate.exclude`,
 `generate.designTokens`, `generate.demoDiscovery`, `health.failBelow`,
-`health.disable`, and `export.*`.
+`health.disable`, `breaking.disable`, and `export.*`.
 
 ### Single-package override
 

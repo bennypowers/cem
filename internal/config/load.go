@@ -20,6 +20,7 @@ type CemConfig struct {
 	Generate     GenerateConfig                `mapstructure:"generate" yaml:"generate" json:"generate"`
 	MCP          MCPConfig                     `mapstructure:"mcp" yaml:"mcp" json:"mcp"`
 	Health       HealthConfig                  `mapstructure:"health" yaml:"health" json:"health"`
+	Breaking     BreakingConfig                `mapstructure:"breaking" yaml:"breaking" json:"breaking"`
 	Serve        ServeConfig                   `mapstructure:"serve" yaml:"serve" json:"serve"`
 	Export       map[string]FrameworkExportConfig `mapstructure:"export" yaml:"export" json:"export"`
 	SourceControlRootUrl string `mapstructure:"sourceControlRootUrl" yaml:"sourceControlRootUrl" json:"sourceControlRootUrl"`
@@ -96,6 +97,10 @@ type FrameworkExportConfig struct {
 type HealthConfig struct {
 	FailBelow int      `mapstructure:"failBelow" yaml:"failBelow" json:"failBelow"`
 	Disable   []string `mapstructure:"disable" yaml:"disable" json:"disable"`
+}
+
+type BreakingConfig struct {
+	Disable []string `mapstructure:"disable" yaml:"disable" json:"disable"`
 }
 
 // LoadConfig reads and parses a CEM config file. The format is detected from

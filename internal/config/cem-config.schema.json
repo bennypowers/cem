@@ -273,6 +273,18 @@
         }
       }
     },
+    "breaking": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Configures cem breaking change detection rules.",
+      "properties": {
+        "disable": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Breaking change rule IDs to skip. Examples: element-removed, attribute-removed, css-custom-property-removed."
+        }
+      }
+    },
     "export": {
       "type": "object",
       "description": "Named framework export configurations. Each key is an export name, and its value defines how to generate framework-specific wrappers from the manifest.",

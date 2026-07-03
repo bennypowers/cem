@@ -1,0 +1,35 @@
+{
+  "changes": [
+    {
+      "rule": "attribute-removed",
+      "severity": "breaking",
+      "element": "my-element",
+      "subject": "variant",
+      "message": "attribute \"variant\" removed from \u003cmy-element\u003e"
+    },
+    {
+      "rule": "attribute-type-changed",
+      "severity": "breaking",
+      "element": "my-element",
+      "subject": "size",
+      "message": "attribute \"size\" type changed from string to number in \u003cmy-element\u003e"
+    },
+    {
+      "rule": "attribute-default-changed",
+      "severity": "dangerous",
+      "element": "my-element",
+      "subject": "size",
+      "message": "attribute \"size\" default changed from \"medium\" to \"large\" in \u003cmy-element\u003e"
+    },
+    {
+      "rule": "attribute-added",
+      "severity": "safe",
+      "element": "my-element",
+      "subject": "color",
+      "message": "attribute \"color\" added to \u003cmy-element\u003e"
+    }
+  ],
+  "breaking": 2,
+  "dangerous": 1,
+  "safe": 1
+}

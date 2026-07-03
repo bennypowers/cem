@@ -1,0 +1,22 @@
+### Breaking Change Report
+{{- if not .Changes}}
+
+No breaking changes detected.
+{{- else}}
+
+| Severity | Count |
+|----------|------:|
+| Breaking | {{.Breaking}} |
+| Dangerous | {{.Dangerous}} |
+| Safe | {{.Safe}} |
+{{- range $sev := severities}}{{$items := filterBySeverity $.Changes $sev}}{{if $items}}
+
+#### {{severityTitle $sev}} ({{len $items}})
+
+| Element | Change |
+|---------|--------|
+{{- range $items}}
+| `<{{.Element}}>` | {{escapeCell .Message}} |
+{{- end}}
+{{- end}}{{end}}
+{{- end}}

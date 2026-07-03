@@ -1,0 +1,24 @@
+name: PR Breaking Change Report
+description: Generate a breaking change report comparing against the PR base ref
+
+inputs:
+  package-path:
+    description: "Path to the package"
+    default: "."
+  breaking-args:
+    description: "Additional arguments for cem breaking"
+    default: ""
+  fail-on:
+    description: "Severity threshold for exit code (breaking or dangerous)"
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Generate breaking change report
+      shell: bash
+      env:
+        PACKAGE_PATH: ${{ inputs.package-path }}
+        BREAKING_ARGS: ${{ inputs.breaking-args }}
+        FAIL_ON: ${{ inputs.fail-on }}
+      run: ${{ github.action_path }}/pr-breaking-report.sh
