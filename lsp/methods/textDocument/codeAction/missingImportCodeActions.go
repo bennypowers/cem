@@ -21,6 +21,7 @@ import (
 	"regexp"
 	"strings"
 
+	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/lsp/types"
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
@@ -282,93 +283,124 @@ func detectScriptTagIndentation(doc types.Document, scriptPosition protocol.Posi
 	return baseIndent
 }
 
-// findLastImportPosition finds the position after the last import statement in a script tag
+// findLastImportPosition finds the position after the last import statement
+// in an inline script tag by parsing the script content as TypeScript.
 func findLastImportPosition(doc types.Document, scriptPosition protocol.Position) protocol.Position {
 	if doc == nil {
-		return scriptPosition // Fallback to the original position
+		return scriptPosition
+	}
+
+	// Find the matching inline module script tag
+	var scriptTag *types.ScriptTag
+	for _, st := range doc.ScriptTags() {
+		if st.IsModule && st.Src == "" {
+			scriptTag = &st
+			break
+		}
+	}
+	if scriptTag == nil {
+		return scriptPosition
 	}
 
 	content, err := doc.Content()
 	if err != nil {
-		return scriptPosition // Fallback to the original position
+		return scriptPosition
 	}
 
+	// Extract script content using ContentRange
 	lines := strings.Split(content, "\n")
-	var lastImportLine = -1
-
-	// Find the script start line by searching backwards from scriptPosition
-	scriptStartLine := 0
-	for i := int(scriptPosition.Line); i >= 0; i-- {
-		if strings.Contains(lines[i], "<script") {
-			scriptStartLine = i
-			break
-		}
+	startLine := int(scriptTag.ContentRange.Start.Line)
+	endLine := int(scriptTag.ContentRange.End.Line)
+	if startLine >= len(lines) {
+		return scriptPosition
 	}
-
-	// Find the script end line by searching forwards
-	scriptEndLine := len(lines) - 1
-	for i := scriptStartLine; i < len(lines); i++ {
-		if strings.Contains(lines[i], "</script>") {
-			scriptEndLine = i
-			break
-		}
-	}
-
-	// Find the last import statement within the script tag
-	for i := scriptStartLine; i < scriptEndLine; i++ {
+	var scriptContent strings.Builder
+	for i := startLine; i <= endLine && i < len(lines); i++ {
 		line := lines[i]
-		trimmedLine := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmedLine, "import ") {
-			lastImportLine = i
+		if i == startLine && i == endLine {
+			startChar := min(int(scriptTag.ContentRange.Start.Character), len(line))
+			endChar := min(int(scriptTag.ContentRange.End.Character), len(line))
+			line = line[startChar:endChar]
+		} else if i == startLine {
+			startChar := min(int(scriptTag.ContentRange.Start.Character), len(line))
+			line = line[startChar:]
+		} else if i == endLine {
+			endChar := min(int(scriptTag.ContentRange.End.Character), len(line))
+			line = line[:endChar]
+		}
+		if i > startLine {
+			scriptContent.WriteByte('\n')
+		}
+		scriptContent.WriteString(line)
+	}
+
+	// Parse as TypeScript to find import_statement nodes
+	parser := typescript.BorrowParser()
+	defer typescript.ReturnParser(parser)
+
+	tree := parser.Parse([]byte(scriptContent.String()), nil)
+	if tree == nil {
+		return scriptPosition
+	}
+	defer tree.Close()
+
+	root := tree.RootNode()
+	var lastImportEnd protocol.Position
+	found := false
+
+	for i := range root.ChildCount() {
+		child := root.Child(i)
+		if child == nil {
+			continue
+		}
+		if child.Kind() == "import_statement" {
+			end := child.EndPosition()
+			lastImportEnd = protocol.Position{
+				Line:      uint32(startLine) + uint32(end.Row) + 1,
+				Character: 0,
+			}
+			found = true
 		}
 	}
 
-	// If we found import statements, position after the last one
-	if lastImportLine >= 0 {
-		return protocol.Position{
-			Line:      uint32(lastImportLine + 1), // Next line after the last import
-			Character: 0,                          // Beginning of the line
-		}
+	if found {
+		return lastImportEnd
 	}
 
-	// No imports found, use the original script position
 	return scriptPosition
 }
 
-// findImportInsertionPosition finds the position to insert new imports after existing imports
+// findImportInsertionPosition finds the position to insert new imports after
+// existing imports using tree-sitter to correctly handle multi-line imports.
 func findImportInsertionPosition(doc types.Document) protocol.Position {
-	content, err := doc.Content()
-	if err != nil {
+	tree, release := doc.AcquireTree()
+	if tree == nil {
 		return protocol.Position{Line: 0, Character: 0}
 	}
+	defer release()
 
-	lines := strings.Split(content, "\n")
+	root := tree.RootNode()
+	var lastImportEnd protocol.Position
+	found := false
 
-	// Find the last import statement
-	lastImportLine := -1
-	for i, line := range lines {
-		trimmedLine := strings.TrimSpace(line)
-		// Look for import statements (both ES6 and CommonJS style)
-		if strings.HasPrefix(trimmedLine, "import ") || strings.HasPrefix(trimmedLine, "from ") {
-			lastImportLine = i
+	for i := range root.ChildCount() {
+		child := root.Child(i)
+		if child == nil {
+			continue
 		}
-		// Stop scanning when we hit the first non-import, non-comment, non-empty line
-		if trimmedLine != "" &&
-			!strings.HasPrefix(trimmedLine, "import ") &&
-			!strings.HasPrefix(trimmedLine, "from ") &&
-			!strings.HasPrefix(trimmedLine, "//") &&
-			!strings.HasPrefix(trimmedLine, "/*") &&
-			!strings.HasPrefix(trimmedLine, "*") &&
-			!strings.HasPrefix(trimmedLine, "*/") {
-			break
+		if child.Kind() == "import_statement" {
+			end := child.EndPosition()
+			lastImportEnd = protocol.Position{
+				Line:      uint32(end.Row + 1),
+				Character: 0,
+			}
+			found = true
 		}
 	}
 
-	if lastImportLine >= 0 {
-		// Insert after the last import, with a blank line
-		return protocol.Position{Line: uint32(lastImportLine + 1), Character: 0}
+	if found {
+		return lastImportEnd
 	}
 
-	// No imports found, insert at the beginning
 	return protocol.Position{Line: 0, Character: 0}
 }
