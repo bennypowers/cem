@@ -54,12 +54,29 @@ func CreateMissingImportAction(
 			// 1. Try to find existing inline module script (not external src)
 			scriptPosition, hasInlineScript := doc.FindInlineModuleScript()
 			if hasInlineScript {
-				// Amend existing inline script tag by adding import statement inside it
-				// Find the position after the last import statement
-				lastImportPosition := findLastImportPosition(doc, scriptPosition)
+				result := findLastImportPosition(doc, scriptPosition)
 				scriptContentIndent := detectScriptTagIndentation(doc, scriptPosition)
+				if result.sameLineScript && result.scriptTag != nil {
+					st := result.scriptTag
+					tagRange := st.Range
+					docContent, _ := doc.Content()
+					docLines := strings.Split(docContent, "\n")
+					tagLine := docLines[tagRange.Start.Line]
+					// Extract opening tag including > from ContentRange boundary
+					openTag := tagLine[tagRange.Start.Character:st.ContentRange.Start.Character]
+					existingContent := strings.TrimSpace(
+						tagLine[st.ContentRange.Start.Character:st.ContentRange.End.Character])
+					tagIndent := strings.Repeat(" ", int(tagRange.Start.Character))
+					replacement := fmt.Sprintf("%s\n%s%s\n%simport \"%s\";\n%s</script>",
+						openTag, scriptContentIndent, existingContent,
+						scriptContentIndent, autofixData.ImportPath,
+						tagIndent)
+					action := buildCodeAction(autofixData.TagName, documentURI, diagnostic,
+						tagRange, replacement)
+					return &action, nil
+				}
 				importStatement = fmt.Sprintf(`%simport "%s";`, scriptContentIndent, autofixData.ImportPath)
-				insertPosition = lastImportPosition
+				insertPosition = result.position
 			} else {
 				// 2. Try to find head section for new script placement
 				dm, err := ctx.DocumentManager()
@@ -109,31 +126,29 @@ import "%s";`, autofixData.ImportPath)
 		}
 	}
 
-	title := fmt.Sprintf("Add import for '%s'", autofixData.TagName)
+	editRange := protocol.Range{Start: insertPosition, End: insertPosition}
+	action := buildCodeAction(autofixData.TagName, documentURI, diagnostic,
+		editRange, importStatement+"\n")
+	return &action, nil
+}
+
+func buildCodeAction(tagName, documentURI string, diagnostic *protocol.Diagnostic,
+	editRange protocol.Range, newText string,
+) protocol.CodeAction {
+	title := fmt.Sprintf("Add import for '%s'", tagName)
 	kind := protocol.CodeActionKindQuickFix
 	preferred := true
-
-	action := protocol.CodeAction{
+	return protocol.CodeAction{
 		Title:       title,
 		Kind:        &kind,
 		IsPreferred: &preferred,
 		Edit: &protocol.WorkspaceEdit{
 			Changes: map[string][]protocol.TextEdit{
-				documentURI: {
-					{
-						Range: protocol.Range{
-							Start: insertPosition,
-							End:   insertPosition,
-						},
-						NewText: importStatement + "\n",
-					},
-				},
+				documentURI: {{Range: editRange, NewText: newText}},
 			},
 		},
 		Diagnostics: []protocol.Diagnostic{*diagnostic},
 	}
-
-	return &action, nil
 }
 
 // detectIndentation analyzes the document content to determine the indentation pattern
@@ -283,14 +298,21 @@ func detectScriptTagIndentation(doc types.Document, scriptPosition protocol.Posi
 	return baseIndent
 }
 
+// importInsertionResult holds the result of finding the import insertion point.
+type importInsertionResult struct {
+	position       protocol.Position
+	sameLineScript bool
+	scriptTag      *types.ScriptTag
+}
+
 // findLastImportPosition finds the position after the last import statement
 // in an inline script tag by parsing the script content as TypeScript.
-func findLastImportPosition(doc types.Document, scriptPosition protocol.Position) protocol.Position {
+func findLastImportPosition(doc types.Document, scriptPosition protocol.Position) importInsertionResult {
+	fallback := importInsertionResult{position: scriptPosition}
 	if doc == nil {
-		return scriptPosition
+		return fallback
 	}
 
-	// Find the matching inline module script tag
 	var scriptTag *types.ScriptTag
 	for _, st := range doc.ScriptTags() {
 		if st.IsModule && st.Src == "" {
@@ -299,21 +321,22 @@ func findLastImportPosition(doc types.Document, scriptPosition protocol.Position
 		}
 	}
 	if scriptTag == nil {
-		return scriptPosition
+		return fallback
 	}
 
 	content, err := doc.Content()
 	if err != nil {
-		return scriptPosition
+		return fallback
 	}
 
-	// Extract script content using ContentRange
 	lines := strings.Split(content, "\n")
 	startLine := int(scriptTag.ContentRange.Start.Line)
 	endLine := int(scriptTag.ContentRange.End.Line)
 	if startLine >= len(lines) {
-		return scriptPosition
+		return fallback
 	}
+	sameLineScript := startLine == endLine
+
 	var scriptContent strings.Builder
 	for i := startLine; i <= endLine && i < len(lines); i++ {
 		line := lines[i]
@@ -334,13 +357,12 @@ func findLastImportPosition(doc types.Document, scriptPosition protocol.Position
 		scriptContent.WriteString(line)
 	}
 
-	// Parse as TypeScript to find import_statement nodes
 	parser := typescript.BorrowParser()
 	defer typescript.ReturnParser(parser)
 
 	tree := parser.Parse([]byte(scriptContent.String()), nil)
 	if tree == nil {
-		return scriptPosition
+		return fallback
 	}
 	defer tree.Close()
 
@@ -355,19 +377,30 @@ func findLastImportPosition(doc types.Document, scriptPosition protocol.Position
 		}
 		if child.Kind() == "import_statement" {
 			end := child.EndPosition()
-			lastImportEnd = protocol.Position{
-				Line:      uint32(startLine) + uint32(end.Row) + 1,
-				Character: 0,
+			if sameLineScript {
+				lastImportEnd = protocol.Position{
+					Line:      uint32(startLine),
+					Character: scriptTag.ContentRange.Start.Character + uint32(end.Column),
+				}
+			} else {
+				lastImportEnd = protocol.Position{
+					Line:      uint32(startLine) + uint32(end.Row) + 1,
+					Character: 0,
+				}
 			}
 			found = true
 		}
 	}
 
 	if found {
-		return lastImportEnd
+		return importInsertionResult{
+			position:       lastImportEnd,
+			sameLineScript: sameLineScript,
+			scriptTag:      scriptTag,
+		}
 	}
 
-	return scriptPosition
+	return fallback
 }
 
 // findImportInsertionPosition finds the position to insert new imports after

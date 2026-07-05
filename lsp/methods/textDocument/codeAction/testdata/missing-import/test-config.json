@@ -108,5 +108,25 @@
     "importPath": "./my-element.js",
     "tagName": "my-element",
     "expectAction": true
+  },
+  {
+    "name": "html-existing-script-sameline",
+    "description": "HTML file with single-line module script tag",
+    "inputFile": "html-existing-script-sameline.html",
+    "goldenFile": "html-existing-script-sameline.golden.html",
+    "documentURI": "file:///test.html",
+    "importPath": "./my-element.js",
+    "tagName": "my-element",
+    "expectAction": true
+  },
+  {
+    "name": "html-multiple-module-scripts",
+    "description": "HTML file with multiple inline module scripts",
+    "inputFile": "html-multiple-module-scripts.html",
+    "goldenFile": "html-multiple-module-scripts.golden.html",
+    "documentURI": "file:///test.html",
+    "importPath": "./my-element.js",
+    "tagName": "my-element",
+    "expectAction": true
   }
 ]
