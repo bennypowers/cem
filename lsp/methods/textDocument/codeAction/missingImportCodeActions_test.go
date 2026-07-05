@@ -229,28 +229,41 @@ func TestCreateMissingImportActionErrors(t *testing.T) {
 func applyTextEdit(content string, edit protocol.TextEdit) string {
 	lines := strings.Split(content, "\n")
 
-	// Insert at the specified position
-	insertLine := int(edit.Range.Start.Line)
-	insertChar := int(edit.Range.Start.Character)
+	startLine := int(edit.Range.Start.Line)
+	startChar := int(edit.Range.Start.Character)
+	endLine := int(edit.Range.End.Line)
+	endChar := int(edit.Range.End.Character)
 
-	if insertLine >= len(lines) {
-		// Insert at end of file
+	if startLine >= len(lines) {
 		return content + edit.NewText
 	}
 
-	if insertLine == 0 && insertChar == 0 {
-		// Insert at beginning of file
-		return edit.NewText + content
+	if startChar > len(lines[startLine]) {
+		startChar = len(lines[startLine])
+	}
+	if endLine >= len(lines) {
+		endLine = len(lines) - 1
+		endChar = len(lines[endLine])
+	}
+	if endChar > len(lines[endLine]) {
+		endChar = len(lines[endLine])
 	}
 
-	// Insert at specific line/character
-	line := lines[insertLine]
-	if insertChar > len(line) {
-		insertChar = len(line)
+	before := lines[startLine][:startChar]
+	after := lines[endLine][endChar:]
+
+	var result strings.Builder
+	for _, line := range lines[:startLine] {
+		result.WriteString(line)
+		result.WriteByte('\n')
+	}
+	result.WriteString(before)
+	result.WriteString(edit.NewText)
+	result.WriteString(after)
+	for _, line := range lines[endLine+1:] {
+		result.WriteByte('\n')
+		result.WriteString(line)
 	}
 
-	newLine := line[:insertChar] + edit.NewText + line[insertChar:]
-	lines[insertLine] = newLine
-
-	return strings.Join(lines, "\n")
+	return result.String()
 }

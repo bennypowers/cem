@@ -58,5 +58,75 @@
     "importPath": "@my-org/components",
     "tagName": "ui-button",
     "expectAction": true
+  },
+  {
+    "name": "typescript-multiline-import",
+    "description": "TypeScript file with multi-line import block",
+    "inputFile": "typescript-multiline-import.ts",
+    "goldenFile": "typescript-multiline-import.golden.ts",
+    "documentURI": "file:///test.ts",
+    "importPath": "./my-element.js",
+    "tagName": "my-element",
+    "expectAction": true
+  },
+  {
+    "name": "html-existing-script-multiline-import",
+    "description": "HTML file with existing script tag containing multi-line import",
+    "inputFile": "html-existing-script-multiline-import.html",
+    "goldenFile": "html-existing-script-multiline-import.golden.html",
+    "documentURI": "file:///test.html",
+    "importPath": "./my-element.js",
+    "tagName": "my-element",
+    "expectAction": true
+  },
+  {
+    "name": "html-existing-script-multiline-import-last",
+    "description": "HTML file where multi-line import is the last import in script",
+    "inputFile": "html-existing-script-multiline-import-last.html",
+    "goldenFile": "html-existing-script-multiline-import-last.golden.html",
+    "documentURI": "file:///test.html",
+    "importPath": "./my-element.js",
+    "tagName": "my-element",
+    "expectAction": true
+  },
+  {
+    "name": "typescript-multiline-import-with-comments",
+    "description": "TypeScript file with comments containing 'from' inside multi-line import",
+    "inputFile": "typescript-multiline-import-with-comments.ts",
+    "goldenFile": "typescript-multiline-import-with-comments.golden.ts",
+    "documentURI": "file:///test.ts",
+    "importPath": "./my-element.js",
+    "tagName": "my-element",
+    "expectAction": true
+  },
+  {
+    "name": "typescript-lit-template-script",
+    "description": "TypeScript file with script tag inside Lit template literal",
+    "inputFile": "typescript-lit-template-script.ts",
+    "goldenFile": "typescript-lit-template-script.golden.ts",
+    "documentURI": "file:///test.ts",
+    "importPath": "./my-element.js",
+    "tagName": "my-element",
+    "expectAction": true
+  },
+  {
+    "name": "html-existing-script-sameline",
+    "description": "HTML file with single-line module script tag",
+    "inputFile": "html-existing-script-sameline.html",
+    "goldenFile": "html-existing-script-sameline.golden.html",
+    "documentURI": "file:///test.html",
+    "importPath": "./my-element.js",
+    "tagName": "my-element",
+    "expectAction": true
+  },
+  {
+    "name": "html-multiple-module-scripts",
+    "description": "HTML file with multiple inline module scripts",
+    "inputFile": "html-multiple-module-scripts.html",
+    "goldenFile": "html-multiple-module-scripts.golden.html",
+    "documentURI": "file:///test.html",
+    "importPath": "./my-element.js",
+    "tagName": "my-element",
+    "expectAction": true
   }
 ]
