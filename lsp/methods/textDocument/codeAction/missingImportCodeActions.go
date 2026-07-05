@@ -62,15 +62,26 @@ func CreateMissingImportAction(
 					docContent, _ := doc.Content()
 					docLines := strings.Split(docContent, "\n")
 					tagLine := docLines[tagRange.Start.Line]
-					// Extract opening tag including > from ContentRange boundary
 					openTag := tagLine[tagRange.Start.Character:st.ContentRange.Start.Character]
-					existingContent := strings.TrimSpace(
-						tagLine[st.ContentRange.Start.Character:st.ContentRange.End.Character])
+					contentStart := int(st.ContentRange.Start.Character)
+					contentEnd := int(st.ContentRange.End.Character)
+					insertChar := int(result.position.Character)
+					beforeImport := strings.TrimSpace(tagLine[contentStart:insertChar])
+					afterImport := strings.TrimSpace(tagLine[insertChar:contentEnd])
 					tagIndent := strings.Repeat(" ", int(tagRange.Start.Character))
-					replacement := fmt.Sprintf("%s\n%s%s\n%simport \"%s\";\n%s</script>",
-						openTag, scriptContentIndent, existingContent,
-						scriptContentIndent, autofixData.ImportPath,
-						tagIndent)
+					var replacement string
+					if afterImport == "" {
+						replacement = fmt.Sprintf("%s\n%s%s\n%simport \"%s\";\n%s</script>",
+							openTag, scriptContentIndent, beforeImport,
+							scriptContentIndent, autofixData.ImportPath,
+							tagIndent)
+					} else {
+						replacement = fmt.Sprintf("%s\n%s%s\n%simport \"%s\";\n%s%s\n%s</script>",
+							openTag, scriptContentIndent, beforeImport,
+							scriptContentIndent, autofixData.ImportPath,
+							scriptContentIndent, afterImport,
+							tagIndent)
+					}
 					action := buildCodeAction(autofixData.TagName, documentURI, diagnostic,
 						tagRange, replacement)
 					return &action, nil
@@ -314,9 +325,12 @@ func findLastImportPosition(doc types.Document, scriptPosition protocol.Position
 	}
 
 	var scriptTag *types.ScriptTag
-	for _, st := range doc.ScriptTags() {
-		if st.IsModule && st.Src == "" {
-			scriptTag = &st
+	scriptTags := doc.ScriptTags()
+	for i := range scriptTags {
+		st := &scriptTags[i]
+		if st.IsModule && st.Src == "" &&
+			scriptPosition.Line >= st.Range.Start.Line && scriptPosition.Line <= st.Range.End.Line {
+			scriptTag = st
 			break
 		}
 	}
