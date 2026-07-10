@@ -239,6 +239,48 @@ func TestResolveTextParts(t *testing.T) {
 			},
 			"'val'",
 		},
+		{
+			"Extract within file",
+			"Extract<Colors, 'red' | 'blue'>",
+			map[string]aliasDefinition{"Colors": {text: "'red' | 'green' | 'blue'"}},
+			"'red' | 'blue'",
+		},
+		{
+			"Exclude within file",
+			"Exclude<Colors, 'green'>",
+			map[string]aliasDefinition{"Colors": {text: "'red' | 'green' | 'blue'"}},
+			"'red' | 'blue'",
+		},
+		{
+			"NonNullable within file",
+			"NonNullable<MaybeSize>",
+			map[string]aliasDefinition{"MaybeSize": {text: "'sm' | 'md' | null | undefined"}},
+			"'sm' | 'md'",
+		},
+		{
+			"Readonly within file",
+			"Readonly<Variant>",
+			map[string]aliasDefinition{"Variant": {text: "'primary' | 'secondary'"}},
+			"'primary' | 'secondary'",
+		},
+		{
+			"Array within file",
+			"Array<string>",
+			nil,
+			"string[]",
+		},
+		{
+			"string[] passthrough within file",
+			"string[]",
+			nil,
+			"string[]",
+		},
+		{
+			"unknown generic passthrough within file",
+			"Partial<Config>",
+			nil,
+			"Partial<Config>",
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

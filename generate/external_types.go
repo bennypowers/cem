@@ -520,6 +520,11 @@ func resolveTextParts(def string, aliases map[string]aliasDefinition, visited ma
 		return def
 	}
 
+	// Try utility type resolution for generics (Extract, Exclude, etc.)
+	if resolved, ok := resolveUtilityTypeText(def, aliases, visited); ok {
+		return resolved
+	}
+
 	// Primitive types — no resolution needed
 	if primitiveTypes[def] {
 		return def
@@ -541,6 +546,38 @@ func resolveTextParts(def string, aliases map[string]aliasDefinition, visited ma
 	}
 
 	return def
+}
+
+// resolveUtilityTypeText handles built-in utility types during within-file
+// alias resolution (no module/package context needed).
+func resolveUtilityTypeText(def string, aliases map[string]aliasDefinition, visited map[string]bool) (string, bool) {
+	valueNode, source, tree, ok := parseTypeValue(def)
+	if !ok {
+		return "", false
+	}
+	defer tree.Close()
+
+	if valueNode.GrammarName() == "array_type" {
+		return def, true
+	}
+	if valueNode.GrammarName() != "generic_type" {
+		return "", false
+	}
+
+	name, args, ok := extractGenericParts(valueNode, source)
+	if !ok || !utilityTypes[name] {
+		return "", false
+	}
+
+	resolve := func(text string) string {
+		return resolveTextParts(text, aliases, visited)
+	}
+
+	result, handled := resolveUtilityTypeCore(name, args, resolve)
+	if !handled {
+		return "", false
+	}
+	return result, true
 }
 
 // broadPrimitives are types that, when used in a template expression, collapse

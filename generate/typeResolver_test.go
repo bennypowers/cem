@@ -53,6 +53,146 @@ func TestSplitTopLevelUnion(t *testing.T) {
 	}
 }
 
+func TestParseGenericType(t *testing.T) {
+	tests := []struct {
+		name     string
+		in       string
+		wantName string
+		wantArgs []string
+		wantOk   bool
+	}{
+		{"simple generic", "Array<string>", "Array", []string{"string"}, true},
+		{"two args", "Extract<Foo, Bar>", "Extract", []string{"Foo", "Bar"}, true},
+		{"nested union arg", "Extract<'a' | 'b' | 'c', 'a' | 'c'>", "Extract", []string{"'a' | 'b' | 'c'", "'a' | 'c'"}, true},
+		{"nested generic arg", "Readonly<Array<string>>", "Readonly", []string{"Array<string>"}, true},
+		{"deeply nested", "Map<string, Set<'a' | 'b'>>", "Map", []string{"string", "Set<'a' | 'b'>"}, true},
+		{"not generic - identifier", "string", "", nil, false},
+		{"not generic - array", "string[]", "", nil, false},
+		{"not generic - union", "'a' | 'b'", "", nil, false},
+		{"not generic - literal", "'hello'", "", nil, false},
+		{"empty", "", "", nil, false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			name, args, ok := parseGenericType(tc.in)
+			assert.Equal(t, tc.wantOk, ok)
+			if ok {
+				assert.Equal(t, tc.wantName, name)
+				assert.Equal(t, tc.wantArgs, args)
+			}
+		})
+	}
+}
+
+func TestResolveUtilityTypeText(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      string
+		aliases map[string]string
+		want    string
+	}{
+		{
+			"Extract with literals",
+			"Extract<'a' | 'b' | 'c', 'a' | 'c'>",
+			nil,
+			"'a' | 'c'",
+		},
+		{
+			"Extract with alias",
+			"Extract<ColorPalette, 'lightest' | 'darkest'>",
+			map[string]string{"ColorPalette": "'light' | 'lighter' | 'lightest' | 'dark' | 'darker' | 'darkest'"},
+			"'lightest' | 'darkest'",
+		},
+		{
+			"Exclude with literals",
+			"Exclude<'a' | 'b' | 'c', 'b'>",
+			nil,
+			"'a' | 'c'",
+		},
+		{
+			"Exclude removes multiple",
+			"Exclude<'a' | 'b' | 'c', 'a' | 'c'>",
+			nil,
+			"'b'",
+		},
+		{
+			"Array<string> normalizes",
+			"Array<string>",
+			nil,
+			"string[]",
+		},
+		{
+			"Array<union> normalizes",
+			"Array<string | number>",
+			nil,
+			"(string | number)[]",
+		},
+		{
+			"Readonly unwraps",
+			"Readonly<'a' | 'b'>",
+			nil,
+			"'a' | 'b'",
+		},
+		{
+			"Required unwraps",
+			"Required<'a' | 'b'>",
+			nil,
+			"'a' | 'b'",
+		},
+		{
+			"NonNullable filters",
+			"NonNullable<'a' | null | undefined | 'b'>",
+			nil,
+			"'a' | 'b'",
+		},
+		{
+			"NonNullable alias",
+			"NonNullable<MaybeColor>",
+			map[string]string{"MaybeColor": "'red' | 'blue' | null"},
+			"'red' | 'blue'",
+		},
+		{
+			"Readonly with alias resolution",
+			"Readonly<Variant>",
+			map[string]string{"Variant": "'primary' | 'secondary'"},
+			"'primary' | 'secondary'",
+		},
+		{
+			"string[] passthrough",
+			"string[]",
+			nil,
+			"string[]",
+		},
+		{
+			"unknown generic passthrough",
+			"Partial<Config>",
+			nil,
+			"Partial<Config>",
+		},
+		{
+			"Extract empty result",
+			"Extract<'a' | 'b', 'x'>",
+			nil,
+			"never",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			pkg := &M.Package{
+				Modules: []M.Module{{Path: "test.ts"}},
+			}
+			typeAliases := make(moduleTypeAliasesMap)
+			if tc.aliases != nil {
+				typeAliases["test.ts"] = tc.aliases
+			}
+			imports := make(moduleImportsMap)
+			ctx := newResolutionContext()
+			resolved, _ := resolveTypeText(tc.in, &pkg.Modules[0], pkg, typeAliases, imports, nil, ctx)
+			assert.Equal(t, tc.want, resolved)
+		})
+	}
+}
+
 func TestFindModuleBySpec(t *testing.T) {
 	pkg := &M.Package{
 		Modules: []M.Module{
