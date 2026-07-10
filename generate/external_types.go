@@ -507,13 +507,10 @@ func resolveTextParts(def string, aliases map[string]aliasDefinition, visited ma
 	}
 
 	// Handle unions: resolve each part independently
-	if strings.Contains(def, "|") {
-		var resolvedParts []string
-		for part := range strings.SplitSeq(def, "|") {
-			part = strings.TrimSpace(part)
-			if part != "" {
-				resolvedParts = append(resolvedParts, resolveTextParts(part, aliases, visited))
-			}
+	if parts := splitTopLevelUnion(def); len(parts) > 1 {
+		resolvedParts := make([]string, 0, len(parts))
+		for _, part := range parts {
+			resolvedParts = append(resolvedParts, resolveTextParts(part, aliases, visited))
 		}
 		return strings.Join(resolvedParts, " | ")
 	}
@@ -606,12 +603,7 @@ func expandTemplate(td *templateDef, aliases map[string]aliasDefinition, visited
 // each part, and returns the usable string values. The bail return signals
 // whether to collapse ("string") or give up ("unresolvable").
 func validateExpressionValues(resolved string) (values []string, bail string) {
-	for part := range strings.SplitSeq(resolved, "|") {
-		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-
+	for _, part := range splitTopLevelUnion(resolved) {
 		// Quoted string literal — unquote and add
 		if isQuoted(part) {
 			values = append(values, part[1:len(part)-1])

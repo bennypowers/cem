@@ -22,8 +22,66 @@ import (
 	"strings"
 
 	L "bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/languages/typescript"
 	M "bennypowers.dev/cem/manifest"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
+
+// splitTopLevelUnion parses typeText as a TypeScript type using tree-sitter
+// and splits top-level union members. Returns nil for empty input, a
+// single-element slice for non-union types.
+func splitTopLevelUnion(typeText string) []string {
+	typeText = strings.TrimSpace(typeText)
+	if typeText == "" {
+		return nil
+	}
+
+	snippet := []byte("type _ = " + typeText)
+	parser := typescript.BorrowParser()
+	defer typescript.ReturnParser(parser)
+
+	tree := parser.Parse(snippet, nil)
+	if tree == nil {
+		return []string{typeText}
+	}
+	defer tree.Close()
+
+	root := tree.RootNode()
+	cursor := root.Walk()
+	defer cursor.Close()
+
+	for _, child := range root.NamedChildren(cursor) {
+		if child.GrammarName() == "type_alias_declaration" {
+			valueNode := child.ChildByFieldName("value")
+			if valueNode != nil && valueNode.GrammarName() == "union_type" {
+				return flattenUnionType(valueNode, snippet)
+			}
+		}
+	}
+
+	return []string{typeText}
+}
+
+// flattenUnionType recursively collects leaf type texts from a
+// left-recursive union_type tree-sitter node.
+func flattenUnionType(node *ts.Node, source []byte) []string {
+	var parts []string
+	cursor := node.Walk()
+	defer cursor.Close()
+
+	for _, child := range node.NamedChildren(cursor) {
+		if child.GrammarName() == "union_type" {
+			parts = append(parts, flattenUnionType(&child, source)...)
+		} else {
+			text := strings.TrimSpace(child.Utf8Text(source))
+			if text != "" {
+				parts = append(parts, text)
+			}
+		}
+	}
+
+	return parts
+}
 
 // Primitive types that should not be resolved
 var primitiveTypes = map[string]bool{
@@ -134,35 +192,19 @@ func resolveType(typ *M.Type, module *M.Module, pkg *M.Package, typeAliases modu
 	}
 }
 
-// resolveUnionType resolves each constituent of a union type
-func resolveUnionType(typeText string, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, externalResolver *ExternalTypeResolver, ctx *resolutionContext) (string, []M.TypeReference) {
-	parts := strings.Split(typeText, "|")
-	resolvedParts := make([]string, 0, len(parts))
-	allRefs := make([]M.TypeReference, 0)
-
-	for _, part := range parts {
-		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-
-		// Recursively resolve each part
-		resolved, refs := resolveTypeText(part, module, pkg, typeAliases, imports, externalResolver, ctx)
-		resolvedParts = append(resolvedParts, resolved)
-		allRefs = append(allRefs, refs...)
-	}
-
-	// Reconstruct the union
-	result := strings.Join(resolvedParts, " | ")
-	return result, allRefs
-}
-
 func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, externalResolver *ExternalTypeResolver, ctx *resolutionContext) (string, []M.TypeReference) {
 	typeText = strings.TrimSpace(typeText)
 
 	// Handle union types by resolving each constituent
-	if strings.Contains(typeText, "|") {
-		return resolveUnionType(typeText, module, pkg, typeAliases, imports, externalResolver, ctx)
+	if parts := splitTopLevelUnion(typeText); len(parts) > 1 {
+		resolvedParts := make([]string, 0, len(parts))
+		var allRefs []M.TypeReference
+		for _, part := range parts {
+			resolved, refs := resolveTypeText(part, module, pkg, typeAliases, imports, externalResolver, ctx)
+			resolvedParts = append(resolvedParts, resolved)
+			allRefs = append(allRefs, refs...)
+		}
+		return strings.Join(resolvedParts, " | "), allRefs
 	}
 
 	// Check if it's a simple type identifier that could be an alias
