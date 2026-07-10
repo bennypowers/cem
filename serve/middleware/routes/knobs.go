@@ -260,12 +260,15 @@ func parseType(typeText string) (KnobType, []string) {
 	}
 
 	var enumValues []string
+	allLiteral := true
 	for _, part := range parts {
 		if unquoted, ok := unquoteLiteral(part); ok {
 			enumValues = append(enumValues, unquoted)
+		} else {
+			allLiteral = false
 		}
 	}
-	if len(enumValues) > 0 {
+	if allLiteral && len(enumValues) > 0 {
 		return KnobTypeEnum, enumValues
 	}
 

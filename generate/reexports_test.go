@@ -35,7 +35,9 @@ func parseStatement(stmt string) (*ts.Node, *ts.Tree) {
 	return root, tree
 }
 
-func TestIsTypeOnlyStatement(t *testing.T) {
+// Inline: pure boolean classifier, table-driven cases are clearer than goldens
+
+func TestIsTypeOnlyNode(t *testing.T) {
 	tests := []struct {
 		name string
 		stmt string
@@ -52,6 +54,7 @@ func TestIsTypeOnlyStatement(t *testing.T) {
 		{"named import alias", "import { Foo as Bar } from './foo.js';", false},
 		{"namespace import", "import * as FooNS from './foo.js';", false},
 		{"mixed import", "import { Foo, type Bar } from './foo.js';", false},
+		{"default plus type import", "import Foo, { type Bar } from './foo.js';", false},
 		{"export type named", "export type { Foo } from './foo.js';", true},
 		{"export type named alias", "export type { Foo as Bar } from './foo.js';", true},
 		{"export type specifier", "export { type Foo } from './foo.js';", true},
@@ -73,9 +76,9 @@ func TestIsTypeOnlyStatement(t *testing.T) {
 			cursor := root.Walk()
 			defer cursor.Close()
 			for _, child := range root.NamedChildren(cursor) {
-				got := isTypeOnlyStatement(root, int(child.Id()))
+				got := isTypeOnlyNode(&child)
 				if got != tt.want {
-					t.Errorf("isTypeOnlyStatement(%q) = %v, want %v", tt.stmt, got, tt.want)
+					t.Errorf("isTypeOnlyNode(%q) = %v, want %v", tt.stmt, got, tt.want)
 				}
 			}
 		})

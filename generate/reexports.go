@@ -230,15 +230,14 @@ func findAncestor(root *ts.Node, nodeId int, grammarName string) *ts.Node {
 	return nil
 }
 
-// isTypeOnlyStatement checks if an import/export tree-sitter node is type-only
+// isTypeOnlyNode checks if an import/export tree-sitter node is type-only
 // by looking for a `type` anonymous child (statement-level) or checking that
-// all specifiers have `type` children (per-specifier).
-func isTypeOnlyStatement(root *ts.Node, nodeId int) bool {
-	node := Q.GetDescendantById(root, nodeId)
+// all bindings are type-only (per-specifier).
+func isTypeOnlyNode(node *ts.Node) bool {
 	if node == nil {
 		return false
 	}
-	return hasStatementLevelType(node) || allSpecifiersTypeOnly(node)
+	return hasStatementLevelType(node) || allBindingsTypeOnly(node)
 }
 
 // hasStatementLevelType checks for `import type` or `export type` at statement level.
@@ -257,35 +256,41 @@ func hasStatementLevelType(node *ts.Node) bool {
 	return false
 }
 
-// allSpecifiersTypeOnly checks if every import_specifier/export_specifier
-// has a `type` child, meaning all specifiers are type-only.
-func allSpecifiersTypeOnly(node *ts.Node) bool {
+// allBindingsTypeOnly checks if every binding in the import/export is type-only.
+// Returns false if any default binding, namespace binding, or non-type specifier exists.
+func allBindingsTypeOnly(node *ts.Node) bool {
 	cursor := node.Walk()
 	defer cursor.Close()
-	var specifiers int
-	var typeSpecifiers int
+	var bindings int
+	var typeBindings int
 	for _, child := range node.NamedChildren(cursor) {
-		walkSpecifiers(&child, &specifiers, &typeSpecifiers)
+		classifyBindings(&child, &bindings, &typeBindings)
 	}
-	return specifiers > 0 && specifiers == typeSpecifiers
+	return bindings > 0 && bindings == typeBindings
 }
 
-func walkSpecifiers(node *ts.Node, total, typed *int) {
-	name := node.GrammarName()
-	if name == "import_specifier" || name == "export_specifier" {
+func classifyBindings(node *ts.Node, total, typed *int) {
+	switch node.GrammarName() {
+	case "import_specifier", "export_specifier":
 		*total++
 		count := node.ChildCount()
-		for i := uint(0); i < count; i++ {
+		for i := range count {
 			if node.Child(i).GrammarName() == "type" {
 				*typed++
 				break
 			}
 		}
-		return
-	}
-	cursor := node.Walk()
-	defer cursor.Close()
-	for _, child := range node.NamedChildren(cursor) {
-		walkSpecifiers(&child, total, typed)
+	case "identifier":
+		// Default binding (import Foo, { ... }) -- never type-only
+		*total++
+	case "namespace_import", "namespace_export":
+		// import * as Ns / export * as Ns -- never type-only at per-binding level
+		*total++
+	case "import_clause", "named_imports", "export_clause":
+		cursor := node.Walk()
+		defer cursor.Close()
+		for _, child := range node.NamedChildren(cursor) {
+			classifyBindings(&child, total, typed)
+		}
 	}
 }

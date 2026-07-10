@@ -98,17 +98,9 @@ func (a Attribute) Clone() Attribute {
 
 // Validation methods for attribute values
 
-// IsEnum returns true if this attribute has enum/union type constraints
-func (a *Attribute) IsEnum() bool {
-	if a.Type == nil || a.Type.Text == "" {
-		return false
-	}
-	return len(tstype.SplitTopLevelUnion(a.Type.Text)) > 1
-}
-
-// EnumValues extracts enum values from union type definitions
-// Returns empty slice if not an enum type
-func (a *Attribute) EnumValues() []string {
+// enumParts returns the union members if this attribute has a union type,
+// or nil otherwise. Single parse, reusable for enum detection and validation.
+func (a *Attribute) enumParts() []string {
 	if a.Type == nil || a.Type.Text == "" {
 		return nil
 	}
@@ -119,16 +111,24 @@ func (a *Attribute) EnumValues() []string {
 	return parts
 }
 
+// IsEnum returns true if this attribute has enum/union type constraints
+func (a *Attribute) IsEnum() bool {
+	return a.enumParts() != nil
+}
+
+// EnumValues extracts enum values from union type definitions
+func (a *Attribute) EnumValues() []string {
+	return a.enumParts()
+}
+
 // IsValidValue checks if a value is valid for this attribute
 func (a *Attribute) IsValidValue(value string) bool {
-	if !a.IsEnum() {
-		return true // Non-enum attributes accept any value
+	parts := a.enumParts()
+	if parts == nil {
+		return true
 	}
 
-	enumValues := a.EnumValues()
-	for _, validValue := range enumValues {
-		// Check both quoted and unquoted versions
-		// HTML attributes are unquoted but TypeScript values may be quoted
+	for _, validValue := range parts {
 		unquoted := validValue
 		if len(validValue) >= 2 && validValue[0] == '"' && validValue[len(validValue)-1] == '"' {
 			unquoted = validValue[1 : len(validValue)-1]

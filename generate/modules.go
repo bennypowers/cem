@@ -272,7 +272,7 @@ func (mp *ModuleProcessor) processImports() error {
 			continue
 		}
 		stmtNode := findAncestor(mp.root, specCaptures[0].NodeId, "import_statement")
-		if stmtNode != nil && isTypeOnlyStatement(mp.root, int(stmtNode.Id())) {
+		if isTypeOnlyNode(stmtNode) {
 			continue
 		}
 		spec := specCaptures[0].Text
@@ -562,7 +562,8 @@ func (mp *ModuleProcessor) processDeclarations() error {
 				continue
 			}
 			if hasParent && len(parentNodes) > 0 {
-				if isTypeOnlyStatement(mp.root, parentNodes[0].NodeId) {
+				stmtNode := Q.GetDescendantById(mp.root, parentNodes[0].NodeId)
+				if isTypeOnlyNode(stmtNode) {
 					continue
 				}
 			}
@@ -582,10 +583,18 @@ func (mp *ModuleProcessor) processDeclarations() error {
 		}
 
 		// namespace re-exports: export * from './module.js'
+		// Excludes type-only: export type * from './module.js'
 		for captures := range exQm.ParentCaptures(mp.root, mp.code, "export.namespace.from") {
 			sourceNodes, hasSource := captures["export.source"]
+			parentNodes := captures["export.namespace.from"]
 			if !hasSource || len(sourceNodes) == 0 {
 				continue
+			}
+			if len(parentNodes) > 0 {
+				stmtNode := Q.GetDescendantById(mp.root, parentNodes[0].NodeId)
+				if isTypeOnlyNode(stmtNode) {
+					continue
+				}
 			}
 			sourcePath := mp.resolveImportSpec(sourceNodes[0].Text)
 			if !slices.Contains(mp.reExportAllSources, sourcePath) {
@@ -594,11 +603,19 @@ func (mp *ModuleProcessor) processDeclarations() error {
 		}
 
 		// namespace alias re-exports: export * as Namespace from './module.js'
+		// Excludes type-only: export type * as Namespace from './module.js'
 		for captures := range exQm.ParentCaptures(mp.root, mp.code, "export.namespace.alias.from") {
 			aliasNodes, hasAlias := captures["export.namespace.alias"]
 			sourceNodes, hasSource := captures["export.source"]
+			parentNodes := captures["export.namespace.alias.from"]
 			if !hasAlias || !hasSource || len(aliasNodes) == 0 || len(sourceNodes) == 0 {
 				continue
+			}
+			if len(parentNodes) > 0 {
+				stmtNode := Q.GetDescendantById(mp.root, parentNodes[0].NodeId)
+				if isTypeOnlyNode(stmtNode) {
+					continue
+				}
 			}
 			sourcePath := mp.resolveImportSpec(sourceNodes[0].Text)
 			reference := M.NewReference("*", "", sourcePath)
