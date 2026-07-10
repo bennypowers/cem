@@ -10,12 +10,14 @@ import { FormAssociatedElement } from '../../base/form-associated-element.js';
  * providing form validation, submission, and reset capabilities.
  *
  * @summary Form-associated text field
+ * @demo https://example.com/demo-field/ - Basic usage
+ * @demo ../../patterns/form-validation.html - Form validation pattern
  * @fires input - Emitted when the value changes
  * @fires change - Emitted when the input loses focus
  * @csspart input - The native input element
  * @csspart label - The label element
- * @cssprop --field-border-color - Border color (default: #ddd)
- * @cssprop --field-focus-color - Focus border color (default: #0066cc)
+ * @cssprop {<color>} --field-border-color - Border color (default: #ddd)
+ * @cssprop {<color>} --field-focus-color - Focus border color (default: #0066cc)
  */
 @customElement('demo-field')
 export class DemoField extends FormAssociatedElement {

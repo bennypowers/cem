@@ -6,6 +6,7 @@ import styles from './demo-card.css' with { type: 'css' };
  * A card component for grouping related content.
  *
  * @summary Cards contain content and actions about a single subject
+ * @demo ../../patterns/feedback-card.html - Status feedback pattern
  */
 @customElement('demo-card')
 export class DemoCard extends LitElement {
@@ -29,12 +30,12 @@ export class DemoCard extends LitElement {
                summary: The body/content container -->
         <slot></slot>
       </div>
-      <!-- The footer container -->
+      <!-- part:
+               summary: The footer container
+               deprecated: Use slot-based composition instead -->
       <div id="footer" part="footer">
         <!-- slot:
-               summary: Content for the card footer (e.g., actions, metadata)
-             part:
-               summary: The footer container -->
+               summary: Content for the card footer (e.g., actions, metadata) -->
         <slot name="footer"></slot>
       </div>
     `;

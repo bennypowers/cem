@@ -28,8 +28,12 @@ export class DemoInputEvent extends Event {
  *
  * @summary Text input with label, validation, and accessibility features
  *
- * @fires demo-input - Emitted when the input value changes (on input event)
- * @fires demo-change - Emitted when the input value is committed (on change event)
+ * @cssstate invalid - Applied when the input fails validation
+ * @cssstate focused - Applied when the input has focus
+ * @cssstate disabled - Applied when the input is disabled
+ *
+ * @fires {DemoInputEvent} demo-input - Emitted when the input value changes (on input event)
+ * @fires {DemoInputEvent} demo-change - Emitted when the input value is committed (on change event)
  */
 @customElement('demo-input')
 export class DemoInput extends LitElement {

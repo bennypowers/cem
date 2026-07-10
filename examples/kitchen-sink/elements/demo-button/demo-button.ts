@@ -34,6 +34,14 @@ export type ButtonVariant =
  * @slot start - Content placed before the label (e.g., an icon)
  * @slot end - Content placed after the label (e.g., an icon)
  *
+ * @example <caption>Basic usage</caption>
+ * ```html
+ * <demo-button variant="brand">Click me</demo-button>
+ * ```
+ *
+ * @cssstate loading - Applied when the button is in a loading state
+ * @cssstate active - Applied when the button is actively pressed
+ *
  * @csspart base - The component's base wrapper
  * @csspart start - The container that wraps the start slot
  * @csspart label - The button's label container
@@ -47,6 +55,7 @@ export class DemoButton extends LitElement {
   @query('#button')
   accessor button!: HTMLButtonElement;
 
+  /** @ignore */
   @state() private accessor hasStartSlot = false;
 
   @state() private accessor hasEndSlot = false;
@@ -73,6 +82,7 @@ export class DemoButton extends LitElement {
 
   /**
    * Draws the button with a pill shape (fully rounded)
+   * @deprecated Use CSS border-radius instead
    */
   @property({ type: Boolean, reflect: true }) accessor pill = false;
 
@@ -119,6 +129,10 @@ export class DemoButton extends LitElement {
 
   /**
    * Simulates a click on the button
+   * @example
+   * ```js
+   * document.querySelector('demo-button').click();
+   * ```
    */
   click() {
     this.button?.click();
@@ -166,6 +180,7 @@ export class DemoButton extends LitElement {
               value="${this.value || nothing}"
               aria-disabled="${String(disabled)}"
               tabindex="${disabled ? '-1' : '0'}">
+        <!-- deprecated: Use CSS ::before pseudo-element -->
         <slot name="start" part="start" @slotchange=${this.onSlotchange}></slot>
         <slot part="label" @slotchange=${this.onSlotchange}></slot>
         <slot name="end" part="end" @slotchange=${this.onSlotchange}></slot>

@@ -9,10 +9,12 @@ import { LoggingMixin } from '../../mixins/logging-mixin.js';
  * and debug utilities to track element behavior.
  *
  * @summary Debug element demonstrating mixin pattern
+ * @deprecated Use browser DevTools instead
  * @slot - Content to display
  * @csspart container - The main container
- * @cssprop --logger-border-color - Border color (default: #ccc)
- * @cssprop --logger-bg-color - Background color (default: #f5f5f5)
+ * @cssprop {<color>} --logger-border-color - Border color (default: #ccc)
+ * @cssprop {<color>} --logger-bg-color - Background color (default: #f5f5f5)
+ * @attr {boolean} [verbose=false] - Enable verbose logging output
  */
 @customElement('demo-logger')
 export class DemoLogger extends LoggingMixin(LitElement) {

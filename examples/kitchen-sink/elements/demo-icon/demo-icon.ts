@@ -43,6 +43,7 @@ export class DemoIcon extends LitElement {
   /**
    * The name of the icon to display
    * @type {'alert' | 'check' | 'chevron' | 'heart' | 'info' | 'minus' | 'plus' | 'search' | 'star' | 'x'}
+   * @default info
    */
   @property() accessor name: keyof typeof ICONS = 'check';
 
@@ -74,6 +75,8 @@ export class DemoIcon extends LitElement {
     `;
   }
 }
+
+export default DemoIcon;
 
 declare global {
   interface HTMLElementTagNameMap {

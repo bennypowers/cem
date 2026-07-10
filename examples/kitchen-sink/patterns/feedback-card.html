@@ -1,0 +1,71 @@
+<script type="text/markdown" itemprop="description">
+Status feedback pattern combining demo-card, demo-icon, demo-button, and
+demo-spinner. Shows success, warning, and error states with contextual
+icons and actions.
+</script>
+
+<div class="grid">
+  <demo-card>
+    <div slot="header" class="status-header">
+      <demo-icon name="check" label="Success"></demo-icon>
+      <span>Upload Complete</span>
+    </div>
+    <p>Your file has been uploaded and processed.</p>
+    <div slot="footer">
+      <demo-button variant="success" size="small">View File</demo-button>
+    </div>
+  </demo-card>
+
+  <demo-card>
+    <div slot="header" class="status-header">
+      <demo-icon name="alert" label="Warning"></demo-icon>
+      <span>Storage Low</span>
+    </div>
+    <p>You have used 90% of your storage quota.</p>
+    <div slot="footer">
+      <demo-button variant="warning" size="small">Manage Storage</demo-button>
+    </div>
+  </demo-card>
+
+  <demo-card>
+    <div slot="header" class="status-header">
+      <demo-icon name="x" label="Error"></demo-icon>
+      <span>Connection Lost</span>
+    </div>
+    <p>Unable to reach the server. Retrying...</p>
+    <div slot="footer" class="error-footer">
+      <demo-spinner></demo-spinner>
+      <demo-button variant="danger"
+                   size="small"
+                   appearance="outlined">Cancel</demo-button>
+    </div>
+  </demo-card>
+</div>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+
+  .status-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+  }
+
+  .error-footer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+</style>
+
+<script type="module">
+  import '@cem-examples/kitchen-sink/elements/demo-button/demo-button.js';
+  import '@cem-examples/kitchen-sink/elements/demo-card/demo-card.js';
+  import '@cem-examples/kitchen-sink/elements/demo-icon/demo-icon.js';
+  import '@cem-examples/kitchen-sink/elements/demo-spinner/demo-spinner.js';
+</script>

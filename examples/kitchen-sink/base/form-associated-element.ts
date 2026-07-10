@@ -14,7 +14,8 @@ export class FormAssociatedElement extends LitElement {
    */
   static formAssociated = true;
 
-  private internals: ElementInternals;
+  /** @internal */
+  protected internals: ElementInternals;
   private _value: string = '';
 
   constructor() {
@@ -96,6 +97,16 @@ export class FormAssociatedElement extends LitElement {
     } else {
       this.internals.setValidity({});
     }
+  }
+
+  /**
+   * Run custom validation logic for the element.
+   * Subclasses should override this to implement field-specific validation.
+   *
+   * @returns Whether the element's value is valid
+   */
+  protected validate(): boolean {
+    return this.internals.checkValidity();
   }
 
   /**

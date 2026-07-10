@@ -20,7 +20,7 @@
                 "text": "ElementInternals"
               },
               "kind": "field",
-              "privacy": "private"
+              "privacy": "protected"
             },
             {
               "name": "_value",
@@ -116,6 +116,17 @@
             {
               "return": {
                 "type": {
+                  "text": "boolean"
+                }
+              },
+              "name": "validate",
+              "description": "Run custom validation logic for the element.\nSubclasses should override this to implement field-specific validation.",
+              "kind": "method",
+              "privacy": "protected"
+            },
+            {
+              "return": {
+                "type": {
                   "text": "void"
                 }
               },
@@ -148,7 +159,7 @@
         {
           "name": "DemoButton",
           "summary": "Buttons represent actions that are available to the user",
-          "description": "Comprehensive button component demonstrating all CEM features.",
+          "description": "Comprehensive button component demonstrating all CEM features.\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eBasic usage\u003c/figcaption\u003e\n\n```html\n\u003cdemo-button variant=\"brand\"\u003eClick me\u003c/demo-button\u003e\n```\n\u003c/figure\u003e",
           "superclass": {
             "name": "LitElement",
             "package": "lit"
@@ -194,6 +205,7 @@
                 "text": "boolean"
               },
               "default": "false",
+              "deprecated": "Use CSS border-radius instead",
               "kind": "field",
               "attribute": "pill",
               "reflects": true
@@ -257,7 +269,7 @@
             },
             {
               "name": "click",
-              "description": "Simulates a click on the button",
+              "description": "Simulates a click on the button\n\n```js\ndocument.querySelector('demo-button').click();\n```",
               "kind": "method"
             },
             {
@@ -300,7 +312,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo-button.ts#L44"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo-button.ts#L52"
           },
           "kind": "class",
           "tagName": "demo-button",
@@ -339,7 +351,8 @@
                 "text": "boolean"
               },
               "default": "false",
-              "fieldName": "pill"
+              "fieldName": "pill",
+              "deprecated": "Use CSS border-radius instead"
             },
             {
               "name": "disabled",
@@ -444,7 +457,8 @@
           "slots": [
             {
               "name": "start",
-              "description": "Content placed before the label (e.g., an icon)"
+              "description": "Content placed before the label (e.g., an icon)",
+              "deprecated": "Use CSS ::before pseudo-element"
             },
             {
               "name": "",
@@ -462,7 +476,8 @@
             },
             {
               "name": "start",
-              "description": "The container that wraps the start slot"
+              "description": "The container that wraps the start slot",
+              "deprecated": "Use CSS ::before pseudo-element"
             },
             {
               "name": "label",
@@ -506,7 +521,8 @@
               "name": "--demo-button-font-weight",
               "summary": "Button font weight",
               "description": "Font weight of button text",
-              "default": "500"
+              "default": "500",
+              "deprecated": "Use CSS font-weight directly on the host"
             },
             {
               "name": "--demo-button-transition",
@@ -525,6 +541,16 @@
               "summary": "Button background color",
               "description": "Background color of the button",
               "default": "#0070f3"
+            }
+          ],
+          "cssStates": [
+            {
+              "name": "loading",
+              "description": "Applied when the button is in a loading state"
+            },
+            {
+              "name": "active",
+              "description": "Applied when the button is actively pressed"
             }
           ],
           "demos": [
@@ -607,7 +633,7 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-card/demo-card.ts#L11"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-card/demo-card.ts#L12"
           },
           "kind": "class",
           "tagName": "demo-card",
@@ -636,7 +662,8 @@
             },
             {
               "name": "footer",
-              "description": "The footer container"
+              "summary": "The footer container",
+              "deprecated": "Use slot-based composition instead"
             }
           ],
           "cssProperties": [
@@ -682,6 +709,10 @@
             }
           ],
           "demos": [
+            {
+              "description": "Status feedback pattern",
+              "url": "../../patterns/feedback-card.html"
+            },
             {
               "description": "Using demo-card to display article content with metadata in the footer.",
               "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-card/article/",
@@ -1076,7 +1107,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-field/demo-field.ts#L21"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-field/demo-field.ts#L23"
           },
           "kind": "class",
           "tagName": "demo-field",
@@ -1122,12 +1153,24 @@
             {
               "name": "--field-border-color",
               "description": "Border color (default: #ddd)",
-              "default": "#ddd"
+              "default": "#ddd",
+              "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--field-focus-color",
               "description": "Focus border color (default: #0066cc)",
-              "default": "#0066cc"
+              "default": "#0066cc",
+              "syntax": "\u003ccolor\u003e"
+            }
+          ],
+          "demos": [
+            {
+              "description": "Basic usage",
+              "url": "https://example.com/demo-field/"
+            },
+            {
+              "description": "Form validation pattern",
+              "url": "../../patterns/form-validation.html"
             }
           ],
           "customElement": true
@@ -1171,7 +1214,7 @@
               "type": {
                 "text": "'alert' | 'check' | 'chevron' | 'heart' | 'info' | 'minus' | 'plus' | 'search' | 'star' | 'x'"
               },
-              "default": "'check'",
+              "default": "info",
               "kind": "field",
               "attribute": "name"
             },
@@ -1198,7 +1241,7 @@
               "type": {
                 "text": "'alert' | 'check' | 'chevron' | 'heart' | 'info' | 'minus' | 'plus' | 'search' | 'star' | 'x'"
               },
-              "default": "'check'",
+              "default": "info",
               "fieldName": "name"
             },
             {
@@ -1461,7 +1504,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo-input.ts#L35"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-input/demo-input.ts#L39"
           },
           "kind": "class",
           "tagName": "demo-input",
@@ -1580,26 +1623,14 @@
               "name": "demo-input",
               "description": "Emitted when the input value changes (on input event)",
               "type": {
-                "text": "Event",
-                "references": [
-                  {
-                    "name": "Event",
-                    "package": "global:"
-                  }
-                ]
+                "text": "DemoInputEvent"
               }
             },
             {
               "name": "demo-change",
               "description": "Emitted when the input value is committed (on change event)",
               "type": {
-                "text": "Event",
-                "references": [
-                  {
-                    "name": "Event",
-                    "package": "global:"
-                  }
-                ]
+                "text": "DemoInputEvent"
               }
             }
           ],
@@ -1701,6 +1732,20 @@
               "name": "--demo-input-error-color",
               "description": "Color of error message text",
               "default": "#ef4444"
+            }
+          ],
+          "cssStates": [
+            {
+              "name": "invalid",
+              "description": "Applied when the input fails validation"
+            },
+            {
+              "name": "focused",
+              "description": "Applied when the input has focus"
+            },
+            {
+              "name": "disabled",
+              "description": "Applied when the input is disabled"
             }
           ],
           "demos": [
@@ -1823,11 +1868,20 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-logger/demo-logger.ts#L18"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-logger/demo-logger.ts#L20"
           },
           "kind": "class",
+          "deprecated": "Use browser DevTools instead",
           "tagName": "demo-logger",
           "attributes": [
+            {
+              "name": "verbose",
+              "description": "Enable verbose logging output",
+              "type": {
+                "text": "boolean"
+              },
+              "default": "false"
+            },
             {
               "name": "message",
               "description": "Message to display",
@@ -1854,12 +1908,14 @@
             {
               "name": "--logger-border-color",
               "description": "Border color (default: #ccc)",
-              "default": "#ccc"
+              "default": "#ccc",
+              "syntax": "\u003ccolor\u003e"
             },
             {
               "name": "--logger-bg-color",
               "description": "Background color (default: #f5f5f5)",
-              "default": "#f5f5f5"
+              "default": "#f5f5f5",
+              "syntax": "\u003ccolor\u003e"
             }
           ],
           "customElement": true
@@ -1981,6 +2037,122 @@
           "declaration": {
             "name": "DemoSpinner",
             "module": "elements/demo-spinner/demo-spinner.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "elements/index.js",
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-button",
+          "declaration": {
+            "name": "DemoButton",
+            "module": "elements/demo-button/demo-button.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "demo-card",
+          "declaration": {
+            "name": "DemoCard",
+            "module": "elements/demo-card/demo-card.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "VERSION",
+          "declaration": {
+            "name": "VERSION",
+            "module": "elements/utilities.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "formatTagName",
+          "declaration": {
+            "name": "formatTagName",
+            "module": "elements/utilities.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DemoButton",
+          "declaration": {
+            "name": "DemoButton",
+            "module": "elements/demo-button/demo-button.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DemoCard",
+          "declaration": {
+            "name": "DemoCard",
+            "module": "elements/demo-card/demo-card.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DemoIcon",
+          "declaration": {
+            "name": "default",
+            "module": "elements/demo-icon/demo-icon.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "elements/utilities.js",
+      "declarations": [
+        {
+          "name": "VERSION",
+          "summary": "Package version string",
+          "description": "Current version of the kitchen-sink demo package.",
+          "kind": "variable",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/utilities.ts#L5"
+          }
+        },
+        {
+          "parameters": [
+            {
+              "name": "tagName",
+              "description": "- The tag name to format",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "return": {
+            "description": "The formatted display name"
+          },
+          "name": "formatTagName",
+          "summary": "Format tag name for display",
+          "description": "Format a custom element tag name for display.",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/utilities.ts#L14"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "VERSION",
+          "declaration": {
+            "name": "VERSION",
+            "module": "elements/utilities.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "formatTagName",
+          "declaration": {
+            "name": "formatTagName",
+            "module": "elements/utilities.js"
           }
         }
       ]

@@ -48,6 +48,7 @@
     /**
      * Font weight of button text
      * @summary Button font weight
+     * @deprecated Use CSS font-weight directly on the host
      */
     var(--demo-button-font-weight, 500);
   cursor: pointer;
