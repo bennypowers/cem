@@ -126,10 +126,11 @@ func (q *QueryMatcher) ParentCaptures(root *ts.Node, code []byte, parentCaptureN
 			name := names[cap.Index]
 			text := cap.Node.Utf8Text(code)
 			ci := CaptureInfo{
-				NodeId:    int(cap.Node.Id()),
-				Text:      text,
-				StartByte: cap.Node.StartByte(),
-				EndByte:   cap.Node.EndByte(),
+				NodeId:      int(cap.Node.Id()),
+				GrammarName: cap.Node.GrammarName(),
+				Text:        text,
+				StartByte:   cap.Node.StartByte(),
+				EndByte:     cap.Node.EndByte(),
 			}
 			if _, hasMap := parentGroups[pid].capMap[name]; !hasMap {
 				parentGroups[pid].capMap[name] = make([]CaptureInfo, 0)

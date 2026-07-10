@@ -18,7 +18,6 @@ package generate
 
 import (
 	"errors"
-	"regexp"
 	"slices"
 	"strings"
 
@@ -59,10 +58,6 @@ var ignoredInstanceMethodsLit = S.NewSet(
 	"willUpdate",
 )
 
-var (
-	numberLiteralRegexp = regexp.MustCompile(`^[\d._]+$`)
-	stringLiteralRegexp = regexp.MustCompile(`^('|")`)
-)
 
 func isIgnoredMember(memberName string, superclass string, isStatic bool) bool {
 	switch superclass {
@@ -264,19 +259,17 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 	for _, x := range captures["field.initializer"] {
 		defaultStr := strings.ReplaceAll(x.Text, "\n", "\\n")
 
-		// Infer type from default value if type is not already set
 		if field.Type == nil {
-			switch {
-			case defaultStr == "true" || defaultStr == "false":
+			switch x.GrammarName {
+			case "true", "false":
 				field.Type = &M.Type{Text: "boolean"}
-			case numberLiteralRegexp.MatchString(defaultStr):
+			case "number":
 				field.Type = &M.Type{Text: "number"}
-			case stringLiteralRegexp.MatchString(defaultStr):
+			case "string", "template_string":
 				field.Type = &M.Type{Text: "string"}
 			}
 		}
 
-		// Store default value as string per CEM schema
 		field.Default = defaultStr
 	}
 

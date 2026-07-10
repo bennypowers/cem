@@ -38,10 +38,11 @@ type ParentNodeCaptures struct {
 }
 
 type CaptureInfo struct {
-	NodeId    int
-	Text      string
-	StartByte uint
-	EndByte   uint
+	NodeId      int
+	GrammarName string
+	Text        string
+	StartByte   uint
+	EndByte     uint
 }
 
 type CaptureMap = map[string][]CaptureInfo

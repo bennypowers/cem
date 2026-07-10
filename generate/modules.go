@@ -271,9 +271,8 @@ func (mp *ModuleProcessor) processImports() error {
 		if !hasSpec || len(specCaptures) == 0 {
 			continue
 		}
-		// Find the full import statement by scanning backward from spec to find line start
-		stmtText := statementTextBefore(mp.code, specCaptures[0].StartByte)
-		if isTypeOnlyImport(stmtText) {
+		stmtNode := findAncestor(mp.root, specCaptures[0].NodeId, "import_statement")
+		if stmtNode != nil && isTypeOnlyStatement(mp.root, int(stmtNode.Id())) {
 			continue
 		}
 		spec := specCaptures[0].Text
@@ -563,8 +562,7 @@ func (mp *ModuleProcessor) processDeclarations() error {
 				continue
 			}
 			if hasParent && len(parentNodes) > 0 {
-				stmtText := string(mp.code[parentNodes[0].StartByte:parentNodes[0].EndByte])
-				if isTypeOnlyExport(stmtText) {
+				if isTypeOnlyStatement(mp.root, parentNodes[0].NodeId) {
 					continue
 				}
 			}
