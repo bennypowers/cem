@@ -18,7 +18,6 @@ package generate
 
 import (
 	"path"
-	"regexp"
 	"strings"
 
 	L "bennypowers.dev/cem/internal/logging"
@@ -237,52 +236,12 @@ func extractExcludeCore(union, filter string, extract bool) string {
 	return strings.Join(result, " | ")
 }
 
-// resolveUtilityType attempts to resolve built-in TS utility types in
-// module/package context. Returns ("", nil, false) to fall through.
-func resolveUtilityType(typeText string, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, externalResolver *ExternalTypeResolver, ctx *resolutionContext) (string, []M.TypeReference, bool) {
-	valueNode, source, tree, ok := parseTypeValue(typeText)
-	if !ok {
-		return "", nil, false
-	}
-	defer tree.Close()
-
-	if valueNode.GrammarName() == "array_type" {
-		return typeText, nil, true
-	}
-	if valueNode.GrammarName() != "generic_type" {
-		return "", nil, false
-	}
-
-	name, args, ok := extractGenericParts(valueNode, source)
-	if !ok || !utilityTypes[name] {
-		return "", nil, false
-	}
-
-	var allRefs []M.TypeReference
-	resolve := func(text string) string {
-		resolved, refs := resolveTypeText(text, module, pkg, typeAliases, imports, externalResolver, ctx)
-		allRefs = append(allRefs, refs...)
-		return resolved
-	}
-
-	result, handled := resolveUtilityTypeCore(name, args, resolve)
-	if !handled {
-		return "", nil, false
-	}
-	return result, allRefs, true
-}
-
 // Primitive types that should not be resolved
 var primitiveTypes = map[string]bool{
 	"string": true, "number": true, "boolean": true, "any": true,
 	"void": true, "null": true, "undefined": true, "never": true,
 	"unknown": true, "object": true, "symbol": true, "bigint": true,
 }
-
-// Type identifier pattern (TypeScript identifier rules - all valid identifiers)
-// Matches identifiers that start with letter, underscore, or dollar sign,
-// followed by letters, digits, underscores, or dollar signs
-var typeIdentifierPattern = regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*$`)
 
 // importInfo represents an import statement (internal to generate package)
 type importInfo struct {
@@ -384,8 +343,15 @@ func resolveType(typ *M.Type, module *M.Module, pkg *M.Package, typeAliases modu
 func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, externalResolver *ExternalTypeResolver, ctx *resolutionContext) (string, []M.TypeReference) {
 	typeText = strings.TrimSpace(typeText)
 
-	// Handle union types by resolving each constituent
-	if parts := splitTopLevelUnion(typeText); len(parts) > 1 {
+	valueNode, source, tree, ok := parseTypeValue(typeText)
+	if !ok {
+		return typeText, nil
+	}
+	defer tree.Close()
+
+	switch valueNode.GrammarName() {
+	case "union_type":
+		parts := flattenUnionType(valueNode, source)
 		resolvedParts := make([]string, 0, len(parts))
 		var allRefs []M.TypeReference
 		for _, part := range parts {
@@ -394,17 +360,36 @@ func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAlia
 			allRefs = append(allRefs, refs...)
 		}
 		return strings.Join(resolvedParts, " | "), allRefs
-	}
 
-	// Check if it's a simple type identifier that could be an alias
-	if !typeIdentifierPattern.MatchString(typeText) {
-		if resolved, refs, ok := resolveUtilityType(typeText, module, pkg, typeAliases, imports, externalResolver, ctx); ok {
-			return resolved, refs
+	case "array_type":
+		return typeText, nil
+
+	case "generic_type":
+		name, args, okGeneric := extractGenericParts(valueNode, source)
+		if okGeneric && utilityTypes[name] {
+			var allRefs []M.TypeReference
+			resolve := func(text string) string {
+				resolved, refs := resolveTypeText(text, module, pkg, typeAliases, imports, externalResolver, ctx)
+				allRefs = append(allRefs, refs...)
+				return resolved
+			}
+			if result, handled := resolveUtilityTypeCore(name, args, resolve); handled {
+				return result, allRefs
+			}
 		}
+		return typeText, nil
+
+	case "type_identifier", "identifier":
+		// falls through to alias resolution below
+
+	case "predefined_type":
+		return typeText, nil
+
+	default:
 		return typeText, nil
 	}
 
-	// Don't resolve primitive types
+	// Don't resolve primitive types (defensive; predefined_type case covers most)
 	if primitiveTypes[typeText] {
 		return typeText, nil
 	}
