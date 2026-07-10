@@ -19,6 +19,7 @@ package generate
 import (
 	"testing"
 
+	"bennypowers.dev/cem/internal/tstype"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/stretchr/testify/assert"
 )
@@ -47,7 +48,7 @@ func TestSplitTopLevelUnion(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := splitTopLevelUnion(tc.in)
+			got := tstype.SplitTopLevelUnion(tc.in)
 			assert.Equal(t, tc.want, got)
 		})
 	}

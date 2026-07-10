@@ -19,7 +19,8 @@ package manifest
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
+
+	"bennypowers.dev/cem/internal/tstype"
 )
 
 var _ Deprecatable = (*Attribute)(nil)
@@ -102,26 +103,20 @@ func (a *Attribute) IsEnum() bool {
 	if a.Type == nil || a.Type.Text == "" {
 		return false
 	}
-	return strings.Contains(a.Type.Text, "|")
+	return len(tstype.SplitTopLevelUnion(a.Type.Text)) > 1
 }
 
 // EnumValues extracts enum values from union type definitions
 // Returns empty slice if not an enum type
 func (a *Attribute) EnumValues() []string {
-	if !a.IsEnum() {
+	if a.Type == nil || a.Type.Text == "" {
 		return nil
 	}
-
-	// Split on | and trim whitespace from each part
-	parts := strings.Split(a.Type.Text, "|")
-	values := make([]string, 0, len(parts))
-	for _, part := range parts {
-		trimmed := strings.TrimSpace(part)
-		if trimmed != "" {
-			values = append(values, trimmed)
-		}
+	parts := tstype.SplitTopLevelUnion(a.Type.Text)
+	if len(parts) <= 1 {
+		return nil
 	}
-	return values
+	return parts
 }
 
 // IsValidValue checks if a value is valid for this attribute

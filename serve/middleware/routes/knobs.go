@@ -21,9 +21,9 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"regexp"
 	"strings"
 
+	"bennypowers.dev/cem/internal/tstype"
 	M "bennypowers.dev/cem/manifest"
 	"golang.org/x/net/html"
 )
@@ -49,10 +49,6 @@ const (
 	KnobCategoryCSSProperty KnobCategory = "css-properties"
 )
 
-var (
-	singleLiteralRe = regexp.MustCompile(`^'([^']+)'$|^"([^"]+)"$`)
-	stringLiteralRe = regexp.MustCompile(`'([^']+)'`)
-)
 
 // KnobsData represents all knobs for an element
 type KnobsData struct {
@@ -248,45 +244,40 @@ func parseType(typeText string) (KnobType, []string) {
 		return KnobTypeString, nil
 	}
 
-	// Remove whitespace for easier parsing
-	normalized := strings.ReplaceAll(typeText, " ", "")
+	parts := tstype.SplitTopLevelUnion(typeText)
 
-	// Check for boolean
-	if normalized == "boolean" {
-		return KnobTypeBoolean, nil
-	}
-
-	// Check for number
-	if normalized == "number" {
-		return KnobTypeNumber, nil
-	}
-
-	// Check for single string literal: 'value' or "value"
-	if match := singleLiteralRe.FindStringSubmatch(normalized); match != nil {
-		value := match[1]
-		if value == "" {
-			value = match[2]
+	if len(parts) == 1 {
+		switch strings.TrimSpace(parts[0]) {
+		case "boolean":
+			return KnobTypeBoolean, nil
+		case "number":
+			return KnobTypeNumber, nil
 		}
-		return KnobTypeEnum, []string{value}
+		if unquoted, ok := unquoteLiteral(parts[0]); ok {
+			return KnobTypeEnum, []string{unquoted}
+		}
+		return KnobTypeString, nil
 	}
 
-	// Check for string literal union (enum): 'a' | 'b' | 'c'
-	if strings.Contains(normalized, "|") && strings.Contains(normalized, "'") {
-		// Extract string literals
-		matches := stringLiteralRe.FindAllStringSubmatch(normalized, -1)
-		if len(matches) > 0 {
-			var enumValues []string
-			for _, match := range matches {
-				if len(match) > 1 {
-					enumValues = append(enumValues, match[1])
-				}
-			}
-			return KnobTypeEnum, enumValues
+	var enumValues []string
+	for _, part := range parts {
+		if unquoted, ok := unquoteLiteral(part); ok {
+			enumValues = append(enumValues, unquoted)
 		}
 	}
+	if len(enumValues) > 0 {
+		return KnobTypeEnum, enumValues
+	}
 
-	// Default to string
 	return KnobTypeString, nil
+}
+
+func unquoteLiteral(s string) (string, bool) {
+	s = strings.TrimSpace(s)
+	if len(s) >= 2 && ((s[0] == '\'' && s[len(s)-1] == '\'') || (s[0] == '"' && s[len(s)-1] == '"')) {
+		return s[1 : len(s)-1], true
+	}
+	return "", false
 }
 
 // detectCSSPropertyType detects the type of a CSS property from its default value

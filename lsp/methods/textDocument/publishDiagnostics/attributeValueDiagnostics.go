@@ -22,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 
+	"bennypowers.dev/cem/internal/tstype"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
@@ -360,12 +361,7 @@ type unionOptions struct {
 func parseUnionOptions(typeText string) unionOptions {
 	result := unionOptions{}
 
-	for part := range strings.SplitSeq(typeText, "|") {
-		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-
+	for _, part := range tstype.SplitTopLevelUnion(typeText) {
 		if isLiteralType(part) {
 			result.literals = append(result.literals, strings.Trim(part, `"'`))
 		} else if part == "undefined" || part == "null" {

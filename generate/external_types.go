@@ -30,6 +30,7 @@ import (
 	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/set"
+	"bennypowers.dev/cem/internal/tstype"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
@@ -507,7 +508,7 @@ func resolveTextParts(def string, aliases map[string]aliasDefinition, visited ma
 	}
 
 	// Handle unions: resolve each part independently
-	if parts := splitTopLevelUnion(def); len(parts) > 1 {
+	if parts := tstype.SplitTopLevelUnion(def); len(parts) > 1 {
 		resolvedParts := make([]string, 0, len(parts))
 		for _, part := range parts {
 			resolvedParts = append(resolvedParts, resolveTextParts(part, aliases, visited))
@@ -551,7 +552,7 @@ func resolveTextParts(def string, aliases map[string]aliasDefinition, visited ma
 // resolveUtilityTypeText handles built-in utility types during within-file
 // alias resolution (no module/package context needed).
 func resolveUtilityTypeText(def string, aliases map[string]aliasDefinition, visited map[string]bool) (string, bool) {
-	valueNode, source, tree, ok := parseTypeValue(def)
+	valueNode, source, tree, ok := tstype.ParseTypeValue(def)
 	if !ok {
 		return "", false
 	}
@@ -640,7 +641,7 @@ func expandTemplate(td *templateDef, aliases map[string]aliasDefinition, visited
 // each part, and returns the usable string values. The bail return signals
 // whether to collapse ("string") or give up ("unresolvable").
 func validateExpressionValues(resolved string) (values []string, bail string) {
-	for _, part := range splitTopLevelUnion(resolved) {
+	for _, part := range tstype.SplitTopLevelUnion(resolved) {
 		// Quoted string literal — unquote and add
 		if isQuoted(part) {
 			values = append(values, part[1:len(part)-1])

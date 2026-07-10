@@ -21,92 +21,16 @@ import (
 	"strings"
 
 	L "bennypowers.dev/cem/internal/logging"
-	"bennypowers.dev/cem/internal/languages/typescript"
+	"bennypowers.dev/cem/internal/tstype"
 	M "bennypowers.dev/cem/manifest"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
-
-// parseTypeValue parses typeText as a TypeScript type via tree-sitter and
-// returns the value node from `type _ = <typeText>`. Caller must close the
-// returned tree.
-func parseTypeValue(typeText string) (valueNode *ts.Node, source []byte, tree *ts.Tree, ok bool) {
-	typeText = strings.TrimSpace(typeText)
-	if typeText == "" {
-		return nil, nil, nil, false
-	}
-
-	source = []byte("type _ = " + typeText)
-	parser := typescript.BorrowParser()
-	defer typescript.ReturnParser(parser)
-
-	tree = parser.Parse(source, nil)
-	if tree == nil {
-		return nil, nil, nil, false
-	}
-
-	root := tree.RootNode()
-	cursor := root.Walk()
-	defer cursor.Close()
-
-	for _, child := range root.NamedChildren(cursor) {
-		if child.GrammarName() == "type_alias_declaration" {
-			if vn := child.ChildByFieldName("value"); vn != nil {
-				return vn, source, tree, true
-			}
-		}
-	}
-
-	tree.Close()
-	return nil, nil, nil, false
-}
-
-// splitTopLevelUnion parses typeText as a TypeScript type using tree-sitter
-// and splits top-level union members. Returns nil for empty input, a
-// single-element slice for non-union types.
-func splitTopLevelUnion(typeText string) []string {
-	typeText = strings.TrimSpace(typeText)
-	if typeText == "" {
-		return nil
-	}
-
-	valueNode, source, tree, ok := parseTypeValue(typeText)
-	if !ok {
-		return []string{typeText}
-	}
-	defer tree.Close()
-
-	if valueNode.GrammarName() == "union_type" {
-		return flattenUnionType(valueNode, source)
-	}
-	return []string{typeText}
-}
-
-// flattenUnionType recursively collects leaf type texts from a
-// left-recursive union_type tree-sitter node.
-func flattenUnionType(node *ts.Node, source []byte) []string {
-	var parts []string
-	cursor := node.Walk()
-	defer cursor.Close()
-
-	for _, child := range node.NamedChildren(cursor) {
-		if child.GrammarName() == "union_type" {
-			parts = append(parts, flattenUnionType(&child, source)...)
-		} else {
-			text := strings.TrimSpace(child.Utf8Text(source))
-			if text != "" {
-				parts = append(parts, text)
-			}
-		}
-	}
-
-	return parts
-}
 
 // parseGenericType decomposes a generic type like TypeName<Arg1, Arg2>
 // into its name and type arguments using tree-sitter. Returns false if
 // the type is not a generic_type node.
 func parseGenericType(typeText string) (name string, args []string, ok bool) {
-	valueNode, source, tree, okParse := parseTypeValue(typeText)
+	valueNode, source, tree, okParse := tstype.ParseTypeValue(typeText)
 	if !okParse {
 		return "", nil, false
 	}
@@ -179,7 +103,7 @@ func resolveUtilityTypeCore(name string, args []string, resolve func(string) str
 			return "", false
 		}
 		inner := resolve(args[0])
-		if parts := splitTopLevelUnion(inner); len(parts) > 1 {
+		if parts := tstype.SplitTopLevelUnion(inner); len(parts) > 1 {
 			return "(" + inner + ")[]", true
 		}
 		return inner + "[]", true
@@ -195,7 +119,7 @@ func resolveUtilityTypeCore(name string, args []string, resolve func(string) str
 			return "", false
 		}
 		resolved := resolve(args[0])
-		parts := splitTopLevelUnion(resolved)
+		parts := tstype.SplitTopLevelUnion(resolved)
 		var filtered []string
 		for _, p := range parts {
 			if p != "null" && p != "undefined" {
@@ -214,9 +138,9 @@ func resolveUtilityTypeCore(name string, args []string, resolve func(string) str
 // extractExcludeCore implements Extract (extract=true) / Exclude (extract=false)
 // on already-resolved union text.
 func extractExcludeCore(union, filter string, extract bool) string {
-	unionParts := splitTopLevelUnion(union)
+	unionParts := tstype.SplitTopLevelUnion(union)
 	filterSet := make(map[string]bool)
-	for _, p := range splitTopLevelUnion(filter) {
+	for _, p := range tstype.SplitTopLevelUnion(filter) {
 		filterSet[p] = true
 	}
 
@@ -343,7 +267,7 @@ func resolveType(typ *M.Type, module *M.Module, pkg *M.Package, typeAliases modu
 func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, externalResolver *ExternalTypeResolver, ctx *resolutionContext) (string, []M.TypeReference) {
 	typeText = strings.TrimSpace(typeText)
 
-	valueNode, source, tree, ok := parseTypeValue(typeText)
+	valueNode, source, tree, ok := tstype.ParseTypeValue(typeText)
 	if !ok {
 		return typeText, nil
 	}
@@ -351,7 +275,7 @@ func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAlia
 
 	switch valueNode.GrammarName() {
 	case "union_type":
-		parts := flattenUnionType(valueNode, source)
+		parts := tstype.FlattenUnionType(valueNode, source)
 		resolvedParts := make([]string, 0, len(parts))
 		var allRefs []M.TypeReference
 		for _, part := range parts {
