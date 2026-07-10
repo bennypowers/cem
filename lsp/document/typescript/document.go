@@ -282,8 +282,9 @@ func (d *TypeScriptDocument) findCustomElements(handler *Handler) ([]types.Custo
 		return nil, fmt.Errorf("failed to find HTML templates: %w", err)
 	}
 
+	tsRoot := tree.RootNode()
 	for _, template := range templates {
-		templateElements, err := d.parseHTMLInTemplate(template, handler, docContent)
+		templateElements, err := d.parseHTMLInTemplate(template, handler, docContent, tsRoot)
 		if err != nil {
 			helpers.SafeDebugLog("[TypeScript] Failed to parse template: %v", err)
 			continue
@@ -368,7 +369,7 @@ func (d *TypeScriptDocument) findHTMLTemplates(handler *Handler) ([]TemplateCont
 	return templates, nil
 }
 
-func (d *TypeScriptDocument) parseHTMLInTemplate(template TemplateContext, handler *Handler, docContent string) ([]types.CustomElementMatch, error) {
+func (d *TypeScriptDocument) parseHTMLInTemplate(template TemplateContext, handler *Handler, docContent string, tsRoot *ts.Node) ([]types.CustomElementMatch, error) {
 	templateContent, err := template.Content()
 	if err != nil {
 		return nil, err
@@ -406,7 +407,7 @@ func (d *TypeScriptDocument) parseHTMLInTemplate(template TemplateContext, handl
 					element := types.CustomElementMatch{
 						TagName:    capture.Text,
 						Range:      d.adjustRangeToTemplate(capture, template, docContent),
-						Attributes: d.collectTemplateAttributes(captureMap, contentBytes, template, docContent),
+						Attributes: d.collectTemplateAttributes(captureMap, contentBytes, template, docContent, tsRoot),
 					}
 					elements = append(elements, element)
 				}
@@ -433,6 +434,7 @@ func (d *TypeScriptDocument) collectTemplateAttributes(
 	contentBytes []byte,
 	template TemplateContext,
 	docContent string,
+	tsRoot *ts.Node,
 ) map[string]types.AttributeMatch {
 	attributes := make(map[string]types.AttributeMatch)
 	attrNames, ok := captureMap["attr.name"]
@@ -487,12 +489,108 @@ func (d *TypeScriptDocument) collectTemplateAttributes(
 		}
 		if closestValue != "" {
 			attrMatch.Value = closestValue
+			if strings.Contains(closestValue, "${") && tsRoot != nil {
+				classifyExpression(&attrMatch, template, tsRoot, []byte(docContent))
+			}
 		}
 
 		attributes[attrName.Text] = attrMatch
 	}
 
 	return attributes
+}
+
+// classifyExpression analyzes a template expression (${...}) from the TS tree
+// and populates ExpressionKind/ExpressionDetail on the attribute match.
+// Uses the attribute value's ${...} content to locate the expression in the TS AST.
+func classifyExpression(match *types.AttributeMatch, template TemplateContext, tsRoot *ts.Node, docContent []byte) {
+	value := match.Value
+	dollarIdx := strings.Index(value, "${")
+	if dollarIdx < 0 {
+		return
+	}
+
+	// The expression text between ${ and } -- used to find matching TS node
+	closeIdx := strings.LastIndex(value, "}")
+	if closeIdx <= dollarIdx+2 {
+		match.ExpressionKind = "complex"
+		return
+	}
+	exprText := value[dollarIdx+2 : closeIdx]
+
+	// Search for the template_substitution containing this expression text
+	// within the template's byte range in the TS document
+	sub := findSubstitutionByContent(tsRoot, docContent, template.startByte, exprText)
+	if sub == nil {
+		match.ExpressionKind = "complex"
+		return
+	}
+
+	cursor := sub.Walk()
+	defer cursor.Close()
+	children := sub.NamedChildren(cursor)
+	if len(children) == 0 {
+		match.ExpressionKind = "complex"
+		return
+	}
+
+	expr := children[0]
+	switch expr.GrammarName() {
+	case "string", "template_string":
+		match.ExpressionKind = "literal"
+		text := expr.Utf8Text(docContent)
+		if len(text) >= 2 {
+			match.ExpressionDetail = text[1 : len(text)-1]
+		}
+	case "number":
+		match.ExpressionKind = "literal"
+		match.ExpressionDetail = expr.Utf8Text(docContent)
+	case "true", "false":
+		match.ExpressionKind = "literal"
+		match.ExpressionDetail = expr.GrammarName()
+	case "member_expression":
+		objNode := expr.ChildByFieldName("object")
+		propNode := expr.ChildByFieldName("property")
+		if objNode != nil && propNode != nil && objNode.GrammarName() == "this" {
+			match.ExpressionKind = "this-member"
+			match.ExpressionDetail = propNode.Utf8Text(docContent)
+		} else {
+			match.ExpressionKind = "complex"
+		}
+	case "identifier":
+		match.ExpressionKind = "identifier"
+		match.ExpressionDetail = expr.Utf8Text(docContent)
+	default:
+		match.ExpressionKind = "complex"
+	}
+}
+
+// findSubstitutionByContent finds a template_substitution node whose
+// expression text matches, within the template's byte range.
+func findSubstitutionByContent(node *ts.Node, docContent []byte, templateStart uint, exprText string) *ts.Node {
+	start, _ := node.ByteRange()
+	if start < templateStart && node.GrammarName() != "program" && node.GrammarName() != "template_string" && node.GrammarName() != "call_expression" {
+		return nil
+	}
+	if node.GrammarName() == "template_substitution" {
+		cursor := node.Walk()
+		children := node.NamedChildren(cursor)
+		cursor.Close()
+		if len(children) > 0 {
+			text := strings.TrimSpace(children[0].Utf8Text(docContent))
+			if text == exprText {
+				return node
+			}
+		}
+	}
+	cursor := node.Walk()
+	defer cursor.Close()
+	for _, child := range node.NamedChildren(cursor) {
+		if found := findSubstitutionByContent(&child, docContent, templateStart, exprText); found != nil {
+			return found
+		}
+	}
+	return nil
 }
 
 func (d *TypeScriptDocument) analyzeCompletionContext(

@@ -113,10 +113,12 @@ type CustomElementMatch struct {
 
 // AttributeMatch represents a found attribute
 type AttributeMatch struct {
-	Name          string
-	Value         string
-	Range         protocol.Range
-	BindingPrefix string // Lit binding prefix: ".", "?", "@", or "" for plain attributes
+	Name             string
+	Value            string
+	Range            protocol.Range
+	BindingPrefix    string // Lit binding prefix: ".", "?", "@", or "" for plain attributes
+	ExpressionKind   string // "literal", "this-member", "identifier", "complex", or "" (not an expression)
+	ExpressionDetail string // member name, identifier name, or literal value depending on kind
 }
 
 // ElementDefinition represents a custom element with its source information
