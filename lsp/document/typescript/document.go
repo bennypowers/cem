@@ -502,25 +502,11 @@ func (d *TypeScriptDocument) collectTemplateAttributes(
 
 // classifyExpression analyzes a template expression (${...}) from the TS tree
 // and populates ExpressionKind/ExpressionDetail on the attribute match.
-// Uses the attribute value's ${...} content to locate the expression in the TS AST.
+// Finds the first template_substitution within the template's byte range
+// and classifies its expression child node.
 func classifyExpression(match *types.AttributeMatch, template TemplateContext, tsRoot *ts.Node, docContent []byte) {
-	value := match.Value
-	dollarIdx := strings.Index(value, "${")
-	if dollarIdx < 0 {
-		return
-	}
-
-	// The expression text between ${ and } -- used to find matching TS node
-	closeIdx := strings.LastIndex(value, "}")
-	if closeIdx <= dollarIdx+2 {
-		match.ExpressionKind = "complex"
-		return
-	}
-	exprText := value[dollarIdx+2 : closeIdx]
-
-	// Search for the template_substitution containing this expression text
-	// within the template's byte range in the TS document
-	sub := findSubstitutionByContent(tsRoot, docContent, template.startByte, exprText)
+	templateEnd := template.startByte + uint(len(match.Value)+100)
+	sub := findFirstSubstitution(tsRoot, template.startByte, templateEnd)
 	if sub == nil {
 		match.ExpressionKind = "complex"
 		return
@@ -534,7 +520,10 @@ func classifyExpression(match *types.AttributeMatch, template TemplateContext, t
 		return
 	}
 
-	expr := children[0]
+	classifyExpressionNode(&children[0], match, docContent)
+}
+
+func classifyExpressionNode(expr *ts.Node, match *types.AttributeMatch, docContent []byte) {
 	switch expr.GrammarName() {
 	case "string", "template_string":
 		match.ExpressionKind = "literal"
@@ -565,28 +554,24 @@ func classifyExpression(match *types.AttributeMatch, template TemplateContext, t
 	}
 }
 
-// findSubstitutionByContent finds a template_substitution node whose
-// expression text matches, within the template's byte range.
-func findSubstitutionByContent(node *ts.Node, docContent []byte, templateStart uint, exprText string) *ts.Node {
-	start, _ := node.ByteRange()
-	if start < templateStart && node.GrammarName() != "program" && node.GrammarName() != "template_string" && node.GrammarName() != "call_expression" {
+// findFirstSubstitution finds the first template_substitution node
+// whose byte range overlaps [minByte, maxByte].
+func findFirstSubstitution(node *ts.Node, minByte, maxByte uint) *ts.Node {
+	_, end := node.ByteRange()
+	if end < minByte {
 		return nil
 	}
-	if node.GrammarName() == "template_substitution" {
-		cursor := node.Walk()
-		children := node.NamedChildren(cursor)
-		cursor.Close()
-		if len(children) > 0 {
-			text := strings.TrimSpace(children[0].Utf8Text(docContent))
-			if text == exprText {
-				return node
-			}
-		}
+	start, _ := node.ByteRange()
+	if start > maxByte {
+		return nil
+	}
+	if node.GrammarName() == "template_substitution" && start >= minByte {
+		return node
 	}
 	cursor := node.Walk()
 	defer cursor.Close()
 	for _, child := range node.NamedChildren(cursor) {
-		if found := findSubstitutionByContent(&child, docContent, templateStart, exprText); found != nil {
+		if found := findFirstSubstitution(&child, minByte, maxByte); found != nil {
 			return found
 		}
 	}
