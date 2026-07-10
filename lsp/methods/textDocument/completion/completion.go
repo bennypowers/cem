@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strings"
 
+	"bennypowers.dev/cem/internal/tstype"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/types"
@@ -450,11 +451,8 @@ func parseUnionType(typeText string) []protocol.CompletionItem {
 	var items []protocol.CompletionItem
 	valueKind := protocol.CompletionItemKindValue
 
-	// Split by | and clean up quotes
-	for part := range strings.SplitSeq(typeText, "|") {
-		part = strings.TrimSpace(part)
-		part = strings.Trim(part, `"'`) // Remove quotes
-
+	for _, part := range tstype.SplitTopLevelUnion(typeText) {
+		part = strings.Trim(part, `"'`)
 		if part != "" {
 			items = append(items, protocol.CompletionItem{
 				Label:      part,

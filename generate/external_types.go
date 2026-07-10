@@ -30,6 +30,7 @@ import (
 	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/set"
+	"bennypowers.dev/cem/internal/tstype"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
@@ -507,13 +508,10 @@ func resolveTextParts(def string, aliases map[string]aliasDefinition, visited ma
 	}
 
 	// Handle unions: resolve each part independently
-	if strings.Contains(def, "|") {
-		var resolvedParts []string
-		for part := range strings.SplitSeq(def, "|") {
-			part = strings.TrimSpace(part)
-			if part != "" {
-				resolvedParts = append(resolvedParts, resolveTextParts(part, aliases, visited))
-			}
+	if parts := tstype.SplitTopLevelUnion(def); len(parts) > 1 {
+		resolvedParts := make([]string, 0, len(parts))
+		for _, part := range parts {
+			resolvedParts = append(resolvedParts, resolveTextParts(part, aliases, visited))
 		}
 		return strings.Join(resolvedParts, " | ")
 	}
@@ -521,6 +519,11 @@ func resolveTextParts(def string, aliases map[string]aliasDefinition, visited ma
 	// Quoted string literal — already a scalar value
 	if isQuoted(def) {
 		return def
+	}
+
+	// Try utility type resolution for generics (Extract, Exclude, etc.)
+	if resolved, ok := resolveUtilityTypeText(def, aliases, visited); ok {
+		return resolved
 	}
 
 	// Primitive types — no resolution needed
@@ -544,6 +547,38 @@ func resolveTextParts(def string, aliases map[string]aliasDefinition, visited ma
 	}
 
 	return def
+}
+
+// resolveUtilityTypeText handles built-in utility types during within-file
+// alias resolution (no module/package context needed).
+func resolveUtilityTypeText(def string, aliases map[string]aliasDefinition, visited map[string]bool) (string, bool) {
+	valueNode, source, tree, ok := tstype.ParseTypeValue(def)
+	if !ok {
+		return "", false
+	}
+	defer tree.Close()
+
+	if valueNode.GrammarName() == "array_type" {
+		return def, true
+	}
+	if valueNode.GrammarName() != "generic_type" {
+		return "", false
+	}
+
+	name, args, ok := extractGenericParts(valueNode, source)
+	if !ok || !utilityTypes[name] {
+		return "", false
+	}
+
+	resolve := func(text string) string {
+		return resolveTextParts(text, aliases, visited)
+	}
+
+	result, handled := resolveUtilityTypeCore(name, args, resolve)
+	if !handled {
+		return "", false
+	}
+	return result, true
 }
 
 // broadPrimitives are types that, when used in a template expression, collapse
@@ -606,12 +641,7 @@ func expandTemplate(td *templateDef, aliases map[string]aliasDefinition, visited
 // each part, and returns the usable string values. The bail return signals
 // whether to collapse ("string") or give up ("unresolvable").
 func validateExpressionValues(resolved string) (values []string, bail string) {
-	for part := range strings.SplitSeq(resolved, "|") {
-		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-
+	for _, part := range tstype.SplitTopLevelUnion(resolved) {
 		// Quoted string literal — unquote and add
 		if isQuoted(part) {
 			values = append(values, part[1:len(part)-1])

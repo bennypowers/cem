@@ -1,0 +1,162 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/types.js"
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/utility-types.js",
+      "declarations": [
+        {
+          "name": "UtilityElement",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "name": "extractedPalette",
+              "type": {
+                "text": "'lightest' | 'darkest'",
+                "references": [
+                  {
+                    "name": "NavPalette",
+                    "module": "src/utility-types.js"
+                  },
+                  {
+                    "name": "ColorPalette",
+                    "module": "src/types.js"
+                  }
+                ]
+              },
+              "default": "'lightest'",
+              "kind": "field"
+            },
+            {
+              "name": "excludedPalette",
+              "type": {
+                "text": "'light' | 'lighter' | 'lightest'",
+                "references": [
+                  {
+                    "name": "NonDarkPalette",
+                    "module": "src/utility-types.js"
+                  },
+                  {
+                    "name": "ColorPalette",
+                    "module": "src/types.js"
+                  }
+                ]
+              },
+              "default": "'light'",
+              "kind": "field"
+            },
+            {
+              "name": "nonNullableSize",
+              "type": {
+                "text": "'sm' | 'md' | 'lg' | 'xl'",
+                "references": [
+                  {
+                    "name": "RequiredSize",
+                    "module": "src/utility-types.js"
+                  },
+                  {
+                    "name": "MaybeSize",
+                    "module": "src/types.js"
+                  },
+                  {
+                    "name": "Size",
+                    "module": "src/types.js"
+                  }
+                ]
+              },
+              "default": "'sm'",
+              "kind": "field"
+            },
+            {
+              "name": "readonlyPalette",
+              "type": {
+                "text": "'light' | 'lighter' | 'lightest' | 'dark' | 'darker' | 'darkest'",
+                "references": [
+                  {
+                    "name": "ReadonlyPalette",
+                    "module": "src/utility-types.js"
+                  },
+                  {
+                    "name": "ColorPalette",
+                    "module": "src/types.js"
+                  }
+                ]
+              },
+              "default": "'light'",
+              "kind": "field"
+            },
+            {
+              "name": "requiredPalette",
+              "type": {
+                "text": "'light' | 'lighter' | 'lightest' | 'dark' | 'darker' | 'darkest'",
+                "references": [
+                  {
+                    "name": "RequiredPalette",
+                    "module": "src/utility-types.js"
+                  },
+                  {
+                    "name": "ColorPalette",
+                    "module": "src/types.js"
+                  }
+                ]
+              },
+              "default": "'light'",
+              "kind": "field"
+            },
+            {
+              "name": "sizes",
+              "type": {
+                "text": "('sm' | 'md' | 'lg' | 'xl')[]",
+                "references": [
+                  {
+                    "name": "Sizes",
+                    "module": "src/utility-types.js"
+                  },
+                  {
+                    "name": "Size",
+                    "module": "src/types.js"
+                  }
+                ]
+              },
+              "default": "[]",
+              "kind": "field"
+            },
+            {
+              "name": "tags",
+              "type": {
+                "text": "string[]",
+                "references": [
+                  {
+                    "name": "Tags",
+                    "module": "src/utility-types.js"
+                  }
+                ]
+              },
+              "default": "[]",
+              "kind": "field"
+            }
+          ],
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "UtilityElement",
+          "declaration": {
+            "name": "UtilityElement",
+            "module": "src/utility-types.js"
+          }
+        }
+      ]
+    }
+  ]
+}

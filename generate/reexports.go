@@ -18,11 +18,11 @@ package generate
 
 import (
 	"cmp"
-	"regexp"
 	"slices"
-	"strings"
 
+	Q "bennypowers.dev/cem/internal/treesitter"
 	M "bennypowers.dev/cem/manifest"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 // resolveReExportedCEDefinitions adds custom-element-definition exports to modules
@@ -218,52 +218,79 @@ func addCEExportForReExportedClass(mod *M.Module, className string, sourceModule
 	}
 }
 
-// typeSpecifierRe matches per-specifier type annotations where ALL specifiers are type-only.
-// Matches: { type Foo }, { type Foo, type Bar }, { type Foo as Bar }, { type Foo as Bar, type Baz }
-var typeSpecifierRe = regexp.MustCompile(`\{\s*(type\s+\w+(\s+as\s+\w+)?\s*,?\s*)+\}`)
-
-// statementTextBefore extracts the statement text from the beginning of the line
-// up to the given byte offset. Used to check for type-only import/export keywords
-// that appear before the source specifier in the statement.
-func statementTextBefore(code []byte, endByte uint) string {
-	if int(endByte) > len(code) {
-		endByte = uint(len(code))
+// findAncestor walks up from a node to find the nearest ancestor with the given grammar name.
+func findAncestor(root *ts.Node, nodeId int, grammarName string) *ts.Node {
+	node := Q.GetDescendantById(root, nodeId)
+	for node != nil {
+		if node.GrammarName() == grammarName {
+			return node
+		}
+		node = node.Parent()
 	}
-	start := int(endByte)
-	for start > 0 && code[start-1] != '\n' {
-		start--
-	}
-	return string(code[start:endByte])
+	return nil
 }
 
-// isTypeOnlyImport checks if an import statement is type-only and will be elided.
-// Matches: import type { X }, import type * as Ns, import { type X }
-// Does NOT match: import { X }, import './x.js', import { X, type Y } (has non-type specifier)
-func isTypeOnlyImport(stmtText string) bool {
-	trimmed := strings.TrimSpace(stmtText)
-	// Statement-level: import type { X } or import type * as Ns
-	if strings.HasPrefix(trimmed, "import type ") {
-		return true
+// isTypeOnlyNode checks if an import/export tree-sitter node is type-only
+// by looking for a `type` anonymous child (statement-level) or checking that
+// all bindings are type-only (per-specifier).
+func isTypeOnlyNode(node *ts.Node) bool {
+	if node == nil {
+		return false
 	}
-	// Per-specifier: import { type X, type Y } (all specifiers are type-only)
-	if typeSpecifierRe.MatchString(trimmed) {
-		return true
+	return hasStatementLevelType(node) || allBindingsTypeOnly(node)
+}
+
+// hasStatementLevelType checks for `import type` or `export type` at statement level.
+func hasStatementLevelType(node *ts.Node) bool {
+	count := node.ChildCount()
+	for i := uint(0); i+1 < count; i++ {
+		child := node.Child(i)
+		next := node.Child(i + 1)
+		if child.GrammarName() == "import" && next.GrammarName() == "type" {
+			return true
+		}
+		if child.GrammarName() == "export" && next.GrammarName() == "type" {
+			return true
+		}
 	}
 	return false
 }
 
-// isTypeOnlyExport checks if an export statement is type-only and will be elided.
-// Matches: export type { X }, export { type X }
-// Does NOT match: export { X }, export { X, type Y } (has non-type specifier)
-func isTypeOnlyExport(stmtText string) bool {
-	trimmed := strings.TrimSpace(stmtText)
-	// Statement-level: export type { X }
-	if strings.HasPrefix(trimmed, "export type ") {
-		return true
+// allBindingsTypeOnly checks if every binding in the import/export is type-only.
+// Returns false if any default binding, namespace binding, or non-type specifier exists.
+func allBindingsTypeOnly(node *ts.Node) bool {
+	cursor := node.Walk()
+	defer cursor.Close()
+	var bindings int
+	var typeBindings int
+	for _, child := range node.NamedChildren(cursor) {
+		classifyBindings(&child, &bindings, &typeBindings)
 	}
-	// Per-specifier: export { type X, type Y } (all specifiers are type-only)
-	if typeSpecifierRe.MatchString(trimmed) {
-		return true
+	return bindings > 0 && bindings == typeBindings
+}
+
+func classifyBindings(node *ts.Node, total, typed *int) {
+	switch node.GrammarName() {
+	case "import_specifier", "export_specifier":
+		*total++
+		count := node.ChildCount()
+		for i := range count {
+			if node.Child(i).GrammarName() == "type" {
+				*typed++
+				break
+			}
+		}
+	case "identifier":
+		// Default binding (import Foo, { ... }) -- never type-only
+		*total++
+	case "namespace_import", "namespace_export":
+		// import * as Ns / export * as Ns -- never type-only at per-binding level
+		*total++
+	case "import_clause", "named_imports", "export_clause":
+		cursor := node.Walk()
+		defer cursor.Close()
+		for _, child := range node.NamedChildren(cursor) {
+			classifyBindings(&child, total, typed)
+		}
 	}
-	return false
 }

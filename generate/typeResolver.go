@@ -18,12 +18,147 @@ package generate
 
 import (
 	"path"
-	"regexp"
 	"strings"
 
 	L "bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/tstype"
 	M "bennypowers.dev/cem/manifest"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
+
+// parseGenericType decomposes a generic type like TypeName<Arg1, Arg2>
+// into its name and type arguments using tree-sitter. Returns false if
+// the type is not a generic_type node.
+func parseGenericType(typeText string) (name string, args []string, ok bool) {
+	valueNode, source, tree, okParse := tstype.ParseTypeValue(typeText)
+	if !okParse {
+		return "", nil, false
+	}
+	defer tree.Close()
+
+	if valueNode.GrammarName() != "generic_type" {
+		return "", nil, false
+	}
+	return extractGenericParts(valueNode, source)
+}
+
+// extractGenericParts reads the name and type_arguments from a generic_type node.
+func extractGenericParts(node *ts.Node, source []byte) (string, []string, bool) {
+	cursor := node.Walk()
+	defer cursor.Close()
+
+	var name string
+	var args []string
+	for _, child := range node.NamedChildren(cursor) {
+		switch child.GrammarName() {
+		case "identifier", "type_identifier":
+			name = child.Utf8Text(source)
+		case "type_arguments":
+			argCursor := child.Walk()
+			for _, arg := range child.NamedChildren(argCursor) {
+				text := strings.TrimSpace(arg.Utf8Text(source))
+				if text != "" {
+					args = append(args, text)
+				}
+			}
+			argCursor.Close()
+		}
+	}
+
+	if name == "" {
+		return "", nil, false
+	}
+	return name, args, true
+}
+
+// utilityTypes lists built-in TypeScript utility types we can resolve statically.
+var utilityTypes = map[string]bool{
+	"Extract":     true,
+	"Exclude":     true,
+	"Array":       true,
+	"Readonly":    true,
+	"Required":    true,
+	"NonNullable": true,
+}
+
+// resolveUtilityTypeCore dispatches utility type resolution using the provided
+// resolve callback for recursive type resolution. Shared by both module-context
+// and within-file resolution paths.
+func resolveUtilityTypeCore(name string, args []string, resolve func(string) string) (string, bool) {
+	switch name {
+	case "Extract":
+		if len(args) != 2 {
+			return "", false
+		}
+		return extractExcludeCore(resolve(args[0]), resolve(args[1]), true), true
+
+	case "Exclude":
+		if len(args) != 2 {
+			return "", false
+		}
+		return extractExcludeCore(resolve(args[0]), resolve(args[1]), false), true
+
+	case "Array":
+		if len(args) != 1 {
+			return "", false
+		}
+		inner := resolve(args[0])
+		if parts := tstype.SplitTopLevelUnion(inner); len(parts) > 1 {
+			return "(" + inner + ")[]", true
+		}
+		return inner + "[]", true
+
+	case "Readonly", "Required":
+		if len(args) != 1 {
+			return "", false
+		}
+		return resolve(args[0]), true
+
+	case "NonNullable":
+		if len(args) != 1 {
+			return "", false
+		}
+		resolved := resolve(args[0])
+		parts := tstype.SplitTopLevelUnion(resolved)
+		var filtered []string
+		for _, p := range parts {
+			if p != "null" && p != "undefined" {
+				filtered = append(filtered, p)
+			}
+		}
+		if len(filtered) == 0 {
+			return "never", true
+		}
+		return strings.Join(filtered, " | "), true
+	}
+
+	return "", false
+}
+
+// extractExcludeCore implements Extract (extract=true) / Exclude (extract=false)
+// on already-resolved union text.
+func extractExcludeCore(union, filter string, extract bool) string {
+	unionParts := tstype.SplitTopLevelUnion(union)
+	filterSet := make(map[string]bool)
+	for _, p := range tstype.SplitTopLevelUnion(filter) {
+		filterSet[p] = true
+	}
+
+	var result []string
+	for _, p := range unionParts {
+		inFilter := filterSet[p]
+		if extract && inFilter {
+			result = append(result, p)
+		} else if !extract && !inFilter {
+			result = append(result, p)
+		}
+	}
+
+	if len(result) == 0 {
+		return "never"
+	}
+	return strings.Join(result, " | ")
+}
 
 // Primitive types that should not be resolved
 var primitiveTypes = map[string]bool{
@@ -31,11 +166,6 @@ var primitiveTypes = map[string]bool{
 	"void": true, "null": true, "undefined": true, "never": true,
 	"unknown": true, "object": true, "symbol": true, "bigint": true,
 }
-
-// Type identifier pattern (TypeScript identifier rules - all valid identifiers)
-// Matches identifiers that start with letter, underscore, or dollar sign,
-// followed by letters, digits, underscores, or dollar signs
-var typeIdentifierPattern = regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*$`)
 
 // importInfo represents an import statement (internal to generate package)
 type importInfo struct {
@@ -134,44 +264,56 @@ func resolveType(typ *M.Type, module *M.Module, pkg *M.Package, typeAliases modu
 	}
 }
 
-// resolveUnionType resolves each constituent of a union type
-func resolveUnionType(typeText string, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, externalResolver *ExternalTypeResolver, ctx *resolutionContext) (string, []M.TypeReference) {
-	parts := strings.Split(typeText, "|")
-	resolvedParts := make([]string, 0, len(parts))
-	allRefs := make([]M.TypeReference, 0)
-
-	for _, part := range parts {
-		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-
-		// Recursively resolve each part
-		resolved, refs := resolveTypeText(part, module, pkg, typeAliases, imports, externalResolver, ctx)
-		resolvedParts = append(resolvedParts, resolved)
-		allRefs = append(allRefs, refs...)
-	}
-
-	// Reconstruct the union
-	result := strings.Join(resolvedParts, " | ")
-	return result, allRefs
-}
-
 func resolveTypeText(typeText string, module *M.Module, pkg *M.Package, typeAliases moduleTypeAliasesMap, imports moduleImportsMap, externalResolver *ExternalTypeResolver, ctx *resolutionContext) (string, []M.TypeReference) {
 	typeText = strings.TrimSpace(typeText)
 
-	// Handle union types by resolving each constituent
-	if strings.Contains(typeText, "|") {
-		return resolveUnionType(typeText, module, pkg, typeAliases, imports, externalResolver, ctx)
+	valueNode, source, tree, ok := tstype.ParseTypeValue(typeText)
+	if !ok {
+		return typeText, nil
 	}
+	defer tree.Close()
 
-	// Check if it's a simple type identifier that could be an alias
-	if !typeIdentifierPattern.MatchString(typeText) {
-		// Not a simple identifier, could be a complex type (generics, etc.) - don't resolve
+	switch valueNode.GrammarName() {
+	case "union_type":
+		parts := tstype.FlattenUnionType(valueNode, source)
+		resolvedParts := make([]string, 0, len(parts))
+		var allRefs []M.TypeReference
+		for _, part := range parts {
+			resolved, refs := resolveTypeText(part, module, pkg, typeAliases, imports, externalResolver, ctx)
+			resolvedParts = append(resolvedParts, resolved)
+			allRefs = append(allRefs, refs...)
+		}
+		return strings.Join(resolvedParts, " | "), allRefs
+
+	case "array_type":
+		return typeText, nil
+
+	case "generic_type":
+		name, args, okGeneric := extractGenericParts(valueNode, source)
+		if okGeneric && utilityTypes[name] {
+			var allRefs []M.TypeReference
+			resolve := func(text string) string {
+				resolved, refs := resolveTypeText(text, module, pkg, typeAliases, imports, externalResolver, ctx)
+				allRefs = append(allRefs, refs...)
+				return resolved
+			}
+			if result, handled := resolveUtilityTypeCore(name, args, resolve); handled {
+				return result, allRefs
+			}
+		}
+		return typeText, nil
+
+	case "type_identifier", "identifier":
+		// falls through to alias resolution below
+
+	case "predefined_type":
+		return typeText, nil
+
+	default:
 		return typeText, nil
 	}
 
-	// Don't resolve primitive types
+	// Don't resolve primitive types (defensive; predefined_type case covers most)
 	if primitiveTypes[typeText] {
 		return typeText, nil
 	}

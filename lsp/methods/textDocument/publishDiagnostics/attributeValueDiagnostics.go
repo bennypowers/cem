@@ -22,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 
+	"bennypowers.dev/cem/internal/tstype"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
@@ -96,7 +97,7 @@ func validateAttributeValue(attr *M.Attribute, match AttributeMatch) []protocol.
 		diagnostics = append(diagnostics, validateUnionType(typeText, match)...)
 	case isLiteralType(typeText):
 		diagnostics = append(diagnostics, validateLiteralType(typeText, match)...)
-	case isArrayType(lowerTypeText):
+	case isArrayType(typeText):
 		diagnostics = append(diagnostics, createArrayTypeInfo(match)...)
 	default:
 		helpers.SafeDebugLog("[VALUE_DIAGNOSTICS] Skipping validation for unknown type: %s", typeText)
@@ -341,9 +342,27 @@ func isLiteralType(typeText string) bool {
 		(strings.HasPrefix(typeText, "\"") && strings.HasSuffix(typeText, "\""))
 }
 
-// isArrayType checks if a type definition is an array type
+// isArrayType checks if a type definition is an array type using tree-sitter.
+// Matches both T[] (array_type) and Array<T> (generic_type named "Array").
 func isArrayType(typeText string) bool {
-	return strings.Contains(typeText, "[]") || strings.Contains(typeText, "array")
+	valueNode, source, tree, ok := tstype.ParseTypeValue(typeText)
+	if !ok {
+		return false
+	}
+	defer tree.Close()
+	switch valueNode.GrammarName() {
+	case "array_type":
+		return true
+	case "generic_type":
+		cursor := valueNode.Walk()
+		defer cursor.Close()
+		for _, child := range valueNode.NamedChildren(cursor) {
+			if (child.GrammarName() == "identifier" || child.GrammarName() == "type_identifier") && strings.EqualFold(child.Utf8Text(source), "Array") {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // unionOptions holds parsed union type results
@@ -360,12 +379,7 @@ type unionOptions struct {
 func parseUnionOptions(typeText string) unionOptions {
 	result := unionOptions{}
 
-	for part := range strings.SplitSeq(typeText, "|") {
-		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-
+	for _, part := range tstype.SplitTopLevelUnion(typeText) {
 		if isLiteralType(part) {
 			result.literals = append(result.literals, strings.Trim(part, `"'`))
 		} else if part == "undefined" || part == "null" {
