@@ -75,32 +75,58 @@ func AnalyzeAttributeValueDiagnosticsForTest(ctx types.ServerContext, doc types.
 func validateAttributeValue(attr *M.Attribute, match AttributeMatch) []protocol.Diagnostic {
 	var diagnostics []protocol.Diagnostic
 
-	// Skip validation if no type information
 	if attr.Type == nil || attr.Type.Text == "" {
 		return diagnostics
 	}
 
+	// Property bindings pass JS values, not HTML attribute strings
+	if match.BindingPrefix == "." {
+		return diagnostics
+	}
+	// Event bindings are function handlers
+	if match.BindingPrefix == "@" {
+		return diagnostics
+	}
+	// Boolean bindings control attribute presence via expression truthiness
+	if match.BindingPrefix == "?" {
+		return diagnostics
+	}
+	// Expression values can't be validated as static strings
+	if match.ExpressionKind != "" {
+		return diagnostics
+	}
+
 	typeText := strings.TrimSpace(attr.Type.Text)
-	lowerTypeText := strings.ToLower(typeText)
 
 	helpers.SafeDebugLog("[VALUE_DIAGNOSTICS] Validating attribute %s.%s with type '%s', value='%s', hasValue=%t",
 		match.TagName, match.Name, typeText, match.Value, match.HasValue)
 
-	switch {
-	case lowerTypeText == "boolean":
-		diagnostics = append(diagnostics, validateBooleanAttribute(match)...)
-	case lowerTypeText == "number":
-		diagnostics = append(diagnostics, validateNumberAttribute(match)...)
-	case lowerTypeText == "string":
-		// String attributes are very permissive - almost any value is valid
-	case strings.Contains(typeText, "|"):
+	valueNode, _, tree, parsed := tstype.ParseTypeValue(typeText)
+	if !parsed {
+		return diagnostics
+	}
+	defer tree.Close()
+
+	switch valueNode.GrammarName() {
+	case "predefined_type":
+		switch typeText {
+		case "boolean":
+			diagnostics = append(diagnostics, validateBooleanAttribute(match)...)
+		case "number":
+			diagnostics = append(diagnostics, validateNumberAttribute(match)...)
+		}
+	case "union_type":
 		diagnostics = append(diagnostics, validateUnionType(typeText, match)...)
-	case isLiteralType(typeText):
+	case "literal_type":
 		diagnostics = append(diagnostics, validateLiteralType(typeText, match)...)
-	case isArrayType(typeText):
+	case "array_type":
 		diagnostics = append(diagnostics, createArrayTypeInfo(match)...)
+	case "generic_type":
+		if isArrayType(typeText) {
+			diagnostics = append(diagnostics, createArrayTypeInfo(match)...)
+		}
 	default:
-		helpers.SafeDebugLog("[VALUE_DIAGNOSTICS] Skipping validation for unknown type: %s", typeText)
+		helpers.SafeDebugLog("[VALUE_DIAGNOSTICS] Skipping validation for type: %s (%s)", typeText, valueNode.GrammarName())
 	}
 
 	return diagnostics
@@ -461,13 +487,16 @@ func findAttributesWithValues(doc types.Document, ctx types.ServerContext) []Att
 	for _, element := range elements {
 		for attrName, attr := range element.Attributes {
 			match := AttributeMatch{
-				Name:     attrName,
-				TagName:  element.TagName,
-				Value:    attr.Value,
-				HasValue: true,
-				Line:     attr.Range.Start.Line,
-				StartCol: attr.Range.Start.Character,
-				EndCol:   attr.Range.End.Character,
+				Name:             attrName,
+				TagName:          element.TagName,
+				Value:            attr.Value,
+				HasValue:         true,
+				Line:             attr.Range.Start.Line,
+				StartCol:         attr.Range.Start.Character,
+				EndCol:           attr.Range.End.Character,
+				BindingPrefix:    attr.BindingPrefix,
+				ExpressionKind:   attr.ExpressionKind,
+				ExpressionDetail: attr.ExpressionDetail,
 			}
 			matches = append(matches, match)
 		}
