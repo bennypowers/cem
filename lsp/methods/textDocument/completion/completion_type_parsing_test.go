@@ -23,6 +23,84 @@ import (
 	M "bennypowers.dev/cem/manifest"
 )
 
+// Inline: pure function, table-driven cases test completion output filtering
+
+// TestTypeBasedCompletions_FiltersUnresolvedIdentifiers verifies that bare
+// type identifiers (unresolved aliases) are not suggested as attribute values.
+func TestTypeBasedCompletions_FiltersUnresolvedIdentifiers(t *testing.T) {
+	tests := []struct {
+		name          string
+		typeText      string
+		wantLabels    []string
+		wantCount     int
+		description   string
+	}{
+		{
+			"mixed literal and identifier",
+			"'primary' | NavigationPrimaryPalette",
+			[]string{"primary"},
+			1,
+			"Should suggest only the resolved literal, not the bare identifier",
+		},
+		{
+			"all literals",
+			"'a' | 'b' | 'c'",
+			[]string{"a", "b", "c"},
+			3,
+			"All quoted literals should be suggested",
+		},
+		{
+			"literals with null and undefined",
+			"'red' | 'blue' | undefined | null",
+			[]string{"red", "blue"},
+			2,
+			"null and undefined should be filtered out",
+		},
+		{
+			"only identifiers",
+			"SomeType | AnotherType",
+			nil,
+			0,
+			"Pure unresolved identifiers should produce no completions",
+		},
+		{
+			"primitive string",
+			"string",
+			[]string{`""`},
+			1,
+			"string type suggests empty-string placeholder",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			attr := &M.Attribute{
+				FullyQualified: M.FullyQualified{Name: "test"},
+				Type:           &M.Type{Text: tt.typeText},
+			}
+			completions := completion.GetTypeBasedCompletions(attr)
+			var labels []string
+			for _, c := range completions {
+				labels = append(labels, c.Label)
+			}
+			if len(labels) != tt.wantCount {
+				t.Errorf("%s: expected %d completions, got %d: %v", tt.description, tt.wantCount, len(labels), labels)
+			}
+			for _, want := range tt.wantLabels {
+				found := false
+				for _, l := range labels {
+					if l == want {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("%s: expected label %q not found in %v", tt.description, want, labels)
+				}
+			}
+		})
+	}
+}
+
 // TestTypeBasedCompletions tests completion for literal types and unions
 // This covers both single literal types (e.g., 'promo') and union types (e.g., 'promo' | 'standard')
 // Consolidated from TestSingleLiteralTypeCompletion and TestUnionTypeParser

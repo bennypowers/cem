@@ -446,14 +446,25 @@ func getDefaultValueCompletion(attr *M.Attribute) *protocol.CompletionItem {
 	}
 }
 
-// parseUnionType parses union types like "red" | "green" | "blue" into completion items
+// parseUnionType extracts concrete value completions from union types.
+// Only suggests quoted string literals and boolean literals; drops bare
+// identifiers (unresolved type names), null, undefined, and primitives.
 func parseUnionType(typeText string) []protocol.CompletionItem {
 	var items []protocol.CompletionItem
 	valueKind := protocol.CompletionItemKindValue
 
 	for _, part := range tstype.SplitTopLevelUnion(typeText) {
-		part = strings.Trim(part, `"'`)
-		if part != "" {
+		if isQuotedLiteral(part) {
+			value := part[1 : len(part)-1]
+			if value != "" {
+				items = append(items, protocol.CompletionItem{
+					Label:      value,
+					Kind:       &valueKind,
+					Detail:     &[]string{"Union type value"}[0],
+					InsertText: &[]string{value}[0],
+				})
+			}
+		} else if part == "true" || part == "false" {
 			items = append(items, protocol.CompletionItem{
 				Label:      part,
 				Kind:       &valueKind,
@@ -464,6 +475,12 @@ func parseUnionType(typeText string) []protocol.CompletionItem {
 	}
 
 	return items
+}
+
+func isQuotedLiteral(s string) bool {
+	return len(s) >= 2 &&
+		((s[0] == '\'' && s[len(s)-1] == '\'') ||
+			(s[0] == '"' && s[len(s)-1] == '"'))
 }
 
 // deduplicateCompletionItems removes duplicate completion items by label,
