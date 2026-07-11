@@ -70,6 +70,27 @@ func TestTypeBasedCompletions_FiltersUnresolvedIdentifiers(t *testing.T) {
 			1,
 			"string type suggests empty-string placeholder",
 		},
+		{
+			"boolean union",
+			"true | false",
+			[]string{"true", "false"},
+			2,
+			"Boolean literals should be suggested",
+		},
+		{
+			"double-quoted literals",
+			`"primary" | "secondary"`,
+			[]string{"primary", "secondary"},
+			2,
+			"Double-quoted literals should be suggested",
+		},
+		{
+			"mixed quotes with boolean",
+			"'auto' | true | false",
+			[]string{"auto", "true", "false"},
+			3,
+			"Mixed quoted literal and boolean literals",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

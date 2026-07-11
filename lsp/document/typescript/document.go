@@ -473,6 +473,7 @@ func (d *TypeScriptDocument) collectTemplateAttributes(
 		}
 
 		var closestValue string
+		var closestValuePos uint
 		var closestDistance = ^uint(0)
 		for valuePos, value := range valuesByPosition {
 			if valuePos > attrName.EndByte {
@@ -483,6 +484,7 @@ func (d *TypeScriptDocument) collectTemplateAttributes(
 					if len(trimmed) > 0 && trimmed[0] == '=' {
 						closestDistance = distance
 						closestValue = value
+						closestValuePos = valuePos
 					}
 				}
 			}
@@ -490,7 +492,8 @@ func (d *TypeScriptDocument) collectTemplateAttributes(
 		if closestValue != "" {
 			attrMatch.Value = closestValue
 			if strings.Contains(closestValue, "${") && tsRoot != nil {
-				classifyExpression(&attrMatch, template, tsRoot, []byte(docContent))
+				valueTSOffset := template.startByte + closestValuePos
+				classifyExpression(&attrMatch, valueTSOffset, tsRoot, []byte(docContent))
 			}
 		}
 
@@ -502,11 +505,10 @@ func (d *TypeScriptDocument) collectTemplateAttributes(
 
 // classifyExpression analyzes a template expression (${...}) from the TS tree
 // and populates ExpressionKind/ExpressionDetail on the attribute match.
-// Finds the first template_substitution within the template's byte range
-// and classifies its expression child node.
-func classifyExpression(match *types.AttributeMatch, template TemplateContext, tsRoot *ts.Node, docContent []byte) {
-	templateEnd := template.startByte + uint(len(match.Value)+100)
-	sub := findFirstSubstitution(tsRoot, template.startByte, templateEnd)
+// valueTSOffset is the attribute value's byte position in the TS document.
+func classifyExpression(match *types.AttributeMatch, valueTSOffset uint, tsRoot *ts.Node, docContent []byte) {
+	searchEnd := valueTSOffset + uint(len(match.Value))
+	sub := findFirstSubstitution(tsRoot, valueTSOffset, searchEnd)
 	if sub == nil {
 		match.ExpressionKind = "complex"
 		return
