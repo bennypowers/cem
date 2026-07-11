@@ -532,6 +532,36 @@ func TestAttributeValueDiagnostics_ArrayTypes(t *testing.T) {
 	}
 }
 
+// Inline: validates that plain HTML attribute values still produce diagnostics
+// (regression guard for binding prefix / expression skipping)
+
+func TestAttributeValueDiagnostics_PlainHTMLStillValidated(t *testing.T) {
+	ctx := testhelpers.NewMockServerContext()
+	content := `<my-element variant="invalid-value">Content</my-element>`
+
+	dm, err := document.NewDocumentManager()
+	if err != nil {
+		t.Fatalf("Failed to create DocumentManager: %v", err)
+	}
+	defer dm.Close()
+	ctx.SetDocumentManager(dm)
+	doc := dm.OpenDocument("test.html", content, 1)
+	ctx.AddDocument("test.html", doc)
+
+	ctx.AddAttributes("my-element", map[string]*M.Attribute{
+		"variant": {
+			FullyQualified: M.FullyQualified{Name: "variant"},
+			Type:           &M.Type{Text: "'primary' | 'secondary'"},
+		},
+	})
+
+	diagnostics := publishDiagnostics.AnalyzeAttributeValueDiagnosticsForTest(ctx, doc)
+
+	if len(diagnostics) == 0 {
+		t.Error("Expected diagnostics for invalid attribute value in plain HTML, got none")
+	}
+}
+
 func TestAttributeValueDiagnostics_StringTypes(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 	content := `<my-element label="Hello World" description="">Content</my-element>`

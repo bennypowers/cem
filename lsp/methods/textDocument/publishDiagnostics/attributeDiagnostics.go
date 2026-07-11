@@ -31,13 +31,16 @@ import (
 
 // AttributeMatch represents a found attribute in the document
 type AttributeMatch struct {
-	Name     string
-	TagName  string // The tag this attribute belongs to
-	Value    string // The attribute value (empty if no value)
-	HasValue bool   // Whether attribute has an explicit value
-	Line     uint32
-	StartCol uint32
-	EndCol   uint32
+	Name             string
+	TagName          string // The tag this attribute belongs to
+	Value            string // The attribute value (empty if no value)
+	HasValue         bool   // Whether attribute has an explicit value
+	Line             uint32
+	StartCol         uint32
+	EndCol           uint32
+	BindingPrefix    string // Lit binding prefix: ".", "?", "@", or ""
+	ExpressionKind   string // "literal", "this-member", "identifier", "complex", or ""
+	ExpressionDetail string
 }
 
 // analyzeAttributeDiagnostics finds unknown attributes and suggests corrections
@@ -70,9 +73,11 @@ func AnalyzeAttributeDiagnosticsForTest(ctx types.ServerContext, doc types.Docum
 	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d attributes", len(attributeMatches))
 
 	for _, match := range attributeMatches {
-		// For custom elements, validate all their attributes
 		if helpers.IsCustomElementTag(match.TagName) {
-			// Skip if it's a global HTML attribute (valid on all elements)
+			// Event bindings (@click) are not manifest attributes
+			if match.BindingPrefix == "@" {
+				continue
+			}
 			if validations.IsGlobalAttribute(match.Name) {
 				continue
 			}
@@ -201,13 +206,17 @@ func processTagCaptures(captureMap Q.CaptureMap, content string, matches *[]Attr
 	// Process each attribute
 	for i, attrNameInfo := range attrNames {
 		attrName := attrNameInfo.Text
+		var bindingPrefix string
+		if len(attrName) > 1 && (attrName[0] == '.' || attrName[0] == '?' || attrName[0] == '@') {
+			bindingPrefix = attrName[:1]
+			attrName = attrName[1:]
+		}
+
 		attrValue := ""
 		hasValue := false
 
-		// Check for quoted value
 		if i < len(quotedValues) {
 			rawValue := quotedValues[i].Text
-			// Strip quotes
 			if len(rawValue) >= 2 {
 				attrValue = rawValue[1 : len(rawValue)-1]
 			}
@@ -217,7 +226,6 @@ func processTagCaptures(captureMap Q.CaptureMap, content string, matches *[]Attr
 			hasValue = true
 		}
 
-		// Convert byte positions to line/column
 		lines := strings.Split(content[:attrNameInfo.StartByte], "\n")
 		line := uint32(len(lines) - 1)
 		startCol := uint32(len(lines[len(lines)-1]))
@@ -226,13 +234,14 @@ func processTagCaptures(captureMap Q.CaptureMap, content string, matches *[]Attr
 		endCol := uint32(len(endLines[len(endLines)-1]))
 
 		match := AttributeMatch{
-			Name:     attrName,
-			TagName:  tagName,
-			Value:    attrValue,
-			HasValue: hasValue,
-			Line:     line,
-			StartCol: startCol,
-			EndCol:   endCol,
+			Name:          attrName,
+			TagName:       tagName,
+			Value:         attrValue,
+			HasValue:      hasValue,
+			Line:          line,
+			StartCol:      startCol,
+			EndCol:        endCol,
+			BindingPrefix: bindingPrefix,
 		}
 
 		*matches = append(*matches, match)
