@@ -162,6 +162,12 @@ export class DemoButton extends LitElement {
     }
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+    if (this.loading) this.#internals.states.add('loading');
+    if (this.disabled) this.#internals.states.add('disabled');
+  }
+
   render() {
     return html`
       <button id="button"

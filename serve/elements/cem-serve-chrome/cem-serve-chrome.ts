@@ -1438,7 +1438,7 @@ Generated: ${new Date().toISOString()}`;
       if (!(el instanceof HTMLElement)) continue;
       if (el.dataset?.isElementKnob !== 'true') continue;
       const control = el.querySelector(
-        `[data-knob-type="css-state"][data-knob-name="${name}"]`,
+        `[data-knob-type="css-state"][data-knob-name="${CSS.escape(name)}"]`,
       ) as HTMLInputElement | null;
       if (control) {
         control.checked = false;
