@@ -47,6 +47,7 @@ const (
 	KnobCategoryAttribute   KnobCategory = "attributes"
 	KnobCategoryProperty    KnobCategory = "properties"
 	KnobCategoryCSSProperty KnobCategory = "css-properties"
+	KnobCategoryCSSState    KnobCategory = "css-states"
 )
 
 
@@ -57,6 +58,7 @@ type KnobsData struct {
 	AttributeKnobs   []KnobData
 	PropertyKnobs    []KnobData
 	CSSPropertyKnobs []KnobData
+	CSSStateKnobs    []KnobData
 }
 
 // KnobData represents a single knob control
@@ -144,6 +146,8 @@ func parseEnabledKnobs(enabledKnobs string) map[KnobCategory]bool {
 			enabled[KnobCategoryProperty] = true
 		case KnobCategoryCSSProperty:
 			enabled[KnobCategoryCSSProperty] = true
+		case KnobCategoryCSSState:
+			enabled[KnobCategoryCSSState] = true
 		}
 	}
 	return enabled
@@ -236,6 +240,17 @@ func cssPropertyToKnob(cssProp M.CssCustomProperty, currentValues map[string]str
 	}
 
 	return knob
+}
+
+// cssStateToKnob converts a CSS custom state to a boolean toggle knob
+func cssStateToKnob(state M.CssCustomState) KnobData {
+	return KnobData{
+		Name:        state.Name,
+		Category:    KnobCategoryCSSState,
+		Type:        KnobTypeBoolean,
+		Summary:     template.HTML(state.Summary),
+		Description: template.HTML(state.Description),
+	}
 }
 
 // parseType parses a TypeScript type string and returns the knob type and enum values
@@ -577,6 +592,13 @@ func generateKnobsForInstance(declaration *M.CustomElementDeclaration, currentVa
 		}
 	}
 
+	// Generate CSS custom state knobs
+	if enabled[KnobCategoryCSSState] {
+		for _, state := range declaration.CssStates() {
+			knobs.CSSStateKnobs = append(knobs.CSSStateKnobs, cssStateToKnob(state))
+		}
+	}
+
 	return knobs, nil
 }
 
@@ -743,6 +765,9 @@ func RenderKnobsHTML(templates *TemplateRegistry, knobGroups []ElementKnobGroup)
 			return "", err
 		}
 		if err := convertMarkdownFields(knobGroups[gi].Knobs.CSSPropertyKnobs, "CSS property knob"); err != nil {
+			return "", err
+		}
+		if err := convertMarkdownFields(knobGroups[gi].Knobs.CSSStateKnobs, "CSS state knob"); err != nil {
 			return "", err
 		}
 	}

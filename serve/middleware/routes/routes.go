@@ -494,7 +494,7 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 				Manifest: pkg.Manifest,
 			}
 		}
-		html, err = RenderWorkspaceListing(config.Templates, config.Context, packages, importMapJSON, state)
+		html, err = RenderWorkspaceListing(config.Templates, config.Context, packages, importMapJSON, state, config.Context.DemoURLPrefix())
 	} else {
 		config.Context.Logger().Debug("serveIndexListing: NOT in workspace mode, single-package mode")
 		// Single-package mode: check if index.html exists
@@ -522,7 +522,7 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 			pkgName = pkg.Name
 		}
 		config.Context.Logger().Debug("serveIndexListing: calling RenderElementListing with package name=%s", pkgName)
-		html, err = RenderElementListing(config.Templates, config.Context, manifestBytes, importMapJSON, pkgName, state)
+		html, err = RenderElementListing(config.Templates, config.Context, manifestBytes, importMapJSON, pkgName, state, config.Context.DemoURLPrefix())
 		config.Context.Logger().Debug("serveIndexListing: RenderElementListing returned, err=%v, html len=%d", err, len(html))
 	}
 
@@ -594,7 +594,7 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 			}
 		}
 		var navErr error
-		navigationHTML, navErr = BuildWorkspaceNavigation(config.Templates, packages, r.URL.Path)
+		navigationHTML, navErr = BuildWorkspaceNavigation(config.Templates, packages, r.URL.Path, config.Context.DemoURLPrefix())
 		if navErr != nil {
 			config.Context.Logger().Error("Failed to build workspace navigation for %s: %v", r.URL.Path, navErr)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -606,7 +606,7 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 		manifestBytes, err := config.Context.Manifest()
 		if err == nil && len(manifestBytes) > 0 {
 			var navErr error
-			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(config.Templates, manifestBytes, packageName, r.URL.Path)
+			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(config.Templates, manifestBytes, packageName, r.URL.Path, config.Context.DemoURLPrefix())
 			if navErr != nil {
 				config.Context.Logger().Error("Failed to build navigation: %v", navErr)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -676,7 +676,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 	enabledKnobs := queryParams["knobs"]
 	if enabledKnobs == "" {
 		// Default to all knob categories
-		enabledKnobs = "attributes properties css-properties"
+		enabledKnobs = "attributes properties css-properties css-states"
 	}
 
 	// Fetch manifest and generate knobs for ALL custom elements in demo
@@ -966,7 +966,7 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 			}
 		}
 		var navErr error
-		navigationHTML, navErr = BuildWorkspaceNavigation(config.Templates, packages, r.URL.Path)
+		navigationHTML, navErr = BuildWorkspaceNavigation(config.Templates, packages, r.URL.Path, config.Context.DemoURLPrefix())
 		if navErr != nil {
 			config.Context.Logger().Error("Failed to build workspace navigation for %s: %v", r.URL.Path, navErr)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -981,7 +981,7 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 				pkgName = pkg.Name
 			}
 			var navErr error
-			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(config.Templates, manifestBytes, pkgName, r.URL.Path)
+			navigationHTML, packageName, navErr = BuildSinglePackageNavigation(config.Templates, manifestBytes, pkgName, r.URL.Path, config.Context.DemoURLPrefix())
 			if navErr != nil {
 				config.Context.Logger().Error("Failed to build navigation: %v", navErr)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)

@@ -79,6 +79,30 @@ export class KnobCssPropertyClearEvent extends Event {
 }
 
 /**
+ * Custom event fired when a knob CSS custom state changes
+ */
+export class KnobCssStateChangeEvent extends Event {
+  name: string;
+  value: boolean;
+  constructor(name: string, value: boolean) {
+    super('knob:css-state-change', { bubbles: true });
+    this.name = name;
+    this.value = value;
+  }
+}
+
+/**
+ * Custom event fired when a knob CSS custom state is cleared
+ */
+export class KnobCssStateClearEvent extends Event {
+  name: string;
+  constructor(name: string) {
+    super('knob:css-state-clear', { bubbles: true });
+    this.name = name;
+  }
+}
+
+/**
  * CEM Serve Knob Group Component
  *
  * Handles event delegation and debouncing for form controls that modify demo elements.
@@ -208,6 +232,9 @@ export class CemServeKnobGroup extends LitElement {
         break;
       case 'css-property':
         this.dispatchEvent(new KnobCssPropertyClearEvent(knobName));
+        break;
+      case 'css-state':
+        this.dispatchEvent(new KnobCssStateClearEvent(knobName));
         break;
     }
   };
@@ -345,6 +372,9 @@ export class CemServeKnobGroup extends LitElement {
         break;
       case 'css-property':
         this.dispatchEvent(new KnobCssPropertyChangeEvent(name, value as string));
+        break;
+      case 'css-state':
+        this.dispatchEvent(new KnobCssStateChangeEvent(name, value as boolean));
         break;
       default:
         console.warn(`[KnobGroup] Unknown knob type: ${type}`);

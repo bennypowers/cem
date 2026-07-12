@@ -1,3 +1,7 @@
+declare global {
+  var _elementInternals: WeakMap<Element, ElementInternals> | undefined;
+}
+
 import { LitElement, html } from 'lit';
 import { customElement } from 'lit/decorators/custom-element.js';
 import { property } from 'lit/decorators/property.js';
@@ -79,6 +83,8 @@ export class CemServeDemo extends LitElement {
         );
       case 'css-property':
         return this.#applyCSSPropertyChange(element as HTMLElement, name, value);
+      case 'css-state':
+        return this.#applyCSSStateChange(element, name, value);
       default:
         console.warn('[cem-serve-demo] Unknown knob type:', type);
         return false;
@@ -204,6 +210,19 @@ export class CemServeDemo extends LitElement {
       }
     } else {
       (element)[name] = value;
+    }
+    return true;
+  }
+
+  #applyCSSStateChange(element: Element, name: string, value: unknown): boolean {
+    const stateName = name.startsWith('--') ? name.slice(2) : name;
+    const internals = globalThis._elementInternals?.get(element);
+    const states = internals?.states;
+    if (!states) return false;
+    if (value) {
+      states.add(stateName);
+    } else {
+      states.delete(stateName);
     }
     return true;
   }

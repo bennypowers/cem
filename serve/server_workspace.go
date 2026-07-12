@@ -79,6 +79,13 @@ func (s *Server) SourceControlRootURL() string {
 	return s.sourceControlRootURL
 }
 
+// DemoURLPrefix returns the URL path prefix to strip from demo URLs for local routing.
+func (s *Server) DemoURLPrefix() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.demoURLPrefix
+}
+
 // InitializeWorkspaceMode detects and initializes workspace mode if applicable
 func (s *Server) InitializeWorkspaceMode() error {
 	s.mu.Lock()
@@ -126,7 +133,7 @@ func (s *Server) InitializeWorkspaceMode() error {
 			Manifest: pkg.Manifest,
 		}
 	}
-	workspaceRoutingTable, err := routes.BuildWorkspaceRoutingTable(pkgContexts)
+	workspaceRoutingTable, err := routes.BuildWorkspaceRoutingTable(pkgContexts, s.demoURLPrefix)
 	if err != nil {
 		return fmt.Errorf("building workspace routing table: %w", err)
 	}
@@ -279,6 +286,7 @@ func (s *Server) regenerateAffectedWorkspacePackages(changedFiles []string) (int
 	s.mu.RLock()
 	watchDir := s.watchDir
 	existingPackages := s.workspacePackages
+	demoPrefix := s.demoURLPrefix
 	s.mu.RUnlock()
 
 	if watchDir == "" {
@@ -369,7 +377,7 @@ func (s *Server) regenerateAffectedWorkspacePackages(changedFiles []string) (int
 		}
 	}
 
-	workspaceRoutingTable, err := routes.BuildWorkspaceRoutingTable(pkgContexts)
+	workspaceRoutingTable, err := routes.BuildWorkspaceRoutingTable(pkgContexts, demoPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build workspace routing table: %v", err)
 	}

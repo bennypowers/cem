@@ -6760,7 +6760,7 @@ s54.replaceSync(JSON.parse('":host {\\n  display: block;\\n}\\n\\niframe {\\n  b
 var cem_serve_demo_default = s54;
 
 // elements/cem-serve-demo/cem-serve-demo.ts
-var _rendering_dec, _a50, _CemServeDemo_decorators, _init50, _rendering, _iframeReady, _pendingMessages, _CemServeDemo_instances, iframe_get, iframeSrc_fn, _onChildReady, getElementInstance_fn, postKnobChange_fn, applyAttributeChange_fn, applyPropertyChange_fn, applyCSSPropertyChange_fn;
+var _rendering_dec, _a50, _CemServeDemo_decorators, _init50, _rendering, _iframeReady, _pendingMessages, _CemServeDemo_instances, iframe_get, iframeSrc_fn, _onChildReady, getElementInstance_fn, postKnobChange_fn, applyAttributeChange_fn, applyPropertyChange_fn, applyCSSStateChange_fn, applyCSSPropertyChange_fn;
 _CemServeDemo_decorators = [t3("cem-serve-demo")];
 var CemServeDemo = class extends (_a50 = i3, _rendering_dec = [n4({ reflect: true })], _a50) {
   constructor() {
@@ -6819,6 +6819,8 @@ var CemServeDemo = class extends (_a50 = i3, _rendering_dec = [n4({ reflect: tru
         return __privateMethod(this, _CemServeDemo_instances, applyPropertyChange_fn).call(this, element, name, value);
       case "css-property":
         return __privateMethod(this, _CemServeDemo_instances, applyCSSPropertyChange_fn).call(this, element, name, value);
+      case "css-state":
+        return __privateMethod(this, _CemServeDemo_instances, applyCSSStateChange_fn).call(this, element, name, value);
       default:
         console.warn("[cem-serve-demo] Unknown knob type:", type);
         return false;
@@ -6920,6 +6922,18 @@ applyPropertyChange_fn = function(element, name, value) {
   }
   return true;
 };
+applyCSSStateChange_fn = function(element, name, value) {
+  const stateName = name.startsWith("--") ? name.slice(2) : name;
+  const internals = globalThis._elementInternals?.get(element);
+  const states = internals?.states;
+  if (!states) return false;
+  if (value) {
+    states.add(stateName);
+  } else {
+    states.delete(stateName);
+  }
+  return true;
+};
 applyCSSPropertyChange_fn = function(element, name, value) {
   const propertyName = name.startsWith("--") ? name : `--${name}`;
   if (value === "" || value === null || value === void 0) {
@@ -6988,6 +7002,22 @@ var KnobCssPropertyClearEvent = class extends Event {
     this.name = name;
   }
 };
+var KnobCssStateChangeEvent = class extends Event {
+  name;
+  value;
+  constructor(name, value) {
+    super("knob:css-state-change", { bubbles: true });
+    this.name = name;
+    this.value = value;
+  }
+};
+var KnobCssStateClearEvent = class extends Event {
+  name;
+  constructor(name) {
+    super("knob:css-state-clear", { bubbles: true });
+    this.name = name;
+  }
+};
 var _htmlFor_dec, _a51, _CemServeKnobGroup_decorators, _init51, _htmlFor, _debounceTimers, _debounceDelay, _colorButtonListeners, _clearButtonListeners, _CemServeKnobGroup_instances, onSlotChange_fn4, attachColorButtonListeners_fn, removeColorButtonListeners_fn, attachClearButtonListeners_fn, removeClearButtonListeners_fn, _handleClearButtonClick, updateClearButtonVisibility_fn, _handleInput, _handleChange, isBooleanControl_fn, _handleColorButtonClick, applyChange_fn, parseValue_fn;
 _CemServeKnobGroup_decorators = [t3("cem-serve-knob-group")];
 var CemServeKnobGroup = class extends (_a51 = i3, _htmlFor_dec = [n4({ reflect: true, attribute: "for" })], _a51) {
@@ -7026,6 +7056,9 @@ var CemServeKnobGroup = class extends (_a51 = i3, _htmlFor_dec = [n4({ reflect: 
           break;
         case "css-property":
           this.dispatchEvent(new KnobCssPropertyClearEvent(knobName));
+          break;
+        case "css-state":
+          this.dispatchEvent(new KnobCssStateClearEvent(knobName));
           break;
       }
     });
@@ -7211,6 +7244,9 @@ applyChange_fn = function(type, name, value) {
       break;
     case "css-property":
       this.dispatchEvent(new KnobCssPropertyChangeEvent(name, value));
+      break;
+    case "css-state":
+      this.dispatchEvent(new KnobCssStateChangeEvent(name, value));
       break;
     default:
       console.warn(`[KnobGroup] Unknown knob type: ${type}`);
@@ -7423,7 +7459,7 @@ var CemLogsEvent = class extends Event {
     this.logs = logs;
   }
 };
-var _hasDescription_dec, _sidebar_dec, _tabsSelected_dec, _drawerHeight_dec2, _drawer_dec, _knobs_dec, _sourceURL_dec, _canonicalURL_dec, _packageName_dec, _demoTitle_dec, _primaryTagName_dec, _a54, _CemServeChrome_decorators, _demoInfoTemplate, _demoGroupTemplate, _demoListTemplate, _logEntryTemplate, _eventEntryTemplate, _init54, _primaryTagName, _demoTitle, _packageName, _canonicalURL, _sourceURL, _knobs, _drawer, _drawerHeight2, _tabsSelected, _sidebar, _hasDescription2, _CemServeChrome_instances, $_fn2, $$_fn, _logContainer, _drawerOpen, _initialLogsFetched, _isInitialLoad, _debugData, _elementEventMap, _manifest, _capturedEvents, _maxCapturedEvents, _eventList, _eventDetailHeader, _eventDetailBody, _selectedEventId, _eventsFilterValue, _eventsFilterDebounceTimer, _eventTypeFilters, _elementFilters, _discoveredElements, _handleLogsEvent, _handleTreeExpand, _handleTreeCollapse, _handleTreeSelect, _copyLogsFeedbackTimeout, _copyDebugFeedbackTimeout, _copyEventsFeedbackTimeout, _logsFilterValue, _logsFilterDebounceTimer, _logLevelFilters, _logLevelDropdown, _observer2, _wsClient, initWsClient_fn, renderSourceButton_fn, _modulesReady, loadClientModules_fn, fetchDebugInfo_fn, populateDemoUrls_fn, setupLogListener_fn, filterLogs_fn, getLogTypeFromEntry_fn, loadLogFilterState_fn, syncCheckboxStates_fn, saveLogFilterState_fn, _handleLogFilterChange, copyLogs_fn, setupDebugOverlay_fn, setupFooterDrawer_fn, detectBrowser_fn, copyDebugInfo_fn, renderLogs_fn, getLogBadge_fn, applyLogLabelAttrs_fn, scrollLatestIntoView_fn, scrollLogsToBottom_fn, migrateFromLocalStorageIfNeeded_fn, setupColorSchemeToggle_fn, applyColorScheme_fn, setupKnobCoordination_fn, _onKnobChange, _onKnobClear, getKnobTarget_fn, getKnobTypeFromEvent_fn, getKnobTypeFromClearEvent_fn, setupTreeStatePersistence_fn, applyTreeState_fn, setupSidebarStatePersistence_fn, findTreeItemById_fn, getTreeNodeId_fn, discoverElementEvents_fn, setupEventCapture_fn, attachEventListeners_fn, observeDemoMutations_fn, _handleElementEvent, getEventDocumentation_fn, findTypeDeclaration_fn, captureEvent_fn, extractEventProperties_fn, renderEvent_fn, selectEvent_fn, buildPropertiesForDisplay_fn, buildPropertyTree_fn, scrollEventsToBottom_fn, isEventsTabActive_fn, filterEvents_fn, eventMatchesTextFilter_fn, getEventRecordById_fn, updateEventFilters_fn, _handleEventTypeFilterChange, _handleElementFilterChange, loadEventFiltersFromStorage_fn, saveEventFilters_fn, clearEvents_fn, copyEvents_fn, setupEventListeners_fn;
+var _hasDescription_dec, _sidebar_dec, _tabsSelected_dec, _drawerHeight_dec2, _drawer_dec, _knobs_dec, _sourceURL_dec, _canonicalURL_dec, _packageName_dec, _demoTitle_dec, _primaryTagName_dec, _a54, _CemServeChrome_decorators, _demoInfoTemplate, _demoGroupTemplate, _demoListTemplate, _logEntryTemplate, _eventEntryTemplate, _init54, _primaryTagName, _demoTitle, _packageName, _canonicalURL, _sourceURL, _knobs, _drawer, _drawerHeight2, _tabsSelected, _sidebar, _hasDescription2, _CemServeChrome_instances, $_fn2, $$_fn, _logContainer, _drawerOpen, _initialLogsFetched, _isInitialLoad, _debugData, _elementEventMap, _manifest, _capturedEvents, _maxCapturedEvents, _eventList, _eventDetailHeader, _eventDetailBody, _selectedEventId, _eventsFilterValue, _eventsFilterDebounceTimer, _eventTypeFilters, _elementFilters, _discoveredElements, _handleLogsEvent, _handleTreeExpand, _handleTreeCollapse, _handleTreeSelect, _copyLogsFeedbackTimeout, _copyDebugFeedbackTimeout, _copyEventsFeedbackTimeout, _logsFilterValue, _logsFilterDebounceTimer, _logLevelFilters, _logLevelDropdown, _observer2, _wsClient, initWsClient_fn, renderSourceButton_fn, _modulesReady, loadClientModules_fn, fetchDebugInfo_fn, populateDemoUrls_fn, setupLogListener_fn, filterLogs_fn, getLogTypeFromEntry_fn, loadLogFilterState_fn, syncCheckboxStates_fn, saveLogFilterState_fn, _handleLogFilterChange, copyLogs_fn, setupDebugOverlay_fn, setupFooterDrawer_fn, detectBrowser_fn, copyDebugInfo_fn, renderLogs_fn, getLogBadge_fn, applyLogLabelAttrs_fn, scrollLatestIntoView_fn, scrollLogsToBottom_fn, migrateFromLocalStorageIfNeeded_fn, setupColorSchemeToggle_fn, applyColorScheme_fn, setupKnobCoordination_fn, _onKnobChange, _onKnobClear, disableCssStateKnob_fn, getKnobTarget_fn, getKnobTypeFromEvent_fn, getKnobTypeFromClearEvent_fn, setupTreeStatePersistence_fn, applyTreeState_fn, setupSidebarStatePersistence_fn, findTreeItemById_fn, getTreeNodeId_fn, discoverElementEvents_fn, setupEventCapture_fn, attachEventListeners_fn, observeDemoMutations_fn, _handleElementEvent, getEventDocumentation_fn, findTypeDeclaration_fn, captureEvent_fn, extractEventProperties_fn, renderEvent_fn, selectEvent_fn, buildPropertiesForDisplay_fn, buildPropertyTree_fn, scrollEventsToBottom_fn, isEventsTabActive_fn, filterEvents_fn, eventMatchesTextFilter_fn, getEventRecordById_fn, updateEventFilters_fn, _handleEventTypeFilterChange, _handleElementFilterChange, loadEventFiltersFromStorage_fn, saveEventFilters_fn, clearEvents_fn, copyEvents_fn, setupEventListeners_fn;
 _CemServeChrome_decorators = [t3("cem-serve-chrome")];
 var _CemServeChrome = class _CemServeChrome extends (_a54 = i3, _primaryTagName_dec = [n4({ attribute: "primary-tag-name" })], _demoTitle_dec = [n4({ attribute: "demo-title" })], _packageName_dec = [n4({ attribute: "package-name" })], _canonicalURL_dec = [n4({ attribute: "canonical-url" })], _sourceURL_dec = [n4({ attribute: "source-url" })], _knobs_dec = [n4()], _drawer_dec = [n4()], _drawerHeight_dec2 = [n4({ attribute: "drawer-height" })], _tabsSelected_dec = [n4({ attribute: "tabs-selected" })], _sidebar_dec = [n4()], _hasDescription_dec = [n4({ type: Boolean, attribute: "has-description" })], _a54) {
   constructor() {
@@ -7529,6 +7565,12 @@ var _CemServeChrome = class _CemServeChrome extends (_a54 = i3, _primaryTagName_
         instanceIndex
       );
       if (!success) {
+        if (knobType === "css-state") {
+          const elementExists = !!demo.querySelectorAll(tagName)[instanceIndex];
+          if (elementExists) {
+            __privateMethod(this, _CemServeChrome_instances, disableCssStateKnob_fn).call(this, event);
+          }
+        }
         console.warn("[cem-serve-chrome] Failed to apply knob change:", {
           type: knobType,
           name: event.name,
@@ -7547,7 +7589,7 @@ var _CemServeChrome = class _CemServeChrome extends (_a54 = i3, _primaryTagName_
       const demo = this.demo;
       if (!demo) return;
       const knobType = __privateMethod(this, _CemServeChrome_instances, getKnobTypeFromClearEvent_fn).call(this, event);
-      const clearValue = knobType === "property" ? void 0 : "";
+      const clearValue = knobType === "property" ? void 0 : knobType === "css-state" ? false : "";
       const success = demo.applyKnobChange(
         knobType,
         event.name,
@@ -7908,9 +7950,11 @@ var _CemServeChrome = class _CemServeChrome extends (_a54 = i3, _primaryTagName_
     this.removeEventListener("knob:attribute-change", __privateGet(this, _onKnobChange));
     this.removeEventListener("knob:property-change", __privateGet(this, _onKnobChange));
     this.removeEventListener("knob:css-property-change", __privateGet(this, _onKnobChange));
+    this.removeEventListener("knob:css-state-change", __privateGet(this, _onKnobChange));
     this.removeEventListener("knob:attribute-clear", __privateGet(this, _onKnobClear));
     this.removeEventListener("knob:property-clear", __privateGet(this, _onKnobClear));
     this.removeEventListener("knob:css-property-clear", __privateGet(this, _onKnobClear));
+    this.removeEventListener("knob:css-state-clear", __privateGet(this, _onKnobClear));
     if (__privateGet(this, _handleTreeExpand)) {
       this.removeEventListener("expand", __privateGet(this, _handleTreeExpand));
     }
@@ -8568,12 +8612,32 @@ setupKnobCoordination_fn = function() {
   this.addEventListener("knob:attribute-change", __privateGet(this, _onKnobChange));
   this.addEventListener("knob:property-change", __privateGet(this, _onKnobChange));
   this.addEventListener("knob:css-property-change", __privateGet(this, _onKnobChange));
+  this.addEventListener("knob:css-state-change", __privateGet(this, _onKnobChange));
   this.addEventListener("knob:attribute-clear", __privateGet(this, _onKnobClear));
   this.addEventListener("knob:property-clear", __privateGet(this, _onKnobClear));
   this.addEventListener("knob:css-property-clear", __privateGet(this, _onKnobClear));
+  this.addEventListener("knob:css-state-clear", __privateGet(this, _onKnobClear));
 };
 _onKnobChange = new WeakMap();
 _onKnobClear = new WeakMap();
+disableCssStateKnob_fn = function(event) {
+  const name = event.name;
+  for (const el of event.composedPath()) {
+    if (!(el instanceof HTMLElement)) continue;
+    if (el.dataset?.isElementKnob !== "true") continue;
+    const control = el.querySelector(
+      `[data-knob-type="css-state"][data-knob-name="${CSS.escape(name)}"]`
+    );
+    if (control) {
+      control.checked = false;
+      control.disabled = true;
+      control.title = "Element does not expose ElementInternals";
+      const clearBtn = control.closest("cem-pf-v6-form-group")?.querySelector(`.knob-clear-button[data-knob-type="css-state"][data-knob-name="${CSS.escape(name)}"]`);
+      if (clearBtn) clearBtn.hidden = true;
+    }
+    break;
+  }
+};
 getKnobTarget_fn = function(event) {
   const defaultTagName = this.primaryTagName || "";
   if (event.composedPath) {
@@ -8597,6 +8661,8 @@ getKnobTypeFromEvent_fn = function(event) {
       return "property";
     case "knob:css-property-change":
       return "css-property";
+    case "knob:css-state-change":
+      return "css-state";
     default:
       return "unknown";
   }
@@ -8609,6 +8675,8 @@ getKnobTypeFromClearEvent_fn = function(event) {
       return "property";
     case "knob:css-property-clear":
       return "css-property";
+    case "knob:css-state-clear":
+      return "css-state";
     default:
       return "unknown";
   }

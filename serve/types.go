@@ -63,6 +63,7 @@ type Config struct {
 	ConfigFile           string                // Path to config file (for error reporting)
 	WatchIgnore          []string              // Glob patterns to ignore in file watcher (e.g., ["_site/**", "dist/**"])
 	SourceControlRootURL string                // Source control root URL for demo routing (e.g., "https://github.com/user/repo/tree/main/")
+	DemoURLPrefix        string                // URL path prefix to strip from demo URLs for local routing (computed from urlTemplate)
 	FS                   platform.FileSystem   // Optional filesystem for testing (defaults to os package)
 	URLRewrites          []config.URLRewrite   // URL rewrites for request path mapping (e.g., "/dist/:path*" -> "/src/{{.path}}")
 	WebSocketManager     WebSocketManager      // Optional WebSocket manager for testing (created automatically if nil and Reload=true)

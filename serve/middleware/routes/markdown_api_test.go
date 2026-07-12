@@ -49,6 +49,7 @@ func (m *mockContext) Manifest() ([]byte, error)                         { retur
 func (m *mockContext) ImportMap() middleware.ImportMap                   { return nil }
 func (m *mockContext) DemoRoutes() map[string]*middleware.DemoRouteEntry { return m.demoRoutes }
 func (m *mockContext) SourceControlRootURL() string                      { return "" }
+func (m *mockContext) DemoURLPrefix() string                             { return "" }
 func (m *mockContext) Logger() logger.Logger                             { return logger.NewDefaultLogger() }
 func (m *mockContext) FileSystem() platform.FileSystem                   { return nil }
 func (m *mockContext) PackageJSON() (*middleware.PackageJSON, error)     { return nil, nil }

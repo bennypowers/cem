@@ -31,8 +31,26 @@ import (
 // DemoRouteEntry is a type alias for types.DemoRouteEntry
 type DemoRouteEntry = types.DemoRouteEntry
 
+// DemoURLPrefixFromTemplate extracts the static URL path prefix from a
+// urlTemplate string (everything before the first "{{" template marker).
+// Returns empty string if no stripping is needed.
+func DemoURLPrefixFromTemplate(urlTemplate string) string {
+	if urlTemplate == "" {
+		return ""
+	}
+	prefix := urlTemplate
+	if idx := strings.Index(prefix, "{{"); idx >= 0 {
+		prefix = prefix[:idx]
+	}
+	parsed, err := url.Parse(prefix)
+	if err != nil || parsed.Path == "" || parsed.Path == "/" {
+		return ""
+	}
+	return strings.TrimSuffix(parsed.Path, "/")
+}
+
 // BuildDemoRoutingTable creates a routing table from manifest
-func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string) (map[string]*DemoRouteEntry, error) {
+func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string, demoURLPrefix string) (map[string]*DemoRouteEntry, error) {
 	if len(manifestBytes) == 0 {
 		return nil, fmt.Errorf("no manifest available")
 	}
@@ -47,24 +65,8 @@ func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string) (m
 	for _, renderableDemo := range pkg.RenderableDemos() {
 		demoURL := renderableDemo.Demo.URL
 
-		// Extract local route from canonical URL (strip origin)
-		localRoute := demoURL
-		if parsed, err := url.Parse(demoURL); err == nil && parsed.Path != "" {
-			localRoute = parsed.Path
-		}
-
-		// Normalize relative paths (./foo -> /foo)
-		if strings.HasPrefix(localRoute, "./") {
-			localRoute = localRoute[1:] // Remove leading dot
-		}
-		if !strings.HasPrefix(localRoute, "/") {
-			localRoute = "/" + localRoute
-		}
-
-		// Normalize: ensure trailing slash for directory-style URLs
-		if localRoute != "/" && !strings.HasSuffix(localRoute, "/") && filepath.Ext(localRoute) == "" {
-			localRoute += "/"
-		}
+		// Extract local route from canonical URL (strip origin and deployment prefix)
+		localRoute := extractLocalRoute(demoURL, demoURLPrefix)
 
 		// Determine file path from Source.Href
 		filePath := demoURL
@@ -81,7 +83,7 @@ func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string) (m
 		var err error
 		filePath, err = normalizeAndValidateDemoPath(filePath, renderableDemo.CustomElementDeclaration.TagName, demoURL)
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		// Check for duplicate routes before assignment
@@ -176,14 +178,14 @@ func normalizeAndValidateDemoPath(filePath, tagName, demoURL string) (string, er
 
 // BuildWorkspaceRoutingTable builds a combined routing table from all packages
 // Returns error if route conflicts are detected or if package routing errors occurred
-func BuildWorkspaceRoutingTable(packages []PackageContext) (map[string]*DemoRouteEntry, error) {
+func BuildWorkspaceRoutingTable(packages []PackageContext, demoURLPrefix string) (map[string]*DemoRouteEntry, error) {
 	routes := make(map[string]*DemoRouteEntry)
 	conflicts := make(map[string][]routeConflict)
 	var packageErrors []packageRoutingError
 
 	for _, pkg := range packages {
 		// Build routing table for this package
-		pkgRoutes, err := buildPackageRoutingTable(pkg)
+		pkgRoutes, err := buildPackageRoutingTable(pkg, demoURLPrefix)
 		if err != nil {
 			// Collect package routing errors for reporting
 			packageErrors = append(packageErrors, packageRoutingError{
@@ -290,7 +292,7 @@ func formatRouteConflictsError(conflicts map[string][]routeConflict) error {
 }
 
 // buildPackageRoutingTable builds routing table for a single package
-func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, error) {
+func buildPackageRoutingTable(pkg PackageContext, demoURLPrefix string) (map[string]*DemoRouteEntry, error) {
 	var manifest M.Package
 	if err := json.Unmarshal(pkg.Manifest, &manifest); err != nil {
 		return nil, fmt.Errorf("parsing manifest for %s: %w", pkg.Name, err)
@@ -301,24 +303,7 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 	for _, renderableDemo := range manifest.RenderableDemos() {
 		demoURL := renderableDemo.Demo.URL
 
-		// Extract local route from canonical URL
-		localRoute := demoURL
-		if parsed, err := url.Parse(demoURL); err == nil && parsed.Path != "" {
-			localRoute = parsed.Path
-		}
-
-		// Normalize relative paths
-		if strings.HasPrefix(localRoute, "./") {
-			localRoute = localRoute[1:]
-		}
-		if !strings.HasPrefix(localRoute, "/") {
-			localRoute = "/" + localRoute
-		}
-
-		// Ensure trailing slash for directory-style URLs
-		if localRoute != "/" && !strings.HasSuffix(localRoute, "/") && filepath.Ext(localRoute) == "" {
-			localRoute += "/"
-		}
+		localRoute := extractLocalRoute(demoURL, demoURLPrefix)
 
 		// Resolve file path
 		moduleDir := filepath.Dir(renderableDemo.Module.Path)
@@ -334,7 +319,7 @@ func buildPackageRoutingTable(pkg PackageContext) (map[string]*DemoRouteEntry, e
 		var err error
 		filePath, err = normalizeAndValidateDemoPath(filePath, renderableDemo.CustomElementDeclaration.TagName, demoURL)
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		// Make filePath relative to package path for workspace mode

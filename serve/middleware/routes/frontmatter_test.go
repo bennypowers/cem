@@ -49,6 +49,7 @@ func (c *frontmatterTestContext) Manifest() ([]byte, error)                     
 func (c *frontmatterTestContext) ImportMap() middleware.ImportMap                    { return nil }
 func (c *frontmatterTestContext) DemoRoutes() map[string]*middleware.DemoRouteEntry  { return c.demoRoutes }
 func (c *frontmatterTestContext) SourceControlRootURL() string                      { return "" }
+func (c *frontmatterTestContext) DemoURLPrefix() string                             { return "" }
 func (c *frontmatterTestContext) Logger() logger.Logger                             { return logger.NewDefaultLogger() }
 func (c *frontmatterTestContext) FileSystem() platform.FileSystem                   { return c.fs }
 func (c *frontmatterTestContext) PackageJSON() (*middleware.PackageJSON, error)      { return nil, nil }

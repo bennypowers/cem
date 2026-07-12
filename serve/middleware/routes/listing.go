@@ -49,7 +49,7 @@ type DemoListing struct {
 }
 
 // RenderElementListing renders the root listing page with all elements
-func RenderElementListing(templates *TemplateRegistry, ctx middleware.DevServerContext, manifestBytes []byte, importMap string, packageName string, state CemServeState) (string, error) {
+func RenderElementListing(templates *TemplateRegistry, ctx middleware.DevServerContext, manifestBytes []byte, importMap string, packageName string, state CemServeState, demoURLPrefix string) (string, error) {
 	if len(manifestBytes) == 0 {
 		// Empty manifest - show helpful message
 		title := packageName
@@ -79,13 +79,13 @@ func RenderElementListing(templates *TemplateRegistry, ctx middleware.DevServerC
 
 	// Build navigation (this also extracts elements and sorts them)
 	// Pass empty path since this is the listing page, not a specific demo
-	navigationHTML, title, err := BuildSinglePackageNavigation(templates, manifestBytes, packageName, "")
+	navigationHTML, title, err := BuildSinglePackageNavigation(templates, manifestBytes, packageName, "", demoURLPrefix)
 	if err != nil {
 		return "", fmt.Errorf("building navigation: %w", err)
 	}
 
 	// Extract elements for the main listing content
-	elements, err := extractElementListings(&pkg, packageName)
+	elements, err := extractElementListings(&pkg, packageName, demoURLPrefix)
 	if err != nil {
 		return "", fmt.Errorf("extracting element listings: %w", err)
 	}
@@ -190,23 +190,26 @@ func prettifyRoute(route string) string {
 	return lastPart
 }
 
-// extractLocalRoute extracts the local route from a demo URL (same logic as routing table)
-func extractLocalRoute(demoURL string) string {
-	// Extract local route from canonical URL (strip origin)
+// extractLocalRoute extracts the local route from a demo URL.
+// Strips origin and optional deployment prefix (from urlTemplate).
+func extractLocalRoute(demoURL string, demoURLPrefix string) string {
 	localRoute := demoURL
 	if parsed, err := url.Parse(demoURL); err == nil && parsed.Path != "" {
 		localRoute = parsed.Path
 	}
 
-	// Normalize relative paths (./foo -> /foo)
+	// Strip deployment prefix from urlTemplate (e.g. /cem/examples/kitchen-sink)
+	if demoURLPrefix != "" {
+		localRoute = strings.TrimPrefix(localRoute, demoURLPrefix)
+	}
+
 	if strings.HasPrefix(localRoute, "./") {
-		localRoute = localRoute[1:] // Remove leading dot
+		localRoute = localRoute[1:]
 	}
 	if !strings.HasPrefix(localRoute, "/") {
 		localRoute = "/" + localRoute
 	}
 
-	// Normalize: ensure trailing slash for directory-style URLs
 	if localRoute != "/" && localRoute[len(localRoute)-1] != '/' && filepath.Ext(localRoute) == "" {
 		localRoute += "/"
 	}
@@ -214,8 +217,9 @@ func extractLocalRoute(demoURL string) string {
 	return localRoute
 }
 
-// extractElementListings extracts element listings from manifest using RenderableDemos
-func extractElementListings(pkg *M.Package, packageName string) ([]ElementListing, error) {
+// extractElementListings extracts element listings from manifest using RenderableDemos.
+// demoURLPrefix strips the deployment base path from demo URLs for local routing.
+func extractElementListings(pkg *M.Package, packageName, demoURLPrefix string) ([]ElementListing, error) {
 	elements := []ElementListing{}
 	elementMap := make(map[string]*ElementListing)
 
@@ -245,7 +249,7 @@ func extractElementListings(pkg *M.Package, packageName string) ([]ElementListin
 		}
 
 		// Extract local route from demo URL
-		localRoute := extractLocalRoute(demo.URL)
+		localRoute := extractLocalRoute(demo.URL, demoURLPrefix)
 
 		// Use prettified route for the display name
 		name := prettifyRoute(localRoute)
@@ -300,7 +304,7 @@ type PackageNavigation struct {
 
 // BuildSinglePackageNavigation builds navigation HTML for single-package mode
 // currentPath is used to expand the nav item containing the current demo
-func BuildSinglePackageNavigation(templates *TemplateRegistry, manifestBytes []byte, packageName string, currentPath string) (template.HTML, string, error) {
+func BuildSinglePackageNavigation(templates *TemplateRegistry, manifestBytes []byte, packageName, currentPath, demoURLPrefix string) (template.HTML, string, error) {
 	if len(manifestBytes) == 0 {
 		return "", packageName, nil
 	}
@@ -310,7 +314,7 @@ func BuildSinglePackageNavigation(templates *TemplateRegistry, manifestBytes []b
 		return "", packageName, fmt.Errorf("parsing manifest: %w", err)
 	}
 
-	elements, err := extractElementListings(&pkg, packageName)
+	elements, err := extractElementListings(&pkg, packageName, demoURLPrefix)
 	if err != nil {
 		return "", packageName, fmt.Errorf("extracting element listings: %w", err)
 	}
@@ -419,13 +423,13 @@ func buildPackageListingsFromRoutes(routes map[string]*DemoRouteEntry) ([]Packag
 
 // BuildWorkspaceNavigation builds navigation HTML for workspace mode
 // currentPath is used to expand the nav item containing the current demo
-func BuildWorkspaceNavigation(templates *TemplateRegistry, packages []PackageContext, currentPath string) (template.HTML, error) {
+func BuildWorkspaceNavigation(templates *TemplateRegistry, packages []PackageContext, currentPath, demoURLPrefix string) (template.HTML, error) {
 	if len(packages) == 0 {
 		return "", nil
 	}
 
 	// Build routing table
-	routes, err := BuildWorkspaceRoutingTable(packages)
+	routes, err := BuildWorkspaceRoutingTable(packages, demoURLPrefix)
 	if err != nil {
 		return "", err
 	}
@@ -471,7 +475,7 @@ func renderNavigationHTML(templates *TemplateRegistry, packages []PackageNavigat
 }
 
 // RenderWorkspaceListing renders the workspace index page with all packages
-func RenderWorkspaceListing(templates *TemplateRegistry, ctx middleware.DevServerContext, packages []PackageContext, importMap string, state CemServeState) (string, error) {
+func RenderWorkspaceListing(templates *TemplateRegistry, ctx middleware.DevServerContext, packages []PackageContext, importMap string, state CemServeState, demoURLPrefix string) (string, error) {
 	if len(packages) == 0 {
 		return renderDemo(templates, ctx, ChromeData{
 			TagName:     "cem-serve",
@@ -488,7 +492,7 @@ func RenderWorkspaceListing(templates *TemplateRegistry, ctx middleware.DevServe
 	}
 
 	// Build routing table once
-	routes, err := BuildWorkspaceRoutingTable(packages)
+	routes, err := BuildWorkspaceRoutingTable(packages, demoURLPrefix)
 	if err != nil {
 		return "", fmt.Errorf("building workspace routing table: %w", err)
 	}

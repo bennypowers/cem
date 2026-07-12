@@ -84,6 +84,9 @@ type DevServerContext interface {
 	// SourceControlRootURL returns the source control root URL for demo routing
 	SourceControlRootURL() string
 
+	// DemoURLPrefix returns the URL path prefix to strip from demo URLs for local routing
+	DemoURLPrefix() string
+
 	// Logger returns the server's logger
 	Logger() Logger
 

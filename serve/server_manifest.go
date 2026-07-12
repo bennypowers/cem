@@ -37,6 +37,7 @@ func (s *Server) SetManifest(manifest []byte) error {
 	// Extract state under read lock
 	s.mu.RLock()
 	sourceControlURL := s.sourceControlRootURL
+	demoPrefix := s.demoURLPrefix
 	s.mu.RUnlock()
 
 	// Defensive copy to prevent caller from mutating our internal state
@@ -44,7 +45,7 @@ func (s *Server) SetManifest(manifest []byte) error {
 	copy(manifestCopy, manifest)
 
 	// Build routing table from manifest (expensive - no lock held)
-	routingTable, err := routes.BuildDemoRoutingTable(manifestCopy, sourceControlURL)
+	routingTable, err := routes.BuildDemoRoutingTable(manifestCopy, sourceControlURL, demoPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
 		routingTable = nil
@@ -121,6 +122,7 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 	s.mu.RLock()
 	watchDir := s.watchDir
 	sourceControlURL := s.sourceControlRootURL
+	demoPrefix := s.demoURLPrefix
 	filesystem := s.fs
 	s.mu.RUnlock()
 
@@ -161,7 +163,7 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 	}
 
 	// Build routing table from manifest
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL)
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL, demoPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table from cached manifest: %v", err)
 		routingTable = nil
@@ -189,6 +191,7 @@ func (s *Server) RegenerateManifest() (int, error) {
 	s.mu.RLock()
 	watchDir := s.watchDir
 	sourceControlURL := s.sourceControlRootURL
+	demoPrefix := s.demoURLPrefix
 	isWorkspace := s.isWorkspace
 	s.mu.RUnlock()
 
@@ -248,7 +251,7 @@ func (s *Server) RegenerateManifest() (int, error) {
 	}
 
 	// Build routing table from manifest (expensive - no lock held)
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL)
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL, demoPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
 		routingTable = nil
@@ -287,6 +290,7 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, erro
 	watchDir := s.watchDir
 	session := s.generateSession
 	sourceControlURL := s.sourceControlRootURL
+	demoPrefix := s.demoURLPrefix
 	isWorkspace := s.isWorkspace
 	s.mu.RUnlock()
 
@@ -329,7 +333,7 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, erro
 	}
 
 	// Build routing table from manifest (single-package mode)
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL)
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL, demoPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
 		routingTable = nil

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/state-element.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "StateElement",
+          "tagName": "state-element",
+          "attributes": [
+            {
+              "name": "loading",
+              "type": {
+                "text": "boolean"
+              },
+              "description": "Whether the element is loading"
+            }
+          ],
+          "members": [],
+          "cssStates": [
+            {
+              "name": "loading",
+              "description": "Applied when the element is loading"
+            },
+            {
+              "name": "active",
+              "description": "Applied when the element is active"
+            },
+            {
+              "name": "disabled"
+            }
+          ],
+          "demos": [
+            {
+              "description": "Basic",
+              "url": "./demo/basic.html"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

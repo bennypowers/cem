@@ -1357,9 +1357,11 @@ Generated: ${new Date().toISOString()}`;
     this.addEventListener('knob:attribute-change', this.#onKnobChange);
     this.addEventListener('knob:property-change', this.#onKnobChange);
     this.addEventListener('knob:css-property-change', this.#onKnobChange);
+    this.addEventListener('knob:css-state-change', this.#onKnobChange);
     this.addEventListener('knob:attribute-clear', this.#onKnobClear);
     this.addEventListener('knob:property-clear', this.#onKnobClear);
     this.addEventListener('knob:css-property-clear', this.#onKnobClear);
+    this.addEventListener('knob:css-state-clear', this.#onKnobClear);
   }
 
   #onKnobChange = (event: Event) => {
@@ -1385,6 +1387,12 @@ Generated: ${new Date().toISOString()}`;
     );
 
     if (!success) {
+      if (knobType === 'css-state') {
+        const elementExists = !!demo.querySelectorAll(tagName)[instanceIndex];
+        if (elementExists) {
+          this.#disableCssStateKnob(event);
+        }
+      }
       console.warn('[cem-serve-chrome] Failed to apply knob change:', {
         type: knobType,
         name: (event as any).name,
@@ -1407,7 +1415,7 @@ Generated: ${new Date().toISOString()}`;
     if (!demo) return;
 
     const knobType = this.#getKnobTypeFromClearEvent(event);
-    const clearValue = knobType === 'property' ? undefined : '';
+    const clearValue = knobType === 'property' ? undefined : knobType === 'css-state' ? false : '';
 
     const success = (demo as any).applyKnobChange(
       knobType,
@@ -1426,6 +1434,26 @@ Generated: ${new Date().toISOString()}`;
       });
     }
   };
+
+  #disableCssStateKnob(event: Event) {
+    const name = (event as any).name;
+    for (const el of event.composedPath()) {
+      if (!(el instanceof HTMLElement)) continue;
+      if (el.dataset?.isElementKnob !== 'true') continue;
+      const control = el.querySelector(
+        `[data-knob-type="css-state"][data-knob-name="${CSS.escape(name)}"]`,
+      ) as HTMLInputElement | null;
+      if (control) {
+        control.checked = false;
+        control.disabled = true;
+        control.title = 'Element does not expose ElementInternals';
+        const clearBtn = control.closest('cem-pf-v6-form-group')
+          ?.querySelector(`.knob-clear-button[data-knob-type="css-state"][data-knob-name="${CSS.escape(name)}"]`) as HTMLElement | null;
+        if (clearBtn) clearBtn.hidden = true;
+      }
+      break;
+    }
+  }
 
   #getKnobTarget(event: Event): { tagName: string; instanceIndex: number } | null {
     const defaultTagName = this.primaryTagName || '';
@@ -1454,6 +1482,8 @@ Generated: ${new Date().toISOString()}`;
         return 'property';
       case 'knob:css-property-change':
         return 'css-property';
+      case 'knob:css-state-change':
+        return 'css-state';
       default:
         return 'unknown';
     }
@@ -1467,6 +1497,8 @@ Generated: ${new Date().toISOString()}`;
         return 'property';
       case 'knob:css-property-clear':
         return 'css-property';
+      case 'knob:css-state-clear':
+        return 'css-state';
       default:
         return 'unknown';
     }
@@ -2331,9 +2363,11 @@ Generated: ${new Date().toISOString()}`;
     this.removeEventListener('knob:attribute-change', this.#onKnobChange);
     this.removeEventListener('knob:property-change', this.#onKnobChange);
     this.removeEventListener('knob:css-property-change', this.#onKnobChange);
+    this.removeEventListener('knob:css-state-change', this.#onKnobChange);
     this.removeEventListener('knob:attribute-clear', this.#onKnobClear);
     this.removeEventListener('knob:property-clear', this.#onKnobClear);
     this.removeEventListener('knob:css-property-clear', this.#onKnobClear);
+    this.removeEventListener('knob:css-state-clear', this.#onKnobClear);
 
     // Clean up tree state listeners
     if (this.#handleTreeExpand) {
