@@ -307,7 +307,7 @@
             }
           ],
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo-button.ts#L52"
+            "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo-button.ts#L51"
           },
           "kind": "class",
           "tagName": "demo-button",
@@ -540,10 +540,6 @@
             {
               "name": "loading",
               "description": "Applied when the button is in a loading state"
-            },
-            {
-              "name": "active",
-              "description": "Applied when the button is actively pressed"
             },
             {
               "name": "disabled",

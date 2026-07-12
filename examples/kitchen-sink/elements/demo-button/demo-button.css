@@ -95,21 +95,27 @@
 }
 
 /* Appearances */
-:host([appearance="filled"]) #button {
-  background: var(--demo-button-bg);
-  color: var(--demo-button-color);
+:host([appearance="filled"]) {
+  #button {
+    background: var(--demo-button-bg);
+    color: var(--demo-button-color);
+  }
 }
 
-:host([appearance="outlined"]) #button {
-  background: transparent;
-  color: var(--demo-button-bg);
-  border: 1px solid var(--demo-button-bg);
+:host([appearance="outlined"]) {
+  #button {
+    background: transparent;
+    color: var(--demo-button-bg);
+    border: 1px solid var(--demo-button-bg);
+  }
 }
 
-:host([appearance="plain"]) #button {
-  background: transparent;
-  color: var(--demo-button-bg);
-  border: none;
+:host([appearance="plain"]) {
+  #button {
+    background: transparent;
+    color: var(--demo-button-bg);
+    border: none;
+  }
 }
 
 /* Sizes */
@@ -134,20 +140,24 @@
 }
 
 /* Disabled */
-:host([disabled]) #button,
-:host(:state(disabled)) #button {
-  opacity: 0.5;
-  cursor: not-allowed;
+:host([disabled]),
+:host(:state(disabled)) {
+  #button {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
-:host(:not([disabled]):not(:state(disabled)):not(:state(loading))) #button {
-  &:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-  }
+:host(:not([disabled]):not(:state(disabled)):not(:state(loading))) {
+  #button {
+    &:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
 
-  &:active {
-    transform: translateY(0);
+    &:active {
+      transform: translateY(0);
+    }
   }
 }
 
@@ -156,17 +166,14 @@ demo-spinner {
 }
 
 /* Custom states */
-:host(:state(loading)) demo-spinner {
-  display: inline-block;
-}
+:host(:state(loading)) {
+  demo-spinner {
+    display: inline-block;
+  }
 
-:host(:state(loading)) #button {
-  pointer-events: none;
-}
-
-:host(:state(active)) #button {
-  transform: scale(0.96);
-  box-shadow: inset 0 2px 4px rgb(0 0 0 / 25%);
+  #button {
+    pointer-events: none;
+  }
 }
 
 [hidden] {

@@ -1388,7 +1388,10 @@ Generated: ${new Date().toISOString()}`;
 
     if (!success) {
       if (knobType === 'css-state') {
-        this.#disableCssStateKnob(event);
+        const elementExists = !!demo.querySelectorAll(tagName)[instanceIndex];
+        if (elementExists) {
+          this.#disableCssStateKnob(event);
+        }
       }
       console.warn('[cem-serve-chrome] Failed to apply knob change:', {
         type: knobType,
@@ -1443,6 +1446,10 @@ Generated: ${new Date().toISOString()}`;
       if (control) {
         control.checked = false;
         control.disabled = true;
+        control.title = 'Element does not expose ElementInternals';
+        const clearBtn = control.closest('cem-pf-v6-form-group')
+          ?.querySelector(`.knob-clear-button[data-knob-name="${CSS.escape(name)}"]`) as HTMLElement | null;
+        if (clearBtn) clearBtn.hidden = true;
       }
       break;
     }

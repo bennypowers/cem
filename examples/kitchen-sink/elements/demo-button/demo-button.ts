@@ -39,7 +39,6 @@ export type ButtonVariant =
  * ```
  *
  * @cssstate loading - Applied when the button is in a loading state
- * @cssstate active - Applied when the button is actively pressed
  * @cssstate disabled - Applied when the button is disabled
  *
  * @csspart base - The component's base wrapper
@@ -56,7 +55,7 @@ export class DemoButton extends LitElement {
 
   constructor() {
     super();
-    (globalThis as any)._elementInternals?.set(this, this.#internals);
+    globalThis._elementInternals?.set(this, this.#internals);
   }
 
   @query('#button')

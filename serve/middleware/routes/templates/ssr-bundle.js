@@ -7566,7 +7566,10 @@ var _CemServeChrome = class _CemServeChrome extends (_a54 = i3, _primaryTagName_
       );
       if (!success) {
         if (knobType === "css-state") {
-          __privateMethod(this, _CemServeChrome_instances, disableCssStateKnob_fn).call(this, event);
+          const elementExists = !!demo.querySelectorAll(tagName)[instanceIndex];
+          if (elementExists) {
+            __privateMethod(this, _CemServeChrome_instances, disableCssStateKnob_fn).call(this, event);
+          }
         }
         console.warn("[cem-serve-chrome] Failed to apply knob change:", {
           type: knobType,
@@ -8628,6 +8631,9 @@ disableCssStateKnob_fn = function(event) {
     if (control) {
       control.checked = false;
       control.disabled = true;
+      control.title = "Element does not expose ElementInternals";
+      const clearBtn = control.closest("cem-pf-v6-form-group")?.querySelector(`.knob-clear-button[data-knob-name="${CSS.escape(name)}"]`);
+      if (clearBtn) clearBtn.hidden = true;
     }
     break;
   }

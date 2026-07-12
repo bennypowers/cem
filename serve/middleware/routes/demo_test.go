@@ -259,7 +259,7 @@ func TestBuildPackageRoutingTable_DuplicateDetection(t *testing.T) {
 		Manifest: []byte(manifestJSON),
 	}
 
-	_, err := buildPackageRoutingTable(pkg)
+	_, err := buildPackageRoutingTable(pkg, "")
 
 	if err == nil {
 		t.Fatal("Expected error for duplicate routes, but got none")

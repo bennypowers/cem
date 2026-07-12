@@ -1,3 +1,7 @@
+declare global {
+  var _elementInternals: WeakMap<Element, ElementInternals> | undefined;
+}
+
 import { LitElement, html } from 'lit';
 import { customElement } from 'lit/decorators/custom-element.js';
 import { property } from 'lit/decorators/property.js';
@@ -212,7 +216,7 @@ export class CemServeDemo extends LitElement {
 
   #applyCSSStateChange(element: Element, name: string, value: unknown): boolean {
     const stateName = name.startsWith('--') ? name.slice(2) : name;
-    const internals = (globalThis as any)._elementInternals?.get(element);
+    const internals = globalThis._elementInternals?.get(element);
     const states = internals?.states;
     if (!states) return false;
     if (value) {

@@ -494,7 +494,7 @@ func serveIndexListing(w http.ResponseWriter, r *http.Request, config Config) bo
 				Manifest: pkg.Manifest,
 			}
 		}
-		html, err = RenderWorkspaceListing(config.Templates, config.Context, packages, importMapJSON, state)
+		html, err = RenderWorkspaceListing(config.Templates, config.Context, packages, importMapJSON, state, config.Context.DemoURLPrefix())
 	} else {
 		config.Context.Logger().Debug("serveIndexListing: NOT in workspace mode, single-package mode")
 		// Single-package mode: check if index.html exists
@@ -594,7 +594,7 @@ func serveDemoRoute(w http.ResponseWriter, r *http.Request, config Config) bool 
 			}
 		}
 		var navErr error
-		navigationHTML, navErr = BuildWorkspaceNavigation(config.Templates, packages, r.URL.Path)
+		navigationHTML, navErr = BuildWorkspaceNavigation(config.Templates, packages, r.URL.Path, config.Context.DemoURLPrefix())
 		if navErr != nil {
 			config.Context.Logger().Error("Failed to build workspace navigation for %s: %v", r.URL.Path, navErr)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -966,7 +966,7 @@ func serve404Page(w http.ResponseWriter, r *http.Request, config Config) {
 			}
 		}
 		var navErr error
-		navigationHTML, navErr = BuildWorkspaceNavigation(config.Templates, packages, r.URL.Path)
+		navigationHTML, navErr = BuildWorkspaceNavigation(config.Templates, packages, r.URL.Path, config.Context.DemoURLPrefix())
 		if navErr != nil {
 			config.Context.Logger().Error("Failed to build workspace navigation for %s: %v", r.URL.Path, navErr)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

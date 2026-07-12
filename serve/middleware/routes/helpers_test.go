@@ -194,7 +194,7 @@ func TestExtractLocalRoute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := extractLocalRoute(tt.demoURL, "")
 			if got != tt.want {
-				t.Errorf("extractLocalRoute(%q) = %q, want %q", tt.demoURL, got, tt.want)
+				t.Errorf("extractLocalRoute(%q, %q) = %q, want %q", tt.demoURL, "", got, tt.want)
 			}
 		})
 	}

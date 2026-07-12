@@ -423,13 +423,13 @@ func buildPackageListingsFromRoutes(routes map[string]*DemoRouteEntry) ([]Packag
 
 // BuildWorkspaceNavigation builds navigation HTML for workspace mode
 // currentPath is used to expand the nav item containing the current demo
-func BuildWorkspaceNavigation(templates *TemplateRegistry, packages []PackageContext, currentPath string) (template.HTML, error) {
+func BuildWorkspaceNavigation(templates *TemplateRegistry, packages []PackageContext, currentPath, demoURLPrefix string) (template.HTML, error) {
 	if len(packages) == 0 {
 		return "", nil
 	}
 
 	// Build routing table
-	routes, err := BuildWorkspaceRoutingTable(packages)
+	routes, err := BuildWorkspaceRoutingTable(packages, demoURLPrefix)
 	if err != nil {
 		return "", err
 	}
@@ -475,7 +475,7 @@ func renderNavigationHTML(templates *TemplateRegistry, packages []PackageNavigat
 }
 
 // RenderWorkspaceListing renders the workspace index page with all packages
-func RenderWorkspaceListing(templates *TemplateRegistry, ctx middleware.DevServerContext, packages []PackageContext, importMap string, state CemServeState) (string, error) {
+func RenderWorkspaceListing(templates *TemplateRegistry, ctx middleware.DevServerContext, packages []PackageContext, importMap string, state CemServeState, demoURLPrefix string) (string, error) {
 	if len(packages) == 0 {
 		return renderDemo(templates, ctx, ChromeData{
 			TagName:     "cem-serve",
@@ -492,7 +492,7 @@ func RenderWorkspaceListing(templates *TemplateRegistry, ctx middleware.DevServe
 	}
 
 	// Build routing table once
-	routes, err := BuildWorkspaceRoutingTable(packages)
+	routes, err := BuildWorkspaceRoutingTable(packages, demoURLPrefix)
 	if err != nil {
 		return "", fmt.Errorf("building workspace routing table: %w", err)
 	}
