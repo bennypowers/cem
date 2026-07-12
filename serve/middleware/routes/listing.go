@@ -200,7 +200,10 @@ func extractLocalRoute(demoURL string, demoURLPrefix string) string {
 
 	// Strip deployment prefix from urlTemplate (e.g. /cem/examples/kitchen-sink)
 	if demoURLPrefix != "" {
-		localRoute = strings.TrimPrefix(localRoute, demoURLPrefix)
+		after, found := strings.CutPrefix(localRoute, demoURLPrefix)
+		if found && (after == "" || after[0] == '/') {
+			localRoute = after
+		}
 	}
 
 	if strings.HasPrefix(localRoute, "./") {

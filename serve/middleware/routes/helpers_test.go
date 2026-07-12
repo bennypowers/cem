@@ -225,6 +225,12 @@ func TestExtractLocalRoute_PrefixStripping(t *testing.T) {
 			prefix: "/cem/examples",
 			want:   "/other/path/demo/",
 		},
+		{
+			name:   "prefix partial segment match not stripped",
+			url:    "https://example.com/cem/examples/kitchen-sink-extra/demo/",
+			prefix: "/cem/examples/kitchen-sink",
+			want:   "/cem/examples/kitchen-sink-extra/demo/",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
