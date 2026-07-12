@@ -225,41 +225,11 @@ func TestExtractLocalRoute_PrefixStripping(t *testing.T) {
 			prefix: "/cem/examples",
 			want:   "/other/path/demo/",
 		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := extractLocalRoute(tt.url, tt.prefix)
-			if got != tt.want {
-				t.Errorf("extractLocalRoute(%q, %q) = %q, want %q", tt.url, tt.prefix, got, tt.want)
-			}
-		})
-	}
-}
-
-func TestExtractLocalRoute_PrefixStripping(t *testing.T) {
-	tests := []struct {
-		name   string
-		url    string
-		prefix string
-		want   string
-	}{
 		{
-			name:   "strips deployment prefix from full URL",
-			url:    "https://example.com/cem/examples/kitchen-sink/demo-button/variants/",
+			name:   "prefix partial segment match not stripped",
+			url:    "https://example.com/cem/examples/kitchen-sink-extra/demo/",
 			prefix: "/cem/examples/kitchen-sink",
-			want:   "/demo-button/variants/",
-		},
-		{
-			name:   "no prefix leaves path unchanged",
-			url:    "https://example.com/demo-button/variants/",
-			prefix: "",
-			want:   "/demo-button/variants/",
-		},
-		{
-			name:   "prefix that does not match leaves path unchanged",
-			url:    "/other/path/demo/",
-			prefix: "/cem/examples",
-			want:   "/other/path/demo/",
+			want:   "/cem/examples/kitchen-sink-extra/demo/",
 		},
 	}
 	for _, tt := range tests {
