@@ -676,7 +676,7 @@ func renderDemoFromRoute(entry *DemoRouteEntry, queryParams map[string]string, c
 	enabledKnobs := queryParams["knobs"]
 	if enabledKnobs == "" {
 		// Default to all knob categories
-		enabledKnobs = "attributes properties css-properties"
+		enabledKnobs = "attributes properties css-properties css-states"
 	}
 
 	// Fetch manifest and generate knobs for ALL custom elements in demo

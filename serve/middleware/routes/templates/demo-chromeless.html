@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
     <title>{{.DemoTitle}}</title>
+    <script>globalThis._elementInternals ??= new WeakMap();</script>
     {{if .ImportMap}}
     <script type="importmap">{{.ImportMap}}</script>
     {{end}}
@@ -52,6 +53,15 @@
                         element.style.removeProperty(prop);
                     else
                         element.style.setProperty(prop, String(value));
+                    break;
+                }
+                case 'css-state': {
+                    const stateName = name.startsWith('--') ? name.slice(2) : name;
+                    const states = globalThis._elementInternals?.get(element)?.states;
+                    if (states) {
+                        if (value) states.add(stateName);
+                        else states.delete(stateName);
+                    }
                     break;
                 }
             }

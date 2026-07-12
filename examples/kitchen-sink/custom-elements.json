@@ -263,11 +263,6 @@
               "attribute": "value"
             },
             {
-              "name": "onSlotchange",
-              "kind": "method",
-              "privacy": "private"
-            },
-            {
               "name": "click",
               "description": "Simulates a click on the button\n\n```js\ndocument.querySelector('demo-button').click();\n```",
               "kind": "method"
@@ -457,8 +452,7 @@
           "slots": [
             {
               "name": "start",
-              "description": "Content placed before the label (e.g., an icon)",
-              "deprecated": "Use CSS ::before pseudo-element"
+              "description": "Content placed before the label (e.g., an icon)"
             },
             {
               "name": "",
@@ -476,8 +470,7 @@
             },
             {
               "name": "start",
-              "description": "The container that wraps the start slot",
-              "deprecated": "Use CSS ::before pseudo-element"
+              "description": "The container that wraps the start slot"
             },
             {
               "name": "label",
@@ -494,22 +487,10 @@
           ],
           "cssProperties": [
             {
-              "name": "--demo-button-padding",
-              "summary": "Button padding",
-              "description": "Internal padding of the button",
-              "default": "0.5rem 1rem"
-            },
-            {
               "name": "--demo-button-border",
               "summary": "Button border",
               "description": "Border style of the button",
               "default": "none"
-            },
-            {
-              "name": "--demo-button-radius",
-              "summary": "Button border radius",
-              "description": "Border radius for rounded corners",
-              "default": "4px"
             },
             {
               "name": "--demo-button-font-size",
@@ -540,7 +521,19 @@
               "name": "--demo-button-bg",
               "summary": "Button background color",
               "description": "Background color of the button",
-              "default": "#0070f3"
+              "default": "light-dark(#ef4444, #f87171)"
+            },
+            {
+              "name": "--demo-button-padding",
+              "summary": "Button padding",
+              "description": "Internal padding of the button",
+              "default": "0.75rem 1.5rem"
+            },
+            {
+              "name": "--demo-button-radius",
+              "summary": "Button border radius",
+              "description": "Border radius for rounded corners",
+              "default": "999px"
             }
           ],
           "cssStates": [
@@ -551,6 +544,10 @@
             {
               "name": "active",
               "description": "Applied when the button is actively pressed"
+            },
+            {
+              "name": "disabled",
+              "description": "Applied when the button is disabled"
             }
           ],
           "demos": [

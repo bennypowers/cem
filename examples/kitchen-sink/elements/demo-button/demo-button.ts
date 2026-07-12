@@ -1,6 +1,5 @@
 import { LitElement, html, nothing } from 'lit';
-import { customElement, property, query, state } from 'lit/decorators.js';
-import { classMap } from 'lit/directives/class-map.js';
+import { customElement, property, query } from 'lit/decorators.js';
 import styles from './demo-button.css' with { type: 'css' };
 import '../demo-spinner/demo-spinner.js';
 
@@ -41,6 +40,7 @@ export type ButtonVariant =
  *
  * @cssstate loading - Applied when the button is in a loading state
  * @cssstate active - Applied when the button is actively pressed
+ * @cssstate disabled - Applied when the button is disabled
  *
  * @csspart base - The component's base wrapper
  * @csspart start - The container that wraps the start slot
@@ -52,15 +52,15 @@ export type ButtonVariant =
 export class DemoButton extends LitElement {
   static styles = [styles];
 
+  #internals = this.attachInternals();
+
+  constructor() {
+    super();
+    (globalThis as any)._elementInternals?.set(this, this.#internals);
+  }
+
   @query('#button')
   accessor button!: HTMLButtonElement;
-
-  /** @ignore */
-  @state() private accessor hasStartSlot = false;
-
-  @state() private accessor hasEndSlot = false;
-
-  @state() private accessor hasDefaultSlot = false;
 
   /**
    * The button's theme variant
@@ -112,21 +112,6 @@ export class DemoButton extends LitElement {
    */
   @property() accessor value = '';
 
-  private onSlotchange() {
-    this.hasStartSlot = this.querySelector('[slot="start"]') !== null;
-    this.hasEndSlot = this.querySelector('[slot="end"]') !== null;
-    this.hasDefaultSlot = Array.from(this.childNodes).some(
-      node => {
-        if (node.nodeType === Node.TEXT_NODE) {
-          return !!node.nodeValue?.trim();
-        }
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          return !(node as Element).hasAttribute('slot');
-        }
-        return false;
-      });
-  }
-
   /**
    * Simulates a click on the button
    * @example
@@ -168,23 +153,29 @@ export class DemoButton extends LitElement {
     return this.button?.reportValidity() ?? true;
   }
 
+  updated(changed: Map<string, unknown>) {
+    if (changed.has('loading')) {
+      this.#internals.states[this.loading ? 'add' : 'delete']('loading');
+    }
+    if (changed.has('disabled')) {
+      this.#internals.states[this.disabled ? 'add' : 'delete']('disabled');
+    }
+  }
+
   render() {
-    const { hasStartSlot, hasDefaultSlot, hasEndSlot, loading, disabled, pill, variant, appearance, size } = this;
     return html`
       <button id="button"
               part="base"
-              class="${classMap({ [variant]: true, [appearance]: true, [size]: true, pill, disabled, loading, hasStartSlot, hasEndSlot, hasDefaultSlot })}"
-              ?disabled="${disabled || loading}"
+              ?disabled="${this.disabled || this.loading}"
               type="${this.type}"
               name="${this.name || nothing}"
               value="${this.value || nothing}"
-              aria-disabled="${String(disabled)}"
-              tabindex="${disabled ? '-1' : '0'}">
-        <!-- deprecated: Use CSS ::before pseudo-element -->
-        <slot name="start" part="start" @slotchange=${this.onSlotchange}></slot>
-        <slot part="label" @slotchange=${this.onSlotchange}></slot>
-        <slot name="end" part="end" @slotchange=${this.onSlotchange}></slot>
-        ${loading ? html`<demo-spinner part="spinner"></demo-spinner>` : ''}
+              aria-disabled="${String(this.disabled)}"
+              tabindex="${this.disabled ? '-1' : '0'}">
+        <slot name="start" part="start"></slot>
+        <slot part="label"></slot>
+        <slot name="end" part="end"></slot>
+        <demo-spinner part="spinner"></demo-spinner>
       </button>
     `;
   }

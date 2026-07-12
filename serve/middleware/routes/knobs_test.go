@@ -163,13 +163,15 @@ func TestParseEnabledKnobs(t *testing.T) {
 		wantAttributes bool
 		wantProperties bool
 		wantCSS        bool
+		wantCSSStates  bool
 	}{
 		{
 			name:           "all enabled",
-			input:          "attributes properties css-properties",
+			input:          "attributes properties css-properties css-states",
 			wantAttributes: true,
 			wantProperties: true,
 			wantCSS:        true,
+			wantCSSStates:  true,
 		},
 		{
 			name:           "only attributes",
@@ -177,6 +179,7 @@ func TestParseEnabledKnobs(t *testing.T) {
 			wantAttributes: true,
 			wantProperties: false,
 			wantCSS:        false,
+			wantCSSStates:  false,
 		},
 		{
 			name:           "attributes and properties",
@@ -184,6 +187,15 @@ func TestParseEnabledKnobs(t *testing.T) {
 			wantAttributes: true,
 			wantProperties: true,
 			wantCSS:        false,
+			wantCSSStates:  false,
+		},
+		{
+			name:           "only css-states",
+			input:          "css-states",
+			wantAttributes: false,
+			wantProperties: false,
+			wantCSS:        false,
+			wantCSSStates:  true,
 		},
 		{
 			name:           "empty",
@@ -191,6 +203,7 @@ func TestParseEnabledKnobs(t *testing.T) {
 			wantAttributes: false,
 			wantProperties: false,
 			wantCSS:        false,
+			wantCSSStates:  false,
 		},
 	}
 
@@ -206,6 +219,9 @@ func TestParseEnabledKnobs(t *testing.T) {
 			}
 			if got[KnobCategoryCSSProperty] != tt.wantCSS {
 				t.Errorf("css-properties: got %v, want %v", got[KnobCategoryCSSProperty], tt.wantCSS)
+			}
+			if got[KnobCategoryCSSState] != tt.wantCSSStates {
+				t.Errorf("css-states: got %v, want %v", got[KnobCategoryCSSState], tt.wantCSSStates)
 			}
 		})
 	}
@@ -820,5 +836,145 @@ func TestRenderMultiInstanceKnobsHTML(t *testing.T) {
 	// Verify tag name appears
 	if !strings.Contains(htmlStr, "my-card") {
 		t.Error("Expected HTML to contain tag name 'my-card'")
+	}
+}
+
+func TestCSSStateToKnob(t *testing.T) {
+	state := M.CssCustomState{
+		FullyQualified: M.FullyQualified{
+			Name:        "loading",
+			Description: "Applied when the element is loading",
+		},
+	}
+
+	knob := cssStateToKnob(state)
+
+	if knob.Name != "loading" {
+		t.Errorf("Expected name 'loading', got '%s'", knob.Name)
+	}
+	if knob.Type != KnobTypeBoolean {
+		t.Errorf("Expected type boolean, got %s", knob.Type)
+	}
+	if knob.Category != KnobCategoryCSSState {
+		t.Errorf("Expected category css-states, got %s", knob.Category)
+	}
+	if string(knob.Description) != "Applied when the element is loading" {
+		t.Errorf("Expected description preserved, got '%s'", knob.Description)
+	}
+	if knob.CurrentValue != "" {
+		t.Errorf("Expected empty current value, got '%s'", knob.CurrentValue)
+	}
+}
+
+func TestGenerateKnobs_CSSStates(t *testing.T) {
+	manifestBytes := loadKnobsFixture(t, "css-state-manifest.json")
+
+	var pkg M.Package
+	if err := json.Unmarshal(manifestBytes, &pkg); err != nil {
+		t.Fatalf("Failed to parse manifest: %v", err)
+	}
+
+	var declaration *M.CustomElementDeclaration
+	for _, mod := range pkg.Modules {
+		for _, decl := range mod.Declarations {
+			if customEl, ok := decl.(*M.CustomElementDeclaration); ok {
+				declaration = customEl
+				break
+			}
+		}
+		if declaration != nil {
+			break
+		}
+	}
+	if declaration == nil {
+		t.Fatal("No custom element declaration found in manifest")
+	}
+
+	demoHTML := loadKnobsFixture(t, "css-state-demo.html")
+
+	knobs, err := GenerateKnobs(declaration, demoHTML, "attributes css-states")
+	if err != nil {
+		t.Fatalf("GenerateKnobs failed: %v", err)
+	}
+
+	if len(knobs.CSSStateKnobs) != 3 {
+		t.Fatalf("Expected 3 CSS state knobs, got %d", len(knobs.CSSStateKnobs))
+	}
+
+	expectedNames := []string{"loading", "active", "disabled"}
+	for i, name := range expectedNames {
+		if knobs.CSSStateKnobs[i].Name != name {
+			t.Errorf("State %d: expected name '%s', got '%s'", i, name, knobs.CSSStateKnobs[i].Name)
+		}
+		if knobs.CSSStateKnobs[i].Type != KnobTypeBoolean {
+			t.Errorf("State %d: expected type boolean, got %s", i, knobs.CSSStateKnobs[i].Type)
+		}
+		if knobs.CSSStateKnobs[i].Category != KnobCategoryCSSState {
+			t.Errorf("State %d: expected category css-states, got %s", i, knobs.CSSStateKnobs[i].Category)
+		}
+	}
+
+	if string(knobs.CSSStateKnobs[0].Description) != "Applied when the element is loading" {
+		t.Errorf("Expected loading description, got '%s'", knobs.CSSStateKnobs[0].Description)
+	}
+	if string(knobs.CSSStateKnobs[2].Description) != "" {
+		t.Errorf("Expected disabled to have no description, got '%s'", knobs.CSSStateKnobs[2].Description)
+	}
+
+	// CSS states disabled should not generate property/css-property knobs
+	if len(knobs.PropertyKnobs) != 0 {
+		t.Errorf("Expected 0 property knobs (not enabled), got %d", len(knobs.PropertyKnobs))
+	}
+}
+
+func TestRenderKnobsHTML_CSSStates(t *testing.T) {
+	knobs := &KnobsData{
+		TagName:   "state-element",
+		ElementID: "state-element-0",
+		CSSStateKnobs: []KnobData{
+			{
+				Name:        "loading",
+				Category:    KnobCategoryCSSState,
+				Type:        KnobTypeBoolean,
+				Description: "Applied when loading",
+			},
+			{
+				Name:     "active",
+				Category: KnobCategoryCSSState,
+				Type:     KnobTypeBoolean,
+			},
+		},
+	}
+
+	knobGroups := []ElementKnobGroup{
+		{
+			TagName:       "state-element",
+			ElementID:     "state-element-0",
+			Label:         "state-element No. 1",
+			InstanceIndex: 0,
+			IsPrimary:     true,
+			Knobs:         knobs,
+		},
+	}
+
+	htmlOut, err := RenderKnobsHTML(testTemplatesForKnobs(), knobGroups)
+	if err != nil {
+		t.Fatalf("RenderKnobsHTML failed: %v", err)
+	}
+
+	htmlStr := string(htmlOut)
+
+	expectedStrings := []string{
+		"CSS Custom States",
+		`data-knob-type="css-state"`,
+		`data-knob-name="loading"`,
+		`data-knob-name="active"`,
+		"cem-pf-v6-switch",
+	}
+
+	for _, expected := range expectedStrings {
+		if !strings.Contains(htmlStr, expected) {
+			t.Errorf("Expected HTML to contain '%s'", expected)
+		}
 	}
 }
