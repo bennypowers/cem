@@ -8632,7 +8632,7 @@ disableCssStateKnob_fn = function(event) {
       control.checked = false;
       control.disabled = true;
       control.title = "Element does not expose ElementInternals";
-      const clearBtn = control.closest("cem-pf-v6-form-group")?.querySelector(`.knob-clear-button[data-knob-name="${CSS.escape(name)}"]`);
+      const clearBtn = control.closest("cem-pf-v6-form-group")?.querySelector(`.knob-clear-button[data-knob-type="css-state"][data-knob-name="${CSS.escape(name)}"]`);
       if (clearBtn) clearBtn.hidden = true;
     }
     break;

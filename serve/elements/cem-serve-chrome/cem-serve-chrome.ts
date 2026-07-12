@@ -1448,7 +1448,7 @@ Generated: ${new Date().toISOString()}`;
         control.disabled = true;
         control.title = 'Element does not expose ElementInternals';
         const clearBtn = control.closest('cem-pf-v6-form-group')
-          ?.querySelector(`.knob-clear-button[data-knob-name="${CSS.escape(name)}"]`) as HTMLElement | null;
+          ?.querySelector(`.knob-clear-button[data-knob-type="css-state"][data-knob-name="${CSS.escape(name)}"]`) as HTMLElement | null;
         if (clearBtn) clearBtn.hidden = true;
       }
       break;

@@ -286,6 +286,7 @@ func (s *Server) regenerateAffectedWorkspacePackages(changedFiles []string) (int
 	s.mu.RLock()
 	watchDir := s.watchDir
 	existingPackages := s.workspacePackages
+	demoPrefix := s.demoURLPrefix
 	s.mu.RUnlock()
 
 	if watchDir == "" {
@@ -376,7 +377,7 @@ func (s *Server) regenerateAffectedWorkspacePackages(changedFiles []string) (int
 		}
 	}
 
-	workspaceRoutingTable, err := routes.BuildWorkspaceRoutingTable(pkgContexts, s.demoURLPrefix)
+	workspaceRoutingTable, err := routes.BuildWorkspaceRoutingTable(pkgContexts, demoPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build workspace routing table: %v", err)
 	}
