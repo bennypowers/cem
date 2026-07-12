@@ -29,6 +29,11 @@ class DemoCardHost {}
 class DemoSpinnerHost {}
 
 beforeAll(() => {
+  if (typeof HTMLElement.prototype.attachInternals !== 'function') {
+    HTMLElement.prototype.attachInternals = function () {
+      return { states: new Set() } as unknown as ElementInternals;
+    };
+  }
   TestBed.initTestEnvironment(
     BrowserDynamicTestingModule,
     platformBrowserDynamicTesting(),

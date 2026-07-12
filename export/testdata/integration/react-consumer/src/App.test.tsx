@@ -1,6 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { render } from '@testing-library/react';
 import { DemoButton, DemoCard, DemoSpinner } from '../generated';
+
+beforeAll(() => {
+  if (typeof HTMLElement.prototype.attachInternals !== 'function') {
+    HTMLElement.prototype.attachInternals = function () {
+      return { states: new Set() } as unknown as ElementInternals;
+    };
+  }
+});
 
 describe('React wrappers render custom elements', () => {
   it('renders demo-button with properties', () => {
