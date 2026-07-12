@@ -73,6 +73,7 @@ type Server struct {
 	importMap               *importmappkg.ImportMap       // Cached import map (workspace or single-package)
 	importMapGraph          *importmappkg.DependencyGraph // Dependency graph for incremental updates
 	sourceControlRootURL    string                        // Source control root URL for demo routing
+	demoURLPrefix           string                        // URL path prefix to strip from demo URLs for local routing
 	templates               *routes.TemplateRegistry      // Template registry for HTML rendering
 	urlRewrites             []config.URLRewrite           // URL rewrites for request path mapping
 	pathResolver            *transform.PathResolver       // Cached path resolver (initialized once)
@@ -115,6 +116,7 @@ func NewServerWithConfig(config Config) (*Server, error) {
 		logger:               log,
 		shutdown:             make(chan struct{}),
 		sourceControlRootURL: config.SourceControlRootURL,
+		demoURLPrefix:        config.DemoURLPrefix,
 	}
 
 	// Use provided filesystem or default to os package

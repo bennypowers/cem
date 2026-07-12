@@ -79,6 +79,13 @@ func (s *Server) SourceControlRootURL() string {
 	return s.sourceControlRootURL
 }
 
+// DemoURLPrefix returns the URL path prefix to strip from demo URLs for local routing.
+func (s *Server) DemoURLPrefix() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.demoURLPrefix
+}
+
 // InitializeWorkspaceMode detects and initializes workspace mode if applicable
 func (s *Server) InitializeWorkspaceMode() error {
 	s.mu.Lock()

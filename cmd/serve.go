@@ -36,6 +36,7 @@ import (
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/serve"
 	"bennypowers.dev/cem/serve/logger"
+	"bennypowers.dev/cem/serve/middleware/routes"
 	"bennypowers.dev/cem/serve/middleware/transform"
 	"bennypowers.dev/cem/serve/middleware/types"
 	servetui "bennypowers.dev/cem/serve/tui"
@@ -146,6 +147,11 @@ var serveCmd = &cobra.Command{
 		// Get source control root URL from config
 		sourceControlRootURL := viper.GetString("sourceControlRootUrl")
 
+		// Compute demo URL prefix from urlTemplate for local route stripping
+		demoURLPrefix := routes.DemoURLPrefixFromTemplate(
+			viper.GetString("generate.demoDiscovery.urlTemplate"),
+		)
+
 		// Get URL rewrites from config
 		var urlRewrites []config.URLRewrite
 		if err := viper.UnmarshalKey("serve.urlRewrites", &urlRewrites); err != nil {
@@ -167,6 +173,7 @@ var serveCmd = &cobra.Command{
 			Target:               target,
 			WatchIgnore:          watchIgnore,
 			SourceControlRootURL: sourceControlRootURL,
+			DemoURLPrefix:        demoURLPrefix,
 			URLRewrites:          urlRewrites,
 			ConfigFile:           ctx.ConfigFile(),
 			ImportMap: types.ImportMapConfig{

@@ -44,7 +44,7 @@ func (s *Server) SetManifest(manifest []byte) error {
 	copy(manifestCopy, manifest)
 
 	// Build routing table from manifest (expensive - no lock held)
-	routingTable, err := routes.BuildDemoRoutingTable(manifestCopy, sourceControlURL)
+	routingTable, err := routes.BuildDemoRoutingTable(manifestCopy, sourceControlURL, s.demoURLPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
 		routingTable = nil
@@ -161,7 +161,7 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 	}
 
 	// Build routing table from manifest
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL)
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL, s.demoURLPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table from cached manifest: %v", err)
 		routingTable = nil
@@ -248,7 +248,7 @@ func (s *Server) RegenerateManifest() (int, error) {
 	}
 
 	// Build routing table from manifest (expensive - no lock held)
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL)
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL, s.demoURLPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
 		routingTable = nil
@@ -329,7 +329,7 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, erro
 	}
 
 	// Build routing table from manifest (single-package mode)
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL)
+	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL, s.demoURLPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
 		routingTable = nil

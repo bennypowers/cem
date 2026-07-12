@@ -105,21 +105,42 @@ func TestBuildDemoRoutingTable_DirectoryTraversalPrevention(t *testing.T) {
 			}`, tt.demoURL)
 
 			// Call BuildDemoRoutingTable
-			routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "")
+			routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
 
+			if err != nil {
+				t.Errorf("Expected no error for %s, but got: %v", tt.description, err)
+			}
 			if tt.shouldReject {
-				if err == nil {
-					t.Errorf("Expected error for %s, but got none. Routes: %+v", tt.description, routes)
-				} else if !strings.Contains(err.Error(), "directory traversal") {
-					t.Errorf("Expected directory traversal error for %s, got: %v", tt.description, err)
+				if len(routes) != 0 {
+					t.Errorf("Expected traversal path to be skipped for %s, but got routes: %+v", tt.description, routes)
 				}
 			} else {
-				if err != nil {
-					t.Errorf("Expected no error for %s, but got: %v", tt.description, err)
-				}
 				if len(routes) == 0 {
 					t.Errorf("Expected routes to be created for %s", tt.description)
 				}
+			}
+		})
+	}
+}
+
+func TestDemoURLPrefixFromTemplate(t *testing.T) {
+	tests := []struct {
+		name     string
+		template string
+		want     string
+	}{
+		{"full external URL", "https://example.com/docs/components/{{.tag}}/{{.demo}}/", "/docs/components"},
+		{"path-only template", "/elements/{{.tag}}/demo/{{.demo}}/", "/elements"},
+		{"no template markers", "https://example.com/static/path/", "/static/path"},
+		{"root path", "https://example.com/{{.tag}}/", ""},
+		{"empty", "", ""},
+		{"relative template", "{{.tag}}/{{.demo}}/", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := DemoURLPrefixFromTemplate(tt.template)
+			if got != tt.want {
+				t.Errorf("DemoURLPrefixFromTemplate(%q) = %q, want %q", tt.template, got, tt.want)
 			}
 		})
 	}
@@ -168,7 +189,7 @@ func TestBuildDemoRoutingTable_DuplicateDetection(t *testing.T) {
 		]
 	}`
 
-	_, err := BuildDemoRoutingTable([]byte(manifestJSON), "")
+	_, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
 
 	if err == nil {
 		t.Fatal("Expected error for duplicate routes, but got none")
@@ -318,7 +339,7 @@ func TestBuildDemoRoutingTable_SourceHrefPaths(t *testing.T) {
 				]
 			}`, tt.sourceHref)
 
-			routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "")
+			routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
 			if err != nil {
 				t.Fatalf("BuildDemoRoutingTable failed: %v", err)
 			}
