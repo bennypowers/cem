@@ -174,7 +174,7 @@ func serveInternalModules(w http.ResponseWriter, r *http.Request, config Config)
 		path = "templates/js/" + reqPath
 	}
 
-	data, err := InternalModules.ReadFile(path)
+	data, err := ReadInternalModule(path)
 	if err != nil {
 		http.NotFound(w, r)
 		return
