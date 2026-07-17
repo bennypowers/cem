@@ -25,7 +25,8 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	"go.lsp.dev/uri"
 )
 
 func TestHover_Fixtures(t *testing.T) {
@@ -58,16 +59,16 @@ func TestHover_Fixtures(t *testing.T) {
 		ctx.SetDocumentManager(dm)
 
 		// Determine URI based on input type
-		var uri string
+		var docURI string
 		if fixture.InputType == "ts" {
-			uri = "file:///test.ts"
+			docURI = "file:///test.ts"
 		} else {
-			uri = "file:///test.html"
+			docURI = "file:///test.html"
 		}
 
 		// Open document
-		doc := dm.OpenDocument(uri, fixture.InputContent, 1)
-		ctx.AddDocument(uri, doc)
+		doc := dm.OpenDocument(docURI, fixture.InputContent, 1)
+		ctx.AddDocument(docURI, doc)
 
 		// Load expected Hover response
 		var expected protocol.Hover
@@ -79,13 +80,13 @@ func TestHover_Fixtures(t *testing.T) {
 		// Create hover params
 		params := &protocol.HoverParams{
 			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-				TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+				TextDocument: protocol.TextDocumentIdentifier{URI: uri.URI(docURI)},
 				Position:     cursor,
 			},
 		}
 
 		// Call hover
-		result, err := hover.Hover(ctx, nil, params)
+		result, err := hover.Hover(ctx, params)
 		if err != nil {
 			t.Fatalf("Hover failed: %v", err)
 		}
@@ -102,14 +103,14 @@ func TestHover_Fixtures(t *testing.T) {
 		}
 
 		// Verify hover matches expected
-		actualContents, ok := result.Contents.(protocol.MarkupContent)
+		actualContents, ok := result.Contents.(*protocol.MarkupContent)
 		if !ok {
-			t.Fatalf("Expected Contents to be MarkupContent, got %T", result.Contents)
+			t.Fatalf("Expected Contents to be *MarkupContent, got %T", result.Contents)
 		}
 
-		expectedContents, ok := expected.Contents.(protocol.MarkupContent)
+		expectedContents, ok := expected.Contents.(*protocol.MarkupContent)
 		if !ok {
-			t.Fatalf("Expected Contents in expected.json to be MarkupContent, got %T", expected.Contents)
+			t.Fatalf("Expected Contents in expected.json to be *MarkupContent, got %T", expected.Contents)
 		}
 
 		if actualContents.Kind != expectedContents.Kind {

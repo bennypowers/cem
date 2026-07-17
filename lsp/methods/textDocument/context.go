@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // AnalyzeCompletionContext determines what completion should be provided using tree-sitter

@@ -17,66 +17,75 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package codeAction
 
 import (
+	"encoding/json"
+
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // CodeAction handles textDocument/codeAction requests
-func CodeAction(ctx types.ServerContext, context *glsp.Context, params *protocol.CodeActionParams) (any, error) {
+func CodeAction(ctx types.ServerContext, params *protocol.CodeActionParams) (any, error) {
 	helpers.SafeDebugLog("[CODE_ACTION] Starting code action for %s", params.TextDocument.URI)
 
 	var actions []protocol.CodeAction
 
-	// Process diagnostics that have autofix suggestions
+	docURI := string(params.TextDocument.URI)
+
 	for _, diagnostic := range params.Context.Diagnostics {
-		if diagnostic.Source != nil && *diagnostic.Source == "cem-lsp" {
-			if diagnostic.Data != nil {
-				if dataMap, ok := diagnostic.Data.(map[string]any); ok {
-					if actionType, exists := dataMap["type"]; exists {
-						switch actionType {
-						case "slot-suggestion":
-							action := createSlotAutofixAction(&diagnostic, dataMap, params.TextDocument.URI)
-							if action != nil {
-								actions = append(actions, *action)
-								helpers.SafeDebugLog("[CODE_ACTION] Created slot autofix action")
-							}
-						case "tag-suggestion":
-							action := createTagAutofixAction(&diagnostic, dataMap, params.TextDocument.URI)
-							if action != nil {
-								actions = append(actions, *action)
-								helpers.SafeDebugLog("[CODE_ACTION] Created tag autofix action")
-							}
-						case "missing-import":
-							action, err := CreateMissingImportAction(ctx, &diagnostic, dataMap, params.TextDocument.URI)
-							if err != nil {
-								return nil, err
-							}
-							if action != nil {
-								actions = append(actions, *action)
-								helpers.SafeDebugLog("[CODE_ACTION] Created missing import action")
-							}
-						case "attribute-suggestion":
-							action := createAttributeAutofixAction(&diagnostic, dataMap, params.TextDocument.URI)
-							if action != nil {
-								actions = append(actions, *action)
-								helpers.SafeDebugLog("[CODE_ACTION] Created attribute autofix action")
-							}
-						case "attribute-value-suggestion":
-							action := createAttributeValueAutofixAction(&diagnostic, dataMap, params.TextDocument.URI)
-							if action != nil {
-								actions = append(actions, *action)
-								helpers.SafeDebugLog("[CODE_ACTION] Created attribute value autofix action")
-							}
-						case "css-ambiguous-comment":
-							cssActions := createCSSAmbiguousCommentActions(&diagnostic, dataMap, params.TextDocument.URI)
-							actions = append(actions, cssActions...)
-							helpers.SafeDebugLog("[CODE_ACTION] Created %d CSS ambiguous comment actions", len(cssActions))
-						}
-					}
-				}
+		source, hasSource := diagnostic.Source.Get()
+		if !hasSource || source != "cem-lsp" {
+			continue
+		}
+		if len(diagnostic.Data) == 0 {
+			continue
+		}
+		var dataMap map[string]any
+		if err := json.Unmarshal(diagnostic.Data, &dataMap); err != nil {
+			continue
+		}
+		actionType, exists := dataMap["type"]
+		if !exists {
+			continue
+		}
+		switch actionType {
+		case "slot-suggestion":
+			action := createSlotAutofixAction(&diagnostic, dataMap, docURI)
+			if action != nil {
+				actions = append(actions, *action)
+				helpers.SafeDebugLog("[CODE_ACTION] Created slot autofix action")
 			}
+		case "tag-suggestion":
+			action := createTagAutofixAction(&diagnostic, dataMap, docURI)
+			if action != nil {
+				actions = append(actions, *action)
+				helpers.SafeDebugLog("[CODE_ACTION] Created tag autofix action")
+			}
+		case "missing-import":
+			action, err := CreateMissingImportAction(ctx, &diagnostic, dataMap, docURI)
+			if err != nil {
+				return nil, err
+			}
+			if action != nil {
+				actions = append(actions, *action)
+				helpers.SafeDebugLog("[CODE_ACTION] Created missing import action")
+			}
+		case "attribute-suggestion":
+			action := createAttributeAutofixAction(&diagnostic, dataMap, docURI)
+			if action != nil {
+				actions = append(actions, *action)
+				helpers.SafeDebugLog("[CODE_ACTION] Created attribute autofix action")
+			}
+		case "attribute-value-suggestion":
+			action := createAttributeValueAutofixAction(&diagnostic, dataMap, docURI)
+			if action != nil {
+				actions = append(actions, *action)
+				helpers.SafeDebugLog("[CODE_ACTION] Created attribute value autofix action")
+			}
+		case "css-ambiguous-comment":
+			cssActions := createCSSAmbiguousCommentActions(&diagnostic, dataMap, docURI)
+			actions = append(actions, cssActions...)
+			helpers.SafeDebugLog("[CODE_ACTION] Created %d CSS ambiguous comment actions", len(cssActions))
 		}
 	}
 

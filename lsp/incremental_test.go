@@ -19,7 +19,7 @@ package lsp
 import (
 	"testing"
 
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 func TestIncrementalParser_AnalyzeChanges(t *testing.T) {
@@ -35,8 +35,8 @@ func TestIncrementalParser_AnalyzeChanges(t *testing.T) {
 		{
 			name: "Single small change should use incremental",
 			changes: []protocol.TextDocumentContentChangeEvent{
-				{
-					Range: &protocol.Range{
+				&protocol.TextDocumentContentChangePartial{
+					Range: protocol.Range{
 						Start: protocol.Position{Line: 0, Character: 5},
 						End:   protocol.Position{Line: 0, Character: 10},
 					},
@@ -50,8 +50,8 @@ func TestIncrementalParser_AnalyzeChanges(t *testing.T) {
 		{
 			name: "Large change should not use incremental",
 			changes: []protocol.TextDocumentContentChangeEvent{
-				{
-					Range: &protocol.Range{
+				&protocol.TextDocumentContentChangePartial{
+					Range: protocol.Range{
 						Start: protocol.Position{Line: 0, Character: 0},
 						End:   protocol.Position{Line: 50, Character: 0},
 					},
@@ -67,8 +67,8 @@ func TestIncrementalParser_AnalyzeChanges(t *testing.T) {
 			changes: func() []protocol.TextDocumentContentChangeEvent {
 				changes := make([]protocol.TextDocumentContentChangeEvent, 10) // Too many changes
 				for i := range changes {
-					changes[i] = protocol.TextDocumentContentChangeEvent{
-						Range: &protocol.Range{
+					changes[i] = &protocol.TextDocumentContentChangePartial{
+						Range: protocol.Range{
 							Start: protocol.Position{Line: 0, Character: uint32(i)},
 							End:   protocol.Position{Line: 0, Character: uint32(i + 1)},
 						},
@@ -84,9 +84,8 @@ func TestIncrementalParser_AnalyzeChanges(t *testing.T) {
 		{
 			name: "Full document change should not use incremental",
 			changes: []protocol.TextDocumentContentChangeEvent{
-				{
-					Range: nil, // Full document change
-					Text:  "completely new content",
+				&protocol.TextDocumentContentChangeWholeDocument{
+					Text: "completely new content",
 				},
 			},
 			oldContent:          "old content",

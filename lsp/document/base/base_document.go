@@ -23,7 +23,7 @@ import (
 
 	"bennypowers.dev/cem/internal/textutil"
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 

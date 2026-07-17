@@ -78,7 +78,7 @@ func TestModuleGraphIntegration_DirectVsReExport(t *testing.T) {
 	diagnostics1 := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(server, doc1)
 
 	for _, diagnostic := range diagnostics1 {
-		if contains(diagnostic.Message, "my-button") {
+		if contains(msgString(diagnostic.Message), "my-button") {
 			t.Errorf("Direct import should not have errors for my-button: %s", diagnostic.Message)
 		}
 	}
@@ -104,7 +104,7 @@ func TestModuleGraphIntegration_DirectVsReExport(t *testing.T) {
 	diagnostics2 := publishDiagnostics.AnalyzeTagNameDiagnosticsForTest(server, doc2)
 
 	for _, diagnostic := range diagnostics2 {
-		if contains(diagnostic.Message, "my-button") {
+		if contains(msgString(diagnostic.Message), "my-button") {
 			t.Errorf("Re-export import should not have errors for my-button: %s", diagnostic.Message)
 		}
 	}

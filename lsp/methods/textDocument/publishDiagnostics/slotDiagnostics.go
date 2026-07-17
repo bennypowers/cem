@@ -24,7 +24,7 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/agext/levenshtein"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -73,18 +73,16 @@ func AnalyzeSlotDiagnosticsForTest(ctx types.ServerContext, doc types.Document) 
 		if slices.Contains(slotNames, slotValue) {
 			for _, slot := range availableSlots {
 				if slot.Name == slotValue && slot.IsDeprecated() {
-					severity := protocol.DiagnosticSeverityHint
-					source := "cem-lsp"
 					d := protocol.Diagnostic{
 						Range:    match.Range,
-						Severity: &severity,
-						Source:   &source,
-						Tags:     []protocol.DiagnosticTag{protocol.DiagnosticTagDeprecated},
+						Severity: protocol.DiagnosticSeverityHint,
+						Source:   protocol.NewOptional("cem-lsp"),
+						Tags:     protocol.NewDiagnosticTags(protocol.DiagnosticTagDeprecated),
 					}
 					if reason, ok := slot.Deprecated.Value().(string); ok && reason != "" {
-						d.Message = fmt.Sprintf("Slot '%s' on '%s' is deprecated: %s", slotValue, parentElement, reason)
+						d.Message = protocol.String(fmt.Sprintf("Slot '%s' on '%s' is deprecated: %s", slotValue, parentElement, reason))
 					} else {
-						d.Message = fmt.Sprintf("Slot '%s' on '%s' is deprecated", slotValue, parentElement)
+						d.Message = protocol.String(fmt.Sprintf("Slot '%s' on '%s' is deprecated", slotValue, parentElement))
 					}
 					diagnostics = append(diagnostics, d)
 					break
@@ -97,15 +95,13 @@ func AnalyzeSlotDiagnosticsForTest(ctx types.ServerContext, doc types.Document) 
 
 		closestMatch, distance := findClosestMatch(slotValue, slotNames, 3)
 
-		severity := protocol.DiagnosticSeverityError
-		source := "cem-lsp"
 		var diagnostic protocol.Diagnostic
 		diagnostic.Range = match.Range
-		diagnostic.Severity = &severity
-		diagnostic.Source = &source
+		diagnostic.Severity = protocol.DiagnosticSeverityError
+		diagnostic.Source = protocol.NewOptional("cem-lsp")
 
 		if closestMatch != "" && distance <= 2 {
-			diagnostic.Message = fmt.Sprintf("Unknown slot '%s' for element '%s'. Did you mean '%s'?", slotValue, parentElement, closestMatch)
+			diagnostic.Message = protocol.String(fmt.Sprintf("Unknown slot '%s' for element '%s'. Did you mean '%s'?", slotValue, parentElement, closestMatch))
 
 			autofixData := &types.AutofixData{
 				Type:       types.DiagnosticTypeSlotSuggestion,
@@ -113,10 +109,11 @@ func AnalyzeSlotDiagnosticsForTest(ctx types.ServerContext, doc types.Document) 
 				Suggestion: closestMatch,
 				Range:      match.Range,
 			}
-			diagnostic.Data = autofixData.ToMap()
+			data, _ := protocol.Marshal(autofixData.ToMap())
+			diagnostic.Data = data
 		} else {
 			availableList := strings.Join(slotNames, "', '")
-			diagnostic.Message = fmt.Sprintf("Unknown slot '%s' for element '%s'. Available slots: '%s'", slotValue, parentElement, availableList)
+			diagnostic.Message = protocol.String(fmt.Sprintf("Unknown slot '%s' for element '%s'. Available slots: '%s'", slotValue, parentElement, availableList))
 		}
 
 		diagnostics = append(diagnostics, diagnostic)

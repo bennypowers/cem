@@ -241,9 +241,10 @@ func TestTransitiveIntegration_ThreeLevelDependency(t *testing.T) {
 	problematicElements := []string{"my-tabs", "my-tab", "my-icon"}
 
 	for _, diagnostic := range diagnostics {
+		dmsg := msgString(diagnostic.Message)
 		for _, element := range problematicElements {
-			if contains(diagnostic.Message, element) &&
-				(contains(diagnostic.Message, "not imported") || contains(diagnostic.Message, "Unknown custom element")) {
+			if contains(dmsg, element) &&
+				(contains(dmsg, "not imported") || contains(dmsg, "Unknown custom element")) {
 				t.Errorf("Transitive dependency failed: %s should be available via import './my-tabs.js' but got error: %s", element, diagnostic.Message)
 			}
 		}
@@ -313,16 +314,17 @@ func TestTransitiveIntegration_PartialImport(t *testing.T) {
 	hasMyTabsError := false
 
 	for _, diagnostic := range diagnostics {
+		dmsg := msgString(diagnostic.Message)
 		// Check for my-tabs first (longer string) to avoid substring matching issues
-		if contains(diagnostic.Message, "my-tabs") &&
-			(contains(diagnostic.Message, "not imported") || contains(diagnostic.Message, "Unknown custom element")) {
+		if contains(dmsg, "my-tabs") &&
+			(contains(dmsg, "not imported") || contains(dmsg, "Unknown custom element")) {
 			hasMyTabsError = true
 			t.Log("Expected error for my-tabs - it was not imported")
-		} else if contains(diagnostic.Message, "'my-tab'") &&
-			(contains(diagnostic.Message, "not imported") || contains(diagnostic.Message, "Unknown custom element")) {
+		} else if contains(dmsg, "'my-tab'") &&
+			(contains(dmsg, "not imported") || contains(dmsg, "Unknown custom element")) {
 			t.Errorf("my-tab should be available via direct import: %s", diagnostic.Message)
-		} else if contains(diagnostic.Message, "'my-icon'") &&
-			(contains(diagnostic.Message, "not imported") || contains(diagnostic.Message, "Unknown custom element")) {
+		} else if contains(dmsg, "'my-icon'") &&
+			(contains(dmsg, "not imported") || contains(dmsg, "Unknown custom element")) {
 			t.Errorf("my-icon should be available via transitive import from my-tab: %s", diagnostic.Message)
 		}
 	}

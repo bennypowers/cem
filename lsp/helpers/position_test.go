@@ -19,7 +19,7 @@ package helpers
 import (
 	"testing"
 
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // Inline: pure function, table-driven

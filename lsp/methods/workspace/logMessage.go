@@ -18,38 +18,31 @@ package workspace
 
 import (
 	"bennypowers.dev/cem/internal/logging"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // LogInfo logs an info message using the centralized logger
-func LogInfo(context *glsp.Context, format string, args ...any) {
+func LogInfo(format string, args ...any) {
 	logging.Info(format, args...)
 }
 
 // LogWarning logs a warning message using the centralized logger
-func LogWarning(context *glsp.Context, format string, args ...any) {
+func LogWarning(format string, args ...any) {
 	logging.Warning(format, args...)
 }
 
 // LogError logs an error message using the centralized logger
-func LogError(context *glsp.Context, format string, args ...any) {
+func LogError(format string, args ...any) {
 	logging.Error(format, args...)
 }
 
 // LogDebug logs a debug message using the centralized logger
-func LogDebug(context *glsp.Context, format string, args ...any) {
+func LogDebug(format string, args ...any) {
 	logging.Debug(format, args...)
 }
 
 // ShowMessage sends a message to be displayed to the user
-func ShowMessage(context *glsp.Context, messageType protocol.MessageType, message string) {
-	if context != nil {
-		go func() {
-			context.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
-				Type:    messageType,
-				Message: message,
-			})
-		}()
-	}
+func ShowMessage(messageType protocol.MessageType, message string) {
+	// TODO: wire up notification via the new protocol connection
+	logging.Info("[SHOW_MESSAGE] type=%d: %s", messageType, message)
 }

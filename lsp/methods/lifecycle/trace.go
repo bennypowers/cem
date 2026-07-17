@@ -19,17 +19,16 @@ package lifecycle
 import (
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // SetTrace handles the $/setTrace notification
-func SetTrace(ctx types.ServerContext, context *glsp.Context, params *protocol.SetTraceParams) error {
+func SetTrace(ctx types.ServerContext, params *protocol.SetTraceParams) error {
 	switch params.Value {
 	case protocol.TraceValueOff:
 		ctx.DebugLog("Disabling debug logging via $/setTrace")
 		logging.SetVerbosity(logging.VerbosityNormal)
-	case protocol.TraceValueMessage:
+	case protocol.TraceValueMessages:
 		logging.SetVerbosity(logging.VerbosityDebug)
 		ctx.DebugLog("Debug logging enabled via $/setTrace")
 	case protocol.TraceValueVerbose:

@@ -19,12 +19,11 @@ package lifecycle
 import (
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // Initialized handles the LSP initialized notification
-func Initialized(ctx types.ServerContext, context *glsp.Context, params *protocol.InitializedParams) error {
+func Initialized(ctx types.ServerContext, params *protocol.InitializedParams) error {
 	// Initialize manifests and start watching after successful LSP initialization
 	if err := ctx.InitializeManifests(); err != nil {
 		logging.Warning("Failed to initialize manifests: %v", err)

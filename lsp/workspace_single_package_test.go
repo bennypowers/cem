@@ -22,12 +22,13 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/workspace"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
-	"bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.lsp.dev/protocol"
 )
 
 // Inline: integration test, scalar assertions
@@ -79,8 +80,9 @@ func TestWorkspaceSinglePackage(t *testing.T) {
 
 		// Should have NO "unknown element" diagnostic for <my-element>
 		for _, diag := range diagnostics {
-			if strings.Contains(diag.Message, "my-element") && strings.Contains(diag.Message, "Unknown") {
-				t.Errorf("FALSE POSITIVE: Got 'unknown element' diagnostic for workspace element: %s", diag.Message)
+			msg := string(diag.Message.(protocol.String))
+			if strings.Contains(msg, "my-element") && strings.Contains(msg, "Unknown") {
+				t.Errorf("FALSE POSITIVE: Got 'unknown element' diagnostic for workspace element: %s", msg)
 			}
 		}
 	})

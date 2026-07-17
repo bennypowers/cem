@@ -19,7 +19,8 @@ package codeAction
 import (
 	"fmt"
 
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	urilib "go.lsp.dev/uri"
 )
 
 func createAutofixAction(diagnostic *protocol.Diagnostic, dataMap map[string]any, uri string) *protocol.CodeAction {
@@ -37,8 +38,8 @@ func createAutofixAction(diagnostic *protocol.Diagnostic, dataMap map[string]any
 		Kind:        &kind,
 		IsPreferred: &preferred,
 		Edit: &protocol.WorkspaceEdit{
-			Changes: map[string][]protocol.TextEdit{
-				uri: {{Range: diagnostic.Range, NewText: suggestion}},
+			Changes: map[urilib.URI][]protocol.TextEdit{
+				urilib.URI(uri): {{Range: diagnostic.Range, NewText: suggestion}},
 			},
 		},
 		Diagnostics: []protocol.Diagnostic{*diagnostic},

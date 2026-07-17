@@ -20,7 +20,7 @@ import (
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 func analyzeCssDiagnostics(ctx types.ServerContext, doc types.Document) []protocol.Diagnostic {
@@ -67,8 +67,6 @@ func AnalyzeCssDiagnosticsForTest(ctx types.ServerContext, doc types.Document) [
 		if !hasComment || len(comments) == 0 || len(properties) <= 1 {
 			continue
 		}
-		severity := protocol.DiagnosticSeverityWarning
-		source := "cem-lsp"
 		commentRange := doc.ByteRangeToProtocolRange(content, comments[0].StartByte, comments[0].EndByte)
 		deleteRange := protocol.Range{
 			Start: protocol.Position{Line: commentRange.Start.Line, Character: 0},
@@ -88,26 +86,28 @@ func AnalyzeCssDiagnosticsForTest(ctx types.ServerContext, doc types.Document) [
 			}
 			propertyData = append(propertyData, entry)
 		}
+		dataMap := map[string]any{
+			"type":        string(types.DiagnosticTypeCSSAmbiguousComment),
+			"commentText": comments[0].Text,
+			"deleteRange": map[string]any{
+				"start": map[string]any{
+					"line":      float64(deleteRange.Start.Line),
+					"character": float64(deleteRange.Start.Character),
+				},
+				"end": map[string]any{
+					"line":      float64(deleteRange.End.Line),
+					"character": float64(deleteRange.End.Character),
+				},
+			},
+			"properties": propertyData,
+		}
+		data, _ := protocol.Marshal(dataMap)
 		diagnostics = append(diagnostics, protocol.Diagnostic{
 			Range:    commentRange,
-			Severity: &severity,
-			Source:   &source,
-			Message:  "Ambiguous comment ignored: more than one var() call in declaration.",
-			Data: map[string]any{
-				"type":        string(types.DiagnosticTypeCSSAmbiguousComment),
-				"commentText": comments[0].Text,
-				"deleteRange": map[string]any{
-					"start": map[string]any{
-						"line":      float64(deleteRange.Start.Line),
-						"character": float64(deleteRange.Start.Character),
-					},
-					"end": map[string]any{
-						"line":      float64(deleteRange.End.Line),
-						"character": float64(deleteRange.End.Character),
-					},
-				},
-				"properties": propertyData,
-			},
+			Severity: protocol.DiagnosticSeverityWarning,
+			Source:   protocol.NewOptional("cem-lsp"),
+			Message:  protocol.String("Ambiguous comment ignored: more than one var() call in declaration."),
+			Data:     data,
 		})
 	}
 

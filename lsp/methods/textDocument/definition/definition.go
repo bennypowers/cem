@@ -27,8 +27,8 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	urilib "go.lsp.dev/uri"
 )
 
 // DefinitionTargetType specifies what type of definition to look for
@@ -58,8 +58,8 @@ type DefinitionRequest struct {
 }
 
 // Definition handles textDocument/definition requests
-func Definition(ctx types.ServerContext, context *glsp.Context, params *protocol.DefinitionParams) (any, error) {
-	uri := params.TextDocument.URI
+func Definition(ctx types.ServerContext, params *protocol.DefinitionParams) (any, error) {
+	uri := string(params.TextDocument.URI)
 
 	// Get the tracked document
 	doc := ctx.Document(uri)
@@ -103,7 +103,7 @@ func Definition(ctx types.ServerContext, context *glsp.Context, params *protocol
 	if location == nil {
 		// Fallback to file start
 		location = &protocol.Location{
-			URI: sourceFile,
+			URI: urilib.URI(sourceFile),
 			Range: protocol.Range{
 				Start: protocol.Position{Line: 0, Character: 0},
 				End:   protocol.Position{Line: 0, Character: 0},
@@ -264,7 +264,7 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx t
 	queryManager := getQueryManagerFromContext(ctx)
 	if queryManager == nil {
 		return &protocol.Location{
-			URI: sourceFile,
+			URI: urilib.URI(sourceFile),
 			Range: protocol.Range{
 				Start: protocol.Position{Line: 0, Character: 0},
 				End:   protocol.Position{Line: 0, Character: 0},
@@ -322,7 +322,7 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx t
 	if targetRange != nil {
 		helpers.SafeDebugLog("[DEFINITION] Using precise location: Line:%d Character:%d", targetRange.Start.Line, targetRange.Start.Character)
 		return &protocol.Location{
-			URI: sourceFile,
+			URI: urilib.URI(sourceFile),
 			Range: protocol.Range{
 				Start: protocol.Position{
 					Line:      targetRange.Start.Line,
@@ -339,7 +339,7 @@ func findDefinitionLocation(sourceFile string, request *DefinitionRequest, ctx t
 	// Fallback to file start if precise location not found
 	helpers.SafeDebugLog("[DEFINITION] No precise location found, falling back to top of file")
 	return &protocol.Location{
-		URI: sourceFile,
+		URI: urilib.URI(sourceFile),
 		Range: protocol.Range{
 			Start: protocol.Position{Line: 0, Character: 0},
 			End:   protocol.Position{Line: 0, Character: 0},

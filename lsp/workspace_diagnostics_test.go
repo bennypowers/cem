@@ -21,12 +21,13 @@ import (
 	"strings"
 	"testing"
 
+	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
-	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.lsp.dev/protocol"
 )
 
 // Inline: integration test, scalar assertions
@@ -68,11 +69,12 @@ func TestWorkspaceDiagnostics_NoFalsePositives_npm(t *testing.T) {
 	// CRITICAL: Should have NO "unknown element" diagnostic for <my-element-a>
 	// because it's a workspace sibling that IS imported
 	for _, diag := range diagnostics {
-		if strings.Contains(diag.Message, "my-element-a") && strings.Contains(diag.Message, "Unknown") {
-			t.Errorf("FALSE POSITIVE: Got 'unknown element' diagnostic for workspace sibling: %s", diag.Message)
+		msg := string(diag.Message.(protocol.String))
+		if strings.Contains(msg, "my-element-a") && strings.Contains(msg, "Unknown") {
+			t.Errorf("FALSE POSITIVE: Got 'unknown element' diagnostic for workspace sibling: %s", msg)
 		}
-		if strings.Contains(diag.Message, "my-element-a") && strings.Contains(diag.Message, "not imported") {
-			t.Errorf("FALSE POSITIVE: Got 'missing import' diagnostic for workspace sibling: %s", diag.Message)
+		if strings.Contains(msg, "my-element-a") && strings.Contains(msg, "not imported") {
+			t.Errorf("FALSE POSITIVE: Got 'missing import' diagnostic for workspace sibling: %s", msg)
 		}
 	}
 
@@ -117,11 +119,12 @@ func TestWorkspaceDiagnostics_NoFalsePositives_yarn(t *testing.T) {
 
 	// Should have NO false positive diagnostics
 	for _, diag := range diagnostics {
-		if strings.Contains(diag.Message, "my-element-a") && strings.Contains(diag.Message, "Unknown") {
-			t.Errorf("FALSE POSITIVE: Got 'unknown element' diagnostic for yarn workspace sibling: %s", diag.Message)
+		msg := string(diag.Message.(protocol.String))
+		if strings.Contains(msg, "my-element-a") && strings.Contains(msg, "Unknown") {
+			t.Errorf("FALSE POSITIVE: Got 'unknown element' diagnostic for yarn workspace sibling: %s", msg)
 		}
-		if strings.Contains(diag.Message, "my-element-a") && strings.Contains(diag.Message, "not imported") {
-			t.Errorf("FALSE POSITIVE: Got 'missing import' diagnostic for yarn workspace sibling: %s", diag.Message)
+		if strings.Contains(msg, "my-element-a") && strings.Contains(msg, "not imported") {
+			t.Errorf("FALSE POSITIVE: Got 'missing import' diagnostic for yarn workspace sibling: %s", msg)
 		}
 	}
 
@@ -166,11 +169,12 @@ func TestWorkspaceDiagnostics_NoFalsePositives_pnpm(t *testing.T) {
 
 	// Should have NO false positive diagnostics
 	for _, diag := range diagnostics {
-		if strings.Contains(diag.Message, "my-element-a") && strings.Contains(diag.Message, "Unknown") {
-			t.Errorf("FALSE POSITIVE: Got 'unknown element' diagnostic for pnpm workspace sibling: %s", diag.Message)
+		msg := string(diag.Message.(protocol.String))
+		if strings.Contains(msg, "my-element-a") && strings.Contains(msg, "Unknown") {
+			t.Errorf("FALSE POSITIVE: Got 'unknown element' diagnostic for pnpm workspace sibling: %s", msg)
 		}
-		if strings.Contains(diag.Message, "my-element-a") && strings.Contains(diag.Message, "not imported") {
-			t.Errorf("FALSE POSITIVE: Got 'missing import' diagnostic for pnpm workspace sibling: %s", diag.Message)
+		if strings.Contains(msg, "my-element-a") && strings.Contains(msg, "not imported") {
+			t.Errorf("FALSE POSITIVE: Got 'missing import' diagnostic for pnpm workspace sibling: %s", msg)
 		}
 	}
 

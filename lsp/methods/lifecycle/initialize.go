@@ -17,14 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package lifecycle
 
 import (
+	"encoding/json"
 	"os"
 
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/version"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // cemInitializationOptions represents the custom initialization options for CEM LSP
@@ -34,9 +34,9 @@ type cemInitializationOptions struct {
 }
 
 // Initialize handles the LSP initialize request
-func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol.InitializeParams) (any, error) {
+func Initialize(ctx types.ServerContext, params *protocol.InitializeParams) (*protocol.InitializeResult, error) {
 	// Configure centralized logger for LSP mode
-	logging.SetLSPContext(context)
+	logging.SetLSPClient(ctx.Client())
 
 	// Send initialization message with version
 	serverVersion := version.GetVersion()
@@ -47,24 +47,34 @@ func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol
 		logging.Debug("LSP server binary: %s", executable)
 	}
 
-	// Log workspace information from LSP client
+	//nolint:staticcheck // RootURI still needed for older LSP clients
 	if params.RootURI != nil {
-		helpers.SafeDebugLog("[INITIALIZE] LSP client provided root URI: %s", *params.RootURI)
+		helpers.SafeDebugLog("[INITIALIZE] LSP client provided root URI: %s", *params.RootURI) //nolint:staticcheck
 	}
-	if len(params.WorkspaceFolders) > 0 {
-		for i, folder := range params.WorkspaceFolders {
+	if folders, ok := params.WorkspaceFolders.Get(); ok {
+		for i, folder := range folders {
 			helpers.SafeDebugLog("[INITIALIZE] LSP client workspace folder %d: %s (%s)", i, folder.URI, folder.Name)
 		}
 	}
 
 	// Update workspace context with information from LSP client
-	if err := ctx.UpdateWorkspaceFromLSP(params.RootURI, params.WorkspaceFolders); err != nil {
+	var rootStr *string
+	//nolint:staticcheck // RootURI still needed for older LSP clients
+	if params.RootURI != nil {
+		s := string(*params.RootURI) //nolint:staticcheck
+		rootStr = &s
+	}
+	var folders []protocol.WorkspaceFolder
+	if f, ok := params.WorkspaceFolders.Get(); ok {
+		folders = f
+	}
+	if err := ctx.UpdateWorkspaceFromLSP(rootStr, folders); err != nil {
 		helpers.SafeDebugLog("[INITIALIZE] Warning: Failed to update workspace from LSP parameters: %v", err)
 		// Don't fail initialization, just log the warning
 	}
 
 	// Parse initializationOptions for additional packages and settings
-	if params.InitializationOptions != nil {
+	if len(params.InitializationOptions) > 0 {
 		options := parseInitializationOptions(params.InitializationOptions)
 		if len(options.AdditionalPackages) > 0 {
 			helpers.SafeDebugLog("[INITIALIZE] Found %d additional packages in initializationOptions", len(options.AdditionalPackages))
@@ -120,40 +130,38 @@ func Initialize(ctx types.ServerContext, context *glsp.Context, params *protocol
 		}
 	}
 
-	return protocol.InitializeResult{
+	return &protocol.InitializeResult{
 		Capabilities: capabilities,
-		ServerInfo: &protocol.InitializeResultServerInfo{
+		ServerInfo: protocol.ServerInfo{
 			Name:    "cem-lsp",
-			Version: &serverVersion,
+			Version: protocol.NewOptional(serverVersion),
 		},
 	}, nil
 }
 
 // parseInitializationOptions attempts to parse the initializationOptions into our expected format.
-// It handles various formats that editors might send (map, struct, etc.)
-func parseInitializationOptions(options any) cemInitializationOptions {
+func parseInitializationOptions(raw protocol.LSPAny) cemInitializationOptions {
 	result := cemInitializationOptions{}
 
-	// The options could come in various forms depending on the editor
-	switch opts := options.(type) {
-	case map[string]any:
-		// Top-level additionalPackages (backward compatible)
-		if additionalPackages, ok := opts["additionalPackages"]; ok {
-			result.AdditionalPackages = parseStringSlice(additionalPackages)
-		}
+	var opts map[string]any
+	if err := json.Unmarshal(raw, &opts); err != nil {
+		return result
+	}
 
-		// Settings under "cem" namespace
-		if cemSettings, ok := opts["cem"]; ok {
-			if cemMap, ok := cemSettings.(map[string]any); ok {
-				if inlayHints, ok := cemMap["inlayHints"]; ok {
-					if b, ok := inlayHints.(bool); ok {
-						result.InlayHints = &b
-					}
+	if additionalPackages, ok := opts["additionalPackages"]; ok {
+		result.AdditionalPackages = parseStringSlice(additionalPackages)
+	}
+
+	if cemSettings, ok := opts["cem"]; ok {
+		if cemMap, ok := cemSettings.(map[string]any); ok {
+			if inlayHints, ok := cemMap["inlayHints"]; ok {
+				if b, ok := inlayHints.(bool); ok {
+					result.InlayHints = &b
 				}
-				if additionalPackages, ok := cemMap["additionalPackages"]; ok {
-					if parsed := parseStringSlice(additionalPackages); len(parsed) > 0 {
-						result.AdditionalPackages = parsed
-					}
+			}
+			if additionalPackages, ok := cemMap["additionalPackages"]; ok {
+				if parsed := parseStringSlice(additionalPackages); len(parsed) > 0 {
+					result.AdditionalPackages = parsed
 				}
 			}
 		}

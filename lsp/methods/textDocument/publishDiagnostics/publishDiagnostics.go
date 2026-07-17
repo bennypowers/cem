@@ -17,10 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package publishDiagnostics
 
 import (
+	"context"
+
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	"go.lsp.dev/uri"
 )
 
 // ComputeDiagnostics analyzes a document and returns a non-nil slice of diagnostics.
@@ -35,21 +37,20 @@ func ComputeDiagnostics(ctx types.ServerContext, doc types.Document) []protocol.
 }
 
 // PublishDiagnostics analyzes the document and publishes diagnostics via push notification
-func PublishDiagnostics(ctx types.ServerContext, glspContext *glsp.Context, uri string) error {
-	helpers.SafeDebugLog("[DIAGNOSTICS] Starting diagnostics for %s", uri)
+func PublishDiagnostics(ctx types.ServerContext, docURI string) error {
+	helpers.SafeDebugLog("[DIAGNOSTICS] Starting diagnostics for %s", docURI)
 
-	doc := ctx.Document(uri)
+	doc := ctx.Document(docURI)
 	if doc == nil {
-		helpers.SafeDebugLog("[DIAGNOSTICS] No document found for %s", uri)
+		helpers.SafeDebugLog("[DIAGNOSTICS] No document found for %s", docURI)
 		return nil
 	}
 
 	diagnostics := ComputeDiagnostics(ctx, doc)
-	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d diagnostics for %s", len(diagnostics), uri)
+	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d diagnostics for %s", len(diagnostics), docURI)
 
-	glspContext.Notify(protocol.ServerTextDocumentPublishDiagnostics, &protocol.PublishDiagnosticsParams{
-		URI:         uri,
+	return ctx.Client().PublishDiagnostics(context.Background(), &protocol.PublishDiagnosticsParams{
+		URI:         uri.URI(docURI),
 		Diagnostics: diagnostics,
 	})
-	return nil
 }

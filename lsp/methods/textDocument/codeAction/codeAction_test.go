@@ -22,7 +22,7 @@ import (
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 func TestCodeActionSlotSuggestion(t *testing.T) {
@@ -41,31 +41,31 @@ func TestCodeActionSlotSuggestion(t *testing.T) {
 	ctx.AddDocument("test://test.html", doc)
 
 	// Create mock diagnostic with slot suggestion data
-	severity := protocol.DiagnosticSeverityError
-	source := "cem-lsp"
+	dataMap := map[string]any{
+		"type":       "slot-suggestion",
+		"original":   "heade",
+		"suggestion": "header",
+		"range": map[string]any{
+			"start": map[string]any{
+				"line":      float64(0),
+				"character": float64(25),
+			},
+			"end": map[string]any{
+				"line":      float64(0),
+				"character": float64(30),
+			},
+		},
+	}
+	data, _ := protocol.Marshal(dataMap)
 	diagnostic := protocol.Diagnostic{
 		Range: protocol.Range{
 			Start: protocol.Position{Line: 0, Character: 25},
 			End:   protocol.Position{Line: 0, Character: 30},
 		},
-		Severity: &severity,
-		Source:   &source,
-		Message:  "Unknown slot 'heade' for element 'my-element'. Did you mean 'header'?",
-		Data: map[string]any{
-			"type":       "slot-suggestion",
-			"original":   "heade",
-			"suggestion": "header",
-			"range": map[string]any{
-				"start": map[string]any{
-					"line":      float64(0),
-					"character": float64(25),
-				},
-				"end": map[string]any{
-					"line":      float64(0),
-					"character": float64(30),
-				},
-			},
-		},
+		Severity: protocol.DiagnosticSeverityError,
+		Source:   protocol.NewOptional("cem-lsp"),
+		Message:  protocol.String("Unknown slot 'heade' for element 'my-element'. Did you mean 'header'?"),
+		Data:     data,
 	}
 
 	// Create code action request
@@ -79,7 +79,7 @@ func TestCodeActionSlotSuggestion(t *testing.T) {
 	}
 
 	// Call CodeAction
-	result, err := codeAction.CodeAction(ctx, nil, params)
+	result, err := codeAction.CodeAction(ctx, params)
 	if err != nil {
 		t.Fatalf("CodeAction failed: %v", err)
 	}
@@ -166,7 +166,7 @@ func TestCodeActionNoDiagnostics(t *testing.T) {
 	}
 
 	// Call CodeAction
-	result, err := codeAction.CodeAction(ctx, nil, params)
+	result, err := codeAction.CodeAction(ctx, params)
 	if err != nil {
 		t.Fatalf("CodeAction failed: %v", err)
 	}
@@ -194,7 +194,6 @@ func TestCodeActionIsPreferred(t *testing.T) {
 	doc := dm.OpenDocument("test://test.html", `<my-element><div slot="heade">Content</div></my-element>`, 1)
 	ctx.AddDocument("test://test.html", doc)
 
-	source := "cem-lsp"
 	tests := []struct {
 		name string
 		data map[string]any
@@ -254,18 +253,19 @@ func TestCodeActionIsPreferred(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ttData, _ := protocol.Marshal(tt.data)
 			params := &protocol.CodeActionParams{
 				TextDocument: protocol.TextDocumentIdentifier{URI: "test://test.html"},
 				Context: protocol.CodeActionContext{
 					Diagnostics: []protocol.Diagnostic{{
 						Range:  protocol.Range{Start: protocol.Position{Line: 0, Character: 0}, End: protocol.Position{Line: 0, Character: 5}},
-						Source: &source,
-						Data:   tt.data,
+						Source: protocol.NewOptional("cem-lsp"),
+						Data:   ttData,
 					}},
 				},
 			}
 
-			result, err := codeAction.CodeAction(ctx, nil, params)
+			result, err := codeAction.CodeAction(ctx, params)
 			if err != nil {
 				t.Fatalf("CodeAction failed: %v", err)
 			}

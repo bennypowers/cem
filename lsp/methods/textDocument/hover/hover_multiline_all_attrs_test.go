@@ -25,7 +25,8 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	"go.lsp.dev/uri"
 )
 
 // TestHover_MultilineAllAttributes tests hover on all attributes that failed in the benchmark.
@@ -55,9 +56,9 @@ func TestHover_MultilineAllAttributes(t *testing.T) {
 		defer dm.Close()
 		ctx.SetDocumentManager(dm)
 
-		uri := "file:///test.html"
-		doc := dm.OpenDocument(uri, fixture.InputContent, 1)
-		ctx.AddDocument(uri, doc)
+		docURI := "file:///test.html"
+		doc := dm.OpenDocument(docURI, fixture.InputContent, 1)
+		ctx.AddDocument(docURI, doc)
 
 		// Test each attribute that failed in the benchmark
 		testCases := []struct {
@@ -82,25 +83,25 @@ func TestHover_MultilineAllAttributes(t *testing.T) {
 				// Call hover
 				params := &protocol.HoverParams{
 					TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-						TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+						TextDocument: protocol.TextDocumentIdentifier{URI: uri.URI(docURI)},
 						Position:     tc.position,
 					},
 				}
 
-				result, err := hover.Hover(ctx, nil, params)
+				result, err := hover.Hover(ctx, params)
 				if err != nil {
 					t.Fatalf("Hover failed: %v", err)
 				}
 
 				// Structured comparison
-				actualContents, ok := result.Contents.(protocol.MarkupContent)
+				actualContents, ok := result.Contents.(*protocol.MarkupContent)
 				if !ok {
-					t.Fatalf("Expected Contents to be MarkupContent, got %T", result.Contents)
+					t.Fatalf("Expected Contents to be *MarkupContent, got %T", result.Contents)
 				}
 
-				expectedContents, ok := expected.Contents.(protocol.MarkupContent)
+				expectedContents, ok := expected.Contents.(*protocol.MarkupContent)
 				if !ok {
-					t.Fatalf("Expected Contents in expected.json to be MarkupContent, got %T", expected.Contents)
+					t.Fatalf("Expected Contents in expected.json to be *MarkupContent, got %T", expected.Contents)
 				}
 
 				if actualContents.Kind != expectedContents.Kind {

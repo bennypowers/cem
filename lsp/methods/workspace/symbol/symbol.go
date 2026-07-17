@@ -23,13 +23,13 @@ import (
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	"go.lsp.dev/uri"
 )
 
 // Symbol handles workspace/symbol requests
 // Allows users to search for custom elements across the entire workspace
-func Symbol(ctx types.ServerContext, context *glsp.Context, params *protocol.WorkspaceSymbolParams) ([]protocol.SymbolInformation, error) {
+func Symbol(ctx types.ServerContext, params *protocol.WorkspaceSymbolParams) ([]protocol.SymbolInformation, error) {
 	helpers.SafeDebugLog("[WORKSPACE_SYMBOL] Request for query: '%s'", params.Query)
 
 	var symbols []protocol.SymbolInformation
@@ -66,16 +66,14 @@ func createSymbolInformation(ctx types.ServerContext, tagName string) *protocol.
 	// Get description if available
 	description, _ := ctx.ElementDescription(tagName)
 
-	// Create file URI from source path
 	workspaceRoot := ctx.WorkspaceRoot()
-	var uri string
+	var locationURI uri.URI
 
 	if filepath.IsAbs(source) {
-		uri = "file://" + source
+		locationURI = uri.URI("file://" + source)
 	} else {
-		// Relative path - resolve against workspace root
 		fullPath := filepath.Join(workspaceRoot, source)
-		uri = "file://" + fullPath
+		locationURI = uri.URI("file://" + fullPath)
 	}
 
 	// Create symbol name with description if available
@@ -85,16 +83,17 @@ func createSymbolInformation(ctx types.ServerContext, tagName string) *protocol.
 	}
 
 	return &protocol.SymbolInformation{
-		Name: symbolName,
-		Kind: protocol.SymbolKindClass, // Custom elements are class-based
+		BaseSymbolInformation: protocol.BaseSymbolInformation{
+			Name:          symbolName,
+			Kind:          protocol.SymbolKindClass,
+			ContainerName: &source,
+		},
 		Location: protocol.Location{
-			URI: uri,
+			URI: locationURI,
 			Range: protocol.Range{
-				// Point to start of file - could be enhanced to find exact class location
 				Start: protocol.Position{Line: 0, Character: 0},
 				End:   protocol.Position{Line: 0, Character: 0},
 			},
 		},
-		ContainerName: &source, // Show the file path as container
 	}
 }

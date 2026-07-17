@@ -3,7 +3,7 @@ package completion
 import (
 	"testing"
 
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,8 +63,6 @@ func TestStartsWithIgnoreCase(t *testing.T) {
 }
 
 func TestDeduplicateCompletionItems(t *testing.T) {
-	valueKind := protocol.CompletionItemKindValue
-
 	tests := []struct {
 		name     string
 		items    []protocol.CompletionItem
@@ -73,25 +71,25 @@ func TestDeduplicateCompletionItems(t *testing.T) {
 		{
 			name:     "no duplicates",
 			items: []protocol.CompletionItem{
-				{Label: "alpha", Kind: &valueKind},
-				{Label: "beta", Kind: &valueKind},
-				{Label: "gamma", Kind: &valueKind},
+				{Label: "alpha", Kind: protocol.CompletionItemKindValue},
+				{Label: "beta", Kind: protocol.CompletionItemKindValue},
+				{Label: "gamma", Kind: protocol.CompletionItemKindValue},
 			},
 			expected: 3,
 		},
 		{
 			name: "exact duplicates",
 			items: []protocol.CompletionItem{
-				{Label: "primary", Kind: &valueKind, Detail: &[]string{"Variant value"}[0]},
-				{Label: "primary", Kind: &valueKind, Detail: &[]string{"Union type value"}[0]},
+				{Label: "primary", Kind: protocol.CompletionItemKindValue, Detail: protocol.NewOptional("Variant value")},
+				{Label: "primary", Kind: protocol.CompletionItemKindValue, Detail: protocol.NewOptional("Union type value")},
 			},
 			expected: 1,
 		},
 		{
 			name: "different labels",
 			items: []protocol.CompletionItem{
-				{Label: "red", Kind: &valueKind},
-				{Label: "blue", Kind: &valueKind},
+				{Label: "red", Kind: protocol.CompletionItemKindValue},
+				{Label: "blue", Kind: protocol.CompletionItemKindValue},
 			},
 			expected: 2,
 		},
@@ -106,16 +104,15 @@ func TestDeduplicateCompletionItems(t *testing.T) {
 }
 
 func TestDeduplicateCompletionItems_PrefersTypeBased(t *testing.T) {
-	valueKind := protocol.CompletionItemKindValue
-
 	items := []protocol.CompletionItem{
-		{Label: "primary", Kind: &valueKind, Detail: &[]string{"Variant value"}[0]},
-		{Label: "primary", Kind: &valueKind, Detail: &[]string{"Union type value"}[0]},
+		{Label: "primary", Kind: protocol.CompletionItemKindValue, Detail: protocol.NewOptional("Variant value")},
+		{Label: "primary", Kind: protocol.CompletionItemKindValue, Detail: protocol.NewOptional("Union type value")},
 	}
 
 	result := deduplicateCompletionItems(items)
 	assert.Len(t, result, 1)
-	assert.Equal(t, "Union type value", *result[0].Detail)
+	detail, _ := result[0].Detail.Get()
+	assert.Equal(t, "Union type value", detail)
 }
 
 func TestShouldPreferItem(t *testing.T) {
@@ -173,11 +170,11 @@ func TestShouldPreferItem(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			newItem := protocol.CompletionItem{
 				Label:  tt.newLabel,
-				Detail: &tt.newDetail,
+				Detail: protocol.NewOptional(tt.newDetail),
 			}
 			existItem := protocol.CompletionItem{
 				Label:  tt.existLabel,
-				Detail: &tt.existDetail,
+				Detail: protocol.NewOptional(tt.existDetail),
 			}
 			result := shouldPreferItem(newItem, existItem)
 			assert.Equal(t, tt.expected, result)

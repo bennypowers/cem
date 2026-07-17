@@ -26,7 +26,7 @@ import (
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/textutil"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	"golang.org/x/net/html"
 	"gopkg.in/yaml.v3"
 )
@@ -182,19 +182,20 @@ func loadLSPFixtureFromMapFS(t *testing.T, mfs *platform.MapFileSystem, scenario
 	return fixture
 }
 
-// GetExpected returns typed expected data from the fixture
+// GetExpected returns typed expected data from the fixture.
+// Uses protocol.Unmarshal for the final deserialization step so that
+// LSP union types (InlayHintTooltip, etc.) are handled correctly.
 func (f *LSPFixture) GetExpected(key string, v any) error {
 	data, ok := f.ExpectedMap[key]
 	if !ok {
 		return nil // No expected data for this key
 	}
 
-	// Re-marshal and unmarshal to convert to desired type
 	bytes, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(bytes, v)
+	return protocol.Unmarshal(bytes, v)
 }
 
 // CursorParser extracts a ^cursor marker from file content.

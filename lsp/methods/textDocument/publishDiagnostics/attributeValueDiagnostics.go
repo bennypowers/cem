@@ -27,7 +27,7 @@ import (
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/agext/levenshtein"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // analyzeAttributeValueDiagnostics validates attribute values against their type definitions
@@ -150,9 +150,9 @@ func validateBooleanAttribute(match AttributeMatch) []protocol.Diagnostic {
 				Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 				End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 			},
-			Message:  fmt.Sprintf("Boolean attribute '%s' with value 'false' is still true. Remove the attribute entirely to make it false.", match.Name),
-			Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityWarning}[0],
-			Source:   &[]string{"cem-lsp"}[0],
+			Message:  protocol.String(fmt.Sprintf("Boolean attribute '%s' with value 'false' is still true. Remove the attribute entirely to make it false.", match.Name)),
+			Severity: protocol.DiagnosticSeverityWarning,
+			Source:   protocol.NewOptional("cem-lsp"),
 		})
 	} else if match.Value == "true" {
 		// This is redundant but not wrong
@@ -161,9 +161,9 @@ func validateBooleanAttribute(match AttributeMatch) []protocol.Diagnostic {
 				Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 				End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 			},
-			Message:  fmt.Sprintf("Boolean attribute '%s' with value 'true' is redundant. Use <%s %s> instead.", match.Name, match.TagName, match.Name),
-			Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityInformation}[0],
-			Source:   &[]string{"cem-lsp"}[0],
+			Message:  protocol.String(fmt.Sprintf("Boolean attribute '%s' with value 'true' is redundant. Use <%s %s> instead.", match.Name, match.TagName, match.Name)),
+			Severity: protocol.DiagnosticSeverityInformation,
+			Source:   protocol.NewOptional("cem-lsp"),
 		})
 	} else if match.Value != "" && match.Value != match.Name {
 		// Non-standard boolean value
@@ -172,9 +172,9 @@ func validateBooleanAttribute(match AttributeMatch) []protocol.Diagnostic {
 				Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 				End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 			},
-			Message:  fmt.Sprintf("Boolean attribute '%s' should not have value '%s'. Use <%s %s> instead.", match.Name, match.Value, match.TagName, match.Name),
-			Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityInformation}[0],
-			Source:   &[]string{"cem-lsp"}[0],
+			Message:  protocol.String(fmt.Sprintf("Boolean attribute '%s' should not have value '%s'. Use <%s %s> instead.", match.Name, match.Value, match.TagName, match.Name)),
+			Severity: protocol.DiagnosticSeverityInformation,
+			Source:   protocol.NewOptional("cem-lsp"),
 		})
 	}
 
@@ -192,9 +192,9 @@ func validateNumberAttribute(match AttributeMatch) []protocol.Diagnostic {
 				Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 				End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 			},
-			Message:  fmt.Sprintf("Number attribute '%s' requires a numeric value", match.Name),
-			Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityError}[0],
-			Source:   &[]string{"cem-lsp"}[0],
+			Message:  protocol.String(fmt.Sprintf("Number attribute '%s' requires a numeric value", match.Name)),
+			Severity: protocol.DiagnosticSeverityError,
+			Source:   protocol.NewOptional("cem-lsp"),
 		})
 		return diagnostics
 	}
@@ -206,9 +206,9 @@ func validateNumberAttribute(match AttributeMatch) []protocol.Diagnostic {
 				Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 				End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 			},
-			Message:  fmt.Sprintf("Expected number for attribute '%s', got '%s'", match.Name, match.Value),
-			Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityError}[0],
-			Source:   &[]string{"cem-lsp"}[0],
+			Message:  protocol.String(fmt.Sprintf("Expected number for attribute '%s', got '%s'", match.Name, match.Value)),
+			Severity: protocol.DiagnosticSeverityError,
+			Source:   protocol.NewOptional("cem-lsp"),
 		})
 	}
 
@@ -226,9 +226,9 @@ func validateUnionType(typeText string, match AttributeMatch) []protocol.Diagnos
 				Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 				End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 			},
-			Message:  fmt.Sprintf("Union type attribute '%s' requires a value", match.Name),
-			Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityError}[0],
-			Source:   &[]string{"cem-lsp"}[0],
+			Message:  protocol.String(fmt.Sprintf("Union type attribute '%s' requires a value", match.Name)),
+			Severity: protocol.DiagnosticSeverityError,
+			Source:   protocol.NewOptional("cem-lsp"),
 		})
 		return diagnostics
 	}
@@ -255,9 +255,9 @@ func validateUnionType(typeText string, match AttributeMatch) []protocol.Diagnos
 				Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 				End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 			},
-			Message:  fmt.Sprintf("Expected one of: %s for attribute '%s', got '%s'. Did you mean '%s'?", formatUnionOptions(options), match.Name, match.Value, suggestion),
-			Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityError}[0],
-			Source:   &[]string{"cem-lsp"}[0],
+			Message:  protocol.String(fmt.Sprintf("Expected one of: %s for attribute '%s', got '%s'. Did you mean '%s'?", formatUnionOptions(options), match.Name, match.Value, suggestion)),
+			Severity: protocol.DiagnosticSeverityError,
+			Source:   protocol.NewOptional("cem-lsp"),
 		}
 
 		// Add autofix data
@@ -267,7 +267,8 @@ func validateUnionType(typeText string, match AttributeMatch) []protocol.Diagnos
 			Suggestion: suggestion,
 			Range:      diagnostic.Range,
 		}
-		diagnostic.Data = autofixData.ToMap()
+		data, _ := protocol.Marshal(autofixData.ToMap())
+		diagnostic.Data = data
 
 		diagnostics = append(diagnostics, diagnostic)
 	} else {
@@ -276,9 +277,9 @@ func validateUnionType(typeText string, match AttributeMatch) []protocol.Diagnos
 				Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 				End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 			},
-			Message:  fmt.Sprintf("Expected one of: %s for attribute '%s', got '%s'", formatUnionOptions(options), match.Name, match.Value),
-			Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityError}[0],
-			Source:   &[]string{"cem-lsp"}[0],
+			Message:  protocol.String(fmt.Sprintf("Expected one of: %s for attribute '%s', got '%s'", formatUnionOptions(options), match.Name, match.Value)),
+			Severity: protocol.DiagnosticSeverityError,
+			Source:   protocol.NewOptional("cem-lsp"),
 		})
 	}
 
@@ -298,9 +299,9 @@ func validateLiteralType(typeText string, match AttributeMatch) []protocol.Diagn
 				Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 				End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 			},
-			Message:  fmt.Sprintf("Expected literal value '%s' for attribute '%s'", expectedValue, match.Name),
-			Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityError}[0],
-			Source:   &[]string{"cem-lsp"}[0],
+			Message:  protocol.String(fmt.Sprintf("Expected literal value '%s' for attribute '%s'", expectedValue, match.Name)),
+			Severity: protocol.DiagnosticSeverityError,
+			Source:   protocol.NewOptional("cem-lsp"),
 		})
 		return diagnostics
 	}
@@ -313,9 +314,9 @@ func validateLiteralType(typeText string, match AttributeMatch) []protocol.Diagn
 					Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 					End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 				},
-				Message:  fmt.Sprintf("Expected literal value '%s', got '%s' (case mismatch)", expectedValue, match.Value),
-				Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityError}[0],
-				Source:   &[]string{"cem-lsp"}[0],
+				Message:  protocol.String(fmt.Sprintf("Expected literal value '%s', got '%s' (case mismatch)", expectedValue, match.Value)),
+				Severity: protocol.DiagnosticSeverityError,
+				Source:   protocol.NewOptional("cem-lsp"),
 			}
 
 			// Add autofix data for case correction
@@ -325,7 +326,8 @@ func validateLiteralType(typeText string, match AttributeMatch) []protocol.Diagn
 				Suggestion: expectedValue,
 				Range:      diagnostic.Range,
 			}
-			diagnostic.Data = autofixData.ToMap()
+			data, _ := protocol.Marshal(autofixData.ToMap())
+		diagnostic.Data = data
 
 			diagnostics = append(diagnostics, diagnostic)
 		} else {
@@ -334,9 +336,9 @@ func validateLiteralType(typeText string, match AttributeMatch) []protocol.Diagn
 					Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 					End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 				},
-				Message:  fmt.Sprintf("Expected literal value '%s' for attribute '%s', got '%s'", expectedValue, match.Name, match.Value),
-				Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityError}[0],
-				Source:   &[]string{"cem-lsp"}[0],
+				Message:  protocol.String(fmt.Sprintf("Expected literal value '%s' for attribute '%s', got '%s'", expectedValue, match.Name, match.Value)),
+				Severity: protocol.DiagnosticSeverityError,
+				Source:   protocol.NewOptional("cem-lsp"),
 			})
 		}
 	}
@@ -352,9 +354,9 @@ func createArrayTypeInfo(match AttributeMatch) []protocol.Diagnostic {
 				Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 				End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 			},
-			Message:  "Array attributes support multiple formats (JSON, comma-separated, space-separated). Refer to component documentation.",
-			Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityInformation}[0],
-			Source:   &[]string{"cem-lsp"}[0],
+			Message:  protocol.String("Array attributes support multiple formats (JSON, comma-separated, space-separated). Refer to component documentation."),
+			Severity: protocol.DiagnosticSeverityInformation,
+			Source:   protocol.NewOptional("cem-lsp"),
 		},
 	}
 }

@@ -27,8 +27,7 @@ import (
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // TestStartTagCompletion tests start tag completion scenarios
@@ -162,12 +161,12 @@ func TestStartTagCompletion(t *testing.T) {
 						TextDocument: protocol.TextDocumentIdentifier{URI: "test://test.html"},
 						Position:     tt.position,
 					},
-					Context: &protocol.CompletionContext{
+					Context: protocol.CompletionContext{
 						TriggerCharacter: tt.triggerChar,
 					},
 				}
 
-				result, err := completion.Completion(ctx, &glsp.Context{}, params)
+				result, err := completion.Completion(ctx, params)
 				if err != nil {
 					t.Fatalf("Completion failed: %v", err)
 				}

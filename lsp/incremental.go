@@ -20,7 +20,7 @@ import (
 	"bennypowers.dev/cem/internal/textutil"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -91,25 +91,22 @@ func (ip *IncrementalParser) AnalyzeChanges(changes []protocol.TextDocumentConte
 	for _, change := range changes {
 		var edit DocumentEdit
 
-		if change.Range != nil {
-			// Incremental change
+		switch c := change.(type) {
+		case *protocol.TextDocumentContentChangePartial:
 			edit = DocumentEdit{
-				StartPosition: change.Range.Start,
-				EndPosition:   change.Range.End,
-				Text:          change.Text,
-				NewLength:     uint(len(change.Text)),
+				StartPosition: c.Range.Start,
+				EndPosition:   c.Range.End,
+				Text:          c.Text,
+				NewLength:     uint(len(c.Text)),
 			}
-
-			// Calculate old length from range and content
-			edit.OldLength = ip.calculateOldLength(change.Range, oldContent)
-		} else {
-			// Full document replacement
+			edit.OldLength = ip.calculateOldLength(&c.Range, oldContent)
+		case *protocol.TextDocumentContentChangeWholeDocument:
 			hasFullDocumentChange = true
 			edit = DocumentEdit{
 				StartPosition: protocol.Position{Line: 0, Character: 0},
-				EndPosition:   protocol.Position{Line: 999999, Character: 999999}, // End of document
-				Text:          change.Text,
-				NewLength:     uint(len(change.Text)),
+				EndPosition:   protocol.Position{Line: 999999, Character: 999999},
+				Text:          c.Text,
+				NewLength:     uint(len(c.Text)),
 				OldLength:     uint(len(oldContent)),
 			}
 		}
@@ -202,7 +199,7 @@ func (ip *IncrementalParser) determineStrategy(_ types.Document, _ string, chang
 
 	// Check if we have a full document replacement
 	for _, change := range changes {
-		if change.Range == nil {
+		if _, ok := change.(*protocol.TextDocumentContentChangeWholeDocument); ok {
 			return ParseStrategyFull
 		}
 	}
@@ -231,8 +228,8 @@ func (ip *IncrementalParser) attemptIncrementalParse(doc types.Document, newCont
 
 	// Apply edits to the tree for incremental parsing
 	for _, change := range changes {
-		if change.Range != nil {
-			edit := ip.convertToTreeSitterEdit(change, oldContent)
+		if partial, ok := change.(*protocol.TextDocumentContentChangePartial); ok {
+			edit := ip.convertPartialToTreeSitterEdit(partial, oldContent)
 			oldTree.Edit(&edit)
 		}
 	}
@@ -273,26 +270,17 @@ func (ip *IncrementalParser) performFullParse(doc types.Document, newContent str
 	}
 }
 
-// convertToTreeSitterEdit converts LSP change to tree-sitter edit
-// LSP uses UTF-16 for positions, tree-sitter uses UTF-8 byte offsets
-func (ip *IncrementalParser) convertToTreeSitterEdit(change protocol.TextDocumentContentChangeEvent, oldContent string) ts.InputEdit {
-	if change.Range == nil {
-		return ts.InputEdit{}
-	}
-
-	// Convert positions to byte offsets
+// convertPartialToTreeSitterEdit converts an incremental LSP change to tree-sitter edit
+func (ip *IncrementalParser) convertPartialToTreeSitterEdit(change *protocol.TextDocumentContentChangePartial, oldContent string) ts.InputEdit {
 	startByte := ip.positionToByteOffset(change.Range.Start, oldContent)
 	oldEndByte := ip.positionToByteOffset(change.Range.End, oldContent)
 	newEndByte := startByte + uint(len(change.Text))
 
-	// Convert LSP positions (UTF-16) to tree-sitter Points (UTF-8 byte columns)
 	oldLines := splitLines(oldContent)
 	startPoint := ip.lspPositionToTreeSitterPoint(change.Range.Start, oldLines)
 	oldEndPoint := ip.lspPositionToTreeSitterPoint(change.Range.End, oldLines)
 	newEndPoint := ip.calculateNewEndPoint(change.Range.Start, change.Text, oldLines)
 
-	// Note: ts.InputEdit uses uint for byte offsets and ts.Point fields, not uint32.
-	// Go's type system catches mismatches at compile time, so no explicit casts needed.
 	return ts.InputEdit{
 		StartByte:      startByte,
 		OldEndByte:     oldEndByte,

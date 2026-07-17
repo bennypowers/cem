@@ -26,7 +26,8 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/definition"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	"go.lsp.dev/uri"
 )
 
 func TestDefinition(t *testing.T) {
@@ -90,25 +91,25 @@ func TestDefinition(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock document for this test case
-			uri := "test://test.html"
-			doc := dm.OpenDocument(uri, tt.html, 1)
+			docURI := "test://test.html"
+			doc := dm.OpenDocument(docURI, tt.html, 1)
 			if doc == nil {
 				t.Fatal("Failed to open test document")
 			}
 
 			// Also add document to the mock context for Document() lookup
-			ctx.AddDocument(uri, doc)
+			ctx.AddDocument(docURI, doc)
 
 			// Create definition params
 			params := &protocol.DefinitionParams{
 				TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-					TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+					TextDocument: protocol.TextDocumentIdentifier{URI: uri.URI(docURI)},
 					Position:     tt.position,
 				},
 			}
 
 			// Call the definition function
-			result, err := definition.Definition(ctx, nil, params)
+			result, err := definition.Definition(ctx, params)
 			if err != nil {
 				t.Fatalf("Definition failed: %v", err)
 			}
@@ -126,7 +127,7 @@ func TestDefinition(t *testing.T) {
 				}
 
 				// Check that URI contains the expected path
-				if tt.expectedPath != "" && !strings.Contains(location.URI, tt.expectedPath) {
+				if tt.expectedPath != "" && !strings.Contains(string(location.URI), tt.expectedPath) {
 					t.Errorf("Expected URI to contain '%s', got '%s'", tt.expectedPath, location.URI)
 				}
 
@@ -165,9 +166,9 @@ func TestDefinition_AttributeOnHTMLElement(t *testing.T) {
 
 	htmlContent := `<button-element variant="primary"></button-element>`
 
-	uri := "file:///test-attr.html"
-	doc := dm.OpenDocument(uri, htmlContent, 1)
-	ctx.AddDocument(uri, doc)
+	docURI := "file:///test-attr.html"
+	doc := dm.OpenDocument(docURI, htmlContent, 1)
+	ctx.AddDocument(docURI, doc)
 
 	tests := []struct {
 		name     string
@@ -193,12 +194,12 @@ func TestDefinition_AttributeOnHTMLElement(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			params := &protocol.DefinitionParams{
 				TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-					TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+					TextDocument: protocol.TextDocumentIdentifier{URI: uri.URI(docURI)},
 					Position:     tt.position,
 				},
 			}
 
-			result, err := definition.Definition(ctx, nil, params)
+			result, err := definition.Definition(ctx, params)
 			if err != nil {
 				t.Fatalf("Definition failed: %v", err)
 			}

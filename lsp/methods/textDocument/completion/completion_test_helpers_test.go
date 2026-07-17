@@ -27,7 +27,8 @@ import (
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	"go.lsp.dev/uri"
 )
 
 // TestHelpers provides utilities for completion testing
@@ -50,7 +51,7 @@ func NewMockTemplateDocument(content, templateContext string) types.Document {
 
 // CreateAttributeValueCompletionParams creates LSP completion parameters for testing attribute value completions
 // This simulates a cursor positioned inside an attribute value, like: <tag-name attr="|"
-func (h *TestHelpers) CreateAttributeValueCompletionParams(uri, tagName, attributeName string) *protocol.CompletionParams {
+func (h *TestHelpers) CreateAttributeValueCompletionParams(docURI, tagName, attributeName string) *protocol.CompletionParams {
 	// Position cursor right after the ="
 	position := protocol.Position{
 		Line:      0,
@@ -60,11 +61,11 @@ func (h *TestHelpers) CreateAttributeValueCompletionParams(uri, tagName, attribu
 	return &protocol.CompletionParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
+				URI: uri.URI(docURI),
 			},
 			Position: position,
 		},
-		Context: &protocol.CompletionContext{
+		Context: protocol.CompletionContext{
 			TriggerKind: protocol.CompletionTriggerKindInvoked,
 		},
 	}
@@ -72,7 +73,7 @@ func (h *TestHelpers) CreateAttributeValueCompletionParams(uri, tagName, attribu
 
 // CreateAttributeCompletionParams creates LSP completion parameters for testing attribute name completions
 // This simulates a cursor positioned after a space in a tag, like: <tag-name |
-func (h *TestHelpers) CreateAttributeCompletionParams(uri, tagName string) *protocol.CompletionParams {
+func (h *TestHelpers) CreateAttributeCompletionParams(docURI, tagName string) *protocol.CompletionParams {
 	// Position cursor right after the space
 	position := protocol.Position{
 		Line:      0,
@@ -82,11 +83,11 @@ func (h *TestHelpers) CreateAttributeCompletionParams(uri, tagName string) *prot
 	return &protocol.CompletionParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 			TextDocument: protocol.TextDocumentIdentifier{
-				URI: uri,
+				URI: uri.URI(docURI),
 			},
 			Position: position,
 		},
-		Context: &protocol.CompletionContext{
+		Context: protocol.CompletionContext{
 			TriggerKind: protocol.CompletionTriggerKindInvoked,
 		},
 	}
@@ -97,7 +98,7 @@ func (h *TestHelpers) CreateAttributeCompletionParams(uri, tagName string) *prot
 // This replaces direct calls to GetAttributeValueCompletions in tests.
 func (h *TestHelpers) GetAttributeValueCompletionsUsingMainEntry(
 	ctx types.ServerContext,
-	uri, tagName, attributeName string,
+	docURI, tagName, attributeName string,
 ) ([]protocol.CompletionItem, error) {
 	// For now, fall back to the legacy function until we have a working main entry point approach
 	// The main entry point requires complex document analysis that's hard to mock properly

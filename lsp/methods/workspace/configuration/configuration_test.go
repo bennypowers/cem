@@ -17,22 +17,31 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package configuration_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"bennypowers.dev/cem/lsp/methods/workspace/configuration"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"github.com/go-json-experiment/json/jsontext"
+	"go.lsp.dev/protocol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func mustJSON(t *testing.T, v any) jsontext.Value {
+	t.Helper()
+	b, err := json.Marshal(v)
+	require.NoError(t, err)
+	return jsontext.Value(b)
+}
 
 // Inline: integration test, scalar assertions
 // Tests DidChangeConfiguration handler with various settings payloads.
 
 func TestDidChangeConfiguration_NilSettings(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
-	err := configuration.DidChangeConfiguration(ctx, nil, &protocol.DidChangeConfigurationParams{
-		Settings: nil,
+	err := configuration.DidChangeConfiguration(ctx, &protocol.DidChangeConfigurationParams{
+		Settings: jsontext.Value("null"),
 	})
 	require.NoError(t, err)
 	assert.True(t, ctx.InlayHintsEnabled())
@@ -40,12 +49,12 @@ func TestDidChangeConfiguration_NilSettings(t *testing.T) {
 
 func TestDidChangeConfiguration_DisableInlayHints(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
-	err := configuration.DidChangeConfiguration(ctx, nil, &protocol.DidChangeConfigurationParams{
-		Settings: map[string]any{
+	err := configuration.DidChangeConfiguration(ctx, &protocol.DidChangeConfigurationParams{
+		Settings: mustJSON(t, map[string]any{
 			"cem": map[string]any{
 				"inlayHints": false,
 			},
-		},
+		}),
 	})
 	require.NoError(t, err)
 	assert.False(t, ctx.InlayHintsEnabled())
@@ -59,12 +68,12 @@ func TestDidChangeConfiguration_EnableInlayHints(t *testing.T) {
 	ctx.SetConfig(cfg)
 	assert.False(t, ctx.InlayHintsEnabled())
 
-	err := configuration.DidChangeConfiguration(ctx, nil, &protocol.DidChangeConfigurationParams{
-		Settings: map[string]any{
+	err := configuration.DidChangeConfiguration(ctx, &protocol.DidChangeConfigurationParams{
+		Settings: mustJSON(t, map[string]any{
 			"cem": map[string]any{
 				"inlayHints": true,
 			},
-		},
+		}),
 	})
 	require.NoError(t, err)
 	assert.True(t, ctx.InlayHintsEnabled())
@@ -72,12 +81,12 @@ func TestDidChangeConfiguration_EnableInlayHints(t *testing.T) {
 
 func TestDidChangeConfiguration_UnknownNamespace(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
-	err := configuration.DidChangeConfiguration(ctx, nil, &protocol.DidChangeConfigurationParams{
-		Settings: map[string]any{
+	err := configuration.DidChangeConfiguration(ctx, &protocol.DidChangeConfigurationParams{
+		Settings: mustJSON(t, map[string]any{
 			"other-tool": map[string]any{
 				"inlayHints": false,
 			},
-		},
+		}),
 	})
 	require.NoError(t, err)
 	assert.True(t, ctx.InlayHintsEnabled())
@@ -91,12 +100,12 @@ func TestDidChangeConfiguration_UnknownNamespacePreservesPriorConfig(t *testing.
 	ctx.SetConfig(cfg)
 	assert.False(t, ctx.InlayHintsEnabled())
 
-	err := configuration.DidChangeConfiguration(ctx, nil, &protocol.DidChangeConfigurationParams{
-		Settings: map[string]any{
+	err := configuration.DidChangeConfiguration(ctx, &protocol.DidChangeConfigurationParams{
+		Settings: mustJSON(t, map[string]any{
 			"python": map[string]any{
 				"formatting": true,
 			},
-		},
+		}),
 	})
 	require.NoError(t, err)
 	assert.False(t, ctx.InlayHintsEnabled(), "non-cem config change must not reset prior settings")
@@ -104,8 +113,8 @@ func TestDidChangeConfiguration_UnknownNamespacePreservesPriorConfig(t *testing.
 
 func TestDidChangeConfiguration_NonMapSettings(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
-	err := configuration.DidChangeConfiguration(ctx, nil, &protocol.DidChangeConfigurationParams{
-		Settings: "invalid",
+	err := configuration.DidChangeConfiguration(ctx, &protocol.DidChangeConfigurationParams{
+		Settings: jsontext.Value(`"invalid"`),
 	})
 	require.NoError(t, err)
 	assert.True(t, ctx.InlayHintsEnabled())

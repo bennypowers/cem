@@ -27,7 +27,8 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	urilib "go.lsp.dev/uri"
 )
 
 // TestConfig represents the configuration for a missing import test case
@@ -105,7 +106,7 @@ func TestCreateMissingImportAction(t *testing.T) {
 					Start: protocol.Position{Line: 5, Character: 10},
 					End:   protocol.Position{Line: 5, Character: 20},
 				},
-				Message: "Test diagnostic",
+				Message: protocol.String("Test diagnostic"),
 			}
 
 			// Call the function under test
@@ -136,7 +137,7 @@ func TestCreateMissingImportAction(t *testing.T) {
 				t.Fatal("Expected edit with changes, got nil")
 			}
 
-			changes, exists := action.Edit.Changes[config.DocumentURI]
+			changes, exists := action.Edit.Changes[urilib.URI(config.DocumentURI)]
 			if !exists {
 				t.Fatal("Expected changes for document URI")
 			}
@@ -201,7 +202,7 @@ func TestCreateMissingImportActionErrors(t *testing.T) {
 					Start: protocol.Position{Line: 5, Character: 10},
 					End:   protocol.Position{Line: 5, Character: 20},
 				},
-				Message: "Test diagnostic",
+				Message: protocol.String("Test diagnostic"),
 			}
 
 			mockCtx := testhelpers.NewMockServerContext()

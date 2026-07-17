@@ -26,7 +26,8 @@ import (
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	urilib "go.lsp.dev/uri"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -113,8 +114,8 @@ func TestInlayHint_Fixtures(t *testing.T) {
 			}
 		}
 
-		result, err := inlayHint.InlayHint(ctx, nil, &protocol.InlayHintParams{
-			TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+		result, err := inlayHint.InlayHint(ctx, &protocol.InlayHintParams{
+			TextDocument: protocol.TextDocumentIdentifier{URI: urilib.URI(uri)},
 			Range:        fullRange(),
 		})
 		require.NoError(t, err)
@@ -125,21 +126,21 @@ func TestInlayHint_Fixtures(t *testing.T) {
 
 		expectedLabels := make(map[string]bool, len(expected))
 		for _, e := range expected {
-			if label, ok := e.Label.(string); ok {
-				expectedLabels[label] = true
+			if label, ok := e.Label.(protocol.String); ok {
+				expectedLabels[string(label)] = true
 			}
 		}
 		for _, hint := range result {
-			label, ok := hint.Label.(string)
+			label, ok := hint.Label.(protocol.String)
 			require.True(t, ok, "hint label should be string")
-			assert.True(t, expectedLabels[label], "unexpected hint label: %s", label)
+			assert.True(t, expectedLabels[string(label)], "unexpected hint label: %s", label)
 		}
 	})
 }
 
 func TestInlayHint_NilDocument(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
-	result, err := inlayHint.InlayHint(ctx, nil, &protocol.InlayHintParams{
+	result, err := inlayHint.InlayHint(ctx, &protocol.InlayHintParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: "nonexistent.html"},
 		Range:        fullRange(),
 	})

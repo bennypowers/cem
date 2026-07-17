@@ -24,7 +24,7 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // Completion test configuration for each fixture (in Go code, not JSON)
@@ -124,22 +124,22 @@ func TestAttributeValueCompletions_NewFixtures(t *testing.T) {
 				t.Errorf("Completion %d: expected label %q, got %q", i, exp.Label, act.Label)
 			}
 
-			// Compare Kind (handle pointer)
-			if exp.Kind != nil && act.Kind != nil {
-				if *exp.Kind != *act.Kind {
-					t.Errorf("Completion %d (%s): expected kind %d, got %d", i, exp.Label, *exp.Kind, *act.Kind)
+			// Compare Kind
+			if exp.Kind != 0 && act.Kind != 0 {
+				if exp.Kind != act.Kind {
+					t.Errorf("Completion %d (%s): expected kind %d, got %d", i, exp.Label, exp.Kind, act.Kind)
 				}
-			} else if exp.Kind != nil || act.Kind != nil {
-				t.Errorf("Completion %d (%s): kind mismatch (one is nil)", i, exp.Label)
+			} else if exp.Kind != 0 || act.Kind != 0 {
+				t.Errorf("Completion %d (%s): kind mismatch (one is zero)", i, exp.Label)
 			}
-			// Compare InsertText (handle pointer)
+			// Compare InsertText
 			expInsert := ""
-			if exp.InsertText != nil {
-				expInsert = *exp.InsertText
+			if !exp.InsertText.IsZero() {
+				expInsert, _ = exp.InsertText.Get()
 			}
 			actInsert := ""
-			if act.InsertText != nil {
-				actInsert = *act.InsertText
+			if !act.InsertText.IsZero() {
+				actInsert, _ = act.InsertText.Get()
 			}
 			if actInsert != expInsert && expInsert != "" {
 				t.Errorf("Completion %d (%s): expected insertText %q, got %q", i, exp.Label, expInsert, actInsert)

@@ -16,7 +16,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 package helpers
 
-import protocol "github.com/bennypowers/glsp/protocol_3_17"
+import "go.lsp.dev/protocol"
 
 // IsPositionInRange checks if a position falls within a range.
 // Both start and end boundaries are inclusive. This diverges from LSP's

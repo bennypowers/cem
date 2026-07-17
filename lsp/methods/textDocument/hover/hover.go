@@ -23,13 +23,12 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // Hover handles textDocument/hover requests
-func Hover(ctx types.ServerContext, context *glsp.Context, params *protocol.HoverParams) (*protocol.Hover, error) {
-	uri := params.TextDocument.URI
+func Hover(ctx types.ServerContext, params *protocol.HoverParams) (*protocol.Hover, error) {
+	uri := string(params.TextDocument.URI)
 	helpers.SafeDebugLog("[HOVER] Request for URI: %s, Position: line=%d, char=%d", uri, params.Position.Line, params.Position.Character)
 
 	// Get the tracked document
@@ -58,7 +57,7 @@ func Hover(ctx types.ServerContext, context *glsp.Context, params *protocol.Hove
 			// Create hover content with full element information including summary/description
 			content := CreateElementHoverContentFromDeclaration(decl)
 			result := &protocol.Hover{
-				Contents: protocol.MarkupContent{
+				Contents: &protocol.MarkupContent{
 					Kind:  protocol.MarkupKindMarkdown,
 					Value: content,
 				},
@@ -85,7 +84,7 @@ func Hover(ctx types.ServerContext, context *glsp.Context, params *protocol.Hove
 				if event, exists := events[attribute.Name]; exists {
 					content := CreateEventHoverContent(event, tagName)
 					return &protocol.Hover{
-						Contents: protocol.MarkupContent{
+						Contents: &protocol.MarkupContent{
 							Kind:  protocol.MarkupKindMarkdown,
 							Value: content,
 						},
@@ -98,7 +97,7 @@ func Hover(ctx types.ServerContext, context *glsp.Context, params *protocol.Hove
 				if field, exists := fields[attribute.Name]; exists {
 					content := CreateFieldHoverContent(field, tagName)
 					return &protocol.Hover{
-						Contents: protocol.MarkupContent{
+						Contents: &protocol.MarkupContent{
 							Kind:  protocol.MarkupKindMarkdown,
 							Value: content,
 						},
@@ -111,7 +110,7 @@ func Hover(ctx types.ServerContext, context *glsp.Context, params *protocol.Hove
 				if attr, exists := attrs[attribute.Name]; exists {
 					content := CreateAttributeHoverContent(attr, tagName)
 					return &protocol.Hover{
-						Contents: protocol.MarkupContent{
+						Contents: &protocol.MarkupContent{
 							Kind:  protocol.MarkupKindMarkdown,
 							Value: content,
 						},

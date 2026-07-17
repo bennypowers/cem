@@ -26,7 +26,8 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	urilib "go.lsp.dev/uri"
 )
 
 func TestCssDiagnostics_Fixtures(t *testing.T) {
@@ -73,8 +74,8 @@ func TestCssDiagnostics_Fixtures(t *testing.T) {
 				t.Errorf("Diagnostic %d: expected message %q, got %q", i, exp.Message, act.Message)
 			}
 
-			if exp.Severity != nil && (act.Severity == nil || *act.Severity != *exp.Severity) {
-				t.Errorf("Diagnostic %d: expected severity %v, got %v", i, *exp.Severity, act.Severity)
+			if exp.Severity != 0 && act.Severity != exp.Severity {
+				t.Errorf("Diagnostic %d: expected severity %v, got %v", i, exp.Severity, act.Severity)
 			}
 		}
 	})
@@ -99,9 +100,9 @@ func TestCssDiagnostics_DataField(t *testing.T) {
 		t.Fatalf("Expected 1 diagnostic, got %d", len(diags))
 	}
 
-	data, ok := diags[0].Data.(map[string]any)
-	if !ok {
-		t.Fatalf("Expected Data to be map[string]any, got %T", diags[0].Data)
+	var data map[string]any
+	if err := json.Unmarshal(diags[0].Data, &data); err != nil {
+		t.Fatalf("Expected Data to be map[string]any, got error: %v", err)
 	}
 
 	if data["type"] != "css-ambiguous-comment" {
@@ -112,12 +113,20 @@ func TestCssDiagnostics_DataField(t *testing.T) {
 		t.Errorf("Expected commentText, got %v", data["commentText"])
 	}
 
-	props, ok := data["properties"].([]map[string]any)
+	propsRaw, ok := data["properties"].([]any)
 	if !ok {
-		t.Fatalf("Expected properties to be []map[string]any, got %T", data["properties"])
+		t.Fatalf("Expected properties to be []any, got %T", data["properties"])
 	}
-	if len(props) != 3 {
-		t.Fatalf("Expected 3 properties, got %d", len(props))
+	if len(propsRaw) != 3 {
+		t.Fatalf("Expected 3 properties, got %d", len(propsRaw))
+	}
+	props := make([]map[string]any, len(propsRaw))
+	for i, p := range propsRaw {
+		m, ok := p.(map[string]any)
+		if !ok {
+			t.Fatalf("Property %d: expected map[string]any, got %T", i, p)
+		}
+		props[i] = m
 	}
 
 	expectedNames := []string{"--pad-top", "--pad-right", "--pad-bottom"}
@@ -174,22 +183,21 @@ func TestCssDiagnostics_RoundTripCodeAction(t *testing.T) {
 		t.Fatalf("Expected 1 diagnostic, got %d", len(diags))
 	}
 
-	// Simulate JSON round-trip (LSP client → server)
-	serialized, err := json.Marshal(diags[0])
+	serialized, err := protocol.Marshal(diags[0])
 	if err != nil {
 		t.Fatalf("Failed to marshal diagnostic: %v", err)
 	}
 	var roundTripped protocol.Diagnostic
-	if err := json.Unmarshal(serialized, &roundTripped); err != nil {
+	if err := protocol.Unmarshal(serialized, &roundTripped); err != nil {
 		t.Fatalf("Failed to unmarshal diagnostic: %v", err)
 	}
 
 	params := &protocol.CodeActionParams{
-		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+		TextDocument: protocol.TextDocumentIdentifier{URI: urilib.URI(uri)},
 		Context:      protocol.CodeActionContext{Diagnostics: []protocol.Diagnostic{roundTripped}},
 	}
 
-	result, err := codeAction.CodeAction(ctx, nil, params)
+	result, err := codeAction.CodeAction(ctx, params)
 	if err != nil {
 		t.Fatalf("CodeAction failed: %v", err)
 	}
@@ -212,7 +220,7 @@ func TestCssDiagnostics_RoundTripCodeAction(t *testing.T) {
 
 	// Verify edits exist and are well-formed
 	for i, action := range actions {
-		edits := action.Edit.Changes[uri]
+		edits := action.Edit.Changes[urilib.URI(uri)]
 		if len(edits) != 2 {
 			t.Errorf("Action %d: expected 2 edits, got %d", i, len(edits))
 		}

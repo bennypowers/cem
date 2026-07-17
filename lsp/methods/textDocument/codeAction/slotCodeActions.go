@@ -18,9 +18,10 @@ package codeAction
 
 import (
 	"fmt"
+	urilib "go.lsp.dev/uri"
 
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // createSlotAutofixAction creates a code action to fix an invalid slot name
@@ -40,8 +41,8 @@ func createSlotAutofixAction(diagnostic *protocol.Diagnostic, data map[string]an
 		Kind:        &kind,
 		IsPreferred: &preferred,
 		Edit: &protocol.WorkspaceEdit{
-			Changes: map[string][]protocol.TextEdit{
-				documentURI: {
+			Changes: map[urilib.URI][]protocol.TextEdit{
+				urilib.URI(documentURI): {
 					{
 						Range:   autofixData.Range,
 						NewText: autofixData.Suggestion,

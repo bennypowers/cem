@@ -22,7 +22,7 @@ import (
 	phplang "bennypowers.dev/cem/internal/languages/php"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 

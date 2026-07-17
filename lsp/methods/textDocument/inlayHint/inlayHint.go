@@ -22,18 +22,17 @@ import (
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 // InlayHint handles the textDocument/inlayHint request
-func InlayHint(ctx types.ServerContext, context *glsp.Context, params *protocol.InlayHintParams) ([]protocol.InlayHint, error) {
+func InlayHint(ctx types.ServerContext, params *protocol.InlayHintParams) ([]protocol.InlayHint, error) {
 	if !ctx.InlayHintsEnabled() {
 		return nil, nil
 	}
 
-	doc := ctx.Document(params.TextDocument.URI)
+	doc := ctx.Document(string(params.TextDocument.URI))
 	if doc == nil {
 		return nil, nil
 	}
@@ -101,11 +100,10 @@ func InlayHint(ctx types.ServerContext, context *glsp.Context, params *protocol.
 				continue
 			}
 
-			typeKind := protocol.InlayHintKindType
 			hints = append(hints, protocol.InlayHint{
 				Position:    attrMatch.Range.End,
-				Label:       fmt.Sprintf(": %s", typeText),
-				Kind:        &typeKind,
+				Label:       protocol.String(fmt.Sprintf(": %s", typeText)),
+				Kind:        protocol.InlayHintKindType,
 				PaddingLeft: boolPtr(true),
 			})
 		}
@@ -143,11 +141,10 @@ func walkSlotBiscuits(node *ts.Node, content []byte, visibleRange protocol.Range
 				end := endTag.EndPosition()
 				pos := protocol.Position{Line: uint32(end.Row), Character: uint32(end.Column)}
 				if helpers.IsPositionInRange(pos, visibleRange) {
-					kind := protocol.InlayHintKindType
 					*hints = append(*hints, protocol.InlayHint{
 						Position:    pos,
-						Label:       fmt.Sprintf("slot: %s", slotValue),
-						Kind:        &kind,
+						Label:       protocol.String(fmt.Sprintf("slot: %s", slotValue)),
+						Kind:        protocol.InlayHintKindType,
 						PaddingLeft: boolPtr(true),
 					})
 				}

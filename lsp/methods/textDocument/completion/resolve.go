@@ -24,8 +24,7 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // CompletionItemData holds the data needed to resolve a completion item later
@@ -36,7 +35,7 @@ type CompletionItemData struct {
 }
 
 // Resolve handles completionItem/resolve requests to lazily generate documentation
-func Resolve(ctx types.ServerContext, _ *glsp.Context, params *protocol.CompletionItem) (*protocol.CompletionItem, error) {
+func Resolve(ctx types.ServerContext, params *protocol.CompletionItem) (*protocol.CompletionItem, error) {
 	helpers.SafeDebugLog("[RESOLVE] Request for completion item: %s", params.Label)
 
 	// If item already has documentation, just return it

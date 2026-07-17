@@ -24,7 +24,7 @@ import (
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/definition"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // TestDefinitionNilPointerRegression tests for the segmentation fault
@@ -57,7 +57,7 @@ func TestDefinitionNilPointerRegression(t *testing.T) {
 	}
 
 	// This should not crash even if element is not found in registry
-	result, err := definition.Definition(ctx, nil, params)
+	result, err := definition.Definition(ctx, params)
 	if err != nil {
 		t.Errorf("Definition call failed: %v", err)
 	}
@@ -146,7 +146,7 @@ func TestDefinitionConcurrentAccess(t *testing.T) {
 					},
 				}
 
-				_, err := definition.Definition(ctx, nil, params)
+				_, err := definition.Definition(ctx, params)
 				if err != nil {
 					mu.Lock()
 					errCount++

@@ -23,7 +23,7 @@ import (
 	"bennypowers.dev/cem/lsp/document"
 	textDocument "bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -168,7 +168,7 @@ func TestDidOpen(t *testing.T) {
 		},
 	}
 
-	err = textDocument.DidOpen(ctx, nil, params)
+	err = textDocument.DidOpen(ctx, params)
 	require.NoError(t, err)
 
 	doc := dm.Document("file:///test.html")
@@ -192,14 +192,14 @@ func TestDidChange_FullReplacement(t *testing.T) {
 			TextDocumentIdentifier: protocol.TextDocumentIdentifier{URI: "file:///test.html"},
 			Version:                2,
 		},
-		ContentChanges: []any{
-			protocol.TextDocumentContentChangeEvent{
+		ContentChanges: []protocol.TextDocumentContentChangeEvent{
+			&protocol.TextDocumentContentChangeWholeDocument{
 				Text: "<div>new</div>",
 			},
 		},
 	}
 
-	err = textDocument.DidChange(ctx, nil, params)
+	err = textDocument.DidChange(ctx, params)
 	require.NoError(t, err)
 
 	doc := dm.Document("file:///test.html")
@@ -218,23 +218,24 @@ func TestDidChange_IncrementalEdit(t *testing.T) {
 
 	dm.OpenDocument("file:///test.html", "<div>hello</div>", 1)
 
+	rng := protocol.Range{
+		Start: protocol.Position{Line: 0, Character: 5},
+		End:   protocol.Position{Line: 0, Character: 10},
+	}
 	params := &protocol.DidChangeTextDocumentParams{
 		TextDocument: protocol.VersionedTextDocumentIdentifier{
 			TextDocumentIdentifier: protocol.TextDocumentIdentifier{URI: "file:///test.html"},
 			Version:                2,
 		},
-		ContentChanges: []any{
-			protocol.TextDocumentContentChangeEvent{
-				Range: &protocol.Range{
-					Start: protocol.Position{Line: 0, Character: 5},
-					End:   protocol.Position{Line: 0, Character: 10},
-				},
-				Text: "world",
+		ContentChanges: []protocol.TextDocumentContentChangeEvent{
+			&protocol.TextDocumentContentChangePartial{
+				Range: rng,
+				Text:  "world",
 			},
 		},
 	}
 
-	err = textDocument.DidChange(ctx, nil, params)
+	err = textDocument.DidChange(ctx, params)
 	require.NoError(t, err)
 
 	doc := dm.Document("file:///test.html")
@@ -256,10 +257,10 @@ func TestDidChange_DocumentNotFound(t *testing.T) {
 			TextDocumentIdentifier: protocol.TextDocumentIdentifier{URI: "file:///missing.html"},
 			Version:                1,
 		},
-		ContentChanges: []any{},
+		ContentChanges: []protocol.TextDocumentContentChangeEvent{},
 	}
 
-	err = textDocument.DidChange(ctx, nil, params)
+	err = textDocument.DidChange(ctx, params)
 	assert.NoError(t, err)
 }
 
@@ -277,7 +278,7 @@ func TestDidClose(t *testing.T) {
 		TextDocument: protocol.TextDocumentIdentifier{URI: "file:///test.html"},
 	}
 
-	err = textDocument.DidClose(ctx, nil, params)
+	err = textDocument.DidClose(ctx, params)
 	require.NoError(t, err)
 	assert.Nil(t, dm.Document("file:///test.html"))
 }

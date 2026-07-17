@@ -19,11 +19,10 @@ package lifecycle
 import (
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/bennypowers/glsp"
 )
 
 // Shutdown handles the LSP shutdown request
-func Shutdown(ctx types.ServerContext, context *glsp.Context) error {
+func Shutdown(ctx types.ServerContext) error {
 	// Send shutdown message
 	logging.Info("CEM LSP Server shutting down...")
 

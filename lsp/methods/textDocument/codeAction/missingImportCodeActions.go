@@ -23,7 +23,8 @@ import (
 
 	"bennypowers.dev/cem/internal/languages/typescript"
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	urilib "go.lsp.dev/uri"
 )
 
 // CreateMissingImportAction creates a code action to add missing imports
@@ -154,8 +155,8 @@ func buildCodeAction(tagName, documentURI string, diagnostic *protocol.Diagnosti
 		Kind:        &kind,
 		IsPreferred: &preferred,
 		Edit: &protocol.WorkspaceEdit{
-			Changes: map[string][]protocol.TextEdit{
-				documentURI: {{Range: editRange, NewText: newText}},
+			Changes: map[urilib.URI][]protocol.TextEdit{
+				urilib.URI(documentURI): {{Range: editRange, NewText: newText}},
 			},
 		},
 		Diagnostics: []protocol.Diagnostic{*diagnostic},

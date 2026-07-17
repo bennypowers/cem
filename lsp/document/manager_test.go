@@ -22,7 +22,7 @@ import (
 	_ "bennypowers.dev/cem/internal/languages/registry"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -161,7 +161,7 @@ func TestDocumentManager_UpdateWithChanges_FullReplace(t *testing.T) {
 	dm.OpenDocument("file:///test.html", "<div>old</div>", 1)
 
 	changes := []protocol.TextDocumentContentChangeEvent{
-		{Text: "<div>new</div>"},
+		&protocol.TextDocumentContentChangeWholeDocument{Text: "<div>new</div>"},
 	}
 	doc := dm.UpdateDocumentWithChanges("file:///test.html", "<div>new</div>", 2, changes)
 	require.NotNil(t, doc)
@@ -188,8 +188,8 @@ func TestDocumentManager_UpdateWithChanges_IncrementalEdit(t *testing.T) {
 	dm.OpenDocument("file:///test.html", "<div>hello</div>", 1)
 
 	changes := []protocol.TextDocumentContentChangeEvent{
-		{
-			Range: &protocol.Range{
+		&protocol.TextDocumentContentChangePartial{
+			Range: protocol.Range{
 				Start: protocol.Position{Line: 0, Character: 5},
 				End:   protocol.Position{Line: 0, Character: 10},
 			},

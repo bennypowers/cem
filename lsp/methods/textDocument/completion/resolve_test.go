@@ -25,12 +25,20 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // Note: createCompletionData is not exported, so it's tested indirectly through
 // the comprehensive resolve tests below that exercise the full completion -> resolve flow
+
+// mustMarshalData marshals a map to LSPAny (jsontext.Value) for test data
+func mustMarshalData(data map[string]any) protocol.LSPAny {
+	b, err := json.Marshal(data)
+	if err != nil {
+		panic("failed to marshal test data: " + err.Error())
+	}
+	return protocol.LSPAny(b)
+}
 
 func TestResolve_HandlesNilData(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
@@ -41,7 +49,7 @@ func TestResolve_HandlesNilData(t *testing.T) {
 	}
 
 	// Resolve should handle nil data gracefully without crashing
-	resolved, err := completion.Resolve(ctx, &glsp.Context{}, item)
+	resolved, err := completion.Resolve(ctx, item)
 	if err != nil {
 		t.Fatalf("Resolve failed with nil data: %v", err)
 	}
@@ -63,15 +71,15 @@ func TestResolve_PreservesExistingDocumentation(t *testing.T) {
 	item := &protocol.CompletionItem{
 		Label:         "test",
 		Documentation: existingDoc,
-		Data: map[string]any{
+		Data: mustMarshalData(map[string]any{
 			"type":          "tag",
 			"tagName":       "my-element",
 			"attributeName": "",
-		},
+		}),
 	}
 
 	// Call Resolve - should preserve existing documentation and not generate new docs
-	resolved, err := completion.Resolve(ctx, &glsp.Context{}, item)
+	resolved, err := completion.Resolve(ctx, item)
 	if err != nil {
 		t.Fatalf("Resolve failed: %v", err)
 	}
@@ -116,12 +124,12 @@ func TestResolve_EventDocumentation(t *testing.T) {
 	// Create a completion item for an event with deferred documentation
 	item := &protocol.CompletionItem{
 		Label: "@card-click",
-		Kind:  &[]protocol.CompletionItemKind{protocol.CompletionItemKindEvent}[0],
-		Data: map[string]any{
+		Kind:  protocol.CompletionItemKindEvent,
+		Data: mustMarshalData(map[string]any{
 			"type":          "event",
 			"tagName":       "card-element",
 			"attributeName": "card-click",
-		},
+		}),
 	}
 
 	// Verify no documentation initially
@@ -130,7 +138,7 @@ func TestResolve_EventDocumentation(t *testing.T) {
 	}
 
 	// Resolve the completion item
-	resolved, err := completion.Resolve(ctx, &glsp.Context{}, item)
+	resolved, err := completion.Resolve(ctx, item)
 	if err != nil {
 		t.Fatalf("Resolve failed: %v", err)
 	}
@@ -186,12 +194,12 @@ func TestResolve_AttributeDocumentation(t *testing.T) {
 	// Create a completion item for an attribute with deferred documentation
 	item := &protocol.CompletionItem{
 		Label: "variant",
-		Kind:  &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
-		Data: map[string]any{
+		Kind:  protocol.CompletionItemKindProperty,
+		Data: mustMarshalData(map[string]any{
 			"type":          "attribute",
 			"tagName":       "my-custom-element",
 			"attributeName": "variant",
-		},
+		}),
 	}
 
 	// Verify no documentation initially
@@ -200,7 +208,7 @@ func TestResolve_AttributeDocumentation(t *testing.T) {
 	}
 
 	// Resolve the completion item
-	resolved, err := completion.Resolve(ctx, &glsp.Context{}, item)
+	resolved, err := completion.Resolve(ctx, item)
 	if err != nil {
 		t.Fatalf("Resolve failed: %v", err)
 	}
@@ -264,12 +272,12 @@ func TestResolve_SlotAttributeDocumentation(t *testing.T) {
 	// Create a completion item for slot attribute with deferred documentation
 	item := &protocol.CompletionItem{
 		Label: "slot",
-		Kind:  &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
-		Data: map[string]any{
+		Kind:  protocol.CompletionItemKindProperty,
+		Data: mustMarshalData(map[string]any{
 			"type":          "attribute",
 			"tagName":       "card-element",
 			"attributeName": "slot",
-		},
+		}),
 	}
 
 	// Verify no documentation initially
@@ -278,7 +286,7 @@ func TestResolve_SlotAttributeDocumentation(t *testing.T) {
 	}
 
 	// Resolve the completion item
-	resolved, err := completion.Resolve(ctx, &glsp.Context{}, item)
+	resolved, err := completion.Resolve(ctx, item)
 	if err != nil {
 		t.Fatalf("Resolve failed: %v", err)
 	}

@@ -7,7 +7,7 @@ WINDOWS_CC_IMAGE := cem-windows-cc-image
 VERSION ?= $(filter v% patch minor major,$(MAKECMDGOALS))
 
 # Use Go 1.25 toolchain automatically with JSON v2 experiment
-export GOEXPERIMENT := jsonv2
+GOEXPERIMENT := jsonv2
 
 # Workaround for Gentoo Linux "hole in findfunctab" error with race detector
 # See: https://bugs.gentoo.org/961618
@@ -96,10 +96,10 @@ dist/bin/cem-darwin-arm64: .generate.stamp $(GO_SOURCES)
 		CGO_CFLAGS="-arch arm64" CGO_LDFLAGS="-arch arm64" \
 		go build -ldflags="$(LDFLAGS)" -o $@ .
 
-# Windows targets (use shared Containerfile.windows via podman)
-SHARED_WINDOWS_CC_IMAGE := cem-shared-windows-cc
+# Windows targets (CI provides WINDOWS_IMAGE via go-release-workflows)
+WINDOWS_IMAGE ?= grw-windows-cross
 
-.PHONY: build-windows-cc-image rebuild-windows-cc-image build-shared-windows-image
+.PHONY: build-windows-cc-image rebuild-windows-cc-image
 build-windows-cc-image:
 	@if ! podman image exists $(WINDOWS_CC_IMAGE); then \
 		echo "Building image..."; \
@@ -111,28 +111,16 @@ build-windows-cc-image:
 rebuild-windows-cc-image:
 	podman build --no-cache -t $(WINDOWS_CC_IMAGE) .
 
-build-shared-windows-image:
-	@if [ ! -f Containerfile.windows ]; then \
-		echo "Error: Containerfile.windows not found. Run setup-windows-build action first."; \
-		exit 1; \
-	fi
-	@if ! podman image exists $(SHARED_WINDOWS_CC_IMAGE); then \
-		echo "Building shared Windows cross-compile image..."; \
-		podman build -t $(SHARED_WINDOWS_CC_IMAGE) -f Containerfile.windows . ; \
-	else \
-		echo "Image $(SHARED_WINDOWS_CC_IMAGE) already exists, skipping build."; \
-	fi
-
-dist/bin/cem-win32-x64.exe: .generate.stamp $(GO_SOURCES) | build-shared-windows-image
+dist/bin/cem-win32-x64.exe: .generate.stamp $(GO_SOURCES)
 	@mkdir -p dist/bin
 	podman run --rm -v $(PWD):/app:Z -w /app \
-		-e GOARCH=amd64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(SHARED_WINDOWS_CC_IMAGE)
+		-e GOARCH=amd64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(WINDOWS_IMAGE)
 	@mv dist/bin/cem-windows-amd64.exe $@
 
-dist/bin/cem-win32-arm64.exe: .generate.stamp $(GO_SOURCES) | build-shared-windows-image
+dist/bin/cem-win32-arm64.exe: .generate.stamp $(GO_SOURCES)
 	@mkdir -p dist/bin
 	podman run --rm -v $(PWD):/app:Z -w /app \
-		-e GOARCH=arm64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(SHARED_WINDOWS_CC_IMAGE)
+		-e GOARCH=arm64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(WINDOWS_IMAGE)
 	@mv dist/bin/cem-windows-arm64.exe $@
 
 # Platform aliases (satisfy go-release-workflows Makefile contract)
