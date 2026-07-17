@@ -536,37 +536,6 @@ func TestLSPDidChange(t *testing.T) {
 	t.Logf("Hover after change: %+v", hover)
 }
 
-// parseCursorMarker finds a "^cursor" marker in content and returns the position
-// it points to: the line above the marker, at the column of the ^ character.
-// The marker line is stripped from the returned content.
-func parseCursorMarker(t *testing.T, content string) (cleaned string, pos protocol.Position) {
-	t.Helper()
-	lines := strings.Split(content, "\n")
-	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		// Match HTML comment markers: <!-- ^cursor -->
-		if idx := strings.Index(trimmed, "^cursor"); idx >= 0 {
-			// Find the ^ position in the original (untrimmed) line
-			caretCol := strings.Index(line, "^cursor")
-			if caretCol < 0 {
-				t.Fatalf("parseCursorMarker: found ^cursor in trimmed line but not in original")
-			}
-			if i == 0 {
-				t.Fatalf("parseCursorMarker: ^cursor marker on first line has no line above it")
-			}
-			// Remove the marker line
-			cleaned = strings.Join(append(lines[:i], lines[i+1:]...), "\n")
-			pos = protocol.Position{
-				Line:      uint32(i - 1),
-				Character: uint32(caretCol),
-			}
-			return cleaned, pos
-		}
-	}
-	t.Fatalf("parseCursorMarker: no ^cursor marker found in content")
-	return "", protocol.Position{}
-}
-
 // openHTMLFile sends a didOpen notification for the given HTML file and returns its URI and content
 func openHTMLFile(t *testing.T, client *lspClient, filePath string) (uri protocol.DocumentUri, content string) {
 	t.Helper()
@@ -591,15 +560,19 @@ func openHTMLFile(t *testing.T, client *lspClient, filePath string) (uri protoco
 }
 
 // openHTMLFixture reads a fixture file from cmd/testdata/fixtures, parses and
-// strips the ^cursor marker, copies the cleaned content into workDir, and sends
-// a didOpen notification. Returns the file URI and cursor position.
+// strips the ^cursor marker using testutil.ExtractHTMLCursor, copies the
+// cleaned content into workDir, and sends a didOpen notification.
 func openHTMLFixture(t *testing.T, client *lspClient, workDir, fixturePath string) (uri protocol.DocumentUri, cursor protocol.Position) {
 	t.Helper()
 	raw, err := os.ReadFile(filepath.Join("testdata", "fixtures", fixturePath))
 	if err != nil {
 		t.Fatalf("Failed to read fixture %s: %v", fixturePath, err)
 	}
-	cleaned, cursor := parseCursorMarker(t, string(raw))
+	cleaned, pos := testutil.ExtractHTMLCursor(string(raw))
+	if pos == nil {
+		t.Fatalf("no ^cursor marker found in fixture %s", fixturePath)
+	}
+	cursor = *pos
 
 	destPath := filepath.Join(workDir, filepath.Base(fixturePath))
 	if err := os.WriteFile(destPath, []byte(cleaned), 0644); err != nil {
