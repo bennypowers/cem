@@ -1,0 +1,13 @@
+{
+  "uri": "file://$WORKSPACE/elements/demo-button/demo-button.ts",
+  "range": {
+    "start": {
+      "line": 49,
+      "character": 16
+    },
+    "end": {
+      "line": 49,
+      "character": 27
+    }
+  }
+}

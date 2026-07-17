@@ -18,6 +18,7 @@ package document
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 
@@ -322,6 +323,9 @@ func (dm *documentManager) AllDocuments() []types.Document {
 	for _, doc := range dm.documents {
 		documents = append(documents, doc)
 	}
+	sort.Slice(documents, func(i, j int) bool {
+		return documents[i].URI() < documents[j].URI()
+	})
 	return documents
 }
 

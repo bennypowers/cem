@@ -1,0 +1,127 @@
+{
+  "kind": "full",
+  "items": [
+    {
+      "range": {
+        "start": {
+          "line": 6,
+          "character": 14
+        },
+        "end": {
+          "line": 6,
+          "character": 19
+        }
+      },
+      "severity": 1,
+      "source": "cem-lsp",
+      "message": "Unknown slot 'strat' for element 'demo-button'. Did you mean 'start'?",
+      "data": {
+        "original": "strat",
+        "range": {
+          "start": {
+            "line": 6,
+            "character": 14
+          },
+          "end": {
+            "line": 6,
+            "character": 19
+          }
+        },
+        "suggestion": "start",
+        "type": "slot-suggestion"
+      }
+    },
+    {
+      "range": {
+        "start": {
+          "line": 5,
+          "character": 1
+        },
+        "end": {
+          "line": 5,
+          "character": 12
+        }
+      },
+      "severity": 1,
+      "source": "cem-lsp",
+      "message": "Custom element 'demo-button' is not imported. Add import from '@cem-examples/kitchen-sink/elements/demo-button/demo-button.js'",
+      "data": {
+        "importPath": "@cem-examples/kitchen-sink/elements/demo-button/demo-button.js",
+        "original": "demo-button",
+        "range": {
+          "start": {
+            "line": 5,
+            "character": 1
+          },
+          "end": {
+            "line": 5,
+            "character": 12
+          }
+        },
+        "suggestion": "import '@cem-examples/kitchen-sink/elements/demo-button/demo-button.js'",
+        "tagName": "demo-button",
+        "type": "missing-import"
+      }
+    },
+    {
+      "range": {
+        "start": {
+          "line": 5,
+          "character": 13
+        },
+        "end": {
+          "line": 5,
+          "character": 20
+        }
+      },
+      "severity": 2,
+      "source": "cem-lsp",
+      "message": "Unknown attribute 'varient'. Did you mean 'variant'?",
+      "data": {
+        "original": "varient",
+        "range": {
+          "start": {
+            "line": 5,
+            "character": 13
+          },
+          "end": {
+            "line": 5,
+            "character": 20
+          }
+        },
+        "suggestion": "variant",
+        "type": "attribute-suggestion"
+      }
+    },
+    {
+      "range": {
+        "start": {
+          "line": 5,
+          "character": 31
+        },
+        "end": {
+          "line": 5,
+          "character": 34
+        }
+      },
+      "severity": 2,
+      "source": "cem-lsp",
+      "message": "Unknown attribute 'siz'. Did you mean 'size'?",
+      "data": {
+        "original": "siz",
+        "range": {
+          "start": {
+            "line": 5,
+            "character": 31
+          },
+          "end": {
+            "line": 5,
+            "character": 34
+          }
+        },
+        "suggestion": "size",
+        "type": "attribute-suggestion"
+      }
+    }
+  ]
+}

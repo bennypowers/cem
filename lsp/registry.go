@@ -1041,6 +1041,7 @@ func (r *Registry) AllTagNames() []string {
 		}
 	}
 
+	slices.Sort(tags)
 	return tags
 }
 
