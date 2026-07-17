@@ -21,7 +21,9 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"os"
+	"strconv"
 	"sync"
 
 	"bennypowers.dev/cem/lsp/document"
@@ -29,6 +31,7 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	lspTypes "bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/types"
+	"github.com/gorilla/websocket"
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/protocol"
 )
@@ -87,11 +90,9 @@ func NewServer(workspace types.WorkspaceContext, transport TransportKind) (*Serv
 func (s *Server) Run() error {
 	helpers.SafeDebugLog("LSP: Running with transport: %s", s.transport)
 
-	var rwc io.ReadWriteCloser
-
 	switch s.transport {
 	case TransportStdio:
-		rwc = &stdioRWC{}
+		return s.serve(&stdioRWC{})
 	case TransportTCP:
 		listener, err := net.Listen("tcp", "localhost:8080")
 		if err != nil {
@@ -102,23 +103,67 @@ func (s *Server) Run() error {
 		if err != nil {
 			return fmt.Errorf("failed to accept TCP connection: %w", err)
 		}
-		rwc = conn
+		return s.serve(conn)
 	case TransportWebSocket:
-		return fmt.Errorf("websocket transport not yet implemented for new protocol library")
+		return s.runWebSocket("localhost:8081")
 	case TransportNodeJS:
-		return fmt.Errorf("nodejs transport not yet implemented for new protocol library")
+		return s.runNodeJS()
 	default:
 		return fmt.Errorf("unsupported transport kind: %s", s.transport)
 	}
+}
 
+// serve wires a ReadWriteCloser to the LSP protocol server.
+// The client is set before starting the connection to avoid a race
+// between handler dispatch and client assignment.
+func (s *Server) serve(rwc io.ReadWriteCloser) error {
 	stream := jsonrpc2.NewStream(rwc)
+	conn := jsonrpc2.NewConn(stream, jsonrpc2.WithCodec(protocolCodec{}))
+	s.client = protocol.ClientDispatcher(conn)
+
 	ctx := context.Background()
-	ctx, conn, client := protocol.NewServer(ctx, s, stream)
-	s.client = client
+	ctx = protocol.WithClient(ctx, s.client)
+	conn.Go(ctx, protocol.Handlers(protocol.ServerHandler(s, jsonrpc2.MethodNotFoundHandler)))
 
 	<-conn.Done()
-	_ = ctx
 	return nil
+}
+
+func (s *Server) runWebSocket(address string) error {
+	upgrader := websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		wsConn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("websocket upgrade failed: %v", err), http.StatusBadRequest)
+			return
+		}
+		defer func() { _ = wsConn.Close() }()
+		_ = s.serve(newWSReadWriteCloser(wsConn))
+	})
+
+	listener, err := net.Listen("tcp", address)
+	if err != nil {
+		return fmt.Errorf("failed to listen for WebSocket on %s: %w", address, err)
+	}
+
+	helpers.SafeDebugLog("LSP: listening for WebSocket connections on %s", address)
+	return http.Serve(listener, mux)
+}
+
+func (s *Server) runNodeJS() error {
+	fdStr := os.Getenv("NODE_CHANNEL_FD")
+	if fdStr == "" {
+		return fmt.Errorf("NODE_CHANNEL_FD not set in environment")
+	}
+	fd, err := strconv.Atoi(fdStr)
+	if err != nil {
+		return fmt.Errorf("invalid NODE_CHANNEL_FD %q: %w", fdStr, err)
+	}
+	file := os.NewFile(uintptr(fd), "/lsp/NODE_CHANNEL_FD")
+	helpers.SafeDebugLog("LSP: serving via Node.js IPC on fd %d", fd)
+	return s.serve(file)
 }
 
 // Close cleans up server resources
@@ -190,11 +235,67 @@ func (s *Server) Registry() *Registry {
 	return s.registry
 }
 
+// protocolCodec implements jsonrpc2.Codec using the protocol library's
+// reflection-free marshal/unmarshal, matching the internal lspCodec
+// used by protocol.NewServer.
+type protocolCodec struct{}
+
+func (protocolCodec) Marshal(v any) ([]byte, error)        { return protocol.Marshal(v) }
+func (protocolCodec) Unmarshal(data []byte, v any) error    { return protocol.Unmarshal(data, v) }
+
 type stdioRWC struct{}
 
 func (*stdioRWC) Read(p []byte) (int, error)  { return os.Stdin.Read(p) }
 func (*stdioRWC) Write(p []byte) (int, error) { return os.Stdout.Write(p) }
 func (*stdioRWC) Close() error                { return os.Stdin.Close() }
+
+// wsReadWriteCloser adapts a gorilla/websocket.Conn to io.ReadWriteCloser
+// for use with jsonrpc2.NewStream.
+type wsReadWriteCloser struct {
+	conn   *websocket.Conn
+	reader io.Reader
+}
+
+func newWSReadWriteCloser(conn *websocket.Conn) *wsReadWriteCloser {
+	return &wsReadWriteCloser{conn: conn}
+}
+
+func (ws *wsReadWriteCloser) Read(p []byte) (int, error) {
+	for {
+		if ws.reader == nil {
+			_, reader, err := ws.conn.NextReader()
+			if err != nil {
+				return 0, err
+			}
+			ws.reader = reader
+		}
+		n, err := ws.reader.Read(p)
+		if err == io.EOF {
+			ws.reader = nil
+			if n > 0 {
+				return n, nil
+			}
+			continue
+		}
+		return n, err
+	}
+}
+
+func (ws *wsReadWriteCloser) Write(p []byte) (int, error) {
+	w, err := ws.conn.NextWriter(websocket.TextMessage)
+	if err != nil {
+		return 0, err
+	}
+	n, err := w.Write(p)
+	if closeErr := w.Close(); err == nil {
+		err = closeErr
+	}
+	return n, err
+}
+
+func (ws *wsReadWriteCloser) Close() error {
+	return ws.conn.Close()
+}
 
 // InitializeForTesting initializes the server without running stdio - for testing only
 func (s *Server) InitializeForTesting() error {

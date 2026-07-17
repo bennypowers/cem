@@ -50,14 +50,8 @@ func Resolve(ctx types.ServerContext, params *protocol.CompletionItem) (*protoco
 		return params, nil
 	}
 
-	// Parse the data
 	var data CompletionItemData
-	dataBytes, err := json.Marshal(params.Data)
-	if err != nil {
-		helpers.SafeDebugLog("[RESOLVE] Failed to marshal data: %v", err)
-		return params, nil
-	}
-	if err := json.Unmarshal(dataBytes, &data); err != nil {
+	if err := json.Unmarshal(params.Data, &data); err != nil {
 		helpers.SafeDebugLog("[RESOLVE] Failed to unmarshal data: %v", err)
 		return params, nil
 	}

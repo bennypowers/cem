@@ -49,7 +49,11 @@ func PublishDiagnostics(ctx types.ServerContext, docURI string) error {
 	diagnostics := ComputeDiagnostics(ctx, doc)
 	helpers.SafeDebugLog("[DIAGNOSTICS] Found %d diagnostics for %s", len(diagnostics), docURI)
 
-	return ctx.Client().PublishDiagnostics(context.Background(), &protocol.PublishDiagnosticsParams{
+	client := ctx.Client()
+	if client == nil {
+		return nil
+	}
+	return client.PublishDiagnostics(context.Background(), &protocol.PublishDiagnosticsParams{
 		URI:         uri.URI(docURI),
 		Diagnostics: diagnostics,
 	})
