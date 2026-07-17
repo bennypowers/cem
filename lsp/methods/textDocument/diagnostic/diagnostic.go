@@ -29,7 +29,7 @@ func DocumentDiagnostic(ctx types.ServerContext, params *protocol.DocumentDiagno
 
 	doc := ctx.Document(string(params.TextDocument.URI))
 	if doc == nil {
-		return protocol.RelatedFullDocumentDiagnosticReport{
+		return &protocol.RelatedFullDocumentDiagnosticReport{
 			FullDocumentDiagnosticReport: protocol.FullDocumentDiagnosticReport{
 				Kind:  string(protocol.DocumentDiagnosticReportKindFull),
 				Items: []protocol.Diagnostic{},
@@ -41,7 +41,7 @@ func DocumentDiagnostic(ctx types.ServerContext, params *protocol.DocumentDiagno
 
 	helpers.SafeDebugLog("[DIAGNOSTICS] Pull diagnostics returning %d items for %s", len(diagnostics), params.TextDocument.URI)
 
-	return protocol.RelatedFullDocumentDiagnosticReport{
+	return &protocol.RelatedFullDocumentDiagnosticReport{
 		FullDocumentDiagnosticReport: protocol.FullDocumentDiagnosticReport{
 			Kind:  string(protocol.DocumentDiagnosticReportKindFull),
 			Items: diagnostics,

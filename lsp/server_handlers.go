@@ -170,6 +170,9 @@ func (s *Server) Symbols(_ context.Context, params *protocol.WorkspaceSymbolPara
 	if err != nil {
 		return nil, err
 	}
+	if result == nil {
+		return nil, nil
+	}
 	return protocol.SymbolInformationSlice(result), nil
 }
 
