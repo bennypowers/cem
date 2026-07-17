@@ -536,6 +536,37 @@ func TestLSPDidChange(t *testing.T) {
 	t.Logf("Hover after change: %+v", hover)
 }
 
+// parseCursorMarker finds a "^cursor" marker in content and returns the position
+// it points to: the line above the marker, at the column of the ^ character.
+// The marker line is stripped from the returned content.
+func parseCursorMarker(t *testing.T, content string) (cleaned string, pos protocol.Position) {
+	t.Helper()
+	lines := strings.Split(content, "\n")
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		// Match HTML comment markers: <!-- ^cursor -->
+		if idx := strings.Index(trimmed, "^cursor"); idx >= 0 {
+			// Find the ^ position in the original (untrimmed) line
+			caretCol := strings.Index(line, "^cursor")
+			if caretCol < 0 {
+				t.Fatalf("parseCursorMarker: found ^cursor in trimmed line but not in original")
+			}
+			if i == 0 {
+				t.Fatalf("parseCursorMarker: ^cursor marker on first line has no line above it")
+			}
+			// Remove the marker line
+			cleaned = strings.Join(append(lines[:i], lines[i+1:]...), "\n")
+			pos = protocol.Position{
+				Line:      uint32(i - 1),
+				Character: uint32(caretCol),
+			}
+			return cleaned, pos
+		}
+	}
+	t.Fatalf("parseCursorMarker: no ^cursor marker found in content")
+	return "", protocol.Position{}
+}
+
 // openHTMLFile sends a didOpen notification for the given HTML file and returns its URI and content
 func openHTMLFile(t *testing.T, client *lspClient, filePath string) (uri protocol.DocumentUri, content string) {
 	t.Helper()
@@ -557,6 +588,37 @@ func openHTMLFile(t *testing.T, client *lspClient, filePath string) (uri protoco
 		t.Fatalf("Failed to send didOpen: %v", err)
 	}
 	return uri, content
+}
+
+// openHTMLFixture reads a fixture file from cmd/testdata/fixtures, parses and
+// strips the ^cursor marker, copies the cleaned content into workDir, and sends
+// a didOpen notification. Returns the file URI and cursor position.
+func openHTMLFixture(t *testing.T, client *lspClient, workDir, fixturePath string) (uri protocol.DocumentUri, cursor protocol.Position) {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join("testdata", "fixtures", fixturePath))
+	if err != nil {
+		t.Fatalf("Failed to read fixture %s: %v", fixturePath, err)
+	}
+	cleaned, cursor := parseCursorMarker(t, string(raw))
+
+	destPath := filepath.Join(workDir, filepath.Base(fixturePath))
+	if err := os.WriteFile(destPath, []byte(cleaned), 0644); err != nil {
+		t.Fatalf("Failed to write fixture to workspace: %v", err)
+	}
+
+	uri = protocol.DocumentUri("file://" + destPath)
+	err = client.notify("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
+		TextDocument: protocol.TextDocumentItem{
+			URI:        uri,
+			LanguageID: "html",
+			Version:    1,
+			Text:       cleaned,
+		},
+	})
+	if err != nil {
+		t.Fatalf("Failed to send didOpen: %v", err)
+	}
+	return uri, cursor
 }
 
 // normalizeJSON replaces workspace-specific paths with $WORKSPACE for golden comparison
@@ -628,15 +690,13 @@ func TestLSPDefinition(t *testing.T) {
 	workDir, client, cleanup := setupLSPTestFromExample(t, "kitchen-sink")
 	defer cleanup()
 
-	// variants.html line 13 (0-indexed: 12): <demo-button variant="neutral">
-	htmlFile := filepath.Join(workDir, "elements", "demo-button", "demo", "variants.html")
-	uri, _ := openHTMLFile(t, client, htmlFile)
+	uri, cursor := openHTMLFixture(t, client, workDir, "lsp-positions/definition-target.html")
 
 	var result json.RawMessage
 	err := client.call("textDocument/definition", protocol.DefinitionParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 			TextDocument: protocol.TextDocumentIdentifier{URI: uri},
-			Position:     protocol.Position{Line: 12, Character: 8},
+			Position:     cursor,
 		},
 	}, &result)
 	require.NoError(t, err, "textDocument/definition must not error")
@@ -654,14 +714,13 @@ func TestLSPReferences(t *testing.T) {
 	workDir, client, cleanup := setupLSPTestFromExample(t, "kitchen-sink")
 	defer cleanup()
 
-	htmlFile := filepath.Join(workDir, "elements", "demo-button", "demo", "variants.html")
-	uri, _ := openHTMLFile(t, client, htmlFile)
+	uri, cursor := openHTMLFixture(t, client, workDir, "lsp-positions/definition-target.html")
 
 	var result json.RawMessage
 	err := client.call("textDocument/references", protocol.ReferenceParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 			TextDocument: protocol.TextDocumentIdentifier{URI: uri},
-			Position:     protocol.Position{Line: 12, Character: 8},
+			Position:     cursor,
 		},
 		Context: protocol.ReferenceContext{IncludeDeclaration: true},
 	}, &result)
@@ -772,30 +831,63 @@ func TestLSPWorkspaceSymbol(t *testing.T) {
 	checkLSPGolden(t, "workspace-symbol", result, workDir)
 }
 
-// TestLSPDidClose tests document close notification
+// TestLSPDidClose tests document close notification clears in-memory state.
+// Proves didClose is not a no-op: modified content produces diagnostics,
+// closing the document clears them, and inlay hints return nil.
 func TestLSPDidClose(t *testing.T) {
 	workDir, client, cleanup := setupLSPTestFromExample(t, "kitchen-sink")
 	defer cleanup()
 
-	htmlFile := filepath.Join(workDir, "elements", "demo-button", "demo", "variants.html")
+	// Open the incorrect-usage file which has typo attributes -- produces diagnostics
+	htmlFile := filepath.Join(workDir, "elements", "demo-button", "demo", "incorrect-usage.html")
 	uri, _ := openHTMLFile(t, client, htmlFile)
 
-	// Close the document
-	err := client.notify("textDocument/didClose", protocol.DidCloseTextDocumentParams{
+	// Diagnostics on invalid content should be non-empty (proves document is tracked)
+	var dirtyDiag json.RawMessage
+	err := client.call("textDocument/diagnostic", protocol.DocumentDiagnosticParams{
+		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+	}, &dirtyDiag)
+	require.NoError(t, err)
+	var dirtyReport struct {
+		Kind  string `json:"kind"`
+		Items []any  `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(dirtyDiag, &dirtyReport))
+	require.NotEmpty(t, dirtyReport.Items, "incorrect-usage content must produce diagnostics before close")
+
+	// Close the document -- should clear in-memory state
+	err = client.notify("textDocument/didClose", protocol.DidCloseTextDocumentParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
 	})
 	require.NoError(t, err, "textDocument/didClose notification must not error")
 
-	// Verify diagnostics on the closed document still works (server exercises
-	// the close handler + subsequent request without crashing)
-	var diagResult json.RawMessage
+	// Diagnostics after close: document is untracked, handler returns empty
+	var closedDiag json.RawMessage
 	err = client.call("textDocument/diagnostic", protocol.DocumentDiagnosticParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
-	}, &diagResult)
-	assert.NoError(t, err, "diagnostic request should succeed even after didClose")
-	require.NotNil(t, diagResult, "diagnostic result after didClose must not be nil")
+	}, &closedDiag)
+	require.NoError(t, err, "diagnostic request must succeed after didClose")
+	require.NotNil(t, closedDiag, "diagnostic result after didClose must not be nil")
+	var closedReport struct {
+		Kind  string `json:"kind"`
+		Items []any  `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(closedDiag, &closedReport))
+	assert.Empty(t, closedReport.Items, "diagnostics must be empty after didClose clears modified state")
 
-	checkLSPGolden(t, "did-close-diagnostic", diagResult, workDir)
+	// Inlay hints after close: document is untracked, handler returns nil
+	var hints json.RawMessage
+	err = client.call("textDocument/inlayHint", protocol.InlayHintParams{
+		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+		Range: protocol.Range{
+			Start: protocol.Position{Line: 0, Character: 0},
+			End:   protocol.Position{Line: 10, Character: 0},
+		},
+	}, &hints)
+	require.NoError(t, err, "inlayHint must succeed after didClose")
+	assert.Equal(t, "null", string(hints), "inlay hints must be nil after didClose")
+
+	checkLSPGolden(t, "did-close-diagnostic", closedDiag, workDir)
 }
 
 // TestLSPDidChangeConfiguration tests configuration change notification
