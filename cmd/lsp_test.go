@@ -36,6 +36,7 @@ import (
 	"testing"
 	"time"
 
+	"bennypowers.dev/cem/internal/platform/testutil"
 	protocol "github.com/bennypowers/glsp/protocol_3_17"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -281,6 +282,18 @@ func startLSPServer(ctx context.Context, workDir string) (*lspClient, error) {
 // setupLSPTest creates a test workspace with the given fixture and initializes LSP
 func setupLSPTest(t *testing.T, fixtureName string) (workDir string, client *lspClient, cleanup func()) {
 	t.Helper()
+	return setupLSPTestFromDir(t, filepath.Join("testdata", "fixtures", fixtureName), fixtureName)
+}
+
+// setupLSPTestFromExample creates a test workspace from an examples/ directory
+func setupLSPTestFromExample(t *testing.T, exampleName string) (workDir string, client *lspClient, cleanup func()) {
+	t.Helper()
+	return setupLSPTestFromDir(t, filepath.Join("..", "examples", exampleName), exampleName)
+}
+
+// setupLSPTestFromDir copies srcDir into a temp directory and starts the LSP server there
+func setupLSPTestFromDir(t *testing.T, srcDir, name string) (workDir string, client *lspClient, cleanup func()) {
+	t.Helper()
 
 	// Create temporary workspace
 	tmpDir, err := os.MkdirTemp("", "cem-lsp-test-")
@@ -289,8 +302,8 @@ func setupLSPTest(t *testing.T, fixtureName string) (workDir string, client *lsp
 	}
 
 	// Copy fixture to workspace
-	workDir = filepath.Join(tmpDir, fixtureName)
-	err = os.CopyFS(workDir, os.DirFS(filepath.Join("testdata", "fixtures", fixtureName)))
+	workDir = filepath.Join(tmpDir, name)
+	err = os.CopyFS(workDir, os.DirFS(srcDir))
 	if err != nil {
 		os.RemoveAll(tmpDir)
 		t.Fatalf("Failed to copy fixture: %v", err)
@@ -521,6 +534,365 @@ func TestLSPDidChange(t *testing.T) {
 	}
 
 	t.Logf("Hover after change: %+v", hover)
+}
+
+// openHTMLFile sends a didOpen notification for the given HTML file and returns its URI and content
+func openHTMLFile(t *testing.T, client *lspClient, filePath string) (uri protocol.DocumentUri, content string) {
+	t.Helper()
+	raw, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("Failed to read %s: %v", filePath, err)
+	}
+	content = string(raw)
+	uri = protocol.DocumentUri("file://" + filePath)
+	err = client.notify("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
+		TextDocument: protocol.TextDocumentItem{
+			URI:        uri,
+			LanguageID: "html",
+			Version:    1,
+			Text:       content,
+		},
+	})
+	if err != nil {
+		t.Fatalf("Failed to send didOpen: %v", err)
+	}
+	return uri, content
+}
+
+// openHTMLFixture reads a fixture file from cmd/testdata/fixtures, parses and
+// strips the ^cursor marker using testutil.ExtractHTMLCursor, copies the
+// cleaned content into workDir, and sends a didOpen notification.
+func openHTMLFixture(t *testing.T, client *lspClient, workDir, fixturePath string) (uri protocol.DocumentUri, cursor protocol.Position) {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join("testdata", "fixtures", fixturePath))
+	if err != nil {
+		t.Fatalf("Failed to read fixture %s: %v", fixturePath, err)
+	}
+	cleaned, pos := testutil.ExtractHTMLCursor(string(raw))
+	if pos == nil {
+		t.Fatalf("no ^cursor marker found in fixture %s", fixturePath)
+	}
+	cursor = *pos
+
+	destPath := filepath.Join(workDir, filepath.Base(fixturePath))
+	if err := os.WriteFile(destPath, []byte(cleaned), 0644); err != nil {
+		t.Fatalf("Failed to write fixture to workspace: %v", err)
+	}
+
+	uri = protocol.DocumentUri("file://" + destPath)
+	err = client.notify("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
+		TextDocument: protocol.TextDocumentItem{
+			URI:        uri,
+			LanguageID: "html",
+			Version:    1,
+			Text:       cleaned,
+		},
+	})
+	if err != nil {
+		t.Fatalf("Failed to send didOpen: %v", err)
+	}
+	return uri, cursor
+}
+
+// normalizeJSON replaces workspace-specific paths with $WORKSPACE for golden comparison
+func normalizeJSON(data json.RawMessage, workDir string) []byte {
+	s := string(data)
+	s = strings.ReplaceAll(s, workDir, "$WORKSPACE")
+	var pretty bytes.Buffer
+	if err := json.Indent(&pretty, []byte(s), "", "  "); err != nil {
+		return []byte(s)
+	}
+	return append(pretty.Bytes(), '\n')
+}
+
+// checkLSPGolden compares an LSP response against a golden file
+func checkLSPGolden(t *testing.T, name string, data json.RawMessage, workDir string) {
+	t.Helper()
+	normalized := normalizeJSON(data, workDir)
+	goldenPath := filepath.Join("testdata", "goldens", "lsp", name+".json")
+	if *testutil.Update {
+		if err := os.MkdirAll(filepath.Dir(goldenPath), 0755); err != nil {
+			t.Fatalf("failed to create golden directory: %v", err)
+		}
+		if err := os.WriteFile(goldenPath, normalized, 0644); err != nil {
+			t.Fatalf("failed to update golden file: %v", err)
+		}
+		t.Logf("Updated golden file: %s", goldenPath)
+		return
+	}
+	expected, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatalf("golden file missing: %s (run with -update)\nerror: %v", goldenPath, err)
+	}
+	if string(normalized) != string(expected) {
+		t.Errorf("Output differs from golden file %s.\n\nExpected:\n%s\nGot:\n%s",
+			goldenPath, string(expected), string(normalized))
+		t.Log("Run 'make test-e2e UPDATE=-update' to update golden files")
+	}
+}
+
+// TestLSPDiagnostic tests pull diagnostics via textDocument/diagnostic
+func TestLSPDiagnostic(t *testing.T) {
+	workDir, client, cleanup := setupLSPTestFromExample(t, "kitchen-sink")
+	defer cleanup()
+
+	// Use the errors fixture which has intentional typos to produce diagnostics
+	htmlFile := filepath.Join(workDir, "elements", "demo-button", "demo", "incorrect-usage.html")
+	uri, _ := openHTMLFile(t, client, htmlFile)
+
+	var result json.RawMessage
+	err := client.call("textDocument/diagnostic", protocol.DocumentDiagnosticParams{
+		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+	}, &result)
+	require.NoError(t, err, "textDocument/diagnostic must not error")
+	require.NotNil(t, result, "diagnostic result must not be nil (nil indicates adapter layer returned wrong type)")
+
+	var report struct {
+		Kind  string `json:"kind"`
+		Items []any  `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(result, &report))
+	assert.Equal(t, "full", report.Kind)
+	assert.NotEmpty(t, report.Items, "should produce diagnostics for typo attributes")
+
+	checkLSPGolden(t, "diagnostic", result, workDir)
+}
+
+// TestLSPDefinition tests go-to-definition on a custom element tag
+func TestLSPDefinition(t *testing.T) {
+	workDir, client, cleanup := setupLSPTestFromExample(t, "kitchen-sink")
+	defer cleanup()
+
+	uri, cursor := openHTMLFixture(t, client, workDir, "lsp-positions/definition-target.html")
+
+	var result json.RawMessage
+	err := client.call("textDocument/definition", protocol.DefinitionParams{
+		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+			TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+			Position:     cursor,
+		},
+	}, &result)
+	require.NoError(t, err, "textDocument/definition must not error")
+	require.NotNil(t, result, "definition result must not be nil (nil indicates adapter layer returned wrong type)")
+
+	var location protocol.Location
+	require.NoError(t, json.Unmarshal(result, &location))
+	assert.Contains(t, string(location.URI), "demo-button", "definition should point to demo-button source")
+
+	checkLSPGolden(t, "definition", result, workDir)
+}
+
+// TestLSPReferences tests find-references on a custom element tag
+func TestLSPReferences(t *testing.T) {
+	workDir, client, cleanup := setupLSPTestFromExample(t, "kitchen-sink")
+	defer cleanup()
+
+	uri, cursor := openHTMLFixture(t, client, workDir, "lsp-positions/definition-target.html")
+
+	var result json.RawMessage
+	err := client.call("textDocument/references", protocol.ReferenceParams{
+		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
+			TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+			Position:     cursor,
+		},
+		Context: protocol.ReferenceContext{IncludeDeclaration: true},
+	}, &result)
+	require.NoError(t, err, "textDocument/references must not error")
+	require.NotNil(t, result, "references result must not be nil (nil indicates adapter layer returned wrong type)")
+
+	var locations []protocol.Location
+	require.NoError(t, json.Unmarshal(result, &locations))
+	assert.NotEmpty(t, locations, "should find at least one reference to demo-button")
+
+	checkLSPGolden(t, "references", result, workDir)
+}
+
+// TestLSPCodeAction tests code actions driven by diagnostics
+func TestLSPCodeAction(t *testing.T) {
+	workDir, client, cleanup := setupLSPTestFromExample(t, "kitchen-sink")
+	defer cleanup()
+
+	// Use the errors fixture which has intentional typos that produce fixable diagnostics
+	htmlFile := filepath.Join(workDir, "elements", "demo-button", "demo", "incorrect-usage.html")
+	uri, _ := openHTMLFile(t, client, htmlFile)
+
+	// Get diagnostics first
+	var diagResult json.RawMessage
+	err := client.call("textDocument/diagnostic", protocol.DocumentDiagnosticParams{
+		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+	}, &diagResult)
+	require.NoError(t, err, "diagnostic request should succeed")
+
+	var report struct {
+		Kind  string                `json:"kind"`
+		Items []protocol.Diagnostic `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(diagResult, &report))
+
+	var actions json.RawMessage
+	err = client.call("textDocument/codeAction", protocol.CodeActionParams{
+		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+		Range: protocol.Range{
+			Start: protocol.Position{Line: 0, Character: 0},
+			End:   protocol.Position{Line: 99, Character: 0},
+		},
+		Context: protocol.CodeActionContext{
+			Diagnostics: report.Items,
+		},
+	}, &actions)
+	require.NoError(t, err, "textDocument/codeAction must not error")
+	require.NotNil(t, actions, "codeAction result must not be nil (nil indicates adapter layer returned wrong type)")
+
+	var actionList []json.RawMessage
+	require.NoError(t, json.Unmarshal(actions, &actionList))
+	assert.NotEmpty(t, actionList, "should produce code actions for typo diagnostics")
+
+	checkLSPGolden(t, "code-action", actions, workDir)
+}
+
+// TestLSPInlayHint tests inlay hints on custom element attributes
+func TestLSPInlayHint(t *testing.T) {
+	workDir, client, cleanup := setupLSPTestFromExample(t, "kitchen-sink")
+	defer cleanup()
+
+	htmlFile := filepath.Join(workDir, "elements", "demo-button", "demo", "variants.html")
+	uri, _ := openHTMLFile(t, client, htmlFile)
+
+	var result json.RawMessage
+	err := client.call("textDocument/inlayHint", protocol.InlayHintParams{
+		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+		Range: protocol.Range{
+			Start: protocol.Position{Line: 0, Character: 0},
+			End:   protocol.Position{Line: 56, Character: 0},
+		},
+	}, &result)
+	require.NoError(t, err, "textDocument/inlayHint must not error")
+	require.NotNil(t, result, "inlayHint result must not be nil (nil indicates adapter layer returned wrong type)")
+
+	var hints []json.RawMessage
+	require.NoError(t, json.Unmarshal(result, &hints))
+	assert.NotEmpty(t, hints, "should produce inlay hints for demo-button attributes")
+
+	checkLSPGolden(t, "inlay-hint", result, workDir)
+}
+
+// TestLSPWorkspaceSymbol tests workspace symbol search
+func TestLSPWorkspaceSymbol(t *testing.T) {
+	workDir, client, cleanup := setupLSPTestFromExample(t, "kitchen-sink")
+	defer cleanup()
+
+	var result json.RawMessage
+	err := client.call("workspace/symbol", protocol.WorkspaceSymbolParams{
+		Query: "demo-button",
+	}, &result)
+	require.NoError(t, err, "workspace/symbol must not error")
+	require.NotNil(t, result, "workspace/symbol result must not be nil (nil indicates adapter layer returned wrong type)")
+
+	var symbols []protocol.SymbolInformation
+	require.NoError(t, json.Unmarshal(result, &symbols))
+	assert.NotEmpty(t, symbols, "should find demo-button symbol")
+
+	found := false
+	for _, sym := range symbols {
+		if strings.Contains(sym.Name, "demo-button") {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "should contain a symbol matching 'demo-button'")
+
+	checkLSPGolden(t, "workspace-symbol", result, workDir)
+}
+
+// TestLSPDidClose tests document close notification clears in-memory state.
+// Proves didClose is not a no-op: modified content produces diagnostics,
+// closing the document clears them, and inlay hints return nil.
+func TestLSPDidClose(t *testing.T) {
+	workDir, client, cleanup := setupLSPTestFromExample(t, "kitchen-sink")
+	defer cleanup()
+
+	// Open the incorrect-usage file which has typo attributes -- produces diagnostics
+	htmlFile := filepath.Join(workDir, "elements", "demo-button", "demo", "incorrect-usage.html")
+	uri, _ := openHTMLFile(t, client, htmlFile)
+
+	// Diagnostics on invalid content should be non-empty (proves document is tracked)
+	var dirtyDiag json.RawMessage
+	err := client.call("textDocument/diagnostic", protocol.DocumentDiagnosticParams{
+		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+	}, &dirtyDiag)
+	require.NoError(t, err)
+	var dirtyReport struct {
+		Kind  string `json:"kind"`
+		Items []any  `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(dirtyDiag, &dirtyReport))
+	require.NotEmpty(t, dirtyReport.Items, "incorrect-usage content must produce diagnostics before close")
+
+	// Close the document -- should clear in-memory state
+	err = client.notify("textDocument/didClose", protocol.DidCloseTextDocumentParams{
+		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+	})
+	require.NoError(t, err, "textDocument/didClose notification must not error")
+
+	// Diagnostics after close: document is untracked, handler returns empty
+	var closedDiag json.RawMessage
+	err = client.call("textDocument/diagnostic", protocol.DocumentDiagnosticParams{
+		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+	}, &closedDiag)
+	require.NoError(t, err, "diagnostic request must succeed after didClose")
+	require.NotNil(t, closedDiag, "diagnostic result after didClose must not be nil")
+	var closedReport struct {
+		Kind  string `json:"kind"`
+		Items []any  `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(closedDiag, &closedReport))
+	assert.Empty(t, closedReport.Items, "diagnostics must be empty after didClose clears modified state")
+
+	// Inlay hints after close: document is untracked, handler returns nil
+	var hints json.RawMessage
+	err = client.call("textDocument/inlayHint", protocol.InlayHintParams{
+		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+		Range: protocol.Range{
+			Start: protocol.Position{Line: 0, Character: 0},
+			End:   protocol.Position{Line: 10, Character: 0},
+		},
+	}, &hints)
+	require.NoError(t, err, "inlayHint must succeed after didClose")
+	assert.Equal(t, "null", string(hints), "inlay hints must be nil after didClose")
+
+	checkLSPGolden(t, "did-close-diagnostic", closedDiag, workDir)
+}
+
+// TestLSPDidChangeConfiguration tests configuration change notification
+func TestLSPDidChangeConfiguration(t *testing.T) {
+	workDir, client, cleanup := setupLSPTestFromExample(t, "kitchen-sink")
+	defer cleanup()
+
+	htmlFile := filepath.Join(workDir, "elements", "demo-button", "demo", "variants.html")
+	uri, _ := openHTMLFile(t, client, htmlFile)
+
+	// Send configuration change to disable inlay hints
+	err := client.notify("workspace/didChangeConfiguration", protocol.DidChangeConfigurationParams{
+		Settings: map[string]any{
+			"cem": map[string]any{
+				"inlayHints": false,
+			},
+		},
+	})
+	require.NoError(t, err, "workspace/didChangeConfiguration must not error")
+
+	// Verify inlay hints are now empty after disabling
+	var result json.RawMessage
+	err = client.call("textDocument/inlayHint", protocol.InlayHintParams{
+		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+		Range: protocol.Range{
+			Start: protocol.Position{Line: 0, Character: 0},
+			End:   protocol.Position{Line: 56, Character: 0},
+		},
+	}, &result)
+	require.NoError(t, err, "inlayHint after config change must not error")
+
+	checkLSPGolden(t, "inlay-hint-disabled", result, workDir)
 }
 
 // TestLSPCommandStdoutClean verifies the `cem lsp` command produces only

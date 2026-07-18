@@ -215,6 +215,13 @@ func (f *LSPFixture) ParseCursor(parser CursorParser) {
 	}
 }
 
+// ExtractHTMLCursor parses HTML content for a ^cursor comment marker or YAML
+// frontmatter cursor. Returns cleaned content with the marker stripped and the
+// cursor position. Returns nil position when no marker is found.
+func ExtractHTMLCursor(content string) (string, *protocol.Position) {
+	return extractCursor(content, "html")
+}
+
 // extractCursor checks content for a ^cursor comment marker or YAML frontmatter.
 // Marker always takes precedence. Frontmatter is stripped when it contains a cursor key.
 // For HTML, uses golang.org/x/net/html tokenizer to find comment nodes.

@@ -18,6 +18,7 @@ package inlayHint
 
 import (
 	"fmt"
+	"sort"
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
@@ -62,7 +63,19 @@ func InlayHint(ctx types.ServerContext, context *glsp.Context, params *protocol.
 			continue
 		}
 
-		for _, attrMatch := range elem.Attributes {
+		attrNames := make([]string, 0, len(elem.Attributes))
+		for name := range elem.Attributes {
+			attrNames = append(attrNames, name)
+		}
+		sort.Slice(attrNames, func(i, j int) bool {
+			ai, aj := elem.Attributes[attrNames[i]], elem.Attributes[attrNames[j]]
+			if ai.Range.Start.Line != aj.Range.Start.Line {
+				return ai.Range.Start.Line < aj.Range.Start.Line
+			}
+			return ai.Range.Start.Character < aj.Range.Start.Character
+		})
+		for _, attrName := range attrNames {
+			attrMatch := elem.Attributes[attrName]
 			var typeText string
 
 			switch attrMatch.BindingPrefix {

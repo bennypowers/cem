@@ -1,0 +1,20 @@
+[
+  {
+    "name": "demo-button - Comprehensive button component demonstrating all CEM features.\n\n\u003cfigure\u003e\n\u003cfigcaption\u003eBasic usage\u003c/figcaption\u003e\n\n```html\n\u003cdemo-button variant=\"brand\"\u003eClick me\u003c/demo-button\u003e\n```\n\u003c/figure\u003e",
+    "kind": 5,
+    "location": {
+      "uri": "file://$WORKSPACE/@cem-examples/kitchen-sink/elements/demo-button/demo-button.js",
+      "range": {
+        "start": {
+          "line": 0,
+          "character": 0
+        },
+        "end": {
+          "line": 0,
+          "character": 0
+        }
+      }
+    },
+    "containerName": "@cem-examples/kitchen-sink/elements/demo-button/demo-button.js"
+  }
+]

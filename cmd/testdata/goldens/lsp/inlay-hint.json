@@ -1,0 +1,227 @@
+[
+  {
+    "position": {
+      "line": 12,
+      "character": 24
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 13,
+      "character": 24
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 14,
+      "character": 24
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 15,
+      "character": 24
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 16,
+      "character": 24
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 23,
+      "character": 27
+    },
+    "label": ": 'filled' | 'outlined' | 'plain'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 23,
+      "character": 46
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 24,
+      "character": 27
+    },
+    "label": ": 'filled' | 'outlined' | 'plain'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 24,
+      "character": 46
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 25,
+      "character": 27
+    },
+    "label": ": 'filled' | 'outlined' | 'plain'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 25,
+      "character": 46
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 26,
+      "character": 27
+    },
+    "label": ": 'filled' | 'outlined' | 'plain'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 26,
+      "character": 46
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 27,
+      "character": 27
+    },
+    "label": ": 'filled' | 'outlined' | 'plain'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 27,
+      "character": 46
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 34,
+      "character": 27
+    },
+    "label": ": 'filled' | 'outlined' | 'plain'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 34,
+      "character": 43
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 35,
+      "character": 27
+    },
+    "label": ": 'filled' | 'outlined' | 'plain'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 35,
+      "character": 43
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 36,
+      "character": 27
+    },
+    "label": ": 'filled' | 'outlined' | 'plain'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 36,
+      "character": 43
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 37,
+      "character": 27
+    },
+    "label": ": 'filled' | 'outlined' | 'plain'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 37,
+      "character": 43
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 38,
+      "character": 27
+    },
+    "label": ": 'filled' | 'outlined' | 'plain'",
+    "kind": 1,
+    "paddingLeft": true
+  },
+  {
+    "position": {
+      "line": 38,
+      "character": 43
+    },
+    "label": ": 'neutral' | 'brand' | 'success' | 'warning' | 'danger'",
+    "kind": 1,
+    "paddingLeft": true
+  }
+]
