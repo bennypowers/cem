@@ -254,6 +254,117 @@ func TestIncrementalParseWithUTF16(t *testing.T) {
 			if content != tt.expected {
 				t.Errorf("%s:\n  got:  %q\n  want: %q", tt.description, content, tt.expected)
 			}
+
+			if tree := updated.Tree(); tree != nil {
+				root := tree.RootNode()
+				if root == nil {
+					t.Error("Tree root is nil after incremental parse")
+				} else if root.EndByte() < uint(len(tt.expected)) {
+					t.Errorf("Tree doesn't span content: tree end %d < content length %d",
+						root.EndByte(), len(tt.expected))
+				}
+			}
+		})
+	}
+}
+
+// TestIncrementalParseAfterNonASCII verifies that edits positioned after
+// non-ASCII content produce correct byte offsets. A wrong UTF-16-to-byte
+// conversion would corrupt the tree or produce incorrect content.
+func TestIncrementalParseAfterNonASCII(t *testing.T) {
+	tests := []struct {
+		name     string
+		initial  string
+		change   *protocol.TextDocumentContentChangePartial
+		expected string
+	}{
+		{
+			name:    "Edit after emoji on same line",
+			initial: `<div>😀 old</div>`,
+			change: &protocol.TextDocumentContentChangePartial{
+				Range: protocol.Range{
+					Start: protocol.Position{Line: 0, Character: 8}, // after "😀 " (5+2+1 = 8 UTF-16)
+					End:   protocol.Position{Line: 0, Character: 11},
+				},
+				Text: "new",
+			},
+			expected: `<div>😀 new</div>`,
+		},
+		{
+			name:    "Edit after Hebrew text",
+			initial: `<div>שלום old</div>`,
+			change: &protocol.TextDocumentContentChangePartial{
+				Range: protocol.Range{
+					Start: protocol.Position{Line: 0, Character: 10}, // after "שלום " (4+1+5 = 10 UTF-16)
+					End:   protocol.Position{Line: 0, Character: 13},
+				},
+				Text: "new",
+			},
+			expected: `<div>שלום new</div>`,
+		},
+		{
+			name:    "Edit after CJK on second line",
+			initial: "<p>你好世界</p>\n<span>old</span>",
+			change: &protocol.TextDocumentContentChangePartial{
+				Range: protocol.Range{
+					Start: protocol.Position{Line: 1, Character: 6},
+					End:   protocol.Position{Line: 1, Character: 9},
+				},
+				Text: "new",
+			},
+			expected: "<p>你好世界</p>\n<span>new</span>",
+		},
+		{
+			name:    "Edit after surrogate pair emoji",
+			initial: `<b>🔥🎉 old</b>`,
+			change: &protocol.TextDocumentContentChangePartial{
+				Range: protocol.Range{
+					Start: protocol.Position{Line: 0, Character: 8}, // after "🔥🎉 " (3+2+2+1 = 8 UTF-16)
+					End:   protocol.Position{Line: 0, Character: 11},
+				},
+				Text: "new",
+			},
+			expected: `<b>🔥🎉 new</b>`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dm, err := document.NewDocumentManager()
+			if err != nil {
+				t.Fatalf("Failed to create DocumentManager: %v", err)
+			}
+			defer dm.Close()
+
+			uri := "file:///test-nonascii.html"
+			doc := dm.OpenDocument(uri, tt.initial, 1)
+			if doc == nil {
+				t.Fatal("OpenDocument returned nil")
+			}
+
+			changes := []protocol.TextDocumentContentChangeEvent{tt.change}
+			updated := dm.UpdateDocumentWithChanges(uri, tt.expected, 2, changes)
+			if updated == nil {
+				t.Fatal("UpdateDocumentWithChanges returned nil")
+			}
+
+			content, err := updated.Content()
+			if err != nil {
+				t.Fatalf("Failed to get content: %v", err)
+			}
+			if content != tt.expected {
+				t.Errorf("Content mismatch:\n  got:  %q\n  want: %q", content, tt.expected)
+			}
+
+			if tree := updated.Tree(); tree != nil {
+				root := tree.RootNode()
+				if root == nil {
+					t.Error("Tree root is nil after incremental parse")
+				} else if root.EndByte() < uint(len(tt.expected)) {
+					t.Errorf("Tree doesn't span content: tree end %d < content length %d",
+						root.EndByte(), len(tt.expected))
+				}
+			}
 		})
 	}
 }
