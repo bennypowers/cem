@@ -40,7 +40,6 @@ func TestDocumentDiagnostic_NilDocument(t *testing.T) {
 
 	require.NoError(t, err)
 	report := result
-	require.True(t, ok)
 	assert.Equal(t, string(protocol.DocumentDiagnosticReportKindFull), report.Kind)
 	assert.Empty(t, report.Items)
 }
@@ -62,7 +61,6 @@ func TestDocumentDiagnostic_ValidDocument(t *testing.T) {
 
 	require.NoError(t, err)
 	report := result
-	require.True(t, ok)
 	assert.Equal(t, string(protocol.DocumentDiagnosticReportKindFull), report.Kind)
 	assert.NotNil(t, report.Items)
 }
@@ -88,6 +86,5 @@ func TestDocumentDiagnostic_WithDiagnostics(t *testing.T) {
 
 	require.NoError(t, err)
 	report := result
-	require.True(t, ok)
 	assert.Greater(t, len(report.Items), 0)
 }

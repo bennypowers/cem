@@ -264,7 +264,7 @@ func TestCodeActionIsPreferred(t *testing.T) {
 				t.Fatalf("CodeAction failed: %v", err)
 			}
 
-			actions := result.([]protocol.CodeAction)
+			actions := result
 			if len(actions) != 1 {
 				t.Fatalf("Expected 1 action, got %d", len(actions))
 			}

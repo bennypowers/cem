@@ -178,7 +178,6 @@ func TestLitBooleanCompletionFiltersToBoolean(t *testing.T) {
 	require.NotNil(t, result)
 
 	items := result
-	require.True(t, ok)
 
 	for _, item := range items {
 		assert.NotEqual(t, "?variant", item.Label, "non-boolean 'variant' should not appear in ? completions")
@@ -244,7 +243,6 @@ func TestLitEventCompletionFiltersToEvents(t *testing.T) {
 	require.NotNil(t, result)
 
 	items := result
-	require.True(t, ok)
 
 	labels := make(map[string]bool)
 	for _, item := range items {
