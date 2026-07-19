@@ -6,8 +6,6 @@ WINDOWS_CC_IMAGE := cem-windows-cc-image
 # Extract version from goals if present (e.g., "make release v0.6.6" or "make release patch")
 VERSION ?= $(filter v% patch minor major,$(MAKECMDGOALS))
 
-# Use Go 1.25 toolchain automatically with JSON v2 experiment
-GOEXPERIMENT := jsonv2
 
 # Workaround for Gentoo Linux "hole in findfunctab" error with race detector
 # See: https://bugs.gentoo.org/961618
@@ -114,13 +112,13 @@ rebuild-windows-cc-image:
 dist/bin/cem-win32-x64.exe: .generate.stamp $(GO_SOURCES)
 	@mkdir -p dist/bin
 	podman run --rm -v $(PWD):/app:Z -w /app \
-		-e GOARCH=amd64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(WINDOWS_IMAGE)
+		-e GOARCH=amd64 -e BINARY_NAME=cem $(WINDOWS_IMAGE)
 	@mv dist/bin/cem-windows-amd64.exe $@
 
 dist/bin/cem-win32-arm64.exe: .generate.stamp $(GO_SOURCES)
 	@mkdir -p dist/bin
 	podman run --rm -v $(PWD):/app:Z -w /app \
-		-e GOARCH=arm64 -e BINARY_NAME=cem -e GOEXPERIMENT=$(GOEXPERIMENT) $(WINDOWS_IMAGE)
+		-e GOARCH=arm64 -e BINARY_NAME=cem $(WINDOWS_IMAGE)
 	@mv dist/bin/cem-windows-arm64.exe $@
 
 # Platform aliases (satisfy go-release-workflows Makefile contract)
@@ -138,11 +136,11 @@ windows: windows-x64 windows-arm64
 
 windows-x64: build-windows-cc-image
 	mkdir -p dist
-	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=amd64 -e GOEXPERIMENT=$(GOEXPERIMENT) $(WINDOWS_CC_IMAGE)
+	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=amd64 $(WINDOWS_CC_IMAGE)
 
 windows-arm64: build-windows-cc-image
 	mkdir -p dist
-	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=arm64 -e GOEXPERIMENT=$(GOEXPERIMENT) $(WINDOWS_CC_IMAGE)
+	podman run --rm -v $(PWD):/app:Z -w /app -e GOARCH=arm64 $(WINDOWS_CC_IMAGE)
 
 .PHONY: all
 all: windows
