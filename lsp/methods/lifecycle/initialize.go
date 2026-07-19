@@ -87,6 +87,18 @@ func Initialize(ctx types.ServerContext, params *protocol.InitializeParams) (*pr
 		}
 	}
 
+	// Load manifests during Initialize (the blocking request) rather than
+	// Initialized (the notification). With AsyncHandler, Initialized runs
+	// concurrently with subsequent requests, so loading here ensures
+	// manifests are ready before any content requests arrive.
+	if err := ctx.InitializeManifests(); err != nil {
+		logging.Warning("Failed to initialize manifests: %v", err)
+	} else {
+		manifestCount := ctx.ManifestCount()
+		elementCount := ctx.ElementCount()
+		logging.Info("CEM LSP loaded %d elements from %d manifests", elementCount, manifestCount)
+	}
+
 	// Detect pull diagnostics support
 	if params.Capabilities.TextDocument != nil &&
 		params.Capabilities.TextDocument.Diagnostic != nil {

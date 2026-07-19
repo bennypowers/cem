@@ -20,6 +20,7 @@ import (
 	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
+	"encoding/json"
 	"go.lsp.dev/protocol"
 )
 
@@ -101,7 +102,7 @@ func AnalyzeCssDiagnosticsForTest(ctx types.ServerContext, doc types.Document) [
 			},
 			"properties": propertyData,
 		}
-		data, _ := protocol.Marshal(dataMap)
+		data, _ := json.Marshal(dataMap)
 		diagnostics = append(diagnostics, protocol.Diagnostic{
 			Range:    commentRange,
 			Severity: protocol.DiagnosticSeverityWarning,

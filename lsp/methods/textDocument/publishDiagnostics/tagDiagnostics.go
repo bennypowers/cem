@@ -27,6 +27,7 @@ import (
 	"bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/internal/modulegraph"
 	"bennypowers.dev/cem/internal/treesitter"
+	"encoding/json"
 	"go.lsp.dev/protocol"
 )
 
@@ -139,7 +140,7 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 					Suggestion: closestMatch,
 					Range:      match.Range,
 				}
-				data, _ := protocol.Marshal(autofixData.ToMap())
+				data, _ := json.Marshal(autofixData.ToMap())
 				diagnostic.Data = data
 			} else {
 				if len(allAvailableTagNames) > 0 {
@@ -203,7 +204,7 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 					ImportPath: importPath,
 					TagName:    tagName,
 				}
-				data, _ := protocol.Marshal(autofixData.ToMap())
+				data, _ := json.Marshal(autofixData.ToMap())
 				diagnostic.Data = data
 
 				diagnostics = append(diagnostics, diagnostic)

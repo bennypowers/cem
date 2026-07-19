@@ -27,6 +27,7 @@ import (
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/agext/levenshtein"
+	"encoding/json"
 	"go.lsp.dev/protocol"
 )
 
@@ -267,7 +268,7 @@ func validateUnionType(typeText string, match AttributeMatch) []protocol.Diagnos
 			Suggestion: suggestion,
 			Range:      diagnostic.Range,
 		}
-		data, _ := protocol.Marshal(autofixData.ToMap())
+		data, _ := json.Marshal(autofixData.ToMap())
 		diagnostic.Data = data
 
 		diagnostics = append(diagnostics, diagnostic)
@@ -326,7 +327,7 @@ func validateLiteralType(typeText string, match AttributeMatch) []protocol.Diagn
 				Suggestion: expectedValue,
 				Range:      diagnostic.Range,
 			}
-			data, _ := protocol.Marshal(autofixData.ToMap())
+			data, _ := json.Marshal(autofixData.ToMap())
 		diagnostic.Data = data
 
 			diagnostics = append(diagnostics, diagnostic)

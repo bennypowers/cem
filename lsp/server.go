@@ -114,18 +114,14 @@ func (s *Server) Run() error {
 }
 
 // serve wires a ReadWriteCloser to the LSP protocol server.
-// The client is set before starting the connection to avoid a race
-// between handler dispatch and client assignment.
 func (s *Server) serve(rwc io.ReadWriteCloser) error {
 	stream := jsonrpc2.NewStream(rwc)
-	conn := jsonrpc2.NewConn(stream, jsonrpc2.WithCodec(protocolCodec{}))
-	s.client = protocol.ClientDispatcher(conn)
-
 	ctx := context.Background()
-	ctx = protocol.WithClient(ctx, s.client)
-	conn.Go(ctx, protocol.Handlers(protocol.ServerHandler(s, jsonrpc2.MethodNotFoundHandler)))
+	ctx, conn, client := protocol.NewServer(ctx, s, stream)
+	s.client = client
 
 	<-conn.Done()
+	_ = ctx
 	return nil
 }
 
@@ -235,13 +231,6 @@ func (s *Server) Registry() *Registry {
 	return s.registry
 }
 
-// protocolCodec implements jsonrpc2.Codec using the protocol library's
-// reflection-free marshal/unmarshal, matching the internal lspCodec
-// used by protocol.NewServer.
-type protocolCodec struct{}
-
-func (protocolCodec) Marshal(v any) ([]byte, error)        { return protocol.Marshal(v) }
-func (protocolCodec) Unmarshal(data []byte, v any) error    { return protocol.Unmarshal(data, v) }
 
 type stdioRWC struct{}
 

@@ -24,6 +24,7 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	"github.com/agext/levenshtein"
+	"encoding/json"
 	"go.lsp.dev/protocol"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
@@ -109,7 +110,7 @@ func AnalyzeSlotDiagnosticsForTest(ctx types.ServerContext, doc types.Document) 
 				Suggestion: closestMatch,
 				Range:      match.Range,
 			}
-			data, _ := protocol.Marshal(autofixData.ToMap())
+			data, _ := json.Marshal(autofixData.ToMap())
 			diagnostic.Data = data
 		} else {
 			availableList := strings.Join(slotNames, "', '")

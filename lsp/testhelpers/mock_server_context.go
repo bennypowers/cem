@@ -185,8 +185,15 @@ func (m *MockServerContext) SetAdditionalPackages(packages []string) {
 }
 
 func (m *MockServerContext) Close() error {
-	// Mock implementation - nothing to clean up
 	return nil
+}
+
+func (m *MockServerContext) ManifestCount() int {
+	return len(m.Manifests)
+}
+
+func (m *MockServerContext) ElementCount() int {
+	return len(m.Elements)
 }
 
 // Document operations
