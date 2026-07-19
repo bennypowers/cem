@@ -24,7 +24,7 @@ import (
 )
 
 // DocumentDiagnostic handles the textDocument/diagnostic request (LSP 3.17 pull model)
-func DocumentDiagnostic(ctx types.ServerContext, params *protocol.DocumentDiagnosticParams) (any, error) {
+func DocumentDiagnostic(ctx types.ServerContext, params *protocol.DocumentDiagnosticParams) (*protocol.RelatedFullDocumentDiagnosticReport, error) {
 	helpers.SafeDebugLog("[DIAGNOSTICS] Pull diagnostic request for %s", params.TextDocument.URI)
 
 	doc := ctx.Document(string(params.TextDocument.URI))

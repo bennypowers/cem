@@ -58,7 +58,7 @@ type DefinitionRequest struct {
 }
 
 // Definition handles textDocument/definition requests
-func Definition(ctx types.ServerContext, params *protocol.DefinitionParams) (any, error) {
+func Definition(ctx types.ServerContext, params *protocol.DefinitionParams) (*protocol.Location, error) {
 	uri := string(params.TextDocument.URI)
 
 	// Get the tracked document
@@ -111,7 +111,7 @@ func Definition(ctx types.ServerContext, params *protocol.DefinitionParams) (any
 		}
 	}
 
-	return *location, nil
+	return location, nil
 }
 
 // analyzeDefinitionTarget analyzes the cursor position to determine what definition is being requested

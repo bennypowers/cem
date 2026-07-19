@@ -82,10 +82,7 @@ func TestCodeActionCSSAmbiguousComment(t *testing.T) {
 		t.Fatalf("CodeAction failed: %v", err)
 	}
 
-	actions, ok := result.([]protocol.CodeAction)
-	if !ok {
-		t.Fatalf("Expected []protocol.CodeAction, got %T", result)
-	}
+	actions := result
 
 	if len(actions) != 2 {
 		t.Fatalf("Expected 2 code actions, got %d", len(actions))

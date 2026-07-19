@@ -17,13 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package helpers
 
 import (
+	"context"
+
 	"bennypowers.dev/cem/internal/logging"
 	"go.lsp.dev/protocol"
 )
 
-// SetGlobalLoggerClient sets the LSP client for the centralized logger
-func SetGlobalLoggerClient(client protocol.Client) {
-	logging.SetLSPClient(client)
+// SetGlobalLoggerClient sets the LSP client and connection context for the centralized logger
+func SetGlobalLoggerClient(client protocol.Client, ctx context.Context) {
+	logging.SetLSPClient(client, ctx)
 }
 
 // SetDebugLoggingEnabled controls whether debug logging is enabled

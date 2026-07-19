@@ -85,10 +85,7 @@ func TestCodeActionSlotSuggestion(t *testing.T) {
 	}
 
 	// Verify result
-	actions, ok := result.([]protocol.CodeAction)
-	if !ok {
-		t.Fatalf("Expected []protocol.CodeAction, got %T", result)
-	}
+	actions := result
 
 	if len(actions) != 1 {
 		t.Fatalf("Expected 1 code action, got %d", len(actions))
@@ -172,10 +169,7 @@ func TestCodeActionNoDiagnostics(t *testing.T) {
 	}
 
 	// Verify result
-	actions, ok := result.([]protocol.CodeAction)
-	if !ok {
-		t.Fatalf("Expected []protocol.CodeAction, got %T", result)
-	}
+	actions := result
 
 	if len(actions) != 0 {
 		t.Errorf("Expected 0 code actions for valid content, got %d", len(actions))

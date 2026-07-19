@@ -19,7 +19,7 @@ package lsp_test
 import (
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
+	"bennypowers.dev/cem/internal/textutil"
 	"bennypowers.dev/cem/lsp/document"
 	"go.lsp.dev/protocol"
 )
@@ -107,7 +107,7 @@ func TestUTF16ToByteOffset(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := lsp.UTF16ToByteOffset(tt.text, tt.utf16Offset)
+			result := textutil.UTF16ToByteOffset(tt.text, tt.utf16Offset)
 			if result != tt.expectedByte {
 				t.Errorf("%s: UTF16ToByteOffset(%q, %d) = %d, want %d",
 					tt.description, tt.text, tt.utf16Offset, result, tt.expectedByte)
@@ -157,7 +157,7 @@ func TestByteOffsetToUTF16(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := lsp.ByteOffsetToUTF16(tt.text, tt.byteOffset)
+			result := textutil.ByteOffsetToUTF16(tt.text, tt.byteOffset)
 			if result != tt.expectedUTF16 {
 				t.Errorf("%s: ByteOffsetToUTF16(%q, %d) = %d, want %d",
 					tt.description, tt.text, tt.byteOffset, result, tt.expectedUTF16)

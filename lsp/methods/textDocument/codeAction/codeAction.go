@@ -25,7 +25,7 @@ import (
 )
 
 // CodeAction handles textDocument/codeAction requests
-func CodeAction(ctx types.ServerContext, params *protocol.CodeActionParams) (any, error) {
+func CodeAction(ctx types.ServerContext, params *protocol.CodeActionParams) ([]protocol.CodeAction, error) {
 	helpers.SafeDebugLog("[CODE_ACTION] Starting code action for %s", params.TextDocument.URI)
 
 	var actions []protocol.CodeAction

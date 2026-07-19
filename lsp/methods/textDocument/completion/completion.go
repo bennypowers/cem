@@ -30,7 +30,7 @@ import (
 )
 
 // Completion handles textDocument/completion requests
-func Completion(ctx types.ServerContext, params *protocol.CompletionParams) (any, error) {
+func Completion(ctx types.ServerContext, params *protocol.CompletionParams) ([]protocol.CompletionItem, error) {
 	uri := string(params.TextDocument.URI)
 	helpers.SafeDebugLog("[COMPLETION] Request for URI: %s, Position: line=%d, char=%d", uri, params.Position.Line, params.Position.Character)
 

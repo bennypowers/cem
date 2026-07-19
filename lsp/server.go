@@ -114,21 +114,38 @@ func (s *Server) Run() error {
 }
 
 // serve wires a ReadWriteCloser to the LSP protocol server.
+// Client is set before conn.Go starts dispatching to avoid a data race
+// between handler dispatch and s.client assignment.
 func (s *Server) serve(rwc io.ReadWriteCloser) error {
 	stream := jsonrpc2.NewStream(rwc)
+	conn := jsonrpc2.NewConn(stream, jsonrpc2.WithCodec(protocolCodec{}))
+	s.client = protocol.ClientDispatcher(conn)
+
 	ctx := context.Background()
-	ctx, conn, client := protocol.NewServer(ctx, s, stream)
-	s.client = client
+	ctx = protocol.WithClient(ctx, s.client)
+
+	helpers.SetGlobalLoggerClient(s.client, ctx)
+
+	conn.Go(ctx, protocol.Handlers(protocol.ServerHandler(s, jsonrpc2.MethodNotFoundHandler)))
 
 	<-conn.Done()
-	_ = ctx
-	return nil
+	return conn.Err()
 }
 
 func (s *Server) runWebSocket(address string) error {
 	upgrader := websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
 
+	listener, err := net.Listen("tcp", address)
+	if err != nil {
+		return fmt.Errorf("failed to listen for WebSocket on %s: %w", address, err)
+	}
+	defer func() { _ = listener.Close() }()
+
+	helpers.SafeDebugLog("LSP: listening for WebSocket connection on %s", address)
+
+	// Accept a single connection -- Server is single-session by design
 	mux := http.NewServeMux()
+	connCh := make(chan error, 1)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		wsConn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -136,16 +153,15 @@ func (s *Server) runWebSocket(address string) error {
 			return
 		}
 		defer func() { _ = wsConn.Close() }()
-		_ = s.serve(newWSReadWriteCloser(wsConn))
+		connCh <- s.serve(newWSReadWriteCloser(wsConn))
 	})
 
-	listener, err := net.Listen("tcp", address)
-	if err != nil {
-		return fmt.Errorf("failed to listen for WebSocket on %s: %w", address, err)
-	}
+	srv := &http.Server{Handler: mux}
+	go func() { _ = srv.Serve(listener) }()
 
-	helpers.SafeDebugLog("LSP: listening for WebSocket connections on %s", address)
-	return http.Serve(listener, mux)
+	serveErr := <-connCh
+	_ = srv.Close()
+	return serveErr
 }
 
 func (s *Server) runNodeJS() error {
@@ -157,7 +173,13 @@ func (s *Server) runNodeJS() error {
 	if err != nil {
 		return fmt.Errorf("invalid NODE_CHANNEL_FD %q: %w", fdStr, err)
 	}
+	if fd < 0 {
+		return fmt.Errorf("NODE_CHANNEL_FD must be non-negative, got %d", fd)
+	}
 	file := os.NewFile(uintptr(fd), "/lsp/NODE_CHANNEL_FD")
+	if file == nil {
+		return fmt.Errorf("NODE_CHANNEL_FD %d is not a valid file descriptor", fd)
+	}
 	helpers.SafeDebugLog("LSP: serving via Node.js IPC on fd %d", fd)
 	return s.serve(file)
 }
@@ -231,6 +253,14 @@ func (s *Server) Registry() *Registry {
 	return s.registry
 }
 
+
+// protocolCodec implements jsonrpc2.Codec using the protocol library's
+// reflection-free marshal/unmarshal, matching the internal lspCodec
+// used by protocol.NewServer.
+type protocolCodec struct{}
+
+func (protocolCodec) Marshal(v any) ([]byte, error)     { return protocol.Marshal(v) }
+func (protocolCodec) Unmarshal(data []byte, v any) error { return protocol.Unmarshal(data, v) }
 
 type stdioRWC struct{}
 

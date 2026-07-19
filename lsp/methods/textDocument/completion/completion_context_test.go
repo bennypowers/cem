@@ -288,10 +288,7 @@ func TestCompletionIntegration(t *testing.T) {
 			t.Fatalf("Completion failed: %v", err)
 		}
 
-		items, ok := result.([]protocol.CompletionItem)
-		if !ok {
-			t.Fatalf("Expected []CompletionItem, got %T", result)
-		}
+		items := result
 
 		// Should contain the test element
 		if len(items) != 1 {
@@ -356,10 +353,7 @@ func TestCompletionIntegration(t *testing.T) {
 			t.Fatalf("Completion failed: %v", err)
 		}
 
-		items, ok := result.([]protocol.CompletionItem)
-		if !ok {
-			t.Fatalf("Expected []CompletionItem, got %T", result)
-		}
+		items := result
 
 		// Should contain attributes for test-component (7 attributes: color, theme, disabled, count, size, variant, items)
 		if len(items) < 5 { // At least 5 attributes, not exact count as it can vary
@@ -404,10 +398,7 @@ func TestCompletionIntegration(t *testing.T) {
 			t.Fatalf("Completion failed: %v", err)
 		}
 
-		items, ok := result.([]protocol.CompletionItem)
-		if !ok {
-			t.Fatalf("Expected []CompletionItem, got %T", result)
-		}
+		items := result
 
 		// Boolean attributes should not provide value completions
 		// (presence = true, absence = false)
@@ -437,10 +428,7 @@ func TestCompletionIntegration(t *testing.T) {
 			t.Fatalf("Completion failed: %v", err)
 		}
 
-		items, ok := result.([]protocol.CompletionItem)
-		if !ok {
-			t.Fatalf("Expected []CompletionItem, got %T", result)
-		}
+		items := result
 
 		// Should contain the test element
 		if len(items) != 1 {

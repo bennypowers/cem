@@ -19,6 +19,7 @@ package document
 import (
 	"strings"
 
+	"bennypowers.dev/cem/internal/textutil"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	"go.lsp.dev/protocol"
@@ -286,69 +287,74 @@ func (ip *incrementalParser) convertToTreeSitterEdit(r *protocol.Range, text str
 		return ts.InputEdit{}
 	}
 
-	// Convert positions to byte offsets
 	startByte := ip.positionToByteOffset(r.Start, oldContent)
 	oldEndByte := ip.positionToByteOffset(r.End, oldContent)
 	newEndByte := startByte + uint(len(text))
 
+	oldLines := strings.Split(oldContent, "\n")
+
 	return ts.InputEdit{
-		StartByte:  startByte,
-		OldEndByte: oldEndByte,
-		NewEndByte: newEndByte,
-		StartPosition: ts.Point{
-			Row:    uint(r.Start.Line),
-			Column: uint(r.Start.Character),
-		},
-		OldEndPosition: ts.Point{
-			Row:    uint(r.End.Line),
-			Column: uint(r.End.Character),
-		},
-		NewEndPosition: ip.calculateNewEndPoint(r.Start, text),
+		StartByte:      startByte,
+		OldEndByte:     oldEndByte,
+		NewEndByte:     newEndByte,
+		StartPosition:  ip.lspPositionToTreeSitterPoint(r.Start, oldLines),
+		OldEndPosition: ip.lspPositionToTreeSitterPoint(r.End, oldLines),
+		NewEndPosition: ip.calculateNewEndPoint(r.Start, text, oldLines),
 	}
 }
 
-// positionToByteOffset converts LSP position to byte offset
+// positionToByteOffset converts LSP position (UTF-16 code units) to byte offset (UTF-8)
 func (ip *incrementalParser) positionToByteOffset(pos protocol.Position, content string) uint {
 	lines := strings.Split(content, "\n")
 	var offset uint = 0
 
-	// Add bytes for complete lines before the target line
 	for i := uint32(0); i < pos.Line && i < uint32(len(lines)); i++ {
-		offset += uint(len(lines[i])) + 1 // +1 for newline
+		offset += uint(len(lines[i])) + 1
 	}
 
-	// Add bytes for characters in the target line
 	if pos.Line < uint32(len(lines)) {
 		line := lines[pos.Line]
-		if pos.Character < uint32(len(line)) {
-			offset += uint(pos.Character)
-		} else {
-			offset += uint(len(line))
-		}
+		offset += textutil.UTF16ToByteOffset(line, pos.Character)
 	}
 
 	return offset
 }
 
-// calculateNewEndPoint calculates the end point after applying an edit
-func (ip *incrementalParser) calculateNewEndPoint(startPos protocol.Position, newText string) ts.Point {
-	lines := strings.Split(newText, "\n")
-	if len(lines) == 0 {
-		return ts.Point{Row: uint(startPos.Line), Column: uint(startPos.Character)}
+// lspPositionToTreeSitterPoint converts LSP position (UTF-16) to tree-sitter Point (UTF-8 byte column)
+func (ip *incrementalParser) lspPositionToTreeSitterPoint(pos protocol.Position, lines []string) ts.Point {
+	if pos.Line >= uint32(len(lines)) {
+		return ts.Point{Row: uint(pos.Line), Column: 0}
+	}
+	line := lines[pos.Line]
+	return ts.Point{
+		Row:    uint(pos.Line),
+		Column: textutil.UTF16ToByteOffset(line, pos.Character),
+	}
+}
+
+// calculateNewEndPoint calculates the end point after applying an edit.
+// Positions use UTF-8 byte offsets for tree-sitter Points.
+func (ip *incrementalParser) calculateNewEndPoint(startPos protocol.Position, newText string, oldLines []string) ts.Point {
+	newLines := strings.Split(newText, "\n")
+	if len(newLines) == 0 {
+		return ip.lspPositionToTreeSitterPoint(startPos, oldLines)
 	}
 
-	if len(lines) == 1 {
-		// Single line
+	if len(newLines) == 1 {
+		startByteColumn := uint(0)
+		if startPos.Line < uint32(len(oldLines)) {
+			startByteColumn = textutil.UTF16ToByteOffset(oldLines[startPos.Line], startPos.Character)
+		}
 		return ts.Point{
 			Row:    uint(startPos.Line),
-			Column: uint(startPos.Character) + uint(len(newText)),
+			Column: startByteColumn + uint(len(newText)),
 		}
 	}
 
-	// Multi-line
+	lastLine := newLines[len(newLines)-1]
 	return ts.Point{
-		Row:    uint(startPos.Line) + uint(len(lines)-1),
-		Column: uint(len(lines[len(lines)-1])),
+		Row:    uint(startPos.Line) + uint(len(newLines)-1),
+		Column: uint(len(lastLine)),
 	}
 }
 

@@ -80,19 +80,10 @@ func (s *Server) Hover(_ context.Context, params *protocol.HoverParams) (_ *prot
 func (s *Server) Completion(_ context.Context, params *protocol.CompletionParams) (_ protocol.CompletionResult, err error) {
 	defer s.recover("textDocument/completion", &err)
 	result, err := completion.Completion(s, params)
-	if err != nil {
+	if err != nil || result == nil {
 		return nil, err
 	}
-	if result == nil {
-		return nil, nil
-	}
-	if cr, ok := result.(protocol.CompletionResult); ok {
-		return cr, nil
-	}
-	if items, ok := result.([]protocol.CompletionItem); ok {
-		return protocol.CompletionItemSlice(items), nil
-	}
-	return nil, nil
+	return protocol.CompletionItemSlice(result), nil
 }
 
 func (s *Server) CompletionResolve(_ context.Context, params *protocol.CompletionItem) (_ *protocol.CompletionItem, err error) {
@@ -103,19 +94,10 @@ func (s *Server) CompletionResolve(_ context.Context, params *protocol.Completio
 func (s *Server) Definition(_ context.Context, params *protocol.DefinitionParams) (_ protocol.DefinitionResult, err error) {
 	defer s.recover("textDocument/definition", &err)
 	result, err := definition.Definition(s, params)
-	if err != nil {
+	if err != nil || result == nil {
 		return nil, err
 	}
-	if result == nil {
-		return nil, nil
-	}
-	if loc, ok := result.(protocol.Location); ok {
-		return &loc, nil
-	}
-	if dr, ok := result.(protocol.DefinitionResult); ok {
-		return dr, nil
-	}
-	return nil, nil
+	return result, nil
 }
 
 func (s *Server) References(_ context.Context, params *protocol.ReferenceParams) (_ []protocol.Location, err error) {
@@ -126,32 +108,19 @@ func (s *Server) References(_ context.Context, params *protocol.ReferenceParams)
 func (s *Server) CodeAction(_ context.Context, params *protocol.CodeActionParams) (_ []protocol.CommandOrCodeAction, err error) {
 	defer s.recover("textDocument/codeAction", &err)
 	result, err := codeAction.CodeAction(s, params)
-	if err != nil {
+	if err != nil || result == nil {
 		return nil, err
 	}
-	if result == nil {
-		return nil, nil
+	out := make([]protocol.CommandOrCodeAction, len(result))
+	for i := range result {
+		out[i] = &result[i]
 	}
-	if actions, ok := result.([]protocol.CodeAction); ok {
-		out := make([]protocol.CommandOrCodeAction, len(actions))
-		for i := range actions {
-			out[i] = &actions[i]
-		}
-		return out, nil
-	}
-	return nil, nil
+	return out, nil
 }
 
 func (s *Server) Diagnostic(_ context.Context, params *protocol.DocumentDiagnosticParams) (_ protocol.DocumentDiagnosticReport, err error) {
 	defer s.recover("textDocument/diagnostic", &err)
-	result, err := diagnostic.DocumentDiagnostic(s, params)
-	if err != nil {
-		return nil, err
-	}
-	if dr, ok := result.(protocol.DocumentDiagnosticReport); ok {
-		return dr, nil
-	}
-	return nil, nil
+	return diagnostic.DocumentDiagnostic(s, params)
 }
 
 func (s *Server) DiagnosticWorkspace(_ context.Context, params *protocol.WorkspaceDiagnosticParams) (_ *protocol.WorkspaceDiagnosticReport, err error) {

@@ -120,13 +120,8 @@ func TestDefinition(t *testing.T) {
 					return
 				}
 
-				location, ok := result.(protocol.Location)
-				if !ok {
-					t.Errorf("Expected protocol.Location, got %T", result)
-					return
-				}
+				location := result
 
-				// Check that URI contains the expected path
 				if tt.expectedPath != "" && !strings.Contains(string(location.URI), tt.expectedPath) {
 					t.Errorf("Expected URI to contain '%s', got '%s'", tt.expectedPath, location.URI)
 				}
@@ -212,11 +207,7 @@ func TestDefinition_AttributeOnHTMLElement(t *testing.T) {
 				if result == nil {
 					t.Fatalf("expected definition location, got nil: %s", tt.desc)
 				}
-				location, ok := result.(protocol.Location)
-				if !ok {
-					t.Fatalf("expected protocol.Location, got %T", result)
-				}
-				t.Logf("definition URI: %s at %d:%d", location.URI, location.Range.Start.Line, location.Range.Start.Character)
+				t.Logf("definition URI: %s at %d:%d", result.URI, result.Range.Start.Line, result.Range.Start.Character)
 			}
 		})
 	}

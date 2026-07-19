@@ -35,9 +35,6 @@ type cemInitializationOptions struct {
 
 // Initialize handles the LSP initialize request
 func Initialize(ctx types.ServerContext, params *protocol.InitializeParams) (*protocol.InitializeResult, error) {
-	// Configure centralized logger for LSP mode
-	logging.SetLSPClient(ctx.Client())
-
 	// Send initialization message with version
 	serverVersion := version.GetVersion()
 	logging.Info("CEM LSP Server initializing (version %s)...", serverVersion)

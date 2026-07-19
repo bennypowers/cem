@@ -171,10 +171,7 @@ func TestStartTagCompletion(t *testing.T) {
 					t.Fatalf("Completion failed: %v", err)
 				}
 
-				items, ok := result.([]protocol.CompletionItem)
-				if !ok {
-					t.Fatalf("Expected []CompletionItem, got %T", result)
-				}
+				items := result
 
 				if len(items) < tt.expectedMinResults {
 					t.Errorf("Expected at least %d completions, got %d", tt.expectedMinResults, len(items))

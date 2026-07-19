@@ -104,12 +104,8 @@ func TestDefinition_GoesToActualDefinitionNotTopOfFile(t *testing.T) {
 		t.Fatal("Expected definition result, got nil")
 	}
 
-	location, ok := result.(protocol.Location)
-	if !ok {
-		t.Fatalf("Expected protocol.Location, got %T", result)
-	}
+	location := result
 
-	// Should resolve to TypeScript file (path resolution working)
 	expectedURI := "file://testdata/integration/definition-test-fixtures/components/card-element.ts"
 	if string(location.URI) != expectedURI {
 		t.Errorf("Expected URI %s, got %s", expectedURI, location.URI)

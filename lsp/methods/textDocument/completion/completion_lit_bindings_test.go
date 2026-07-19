@@ -103,8 +103,7 @@ func TestLitPropertyCompletionUsesFieldName(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	items, ok := result.([]protocol.CompletionItem)
-	require.True(t, ok, "result should be []CompletionItem")
+	items := result
 	require.NotEmpty(t, items, "should have property completions")
 
 	byLabel := make(map[string]protocol.CompletionItem)
@@ -178,7 +177,7 @@ func TestLitBooleanCompletionFiltersToBoolean(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	items, ok := result.([]protocol.CompletionItem)
+	items := result
 	require.True(t, ok)
 
 	for _, item := range items {
@@ -244,7 +243,7 @@ func TestLitEventCompletionFiltersToEvents(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	items, ok := result.([]protocol.CompletionItem)
+	items := result
 	require.True(t, ok)
 
 	labels := make(map[string]bool)

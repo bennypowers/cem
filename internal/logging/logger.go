@@ -119,6 +119,7 @@ type Logger struct {
 	mu        sync.RWMutex
 	mode      LoggerMode
 	lspClient protocol.Client
+	lspCtx    context.Context
 	verbosity Verbosity
 	serveSink ServeSink
 }
@@ -161,11 +162,14 @@ func (l *Logger) SetServeSink(sink ServeSink) {
 	l.serveSink = sink
 }
 
-// SetLSPClient sets the LSP client for LSP mode logging
-func (l *Logger) SetLSPClient(client protocol.Client) {
+// SetLSPClient sets the LSP client and connection context for LSP mode logging.
+// The context should be scoped to the connection lifetime so logging goroutines
+// are cancelled when the connection closes.
+func (l *Logger) SetLSPClient(client protocol.Client, ctx context.Context) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.lspClient = client
+	l.lspCtx = ctx
 	l.mode = ModeLSP
 }
 
@@ -287,6 +291,7 @@ func (l *Logger) Critical(format string, args ...any) {
 	l.mu.RLock()
 	mode := l.mode
 	lspClient := l.lspClient
+	lspCtx := l.lspCtx
 	sink := l.serveSink
 	l.mu.RUnlock()
 
@@ -302,7 +307,7 @@ func (l *Logger) Critical(format string, args ...any) {
 	case ModeLSP:
 		if lspClient != nil {
 			go func() {
-				_ = lspClient.ShowMessage(context.Background(), &protocol.ShowMessageParams{
+				_ = lspClient.ShowMessage(lspCtx, &protocol.ShowMessageParams{
 					Type:    protocol.MessageTypeError,
 					Message: message,
 				})
@@ -319,6 +324,7 @@ func (l *Logger) Notify(format string, args ...any) {
 	l.mu.RLock()
 	mode := l.mode
 	lspClient := l.lspClient
+	lspCtx := l.lspCtx
 	sink := l.serveSink
 	l.mu.RUnlock()
 
@@ -334,7 +340,7 @@ func (l *Logger) Notify(format string, args ...any) {
 	case ModeLSP:
 		if lspClient != nil {
 			go func() {
-				_ = lspClient.ShowMessage(context.Background(), &protocol.ShowMessageParams{
+				_ = lspClient.ShowMessage(lspCtx, &protocol.ShowMessageParams{
 					Type:    protocol.MessageTypeInfo,
 					Message: message,
 				})
@@ -351,6 +357,7 @@ func (l *Logger) NotifyWithActions(message string, actions []MessageAction) {
 	l.mu.RLock()
 	mode := l.mode
 	lspClient := l.lspClient
+	lspCtx := l.lspCtx
 	sink := l.serveSink
 	l.mu.RUnlock()
 
@@ -381,7 +388,7 @@ func (l *Logger) NotifyWithActions(message string, actions []MessageAction) {
 			}
 
 			go func() {
-				ctx := context.Background()
+				ctx := lspCtx
 				selectedAction, err := lspClient.ShowMessageRequest(ctx, &protocol.ShowMessageRequestParams{
 					Type:    protocol.MessageTypeInfo,
 					Message: message,
@@ -428,6 +435,7 @@ func (l *Logger) Success(format string, args ...any) {
 	mode := l.mode
 	verbosity := l.verbosity
 	lspClient := l.lspClient
+	lspCtx := l.lspCtx
 	sink := l.serveSink
 	l.mu.RUnlock()
 
@@ -446,7 +454,7 @@ func (l *Logger) Success(format string, args ...any) {
 		}
 	case ModeLSP:
 		message := fmt.Sprintf(format, args...)
-		l.logLSP(LogLevelInfo, message, lspClient)
+		l.logLSP(LogLevelInfo, message, lspClient, lspCtx)
 	}
 }
 
@@ -455,6 +463,7 @@ func (l *Logger) log(level LogLevel, format string, args ...any) {
 	l.mu.RLock()
 	mode := l.mode
 	lspClient := l.lspClient
+	lspCtx := l.lspCtx
 	sink := l.serveSink
 	ok := l.shouldLog(level)
 	l.mu.RUnlock()
@@ -473,7 +482,7 @@ func (l *Logger) log(level LogLevel, format string, args ...any) {
 			l.logServe(level, message, sink)
 		}
 	case ModeLSP:
-		l.logLSP(level, message, lspClient)
+		l.logLSP(level, message, lspClient, lspCtx)
 	}
 }
 
@@ -508,7 +517,7 @@ func (l *Logger) logCLI(level LogLevel, message string) {
 }
 
 // logLSP handles LSP-mode logging using LSP protocol messages
-func (l *Logger) logLSP(level LogLevel, message string, client protocol.Client) {
+func (l *Logger) logLSP(level LogLevel, message string, client protocol.Client, lspCtx context.Context) {
 	if client == nil {
 		fmt.Fprintf(os.Stderr, "[%s] %s\n", level.String(), message)
 		return
@@ -527,7 +536,7 @@ func (l *Logger) logLSP(level LogLevel, message string, client protocol.Client) 
 	}
 
 	go func() {
-		_ = client.LogMessage(context.Background(), &protocol.LogMessageParams{
+		_ = client.LogMessage(lspCtx, &protocol.LogMessageParams{
 			Type:    messageType,
 			Message: message,
 		})
@@ -586,8 +595,8 @@ func LogDurations(title string, entries []tui.DurationData) {
 }
 
 
-func SetLSPClient(client protocol.Client) {
-	globalLogger.SetLSPClient(client)
+func SetLSPClient(client protocol.Client, ctx context.Context) {
+	globalLogger.SetLSPClient(client, ctx)
 }
 
 func SetVerbosity(v Verbosity) {

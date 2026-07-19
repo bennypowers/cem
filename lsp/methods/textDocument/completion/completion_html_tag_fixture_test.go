@@ -108,10 +108,7 @@ func TestHTMLTagCompletions_Fixtures(t *testing.T) {
 			t.Fatalf("Completion failed: %v", err)
 		}
 
-		actual, ok := result.([]protocol.CompletionItem)
-		if !ok {
-			t.Fatalf("Expected []CompletionItem, got %T", result)
-		}
+		actual := result
 
 		// Load expected completions from golden file
 		var expected []CompletionItemMatcher
