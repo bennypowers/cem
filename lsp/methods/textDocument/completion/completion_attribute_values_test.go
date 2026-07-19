@@ -28,7 +28,7 @@ import (
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // TestUnionTypeParser has been consolidated into completion_type_parsing_test.go
@@ -138,17 +138,19 @@ func TestAttributeCompletionAfterSpaces(t *testing.T) {
 			// For boolean attributes, verify they complete without value syntax
 			for _, completion := range completions {
 				if completion.Label == "disabled" {
-					if completion.InsertText == nil || *completion.InsertText != "disabled" {
+					insertText, ok := completion.InsertText.Get()
+					if !ok || insertText != "disabled" {
 						t.Errorf("Boolean attribute 'disabled' should insert just 'disabled', got: %v", completion.InsertText)
 					}
 					// Should not have snippet format for boolean attributes
-					if completion.InsertTextFormat != nil && *completion.InsertTextFormat == protocol.InsertTextFormatSnippet {
+					if completion.InsertTextFormat == protocol.InsertTextFormatSnippet {
 						t.Errorf("Boolean attribute should not use snippet format")
 					}
 				} else {
 					// Non-boolean attributes should use snippet format
 					expectedSnippet := fmt.Sprintf("%s=\"$0\"", completion.Label)
-					if completion.InsertText == nil || *completion.InsertText != expectedSnippet {
+					insertText, ok := completion.InsertText.Get()
+					if !ok || insertText != expectedSnippet {
 						t.Logf("Non-boolean attribute '%s' uses snippet format: %v", completion.Label, completion.InsertText)
 					}
 				}

@@ -17,11 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package types
 
 import (
-	"bennypowers.dev/cem/internal/platform"
-	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/internal/modulegraph"
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/treesitter"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	M "bennypowers.dev/cem/manifest"
+	"go.lsp.dev/protocol"
 )
 
 // DocumentManager interface for document operations
@@ -61,6 +61,10 @@ type Registry interface {
 // ServerContext provides all dependencies needed for LSP methods
 // This unified context eliminates the need for method-specific context interfaces
 type ServerContext interface {
+	// LSP client for sending notifications/requests back to the editor
+	Client() protocol.Client
+	SetClient(protocol.Client)
+
 	// Server lifecycle
 	InitializeManifests() error
 	UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []protocol.WorkspaceFolder) error

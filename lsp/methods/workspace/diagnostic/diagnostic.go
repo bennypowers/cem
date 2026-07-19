@@ -20,12 +20,12 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	"go.lsp.dev/uri"
 )
 
 // WorkspaceDiagnostic handles the workspace/diagnostic request (LSP 3.17 pull model)
-func WorkspaceDiagnostic(ctx types.ServerContext, context *glsp.Context, params *protocol.WorkspaceDiagnosticParams) (*protocol.WorkspaceDiagnosticReport, error) {
+func WorkspaceDiagnostic(ctx types.ServerContext, params *protocol.WorkspaceDiagnosticParams) (*protocol.WorkspaceDiagnosticReport, error) {
 	helpers.SafeDebugLog("[DIAGNOSTICS] Workspace diagnostic request")
 
 	items := []protocol.WorkspaceDocumentDiagnosticReport{}
@@ -33,12 +33,12 @@ func WorkspaceDiagnostic(ctx types.ServerContext, context *glsp.Context, params 
 		docURI := doc.URI()
 		diagnostics := publishDiagnostics.ComputeDiagnostics(ctx, doc)
 
-		items = append(items, protocol.WorkspaceFullDocumentDiagnosticReport{
+		items = append(items, &protocol.WorkspaceFullDocumentDiagnosticReport{
 			FullDocumentDiagnosticReport: protocol.FullDocumentDiagnosticReport{
 				Kind:  string(protocol.DocumentDiagnosticReportKindFull),
 				Items: diagnostics,
 			},
-			URI:     docURI,
+			URI:     uri.URI(docURI),
 			Version: nil,
 		})
 	}

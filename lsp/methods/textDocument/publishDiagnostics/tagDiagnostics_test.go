@@ -32,7 +32,7 @@ import (
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
 	W "bennypowers.dev/cem/internal/workspace"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 func TestTagDiagnostics_WithImports(t *testing.T) {
@@ -351,7 +351,7 @@ func TestTagDiagnostics_MissingImports(t *testing.T) {
 	foundMessages := make(map[string]bool)
 	for i, diag := range diagnostics {
 		t.Logf("Found diagnostic %d: %s", i, diag.Message)
-		foundMessages[diag.Message] = true
+		foundMessages[msgString(diag.Message)] = true
 	}
 
 	// Verify we get appropriate error messages
@@ -527,7 +527,7 @@ func TestTagDiagnostics_ActualMissingImports(t *testing.T) {
 
 	// Check that diagnostics contain missing import messages
 	for _, diag := range diagnostics {
-		if !strings.Contains(diag.Message, "not imported") {
+		if !strings.Contains(msgString(diag.Message), "not imported") {
 			t.Errorf("Expected missing import diagnostic, got: %s", diag.Message)
 		}
 	}
@@ -651,7 +651,7 @@ func TestTagDiagnostics_SideEffectImports(t *testing.T) {
 	// Find the rh-tab-panel diagnostic
 	var tabPanelDiagnostic *protocol.Diagnostic
 	for _, diag := range diagnostics {
-		if strings.Contains(diag.Message, "rh-tab-panel") {
+		if strings.Contains(msgString(diag.Message), "rh-tab-panel") {
 			tabPanelDiagnostic = &diag
 			break
 		}
@@ -664,7 +664,7 @@ func TestTagDiagnostics_SideEffectImports(t *testing.T) {
 
 	// Currently, this should show as "not imported" because the module graph
 	// doesn't track that rh-tabs.js imports rh-tab-panel.js as a side effect
-	if !strings.Contains(tabPanelDiagnostic.Message, "not imported") {
+	if !strings.Contains(msgString(tabPanelDiagnostic.Message), "not imported") {
 		t.Errorf("Expected 'not imported' diagnostic for rh-tab-panel, got: %s", tabPanelDiagnostic.Message)
 	}
 
@@ -771,12 +771,12 @@ func TestTagDiagnostics_JsDocExamples(t *testing.T) {
 
 	// Verify the diagnostic is for my-foo (the actual code, not JSDoc examples)
 	diag := diagnostics[0]
-	if !strings.Contains(diag.Message, "my-foo") {
+	if !strings.Contains(msgString(diag.Message), "my-foo") {
 		t.Errorf("Expected diagnostic for 'my-foo', got: %s", diag.Message)
 	}
 
 	// Verify it's a missing import diagnostic (my-foo exists in manifest but not imported)
-	if !strings.Contains(diag.Message, "not imported") {
+	if !strings.Contains(msgString(diag.Message), "not imported") {
 		t.Errorf("Expected 'not imported' diagnostic for my-foo, got: %s", diag.Message)
 	}
 }

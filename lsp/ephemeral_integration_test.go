@@ -21,10 +21,11 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform/testutil"
+	W "bennypowers.dev/cem/internal/workspace"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	M "bennypowers.dev/cem/manifest"
-	W "bennypowers.dev/cem/internal/workspace"
+	"go.lsp.dev/protocol"
 )
 
 // newEphemeralTestServer creates a server and opens the fixture's input.ts,
@@ -258,7 +259,7 @@ func testLocalDefinitionUnknownSibling(t *testing.T, fixture *testutil.LSPFixtur
 		return
 	}
 
-	if diagnostics[0].Message == "" {
+	if diagnostics[0].Message == protocol.String("") {
 		t.Error("Expected diagnostic message for unknown-el")
 	}
 }

@@ -25,7 +25,7 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 func TestSlotAttributeCompletions(t *testing.T) {
@@ -173,11 +173,11 @@ func TestSlotCompletionDetails(t *testing.T) {
 
 	// Check that completions have proper details
 	for _, completion := range completions {
-		if completion.Kind == nil || *completion.Kind != protocol.CompletionItemKindValue {
+		if completion.Kind == 0 || completion.Kind != protocol.CompletionItemKindValue {
 			t.Errorf("Completion '%s' should have Value kind", completion.Label)
 		}
 
-		if completion.Detail == nil {
+		if completion.Detail.IsZero() {
 			t.Errorf("Completion '%s' should have detail", completion.Label)
 		}
 
@@ -291,11 +291,12 @@ func TestSlotAttributeNameSuggestion(t *testing.T) {
 					foundSlot = true
 
 					// Verify the completion has proper structure
-					if completion.InsertText == nil || *completion.InsertText != `slot="$0"` {
+					insertText, ok := completion.InsertText.Get()
+					if !ok || insertText != `slot="$0"` {
 						t.Errorf("Expected slot completion to have snippet insert text 'slot=\"$0\"', got: %v", completion.InsertText)
 					}
 
-					if completion.Kind == nil || *completion.Kind != protocol.CompletionItemKindProperty {
+					if completion.Kind == 0 || completion.Kind != protocol.CompletionItemKindProperty {
 						t.Errorf("Expected slot completion to have Property kind")
 					}
 

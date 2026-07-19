@@ -24,8 +24,8 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	"go.lsp.dev/uri"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -90,21 +90,20 @@ func TestLitPropertyCompletionUsesFieldName(t *testing.T) {
 	ctx.AddManifest(&pkg)
 
 	content := "const tpl = html`<test-element .`;"
-	uri := "file:///test.ts"
-	doc := dm.OpenDocument(uri, content, 1)
-	ctx.AddDocument(uri, doc)
+	docURI := "file:///test.ts"
+	doc := dm.OpenDocument(docURI, content, 1)
+	ctx.AddDocument(docURI, doc)
 
-	result, err := completion.Completion(ctx, &glsp.Context{}, &protocol.CompletionParams{
+	result, err := completion.Completion(ctx, &protocol.CompletionParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+			TextDocument: protocol.TextDocumentIdentifier{URI: uri.URI(docURI)},
 			Position:     protocol.Position{Line: 0, Character: 32},
 		},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	items, ok := result.([]protocol.CompletionItem)
-	require.True(t, ok, "result should be []CompletionItem")
+	items := result
 	require.NotEmpty(t, items, "should have property completions")
 
 	byLabel := make(map[string]protocol.CompletionItem)
@@ -117,8 +116,9 @@ func TestLitPropertyCompletionUsesFieldName(t *testing.T) {
 	assert.Contains(t, byLabel, ".disabled", "should offer .disabled")
 
 	if item, ok := byLabel[".myAttr"]; ok {
-		require.NotNil(t, item.InsertText, "InsertText should be set")
-		assert.Equal(t, "myAttr", *item.InsertText, "InsertText should be the field name")
+		require.False(t, item.InsertText.IsZero(), "InsertText should be set")
+		v, _ := item.InsertText.Get()
+		assert.Equal(t, "myAttr", v, "InsertText should be the field name")
 	}
 }
 
@@ -164,21 +164,20 @@ func TestLitBooleanCompletionFiltersToBoolean(t *testing.T) {
 	ctx.AddManifest(&pkg)
 
 	content := "const tpl = html`<test-element ?`;"
-	uri := "file:///test.ts"
-	doc := dm.OpenDocument(uri, content, 1)
-	ctx.AddDocument(uri, doc)
+	docURI := "file:///test.ts"
+	doc := dm.OpenDocument(docURI, content, 1)
+	ctx.AddDocument(docURI, doc)
 
-	result, err := completion.Completion(ctx, &glsp.Context{}, &protocol.CompletionParams{
+	result, err := completion.Completion(ctx, &protocol.CompletionParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+			TextDocument: protocol.TextDocumentIdentifier{URI: uri.URI(docURI)},
 			Position:     protocol.Position{Line: 0, Character: 32},
 		},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	items, ok := result.([]protocol.CompletionItem)
-	require.True(t, ok)
+	items := result
 
 	for _, item := range items {
 		assert.NotEqual(t, "?variant", item.Label, "non-boolean 'variant' should not appear in ? completions")
@@ -230,21 +229,20 @@ func TestLitEventCompletionFiltersToEvents(t *testing.T) {
 	ctx.AddManifest(&pkg)
 
 	content := "const tpl = html`<test-element @`;"
-	uri := "file:///test.ts"
-	doc := dm.OpenDocument(uri, content, 1)
-	ctx.AddDocument(uri, doc)
+	docURI := "file:///test.ts"
+	doc := dm.OpenDocument(docURI, content, 1)
+	ctx.AddDocument(docURI, doc)
 
-	result, err := completion.Completion(ctx, &glsp.Context{}, &protocol.CompletionParams{
+	result, err := completion.Completion(ctx, &protocol.CompletionParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+			TextDocument: protocol.TextDocumentIdentifier{URI: uri.URI(docURI)},
 			Position:     protocol.Position{Line: 0, Character: 32},
 		},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
-	items, ok := result.([]protocol.CompletionItem)
-	require.True(t, ok)
+	items := result
 
 	labels := make(map[string]bool)
 	for _, item := range items {

@@ -26,7 +26,7 @@ import (
 	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/internal/modulegraph"
 	"bennypowers.dev/cem/internal/treesitter"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // MockServerContext provides a unified mock implementation of ServerContext for all tests
@@ -48,6 +48,7 @@ type MockServerContext struct {
 	ModuleGraphInst    *modulegraph.ModuleGraph
 	FS                 platform.FileSystem
 	AdditionalPackages []string
+	client          protocol.Client
 	config          types.ServerConfig
 	pullDiagnostics bool
 	types.Registry
@@ -184,8 +185,15 @@ func (m *MockServerContext) SetAdditionalPackages(packages []string) {
 }
 
 func (m *MockServerContext) Close() error {
-	// Mock implementation - nothing to clean up
 	return nil
+}
+
+func (m *MockServerContext) ManifestCount() int {
+	return len(m.Manifests)
+}
+
+func (m *MockServerContext) ElementCount() int {
+	return len(m.Elements)
 }
 
 // Document operations
@@ -461,6 +469,17 @@ func (m *MockServerContext) SetUsePullDiagnostics(enabled bool) {
 	m.pullDiagnostics = enabled
 }
 
+func (m *MockServerContext) Client() protocol.Client {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.client
+}
+
+func (m *MockServerContext) SetClient(client protocol.Client) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.client = client
+}
 
 func (m *MockServerContext) ModuleGraph() *modulegraph.ModuleGraph {
 	m.mu.Lock()

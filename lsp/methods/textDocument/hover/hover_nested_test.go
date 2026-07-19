@@ -25,7 +25,8 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	"go.lsp.dev/uri"
 )
 
 // TestHover_NestedElements tests that hovering on a custom element nested
@@ -51,9 +52,9 @@ func TestHover_NestedElements(t *testing.T) {
 		defer dm.Close()
 		ctx.SetDocumentManager(dm)
 
-		uri := "file:///test.ts"
-		doc := dm.OpenDocument(uri, fixture.InputContent, 1)
-		ctx.AddDocument(uri, doc)
+		docURI := "file:///test.ts"
+		doc := dm.OpenDocument(docURI, fixture.InputContent, 1)
+		ctx.AddDocument(docURI, doc)
 
 		// Line 5:  "      <outer-surface color-palette="lightest">"
 		//           outer-surface tag at chars 7-20, "color-palette" attr at chars 21-34
@@ -75,19 +76,19 @@ func TestHover_NestedElements(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				params := &protocol.HoverParams{
 					TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-						TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+						TextDocument: protocol.TextDocumentIdentifier{URI: uri.URI(docURI)},
 						Position:     tc.position,
 					},
 				}
 
-				result, err := hover.Hover(ctx, nil, params)
+				result, err := hover.Hover(ctx, params)
 				if err != nil {
 					t.Fatalf("Hover failed: %v", err)
 				}
 
-				actualContents, ok := result.Contents.(protocol.MarkupContent)
+				actualContents, ok := result.Contents.(*protocol.MarkupContent)
 				if !ok {
-					t.Fatalf("Expected Contents to be MarkupContent, got %T", result.Contents)
+					t.Fatalf("Expected Contents to be *MarkupContent, got %T", result.Contents)
 				}
 
 				// Unmarshal expected golden into a typed struct so Contents

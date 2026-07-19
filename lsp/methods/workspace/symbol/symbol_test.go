@@ -22,8 +22,7 @@ import (
 
 	"bennypowers.dev/cem/lsp/methods/workspace/symbol"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 func TestWorkspaceSymbol(t *testing.T) {
@@ -61,8 +60,6 @@ func TestWorkspaceSymbol(t *testing.T) {
 	for tagName, desc := range descriptions {
 		ctx.AddElementDescription(tagName, desc)
 	}
-
-	mockGlspContext := &glsp.Context{}
 
 	tests := []struct {
 		name          string
@@ -115,7 +112,7 @@ func TestWorkspaceSymbol(t *testing.T) {
 				Query: tt.query,
 			}
 
-			symbols, err := symbol.Symbol(ctx, mockGlspContext, params)
+			symbols, err := symbol.Symbol(ctx, params)
 			if err != nil {
 				t.Fatalf("Symbol() error = %v", err)
 			}
@@ -151,10 +148,9 @@ func TestWorkspaceSymbolProperties(t *testing.T) {
 	})
 	ctx.AddElementDescription("test-element", "Test element for verification")
 
-	mockGlspContext := &glsp.Context{}
 	params := &protocol.WorkspaceSymbolParams{Query: "test"}
 
-	symbols, err := symbol.Symbol(ctx, mockGlspContext, params)
+	symbols, err := symbol.Symbol(ctx, params)
 	if err != nil {
 		t.Fatalf("Symbol() error = %v", err)
 	}
@@ -178,7 +174,7 @@ func TestWorkspaceSymbolProperties(t *testing.T) {
 
 	// Check location URI
 	expectedURI := "file:///workspace/src/test-element.ts"
-	if symbol.Location.URI != expectedURI {
+	if string(symbol.Location.URI) != expectedURI {
 		t.Errorf("Expected URI '%s', got '%s'", expectedURI, symbol.Location.URI)
 	}
 
@@ -202,10 +198,9 @@ func TestWorkspaceSymbolAbsolutePaths(t *testing.T) {
 		ModulePathStr: "/absolute/path/to/element.ts",
 	})
 
-	mockGlspContext := &glsp.Context{}
 	params := &protocol.WorkspaceSymbolParams{Query: "abs"}
 
-	symbols, err := symbol.Symbol(ctx, mockGlspContext, params)
+	symbols, err := symbol.Symbol(ctx, params)
 	if err != nil {
 		t.Fatalf("Symbol() error = %v", err)
 	}
@@ -218,7 +213,7 @@ func TestWorkspaceSymbolAbsolutePaths(t *testing.T) {
 
 	// Check absolute path is used directly
 	expectedURI := "file:///absolute/path/to/element.ts"
-	if symbol.Location.URI != expectedURI {
+	if string(symbol.Location.URI) != expectedURI {
 		t.Errorf("Expected URI '%s', got '%s'", expectedURI, symbol.Location.URI)
 	}
 }
@@ -230,10 +225,9 @@ func TestWorkspaceSymbolNoSource(t *testing.T) {
 	ctx.TagNames = []string{"no-source-element"}
 	ctx.SetWorkspaceRoot("/workspace")
 
-	mockGlspContext := &glsp.Context{}
 	params := &protocol.WorkspaceSymbolParams{Query: "no-source"}
 
-	symbols, err := symbol.Symbol(ctx, mockGlspContext, params)
+	symbols, err := symbol.Symbol(ctx, params)
 	if err != nil {
 		t.Fatalf("Symbol() error = %v", err)
 	}
@@ -252,16 +246,15 @@ func TestWorkspaceSymbolURIValidity(t *testing.T) {
 		SourceHrefStr: "src/valid-element.ts",
 	})
 
-	mockGlspContext := &glsp.Context{}
 	params := &protocol.WorkspaceSymbolParams{Query: ""}
 
-	symbols, err := symbol.Symbol(ctx, mockGlspContext, params)
+	symbols, err := symbol.Symbol(ctx, params)
 	if err != nil {
 		t.Fatalf("Symbol() error = %v", err)
 	}
 
 	for _, s := range symbols {
-		if s.Location.URI == "" {
+		if string(s.Location.URI) == "" {
 			t.Errorf("Symbol '%s' has empty URI, violates LSP spec", s.Name)
 		}
 	}

@@ -30,13 +30,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package logging
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"sync"
 
 	lipgloss "charm.land/lipgloss/v2"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	"go.lsp.dev/uri"
 
 	"bennypowers.dev/cem/internal/tui"
 )
@@ -115,11 +116,12 @@ type DurationSink interface {
 
 // Logger provides centralized logging that adapts to CLI vs LSP contexts
 type Logger struct {
-	mu         sync.RWMutex
-	mode       LoggerMode
-	lspContext *glsp.Context
-	verbosity  Verbosity
-	serveSink  ServeSink
+	mu        sync.RWMutex
+	mode      LoggerMode
+	lspClient protocol.Client
+	lspCtx    context.Context
+	verbosity Verbosity
+	serveSink ServeSink
 }
 
 // LoggerMode determines how logs are output
@@ -160,11 +162,14 @@ func (l *Logger) SetServeSink(sink ServeSink) {
 	l.serveSink = sink
 }
 
-// SetLSPContext sets the LSP context for LSP mode logging
-func (l *Logger) SetLSPContext(context *glsp.Context) {
+// SetLSPClient sets the LSP client and connection context for LSP mode logging.
+// The context should be scoped to the connection lifetime so logging goroutines
+// are cancelled when the connection closes.
+func (l *Logger) SetLSPClient(client protocol.Client, ctx context.Context) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.lspContext = context
+	l.lspClient = client
+	l.lspCtx = ctx
 	l.mode = ModeLSP
 }
 
@@ -285,7 +290,8 @@ func (l *Logger) Error(format string, args ...any) {
 func (l *Logger) Critical(format string, args ...any) {
 	l.mu.RLock()
 	mode := l.mode
-	lspContext := l.lspContext
+	lspClient := l.lspClient
+	lspCtx := l.lspCtx
 	sink := l.serveSink
 	l.mu.RUnlock()
 
@@ -299,16 +305,14 @@ func (l *Logger) Critical(format string, args ...any) {
 			sink.Error("%s", message)
 		}
 	case ModeLSP:
-		if lspContext != nil {
-			// Always use window/showMessage for critical errors (popup)
+		if lspClient != nil {
 			go func() {
-				lspContext.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
+				_ = lspClient.ShowMessage(lspCtx, &protocol.ShowMessageParams{
 					Type:    protocol.MessageTypeError,
 					Message: message,
 				})
 			}()
 		} else {
-			// Fallback to stderr
 			fmt.Fprintf(os.Stderr, "[CRITICAL] %s\n", message)
 		}
 	}
@@ -319,7 +323,8 @@ func (l *Logger) Critical(format string, args ...any) {
 func (l *Logger) Notify(format string, args ...any) {
 	l.mu.RLock()
 	mode := l.mode
-	lspContext := l.lspContext
+	lspClient := l.lspClient
+	lspCtx := l.lspCtx
 	sink := l.serveSink
 	l.mu.RUnlock()
 
@@ -333,15 +338,14 @@ func (l *Logger) Notify(format string, args ...any) {
 			sink.Info("%s", message)
 		}
 	case ModeLSP:
-		if lspContext != nil {
+		if lspClient != nil {
 			go func() {
-				lspContext.Notify(protocol.ServerWindowShowMessage, &protocol.ShowMessageParams{
+				_ = lspClient.ShowMessage(lspCtx, &protocol.ShowMessageParams{
 					Type:    protocol.MessageTypeInfo,
 					Message: message,
 				})
 			}()
 		} else {
-			// Fallback to stderr
 			fmt.Fprintf(os.Stderr, "[NOTIFY] %s\n", message)
 		}
 	}
@@ -352,7 +356,8 @@ func (l *Logger) Notify(format string, args ...any) {
 func (l *Logger) NotifyWithActions(message string, actions []MessageAction) {
 	l.mu.RLock()
 	mode := l.mode
-	lspContext := l.lspContext
+	lspClient := l.lspClient
+	lspCtx := l.lspCtx
 	sink := l.serveSink
 	l.mu.RUnlock()
 
@@ -374,8 +379,7 @@ func (l *Logger) NotifyWithActions(message string, actions []MessageAction) {
 			}
 		}
 	case ModeLSP:
-		if lspContext != nil {
-			// Convert to LSP protocol format
+		if lspClient != nil {
 			actionItems := make([]protocol.MessageActionItem, len(actions))
 			for i, action := range actions {
 				actionItems[i] = protocol.MessageActionItem{
@@ -383,34 +387,30 @@ func (l *Logger) NotifyWithActions(message string, actions []MessageAction) {
 				}
 			}
 
-			// Send the request and handle the response
 			go func() {
-				var selectedAction *protocol.MessageActionItem
-				lspContext.Call(string(protocol.ServerWindowShowMessageRequest), &protocol.ShowMessageRequestParams{
+				ctx := lspCtx
+				selectedAction, err := lspClient.ShowMessageRequest(ctx, &protocol.ShowMessageRequestParams{
 					Type:    protocol.MessageTypeInfo,
 					Message: message,
 					Actions: actionItems,
-				}, &selectedAction)
+				})
 
-				// Handle action selection
-				if selectedAction != nil {
-					// Find the corresponding action and open its URL
-					for _, action := range actions {
-						if action.Title == selectedAction.Title && action.URL != "" {
-							// Use window/showDocument to open the URL
-							external := true
-							var showDocResult *protocol.ShowDocumentResult
-							lspContext.Call(string(protocol.ServerWindowShowDocument), &protocol.ShowDocumentParams{
-								URI:      protocol.URI(action.URL),
-								External: &external,
-							}, &showDocResult)
-							break
-						}
+				if err != nil || selectedAction == nil {
+					return
+				}
+
+				for _, action := range actions {
+					if action.Title == selectedAction.Title && action.URL != "" {
+						external := true
+						_, _ = lspClient.ShowDocument(ctx, &protocol.ShowDocumentParams{
+							URI:      uri.URI(action.URL),
+							External: &external,
+						})
+						break
 					}
 				}
 			}()
 		} else {
-			// Fallback to stderr
 			fmt.Fprintf(os.Stderr, "[NOTIFY] %s\n", message)
 			for _, action := range actions {
 				if action.URL != "" {
@@ -434,7 +434,8 @@ func (l *Logger) Success(format string, args ...any) {
 	l.mu.RLock()
 	mode := l.mode
 	verbosity := l.verbosity
-	lspContext := l.lspContext
+	lspClient := l.lspClient
+	lspCtx := l.lspCtx
 	sink := l.serveSink
 	l.mu.RUnlock()
 
@@ -453,7 +454,7 @@ func (l *Logger) Success(format string, args ...any) {
 		}
 	case ModeLSP:
 		message := fmt.Sprintf(format, args...)
-		l.logLSP(LogLevelInfo, message, lspContext)
+		l.logLSP(LogLevelInfo, message, lspClient, lspCtx)
 	}
 }
 
@@ -461,7 +462,8 @@ func (l *Logger) Success(format string, args ...any) {
 func (l *Logger) log(level LogLevel, format string, args ...any) {
 	l.mu.RLock()
 	mode := l.mode
-	lspContext := l.lspContext
+	lspClient := l.lspClient
+	lspCtx := l.lspCtx
 	sink := l.serveSink
 	ok := l.shouldLog(level)
 	l.mu.RUnlock()
@@ -480,7 +482,7 @@ func (l *Logger) log(level LogLevel, format string, args ...any) {
 			l.logServe(level, message, sink)
 		}
 	case ModeLSP:
-		l.logLSP(level, message, lspContext)
+		l.logLSP(level, message, lspClient, lspCtx)
 	}
 }
 
@@ -515,14 +517,12 @@ func (l *Logger) logCLI(level LogLevel, message string) {
 }
 
 // logLSP handles LSP-mode logging using LSP protocol messages
-func (l *Logger) logLSP(level LogLevel, message string, context *glsp.Context) {
-	if context == nil {
-		// Fallback to stderr if no LSP context available
+func (l *Logger) logLSP(level LogLevel, message string, client protocol.Client, lspCtx context.Context) {
+	if client == nil {
 		fmt.Fprintf(os.Stderr, "[%s] %s\n", level.String(), message)
 		return
 	}
 
-	// Map log levels to LSP message types
 	var messageType protocol.MessageType
 	switch level {
 	case LogLevelTrace, LogLevelDebug:
@@ -535,10 +535,8 @@ func (l *Logger) logLSP(level LogLevel, message string, context *glsp.Context) {
 		messageType = protocol.MessageTypeError
 	}
 
-	// Use window/logMessage for all standard log levels (non-intrusive)
-	// Only Critical() method uses window/showMessage for popup notifications
 	go func() {
-		context.Notify(protocol.ServerWindowLogMessage, &protocol.LogMessageParams{
+		_ = client.LogMessage(lspCtx, &protocol.LogMessageParams{
 			Type:    messageType,
 			Message: message,
 		})
@@ -597,8 +595,8 @@ func LogDurations(title string, entries []tui.DurationData) {
 }
 
 
-func SetLSPContext(context *glsp.Context) {
-	globalLogger.SetLSPContext(context)
+func SetLSPClient(client protocol.Client, ctx context.Context) {
+	globalLogger.SetLSPClient(client, ctx)
 }
 
 func SetVerbosity(v Verbosity) {

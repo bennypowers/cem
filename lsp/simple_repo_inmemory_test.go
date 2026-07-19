@@ -22,12 +22,13 @@ import (
 	"strings"
 	"testing"
 
+	"bennypowers.dev/cem/internal/workspace"
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
-	"bennypowers.dev/cem/internal/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.lsp.dev/protocol"
 )
 
 // Inline: integration test, scalar assertions
@@ -117,7 +118,7 @@ func TestSimpleRepoInMemoryGeneration(t *testing.T) {
 
 		// Should have NO "unknown element" diagnostics for our elements
 		for _, diag := range diagnostics {
-			message := diag.Message
+			message := string(diag.Message.(protocol.String))
 			if (strings.Contains(message, "my-card") || strings.Contains(message, "my-button")) &&
 				strings.Contains(message, "Unknown") {
 				t.Errorf("FALSE POSITIVE: Got 'unknown element' diagnostic for in-memory generated element: %s", message)

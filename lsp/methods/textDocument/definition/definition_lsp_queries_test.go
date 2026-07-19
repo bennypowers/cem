@@ -25,7 +25,8 @@ import (
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/definition"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	urilib "go.lsp.dev/uri"
 )
 
 func TestDefinition_LSPQueriesIncludeClasses(t *testing.T) {
@@ -88,12 +89,12 @@ func TestDefinition_GoesToActualDefinitionNotTopOfFile(t *testing.T) {
 	// Create definition request inside the custom element
 	params := &protocol.DefinitionParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-			TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+			TextDocument: protocol.TextDocumentIdentifier{URI: urilib.URI(uri)},
 			Position:     protocol.Position{Line: 3, Character: 5}, // Inside <card-element>
 		},
 	}
 
-	result, err := definition.Definition(ctx, nil, params)
+	result, err := definition.Definition(ctx, params)
 
 	if err != nil {
 		t.Fatalf("Definition request failed: %v", err)
@@ -103,14 +104,10 @@ func TestDefinition_GoesToActualDefinitionNotTopOfFile(t *testing.T) {
 		t.Fatal("Expected definition result, got nil")
 	}
 
-	location, ok := result.(protocol.Location)
-	if !ok {
-		t.Fatalf("Expected protocol.Location, got %T", result)
-	}
+	location := result
 
-	// Should resolve to TypeScript file (path resolution working)
 	expectedURI := "file://testdata/integration/definition-test-fixtures/components/card-element.ts"
-	if location.URI != expectedURI {
+	if string(location.URI) != expectedURI {
 		t.Errorf("Expected URI %s, got %s", expectedURI, location.URI)
 	}
 

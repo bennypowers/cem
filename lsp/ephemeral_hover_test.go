@@ -26,7 +26,8 @@ import (
 	"bennypowers.dev/cem/lsp"
 	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
 	W "bennypowers.dev/cem/internal/workspace"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	"go.lsp.dev/uri"
 )
 
 // Cursor positions for each ephemeral hover test fixture
@@ -67,28 +68,28 @@ func TestEphemeralHover(t *testing.T) {
 		}
 
 		// Open the primary input as a document
-		var uri string
+		var docURI string
 		if fixture.InputType == "ts" {
-			uri = "file:///test.ts"
+			docURI = "file:///test.ts"
 
 			// For TypeScript inputs, the input IS the element definition —
 			// synthesize it for self-referencing hover
-			dm.OpenDocument(uri, fixture.InputContent, 1)
-			server.SynthesizeEphemeralElements(uri)
+			dm.OpenDocument(docURI, fixture.InputContent, 1)
+			server.SynthesizeEphemeralElements(docURI)
 
 		} else {
-			uri = "file:///test.html"
-			dm.OpenDocument(uri, fixture.InputContent, 1)
+			docURI = "file:///test.html"
+			dm.OpenDocument(docURI, fixture.InputContent, 1)
 		}
 
 		params := &protocol.HoverParams{
 			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-				TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+				TextDocument: protocol.TextDocumentIdentifier{URI: uri.URI(docURI)},
 				Position:     cursor,
 			},
 		}
 
-		result, err := hover.Hover(server, nil, params)
+		result, err := hover.Hover(server, params)
 		if err != nil {
 			t.Fatalf("Hover failed: %v", err)
 		}
@@ -124,9 +125,9 @@ func TestEphemeralHover(t *testing.T) {
 			t.Fatalf("Failed to get expected hover: %v", err)
 		}
 
-		actualContents, ok := result.Contents.(protocol.MarkupContent)
+		actualContents, ok := result.Contents.(*protocol.MarkupContent)
 		if !ok {
-			t.Fatalf("Expected Contents to be MarkupContent, got %T", result.Contents)
+			t.Fatalf("Expected Contents to be *MarkupContent, got %T", result.Contents)
 		}
 
 		if actualContents.Kind != expected.Contents.Kind {

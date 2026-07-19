@@ -27,7 +27,8 @@ import (
 	"bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/internal/modulegraph"
 	"bennypowers.dev/cem/internal/treesitter"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"encoding/json"
+	"go.lsp.dev/protocol"
 )
 
 // analyzeTagNameDiagnostics finds invalid custom element tag names and suggests corrections
@@ -101,18 +102,16 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 
 		if existsInManifest && isImported {
 			if decl := ctx.FindCustomElementDeclaration(tagName); decl != nil && decl.IsDeprecated() {
-				severity := protocol.DiagnosticSeverityHint
-				source := "cem-lsp"
 				d := protocol.Diagnostic{
 					Range:    match.Range,
-					Severity: &severity,
-					Source:   &source,
-					Tags:     []protocol.DiagnosticTag{protocol.DiagnosticTagDeprecated},
+					Severity: protocol.DiagnosticSeverityHint,
+					Source:   protocol.NewOptional("cem-lsp"),
+					Tags:     protocol.NewDiagnosticTags(protocol.DiagnosticTagDeprecated),
 				}
 				if reason, ok := decl.Deprecated.Value().(string); ok && reason != "" {
-					d.Message = fmt.Sprintf("Custom element '%s' is deprecated: %s", tagName, reason)
+					d.Message = protocol.String(fmt.Sprintf("Custom element '%s' is deprecated: %s", tagName, reason))
 				} else {
-					d.Message = fmt.Sprintf("Custom element '%s' is deprecated", tagName)
+					d.Message = protocol.String(fmt.Sprintf("Custom element '%s' is deprecated", tagName))
 				}
 				diagnostics = append(diagnostics, d)
 			}
@@ -126,15 +125,13 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 			// Find closest match using Levenshtein distance
 			closestMatch, distance := findClosestMatch(tagName, allAvailableTagNames, 3)
 
-			severity := protocol.DiagnosticSeverityError
-			source := "cem-lsp"
 			var diagnostic protocol.Diagnostic
 			diagnostic.Range = match.Range
-			diagnostic.Severity = &severity
-			diagnostic.Source = &source
+			diagnostic.Severity = protocol.DiagnosticSeverityError
+			diagnostic.Source = protocol.NewOptional("cem-lsp")
 
 			if closestMatch != "" && distance <= 2 {
-				diagnostic.Message = fmt.Sprintf("Unknown custom element '%s'. Did you mean '%s'?", tagName, closestMatch)
+				diagnostic.Message = protocol.String(fmt.Sprintf("Unknown custom element '%s'. Did you mean '%s'?", tagName, closestMatch))
 
 				// Add code action data for quick fix
 				autofixData := &types.AutofixData{
@@ -143,7 +140,8 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 					Suggestion: closestMatch,
 					Range:      match.Range,
 				}
-				diagnostic.Data = autofixData.ToMap()
+				data, _ := json.Marshal(autofixData.ToMap())
+				diagnostic.Data = data
 			} else {
 				if len(allAvailableTagNames) > 0 {
 					// For large distances, avoid showing random elements which might not be helpful
@@ -154,13 +152,13 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 						copy(sortedNames, allAvailableTagNames)
 						slices.Sort(sortedNames)
 						availableList := strings.Join(sortedNames, "', '")
-						diagnostic.Message = fmt.Sprintf("Unknown custom element '%s'. Available elements: '%s'", tagName, availableList)
+						diagnostic.Message = protocol.String(fmt.Sprintf("Unknown custom element '%s'. Available elements: '%s'", tagName, availableList))
 					} else {
 						// For projects with many elements, suggest checking documentation instead
-						diagnostic.Message = fmt.Sprintf("Unknown custom element '%s'. Check available elements in your project's manifest or documentation.", tagName)
+						diagnostic.Message = protocol.String(fmt.Sprintf("Unknown custom element '%s'. Check available elements in your project's manifest or documentation.", tagName))
 					}
 				} else {
-					diagnostic.Message = fmt.Sprintf("Unknown custom element '%s'. No custom elements found in manifest.", tagName)
+					diagnostic.Message = protocol.String(fmt.Sprintf("Unknown custom element '%s'. No custom elements found in manifest.", tagName))
 				}
 			}
 
@@ -191,13 +189,11 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 
 			// Element exists in manifest but is not imported
 			if importPath, hasSource := ctx.ElementSource(tagName); hasSource {
-				severity := protocol.DiagnosticSeverityError
-				source := "cem-lsp"
 				var diagnostic protocol.Diagnostic
 				diagnostic.Range = match.Range
-				diagnostic.Severity = &severity
-				diagnostic.Source = &source
-				diagnostic.Message = fmt.Sprintf("Custom element '%s' is not imported. Add import from '%s'", tagName, importPath)
+				diagnostic.Severity = protocol.DiagnosticSeverityError
+				diagnostic.Source = protocol.NewOptional("cem-lsp")
+				diagnostic.Message = protocol.String(fmt.Sprintf("Custom element '%s' is not imported. Add import from '%s'", tagName, importPath))
 
 				// Add missing import autofix data
 				autofixData := &types.AutofixData{
@@ -208,7 +204,8 @@ func AnalyzeTagNameDiagnosticsForTest(ctx types.ServerContext, doc types.Documen
 					ImportPath: importPath,
 					TagName:    tagName,
 				}
-				diagnostic.Data = autofixData.ToMap()
+				data, _ := json.Marshal(autofixData.ToMap())
+				diagnostic.Data = data
 
 				diagnostics = append(diagnostics, diagnostic)
 				helpers.SafeDebugLog("[DIAGNOSTICS] Added missing import diagnostic for valid but unimported tag '%s'", tagName)

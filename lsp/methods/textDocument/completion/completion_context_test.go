@@ -30,7 +30,7 @@ import (
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // TestCompletionContextAnalysis tests cursor position analysis for different completion scenarios
@@ -283,15 +283,12 @@ func TestCompletionIntegration(t *testing.T) {
 			},
 		}
 
-		result, err := completion.Completion(ctx, nil, params)
+		result, err := completion.Completion(ctx, params)
 		if err != nil {
 			t.Fatalf("Completion failed: %v", err)
 		}
 
-		items, ok := result.([]protocol.CompletionItem)
-		if !ok {
-			t.Fatalf("Expected []CompletionItem, got %T", result)
-		}
+		items := result
 
 		// Should contain the test element
 		if len(items) != 1 {
@@ -320,8 +317,8 @@ func TestCompletionIntegration(t *testing.T) {
 
 		// Verify that snippets include proper < and > characters
 		for _, item := range items {
-			if item.InsertText != nil {
-				insertText := *item.InsertText
+			if !item.InsertText.IsZero() {
+				insertText, _ := item.InsertText.Get()
 				// Should start with < and include closing >
 				if !strings.HasPrefix(insertText, "<") {
 					t.Errorf("Expected InsertText to start with '<', got %q for %s", insertText, item.Label)
@@ -351,15 +348,12 @@ func TestCompletionIntegration(t *testing.T) {
 			},
 		}
 
-		result, err := completion.Completion(ctx, nil, params)
+		result, err := completion.Completion(ctx, params)
 		if err != nil {
 			t.Fatalf("Completion failed: %v", err)
 		}
 
-		items, ok := result.([]protocol.CompletionItem)
-		if !ok {
-			t.Fatalf("Expected []CompletionItem, got %T", result)
-		}
+		items := result
 
 		// Should contain attributes for test-component (7 attributes: color, theme, disabled, count, size, variant, items)
 		if len(items) < 5 { // At least 5 attributes, not exact count as it can vary
@@ -399,15 +393,12 @@ func TestCompletionIntegration(t *testing.T) {
 			},
 		}
 
-		result, err := completion.Completion(ctx, nil, params)
+		result, err := completion.Completion(ctx, params)
 		if err != nil {
 			t.Fatalf("Completion failed: %v", err)
 		}
 
-		items, ok := result.([]protocol.CompletionItem)
-		if !ok {
-			t.Fatalf("Expected []CompletionItem, got %T", result)
-		}
+		items := result
 
 		// Boolean attributes should not provide value completions
 		// (presence = true, absence = false)
@@ -427,20 +418,17 @@ func TestCompletionIntegration(t *testing.T) {
 				TextDocument: protocol.TextDocumentIdentifier{URI: "test://test.html"},
 				Position:     protocol.Position{Line: 0, Character: 1},
 			},
-			Context: &protocol.CompletionContext{
+			Context: protocol.CompletionContext{
 				TriggerCharacter: &[]string{"<"}[0], // Triggered by <
 			},
 		}
 
-		result, err := completion.Completion(ctx, nil, params)
+		result, err := completion.Completion(ctx, params)
 		if err != nil {
 			t.Fatalf("Completion failed: %v", err)
 		}
 
-		items, ok := result.([]protocol.CompletionItem)
-		if !ok {
-			t.Fatalf("Expected []CompletionItem, got %T", result)
-		}
+		items := result
 
 		// Should contain the test element
 		if len(items) != 1 {
@@ -449,8 +437,8 @@ func TestCompletionIntegration(t *testing.T) {
 
 		// Verify that when trigger character is <, we don't get <<tag-name
 		for _, item := range items {
-			if item.InsertText != nil {
-				insertText := *item.InsertText
+			if !item.InsertText.IsZero() {
+				insertText, _ := item.InsertText.Get()
 				// Should not start with << (double <)
 				if strings.HasPrefix(insertText, "<<") {
 					t.Errorf("Expected InsertText not to start with '<<' when trigger char is '<', got %q for %s", insertText, item.Label)

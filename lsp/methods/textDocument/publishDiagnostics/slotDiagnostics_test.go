@@ -25,7 +25,7 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	"bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // SlotManifestFixture represents the manifest format for slot diagnostics tests

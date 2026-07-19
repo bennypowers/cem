@@ -17,16 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package helpers
 
 import (
+	"context"
+
 	"bennypowers.dev/cem/internal/logging"
-	"github.com/bennypowers/glsp"
+	"go.lsp.dev/protocol"
 )
 
-// Debug logging state - shared across all textDocument methods
-// (Currently no shared state needed)
-
-// SetGlobalLoggerContext sets the LSP context for the centralized logger
-func SetGlobalLoggerContext(context *glsp.Context) {
-	logging.SetLSPContext(context)
+// SetGlobalLoggerClient sets the LSP client and connection context for the centralized logger
+func SetGlobalLoggerClient(client protocol.Client, ctx context.Context) {
+	logging.SetLSPClient(client, ctx)
 }
 
 // SetDebugLoggingEnabled controls whether debug logging is enabled

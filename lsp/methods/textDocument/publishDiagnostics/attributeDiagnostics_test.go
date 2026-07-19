@@ -25,7 +25,7 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // ManifestFixture represents simplified manifest data for tests
@@ -109,12 +109,12 @@ func TestAttributeDiagnostics_Fixtures(t *testing.T) {
 					i, exp.Range.Start.Line, exp.Range.Start.Character, act.Range.Start.Line, act.Range.Start.Character)
 			}
 
-			// Verify severity (compare values, not pointers)
-			if (exp.Severity == nil) != (act.Severity == nil) {
-				t.Errorf("Diagnostic %d severity nil mismatch:\n  expected nil: %v\n  got nil: %v",
-					i, exp.Severity == nil, act.Severity == nil)
-			} else if exp.Severity != nil && act.Severity != nil && *exp.Severity != *act.Severity {
-				t.Errorf("Diagnostic %d severity mismatch:\n  expected: %d\n  got: %d", i, *exp.Severity, *act.Severity)
+			// Verify severity (compare values directly)
+			if (exp.Severity == 0) != (act.Severity == 0) {
+				t.Errorf("Diagnostic %d severity zero mismatch:\n  expected zero: %v\n  got zero: %v",
+					i, exp.Severity == 0, act.Severity == 0)
+			} else if exp.Severity != 0 && act.Severity != 0 && exp.Severity != act.Severity {
+				t.Errorf("Diagnostic %d severity mismatch:\n  expected: %d\n  got: %d", i, exp.Severity, act.Severity)
 			}
 		}
 	})

@@ -23,7 +23,7 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/diagnostic"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,13 +34,12 @@ import (
 func TestDocumentDiagnostic_NilDocument(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 
-	result, err := diagnostic.DocumentDiagnostic(ctx, nil, &protocol.DocumentDiagnosticParams{
+	result, err := diagnostic.DocumentDiagnostic(ctx, &protocol.DocumentDiagnosticParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: "nonexistent.html"},
 	})
 
 	require.NoError(t, err)
-	report, ok := result.(protocol.RelatedFullDocumentDiagnosticReport)
-	require.True(t, ok)
+	report := result
 	assert.Equal(t, string(protocol.DocumentDiagnosticReportKindFull), report.Kind)
 	assert.Empty(t, report.Items)
 }
@@ -56,13 +55,12 @@ func TestDocumentDiagnostic_ValidDocument(t *testing.T) {
 	doc := dm.OpenDocument("test.html", html, 1)
 	ctx.AddDocument("test.html", doc)
 
-	result, err := diagnostic.DocumentDiagnostic(ctx, nil, &protocol.DocumentDiagnosticParams{
+	result, err := diagnostic.DocumentDiagnostic(ctx, &protocol.DocumentDiagnosticParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: "test.html"},
 	})
 
 	require.NoError(t, err)
-	report, ok := result.(protocol.RelatedFullDocumentDiagnosticReport)
-	require.True(t, ok)
+	report := result
 	assert.Equal(t, string(protocol.DocumentDiagnosticReportKindFull), report.Kind)
 	assert.NotNil(t, report.Items)
 }
@@ -82,12 +80,11 @@ func TestDocumentDiagnostic_WithDiagnostics(t *testing.T) {
 		"disabled": {FullyQualified: M.FullyQualified{Name: "disabled"}, Type: &M.Type{Text: "Boolean"}},
 	})
 
-	result, err := diagnostic.DocumentDiagnostic(ctx, nil, &protocol.DocumentDiagnosticParams{
+	result, err := diagnostic.DocumentDiagnostic(ctx, &protocol.DocumentDiagnosticParams{
 		TextDocument: protocol.TextDocumentIdentifier{URI: "test.html"},
 	})
 
 	require.NoError(t, err)
-	report, ok := result.(protocol.RelatedFullDocumentDiagnosticReport)
-	require.True(t, ok)
+	report := result
 	assert.Greater(t, len(report.Items), 0)
 }

@@ -25,14 +25,13 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 // Completion handles textDocument/completion requests
-func Completion(ctx types.ServerContext, context *glsp.Context, params *protocol.CompletionParams) (any, error) {
-	uri := params.TextDocument.URI
+func Completion(ctx types.ServerContext, params *protocol.CompletionParams) ([]protocol.CompletionItem, error) {
+	uri := string(params.TextDocument.URI)
 	helpers.SafeDebugLog("[COMPLETION] Request for URI: %s, Position: line=%d, char=%d", uri, params.Position.Line, params.Position.Character)
 
 	// Get the tracked document
@@ -45,7 +44,7 @@ func Completion(ctx types.ServerContext, context *glsp.Context, params *protocol
 
 	// Extract trigger character from the context
 	triggerChar := ""
-	if params.Context != nil && params.Context.TriggerCharacter != nil {
+	if params.Context.TriggerCharacter != nil {
 		triggerChar = *params.Context.TriggerCharacter
 	}
 	helpers.SafeDebugLog("[COMPLETION] Trigger character: '%s'", triggerChar)
@@ -106,12 +105,13 @@ func getDefaultCompletions(ctx types.ServerContext) []protocol.CompletionItem {
 				description += fmt.Sprintf(" (%d attributes)", len(element.Attributes))
 			}
 
+			data, _ := protocol.Marshal(createCompletionData("tag", tagName, ""))
 			items = append(items, protocol.CompletionItem{
 				Label:      tagName,
-				Kind:       &[]protocol.CompletionItemKind{protocol.CompletionItemKindClass}[0],
-				Detail:     &description,
-				Data:       createCompletionData("tag", tagName, ""),
-				InsertText: &tagName,
+				Kind:       protocol.CompletionItemKindClass,
+				Detail:     protocol.NewOptional(description),
+				Data:       data,
+				InsertText: protocol.NewOptional(tagName),
 			})
 		}
 	}
@@ -151,13 +151,14 @@ func getTagNameCompletions(ctx types.ServerContext, doc types.Document, analysis
 				description += fmt.Sprintf(" (%d attributes)", len(element.Attributes))
 			}
 
+			data, _ := protocol.Marshal(createCompletionData("tag", tagName, ""))
 			items = append(items, protocol.CompletionItem{
 				Label:            tagName,
-				Kind:             &[]protocol.CompletionItemKind{protocol.CompletionItemKindClass}[0],
-				Detail:           &description,
-				Data:             createCompletionData("tag", tagName, ""),
-				InsertText:       &snippet,
-				InsertTextFormat: &[]protocol.InsertTextFormat{protocol.InsertTextFormatSnippet}[0],
+				Kind:             protocol.CompletionItemKindClass,
+				Detail:           protocol.NewOptional(description),
+				Data:             data,
+				InsertText:       protocol.NewOptional(snippet),
+				InsertTextFormat: protocol.InsertTextFormatSnippet,
 			})
 		}
 	}
@@ -196,7 +197,7 @@ func GetAttributeCompletionsWithContext(ctx types.ServerContext, doc types.Docum
 		helpers.SafeDebugLog("[COMPLETION] Found %d attributes for element '%s'", len(attrs), tagName)
 		for attrName, attr := range attrs {
 			var snippet string
-			var insertTextFormat *protocol.InsertTextFormat
+			var insertTextFormat protocol.InsertTextFormat
 
 			// For boolean attributes, just insert the attribute name (presence = true)
 			if attr.Type != nil && strings.ToLower(attr.Type.Text) == "boolean" {
@@ -205,7 +206,7 @@ func GetAttributeCompletionsWithContext(ctx types.ServerContext, doc types.Docum
 			} else {
 				// For non-boolean attributes, use the value snippet
 				snippet = fmt.Sprintf("%s=\"$0\"", attrName)
-				insertTextFormat = &[]protocol.InsertTextFormat{protocol.InsertTextFormatSnippet}[0]
+				insertTextFormat = protocol.InsertTextFormatSnippet
 			}
 
 			description := fmt.Sprintf("Attribute of <%s>", tagName)
@@ -215,17 +216,14 @@ func GetAttributeCompletionsWithContext(ctx types.ServerContext, doc types.Docum
 			}
 
 			helpers.SafeDebugLog("[COMPLETION] Adding attribute completion: '%s' for element '%s'", attrName, tagName)
+			data, _ := protocol.Marshal(createCompletionData("attribute", tagName, attrName))
 			item := protocol.CompletionItem{
-				Label:      attrName,
-				Kind:       &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
-				Detail:     &description,
-				Data:       createCompletionData("attribute", tagName, attrName),
-				InsertText: &snippet,
-			}
-
-			// Only set InsertTextFormat if we have one
-			if insertTextFormat != nil {
-				item.InsertTextFormat = insertTextFormat
+				Label:            attrName,
+				Kind:             protocol.CompletionItemKindProperty,
+				Detail:           protocol.NewOptional(description),
+				Data:             data,
+				InsertText:       protocol.NewOptional(snippet),
+				InsertTextFormat: insertTextFormat,
 			}
 
 			items = append(items, item)
@@ -310,9 +308,9 @@ func GetTypeBasedCompletions(attr *M.Attribute) []protocol.CompletionItem {
 		items = append(items,
 			protocol.CompletionItem{
 				Label:      `""`,
-				Kind:       &valueKind,
-				Detail:     &[]string{"Empty string"}[0],
-				InsertText: &[]string{`""`}[0],
+				Kind:       valueKind,
+				Detail: protocol.NewOptional("Empty string"),
+				InsertText: protocol.NewOptional(`""`),
 			},
 		)
 
@@ -327,9 +325,9 @@ func GetTypeBasedCompletions(attr *M.Attribute) []protocol.CompletionItem {
 		if literalValue != "" {
 			items = append(items, protocol.CompletionItem{
 				Label:      literalValue,
-				Kind:       &valueKind,
-				Detail:     &[]string{"Literal type value"}[0],
-				InsertText: &[]string{literalValue}[0],
+				Kind:       valueKind,
+				Detail: protocol.NewOptional("Literal type value"),
+				InsertText: protocol.NewOptional(literalValue),
 			})
 		}
 	}
@@ -353,21 +351,21 @@ func getContextAwareCompletions(attributeName string, attr *M.Attribute) []proto
 		items = append(items,
 			protocol.CompletionItem{
 				Label:      "red",
-				Kind:       &valueKind,
-				Detail:     &[]string{"Color value"}[0],
-				InsertText: &[]string{"red"}[0],
+				Kind:       valueKind,
+				Detail: protocol.NewOptional("Color value"),
+				InsertText: protocol.NewOptional("red"),
 			},
 			protocol.CompletionItem{
 				Label:      "blue",
-				Kind:       &valueKind,
-				Detail:     &[]string{"Color value"}[0],
-				InsertText: &[]string{"blue"}[0],
+				Kind:       valueKind,
+				Detail: protocol.NewOptional("Color value"),
+				InsertText: protocol.NewOptional("blue"),
 			},
 			protocol.CompletionItem{
 				Label:      "green",
-				Kind:       &valueKind,
-				Detail:     &[]string{"Color value"}[0],
-				InsertText: &[]string{"green"}[0],
+				Kind:       valueKind,
+				Detail: protocol.NewOptional("Color value"),
+				InsertText: protocol.NewOptional("green"),
 			},
 		)
 
@@ -375,21 +373,21 @@ func getContextAwareCompletions(attributeName string, attr *M.Attribute) []proto
 		items = append(items,
 			protocol.CompletionItem{
 				Label:      "small",
-				Kind:       &valueKind,
-				Detail:     &[]string{"Size value"}[0],
-				InsertText: &[]string{"small"}[0],
+				Kind:       valueKind,
+				Detail: protocol.NewOptional("Size value"),
+				InsertText: protocol.NewOptional("small"),
 			},
 			protocol.CompletionItem{
 				Label:      "medium",
-				Kind:       &valueKind,
-				Detail:     &[]string{"Size value"}[0],
-				InsertText: &[]string{"medium"}[0],
+				Kind:       valueKind,
+				Detail: protocol.NewOptional("Size value"),
+				InsertText: protocol.NewOptional("medium"),
 			},
 			protocol.CompletionItem{
 				Label:      "large",
-				Kind:       &valueKind,
-				Detail:     &[]string{"Size value"}[0],
-				InsertText: &[]string{"large"}[0],
+				Kind:       valueKind,
+				Detail: protocol.NewOptional("Size value"),
+				InsertText: protocol.NewOptional("large"),
 			},
 		)
 
@@ -397,15 +395,15 @@ func getContextAwareCompletions(attributeName string, attr *M.Attribute) []proto
 		items = append(items,
 			protocol.CompletionItem{
 				Label:      "primary",
-				Kind:       &valueKind,
-				Detail:     &[]string{"Variant value"}[0],
-				InsertText: &[]string{"primary"}[0],
+				Kind:       valueKind,
+				Detail: protocol.NewOptional("Variant value"),
+				InsertText: protocol.NewOptional("primary"),
 			},
 			protocol.CompletionItem{
 				Label:      "secondary",
-				Kind:       &valueKind,
-				Detail:     &[]string{"Variant value"}[0],
-				InsertText: &[]string{"secondary"}[0],
+				Kind:       valueKind,
+				Detail: protocol.NewOptional("Variant value"),
+				InsertText: protocol.NewOptional("secondary"),
 			},
 		)
 
@@ -414,15 +412,15 @@ func getContextAwareCompletions(attributeName string, attr *M.Attribute) []proto
 		items = append(items,
 			protocol.CompletionItem{
 				Label:      "true",
-				Kind:       &valueKind,
-				Detail:     &[]string{"Boolean value"}[0],
-				InsertText: &[]string{"true"}[0],
+				Kind:       valueKind,
+				Detail: protocol.NewOptional("Boolean value"),
+				InsertText: protocol.NewOptional("true"),
 			},
 			protocol.CompletionItem{
 				Label:      "false",
-				Kind:       &valueKind,
-				Detail:     &[]string{"Boolean value"}[0],
-				InsertText: &[]string{"false"}[0],
+				Kind:       valueKind,
+				Detail: protocol.NewOptional("Boolean value"),
+				InsertText: protocol.NewOptional("false"),
 			},
 		)
 	}
@@ -439,10 +437,10 @@ func getDefaultValueCompletion(attr *M.Attribute) *protocol.CompletionItem {
 	valueKind := protocol.CompletionItemKindValue
 	return &protocol.CompletionItem{
 		Label:      fmt.Sprintf("%s (default)", attr.Default),
-		Kind:       &valueKind,
-		Detail:     &[]string{"Default value"}[0],
-		InsertText: &[]string{attr.Default}[0],
-		SortText:   &[]string{"0"}[0], // Sort defaults to the top
+		Kind:       valueKind,
+		Detail: protocol.NewOptional("Default value"),
+		InsertText: protocol.NewOptional(attr.Default),
+		SortText: protocol.NewOptional("0"), // Sort defaults to the top
 	}
 }
 
@@ -459,17 +457,17 @@ func parseUnionType(typeText string) []protocol.CompletionItem {
 			if value != "" {
 				items = append(items, protocol.CompletionItem{
 					Label:      value,
-					Kind:       &valueKind,
-					Detail:     &[]string{"Union type value"}[0],
-					InsertText: &[]string{value}[0],
+					Kind:       valueKind,
+					Detail: protocol.NewOptional("Union type value"),
+					InsertText: protocol.NewOptional(value),
 				})
 			}
 		} else if part == "true" || part == "false" {
 			items = append(items, protocol.CompletionItem{
 				Label:      part,
-				Kind:       &valueKind,
-				Detail:     &[]string{"Union type value"}[0],
-				InsertText: &[]string{part}[0],
+				Kind:       valueKind,
+				Detail: protocol.NewOptional("Union type value"),
+				InsertText: protocol.NewOptional(part),
 			})
 		}
 	}
@@ -524,11 +522,11 @@ func shouldPreferItem(newItem, existingItem protocol.CompletionItem) bool {
 	newDetail := ""
 	existingDetail := ""
 
-	if newItem.Detail != nil {
-		newDetail = *newItem.Detail
+	if v, ok := newItem.Detail.Get(); ok {
+		newDetail = v
 	}
-	if existingItem.Detail != nil {
-		existingDetail = *existingItem.Detail
+	if v, ok := existingItem.Detail.Get(); ok {
+		existingDetail = v
 	}
 
 	// Preference order (higher priority wins):
@@ -575,12 +573,13 @@ func getLitEventCompletions(ctx types.ServerContext, tagName string) []protocol.
 				description += fmt.Sprintf(" (%s)", event.Type.Text)
 			}
 
+			data, _ := protocol.Marshal(createCompletionData("event", tagName, event.Name))
 			items = append(items, protocol.CompletionItem{
 				Label:      "@" + event.Name,
-				Kind:       &[]protocol.CompletionItemKind{protocol.CompletionItemKindEvent}[0],
-				Detail:     &description,
-				Data:       createCompletionData("event", tagName, event.Name),
-				InsertText: &event.Name, // Just insert the event name, @ is already typed
+				Kind:       protocol.CompletionItemKindEvent,
+				Detail:     protocol.NewOptional(description),
+				Data:       data,
+				InsertText: protocol.NewOptional(event.Name), // Just insert the event name, @ is already typed
 			})
 		}
 	}
@@ -604,13 +603,13 @@ func getLitPropertyCompletions(ctx types.ServerContext, tagName string) []protoc
 				description += fmt.Sprintf(" (%s)", field.Type.Text)
 			}
 
-			name := fieldName
+			data, _ := protocol.Marshal(createCompletionData("property", tagName, fieldName))
 			items = append(items, protocol.CompletionItem{
 				Label:      "." + fieldName,
-				Kind:       &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
-				Detail:     &description,
-				Data:       createCompletionData("property", tagName, fieldName),
-				InsertText: &name,
+				Kind:       protocol.CompletionItemKindProperty,
+				Detail:     protocol.NewOptional(description),
+				Data:       data,
+				InsertText: protocol.NewOptional(fieldName),
 			})
 		}
 	}
@@ -633,12 +632,13 @@ func getLitBooleanAttributeCompletions(ctx types.ServerContext, tagName string) 
 			if attr.Type != nil && attr.Type.Text == "boolean" {
 				description := fmt.Sprintf("Boolean attribute for <%s>", tagName)
 
+				data, _ := protocol.Marshal(createCompletionData("booleanAttribute", tagName, attrName))
 				items = append(items, protocol.CompletionItem{
 					Label:      "?" + attrName,
-					Kind:       &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
-					Detail:     &description,
-					Data:       createCompletionData("booleanAttribute", tagName, attrName),
-					InsertText: &attrName, // Just insert the attribute name, ? is already typed
+					Kind:       protocol.CompletionItemKindProperty,
+					Detail:     protocol.NewOptional(description),
+					Data:       data,
+					InsertText: protocol.NewOptional(attrName), // Just insert the attribute name, ? is already typed
 				})
 			}
 		}
@@ -697,9 +697,9 @@ func getSlotAttributeCompletions(ctx types.ServerContext, doc types.Document, po
 		detail := fmt.Sprintf("Slot for <%s>", parentTagName)
 		items = append(items, protocol.CompletionItem{
 			Label:      slot.Name,
-			Kind:       &valueKind,
-			Detail:     &detail,
-			InsertText: &[]string{slot.Name}[0],
+			Kind:       valueKind,
+			Detail:     protocol.NewOptional(detail),
+			InsertText: protocol.NewOptional(slot.Name),
 		})
 	}
 
@@ -923,12 +923,13 @@ func createSlotAttributeCompletion(parentTagName string) protocol.CompletionItem
 	snippet := `slot="$0"`
 	insertTextFormat := protocol.InsertTextFormatSnippet
 
+	data, _ := protocol.Marshal(createCompletionData("attribute", parentTagName, "slot"))
 	return protocol.CompletionItem{
 		Label:            "slot",
-		Kind:             &[]protocol.CompletionItemKind{protocol.CompletionItemKindProperty}[0],
-		Detail:           &[]string{"HTML slot attribute"}[0],
-		Data:             createCompletionData("attribute", parentTagName, "slot"),
-		InsertText:       &snippet,
-		InsertTextFormat: &insertTextFormat,
+		Kind:             protocol.CompletionItemKindProperty,
+		Detail:           protocol.NewOptional("HTML slot attribute"),
+		Data:             data,
+		InsertText:       protocol.NewOptional(snippet),
+		InsertTextFormat: insertTextFormat,
 	}
 }

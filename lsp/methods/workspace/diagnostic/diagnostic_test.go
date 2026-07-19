@@ -22,7 +22,7 @@ import (
 	"bennypowers.dev/cem/lsp/document"
 	workspaceDiag "bennypowers.dev/cem/lsp/methods/workspace/diagnostic"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +33,7 @@ import (
 func TestWorkspaceDiagnostic_Empty(t *testing.T) {
 	ctx := testhelpers.NewMockServerContext()
 
-	result, err := workspaceDiag.WorkspaceDiagnostic(ctx, nil, &protocol.WorkspaceDiagnosticParams{})
+	result, err := workspaceDiag.WorkspaceDiagnostic(ctx, &protocol.WorkspaceDiagnosticParams{})
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -52,7 +52,7 @@ func TestWorkspaceDiagnostic_MultipleDocuments(t *testing.T) {
 	ctx.AddDocument("a.html", doc1)
 	ctx.AddDocument("b.html", doc2)
 
-	result, err := workspaceDiag.WorkspaceDiagnostic(ctx, nil, &protocol.WorkspaceDiagnosticParams{})
+	result, err := workspaceDiag.WorkspaceDiagnostic(ctx, &protocol.WorkspaceDiagnosticParams{})
 
 	require.NoError(t, err)
 	require.NotNil(t, result)

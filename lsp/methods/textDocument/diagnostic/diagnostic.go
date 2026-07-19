@@ -20,17 +20,16 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // DocumentDiagnostic handles the textDocument/diagnostic request (LSP 3.17 pull model)
-func DocumentDiagnostic(ctx types.ServerContext, context *glsp.Context, params *protocol.DocumentDiagnosticParams) (any, error) {
+func DocumentDiagnostic(ctx types.ServerContext, params *protocol.DocumentDiagnosticParams) (*protocol.RelatedFullDocumentDiagnosticReport, error) {
 	helpers.SafeDebugLog("[DIAGNOSTICS] Pull diagnostic request for %s", params.TextDocument.URI)
 
-	doc := ctx.Document(params.TextDocument.URI)
+	doc := ctx.Document(string(params.TextDocument.URI))
 	if doc == nil {
-		return protocol.RelatedFullDocumentDiagnosticReport{
+		return &protocol.RelatedFullDocumentDiagnosticReport{
 			FullDocumentDiagnosticReport: protocol.FullDocumentDiagnosticReport{
 				Kind:  string(protocol.DocumentDiagnosticReportKindFull),
 				Items: []protocol.Diagnostic{},
@@ -42,7 +41,7 @@ func DocumentDiagnostic(ctx types.ServerContext, context *glsp.Context, params *
 
 	helpers.SafeDebugLog("[DIAGNOSTICS] Pull diagnostics returning %d items for %s", len(diagnostics), params.TextDocument.URI)
 
-	return protocol.RelatedFullDocumentDiagnosticReport{
+	return &protocol.RelatedFullDocumentDiagnosticReport{
 		FullDocumentDiagnosticReport: protocol.FullDocumentDiagnosticReport{
 			Kind:  string(protocol.DocumentDiagnosticReportKindFull),
 			Items: diagnostics,

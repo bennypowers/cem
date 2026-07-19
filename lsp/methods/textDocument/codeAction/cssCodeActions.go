@@ -18,8 +18,9 @@ package codeAction
 
 import (
 	"fmt"
+	urilib "go.lsp.dev/uri"
 
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 func createCSSAmbiguousCommentActions(diagnostic *protocol.Diagnostic, data map[string]any, documentURI string) []protocol.CodeAction {
@@ -59,8 +60,8 @@ func createCSSAmbiguousCommentActions(diagnostic *protocol.Diagnostic, data map[
 			Title: fmt.Sprintf("Associate comment with `%s`", name),
 			Kind:  &kind,
 			Edit: &protocol.WorkspaceEdit{
-				Changes: map[string][]protocol.TextEdit{
-					documentURI: {
+				Changes: map[urilib.URI][]protocol.TextEdit{
+					urilib.URI(documentURI): {
 						{Range: deleteRange, NewText: ""},
 						{Range: protocol.Range{Start: insertPos, End: insertPos}, NewText: commentText + " "},
 					},

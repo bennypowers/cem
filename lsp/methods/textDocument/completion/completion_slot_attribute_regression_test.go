@@ -18,6 +18,7 @@ package completion_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform/testutil"
@@ -25,7 +26,7 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // TestSlotAttributeNameSuggestionRegression ensures slot attribute suggestions work correctly
@@ -221,15 +222,17 @@ func TestSlotAttributeNameSuggestionRegression(t *testing.T) {
 			// If slot should be suggested, verify its structure
 			if tt.shouldSuggestSlot && foundSlot {
 				// Verify slot completion has proper structure
-				if slotCompletion.InsertText == nil || *slotCompletion.InsertText != `slot="$0"` {
+				insertText, ok := slotCompletion.InsertText.Get()
+				if !ok || insertText != `slot="$0"` {
 					t.Errorf("REGRESSION: slot completion should have snippet insert text 'slot=\"$0\"', got: %v", slotCompletion.InsertText)
 				}
 
-				if slotCompletion.Kind == nil || *slotCompletion.Kind != protocol.CompletionItemKindProperty {
+				if slotCompletion.Kind == 0 || slotCompletion.Kind != protocol.CompletionItemKindProperty {
 					t.Errorf("REGRESSION: slot completion should have Property kind, got: %v", slotCompletion.Kind)
 				}
 
-				if slotCompletion.Detail == nil || *slotCompletion.Detail != "HTML slot attribute" {
+				detail, ok := slotCompletion.Detail.Get()
+				if !ok || detail != "HTML slot attribute" {
 					t.Errorf("REGRESSION: slot completion should have proper detail, got: %v", slotCompletion.Detail)
 				}
 			}
@@ -416,53 +419,57 @@ func TestSlotAttributeCompletionStructureRegression(t *testing.T) {
 		{
 			name: "Kind should be Property",
 			test: func() bool {
-				return slotCompletion.Kind != nil && *slotCompletion.Kind == protocol.CompletionItemKindProperty
+				return slotCompletion.Kind != 0 && slotCompletion.Kind == protocol.CompletionItemKindProperty
 			},
 			expected: "Property",
 			actual: func() string {
-				if slotCompletion.Kind == nil {
+				if slotCompletion.Kind == 0 {
 					return "nil"
 				}
-				return string(*slotCompletion.Kind)
+				return fmt.Sprintf("%d", slotCompletion.Kind)
 			}(),
 		},
 		{
 			name: "Detail should be 'HTML slot attribute'",
 			test: func() bool {
-				return slotCompletion.Detail != nil && *slotCompletion.Detail == "HTML slot attribute"
+				v, ok := slotCompletion.Detail.Get()
+				return ok && v == "HTML slot attribute"
 			},
 			expected: "HTML slot attribute",
 			actual: func() string {
-				if slotCompletion.Detail == nil {
+				if slotCompletion.Detail.IsZero() {
 					return "nil"
 				}
-				return *slotCompletion.Detail
+				v, _ := slotCompletion.Detail.Get()
+				return v
 			}(),
 		},
 		{
 			name: "InsertText should be snippet 'slot=\"$0\"'",
 			test: func() bool {
-				return slotCompletion.InsertText != nil && *slotCompletion.InsertText == `slot="$0"`
+				v, ok := slotCompletion.InsertText.Get()
+				return ok && v == `slot="$0"`
 			},
 			expected: `slot="$0"`,
 			actual: func() string {
-				if slotCompletion.InsertText == nil {
+				if slotCompletion.InsertText.IsZero() {
 					return "nil"
 				}
-				return *slotCompletion.InsertText
+				v, _ := slotCompletion.InsertText.Get()
+				return v
 			}(),
 		},
 		{
 			name: "InsertTextFormat should be Snippet",
 			test: func() bool {
-				return slotCompletion.InsertTextFormat != nil && *slotCompletion.InsertTextFormat == protocol.InsertTextFormatSnippet
+				return slotCompletion.InsertTextFormat == protocol.InsertTextFormatSnippet
 			},
 			expected: "Snippet",
 			actual: func() string {
-				if slotCompletion.InsertTextFormat == nil {
+				if slotCompletion.InsertTextFormat == 0 {
 					return "nil"
 				}
-				return string(*slotCompletion.InsertTextFormat)
+				return fmt.Sprintf("%d", slotCompletion.InsertTextFormat)
 			}(),
 		},
 		{

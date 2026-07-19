@@ -23,8 +23,16 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
+
+// msgString extracts the string content from a Diagnostic.Message (InlayHintTooltip interface).
+func msgString(msg protocol.InlayHintTooltip) string {
+	if s, ok := msg.(protocol.String); ok {
+		return string(s)
+	}
+	return ""
+}
 
 func TestAttributeValueDiagnostics_BooleanAttributes(t *testing.T) {
 	t.Run("boolean attributes with explicit values", func(t *testing.T) {
@@ -71,9 +79,9 @@ func TestAttributeValueDiagnostics_BooleanAttributes(t *testing.T) {
 		// Check disabled="false" diagnostic (should be warning)
 		found := false
 		for _, diag := range diagnostics {
-			if diag.Message == "Boolean attribute 'disabled' with value 'false' is still true. Remove the attribute entirely to make it false." {
-				if *diag.Severity != protocol.DiagnosticSeverityWarning {
-					t.Errorf("Expected warning severity for disabled='false', got %v", *diag.Severity)
+			if diag.Message == protocol.String("Boolean attribute 'disabled' with value 'false' is still true. Remove the attribute entirely to make it false.") {
+				if diag.Severity != protocol.DiagnosticSeverityWarning {
+					t.Errorf("Expected warning severity for disabled='false', got %v", diag.Severity)
 				}
 				found = true
 				break
@@ -86,9 +94,9 @@ func TestAttributeValueDiagnostics_BooleanAttributes(t *testing.T) {
 		// Check hidden="true" diagnostic (should be info)
 		found = false
 		for _, diag := range diagnostics {
-			if diag.Message == "Boolean attribute 'hidden' with value 'true' is redundant. Use <my-element hidden> instead." {
-				if *diag.Severity != protocol.DiagnosticSeverityInformation {
-					t.Errorf("Expected info severity for hidden='true', got %v", *diag.Severity)
+			if diag.Message == protocol.String("Boolean attribute 'hidden' with value 'true' is redundant. Use <my-element hidden> instead.") {
+				if diag.Severity != protocol.DiagnosticSeverityInformation {
+					t.Errorf("Expected info severity for hidden='true', got %v", diag.Severity)
 				}
 				found = true
 				break
@@ -129,10 +137,10 @@ func TestAttributeValueDiagnostics_BooleanAttributes(t *testing.T) {
 
 		// Bug: disabled and loading incorrectly reported as having value "star"
 		for _, diag := range diagnostics {
-			if diag.Message == "Boolean attribute 'disabled' should not have value 'star'. Use <my-button disabled> instead." {
+			if diag.Message == protocol.String("Boolean attribute 'disabled' should not have value 'star'. Use <my-button disabled> instead.") {
 				t.Errorf("REGRESSION #179: disabled attribute incorrectly detected as having value 'star'")
 			}
-			if diag.Message == "Boolean attribute 'loading' should not have value 'star'. Use <my-button loading> instead." {
+			if diag.Message == protocol.String("Boolean attribute 'loading' should not have value 'star'. Use <my-button loading> instead.") {
 				t.Errorf("REGRESSION #179: loading attribute incorrectly detected as having value 'star'")
 			}
 		}
@@ -170,7 +178,7 @@ func TestAttributeValueDiagnostics_BooleanAttributes(t *testing.T) {
 
 		// Bug: elevated incorrectly reported as having value "16"
 		for _, diag := range diagnostics {
-			if diag.Message == "Boolean attribute 'elevated' should not have value '16'. Use <mdw-card elevated> instead." {
+			if diag.Message == protocol.String("Boolean attribute 'elevated' should not have value '16'. Use <mdw-card elevated> instead.") {
 				t.Errorf("REGRESSION #176: elevated attribute incorrectly detected as having value '16'")
 			}
 		}
@@ -234,8 +242,8 @@ func TestAttributeValueDiagnostics_UnionTypes(t *testing.T) {
 	}
 
 	for _, diag := range diagnostics {
-		if _, exists := expectedMessages[diag.Message]; exists {
-			expectedMessages[diag.Message] = true
+		if _, exists := expectedMessages[msgString(diag.Message)]; exists {
+			expectedMessages[msgString(diag.Message)] = true
 		} else {
 			t.Errorf("Unexpected diagnostic message: %s", diag.Message)
 		}
@@ -416,7 +424,7 @@ func TestAttributeValueDiagnostics_LiteralTypes(t *testing.T) {
 
 	foundMessages := make(map[string]bool)
 	for _, diag := range diagnostics {
-		foundMessages[diag.Message] = true
+		foundMessages[msgString(diag.Message)] = true
 	}
 
 	for _, expected := range expectedMessages {
@@ -474,7 +482,7 @@ func TestAttributeValueDiagnostics_NumberTypes(t *testing.T) {
 
 	foundMessages := make(map[string]bool)
 	for _, diag := range diagnostics {
-		foundMessages[diag.Message] = true
+		foundMessages[msgString(diag.Message)] = true
 	}
 
 	for _, expected := range expectedMessages {
@@ -523,11 +531,11 @@ func TestAttributeValueDiagnostics_ArrayTypes(t *testing.T) {
 
 	expectedMessage := "Array attributes support multiple formats (JSON, comma-separated, space-separated). Refer to component documentation."
 	for _, diag := range diagnostics {
-		if diag.Message != expectedMessage {
+		if diag.Message != protocol.String(expectedMessage) {
 			t.Errorf("Expected array info message, got: %s", diag.Message)
 		}
-		if *diag.Severity != protocol.DiagnosticSeverityInformation {
-			t.Errorf("Expected info severity for array types, got %v", *diag.Severity)
+		if diag.Severity != protocol.DiagnosticSeverityInformation {
+			t.Errorf("Expected info severity for array types, got %v", diag.Severity)
 		}
 	}
 }

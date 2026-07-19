@@ -17,29 +17,23 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package lsp
 
 import (
+	"context"
 	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"os"
+	"strconv"
 	"sync"
 
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/ephemeral"
 	"bennypowers.dev/cem/lsp/helpers"
-	"bennypowers.dev/cem/lsp/methods/lifecycle"
-	"bennypowers.dev/cem/lsp/methods/textDocument"
-	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
-	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
-	"bennypowers.dev/cem/lsp/methods/textDocument/definition"
-	"bennypowers.dev/cem/lsp/methods/textDocument/diagnostic"
-	"bennypowers.dev/cem/lsp/methods/textDocument/hover"
-	"bennypowers.dev/cem/lsp/methods/textDocument/inlayHint"
-	"bennypowers.dev/cem/lsp/methods/textDocument/references"
-	"bennypowers.dev/cem/lsp/methods/workspace/configuration"
-	workspaceDiag "bennypowers.dev/cem/lsp/methods/workspace/diagnostic"
-	"bennypowers.dev/cem/lsp/methods/workspace/symbol"
 	lspTypes "bennypowers.dev/cem/lsp/types"
 	"bennypowers.dev/cem/types"
-	protocol316 "github.com/bennypowers/glsp/protocol_3_16"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
-	"github.com/bennypowers/glsp/server"
+	"github.com/gorilla/websocket"
+	"go.lsp.dev/jsonrpc2"
+	"go.lsp.dev/protocol"
 )
 
 // TransportKind represents different LSP transport methods
@@ -54,11 +48,13 @@ const (
 
 // Server represents the CEM LSP server
 type Server struct {
+	protocol.UnimplementedServer
+
 	workspace          types.WorkspaceContext
 	registry           *Registry
 	ephemeralRegistry  *ephemeral.Registry
 	documents          lspTypes.Manager
-	server             *server.Server
+	client             protocol.Client
 	transport          TransportKind
 	additionalPackages []string
 	config             lspTypes.ServerConfig
@@ -73,7 +69,6 @@ func NewServer(workspace types.WorkspaceContext, transport TransportKind) (*Serv
 		return nil, fmt.Errorf("failed to create document manager: %w", err)
 	}
 
-	// Create registry with production defaults
 	registry, err := NewRegistryWithDefaults()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create registry: %w", err)
@@ -85,80 +80,120 @@ func NewServer(workspace types.WorkspaceContext, transport TransportKind) (*Serv
 		ephemeralRegistry: ephemeral.NewRegistry(),
 		documents:         documents,
 		transport:         transport,
-		config: lspTypes.DefaultConfig(),
+		config:            lspTypes.DefaultConfig(),
 	}
-
-	// Server now directly implements all context interfaces
-
-	// Create the GLSP server with our handler
-	// Handlers are wrapped with middleware for logging, error handling, and panic recovery
-	handler := protocol.Handler{
-		Handler: protocol316.Handler{
-			Initialized:                     notify(s, "initialized", lifecycle.Initialized),
-			Shutdown:                         noParam(s, "shutdown", lifecycle.Shutdown),
-			SetTrace:                         notify(s, "$/setTrace", lifecycle.SetTrace),
-			TextDocumentHover:                method(s, "textDocument/hover", hover.Hover),
-			TextDocumentCompletion:           method(s, "textDocument/completion", completion.Completion),
-			CompletionItemResolve:            method(s, "completionItem/resolve", completion.Resolve),
-			TextDocumentDefinition:           method(s, "textDocument/definition", definition.Definition),
-			TextDocumentReferences:           method(s, "textDocument/references", references.References),
-			TextDocumentCodeAction:           method(s, "textDocument/codeAction", codeAction.CodeAction),
-			TextDocumentDidOpen:              notify(s, "textDocument/didOpen", textDocument.DidOpen),
-			TextDocumentDidChange:            notify(s, "textDocument/didChange", textDocument.DidChange),
-			TextDocumentDidClose:             notify(s, "textDocument/didClose", textDocument.DidClose),
-			WorkspaceSymbol:                  method(s, "workspace/symbol", symbol.Symbol),
-			WorkspaceDidChangeConfiguration: notify(s, "workspace/didChangeConfiguration", configuration.DidChangeConfiguration),
-		},
-		Initialize:             method(s, "initialize", lifecycle.Initialize),
-		TextDocumentDiagnostic: method(s, "textDocument/diagnostic", diagnostic.DocumentDiagnostic),
-		TextDocumentInlayHint:  method(s, "textDocument/inlayHint", inlayHint.InlayHint),
-		WorkspaceDiagnostic:    method(s, "workspace/diagnostic", workspaceDiag.WorkspaceDiagnostic),
-	}
-
-	// Enable debug mode when using stdio to help with VSCode troubleshooting
-	debug := transport == TransportStdio
-	s.server = server.NewServer(&handler, "cem-lsp", debug)
 
 	return s, nil
 }
 
 // Run starts the LSP server using the configured transport
 func (s *Server) Run() error {
-	// Manifest initialization now happens in the LSP Initialized method
-	// This ensures proper LSP protocol compliance and debug logging visibility
-
 	helpers.SafeDebugLog("LSP: Running with transport: %s", s.transport)
 
-	// Run the server with the appropriate transport
 	switch s.transport {
 	case TransportStdio:
-		return s.server.RunStdio()
+		return s.serve(&stdioRWC{})
 	case TransportTCP:
-		// For now, use a default TCP address - this could be made configurable
-		return s.server.RunTCP("localhost:8080")
+		listener, err := net.Listen("tcp", "localhost:8080")
+		if err != nil {
+			return fmt.Errorf("failed to listen on TCP: %w", err)
+		}
+		defer func() { _ = listener.Close() }()
+		conn, err := listener.Accept()
+		if err != nil {
+			return fmt.Errorf("failed to accept TCP connection: %w", err)
+		}
+		return s.serve(conn)
 	case TransportWebSocket:
-		// For now, use a default WebSocket address - this could be made configurable
-		return s.server.RunWebSocket("localhost:8081")
+		return s.runWebSocket("localhost:8081")
 	case TransportNodeJS:
-		return s.server.RunNodeJs()
+		return s.runNodeJS()
 	default:
 		return fmt.Errorf("unsupported transport kind: %s", s.transport)
 	}
 }
 
+// serve wires a ReadWriteCloser to the LSP protocol server.
+// Client is set before conn.Go starts dispatching to avoid a data race
+// between handler dispatch and s.client assignment.
+func (s *Server) serve(rwc io.ReadWriteCloser) error {
+	stream := jsonrpc2.NewStream(rwc)
+	conn := jsonrpc2.NewConn(stream, jsonrpc2.WithCodec(protocolCodec{}))
+	s.client = protocol.ClientDispatcher(conn)
+
+	ctx := context.Background()
+	ctx = protocol.WithClient(ctx, s.client)
+
+	helpers.SetGlobalLoggerClient(s.client, ctx)
+
+	conn.Go(ctx, protocol.Handlers(protocol.ServerHandler(s, jsonrpc2.MethodNotFoundHandler)))
+
+	<-conn.Done()
+	return conn.Err()
+}
+
+func (s *Server) runWebSocket(address string) error {
+	upgrader := websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
+
+	listener, err := net.Listen("tcp", address)
+	if err != nil {
+		return fmt.Errorf("failed to listen for WebSocket on %s: %w", address, err)
+	}
+	defer func() { _ = listener.Close() }()
+
+	helpers.SafeDebugLog("LSP: listening for WebSocket connection on %s", address)
+
+	// Accept a single connection -- Server is single-session by design
+	mux := http.NewServeMux()
+	connCh := make(chan error, 1)
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		wsConn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("websocket upgrade failed: %v", err), http.StatusBadRequest)
+			return
+		}
+		defer func() { _ = wsConn.Close() }()
+		connCh <- s.serve(newWSReadWriteCloser(wsConn))
+	})
+
+	srv := &http.Server{Handler: mux}
+	go func() { _ = srv.Serve(listener) }()
+
+	serveErr := <-connCh
+	_ = srv.Close()
+	return serveErr
+}
+
+func (s *Server) runNodeJS() error {
+	fdStr := os.Getenv("NODE_CHANNEL_FD")
+	if fdStr == "" {
+		return fmt.Errorf("NODE_CHANNEL_FD not set in environment")
+	}
+	fd, err := strconv.Atoi(fdStr)
+	if err != nil {
+		return fmt.Errorf("invalid NODE_CHANNEL_FD %q: %w", fdStr, err)
+	}
+	if fd < 0 {
+		return fmt.Errorf("NODE_CHANNEL_FD must be non-negative, got %d", fd)
+	}
+	file := os.NewFile(uintptr(fd), "/lsp/NODE_CHANNEL_FD")
+	if file == nil {
+		return fmt.Errorf("NODE_CHANNEL_FD %d is not a valid file descriptor", fd)
+	}
+	helpers.SafeDebugLog("LSP: serving via Node.js IPC on fd %d", fd)
+	return s.serve(file)
+}
+
 // Close cleans up server resources
 func (s *Server) Close() error {
-	// Stop file watching
 	if err := s.registry.StopFileWatching(); err != nil {
 		helpers.SafeDebugLog("Warning: Error stopping file watcher: %v", err)
 	}
 
-	// Stop generate watcher
 	if err := s.registry.StopGenerateWatcher(); err != nil {
 		helpers.SafeDebugLog("Warning: Error stopping generate watcher: %v", err)
 	}
 
-	// Close document manager
 	if s.documents != nil {
 		s.documents.Close()
 	}
@@ -171,7 +206,6 @@ func (s *Server) handleManifestReload() {
 	helpers.SafeDebugLog("=== MANIFEST RELOAD TRIGGERED ===")
 	helpers.SafeDebugLog("Reloading manifests due to file changes...")
 
-	// Debug: Show current registry state before reload
 	helpers.SafeDebugLog("Before reload: %d elements in registry", len(s.registry.Elements))
 	for tagName := range s.registry.Elements {
 		helpers.SafeDebugLog("  - Element: %s", tagName)
@@ -186,16 +220,11 @@ func (s *Server) handleManifestReload() {
 		}
 	}
 
-	// The workspace context caches manifests and we can't clear that cache.
-	// Instead, we'll bypass the workspace cache by directly reading manifest files
-	// and reloading them into the registry.
-
 	if err := s.reloadManifestsDirectly(); err != nil {
 		helpers.SafeDebugLog("Error reloading manifests directly: %v", err)
 		return
 	}
 
-	// Debug: Show registry state after reload
 	helpers.SafeDebugLog("After reload: %d elements in registry", len(s.registry.Elements))
 	for tagName := range s.registry.Elements {
 		helpers.SafeDebugLog("  - Element: %s", tagName)
@@ -224,23 +253,81 @@ func (s *Server) Registry() *Registry {
 	return s.registry
 }
 
+
+// protocolCodec implements jsonrpc2.Codec using the protocol library's
+// reflection-free marshal/unmarshal, matching the internal lspCodec
+// used by protocol.NewServer.
+type protocolCodec struct{}
+
+func (protocolCodec) Marshal(v any) ([]byte, error)     { return protocol.Marshal(v) }
+func (protocolCodec) Unmarshal(data []byte, v any) error { return protocol.Unmarshal(data, v) }
+
+type stdioRWC struct{}
+
+func (*stdioRWC) Read(p []byte) (int, error)  { return os.Stdin.Read(p) }
+func (*stdioRWC) Write(p []byte) (int, error) { return os.Stdout.Write(p) }
+func (*stdioRWC) Close() error                { return os.Stdin.Close() }
+
+// wsReadWriteCloser adapts a gorilla/websocket.Conn to io.ReadWriteCloser
+// for use with jsonrpc2.NewStream.
+type wsReadWriteCloser struct {
+	conn   *websocket.Conn
+	reader io.Reader
+}
+
+func newWSReadWriteCloser(conn *websocket.Conn) *wsReadWriteCloser {
+	return &wsReadWriteCloser{conn: conn}
+}
+
+func (ws *wsReadWriteCloser) Read(p []byte) (int, error) {
+	for {
+		if ws.reader == nil {
+			_, reader, err := ws.conn.NextReader()
+			if err != nil {
+				return 0, err
+			}
+			ws.reader = reader
+		}
+		n, err := ws.reader.Read(p)
+		if err == io.EOF {
+			ws.reader = nil
+			if n > 0 {
+				return n, nil
+			}
+			continue
+		}
+		return n, err
+	}
+}
+
+func (ws *wsReadWriteCloser) Write(p []byte) (int, error) {
+	w, err := ws.conn.NextWriter(websocket.TextMessage)
+	if err != nil {
+		return 0, err
+	}
+	n, err := w.Write(p)
+	if closeErr := w.Close(); err == nil {
+		err = closeErr
+	}
+	return n, err
+}
+
+func (ws *wsReadWriteCloser) Close() error {
+	return ws.conn.Close()
+}
+
 // InitializeForTesting initializes the server without running stdio - for testing only
 func (s *Server) InitializeForTesting() error {
-	// Initialize the manifest registry
 	if err := s.registry.LoadFromWorkspace(s.workspace); err != nil {
 		return fmt.Errorf("failed to load manifests: %w", err)
 	}
 
-	// Start file watching for manifest changes
 	if err := s.registry.StartFileWatching(s.handleManifestReload); err != nil {
 		helpers.SafeDebugLog("Warning: Could not start file watching: %v", err)
-		// Don't fail startup if file watching fails
 	}
 
-	// Start generate watcher for local project source file changes
 	if err := s.registry.StartGenerateWatcher(); err != nil {
 		helpers.SafeDebugLog("Warning: Could not start generate watcher: %v", err)
-		// Don't fail startup if generate watcher fails
 	}
 
 	return nil

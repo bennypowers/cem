@@ -26,7 +26,8 @@ import (
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
 	"github.com/agext/levenshtein"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"encoding/json"
+	"go.lsp.dev/protocol"
 )
 
 // AttributeMatch represents a found attribute in the document
@@ -315,9 +316,9 @@ func createAttributeDiagnostic(match AttributeMatch, suggestion string) protocol
 			Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 			End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 		},
-		Message:  message,
-		Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityWarning}[0],
-		Source:   &[]string{"cem-lsp"}[0],
+		Message:  protocol.String(message),
+		Severity: protocol.DiagnosticSeverityWarning,
+		Source:   protocol.NewOptional("cem-lsp"),
 	}
 
 	// Add autofix data if we have a suggestion
@@ -328,7 +329,8 @@ func createAttributeDiagnostic(match AttributeMatch, suggestion string) protocol
 			Suggestion: suggestion,
 			Range:      diagnostic.Range,
 		}
-		diagnostic.Data = autofixData.ToMap()
+		data, _ := json.Marshal(autofixData.ToMap())
+		diagnostic.Data = data
 	}
 
 	return diagnostic
@@ -341,17 +343,15 @@ func createDeprecatedAttributeDiagnostic(match AttributeMatch, attr *M.Attribute
 		message = fmt.Sprintf("Attribute '%s' on '%s' is deprecated: %s", match.Name, match.TagName, reason)
 	}
 
-	severity := protocol.DiagnosticSeverityHint
-	source := "cem-lsp"
 	return protocol.Diagnostic{
 		Range: protocol.Range{
 			Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 			End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 		},
-		Message:  message,
-		Severity: &severity,
-		Source:   &source,
-		Tags:     []protocol.DiagnosticTag{protocol.DiagnosticTagDeprecated},
+		Message:  protocol.String(message),
+		Severity: protocol.DiagnosticSeverityHint,
+		Source:   protocol.NewOptional("cem-lsp"),
+		Tags:     protocol.NewDiagnosticTags(protocol.DiagnosticTagDeprecated),
 	}
 }
 
@@ -369,8 +369,8 @@ func createUnknownAttributeDiagnostic(match AttributeMatch) protocol.Diagnostic 
 			Start: protocol.Position{Line: match.Line, Character: match.StartCol},
 			End:   protocol.Position{Line: match.Line, Character: match.EndCol},
 		},
-		Message:  message,
-		Severity: &[]protocol.DiagnosticSeverity{protocol.DiagnosticSeverityWarning}[0],
-		Source:   &[]string{"cem-lsp"}[0],
+		Message:  protocol.String(message),
+		Severity: protocol.DiagnosticSeverityWarning,
+		Source:   protocol.NewOptional("cem-lsp"),
 	}
 }

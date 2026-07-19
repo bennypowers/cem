@@ -18,7 +18,7 @@ package testhelpers
 
 import (
 	"bennypowers.dev/cem/internal/platform"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // GetCompletionLabels extracts labels from completion items for easy testing

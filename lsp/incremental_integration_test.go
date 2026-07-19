@@ -24,7 +24,7 @@ import (
 	"bennypowers.dev/cem/lsp/document"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // Inline: integration test, scalar assertions
@@ -121,8 +121,8 @@ func TestIncrementalParsingIntegration(t *testing.T) {
 
 			// Define incremental change (primary -> secondary)
 			changes := []protocol.TextDocumentContentChangeEvent{
-				{
-					Range: &protocol.Range{
+				&protocol.TextDocumentContentChangePartial{
+					Range: protocol.Range{
 						Start: protocol.Position{
 							Line:      tt.changePosition.line,
 							Character: tt.changePosition.startChar,
@@ -182,8 +182,8 @@ func TestIncrementalParsingFallback(t *testing.T) {
 
 		// Large change that should trigger full parse
 		changes := []protocol.TextDocumentContentChangeEvent{
-			{
-				Range: &protocol.Range{
+			&protocol.TextDocumentContentChangePartial{
+				Range: protocol.Range{
 					Start: protocol.Position{Line: 0, Character: 0},
 					End:   protocol.Position{Line: 0, Character: uint32(len(initialContent))},
 				},
@@ -216,9 +216,8 @@ func TestIncrementalParsingFallback(t *testing.T) {
 		// Full document replacement (Range is nil)
 		newContent := `<ui-button size="large">Completely Different</ui-button>`
 		changes := []protocol.TextDocumentContentChangeEvent{
-			{
-				Range: nil, // Full document change
-				Text:  newContent,
+			&protocol.TextDocumentContentChangeWholeDocument{
+				Text: newContent,
 			},
 		}
 
@@ -261,8 +260,8 @@ func TestIncrementalParsingValidation(t *testing.T) {
 
 		// Valid small change (primary -> secondary)
 		changes := []protocol.TextDocumentContentChangeEvent{
-			{
-				Range: &protocol.Range{
+			&protocol.TextDocumentContentChangePartial{
+				Range: protocol.Range{
 					Start: protocol.Position{Line: 4, Character: 20}, // Start of "primary"
 					End:   protocol.Position{Line: 4, Character: 27}, // End of "primary"
 				},
@@ -294,8 +293,8 @@ func TestIncrementalParsingValidation(t *testing.T) {
 		// Add content to empty document
 		newContent := "<my-card>New content</my-card>"
 		changes := []protocol.TextDocumentContentChangeEvent{
-			{
-				Range: &protocol.Range{
+			&protocol.TextDocumentContentChangePartial{
+				Range: protocol.Range{
 					Start: protocol.Position{Line: 0, Character: 0},
 					End:   protocol.Position{Line: 0, Character: 0},
 				},

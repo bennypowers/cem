@@ -32,7 +32,7 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	Q "bennypowers.dev/cem/internal/treesitter"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // documentManager implements the types.Manager interface
@@ -228,7 +228,7 @@ func (dm *documentManager) scriptContentChanged(doc types.Document, changes []pr
 		// No existing script tags - check if changes might add one
 		// Look for "<script" in the change text
 		for _, change := range changes {
-			if strings.Contains(change.Text, "<script") {
+			if strings.Contains(changeText(change), "<script") {
 				return true
 			}
 		}
@@ -237,13 +237,14 @@ func (dm *documentManager) scriptContentChanged(doc types.Document, changes []pr
 
 	// Check if any change overlaps with existing script tag ranges
 	for _, change := range changes {
-		if change.Range == nil {
+		r := changeRange(change)
+		if r == nil {
 			// Full document change - script content definitely changed
 			return true
 		}
 
-		changeStart := change.Range.Start
-		changeEnd := change.Range.End
+		changeStart := r.Start
+		changeEnd := r.End
 
 		for _, scriptTag := range scriptTags {
 			// Check if change overlaps with script tag range
@@ -253,7 +254,8 @@ func (dm *documentManager) scriptContentChanged(doc types.Document, changes []pr
 		}
 
 		// Also check if the change text contains script-related content
-		if strings.Contains(change.Text, "<script") || strings.Contains(change.Text, "</script>") {
+		text := changeText(change)
+		if strings.Contains(text, "<script") || strings.Contains(text, "</script>") {
 			return true
 		}
 	}

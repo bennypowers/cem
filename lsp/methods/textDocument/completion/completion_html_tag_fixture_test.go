@@ -26,8 +26,8 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/completion"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	"go.lsp.dev/uri"
 )
 
 // TestHTMLTagCompletions_Fixtures tests HTML tag name completions using fixture/golden pattern
@@ -94,24 +94,21 @@ func TestHTMLTagCompletions_Fixtures(t *testing.T) {
 		// Create completion params
 		params := &protocol.CompletionParams{
 			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
-				TextDocument: protocol.TextDocumentIdentifier{URI: htmlURI},
+				TextDocument: protocol.TextDocumentIdentifier{URI: uri.URI(htmlURI)},
 				Position:     position,
 			},
-			Context: &protocol.CompletionContext{
+			Context: protocol.CompletionContext{
 				TriggerCharacter: stringPtr("<"),
 			},
 		}
 
 		// Request completions
-		result, err := completion.Completion(ctx, &glsp.Context{}, params)
+		result, err := completion.Completion(ctx, params)
 		if err != nil {
 			t.Fatalf("Completion failed: %v", err)
 		}
 
-		actual, ok := result.([]protocol.CompletionItem)
-		if !ok {
-			t.Fatalf("Expected []CompletionItem, got %T", result)
-		}
+		actual := result
 
 		// Load expected completions from golden file
 		var expected []CompletionItemMatcher

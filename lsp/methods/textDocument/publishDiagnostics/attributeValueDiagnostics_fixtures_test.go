@@ -25,7 +25,7 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // TestAttributeValueDiagnostics_MultilineBooleanAttrs tests issue #179
@@ -81,10 +81,10 @@ func runBooleanParsingTest(t *testing.T, fixture *testutil.LSPFixture, issueNumb
 	// Check for specific regression errors based on issue number
 	if issueNumber == 179 {
 		for _, diag := range diagnostics {
-			if diag.Message == "Boolean attribute 'disabled' should not have value 'star'. Use <my-button disabled> instead." {
+			if diag.Message == protocol.String("Boolean attribute 'disabled' should not have value 'star'. Use <my-button disabled> instead.") {
 				t.Errorf("REGRESSION #179: disabled attribute incorrectly detected as having value 'star'")
 			}
-			if diag.Message == "Boolean attribute 'loading' should not have value 'star'. Use <my-button loading> instead." {
+			if diag.Message == protocol.String("Boolean attribute 'loading' should not have value 'star'. Use <my-button loading> instead.") {
 				t.Errorf("REGRESSION #179: loading attribute incorrectly detected as having value 'star'")
 			}
 		}
@@ -92,7 +92,7 @@ func runBooleanParsingTest(t *testing.T, fixture *testutil.LSPFixture, issueNumb
 
 	if issueNumber == 176 {
 		for _, diag := range diagnostics {
-			if diag.Message == "Boolean attribute 'elevated' should not have value '16'. Use <mdw-card elevated> instead." {
+			if diag.Message == protocol.String("Boolean attribute 'elevated' should not have value '16'. Use <mdw-card elevated> instead.") {
 				t.Errorf("REGRESSION #176: elevated attribute incorrectly detected as having value '16'")
 			}
 		}

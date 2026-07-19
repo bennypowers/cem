@@ -28,18 +28,18 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument"
 	"bennypowers.dev/cem/lsp/types"
 	Q "bennypowers.dev/cem/internal/treesitter"
+	"go.lsp.dev/protocol"
+	urilib "go.lsp.dev/uri"
 	ignore "github.com/sabhiram/go-gitignore"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
 )
 
 // References handles textDocument/references requests
-func References(ctx types.ServerContext, context *glsp.Context, params *protocol.ReferenceParams) ([]protocol.Location, error) {
+func References(ctx types.ServerContext, params *protocol.ReferenceParams) ([]protocol.Location, error) {
 	uri := params.TextDocument.URI
 	helpers.SafeDebugLog("[REFERENCES] Request for %s at position %d:%d", uri, params.Position.Line, params.Position.Character)
 
 	// Get the tracked document
-	doc := ctx.Document(uri)
+	doc := ctx.Document(string(uri))
 	if doc == nil {
 		helpers.SafeDebugLog("[REFERENCES] Document not found: %s", uri)
 		return []protocol.Location{}, nil
@@ -259,7 +259,7 @@ func findReferencesInDocument(ctx types.ServerContext, doc types.Document, eleme
 	for _, element := range elements {
 		if element.TagName == elementName {
 			location := protocol.Location{
-				URI:   uri,
+				URI:   urilib.URI(uri),
 				Range: element.Range,
 			}
 			locations = append(locations, location)
@@ -432,7 +432,7 @@ func findHTMLReferencesInContent(content []byte, fileURI string, elementName str
 				endPos := byteOffsetToPosition(content, endByte)
 
 				location := protocol.Location{
-					URI: fileURI,
+					URI: urilib.URI(fileURI),
 					Range: protocol.Range{
 						Start: startPos,
 						End:   endPos,
@@ -556,7 +556,7 @@ func findHTMLReferencesInTemplate(templateContent []byte, templateOffset uint, f
 				endPos := byteOffsetToPosition(templateContent, templateEndByte+templateOffset)
 
 				location := protocol.Location{
-					URI: fileURI,
+					URI: urilib.URI(fileURI),
 					Range: protocol.Range{
 						Start: startPos,
 						End:   endPos,

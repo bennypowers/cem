@@ -26,8 +26,8 @@ import (
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/references"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	urilib "go.lsp.dev/uri"
 )
 
 func TestReferences_Fixtures(t *testing.T) {
@@ -100,7 +100,7 @@ func TestReferences_Fixtures(t *testing.T) {
 		params := &protocol.ReferenceParams{
 			TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 				TextDocument: protocol.TextDocumentIdentifier{
-					URI: uri,
+					URI: urilib.URI(uri),
 				},
 				Position: cursor,
 			},
@@ -110,7 +110,7 @@ func TestReferences_Fixtures(t *testing.T) {
 		}
 
 		// Call References function
-		locations, err := references.References(ctx, &glsp.Context{}, params)
+		locations, err := references.References(ctx, params)
 
 		// Verify results
 		if err != nil {

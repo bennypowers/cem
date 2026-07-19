@@ -24,20 +24,26 @@ import (
 
 	"bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/internal/languages/typescript"
+	"bennypowers.dev/cem/internal/modulegraph"
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/treesitter"
+	W "bennypowers.dev/cem/internal/workspace"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
 	M "bennypowers.dev/cem/manifest"
-	"bennypowers.dev/cem/internal/modulegraph"
-	"bennypowers.dev/cem/internal/treesitter"
-	W "bennypowers.dev/cem/internal/workspace"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // Verify Server implements all context interfaces
 var _ types.ServerContext = (*Server)(nil)
 
-// Server Context implementations - Server directly implements all context interfaces
+func (s *Server) Client() protocol.Client {
+	return s.client
+}
+
+func (s *Server) SetClient(client protocol.Client) {
+	s.client = client
+}
 
 func (s *Server) DocumentManager() (types.DocumentManager, error) {
 	if s.documents == nil {
@@ -267,9 +273,8 @@ func (s *Server) UpdateWorkspaceFromLSP(rootURI *string, workspaceFolders []prot
 
 	// Prefer workspace folders over rootURI
 	if len(workspaceFolders) > 0 {
-		// Use the first workspace folder URI
 		folder := workspaceFolders[0]
-		newRoot = folder.URI
+		newRoot = string(folder.URI)
 		helpers.SafeDebugLog("[UPDATE_WORKSPACE] Using workspace folder URI: %s", newRoot)
 	} else if rootURI != nil {
 		newRoot = *rootURI

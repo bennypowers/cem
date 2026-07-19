@@ -22,12 +22,11 @@ import (
 
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // DidChangeConfiguration handles workspace/didChangeConfiguration notifications
-func DidChangeConfiguration(ctx types.ServerContext, context *glsp.Context, params *protocol.DidChangeConfigurationParams) error {
+func DidChangeConfiguration(ctx types.ServerContext, params *protocol.DidChangeConfigurationParams) error {
 	helpers.SafeDebugLog("[CONFIG] Configuration changed")
 
 	config, found, err := parseConfiguration(params.Settings)
@@ -45,16 +44,16 @@ func DidChangeConfiguration(ctx types.ServerContext, context *glsp.Context, para
 	return nil
 }
 
-func parseConfiguration(settings any) (types.ServerConfig, bool, error) {
+func parseConfiguration(settings protocol.LSPAny) (types.ServerConfig, bool, error) {
 	config := types.DefaultConfig()
 
-	if settings == nil {
+	if len(settings) == 0 {
 		return config, false, nil
 	}
 
-	settingsMap, ok := settings.(map[string]any)
-	if !ok {
-		return config, false, fmt.Errorf("settings is not a map")
+	var settingsMap map[string]any
+	if err := json.Unmarshal(settings, &settingsMap); err != nil {
+		return config, false, fmt.Errorf("settings is not a map: %w", err)
 	}
 
 	cemVal, exists := settingsMap["cem"]

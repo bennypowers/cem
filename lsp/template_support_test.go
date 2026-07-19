@@ -23,7 +23,7 @@ import (
 
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/types"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 const templateFixtureDir = "testdata/integration/template-support"

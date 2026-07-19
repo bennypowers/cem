@@ -19,46 +19,13 @@ package lifecycle
 import (
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
-// Initialized handles the LSP initialized notification
-func Initialized(ctx types.ServerContext, context *glsp.Context, params *protocol.InitializedParams) error {
-	// Initialize manifests and start watching after successful LSP initialization
-	if err := ctx.InitializeManifests(); err != nil {
-		logging.Warning("Failed to initialize manifests: %v", err)
-		// Don't fail the LSP initialization if manifest loading fails
-		logging.Info("CEM LSP Server initialized (no manifests loaded)")
-	} else {
-		// Get manifest statistics using the embedded Registry interface methods
-		manifestCount := ctx.ManifestCount()
-		elementCount := ctx.ElementCount()
-
-		// Send informative initialization complete message
-		logging.Info("CEM LSP loaded %d elements from %d manifests", elementCount, manifestCount)
-
-		// Log elements grouped by package name for debugging
-		packageElements := make(map[string][]string)
-		allTags := ctx.AllTagNames()
-		for _, tagName := range allTags {
-			if def, exists := ctx.ElementDefinition(tagName); exists {
-				packageName := def.PackageName()
-				if packageName == "" {
-					packageName = "(unknown)"
-				}
-				packageElements[packageName] = append(packageElements[packageName], tagName)
-			}
-		}
-
-		// Log elements per package
-		for packageName, tags := range packageElements {
-			logging.Debug("Package '%s': %d elements - %v", packageName, len(tags), tags)
-		}
-	}
-
-	// Show early software notice
+// Initialized handles the LSP initialized notification.
+// Manifest loading now happens during Initialize (the request) to avoid
+// races with AsyncHandler's concurrent dispatch.
+func Initialized(_ types.ServerContext, _ *protocol.InitializedParams) error {
 	logging.Info("CEM LSP is early software. Report issues at: https://github.com/bennypowers/cem/issues")
-
 	return nil
 }

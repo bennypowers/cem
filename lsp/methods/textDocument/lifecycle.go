@@ -22,8 +22,7 @@ import (
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/types"
-	"github.com/bennypowers/glsp"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 // DocumentManager interface for document lifecycle operations
@@ -36,9 +35,10 @@ type DocumentManager interface {
 }
 
 // DidOpen handles textDocument/didOpen notifications
-func DidOpen(ctx types.ServerContext, context *glsp.Context, params *protocol.DidOpenTextDocumentParams) error {
+func DidOpen(ctx types.ServerContext, params *protocol.DidOpenTextDocumentParams) error {
+	uri := string(params.TextDocument.URI)
 	helpers.SafeDebugLog("[LIFECYCLE] DidOpen: URI=%s, Version=%d, ContentLength=%d",
-		params.TextDocument.URI, params.TextDocument.Version, len(params.TextDocument.Text))
+		uri, params.TextDocument.Version, len(params.TextDocument.Text))
 
 	dm, err := ctx.DocumentManager()
 	if err != nil {
@@ -46,34 +46,35 @@ func DidOpen(ctx types.ServerContext, context *glsp.Context, params *protocol.Di
 	}
 
 	doc := dm.OpenDocument(
-		params.TextDocument.URI,
+		uri,
 		params.TextDocument.Text,
 		params.TextDocument.Version,
 	)
 
 	if doc != nil {
-		helpers.SafeDebugLog("[LIFECYCLE] Successfully opened document: %s", params.TextDocument.URI)
+		helpers.SafeDebugLog("[LIFECYCLE] Successfully opened document: %s", uri)
 
 		// Synthesize ephemeral element declarations before diagnostics,
 		// so locally-defined elements are available for diagnostic checks
-		ctx.SynthesizeEphemeralElements(params.TextDocument.URI)
+		ctx.SynthesizeEphemeralElements(uri)
 
 		if !ctx.UsePullDiagnostics() {
-			if err := publishDiagnostics.PublishDiagnostics(ctx, context, params.TextDocument.URI); err != nil {
-				helpers.SafeDebugLog("[LIFECYCLE] Failed to publish diagnostics for %s: %v", params.TextDocument.URI, err)
+			if err := publishDiagnostics.PublishDiagnostics(ctx, uri); err != nil {
+				helpers.SafeDebugLog("[LIFECYCLE] Failed to publish diagnostics for %s: %v", uri, err)
 			}
 		}
 	} else {
-		helpers.SafeDebugLog("[LIFECYCLE] Failed to open document: %s", params.TextDocument.URI)
+		helpers.SafeDebugLog("[LIFECYCLE] Failed to open document: %s", uri)
 	}
 
 	return nil
 }
 
 // DidChange handles textDocument/didChange notifications
-func DidChange(ctx types.ServerContext, context *glsp.Context, params *protocol.DidChangeTextDocumentParams) error {
+func DidChange(ctx types.ServerContext, params *protocol.DidChangeTextDocumentParams) error {
+	uri := string(params.TextDocument.URI)
 	helpers.SafeDebugLog("[LIFECYCLE] DidChange: URI=%s, Version=%d, Changes=%d",
-		params.TextDocument.URI, params.TextDocument.Version, len(params.ContentChanges))
+		uri, params.TextDocument.Version, len(params.ContentChanges))
 
 	dm, err := ctx.DocumentManager()
 	if err != nil {
@@ -81,12 +82,12 @@ func DidChange(ctx types.ServerContext, context *glsp.Context, params *protocol.
 	}
 
 	// Handle incremental changes
-	doc := dm.Document(params.TextDocument.URI)
+	doc := dm.Document(uri)
 	if doc == nil {
-		helpers.SafeDebugLog("[LIFECYCLE] No existing document found for URI: %s", params.TextDocument.URI)
+		helpers.SafeDebugLog("[LIFECYCLE] No existing document found for URI: %s", uri)
 		return nil
 	}
-	helpers.SafeDebugLog("[LIFECYCLE] Found existing document for URI: %s", params.TextDocument.URI)
+	helpers.SafeDebugLog("[LIFECYCLE] Found existing document for URI: %s", uri)
 
 	// Get current document content
 	currentContent, err := doc.Content()
@@ -99,82 +100,64 @@ func DidChange(ctx types.ServerContext, context *glsp.Context, params *protocol.
 	// Apply content changes (can be incremental or full document)
 	newContent := currentContent
 	for i, change := range params.ContentChanges {
-		if changeEvent, ok := change.(protocol.TextDocumentContentChangeEvent); ok {
-			helpers.SafeDebugLog("[LIFECYCLE] Processing change %d of %d", i+1, len(params.ContentChanges))
+		helpers.SafeDebugLog("[LIFECYCLE] Processing change %d of %d", i+1, len(params.ContentChanges))
 
-			// Check if this is a full document change (no range specified)
-			if changeEvent.Range == nil {
-				// Full document replacement
-				newContent = changeEvent.Text
-				helpers.SafeDebugLog("[LIFECYCLE] Full document replacement (length=%d)", len(newContent))
-			} else {
-				// Incremental change - apply to current content
-				newContent = applyIncrementalChange(newContent, changeEvent)
-				helpers.SafeDebugLog("[LIFECYCLE] Applied incremental change, new length=%d", len(newContent))
-			}
-		} else {
-			helpers.SafeDebugLog("[LIFECYCLE] Failed to cast content change %d to TextDocumentContentChangeEvent", i+1)
+		switch c := change.(type) {
+		case *protocol.TextDocumentContentChangePartial:
+			newContent = applyIncrementalChange(newContent, c)
+			helpers.SafeDebugLog("[LIFECYCLE] Applied incremental change, new length=%d", len(newContent))
+		case *protocol.TextDocumentContentChangeWholeDocument:
+			newContent = c.Text
+			helpers.SafeDebugLog("[LIFECYCLE] Full document replacement (length=%d)", len(newContent))
 		}
 	}
 
 	helpers.SafeDebugLog("[LIFECYCLE] Updating document with content (length=%d)", len(newContent))
 
-	// Extract content change events for incremental parsing
-	var changeEvents []protocol.TextDocumentContentChangeEvent
-	for _, change := range params.ContentChanges {
-		if changeEvent, ok := change.(protocol.TextDocumentContentChangeEvent); ok {
-			changeEvents = append(changeEvents, changeEvent)
-		}
-	}
-
 	updatedDoc := dm.UpdateDocumentWithChanges(
-		params.TextDocument.URI,
+		uri,
 		newContent,
 		params.TextDocument.Version,
-		changeEvents,
+		params.ContentChanges,
 	)
 
 	if updatedDoc != nil {
-		helpers.SafeDebugLog("[LIFECYCLE] Successfully updated document: %s", params.TextDocument.URI)
+		helpers.SafeDebugLog("[LIFECYCLE] Successfully updated document: %s", uri)
 
 		// Synthesize ephemeral element declarations before diagnostics
-		ctx.SynthesizeEphemeralElements(params.TextDocument.URI)
+		ctx.SynthesizeEphemeralElements(uri)
 
 		if !ctx.UsePullDiagnostics() {
-			if err := publishDiagnostics.PublishDiagnostics(ctx, context, params.TextDocument.URI); err != nil {
-				helpers.SafeDebugLog("[LIFECYCLE] Failed to publish diagnostics for %s: %v", params.TextDocument.URI, err)
+			if err := publishDiagnostics.PublishDiagnostics(ctx, uri); err != nil {
+				helpers.SafeDebugLog("[LIFECYCLE] Failed to publish diagnostics for %s: %v", uri, err)
 			}
 		}
 	} else {
-		helpers.SafeDebugLog("[LIFECYCLE] Failed to update document: %s", params.TextDocument.URI)
+		helpers.SafeDebugLog("[LIFECYCLE] Failed to update document: %s", uri)
 	}
 
 	return nil
 }
 
 // DidClose handles textDocument/didClose notifications
-func DidClose(ctx types.ServerContext, context *glsp.Context, params *protocol.DidCloseTextDocumentParams) error {
+func DidClose(ctx types.ServerContext, params *protocol.DidCloseTextDocumentParams) error {
+	uri := string(params.TextDocument.URI)
 	dm, err := ctx.DocumentManager()
 	if err != nil {
 		return err
 	}
-	dm.CloseDocument(params.TextDocument.URI)
+	dm.CloseDocument(uri)
 
 	// Clean up ephemeral data for the closed document.
 	// SynthesizeEphemeralElements will see doc == nil (already closed)
 	// and remove any stale ephemeral data for this URI.
-	ctx.SynthesizeEphemeralElements(params.TextDocument.URI)
+	ctx.SynthesizeEphemeralElements(uri)
 
 	return nil
 }
 
 // applyIncrementalChange applies an incremental text change to existing content
-func applyIncrementalChange(content string, change protocol.TextDocumentContentChangeEvent) string {
-	if change.Range == nil {
-		// This should not happen in incremental changes, but handle it safely
-		return change.Text
-	}
-
+func applyIncrementalChange(content string, change *protocol.TextDocumentContentChangePartial) string {
 	lines := strings.Split(content, "\n")
 	changeParams := extractChangeParameters(change, lines)
 
@@ -206,7 +189,7 @@ type changeParameters struct {
 }
 
 // extractChangeParameters extracts and validates change parameters from the LSP change event
-func extractChangeParameters(change protocol.TextDocumentContentChangeEvent, lines []string) changeParameters {
+func extractChangeParameters(change *protocol.TextDocumentContentChangePartial, lines []string) changeParameters {
 	return changeParameters{
 		startLine: int(change.Range.Start.Line),
 		startChar: int(change.Range.Start.Character),

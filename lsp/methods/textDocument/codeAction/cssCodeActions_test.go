@@ -23,7 +23,8 @@ import (
 	"bennypowers.dev/cem/lsp/document"
 	"bennypowers.dev/cem/lsp/methods/textDocument/codeAction"
 	"bennypowers.dev/cem/lsp/testhelpers"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	urilib "go.lsp.dev/uri"
 )
 
 func TestCodeActionCSSAmbiguousComment(t *testing.T) {
@@ -41,50 +42,47 @@ func TestCodeActionCSSAmbiguousComment(t *testing.T) {
 	doc := dm.OpenDocument(uri, cssContent, 1)
 	ctx.AddDocument(uri, doc)
 
-	severity := protocol.DiagnosticSeverityWarning
-	source := "cem-lsp"
+	dataMap := map[string]any{
+		"type":        "css-ambiguous-comment",
+		"commentText": "/** Blue colors */",
+		"deleteRange": map[string]any{
+			"start": map[string]any{"line": float64(1), "character": float64(0)},
+			"end":   map[string]any{"line": float64(2), "character": float64(0)},
+		},
+		"properties": []any{
+			map[string]any{
+				"name":           "--blue",
+				"insertPosition": map[string]any{"line": float64(2), "character": float64(14)},
+			},
+			map[string]any{
+				"name":           "--dark-blue",
+				"insertPosition": map[string]any{"line": float64(2), "character": float64(26)},
+			},
+		},
+	}
+	data, _ := protocol.Marshal(dataMap)
 	diagnostic := protocol.Diagnostic{
 		Range: protocol.Range{
 			Start: protocol.Position{Line: 1, Character: 2},
 			End:   protocol.Position{Line: 1, Character: 20},
 		},
-		Severity: &severity,
-		Source:   &source,
-		Message:  "Ambiguous comment ignored: more than one var() call in declaration.",
-		Data: map[string]any{
-			"type":        "css-ambiguous-comment",
-			"commentText": "/** Blue colors */",
-			"deleteRange": map[string]any{
-				"start": map[string]any{"line": float64(1), "character": float64(0)},
-				"end":   map[string]any{"line": float64(2), "character": float64(0)},
-			},
-			"properties": []any{
-				map[string]any{
-					"name":           "--blue",
-					"insertPosition": map[string]any{"line": float64(2), "character": float64(14)},
-				},
-				map[string]any{
-					"name":           "--dark-blue",
-					"insertPosition": map[string]any{"line": float64(2), "character": float64(26)},
-				},
-			},
-		},
+		Severity: protocol.DiagnosticSeverityWarning,
+		Source:   protocol.NewOptional("cem-lsp"),
+		Message:  protocol.String("Ambiguous comment ignored: more than one var() call in declaration."),
+		Data:     data,
 	}
 
 	params := &protocol.CodeActionParams{
-		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
+		TextDocument: protocol.TextDocumentIdentifier{URI: urilib.URI(uri)},
 		Context:      protocol.CodeActionContext{Diagnostics: []protocol.Diagnostic{diagnostic}},
 	}
 
-	result, err := codeAction.CodeAction(ctx, nil, params)
+	result, err := codeAction.CodeAction(ctx, params)
 	if err != nil {
 		t.Fatalf("CodeAction failed: %v", err)
 	}
 
-	actions, ok := result.([]protocol.CodeAction)
-	if !ok {
-		t.Fatalf("Expected []protocol.CodeAction, got %T", result)
-	}
+	actions := result
 
 	if len(actions) != 2 {
 		t.Fatalf("Expected 2 code actions, got %d", len(actions))
@@ -97,7 +95,7 @@ func TestCodeActionCSSAmbiguousComment(t *testing.T) {
 	if actions[0].Kind == nil || *actions[0].Kind != protocol.CodeActionKindQuickFix {
 		t.Errorf("Action 0: expected QuickFix kind")
 	}
-	edits0 := actions[0].Edit.Changes[uri]
+	edits0 := actions[0].Edit.Changes[urilib.URI(uri)]
 	if len(edits0) != 2 {
 		t.Fatalf("Action 0: expected 2 edits, got %d", len(edits0))
 	}
@@ -118,7 +116,7 @@ func TestCodeActionCSSAmbiguousComment(t *testing.T) {
 	if actions[1].Title != "Associate comment with `--dark-blue`" {
 		t.Errorf("Action 1: expected title with --dark-blue, got %q", actions[1].Title)
 	}
-	edits1 := actions[1].Edit.Changes[uri]
+	edits1 := actions[1].Edit.Changes[urilib.URI(uri)]
 	if len(edits1) != 2 {
 		t.Fatalf("Action 1: expected 2 edits, got %d", len(edits1))
 	}

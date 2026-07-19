@@ -17,10 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package types
 
 import (
-	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	M "bennypowers.dev/cem/manifest"
 	ts "github.com/tree-sitter/go-tree-sitter"
+	"go.lsp.dev/protocol"
 )
 
 // Document interface for LSP document operations

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/lsp/testhelpers"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,12 +24,11 @@ func TestInitializeDiagnosticIdentifier(t *testing.T) {
 			},
 		}
 
-		result, err := Initialize(ctx, nil, params)
+		result, err := Initialize(ctx, params)
 		require.NoError(t, err)
 
-		initResult := result.(protocol.InitializeResult)
-		require.NotNil(t, initResult.Capabilities.DiagnosticProvider)
-		diagOpts, ok := initResult.Capabilities.DiagnosticProvider.(*protocol.DiagnosticOptions)
+		require.NotNil(t, result.Capabilities.DiagnosticProvider)
+		diagOpts, ok := result.Capabilities.DiagnosticProvider.(*protocol.DiagnosticOptions)
 		require.True(t, ok)
 		require.NotNil(t, diagOpts.Identifier)
 		assert.Equal(t, "cem", *diagOpts.Identifier)
@@ -41,11 +40,10 @@ func TestInitializeDiagnosticIdentifier(t *testing.T) {
 			Capabilities: protocol.ClientCapabilities{},
 		}
 
-		result, err := Initialize(ctx, nil, params)
+		result, err := Initialize(ctx, params)
 		require.NoError(t, err)
 
-		initResult := result.(protocol.InitializeResult)
-		assert.Nil(t, initResult.Capabilities.DiagnosticProvider)
+		assert.Nil(t, result.Capabilities.DiagnosticProvider)
 	})
 }
 

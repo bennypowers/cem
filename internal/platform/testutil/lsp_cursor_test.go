@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 )
 
 func TestExtractHTMLCursorMarker(t *testing.T) {

@@ -3,7 +3,7 @@ package textDocument
 import (
 	"testing"
 
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -11,8 +11,8 @@ import (
 // applyIncrementalChange, extractChangeParameters, applySingleLineChange,
 // applyMultiLineChange, etc. are pure text transformation functions.
 
-func ptrRange(startLine, startChar, endLine, endChar uint32) *protocol.Range {
-	return &protocol.Range{
+func makeRange(startLine, startChar, endLine, endChar uint32) protocol.Range {
+	return protocol.Range{
 		Start: protocol.Position{Line: startLine, Character: startChar},
 		End:   protocol.Position{Line: endLine, Character: endChar},
 	}
@@ -22,14 +22,14 @@ func TestApplyIncrementalChange(t *testing.T) {
 	tests := []struct {
 		name     string
 		content  string
-		change   protocol.TextDocumentContentChangeEvent
+		change   *protocol.TextDocumentContentChangePartial
 		expected string
 	}{
 		{
 			name:    "insert at start",
 			content: "hello world",
-			change: protocol.TextDocumentContentChangeEvent{
-				Range: ptrRange(0, 0, 0, 0),
+			change: &protocol.TextDocumentContentChangePartial{
+				Range: makeRange(0, 0, 0, 0),
 				Text:  "prefix ",
 			},
 			expected: "prefix hello world",
@@ -37,8 +37,8 @@ func TestApplyIncrementalChange(t *testing.T) {
 		{
 			name:    "insert at end",
 			content: "hello world",
-			change: protocol.TextDocumentContentChangeEvent{
-				Range: ptrRange(0, 11, 0, 11),
+			change: &protocol.TextDocumentContentChangePartial{
+				Range: makeRange(0, 11, 0, 11),
 				Text:  " suffix",
 			},
 			expected: "hello world suffix",
@@ -46,8 +46,8 @@ func TestApplyIncrementalChange(t *testing.T) {
 		{
 			name:    "insert in middle",
 			content: "hello world",
-			change: protocol.TextDocumentContentChangeEvent{
-				Range: ptrRange(0, 5, 0, 5),
+			change: &protocol.TextDocumentContentChangePartial{
+				Range: makeRange(0, 5, 0, 5),
 				Text:  " beautiful",
 			},
 			expected: "hello beautiful world",
@@ -55,8 +55,8 @@ func TestApplyIncrementalChange(t *testing.T) {
 		{
 			name:    "delete range",
 			content: "hello world",
-			change: protocol.TextDocumentContentChangeEvent{
-				Range: ptrRange(0, 5, 0, 11),
+			change: &protocol.TextDocumentContentChangePartial{
+				Range: makeRange(0, 5, 0, 11),
 				Text:  "",
 			},
 			expected: "hello",
@@ -64,8 +64,8 @@ func TestApplyIncrementalChange(t *testing.T) {
 		{
 			name:    "replace range",
 			content: "hello world",
-			change: protocol.TextDocumentContentChangeEvent{
-				Range: ptrRange(0, 6, 0, 11),
+			change: &protocol.TextDocumentContentChangePartial{
+				Range: makeRange(0, 6, 0, 11),
 				Text:  "there",
 			},
 			expected: "hello there",
@@ -73,8 +73,8 @@ func TestApplyIncrementalChange(t *testing.T) {
 		{
 			name:    "multi-line insert",
 			content: "line1\nline2",
-			change: protocol.TextDocumentContentChangeEvent{
-				Range: ptrRange(0, 5, 0, 5),
+			change: &protocol.TextDocumentContentChangePartial{
+				Range: makeRange(0, 5, 0, 5),
 				Text:  "\nnewline\n",
 			},
 			expected: "line1\nnewline\n\nline2",
@@ -82,20 +82,11 @@ func TestApplyIncrementalChange(t *testing.T) {
 		{
 			name:    "empty change text (no-op insert)",
 			content: "hello world",
-			change: protocol.TextDocumentContentChangeEvent{
-				Range: ptrRange(0, 5, 0, 5),
+			change: &protocol.TextDocumentContentChangePartial{
+				Range: makeRange(0, 5, 0, 5),
 				Text:  "",
 			},
 			expected: "hello world",
-		},
-		{
-			name:    "nil range returns full text replacement",
-			content: "hello world",
-			change: protocol.TextDocumentContentChangeEvent{
-				Range: nil,
-				Text:  "completely new",
-			},
-			expected: "completely new",
 		},
 	}
 
@@ -110,14 +101,14 @@ func TestApplyIncrementalChange(t *testing.T) {
 func TestExtractChangeParameters(t *testing.T) {
 	tests := []struct {
 		name     string
-		change   protocol.TextDocumentContentChangeEvent
+		change   *protocol.TextDocumentContentChangePartial
 		lines    []string
 		expected changeParameters
 	}{
 		{
 			name: "valid params",
-			change: protocol.TextDocumentContentChangeEvent{
-				Range: ptrRange(1, 3, 2, 5),
+			change: &protocol.TextDocumentContentChangePartial{
+				Range: makeRange(1, 3, 2, 5),
 				Text:  "replacement",
 			},
 			lines: []string{"line0", "line1", "line2"},
@@ -130,8 +121,8 @@ func TestExtractChangeParameters(t *testing.T) {
 		},
 		{
 			name: "out-of-bounds lines",
-			change: protocol.TextDocumentContentChangeEvent{
-				Range: ptrRange(10, 0, 20, 0),
+			change: &protocol.TextDocumentContentChangePartial{
+				Range: makeRange(10, 0, 20, 0),
 				Text:  "text",
 			},
 			lines: []string{"line0"},

@@ -37,7 +37,8 @@ import (
 	"time"
 
 	"bennypowers.dev/cem/internal/platform/testutil"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
+	urilib "go.lsp.dev/uri"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -217,9 +218,8 @@ func (c *lspClient) call(method string, params, result any) error {
 		return fmt.Errorf("jsonrpc error %d: %s", resp.Error.Code, resp.Error.Message)
 	}
 
-	// Unmarshal result
 	if result != nil && resp.Result != nil {
-		if err := json.Unmarshal(resp.Result, result); err != nil {
+		if err := protocol.Unmarshal(resp.Result, result); err != nil {
 			return fmt.Errorf("unmarshaling result: %w", err)
 		}
 	}
@@ -319,7 +319,7 @@ func setupLSPTestFromDir(t *testing.T, srcDir, name string) (workDir string, cli
 
 	// Initialize the server
 	var initResult protocol.InitializeResult
-	rootURI := protocol.DocumentUri("file://" + workDir)
+	rootURI := urilib.URI("file://" + workDir)
 	var initParams protocol.InitializeParams
 	initParams.RootURI = &rootURI
 
@@ -372,7 +372,7 @@ func TestLSPHover(t *testing.T) {
 
 	didOpenParams := protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
-			URI:        protocol.DocumentUri("file://" + jsFile),
+			URI:        urilib.URI("file://" + jsFile),
 			LanguageID: "javascript",
 			Version:    1,
 			Text:       string(content),
@@ -392,7 +392,7 @@ func TestLSPHover(t *testing.T) {
 	hoverParams := protocol.HoverParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 			TextDocument: protocol.TextDocumentIdentifier{
-				URI: protocol.DocumentUri("file://" + jsFile),
+				URI: urilib.URI("file://" + jsFile),
 			},
 			Position: protocol.Position{
 				Line:      3,  // 0-indexed, so line 4 in the file
@@ -425,7 +425,7 @@ func TestLSPCompletion(t *testing.T) {
 
 	didOpenParams := protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
-			URI:        protocol.DocumentUri("file://" + jsFile),
+			URI:        urilib.URI("file://" + jsFile),
 			LanguageID: "javascript",
 			Version:    1,
 			Text:       string(content),
@@ -448,7 +448,7 @@ func TestLSPCompletion(t *testing.T) {
 	completionParams := protocol.CompletionParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 			TextDocument: protocol.TextDocumentIdentifier{
-				URI: protocol.DocumentUri("file://" + jsFile),
+				URI: urilib.URI("file://" + jsFile),
 			},
 			Position: protocol.Position{
 				Line:      uint32(eofLine),
@@ -479,7 +479,7 @@ func TestLSPDidChange(t *testing.T) {
 
 	didOpenParams := protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
-			URI:        protocol.DocumentUri("file://" + jsFile),
+			URI:        urilib.URI("file://" + jsFile),
 			LanguageID: "javascript",
 			Version:    1,
 			Text:       string(content),
@@ -500,12 +500,12 @@ func TestLSPDidChange(t *testing.T) {
 	didChangeParams := protocol.DidChangeTextDocumentParams{
 		TextDocument: protocol.VersionedTextDocumentIdentifier{
 			TextDocumentIdentifier: protocol.TextDocumentIdentifier{
-				URI: protocol.DocumentUri("file://" + jsFile),
+				URI: urilib.URI("file://" + jsFile),
 			},
 			Version: 2,
 		},
-		ContentChanges: []any{
-			protocol.TextDocumentContentChangeEvent{
+		ContentChanges: []protocol.TextDocumentContentChangeEvent{
+			&protocol.TextDocumentContentChangeWholeDocument{
 				Text: updatedContent,
 			},
 		},
@@ -519,7 +519,7 @@ func TestLSPDidChange(t *testing.T) {
 	hoverParams := protocol.HoverParams{
 		TextDocumentPositionParams: protocol.TextDocumentPositionParams{
 			TextDocument: protocol.TextDocumentIdentifier{
-				URI: protocol.DocumentUri("file://" + jsFile),
+				URI: urilib.URI("file://" + jsFile),
 			},
 			Position: protocol.Position{
 				Line:      5, // On the observedAttributes line
@@ -537,14 +537,14 @@ func TestLSPDidChange(t *testing.T) {
 }
 
 // openHTMLFile sends a didOpen notification for the given HTML file and returns its URI and content
-func openHTMLFile(t *testing.T, client *lspClient, filePath string) (uri protocol.DocumentUri, content string) {
+func openHTMLFile(t *testing.T, client *lspClient, filePath string) (uri urilib.URI, content string) {
 	t.Helper()
 	raw, err := os.ReadFile(filePath)
 	if err != nil {
 		t.Fatalf("Failed to read %s: %v", filePath, err)
 	}
 	content = string(raw)
-	uri = protocol.DocumentUri("file://" + filePath)
+	uri = urilib.URI("file://" + filePath)
 	err = client.notify("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
@@ -562,7 +562,7 @@ func openHTMLFile(t *testing.T, client *lspClient, filePath string) (uri protoco
 // openHTMLFixture reads a fixture file from cmd/testdata/fixtures, parses and
 // strips the ^cursor marker using testutil.ExtractHTMLCursor, copies the
 // cleaned content into workDir, and sends a didOpen notification.
-func openHTMLFixture(t *testing.T, client *lspClient, workDir, fixturePath string) (uri protocol.DocumentUri, cursor protocol.Position) {
+func openHTMLFixture(t *testing.T, client *lspClient, workDir, fixturePath string) (uri urilib.URI, cursor protocol.Position) {
 	t.Helper()
 	raw, err := os.ReadFile(filepath.Join("testdata", "fixtures", fixturePath))
 	if err != nil {
@@ -579,7 +579,7 @@ func openHTMLFixture(t *testing.T, client *lspClient, workDir, fixturePath strin
 		t.Fatalf("Failed to write fixture to workspace: %v", err)
 	}
 
-	uri = protocol.DocumentUri("file://" + destPath)
+	uri = urilib.URI("file://" + destPath)
 	err = client.notify("textDocument/didOpen", protocol.DidOpenTextDocumentParams{
 		TextDocument: protocol.TextDocumentItem{
 			URI:        uri,
@@ -724,22 +724,25 @@ func TestLSPCodeAction(t *testing.T) {
 	require.NoError(t, err, "diagnostic request should succeed")
 
 	var report struct {
-		Kind  string                `json:"kind"`
-		Items []protocol.Diagnostic `json:"items"`
+		Kind  string            `json:"kind"`
+		Items []json.RawMessage `json:"items"`
 	}
 	require.NoError(t, json.Unmarshal(diagResult, &report))
 
+	// Build the codeAction request as raw JSON to preserve diagnostic wire format
+	codeActionReq := map[string]any{
+		"textDocument": map[string]any{"uri": string(uri)},
+		"range": map[string]any{
+			"start": map[string]any{"line": 0, "character": 0},
+			"end":   map[string]any{"line": 99, "character": 0},
+		},
+		"context": map[string]any{
+			"diagnostics": report.Items,
+		},
+	}
+
 	var actions json.RawMessage
-	err = client.call("textDocument/codeAction", protocol.CodeActionParams{
-		TextDocument: protocol.TextDocumentIdentifier{URI: uri},
-		Range: protocol.Range{
-			Start: protocol.Position{Line: 0, Character: 0},
-			End:   protocol.Position{Line: 99, Character: 0},
-		},
-		Context: protocol.CodeActionContext{
-			Diagnostics: report.Items,
-		},
-	}, &actions)
+	err = client.call("textDocument/codeAction", codeActionReq, &actions)
 	require.NoError(t, err, "textDocument/codeAction must not error")
 	require.NotNil(t, actions, "codeAction result must not be nil (nil indicates adapter layer returned wrong type)")
 
@@ -858,7 +861,8 @@ func TestLSPDidClose(t *testing.T) {
 		},
 	}, &hints)
 	require.NoError(t, err, "inlayHint must succeed after didClose")
-	assert.Equal(t, "null", string(hints), "inlay hints must be nil after didClose")
+	assert.True(t, string(hints) == "null" || string(hints) == "[]",
+		"inlay hints must be null or empty after didClose, got: %s", string(hints))
 
 	checkLSPGolden(t, "did-close-diagnostic", closedDiag, workDir)
 }
@@ -871,13 +875,13 @@ func TestLSPDidChangeConfiguration(t *testing.T) {
 	htmlFile := filepath.Join(workDir, "elements", "demo-button", "demo", "variants.html")
 	uri, _ := openHTMLFile(t, client, htmlFile)
 
-	// Send configuration change to disable inlay hints
-	err := client.notify("workspace/didChangeConfiguration", protocol.DidChangeConfigurationParams{
-		Settings: map[string]any{
-			"cem": map[string]any{
-				"inlayHints": false,
-			},
+	settingsJSON, _ := json.Marshal(map[string]any{
+		"cem": map[string]any{
+			"inlayHints": false,
 		},
+	})
+	err := client.notify("workspace/didChangeConfiguration", protocol.DidChangeConfigurationParams{
+		Settings: settingsJSON,
 	})
 	require.NoError(t, err, "workspace/didChangeConfiguration must not error")
 
@@ -932,20 +936,9 @@ func TestLSPCommandStdoutClean(t *testing.T) {
 	t.Logf("stdout length: %d bytes", len(out))
 	t.Logf("stderr (expected): %s", stderr.String())
 
-	contaminations := []string{
-		"[REGISTRY]",
-		"[IN-MEMORY]",
-		"INFO",
-		"DEBUG",
-		"Loading manifests",
-		"Successfully",
-	}
-	for _, pattern := range contaminations {
-		assert.NotContains(t, out, pattern,
-			"stdout contains log output %q which would corrupt JSON-RPC", pattern)
-	}
-
-	// Verify all stdout bytes parse as JSON-RPC framed messages
+	// Verify all stdout bytes parse as JSON-RPC framed messages.
+	// Log messages during initialization appear as valid window/logMessage
+	// notifications, which is correct LSP behavior.
 	remaining := out
 	for len(remaining) > 0 {
 		idx := strings.Index(remaining, "Content-Length:")

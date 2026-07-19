@@ -26,6 +26,7 @@ import (
 	"bennypowers.dev/cem/lsp/methods/textDocument/publishDiagnostics"
 	"bennypowers.dev/cem/lsp/testhelpers"
 	M "bennypowers.dev/cem/manifest"
+	"go.lsp.dev/protocol"
 )
 
 // TestDiagnostics_NestedElementRanges verifies that tag diagnostics in
@@ -102,7 +103,7 @@ func TestDiagnostics_NestedElementRanges(t *testing.T) {
 						t.Errorf("Expected end character %d, got %d",
 							expected.endChar, diag.Range.End.Character)
 					}
-					if !strings.Contains(diag.Message, "'"+tagName+"'") {
+					if !strings.Contains(string(diag.Message.(protocol.String)), "'"+tagName+"'") {
 						t.Errorf("Expected diagnostic message to mention '%s', got: %s",
 							tagName, diag.Message)
 					}

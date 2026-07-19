@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"bennypowers.dev/cem/internal/textutil"
-	protocol "github.com/bennypowers/glsp/protocol_3_17"
+	"go.lsp.dev/protocol"
 	ts "github.com/tree-sitter/go-tree-sitter"
 	tsCss "github.com/tree-sitter/tree-sitter-css/bindings/go"
 	tsTypescript "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
