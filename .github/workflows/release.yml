@@ -5,6 +5,10 @@ on:
     types:
       - published
 
+permissions:
+  contents: write
+  id-token: write
+
 jobs:
   build:
     uses: bennypowers/go-release-workflows/.github/workflows/build-binaries.yml@main
@@ -14,14 +18,13 @@ jobs:
 
   npm:
     needs: build
-    uses: bennypowers/go-release-workflows/.github/workflows/npm-publish.yml@main
+    uses: bennypowers/go-release-workflows/.github/workflows/npm-publish.yml@v1.1
     with:
       binary-name: cem
       npm-package-name: "@pwrs/cem"
       release-tag: ${{ github.event.release.tag_name }}
       pre-main-publish-script: 'node ../scripts/update-platform-package-versions.js'
-    secrets:
-      npm-token: ${{ secrets.NPM_TOKEN }}
+      provenance: true
 
   vscode-extension:
     name: Build and publish VSCode extension
