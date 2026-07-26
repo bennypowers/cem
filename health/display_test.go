@@ -53,8 +53,9 @@ func TestWriteMarkdownReport(t *testing.T) {
 			got := buf.Bytes()
 
 			testutil.CheckGolden(t, "markdown-"+tt.fixture+".md", got, testutil.GoldenOptions{
-				Dir: "goldens",
-				FS:  mfs,
+				Dir:       "goldens",
+				FS:        mfs,
+				SourceDir: "testdata",
 			})
 		})
 	}

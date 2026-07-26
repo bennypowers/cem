@@ -57,6 +57,7 @@ func TestAnalyze(t *testing.T) {
 				Dir:         "goldens",
 				UseJSONDiff: true,
 				FS:          mfs,
+				SourceDir:   "testdata",
 			})
 		})
 	}

@@ -98,6 +98,43 @@ func TestCheckGolden_WithFS(t *testing.T) {
 	})
 }
 
+func TestCheckGolden_WithFS_UpdateWritesToSourceDir(t *testing.T) {
+	sourceDir := t.TempDir()
+	writeFixtureFile(t, filepath.Join(sourceDir, "goldens", "output.txt"), []byte("old content"))
+
+	// Isolate CWD so the negative assertion can't touch real project files
+	isolatedCWD := t.TempDir()
+	t.Chdir(isolatedCWD)
+
+	mfs := LoadTestdataFS(t, sourceDir, "/")
+
+	// Enable --update temporarily
+	old := *Update
+	*Update = true
+	defer func() { *Update = old }()
+
+	CheckGolden(t, "output", []byte("new content"), GoldenOptions{
+		Dir:       "goldens",
+		Extension: ".txt",
+		FS:        mfs,
+		SourceDir: sourceDir,
+	})
+
+	// Verify write went to sourceDir, not CWD-relative
+	got, err := os.ReadFile(filepath.Join(sourceDir, "goldens", "output.txt"))
+	if err != nil {
+		t.Fatalf("expected golden to be written to source dir: %v", err)
+	}
+	if string(got) != "new content" {
+		t.Errorf("got %q, want %q", string(got), "new content")
+	}
+
+	// Verify CWD-relative path was NOT created
+	if _, err := os.Stat(filepath.Join(isolatedCWD, "goldens", "output.txt")); err == nil {
+		t.Fatal("golden file should not have been written to CWD-relative path")
+	}
+}
+
 func TestCheckGolden_WithFS_ReadsMissingFile(t *testing.T) {
 	dir := t.TempDir()
 	writeFixtureFile(t, filepath.Join(dir, "goldens", "exists.txt"), []byte("content"))
