@@ -102,6 +102,10 @@ func TestCheckGolden_WithFS_UpdateWritesToSourceDir(t *testing.T) {
 	sourceDir := t.TempDir()
 	writeFixtureFile(t, filepath.Join(sourceDir, "goldens", "output.txt"), []byte("old content"))
 
+	// Isolate CWD so the negative assertion can't touch real project files
+	isolatedCWD := t.TempDir()
+	t.Chdir(isolatedCWD)
+
 	mfs := LoadTestdataFS(t, sourceDir, "/")
 
 	// Enable --update temporarily
@@ -126,8 +130,7 @@ func TestCheckGolden_WithFS_UpdateWritesToSourceDir(t *testing.T) {
 	}
 
 	// Verify CWD-relative path was NOT created
-	if _, err := os.Stat("goldens/output.txt"); err == nil {
-		_ = os.Remove("goldens/output.txt")
+	if _, err := os.Stat(filepath.Join(isolatedCWD, "goldens", "output.txt")); err == nil {
 		t.Fatal("golden file should not have been written to CWD-relative path")
 	}
 }

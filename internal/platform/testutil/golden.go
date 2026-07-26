@@ -101,10 +101,11 @@ func CheckGolden(t *testing.T, name string, actual []byte, opts ...GoldenOptions
 		if opt.SourceDir != "" && opt.FS != nil {
 			writePath = filepath.Join(opt.SourceDir, goldenPath)
 		}
-		if err := os.MkdirAll(filepath.Dir(writePath), 0755); err != nil {
+		fsys := platform.NewOSFileSystem()
+		if err := fsys.MkdirAll(filepath.Dir(writePath), 0755); err != nil {
 			t.Fatalf("failed to create golden directory: %v", err)
 		}
-		if err := os.WriteFile(writePath, actual, 0644); err != nil {
+		if err := fsys.WriteFile(writePath, actual, 0644); err != nil {
 			t.Fatalf("failed to update golden file: %v", err)
 		}
 		t.Logf("Updated golden file: %s", writePath)
