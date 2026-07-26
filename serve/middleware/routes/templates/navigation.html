@@ -15,9 +15,9 @@
         <cem-pf-v6-nav-list>
           {{range .Demos}}
           <cem-pf-v6-nav-item>
-            <cem-pf-v6-nav-link href="{{.URL}}"{{if .External}}
-                            target="_blank"{{end}}{{if .Description}}
-                            title="{{.Description}}"{{end}}>
+            <cem-pf-v6-nav-link href="{{.URL}}"
+                            {{- if .External}} target="_blank"{{end}}
+                            {{- if .Description}} title="{{.Description}}"{{end}}>
               {{.Name}}{{if .External}} &#x2197;{{end}}
             </cem-pf-v6-nav-link>
           </cem-pf-v6-nav-item>
@@ -49,9 +49,9 @@
               <cem-pf-v6-nav-list>
                 {{range .Demos}}
                 <cem-pf-v6-nav-item>
-                  <cem-pf-v6-nav-link href="{{.URL}}"{{if .External}}
-                                  target="_blank"{{end}}{{if .Description}}
-                                  title="{{.Description}}"{{end}}>
+                  <cem-pf-v6-nav-link href="{{.URL}}"
+                                  {{- if .External}} target="_blank"{{end}}
+                                  {{- if .Description}} title="{{.Description}}"{{end}}>
                     {{.Name}}{{if .External}} &#x2197;{{end}}
                   </cem-pf-v6-nav-link>
                 </cem-pf-v6-nav-item>
