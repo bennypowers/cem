@@ -52,6 +52,10 @@ type GoldenOptions struct {
 	// FS is a preloaded MapFileSystem to read golden files from instead of disk.
 	// When set, golden reads come from memory. Writes (--update) still go to disk.
 	FS *platform.MapFileSystem
+	// SourceDir is the on-disk directory that FS was loaded from.
+	// When set with FS, --update writes resolve relative to this directory
+	// so tracked golden files are updated in place.
+	SourceDir string
 }
 
 // CheckGolden compares actual output against a golden file.
@@ -93,13 +97,17 @@ func CheckGolden(t *testing.T, name string, actual []byte, opts ...GoldenOptions
 
 	// Update mode: write golden file and return
 	if *Update {
-		if err := os.MkdirAll(filepath.Dir(goldenPath), 0755); err != nil {
+		writePath := goldenPath
+		if opt.SourceDir != "" && opt.FS != nil {
+			writePath = filepath.Join(opt.SourceDir, goldenPath)
+		}
+		if err := os.MkdirAll(filepath.Dir(writePath), 0755); err != nil {
 			t.Fatalf("failed to create golden directory: %v", err)
 		}
-		if err := os.WriteFile(goldenPath, actual, 0644); err != nil {
+		if err := os.WriteFile(writePath, actual, 0644); err != nil {
 			t.Fatalf("failed to update golden file: %v", err)
 		}
-		t.Logf("Updated golden file: %s", goldenPath)
+		t.Logf("Updated golden file: %s", writePath)
 		return
 	}
 

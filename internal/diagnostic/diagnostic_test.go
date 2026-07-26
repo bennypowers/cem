@@ -2,7 +2,6 @@ package diagnostic_test
 
 import (
 	"bytes"
-	"path/filepath"
 	"testing"
 
 	"bennypowers.dev/cem/internal/config"
@@ -28,7 +27,8 @@ func goldenOpts(t *testing.T) testutil.GoldenOptions {
 		Dir:       "goldens",
 		Extension: ".txt",
 		StripANSI: true,
-		FS:        testutil.LoadTestdataFS(t, filepath.Join("testdata"), "/"),
+		FS:        testutil.LoadTestdataFS(t, "testdata", "/"),
+		SourceDir: "testdata",
 	}
 }
 
