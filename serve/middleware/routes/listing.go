@@ -46,6 +46,7 @@ type DemoListing struct {
 	URL         string
 	Slug        string
 	PackageName string // Package name (for workspace mode, empty for single-package)
+	External    bool   // True when URL points to an external resource
 }
 
 // RenderElementListing renders the root listing page with all elements
@@ -251,18 +252,30 @@ func extractElementListings(pkg *M.Package, packageName, demoURLPrefix string) (
 			elementMap[tagName] = listing
 		}
 
-		// Extract local route from demo URL
-		localRoute := extractLocalRoute(demo.URL, demoURLPrefix)
+		hasSourceHref := demo.Source != nil && demo.Source.Href != ""
+		external := isExternalDemoURL(demo.URL) && !hasSourceHref
 
-		// Use prettified route for the display name
-		name := prettifyRoute(localRoute)
+		var demoListingURL string
+		var name string
+		if external {
+			demoListingURL = demo.URL
+			name = demo.Description
+			if name == "" {
+				name = demo.URL
+			}
+		} else {
+			localRoute := extractLocalRoute(demo.URL, demoURLPrefix)
+			demoListingURL = localRoute
+			name = prettifyRoute(localRoute)
+		}
 
 		listing.Demos = append(listing.Demos, DemoListing{
 			Name:        name,
 			Description: demo.Description,
-			URL:         localRoute,
+			URL:         demoListingURL,
 			Slug:        slugify(name),
 			PackageName: packageName,
+			External:    external,
 		})
 	}
 

@@ -49,6 +49,13 @@ func DemoURLPrefixFromTemplate(urlTemplate string) string {
 	return strings.TrimSuffix(parsed.Path, "/")
 }
 
+// isExternalDemoURL reports whether a demo URL points to an external resource
+// (has both a scheme and a host) rather than a local file path.
+func isExternalDemoURL(demoURL string) bool {
+	parsed, err := url.Parse(demoURL)
+	return err == nil && parsed.Scheme != "" && parsed.Host != ""
+}
+
 // BuildDemoRoutingTable creates a routing table from manifest
 func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string, demoURLPrefix string) (map[string]*DemoRouteEntry, error) {
 	if len(manifestBytes) == 0 {
@@ -68,9 +75,15 @@ func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string, de
 		// Extract local route from canonical URL (strip origin and deployment prefix)
 		localRoute := extractLocalRoute(demoURL, demoURLPrefix)
 
+		hasSourceHref := renderableDemo.Demo.Source != nil && renderableDemo.Demo.Source.Href != ""
+
+		if isExternalDemoURL(demoURL) && !hasSourceHref {
+			continue
+		}
+
 		// Determine file path from Source.Href
 		filePath := demoURL
-		if renderableDemo.Demo.Source != nil && renderableDemo.Demo.Source.Href != "" {
+		if hasSourceHref {
 			moduleDir := filepath.Dir(renderableDemo.Module.Path)
 			filePath = resolveSourceHrefToFilePath(renderableDemo.Demo.Source.Href, moduleDir, sourceControlRootURL)
 		} else if strings.HasPrefix(demoURL, "./") || strings.HasPrefix(demoURL, "/") {
@@ -303,12 +316,18 @@ func buildPackageRoutingTable(pkg PackageContext, demoURLPrefix string) (map[str
 	for _, renderableDemo := range manifest.RenderableDemos() {
 		demoURL := renderableDemo.Demo.URL
 
+		hasSourceHref := renderableDemo.Demo.Source != nil && renderableDemo.Demo.Source.Href != ""
+
+		if isExternalDemoURL(demoURL) && !hasSourceHref {
+			continue
+		}
+
 		localRoute := extractLocalRoute(demoURL, demoURLPrefix)
 
 		// Resolve file path
 		moduleDir := filepath.Dir(renderableDemo.Module.Path)
 		var filePath string
-		if renderableDemo.Demo.Source != nil && renderableDemo.Demo.Source.Href != "" {
+		if hasSourceHref {
 			filePath = resolveSourceHrefToFilePath(renderableDemo.Demo.Source.Href, moduleDir, "")
 		} else {
 			// Fallback: try to find demo file in module directory
