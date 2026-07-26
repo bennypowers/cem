@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/serve/middleware"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestBuildDemoRoutingTable_DirectoryTraversalPrevention tests that malicious
@@ -279,6 +280,131 @@ func TestBuildPackageRoutingTable_DuplicateDetection(t *testing.T) {
 			t.Errorf("Expected error to contain %q, got: %v", substr, err)
 		}
 	}
+}
+
+// Inline assertions: pure function, scalar results
+func TestIsExternalDemoURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		url      string
+		expected bool
+	}{
+		{"https URL", "https://example.com/demo/", true},
+		{"http URL", "http://example.com/demo/", true},
+		{"localhost URL", "http://localhost:3000/demo/", true},
+		{"relative path", "./demo/index.html", false},
+		{"absolute path", "/demo/index.html", false},
+		{"bare path", "demo/index.html", false},
+		{"empty", "", false},
+		{"file URI no host", "file:///local/path", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, isExternalDemoURL(tt.url))
+		})
+	}
+}
+
+// Inline assertions: routing table skip behavior, scalar route map check
+func TestBuildDemoRoutingTable_ExternalURLSkipped(t *testing.T) {
+	manifestJSON := `{
+		"schemaVersion": "1.0.0",
+		"modules": [
+			{
+				"kind": "javascript-module",
+				"path": "src/my-element.js",
+				"declarations": [
+					{
+						"kind": "class",
+						"name": "MyElement",
+						"tagName": "my-element",
+						"customElement": true,
+						"demos": [
+							{
+								"url": "https://example.com/demo-field/",
+								"description": "External demo"
+							}
+						]
+					}
+				]
+			}
+		]
+	}`
+
+	routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
+	assert.NoError(t, err)
+	assert.Empty(t, routes, "external demo URL should not produce a route")
+}
+
+// Inline assertions: routing exception case, scalar route count check
+func TestBuildDemoRoutingTable_ExternalURLWithSourceHrefStillRoutes(t *testing.T) {
+	manifestJSON := `{
+		"schemaVersion": "1.0.0",
+		"modules": [
+			{
+				"kind": "javascript-module",
+				"path": "src/my-element.js",
+				"declarations": [
+					{
+						"kind": "class",
+						"name": "MyElement",
+						"tagName": "my-element",
+						"customElement": true,
+						"demos": [
+							{
+								"url": "https://example.com/demo-field/",
+								"description": "External URL but local source",
+								"source": {
+									"href": "src/my-element/demo/index.html"
+								}
+							}
+						]
+					}
+				]
+			}
+		]
+	}`
+
+	routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
+	assert.NoError(t, err)
+	assert.Len(t, routes, 1, "external URL with Source.Href should still produce a route")
+}
+
+// Inline assertions: workspace-mode skip behavior, scalar route map check
+func TestBuildPackageRoutingTable_ExternalURLSkipped(t *testing.T) {
+	manifestJSON := `{
+		"schemaVersion": "1.0.0",
+		"modules": [
+			{
+				"kind": "javascript-module",
+				"path": "src/my-element.js",
+				"declarations": [
+					{
+						"kind": "class",
+						"name": "MyElement",
+						"tagName": "my-element",
+						"customElement": true,
+						"demos": [
+							{
+								"url": "https://example.com/demo-field/",
+								"description": "External demo"
+							}
+						]
+					}
+				]
+			}
+		]
+	}`
+
+	pkg := PackageContext{
+		Name:     "test-package",
+		Path:     "/path/to/test-package",
+		Manifest: []byte(manifestJSON),
+	}
+
+	routes, err := buildPackageRoutingTable(pkg, "")
+	assert.NoError(t, err)
+	assert.Empty(t, routes, "external demo URL should not produce a route in workspace mode")
 }
 
 // TestBuildDemoRoutingTable_SourceHrefPaths tests that demo source.href paths

@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package routes
 
 import (
+	"encoding/json"
 	"testing"
 
 	"bennypowers.dev/cem/health"
@@ -122,6 +123,60 @@ func TestBuildPackageListingsFromRoutes(t *testing.T) {
 	assert.Len(t, pkgs, 1)
 	assert.Equal(t, "@my/elements", pkgs[0].Name)
 	assert.Len(t, pkgs[0].Elements, 2)
+}
+
+// Inline assertions: pure function, scalar fields checked individually
+func TestExtractElementListings_ExternalDemoMarkedExternal(t *testing.T) {
+	manifestJSON := `{
+		"schemaVersion": "1.0.0",
+		"modules": [
+			{
+				"kind": "javascript-module",
+				"path": "src/my-element.js",
+				"declarations": [
+					{
+						"kind": "class",
+						"name": "MyElement",
+						"tagName": "my-element",
+						"customElement": true,
+						"demos": [
+							{
+								"url": "https://example.com/demo/",
+								"description": "External demo"
+							},
+							{
+								"url": "./demo/index.html",
+								"description": "Local demo"
+							}
+						]
+					}
+				]
+			}
+		]
+	}`
+
+	var pkg M.Package
+	err := json.Unmarshal([]byte(manifestJSON), &pkg)
+	assert.NoError(t, err)
+
+	listings, err := extractElementListings(&pkg, "test-pkg", "")
+	assert.NoError(t, err)
+	assert.Len(t, listings, 1)
+	assert.Len(t, listings[0].Demos, 2)
+
+	var externalDemo, localDemo *DemoListing
+	for i := range listings[0].Demos {
+		d := &listings[0].Demos[i]
+		if d.External {
+			externalDemo = d
+		} else {
+			localDemo = d
+		}
+	}
+
+	assert.NotNil(t, externalDemo, "external demo should have External=true")
+	assert.Equal(t, "https://example.com/demo/", externalDemo.URL)
+	assert.NotNil(t, localDemo, "local demo should have External=false")
 }
 
 func TestResolveViaRoutingTable(t *testing.T) {
