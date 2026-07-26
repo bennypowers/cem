@@ -156,6 +156,7 @@ func amendStylesMapFromSource(
 	tree := parser.Parse(code, nil)
 	defer tree.Close()
 	root := tree.RootNode()
+	varDefaults := make(map[string]bool)
 	for captures := range queryMatcher.ParentCaptures(root, code, "cssProperty") {
 		properties := captures["property"]
 		name := properties[len(properties)-1].Text
@@ -172,13 +173,19 @@ func amendStylesMapFromSource(
 				},
 			}
 		}
+		isVarCall := len(captures["fn"]) > 0
 		defaultVals, ok := captures["default"]
 		if ok && len(defaultVals) > 0 {
-			valueNodes := make([]*ts.Node, len(defaultVals))
-			for i, n := range defaultVals {
-				valueNodes[i] = Q.GetDescendantById(root, n.NodeId)
+			if (isVarCall && !varDefaults[name]) || p.Default == "" {
+				valueNodes := make([]*ts.Node, len(defaultVals))
+				for i, n := range defaultVals {
+					valueNodes[i] = Q.GetDescendantById(root, n.NodeId)
+				}
+				p.Default = normalizeCssVal(valueNodes, code)
+				if isVarCall {
+					varDefaults[name] = true
+				}
 			}
-			p.Default = normalizeCssVal(valueNodes, code)
 		}
 		comment, ok := captures["comment"]
 		if ok {

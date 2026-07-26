@@ -26,4 +26,32 @@ p {
     var(--defined-in-var-call)
     /** also defined in var call */
     var(--also-defined-in-var-call);
+  background:
+    /**
+     * Base background color
+     * @summary Background color
+     */
+    var(--var-with-host-override, #0070f3);
+}
+
+:host([variant="danger"]) {
+  --var-with-host-override: red;
+}
+
+:host([variant="warning"]) {
+  --var-with-host-override: orange;
+}
+
+:host([size="small"]) {
+  --defined-on-host: small-blue;
+}
+
+:host([variant="danger"]) {
+  --reverse-order-override: red;
+}
+
+p {
+  color: var(--reverse-order-override, blue);
+  background: var(--multi-var-prop, first-fallback);
+  border-color: var(--multi-var-prop, second-fallback);
 }

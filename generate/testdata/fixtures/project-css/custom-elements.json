@@ -120,11 +120,6 @@
           "tagName": "class-css-host-props",
           "cssProperties": [
             {
-              "name": "--defined-on-host",
-              "description": "defined on host",
-              "default": "blue"
-            },
-            {
               "name": "--also-defined-on-host",
               "description": "also defined on host",
               "default": "blue"
@@ -159,6 +154,25 @@
             {
               "name": "--also-defined-in-var-call",
               "description": "also defined in var call"
+            },
+            {
+              "name": "--var-with-host-override",
+              "summary": "Background color",
+              "description": "Base background color",
+              "default": "#0070f3"
+            },
+            {
+              "name": "--defined-on-host",
+              "description": "defined on host",
+              "default": "blue"
+            },
+            {
+              "name": "--reverse-order-override",
+              "default": "blue"
+            },
+            {
+              "name": "--multi-var-prop",
+              "default": "first-fallback"
             }
           ],
           "customElement": true
