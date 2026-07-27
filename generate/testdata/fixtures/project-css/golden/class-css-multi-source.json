@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-css-multi-source.js",
+      "declarations": [
+        {
+          "name": "ClassCssMultiSource",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-css/src/class-css-multi-source.ts#L3"
+          },
+          "kind": "class",
+          "tagName": "class-css-multi-source",
+          "cssProperties": [
+            {
+              "name": "--shared-prop",
+              "description": "Base text color",
+              "default": "original"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-css-multi-source",
+          "declaration": {
+            "name": "ClassCssMultiSource",
+            "module": "src/class-css-multi-source.js"
+          }
+        }
+      ]
+    }
+  ]
+}

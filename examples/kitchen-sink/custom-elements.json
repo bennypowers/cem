@@ -521,19 +521,19 @@
               "name": "--demo-button-bg",
               "summary": "Button background color",
               "description": "Background color of the button",
-              "default": "light-dark(#ef4444, #f87171)"
+              "default": "#0070f3"
             },
             {
               "name": "--demo-button-padding",
               "summary": "Button padding",
               "description": "Internal padding of the button",
-              "default": "0.75rem 1.5rem"
+              "default": "0.5rem 1rem"
             },
             {
               "name": "--demo-button-radius",
               "summary": "Button border radius",
               "description": "Border radius for rounded corners",
-              "default": "999px"
+              "default": "4px"
             }
           ],
           "cssStates": [
@@ -552,6 +552,13 @@
               "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-button/forms/",
               "source": {
                 "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/forms.html"
+              }
+            },
+            {
+              "description": "Intentionally incorrect usage of demo-button to demonstrate LSP diagnostics:\nattribute typos, invalid slot names, and missing imports.",
+              "url": "https://bennypowers.dev/cem/examples/kitchen-sink/demo-button/incorrect-usage/",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/demo-button/demo/incorrect-usage.html"
               }
             },
             {

@@ -120,11 +120,6 @@
           "tagName": "class-css-host-props",
           "cssProperties": [
             {
-              "name": "--defined-on-host",
-              "description": "defined on host",
-              "default": "blue"
-            },
-            {
               "name": "--also-defined-on-host",
               "description": "also defined on host",
               "default": "blue"
@@ -159,6 +154,25 @@
             {
               "name": "--also-defined-in-var-call",
               "description": "also defined in var call"
+            },
+            {
+              "name": "--var-with-host-override",
+              "summary": "Background color",
+              "description": "Base background color",
+              "default": "#0070f3"
+            },
+            {
+              "name": "--defined-on-host",
+              "description": "defined on host",
+              "default": "blue"
+            },
+            {
+              "name": "--reverse-order-override",
+              "default": "blue"
+            },
+            {
+              "name": "--multi-var-prop",
+              "default": "first-fallback"
             }
           ],
           "customElement": true
@@ -171,6 +185,42 @@
           "declaration": {
             "name": "ClassCssHostProps",
             "module": "src/class-css-host-props.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/class-css-multi-source.js",
+      "declarations": [
+        {
+          "name": "ClassCssMultiSource",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-css/src/class-css-multi-source.ts#L3"
+          },
+          "kind": "class",
+          "tagName": "class-css-multi-source",
+          "cssProperties": [
+            {
+              "name": "--shared-prop",
+              "description": "Base text color",
+              "default": "original"
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "class-css-multi-source",
+          "declaration": {
+            "name": "ClassCssMultiSource",
+            "module": "src/class-css-multi-source.js"
           }
         }
       ]
