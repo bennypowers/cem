@@ -33,9 +33,14 @@ import (
 )
 
 // CssPropsMap maps CSS property names to their parsed values.
-//
-// Usage: Return type for CssCache.Get(), input for CssCache.Set()
 type CssPropsMap map[string]M.CssCustomProperty
+
+// CssCacheEntry stores parsed CSS properties alongside var() provenance
+// tracking so that cached files preserve default-resolution priority.
+type CssCacheEntry struct {
+	Props       CssPropsMap
+	VarDefaults map[string]bool
+}
 
 // CssCache defines the interface for CSS parsing cache operations.
 // This abstraction allows for different cache implementations and easier testing.
@@ -50,10 +55,10 @@ type CssPropsMap map[string]M.CssCustomProperty
 // Implementations:
 // - CssParseCache: Default implementation with sync.RWMutex protection
 type CssCache interface {
-	// Get retrieves cached CSS properties for a file path
-	Get(path string) (CssPropsMap, bool)
-	// Set stores CSS properties for a file path
-	Set(path string, props CssPropsMap)
+	// Get retrieves a cached CSS parse result for a file path
+	Get(path string) (*CssCacheEntry, bool)
+	// Set stores a CSS parse result for a file path
+	Set(path string, entry *CssCacheEntry)
 	// Invalidate removes cached entries for the given paths
 	Invalidate(paths []string)
 	// Clear removes all cached entries
@@ -66,7 +71,7 @@ type CssCache interface {
 // Usage: Created by NewCssParseCache(), injected into ModuleProcessor
 type CssParseCache struct {
 	mu    sync.RWMutex
-	cache map[string]CssPropsMap
+	cache map[string]*CssCacheEntry
 }
 
 // NewCssParseCache creates a new CSS parse cache.
@@ -78,12 +83,12 @@ type CssParseCache struct {
 // Returns: Thread-safe CSS cache implementation
 func NewCssParseCache() *CssParseCache {
 	return &CssParseCache{
-		cache: make(map[string]CssPropsMap),
+		cache: make(map[string]*CssCacheEntry),
 	}
 }
 
 // Get checks the cache for a parsed result.
-func (c *CssParseCache) Get(path string) (CssPropsMap, bool) {
+func (c *CssParseCache) Get(path string) (*CssCacheEntry, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	val, ok := c.cache[path]
@@ -91,10 +96,10 @@ func (c *CssParseCache) Get(path string) (CssPropsMap, bool) {
 }
 
 // Set stores a parsed result.
-func (c *CssParseCache) Set(path string, props CssPropsMap) {
+func (c *CssParseCache) Set(path string, entry *CssCacheEntry) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.cache[path] = props
+	c.cache[path] = entry
 }
 
 // Invalidate removes cached entries for the given paths
@@ -110,7 +115,7 @@ func (c *CssParseCache) Invalidate(paths []string) {
 func (c *CssParseCache) Clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.cache = make(map[string]CssPropsMap)
+	c.cache = make(map[string]*CssCacheEntry)
 }
 
 func sortCustomProperty(a M.CssCustomProperty, b M.CssCustomProperty) int {
@@ -148,6 +153,7 @@ func amendStylesMapFromSource(
 	path string,
 	lineOffset int,
 	props CssPropsMap,
+	varDefaults map[string]bool,
 	queryManager *Q.QueryManager,
 	queryMatcher *Q.QueryMatcher,
 	parser *ts.Parser,
@@ -156,7 +162,6 @@ func amendStylesMapFromSource(
 	tree := parser.Parse(code, nil)
 	defer tree.Close()
 	root := tree.RootNode()
-	varDefaults := make(map[string]bool)
 	for captures := range queryMatcher.ParentCaptures(root, code, "cssProperty") {
 		properties := captures["property"]
 		name := properties[len(properties)-1].Text
@@ -223,15 +228,22 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 		defer qm.Close()
 		parser := csslang.BorrowParser()
 		defer csslang.ReturnParser(parser)
+		varDefaults := make(map[string]bool)
 		if hasBindings && mp.cssCache != nil {
 			for _, binding := range bindings {
 				spec, ok := mp.styleImportsBindingToSpecMap[binding.Text]
 				if ok && strings.HasPrefix(spec, ".") {
 					moduleDir := filepath.Dir(mp.absPath)
 					absPath := filepath.Join(moduleDir, spec)
-					// Try cache first
 					if cached, found := mp.cssCache.Get(absPath); found {
-						maps.Copy(props, cached)
+						for name, prop := range cached.Props {
+							existing, has := props[name]
+							if has && existing.Default != "" && varDefaults[name] {
+								continue
+							}
+							props[name] = prop
+						}
+						maps.Copy(varDefaults, cached.VarDefaults)
 					} else {
 						content, err := mp.fs.ReadFile(absPath)
 						if err != nil {
@@ -241,13 +253,23 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 	from module directory %s: %w`, spec, absPath, moduleDir, err))
 						} else {
 							tmpProps := make(CssPropsMap)
-							err := amendStylesMapFromSource(absPath, 0, tmpProps, mp.queryManager, qm, parser, content)
+							fileVarDefaults := make(map[string]bool)
+							err := amendStylesMapFromSource(absPath, 0, tmpProps, fileVarDefaults, mp.queryManager, qm, parser, content)
 							if err != nil {
 								errs = errors.Join(errs, err)
 							}
-							maps.Copy(props, tmpProps)
-							// Store a copy in cache for this file
-							mp.cssCache.Set(absPath, tmpProps)
+							for name, prop := range tmpProps {
+								existing, has := props[name]
+								if has && existing.Default != "" && varDefaults[name] {
+									continue
+								}
+								props[name] = prop
+							}
+							maps.Copy(varDefaults, fileVarDefaults)
+							mp.cssCache.Set(absPath, &CssCacheEntry{
+								Props:       tmpProps,
+								VarDefaults: fileVarDefaults,
+							})
 						}
 					}
 				}
@@ -260,7 +282,7 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 			for _, styleString := range styleStrings {
 				tsNode := Q.GetDescendantById(mp.root, styleString.NodeId)
 				lineOffset := int(tsNode.StartPosition().Row)
-				err := amendStylesMapFromSource(mp.absPath, lineOffset, props, mp.queryManager, qm, parser, []byte(styleString.Text))
+				err := amendStylesMapFromSource(mp.absPath, lineOffset, props, varDefaults, mp.queryManager, qm, parser, []byte(styleString.Text))
 				if err != nil {
 					errs = errors.Join(errs, err)
 				}

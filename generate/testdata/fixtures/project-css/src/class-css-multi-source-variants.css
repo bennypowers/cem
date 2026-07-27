@@ -1,0 +1,3 @@
+:host([variant="danger"]) {
+  --shared-prop: overridden;
+}
