@@ -417,6 +417,79 @@ func TestBuildWorkspaceRoutingTable_PreservesSkippedAcrossPackages(t *testing.T)
 	}
 }
 
+// Inline assertions: regression test for workspace cross-package duplicate with skipped preservation
+func TestBuildWorkspaceRoutingTable_DuplicatePreservesSkipped(t *testing.T) {
+	pkgWithTraversal := PackageContext{
+		Name: "pkg-a",
+		Path: "/path/to/pkg-a",
+		Manifest: []byte(`{
+			"schemaVersion": "1.0.0",
+			"modules": [
+				{
+					"kind": "javascript-module",
+					"path": "src/bad.js",
+					"declarations": [
+						{
+							"kind": "class",
+							"name": "Bad",
+							"tagName": "bad-element",
+							"customElement": true,
+							"demos": [{
+								"url": "https://example.com/demo/",
+								"source": {"href": "../../etc/passwd"}
+							}]
+						}
+					]
+				},
+				{
+					"kind": "javascript-module",
+					"path": "src/good-a.js",
+					"declarations": [
+						{
+							"kind": "class",
+							"name": "GoodA",
+							"tagName": "good-a",
+							"customElement": true,
+							"demos": [{"url": "./demo/index.html"}]
+						}
+					]
+				}
+			]
+		}`),
+	}
+	pkgWithDup := PackageContext{
+		Name: "pkg-b",
+		Path: "/path/to/pkg-b",
+		Manifest: []byte(`{
+			"schemaVersion": "1.0.0",
+			"modules": [
+				{
+					"kind": "javascript-module",
+					"path": "src/good-b.js",
+					"declarations": [
+						{
+							"kind": "class",
+							"name": "GoodB",
+							"tagName": "good-b",
+							"customElement": true,
+							"demos": [{"url": "./demo/index.html"}]
+						}
+					]
+				}
+			]
+		}`),
+	}
+
+	_, skipped, err := BuildWorkspaceRoutingTable(
+		[]PackageContext{pkgWithTraversal, pkgWithDup}, "",
+	)
+	assert.Error(t, err, "should return cross-package duplicate-route error")
+	assert.Contains(t, err.Error(), "Route conflicts detected")
+	if assert.Len(t, skipped, 1, "traversal skip from pkg-a should survive duplicate error") {
+		assert.Equal(t, "bad-element", skipped[0].TagName)
+	}
+}
+
 // Inline assertions: pure function, scalar results
 func TestIsExternalDemoURL(t *testing.T) {
 	tests := []struct {
