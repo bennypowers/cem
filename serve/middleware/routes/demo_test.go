@@ -115,10 +115,12 @@ func TestBuildDemoRoutingTable_DirectoryTraversalPrevention(t *testing.T) {
 				if len(routes) != 0 {
 					t.Errorf("Expected traversal path to be skipped for %s, but got routes: %+v", tt.description, routes)
 				}
-				assert.Len(t, skipped, 1, "rejected demo should appear in skipped list")
-				assert.Equal(t, "my-element", skipped[0].TagName)
-				assert.Equal(t, tt.demoURL, skipped[0].DemoURL)
-				assert.Contains(t, skipped[0].Reason, "directory traversal")
+				// Inline assertions: scalar field checks on security-critical rejection path
+				if assert.Len(t, skipped, 1, "rejected demo should appear in skipped list") {
+					assert.Equal(t, "my-element", skipped[0].TagName)
+					assert.Equal(t, tt.demoURL, skipped[0].DemoURL)
+					assert.Contains(t, skipped[0].Reason, "directory traversal")
+				}
 			} else {
 				if len(routes) == 0 {
 					t.Errorf("Expected routes to be created for %s", tt.description)
@@ -284,6 +286,134 @@ func TestBuildPackageRoutingTable_DuplicateDetection(t *testing.T) {
 		if !strings.Contains(err.Error(), substr) {
 			t.Errorf("Expected error to contain %q, got: %v", substr, err)
 		}
+	}
+}
+
+// Inline assertions: regression test for skipped-entry preservation on duplicate-route error
+func TestBuildDemoRoutingTable_DuplicatePreservesSkipped(t *testing.T) {
+	manifestJSON := `{
+		"schemaVersion": "1.0.0",
+		"modules": [
+			{
+				"kind": "javascript-module",
+				"path": "src/bad-element.js",
+				"declarations": [
+					{
+						"kind": "class",
+						"name": "BadElement",
+						"tagName": "bad-element",
+						"customElement": true,
+						"demos": [
+							{
+								"url": "../../etc/passwd"
+							}
+						]
+					}
+				]
+			},
+			{
+				"kind": "javascript-module",
+				"path": "src/element-a.js",
+				"declarations": [
+					{
+						"kind": "class",
+						"name": "ElementA",
+						"tagName": "element-a",
+						"customElement": true,
+						"demos": [
+							{
+								"url": "/demo/dup/"
+							}
+						]
+					}
+				]
+			},
+			{
+				"kind": "javascript-module",
+				"path": "src/element-b.js",
+				"declarations": [
+					{
+						"kind": "class",
+						"name": "ElementB",
+						"tagName": "element-b",
+						"customElement": true,
+						"demos": [
+							{
+								"url": "/demo/dup/"
+							}
+						]
+					}
+				]
+			}
+		]
+	}`
+
+	_, skipped, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
+
+	assert.Error(t, err, "should return duplicate-route error")
+	assert.Contains(t, err.Error(), "duplicate demo route")
+	if assert.Len(t, skipped, 1, "traversal skip before duplicate should be preserved") {
+		assert.Equal(t, "bad-element", skipped[0].TagName)
+	}
+}
+
+// Inline assertions: regression test for workspace aggregation preserving skipped across packages
+func TestBuildWorkspaceRoutingTable_PreservesSkippedAcrossPackages(t *testing.T) {
+	pkgWithTraversal := PackageContext{
+		Name: "pkg-a",
+		Path: "/path/to/pkg-a",
+		Manifest: []byte(`{
+			"schemaVersion": "1.0.0",
+			"modules": [
+				{
+					"kind": "javascript-module",
+					"path": "src/bad.js",
+					"declarations": [
+						{
+							"kind": "class",
+							"name": "Bad",
+							"tagName": "bad-element",
+							"customElement": true,
+							"demos": [{
+								"url": "https://example.com/demo/",
+								"source": {"href": "../../etc/passwd"}
+							}]
+						}
+					]
+				}
+			]
+		}`),
+	}
+	pkgClean := PackageContext{
+		Name: "pkg-b",
+		Path: "/path/to/pkg-b",
+		Manifest: []byte(`{
+			"schemaVersion": "1.0.0",
+			"modules": [
+				{
+					"kind": "javascript-module",
+					"path": "src/good.js",
+					"declarations": [
+						{
+							"kind": "class",
+							"name": "Good",
+							"tagName": "good-element",
+							"customElement": true,
+							"demos": [{"url": "./demo/index.html"}]
+						}
+					]
+				}
+			]
+		}`),
+	}
+
+	routes, skipped, err := BuildWorkspaceRoutingTable(
+		[]PackageContext{pkgWithTraversal, pkgClean}, "",
+	)
+	assert.NoError(t, err)
+	assert.Len(t, routes, 1, "clean package should produce one route")
+	if assert.Len(t, skipped, 1, "traversal skip from pkg-a should be preserved") {
+		assert.Equal(t, "bad-element", skipped[0].TagName)
 	}
 }
 

@@ -134,10 +134,10 @@ func (s *Server) InitializeWorkspaceMode() error {
 		}
 	}
 	workspaceRoutingTable, skipped, err := routes.BuildWorkspaceRoutingTable(pkgContexts, s.demoURLPrefix)
+	s.logSkippedDemos(skipped)
 	if err != nil {
 		return fmt.Errorf("building workspace routing table: %w", err)
 	}
-	s.logSkippedDemos(skipped)
 	s.demoRoutes = workspaceRoutingTable
 	s.logger.Debug("Built routing table with %d demo routes", len(workspaceRoutingTable))
 
