@@ -445,7 +445,7 @@ func BuildWorkspaceNavigation(templates *TemplateRegistry, packages []PackageCon
 	}
 
 	// Build routing table
-	routes, err := BuildWorkspaceRoutingTable(packages, demoURLPrefix)
+	routes, _, err := BuildWorkspaceRoutingTable(packages, demoURLPrefix)
 	if err != nil {
 		return "", err
 	}
@@ -508,7 +508,7 @@ func RenderWorkspaceListing(templates *TemplateRegistry, ctx middleware.DevServe
 	}
 
 	// Build routing table once
-	routes, err := BuildWorkspaceRoutingTable(packages, demoURLPrefix)
+	routes, _, err := BuildWorkspaceRoutingTable(packages, demoURLPrefix)
 	if err != nil {
 		return "", fmt.Errorf("building workspace routing table: %w", err)
 	}

@@ -106,7 +106,7 @@ func TestBuildDemoRoutingTable_DirectoryTraversalPrevention(t *testing.T) {
 			}`, tt.demoURL)
 
 			// Call BuildDemoRoutingTable
-			routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
+			routes, skipped, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
 
 			if err != nil {
 				t.Errorf("Expected no error for %s, but got: %v", tt.description, err)
@@ -115,10 +115,17 @@ func TestBuildDemoRoutingTable_DirectoryTraversalPrevention(t *testing.T) {
 				if len(routes) != 0 {
 					t.Errorf("Expected traversal path to be skipped for %s, but got routes: %+v", tt.description, routes)
 				}
+				// Inline assertions: scalar field checks on security-critical rejection path
+				if assert.Len(t, skipped, 1, "rejected demo should appear in skipped list") {
+					assert.Equal(t, "my-element", skipped[0].TagName)
+					assert.Equal(t, tt.demoURL, skipped[0].DemoURL)
+					assert.Contains(t, skipped[0].Reason, "directory traversal")
+				}
 			} else {
 				if len(routes) == 0 {
 					t.Errorf("Expected routes to be created for %s", tt.description)
 				}
+				assert.Empty(t, skipped, "accepted demo should not appear in skipped list")
 			}
 		})
 	}
@@ -190,7 +197,7 @@ func TestBuildDemoRoutingTable_DuplicateDetection(t *testing.T) {
 		]
 	}`
 
-	_, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
+	_, _, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
 
 	if err == nil {
 		t.Fatal("Expected error for duplicate routes, but got none")
@@ -260,7 +267,7 @@ func TestBuildPackageRoutingTable_DuplicateDetection(t *testing.T) {
 		Manifest: []byte(manifestJSON),
 	}
 
-	_, err := buildPackageRoutingTable(pkg, "")
+	_, _, err := buildPackageRoutingTable(pkg, "")
 
 	if err == nil {
 		t.Fatal("Expected error for duplicate routes, but got none")
@@ -279,6 +286,207 @@ func TestBuildPackageRoutingTable_DuplicateDetection(t *testing.T) {
 		if !strings.Contains(err.Error(), substr) {
 			t.Errorf("Expected error to contain %q, got: %v", substr, err)
 		}
+	}
+}
+
+// Inline assertions: regression test for skipped-entry preservation on duplicate-route error
+func TestBuildDemoRoutingTable_DuplicatePreservesSkipped(t *testing.T) {
+	manifestJSON := `{
+		"schemaVersion": "1.0.0",
+		"modules": [
+			{
+				"kind": "javascript-module",
+				"path": "src/bad-element.js",
+				"declarations": [
+					{
+						"kind": "class",
+						"name": "BadElement",
+						"tagName": "bad-element",
+						"customElement": true,
+						"demos": [
+							{
+								"url": "../../etc/passwd"
+							}
+						]
+					}
+				]
+			},
+			{
+				"kind": "javascript-module",
+				"path": "src/element-a.js",
+				"declarations": [
+					{
+						"kind": "class",
+						"name": "ElementA",
+						"tagName": "element-a",
+						"customElement": true,
+						"demos": [
+							{
+								"url": "/demo/dup/"
+							}
+						]
+					}
+				]
+			},
+			{
+				"kind": "javascript-module",
+				"path": "src/element-b.js",
+				"declarations": [
+					{
+						"kind": "class",
+						"name": "ElementB",
+						"tagName": "element-b",
+						"customElement": true,
+						"demos": [
+							{
+								"url": "/demo/dup/"
+							}
+						]
+					}
+				]
+			}
+		]
+	}`
+
+	_, skipped, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
+
+	assert.Error(t, err, "should return duplicate-route error")
+	assert.Contains(t, err.Error(), "duplicate demo route")
+	if assert.Len(t, skipped, 1, "traversal skip before duplicate should be preserved") {
+		assert.Equal(t, "bad-element", skipped[0].TagName)
+	}
+}
+
+// Inline assertions: regression test for workspace aggregation preserving skipped across packages
+func TestBuildWorkspaceRoutingTable_PreservesSkippedAcrossPackages(t *testing.T) {
+	pkgWithTraversal := PackageContext{
+		Name: "pkg-a",
+		Path: "/path/to/pkg-a",
+		Manifest: []byte(`{
+			"schemaVersion": "1.0.0",
+			"modules": [
+				{
+					"kind": "javascript-module",
+					"path": "src/bad.js",
+					"declarations": [
+						{
+							"kind": "class",
+							"name": "Bad",
+							"tagName": "bad-element",
+							"customElement": true,
+							"demos": [{
+								"url": "https://example.com/demo/",
+								"source": {"href": "../../etc/passwd"}
+							}]
+						}
+					]
+				}
+			]
+		}`),
+	}
+	pkgClean := PackageContext{
+		Name: "pkg-b",
+		Path: "/path/to/pkg-b",
+		Manifest: []byte(`{
+			"schemaVersion": "1.0.0",
+			"modules": [
+				{
+					"kind": "javascript-module",
+					"path": "src/good.js",
+					"declarations": [
+						{
+							"kind": "class",
+							"name": "Good",
+							"tagName": "good-element",
+							"customElement": true,
+							"demos": [{"url": "./demo/index.html"}]
+						}
+					]
+				}
+			]
+		}`),
+	}
+
+	routes, skipped, err := BuildWorkspaceRoutingTable(
+		[]PackageContext{pkgWithTraversal, pkgClean}, "",
+	)
+	assert.NoError(t, err)
+	assert.Len(t, routes, 1, "clean package should produce one route")
+	if assert.Len(t, skipped, 1, "traversal skip from pkg-a should be preserved") {
+		assert.Equal(t, "bad-element", skipped[0].TagName)
+	}
+}
+
+// Inline assertions: regression test for workspace cross-package duplicate with skipped preservation
+func TestBuildWorkspaceRoutingTable_DuplicatePreservesSkipped(t *testing.T) {
+	pkgWithTraversal := PackageContext{
+		Name: "pkg-a",
+		Path: "/path/to/pkg-a",
+		Manifest: []byte(`{
+			"schemaVersion": "1.0.0",
+			"modules": [
+				{
+					"kind": "javascript-module",
+					"path": "src/bad.js",
+					"declarations": [
+						{
+							"kind": "class",
+							"name": "Bad",
+							"tagName": "bad-element",
+							"customElement": true,
+							"demos": [{
+								"url": "https://example.com/demo/",
+								"source": {"href": "../../etc/passwd"}
+							}]
+						}
+					]
+				},
+				{
+					"kind": "javascript-module",
+					"path": "src/good-a.js",
+					"declarations": [
+						{
+							"kind": "class",
+							"name": "GoodA",
+							"tagName": "good-a",
+							"customElement": true,
+							"demos": [{"url": "./demo/index.html"}]
+						}
+					]
+				}
+			]
+		}`),
+	}
+	pkgWithDup := PackageContext{
+		Name: "pkg-b",
+		Path: "/path/to/pkg-b",
+		Manifest: []byte(`{
+			"schemaVersion": "1.0.0",
+			"modules": [
+				{
+					"kind": "javascript-module",
+					"path": "src/good-b.js",
+					"declarations": [
+						{
+							"kind": "class",
+							"name": "GoodB",
+							"tagName": "good-b",
+							"customElement": true,
+							"demos": [{"url": "./demo/index.html"}]
+						}
+					]
+				}
+			]
+		}`),
+	}
+
+	_, skipped, err := BuildWorkspaceRoutingTable(
+		[]PackageContext{pkgWithTraversal, pkgWithDup}, "",
+	)
+	assert.Error(t, err, "should return cross-package duplicate-route error")
+	assert.Contains(t, err.Error(), "Route conflicts detected")
+	if assert.Len(t, skipped, 1, "traversal skip from pkg-a should survive duplicate error") {
+		assert.Equal(t, "bad-element", skipped[0].TagName)
 	}
 }
 
@@ -331,7 +539,7 @@ func TestBuildDemoRoutingTable_ExternalURLSkipped(t *testing.T) {
 		]
 	}`
 
-	routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
+	routes, _, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
 	assert.NoError(t, err)
 	assert.Empty(t, routes, "external demo URL should not produce a route")
 }
@@ -365,7 +573,7 @@ func TestBuildDemoRoutingTable_ExternalURLWithSourceHrefStillRoutes(t *testing.T
 		]
 	}`
 
-	routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
+	routes, _, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
 	assert.NoError(t, err)
 	assert.Len(t, routes, 1, "external URL with Source.Href should still produce a route")
 }
@@ -402,7 +610,7 @@ func TestBuildPackageRoutingTable_ExternalURLSkipped(t *testing.T) {
 		Manifest: []byte(manifestJSON),
 	}
 
-	routes, err := buildPackageRoutingTable(pkg, "")
+	routes, _, err := buildPackageRoutingTable(pkg, "")
 	assert.NoError(t, err)
 	assert.Empty(t, routes, "external demo URL should not produce a route in workspace mode")
 }
@@ -465,7 +673,7 @@ func TestBuildDemoRoutingTable_SourceHrefPaths(t *testing.T) {
 				]
 			}`, tt.sourceHref)
 
-			routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
+			routes, _, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
 			if err != nil {
 				t.Fatalf("BuildDemoRoutingTable failed: %v", err)
 			}
