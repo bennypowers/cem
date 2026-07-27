@@ -133,10 +133,11 @@ func (s *Server) InitializeWorkspaceMode() error {
 			Manifest: pkg.Manifest,
 		}
 	}
-	workspaceRoutingTable, err := routes.BuildWorkspaceRoutingTable(pkgContexts, s.demoURLPrefix)
+	workspaceRoutingTable, skipped, err := routes.BuildWorkspaceRoutingTable(pkgContexts, s.demoURLPrefix)
 	if err != nil {
 		return fmt.Errorf("building workspace routing table: %w", err)
 	}
+	s.logSkippedDemos(skipped)
 	s.demoRoutes = workspaceRoutingTable
 	s.logger.Debug("Built routing table with %d demo routes", len(workspaceRoutingTable))
 
@@ -377,10 +378,11 @@ func (s *Server) regenerateAffectedWorkspacePackages(changedFiles []string) (int
 		}
 	}
 
-	workspaceRoutingTable, err := routes.BuildWorkspaceRoutingTable(pkgContexts, demoPrefix)
+	workspaceRoutingTable, skipped, err := routes.BuildWorkspaceRoutingTable(pkgContexts, demoPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build workspace routing table: %v", err)
 	}
+	s.logSkippedDemos(skipped)
 
 	// Update server state under write lock
 	s.mu.Lock()

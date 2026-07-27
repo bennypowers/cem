@@ -56,18 +56,26 @@ func isExternalDemoURL(demoURL string) bool {
 	return err == nil && parsed.Scheme != "" && parsed.Host != ""
 }
 
+// SkippedDemo records a demo entry that was skipped during routing table construction.
+type SkippedDemo struct {
+	TagName string
+	DemoURL string
+	Reason  string
+}
+
 // BuildDemoRoutingTable creates a routing table from manifest
-func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string, demoURLPrefix string) (map[string]*DemoRouteEntry, error) {
+func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string, demoURLPrefix string) (map[string]*DemoRouteEntry, []SkippedDemo, error) {
 	if len(manifestBytes) == 0 {
-		return nil, fmt.Errorf("no manifest available")
+		return nil, nil, fmt.Errorf("no manifest available")
 	}
 
 	var pkg M.Package
 	if err := json.Unmarshal(manifestBytes, &pkg); err != nil {
-		return nil, fmt.Errorf("parsing manifest: %w", err)
+		return nil, nil, fmt.Errorf("parsing manifest: %w", err)
 	}
 
 	routes := make(map[string]*DemoRouteEntry)
+	var skipped []SkippedDemo
 
 	for _, renderableDemo := range pkg.RenderableDemos() {
 		demoURL := renderableDemo.Demo.URL
@@ -96,12 +104,17 @@ func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string, de
 		var err error
 		filePath, err = normalizeAndValidateDemoPath(filePath, renderableDemo.CustomElementDeclaration.TagName, demoURL)
 		if err != nil {
+			skipped = append(skipped, SkippedDemo{
+				TagName: renderableDemo.CustomElementDeclaration.TagName,
+				DemoURL: demoURL,
+				Reason:  err.Error(),
+			})
 			continue
 		}
 
 		// Check for duplicate routes before assignment
 		if existing, exists := routes[localRoute]; exists {
-			return nil, fmt.Errorf("duplicate demo route %q: %s (tagName: %s) conflicts with existing %s (tagName: %s)",
+			return nil, skipped, fmt.Errorf("duplicate demo route %q: %s (tagName: %s) conflicts with existing %s (tagName: %s)",
 				localRoute,
 				filePath,
 				renderableDemo.CustomElementDeclaration.TagName,
@@ -118,7 +131,7 @@ func BuildDemoRoutingTable(manifestBytes []byte, sourceControlRootURL string, de
 		}
 	}
 
-	return routes, nil
+	return routes, skipped, nil
 }
 
 // resolveSourceHrefToFilePath extracts a file path from a source href.
@@ -191,14 +204,16 @@ func normalizeAndValidateDemoPath(filePath, tagName, demoURL string) (string, er
 
 // BuildWorkspaceRoutingTable builds a combined routing table from all packages
 // Returns error if route conflicts are detected or if package routing errors occurred
-func BuildWorkspaceRoutingTable(packages []PackageContext, demoURLPrefix string) (map[string]*DemoRouteEntry, error) {
+func BuildWorkspaceRoutingTable(packages []PackageContext, demoURLPrefix string) (map[string]*DemoRouteEntry, []SkippedDemo, error) {
 	routes := make(map[string]*DemoRouteEntry)
 	conflicts := make(map[string][]routeConflict)
 	var packageErrors []packageRoutingError
+	var allSkipped []SkippedDemo
 
 	for _, pkg := range packages {
 		// Build routing table for this package
-		pkgRoutes, err := buildPackageRoutingTable(pkg, demoURLPrefix)
+		pkgRoutes, pkgSkipped, err := buildPackageRoutingTable(pkg, demoURLPrefix)
+		allSkipped = append(allSkipped, pkgSkipped...)
 		if err != nil {
 			// Collect package routing errors for reporting
 			packageErrors = append(packageErrors, packageRoutingError{
@@ -243,18 +258,18 @@ func BuildWorkspaceRoutingTable(packages []PackageContext, demoURLPrefix string)
 		if len(conflicts) > 0 {
 			pkgErr := formatPackageRoutingErrors(packageErrors)
 			conflictErr := formatRouteConflictsError(conflicts)
-			return nil, fmt.Errorf("%w\n\n%w", pkgErr, conflictErr)
+			return nil, allSkipped, fmt.Errorf("%w\n\n%w", pkgErr, conflictErr)
 		}
 		// Only package errors - return as error so callers are aware
-		return routes, formatPackageRoutingErrors(packageErrors)
+		return routes, allSkipped, formatPackageRoutingErrors(packageErrors)
 	}
 
 	// If conflicts detected, return detailed error
 	if len(conflicts) > 0 {
-		return nil, formatRouteConflictsError(conflicts)
+		return nil, allSkipped, formatRouteConflictsError(conflicts)
 	}
 
-	return routes, nil
+	return routes, allSkipped, nil
 }
 
 // packageRoutingError represents a package that failed to build routing table
@@ -305,13 +320,14 @@ func formatRouteConflictsError(conflicts map[string][]routeConflict) error {
 }
 
 // buildPackageRoutingTable builds routing table for a single package
-func buildPackageRoutingTable(pkg PackageContext, demoURLPrefix string) (map[string]*DemoRouteEntry, error) {
+func buildPackageRoutingTable(pkg PackageContext, demoURLPrefix string) (map[string]*DemoRouteEntry, []SkippedDemo, error) {
 	var manifest M.Package
 	if err := json.Unmarshal(pkg.Manifest, &manifest); err != nil {
-		return nil, fmt.Errorf("parsing manifest for %s: %w", pkg.Name, err)
+		return nil, nil, fmt.Errorf("parsing manifest for %s: %w", pkg.Name, err)
 	}
 
 	routes := make(map[string]*DemoRouteEntry)
+	var skipped []SkippedDemo
 
 	for _, renderableDemo := range manifest.RenderableDemos() {
 		demoURL := renderableDemo.Demo.URL
@@ -338,6 +354,11 @@ func buildPackageRoutingTable(pkg PackageContext, demoURLPrefix string) (map[str
 		var err error
 		filePath, err = normalizeAndValidateDemoPath(filePath, renderableDemo.CustomElementDeclaration.TagName, demoURL)
 		if err != nil {
+			skipped = append(skipped, SkippedDemo{
+				TagName: renderableDemo.CustomElementDeclaration.TagName,
+				DemoURL: demoURL,
+				Reason:  err.Error(),
+			})
 			continue
 		}
 
@@ -364,7 +385,7 @@ func buildPackageRoutingTable(pkg PackageContext, demoURLPrefix string) (map[str
 
 		// Check for duplicate routes before assignment
 		if existing, exists := routes[localRoute]; exists {
-			return nil, fmt.Errorf("duplicate demo route %q in package %s (%s): %s (tagName: %s) conflicts with existing %s (tagName: %s)",
+			return nil, skipped, fmt.Errorf("duplicate demo route %q in package %s (%s): %s (tagName: %s) conflicts with existing %s (tagName: %s)",
 				localRoute,
 				pkg.Name,
 				pkg.Path,
@@ -387,5 +408,5 @@ func buildPackageRoutingTable(pkg PackageContext, demoURLPrefix string) (map[str
 		routes[localRoute] = entry
 	}
 
-	return routes, nil
+	return routes, skipped, nil
 }

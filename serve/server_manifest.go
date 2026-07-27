@@ -32,6 +32,12 @@ import (
 	W "bennypowers.dev/cem/internal/workspace"
 )
 
+func (s *Server) logSkippedDemos(skipped []routes.SkippedDemo) {
+	for _, sd := range skipped {
+		s.logger.Warning("Skipped demo for <%s> (%s): %s", sd.TagName, sd.DemoURL, sd.Reason)
+	}
+}
+
 // SetManifest sets the current manifest and builds the routing table
 func (s *Server) SetManifest(manifest []byte) error {
 	// Extract state under read lock
@@ -45,13 +51,14 @@ func (s *Server) SetManifest(manifest []byte) error {
 	copy(manifestCopy, manifest)
 
 	// Build routing table from manifest (expensive - no lock held)
-	routingTable, err := routes.BuildDemoRoutingTable(manifestCopy, sourceControlURL, demoPrefix)
+	routingTable, skipped, err := routes.BuildDemoRoutingTable(manifestCopy, sourceControlURL, demoPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
 		routingTable = nil
 	} else {
 		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
 	}
+	s.logSkippedDemos(skipped)
 
 	// Update state under write lock
 	s.mu.Lock()
@@ -163,13 +170,14 @@ func (s *Server) TryLoadExistingManifest() (int, error) {
 	}
 
 	// Build routing table from manifest
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL, demoPrefix)
+	routingTable, skipped, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL, demoPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table from cached manifest: %v", err)
 		routingTable = nil
 	} else {
 		s.logger.Debug("Built routing table with %d demo routes from cached manifest", len(routingTable))
 	}
+	s.logSkippedDemos(skipped)
 
 	// Update state under write lock
 	s.mu.Lock()
@@ -251,13 +259,14 @@ func (s *Server) RegenerateManifest() (int, error) {
 	}
 
 	// Build routing table from manifest (expensive - no lock held)
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL, demoPrefix)
+	routingTable, skipped, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL, demoPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
 		routingTable = nil
 	} else {
 		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
 	}
+	s.logSkippedDemos(skipped)
 
 	s.logger.Debug("Tracking %d source files from manifest", len(sourceFiles))
 	// Update server state under write lock
@@ -333,13 +342,14 @@ func (s *Server) RegenerateManifestIncremental(changedFiles []string) (int, erro
 	}
 
 	// Build routing table from manifest (single-package mode)
-	routingTable, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL, demoPrefix)
+	routingTable, skipped, err := routes.BuildDemoRoutingTable(manifestBytes, sourceControlURL, demoPrefix)
 	if err != nil {
 		s.logger.Warning("Failed to build demo routing table: %v", err)
 		routingTable = nil
 	} else {
 		s.logger.Debug("Built routing table with %d demo routes", len(routingTable))
 	}
+	s.logSkippedDemos(skipped)
 
 	// Update server state under write lock
 	s.mu.Lock()

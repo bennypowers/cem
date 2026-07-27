@@ -106,7 +106,7 @@ func TestBuildDemoRoutingTable_DirectoryTraversalPrevention(t *testing.T) {
 			}`, tt.demoURL)
 
 			// Call BuildDemoRoutingTable
-			routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
+			routes, skipped, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
 
 			if err != nil {
 				t.Errorf("Expected no error for %s, but got: %v", tt.description, err)
@@ -115,10 +115,15 @@ func TestBuildDemoRoutingTable_DirectoryTraversalPrevention(t *testing.T) {
 				if len(routes) != 0 {
 					t.Errorf("Expected traversal path to be skipped for %s, but got routes: %+v", tt.description, routes)
 				}
+				assert.Len(t, skipped, 1, "rejected demo should appear in skipped list")
+				assert.Equal(t, "my-element", skipped[0].TagName)
+				assert.Equal(t, tt.demoURL, skipped[0].DemoURL)
+				assert.Contains(t, skipped[0].Reason, "directory traversal")
 			} else {
 				if len(routes) == 0 {
 					t.Errorf("Expected routes to be created for %s", tt.description)
 				}
+				assert.Empty(t, skipped, "accepted demo should not appear in skipped list")
 			}
 		})
 	}
@@ -190,7 +195,7 @@ func TestBuildDemoRoutingTable_DuplicateDetection(t *testing.T) {
 		]
 	}`
 
-	_, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
+	_, _, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
 
 	if err == nil {
 		t.Fatal("Expected error for duplicate routes, but got none")
@@ -260,7 +265,7 @@ func TestBuildPackageRoutingTable_DuplicateDetection(t *testing.T) {
 		Manifest: []byte(manifestJSON),
 	}
 
-	_, err := buildPackageRoutingTable(pkg, "")
+	_, _, err := buildPackageRoutingTable(pkg, "")
 
 	if err == nil {
 		t.Fatal("Expected error for duplicate routes, but got none")
@@ -331,7 +336,7 @@ func TestBuildDemoRoutingTable_ExternalURLSkipped(t *testing.T) {
 		]
 	}`
 
-	routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
+	routes, _, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
 	assert.NoError(t, err)
 	assert.Empty(t, routes, "external demo URL should not produce a route")
 }
@@ -365,7 +370,7 @@ func TestBuildDemoRoutingTable_ExternalURLWithSourceHrefStillRoutes(t *testing.T
 		]
 	}`
 
-	routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
+	routes, _, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
 	assert.NoError(t, err)
 	assert.Len(t, routes, 1, "external URL with Source.Href should still produce a route")
 }
@@ -402,7 +407,7 @@ func TestBuildPackageRoutingTable_ExternalURLSkipped(t *testing.T) {
 		Manifest: []byte(manifestJSON),
 	}
 
-	routes, err := buildPackageRoutingTable(pkg, "")
+	routes, _, err := buildPackageRoutingTable(pkg, "")
 	assert.NoError(t, err)
 	assert.Empty(t, routes, "external demo URL should not produce a route in workspace mode")
 }
@@ -465,7 +470,7 @@ func TestBuildDemoRoutingTable_SourceHrefPaths(t *testing.T) {
 				]
 			}`, tt.sourceHref)
 
-			routes, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
+			routes, _, err := BuildDemoRoutingTable([]byte(manifestJSON), "", "")
 			if err != nil {
 				t.Fatalf("BuildDemoRoutingTable failed: %v", err)
 			}
