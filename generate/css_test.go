@@ -24,6 +24,7 @@ import (
 	W "bennypowers.dev/cem/internal/workspace"
 )
 
+// Inline assertions: narrow in-memory cache-contract test, goldens not applicable.
 func TestCssCache_Interface(t *testing.T) {
 	var cache CssCache = NewCssParseCache()
 
@@ -40,7 +41,7 @@ func TestCssCache_Interface(t *testing.T) {
 
 	retrieved, found := cache.Get("/test/path.css")
 	if !found {
-		t.Error("Should find cached entry")
+		t.Fatal("Should find cached entry")
 	}
 
 	if len(retrieved.Props) != 1 {
@@ -134,7 +135,7 @@ func TestGenerateSession_CssCache_Integration(t *testing.T) {
 	retrieved, found := cache.Get("/session/test.css")
 
 	if !found {
-		t.Error("Should find cached entry through session")
+		t.Fatal("Should find cached entry through session")
 	}
 
 	if len(retrieved.Props) != 1 {

@@ -181,7 +181,7 @@ func amendStylesMapFromSource(
 		isVarCall := len(captures["fn"]) > 0
 		defaultVals, ok := captures["default"]
 		if ok && len(defaultVals) > 0 {
-			if (isVarCall && !varDefaults[name]) || p.Default == "" {
+			if !varDefaults[name] && (isVarCall || p.Default == "") {
 				valueNodes := make([]*ts.Node, len(defaultVals))
 				for i, n := range defaultVals {
 					valueNodes[i] = Q.GetDescendantById(root, n.NodeId)
@@ -237,8 +237,9 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 					absPath := filepath.Join(moduleDir, spec)
 					if cached, found := mp.cssCache.Get(absPath); found {
 						for name, prop := range cached.Props {
-							existing, has := props[name]
-							if has && existing.Default != "" && varDefaults[name] {
+							if existing, has := props[name]; has && varDefaults[name] {
+								existing.StartByte = prop.StartByte
+								props[name] = existing
 								continue
 							}
 							props[name] = prop
@@ -259,8 +260,9 @@ func (mp *ModuleProcessor) processStyles(captures Q.CaptureMap) (props CssPropsM
 								errs = errors.Join(errs, err)
 							}
 							for name, prop := range tmpProps {
-								existing, has := props[name]
-								if has && existing.Default != "" && varDefaults[name] {
+								if existing, has := props[name]; has && varDefaults[name] {
+									existing.StartByte = prop.StartByte
+									props[name] = existing
 									continue
 								}
 								props[name] = prop
