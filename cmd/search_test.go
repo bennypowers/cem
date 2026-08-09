@@ -54,7 +54,7 @@ func TestSearchE2E(t *testing.T) {
 		{
 			name:          "Missing search pattern",
 			command:       []string{"search"},
-			expectedError: "Error: accepts 1 arg(s), received 0",
+			expectedError: "Error: requires a pattern argument (or use -i for interactive mode)",
 		},
 		{
 			name:          "Invalid format",
@@ -101,11 +101,30 @@ func TestSearchHelp(t *testing.T) {
 		"Examples:",
 		"cem search button",
 		"cem search \"^my-.*button$\"",
+		"requires a terminal",
 	}
 
 	for _, expected := range expectedStrings {
 		if !strings.Contains(stdout, expected) {
 			t.Errorf("Expected help output to contain %q, got:\n%s", expected, stdout)
 		}
+	}
+}
+
+func TestSearchInteractive_RequiresTerminal(t *testing.T) {
+	// Subprocess has no TTY so term.IsTerminal returns false; the TTY guard
+	// should fire before any manifest loading or TUI launch.
+	projectDir := setupTest(t, "list-project")
+	_, stderr := runCemCommand(t, projectDir, "search", "-i")
+	if !strings.Contains(stderr, "interactive mode requires a terminal") {
+		t.Errorf("expected TTY guard error, got: %s", stderr)
+	}
+}
+
+func TestSearchInteractive_MutuallyExclusiveWithFormat(t *testing.T) {
+	projectDir := setupTest(t, "list-project")
+	_, stderr := runCemCommand(t, projectDir, "search", "-i", "--format", "tree", "button")
+	if !strings.Contains(stderr, "if any flags in the group [interactive format] are set") {
+		t.Errorf("expected mutual-exclusion error, got: %s", stderr)
 	}
 }

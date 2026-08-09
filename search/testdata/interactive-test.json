@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "2.0.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/my-button.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "MyButton",
+          "tagName": "my-button",
+          "summary": "A clickable button component",
+          "attributes": [
+            { "name": "disabled", "summary": "Disables the button" },
+            { "name": "variant", "summary": "Visual style variant" }
+          ],
+          "slots": [
+            { "name": "", "summary": "Default slot for button label" }
+          ],
+          "cssParts": [
+            { "name": "button", "summary": "The inner button element" }
+          ],
+          "members": []
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-button",
+          "declaration": { "name": "MyButton", "module": "src/my-button.js" }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/my-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "customElement": true,
+          "name": "MyCard",
+          "tagName": "my-card",
+          "summary": "A card container component",
+          "attributes": [
+            { "name": "elevated", "summary": "Adds elevation shadow" }
+          ],
+          "slots": [
+            { "name": "header", "summary": "Card header slot" },
+            { "name": "", "summary": "Card body slot" }
+          ],
+          "cssParts": [
+            { "name": "body", "summary": "The card body container" }
+          ],
+          "members": []
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "my-card",
+          "declaration": { "name": "MyCard", "module": "src/my-card.js" }
+        }
+      ]
+    }
+  ]
+}
