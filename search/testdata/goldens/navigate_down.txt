@@ -1,0 +1,40 @@
+Search:                                                                                                                        
+
+└─┬ <root>
+  ├── module src/my-button.js
+  └── module src/my-card.js
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+↑↓ navigate  → expand  ← collapse  enter select  esc/ctrl+c quit

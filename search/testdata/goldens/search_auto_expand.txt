@@ -1,0 +1,40 @@
+Search: button                                                                                                                 
+
+└─┬ <root>
+  └─┬ module src/my-button.js
+    └─┬ <my-button>
+      ├─┬ Attributes
+      │ └─ disabled Disables the button
+      └─┬ CSS Parts
+        └─ button The inner button element
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+↑↓ navigate  → expand  ← collapse  enter select  esc/ctrl+c quit

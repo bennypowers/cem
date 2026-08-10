@@ -1,0 +1,40 @@
+Search:                                                                                                                        
+
+└─┬ <root>
+  ├─┬ module src/my-button.js
+  │ └─┬ <my-button>
+  │   ├─┬ Attributes
+  │   │ ├─ disabled Disables the button
+  │   │ └─ variant Visual style variant
+  │   ├── Slots
+  │   └── CSS Parts
+  └── module src/my-card.js
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+↑↓ navigate  → expand  ← collapse  enter select  esc/ctrl+c quit

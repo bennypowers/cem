@@ -19,10 +19,14 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 
+	tea "charm.land/bubbletea/v2"
 	lipgloss "charm.land/lipgloss/v2"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
+	M "bennypowers.dev/cem/manifest"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/search"
 	W "bennypowers.dev/cem/internal/workspace"
@@ -48,42 +52,129 @@ Examples:
   cem search --format tree deprecated  # Search for "deprecated" and show as tree
   cem search "css.*property"           # Find CSS-related properties
   cem search "slot.*header"            # Find header-related slots
+  cem search -i                        # Interactive fuzzy search TUI
 `,
-	Args: cobra.ExactArgs(1),
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) > 1 {
+			return errors.New("accepts at most 1 argument")
+		}
+		interactive, _ := cmd.Flags().GetBool("interactive")
+		if !interactive && len(args) == 0 {
+			return errors.New("requires a pattern argument (or use -i for interactive mode)")
+		}
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		interactive, _ := cmd.Flags().GetBool("interactive")
+
+		fsys := platform.NewOSFileSystem()
+		if interactive {
+			if !term.IsTerminal(int(os.Stdin.Fd())) || !term.IsTerminal(int(os.Stdout.Fd())) {
+				return errors.New("interactive mode requires a terminal; omit -i to use non-interactive search")
+			}
+			var initialQuery string
+			if len(args) > 0 {
+				initialQuery = args[0]
+			}
+			if W.ShouldUseWorkspaceMode(cmd, fsys) {
+				return searchInteractiveWorkspace(cmd, initialQuery)
+			}
+			ctx, err := W.GetWorkspaceContext(cmd)
+			if err != nil {
+				return fmt.Errorf("project context not initialized: %w", err)
+			}
+			manifest, err := ctx.Manifest()
+			if err != nil {
+				return err
+			}
+			roots := []M.Renderable{M.NewRenderablePackage(manifest)}
+			model := search.NewInteractiveModel(roots)
+			if initialQuery != "" {
+				model = model.WithInitialQuery(initialQuery)
+			}
+			p := tea.NewProgram(model)
+			if _, err := p.Run(); err != nil {
+				return err
+			}
+			return nil
+		}
+
 		pattern := args[0]
 		if pattern == "" {
 			return errors.New("search pattern cannot be empty")
 		}
 
-		fsys := platform.NewOSFileSystem()
 		if W.ShouldUseWorkspaceMode(cmd, fsys) {
 			return searchWorkspace(cmd, pattern)
 		}
 
-		if ctx, err := W.GetWorkspaceContext(cmd); err != nil {
+		ctx, err := W.GetWorkspaceContext(cmd)
+		if err != nil {
 			return fmt.Errorf("project context not initialized: %w", err)
-		} else {
-			manifest, err := ctx.Manifest()
-			if err != nil {
-				return err
-			}
+		}
+		manifest, err := ctx.Manifest()
+		if err != nil {
+			return err
+		}
 
-			format, err := requireFormat(cmd, []string{"table", "tree"})
-			if err != nil {
-				return err
-			}
+		format, err := requireFormat(cmd, []string{"table", "tree"})
+		if err != nil {
+			return err
+		}
 
-			if s, err := search.RenderSearchResults(manifest, pattern, format); err != nil {
-				return err
-			} else {
-				if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
-					return err
-				}
-			}
+		s, err := search.RenderSearchResults(manifest, pattern, format)
+		if err != nil {
+			return err
+		}
+		if _, err := lipgloss.Fprintln(cmd.OutOrStdout(), s); err != nil {
+			return err
+		}
+		return nil
+	},
+}
+
+func searchInteractiveWorkspace(cmd *cobra.Command, initialQuery string) error {
+	ctx, err := W.GetWorkspaceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	fsys := platform.NewOSFileSystem()
+	var roots []M.Renderable
+	results := W.ForEachPackage(ctx.Root(), fsys, func(pkg W.PackageInfo) error {
+		pkgCtx := W.NewFileSystemWorkspaceContext(pkg.Path)
+		if err := pkgCtx.Init(); err != nil {
+			return err
+		}
+		manifest, err := pkgCtx.Manifest()
+		if err != nil {
+			return err
+		}
+		if manifest == nil {
 			return nil
 		}
-	},
+		roots = append(roots, M.NewRenderablePackage(manifest))
+		return nil
+	})
+
+	reportErr := W.ReportResults("Loaded manifests", results)
+
+	if len(roots) == 0 {
+		if reportErr != nil {
+			return reportErr
+		}
+		return errors.New("no manifests found in workspace")
+	}
+
+	model := search.NewInteractiveModel(roots)
+	if initialQuery != "" {
+		model = model.WithInitialQuery(initialQuery)
+	}
+	p := tea.NewProgram(model)
+	if _, err := p.Run(); err != nil {
+		return err
+	}
+	return reportErr
 }
 
 func searchWorkspace(cmd *cobra.Command, pattern string) error {
@@ -127,5 +218,7 @@ func searchWorkspace(cmd *cobra.Command, pattern string) error {
 
 func init() {
 	searchCmd.Flags().StringP("format", "f", "table", "Output format (table or tree)")
+	searchCmd.Flags().BoolP("interactive", "i", false, "Launch interactive fuzzy search TUI (requires a terminal)")
+	searchCmd.MarkFlagsMutuallyExclusive("interactive", "format")
 	rootCmd.AddCommand(searchCmd)
 }

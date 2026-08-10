@@ -189,6 +189,17 @@ func TestWorkspaceList_ShowsAllPackages(t *testing.T) {
 	compareGolden(t, workspaceGolden("list-all", false), cleaned, false)
 }
 
+func TestWorkspaceSearchInteractive_RequiresTerminal(t *testing.T) {
+	// Subprocess has no TTY; TTY guard should fire before searchInteractiveWorkspace
+	// reaches the TUI launch. Manifest loading is covered by the non-interactive
+	// workspace search tests that use the same ForEachPackage path.
+	projectDir := generateWorkspaceFixture(t)
+	_, stderr := runCemCommand(t, projectDir, "search", "-i")
+	if !strings.Contains(stderr, "interactive mode requires a terminal") {
+		t.Errorf("expected TTY guard error, got: %s", stderr)
+	}
+}
+
 func TestWorkspaceSearch_FindsAcrossPackages(t *testing.T) {
 	projectDir := generateWorkspaceFixture(t)
 	stdout, _ := runCemCommand(t, projectDir, "search", "button")
