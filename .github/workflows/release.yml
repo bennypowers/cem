@@ -18,7 +18,7 @@ jobs:
 
   npm:
     needs: build
-    uses: bennypowers/go-release-workflows/.github/workflows/npm-publish.yml@v1.2
+    uses: bennypowers/go-release-workflows/.github/workflows/npm-publish.yml@v1.3
     with:
       binary-name: cem
       npm-package-name: "@pwrs/cem"
