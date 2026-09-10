@@ -12,7 +12,7 @@ export class TestCardElement extends LitElement {
 
   render() {
     return html`
-      <div class="card ${this.elevated ? 'elevated' : ''}">
+      <div id="card" elevated="${String(this.elevated)}">
         <header>
           <slot name="header"></slot>
         </header>

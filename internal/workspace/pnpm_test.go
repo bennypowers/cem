@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/platform/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,16 +30,17 @@ import (
 // TestReadPnpmWorkspace tests parsing of pnpm-workspace.yaml
 func TestReadPnpmWorkspace(t *testing.T) {
 	t.Run("exists", func(t *testing.T) {
-		rootDir := filepath.Join("testdata", "pnpm-workspace")
-		ws, err := ReadPnpmWorkspace(rootDir, platform.NewOSFileSystem())
+		fsys := testutil.LoadTestdataFS(t, "testdata/pnpm-workspace", "")
+		ws, err := ReadPnpmWorkspace("", fsys) // root is "" because LoadTestdataFS flattens to keys without prefix
 		require.NoError(t, err)
 		require.NotNil(t, ws)
+		// Inline assertion: scalar slice comparison, no golden file needed.
 		assert.Equal(t, []string{"packages/*", "packages/sub/**", "!packages/excluded"}, ws.Packages)
 	})
 
 	t.Run("does not exist", func(t *testing.T) {
-		rootDir := filepath.Join("testdata", "non-workspace")
-		ws, err := ReadPnpmWorkspace(rootDir, platform.NewOSFileSystem())
+		fsys := testutil.LoadTestdataFS(t, "testdata/non-workspace", "")
+		ws, err := ReadPnpmWorkspace("", fsys)
 		require.NoError(t, err)
 		assert.Nil(t, ws)
 	})
@@ -47,30 +49,30 @@ func TestReadPnpmWorkspace(t *testing.T) {
 // TestHasPnpmWorkspace tests detection of pnpm-workspace.yaml
 func TestHasPnpmWorkspace(t *testing.T) {
 	t.Run("has pnpm workspace", func(t *testing.T) {
-		rootDir := filepath.Join("testdata", "pnpm-workspace")
-		assert.True(t, HasPnpmWorkspace(rootDir, platform.NewOSFileSystem()))
+		fsys := testutil.LoadTestdataFS(t, "testdata/pnpm-workspace", "")
+		assert.True(t, HasPnpmWorkspace("", fsys))
 	})
 
 	t.Run("no pnpm workspace", func(t *testing.T) {
-		rootDir := filepath.Join("testdata", "non-workspace")
-		assert.False(t, HasPnpmWorkspace(rootDir, platform.NewOSFileSystem()))
+		fsys := testutil.LoadTestdataFS(t, "testdata/non-workspace", "")
+		assert.False(t, HasPnpmWorkspace("", fsys))
 	})
 
 	t.Run("pnpm-only workspace", func(t *testing.T) {
-		rootDir := filepath.Join("testdata", "pnpm-only")
-		assert.True(t, HasPnpmWorkspace(rootDir, platform.NewOSFileSystem()))
+		fsys := testutil.LoadTestdataFS(t, "testdata/pnpm-only", "")
+		assert.True(t, HasPnpmWorkspace("", fsys))
 	})
 }
 
 // TestDiscoverPnpmPackages tests package discovery from pnpm-workspace.yaml
 func TestDiscoverPnpmPackages(t *testing.T) {
 	t.Run("finds packages from patterns", func(t *testing.T) {
-		rootDir := filepath.Join("testdata", "pnpm-workspace")
-		ws, err := ReadPnpmWorkspace(rootDir, platform.NewOSFileSystem())
+		fsys := testutil.LoadTestdataFS(t, "testdata/pnpm-workspace", "")
+		ws, err := ReadPnpmWorkspace("", fsys)
 		require.NoError(t, err)
 		require.NotNil(t, ws)
 
-		packages, err := DiscoverPnpmPackages(rootDir, ws, platform.NewOSFileSystem())
+		packages, err := DiscoverPnpmPackages("", ws, fsys)
 		require.NoError(t, err)
 
 		// Should find alpha, beta, nested (sub/**), but NOT excluded
@@ -85,13 +87,13 @@ func TestDiscoverPnpmPackages(t *testing.T) {
 // TestIsWorkspaceMode_PnpmWorkspace tests that pnpm workspaces are detected
 func TestIsWorkspaceMode_PnpmWorkspace(t *testing.T) {
 	t.Run("pnpm-workspace.yaml only", func(t *testing.T) {
-		rootDir := filepath.Join("testdata", "pnpm-workspace")
-		assert.True(t, IsWorkspaceMode(rootDir, platform.NewOSFileSystem()))
+		fsys := testutil.LoadTestdataFS(t, "testdata/pnpm-workspace", "")
+		assert.True(t, IsWorkspaceMode("", fsys))
 	})
 
 	t.Run("pnpm-only (no npm workspaces field)", func(t *testing.T) {
-		rootDir := filepath.Join("testdata", "pnpm-only")
-		assert.True(t, IsWorkspaceMode(rootDir, platform.NewOSFileSystem()))
+		fsys := testutil.LoadTestdataFS(t, "testdata/pnpm-only", "")
+		assert.True(t, IsWorkspaceMode("", fsys))
 	})
 
 	t.Run("MapFS with pnpm workspace", func(t *testing.T) {
@@ -109,8 +111,8 @@ func TestIsWorkspaceMode_PnpmWorkspace(t *testing.T) {
 // TestFindPackagesWithManifests_Pnpm tests FindPackagesWithManifests with pnpm workspaces
 func TestFindPackagesWithManifests_Pnpm(t *testing.T) {
 	t.Run("pnpm workspace with negated patterns", func(t *testing.T) {
-		rootDir := filepath.Join("testdata", "pnpm-workspace")
-		packages, err := FindPackagesWithManifests(rootDir, platform.NewOSFileSystem())
+		fsys := testutil.LoadTestdataFS(t, "testdata/pnpm-workspace", "")
+		packages, err := FindPackagesWithManifests("", fsys)
 		require.NoError(t, err)
 
 		// Should find 3 packages (alpha, beta, nested), excluded should be filtered out
@@ -127,8 +129,8 @@ func TestFindPackagesWithManifests_Pnpm(t *testing.T) {
 	})
 
 	t.Run("pnpm-only workspace", func(t *testing.T) {
-		rootDir := filepath.Join("testdata", "pnpm-only")
-		packages, err := FindPackagesWithManifests(rootDir, platform.NewOSFileSystem())
+		fsys := testutil.LoadTestdataFS(t, "testdata/pnpm-only", "")
+		packages, err := FindPackagesWithManifests("", fsys)
 		require.NoError(t, err)
 
 		assert.Len(t, packages, 2)

@@ -20,7 +20,9 @@ package workspace
 import (
 	"cmp"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -28,6 +30,7 @@ import (
 	C "bennypowers.dev/cem/cmd/config"
 	IC "bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/internal/platform"
+	doublestar "github.com/bmatcuk/doublestar/v4"
 )
 
 // PackageInfo represents a discovered workspace package
@@ -46,7 +49,7 @@ type packageJSON struct {
 
 // DiscoverWorkspacePackagesFromPatterns discovers all workspace packages from
 // a flat list of glob patterns. Supports negated patterns (prefixed with !)
-// to exclude packages.
+// to exclude packages. Uses doublestar for ** recursive globstar matching.
 func DiscoverWorkspacePackagesFromPatterns(rootDir string, patterns []string, fsys platform.FileSystem) (map[string]string, error) {
 	result := make(map[string]string)
 
@@ -63,35 +66,39 @@ func DiscoverWorkspacePackagesFromPatterns(rootDir string, patterns []string, fs
 		}
 	}
 
+	// Create a root-scoped fs.FS so doublestar.Glob receives patterns
+	// relative to rootDir and returns relative paths.
+	rootFS := platform.DirFS(fsys, rootDir)
+
 	// Process include patterns to find all matching directories
 	for _, pattern := range includePatterns {
-		matches, err := fsys.Glob(filepath.Join(rootDir, pattern))
+		matches, err := doublestar.Glob(rootFS, filepath.ToSlash(pattern))
 		if err != nil {
 			continue
 		}
 
 		for _, match := range matches {
-			info, err := fsys.Stat(match)
+			info, err := fsys.Stat(filepath.Join(rootDir, match))
 			if err != nil || !info.IsDir() {
 				continue
 			}
 
 			// Read package.json in this workspace
 			pkgPath := filepath.Join(match, "package.json")
-			pkg, err := readPackageJSON(pkgPath, fsys)
+			pkg, err := readPackageJSON(filepath.Join(rootDir, pkgPath), fsys)
 			if err != nil {
 				continue
 			}
 
 			if pkg.Name != "" {
-				result[pkg.Name] = match
+				result[pkg.Name] = filepath.Join(rootDir, match)
 			}
 		}
 	}
 
 	// Remove packages that match exclude patterns
 	for _, excludePattern := range excludePatterns {
-		matches, err := fsys.Glob(filepath.Join(rootDir, excludePattern))
+		matches, err := doublestar.Glob(rootFS, filepath.ToSlash(excludePattern))
 		if err != nil {
 			continue
 		}
@@ -99,7 +106,7 @@ func DiscoverWorkspacePackagesFromPatterns(rootDir string, patterns []string, fs
 		for _, match := range matches {
 			// Read package.json to get the package name
 			pkgPath := filepath.Join(match, "package.json")
-			pkg, err := readPackageJSON(pkgPath, fsys)
+			pkg, err := readPackageJSON(filepath.Join(rootDir, pkgPath), fsys)
 			if err != nil {
 				continue
 			}
@@ -150,8 +157,11 @@ func FindPackagesWithManifests(rootDir string, fsys platform.FileSystem) ([]Pack
 	rootPkgPath := filepath.Join(rootDir, "package.json")
 	rootPkg, err := readPackageJSON(rootPkgPath, fsys)
 	if err != nil {
-		// pnpm workspace but no root package.json
-		if pnpmWs != nil {
+		// pnpm workspace but root package.json is missing — use pnpm only.
+		// Only fall back on file-not-found; propagate malformed JSON, permission
+		// errors, and other filesystem errors since a corrupted package.json
+		// suggests a real problem rather than a missing file.
+		if errors.Is(err, os.ErrNotExist) && pnpmWs != nil {
 			packages, err := DiscoverPnpmPackages(rootDir, pnpmWs, fsys)
 			if err != nil {
 				return nil, err
