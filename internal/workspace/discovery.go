@@ -20,7 +20,9 @@ package workspace
 import (
 	"cmp"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -28,6 +30,7 @@ import (
 	C "bennypowers.dev/cem/cmd/config"
 	IC "bennypowers.dev/cem/internal/config"
 	"bennypowers.dev/cem/internal/platform"
+	doublestar "github.com/bmatcuk/doublestar/v4"
 )
 
 // PackageInfo represents a discovered workspace package
@@ -44,15 +47,83 @@ type packageJSON struct {
 	CustomElements string      `json:"customElements"`
 }
 
-// DiscoverWorkspacePackages discovers all workspace packages from workspace patterns
-// Returns map of package name -> absolute path to package directory
-// Supports negated patterns (prefixed with !) to exclude packages
-func DiscoverWorkspacePackages(rootDir string, workspacesField any, fsys platform.FileSystem) (map[string]string, error) {
+// DiscoverWorkspacePackagesFromPatterns discovers all workspace packages from
+// a flat list of glob patterns. Supports negated patterns (prefixed with !)
+// to exclude packages. Uses doublestar for ** recursive globstar matching.
+func DiscoverWorkspacePackagesFromPatterns(rootDir string, patterns []string, fsys platform.FileSystem) (map[string]string, error) {
 	result := make(map[string]string)
 
+	// Split patterns into includes and excludes
+	var includePatterns []string
+	var excludePatterns []string
+
+	for _, pattern := range patterns {
+		if len(pattern) > 0 && pattern[0] == '!' {
+			// Negated pattern - strip the ! and add to excludes
+			excludePatterns = append(excludePatterns, pattern[1:])
+		} else {
+			includePatterns = append(includePatterns, pattern)
+		}
+	}
+
+	// Create a root-scoped fs.FS so doublestar.Glob receives patterns
+	// relative to rootDir and returns relative paths.
+	rootFS := platform.DirFS(fsys, rootDir)
+
+	// Process include patterns to find all matching directories
+	for _, pattern := range includePatterns {
+		matches, err := doublestar.Glob(rootFS, filepath.ToSlash(pattern))
+		if err != nil {
+			continue
+		}
+
+		for _, match := range matches {
+			info, err := fsys.Stat(filepath.Join(rootDir, match))
+			if err != nil || !info.IsDir() {
+				continue
+			}
+
+			// Read package.json in this workspace
+			pkgPath := filepath.Join(match, "package.json")
+			pkg, err := readPackageJSON(filepath.Join(rootDir, pkgPath), fsys)
+			if err != nil {
+				continue
+			}
+
+			if pkg.Name != "" {
+				result[pkg.Name] = filepath.Join(rootDir, match)
+			}
+		}
+	}
+
+	// Remove packages that match exclude patterns
+	for _, excludePattern := range excludePatterns {
+		matches, err := doublestar.Glob(rootFS, filepath.ToSlash(excludePattern))
+		if err != nil {
+			continue
+		}
+
+		for _, match := range matches {
+			// Read package.json to get the package name
+			pkgPath := filepath.Join(match, "package.json")
+			pkg, err := readPackageJSON(filepath.Join(rootDir, pkgPath), fsys)
+			if err != nil {
+				continue
+			}
+
+			// Remove from result if it was found
+			delete(result, pkg.Name)
+		}
+	}
+
+	return result, nil
+}
+
+// DiscoverWorkspacePackages discovers all workspace packages from a package.json
+// workspaces field. Supports negated patterns (prefixed with !) to exclude packages.
+func DiscoverWorkspacePackages(rootDir string, workspacesField any, fsys platform.FileSystem) (map[string]string, error) {
 	var patterns []string
 
-	// Handle different workspace field formats
 	switch v := workspacesField.(type) {
 	case []any:
 		for _, item := range v {
@@ -70,90 +141,79 @@ func DiscoverWorkspacePackages(rootDir string, workspacesField any, fsys platfor
 		}
 	}
 
-	// Split patterns into includes and excludes
-	var includePatterns []string
-	var excludePatterns []string
-
-	for _, pattern := range patterns {
-		if len(pattern) > 0 && pattern[0] == '!' {
-			// Negated pattern - strip the ! and add to excludes
-			excludePatterns = append(excludePatterns, pattern[1:])
-		} else {
-			includePatterns = append(includePatterns, pattern)
-		}
-	}
-
-	// Process include patterns to find all matching directories
-	for _, pattern := range includePatterns {
-		matches, err := fsys.Glob(filepath.Join(rootDir, pattern))
-		if err != nil {
-			continue
-		}
-
-		for _, match := range matches {
-			info, err := fsys.Stat(match)
-			if err != nil || !info.IsDir() {
-				continue
-			}
-
-			// Read package.json in this workspace
-			pkgPath := filepath.Join(match, "package.json")
-			pkg, err := readPackageJSON(pkgPath, fsys)
-			if err != nil {
-				continue
-			}
-
-			if pkg.Name != "" {
-				result[pkg.Name] = match
-			}
-		}
-	}
-
-	// Remove packages that match exclude patterns
-	for _, excludePattern := range excludePatterns {
-		matches, err := fsys.Glob(filepath.Join(rootDir, excludePattern))
-		if err != nil {
-			continue
-		}
-
-		for _, match := range matches {
-			// Read package.json to get the package name
-			pkgPath := filepath.Join(match, "package.json")
-			pkg, err := readPackageJSON(pkgPath, fsys)
-			if err != nil {
-				continue
-			}
-
-			// Remove from result if it was found
-			delete(result, pkg.Name)
-		}
-	}
-
-	return result, nil
+	return DiscoverWorkspacePackagesFromPatterns(rootDir, patterns, fsys)
 }
 
 // FindPackagesWithManifests finds all workspace packages that have a customElements field
-// This is what the serve command uses to auto-discover packages to serve
+// This is what the serve command uses to auto-discover packages to serve.
+// Supports both npm/yarn workspaces (package.json workspaces field) and pnpm workspaces (pnpm-workspace.yaml).
 func FindPackagesWithManifests(rootDir string, fsys platform.FileSystem) ([]PackageInfo, error) {
-	// Read root package.json to get workspaces
+	// Check for pnpm-workspace.yaml and package.json simultaneously
+	pnpmWs, err := ReadPnpmWorkspace(rootDir, fsys)
+	if err != nil {
+		return nil, fmt.Errorf("reading pnpm-workspace.yaml: %w", err)
+	}
+
 	rootPkgPath := filepath.Join(rootDir, "package.json")
 	rootPkg, err := readPackageJSON(rootPkgPath, fsys)
 	if err != nil {
+		// pnpm workspace but root package.json is missing — use pnpm only.
+		// Only fall back on file-not-found; propagate malformed JSON, permission
+		// errors, and other filesystem errors since a corrupted package.json
+		// suggests a real problem rather than a missing file.
+		if errors.Is(err, os.ErrNotExist) && pnpmWs != nil {
+			packages, err := DiscoverPnpmPackages(rootDir, pnpmWs, fsys)
+			if err != nil {
+				return nil, err
+			}
+			return filterCustomElements(packages, fsys)
+		}
 		return nil, err
 	}
 
-	// If no workspaces, not a monorepo
-	if rootPkg.Workspaces == nil {
+	hasPnpm := pnpmWs != nil
+	hasNpm := rootPkg.Workspaces != nil
+
+	switch {
+	case hasPnpm && !hasNpm:
+		// pnpm-only workspace
+		packages, err := DiscoverPnpmPackages(rootDir, pnpmWs, fsys)
+		if err != nil {
+			return nil, err
+		}
+		return filterCustomElements(packages, fsys)
+
+	case hasPnpm && hasNpm:
+		// merged workspace: npm + pnpm, pnpm wins on name collisions
+		npmPkgs, err := DiscoverWorkspacePackages(rootDir, rootPkg.Workspaces, fsys)
+		if err != nil {
+			return nil, err
+		}
+		pnpmPkgs, err := DiscoverPnpmPackages(rootDir, pnpmWs, fsys)
+		if err != nil {
+			return nil, err
+		}
+		for name, path := range pnpmPkgs {
+			npmPkgs[name] = path
+		}
+		return filterCustomElements(npmPkgs, fsys)
+
+	case hasNpm:
+		// npm-only workspace
+		packages, err := DiscoverWorkspacePackages(rootDir, rootPkg.Workspaces, fsys)
+		if err != nil {
+			return nil, err
+		}
+		return filterCustomElements(packages, fsys)
+
+	default:
+		// neither
 		return nil, nil
 	}
+}
 
-	// Discover all workspace packages
-	packages, err := DiscoverWorkspacePackages(rootDir, rootPkg.Workspaces, fsys)
-	if err != nil {
-		return nil, err
-	}
-
-	// Filter to only packages with customElements field
+// filterCustomElements filters discovered packages to only those with a customElements field.
+func filterCustomElements(packages map[string]string, fsys platform.FileSystem) ([]PackageInfo, error) {
 	var result []PackageInfo
 	for name, path := range packages {
 		pkgPath := filepath.Join(path, "package.json")
@@ -161,7 +221,6 @@ func FindPackagesWithManifests(rootDir string, fsys platform.FileSystem) ([]Pack
 		if err != nil {
 			continue
 		}
-
 		if pkg.CustomElements != "" {
 			result = append(result, PackageInfo{
 				Name:              name,
@@ -292,11 +351,16 @@ func mergeConfigDefaults(pkg, ws *C.CemConfig) {
 	}
 }
 
-// findWorkspaceRootWithWorkspaces finds workspace root by looking for package.json with workspaces field
-// Returns empty string if not in a workspace
+// findWorkspaceRootWithWorkspaces finds workspace root by looking for package.json
+// with workspaces field or pnpm-workspace.yaml. Returns empty string if not in a workspace.
 func findWorkspaceRootWithWorkspaces(startDir string, fsys platform.FileSystem) string {
 	dir := startDir
 	for {
+		// Check for pnpm-workspace.yaml
+		if ws, err := ReadPnpmWorkspace(dir, fsys); err == nil && ws != nil && len(ws.Packages) > 0 {
+			return dir
+		}
+
 		// Check if there's a package.json with workspaces field
 		pkgPath := filepath.Join(dir, "package.json")
 		if pkg, err := readPackageJSON(pkgPath, fsys); err == nil && pkg.Workspaces != nil {
@@ -351,8 +415,14 @@ func FindPackagesForFiles(rootDir string, filePaths []string, fsys platform.File
 
 // IsWorkspaceMode determines if a directory is a monorepo workspace
 // Returns true if the directory has a workspaces field in package.json
+// or a pnpm-workspace.yaml file.
 func IsWorkspaceMode(dir string, fsys platform.FileSystem) bool {
-	// Read root package.json to check for workspaces field
+	// Check for pnpm-workspace.yaml first (no parsing needed)
+	if HasPnpmWorkspace(dir, fsys) {
+		return true
+	}
+
+	// Check for package.json with workspaces field
 	rootPkgPath := filepath.Join(dir, "package.json")
 	rootPkg, err := readPackageJSON(rootPkgPath, fsys)
 	if err != nil {
