@@ -240,6 +240,39 @@ func isTypeOnlyNode(node *ts.Node) bool {
 	return hasStatementLevelType(node) || allBindingsTypeOnly(node)
 }
 
+// isDefaultExportStatement checks whether an export_statement node is a
+// default export (`export default ...`). Inline default declarations
+// (`export default class C {}`, `export default function f() {}`) also match
+// the declarations query's generic export pattern, so that pattern's handler
+// skips them and leaves default exports to the exports query.
+func isDefaultExportStatement(node *ts.Node) bool {
+	if node == nil {
+		return false
+	}
+	return hasAnonymousChild(node, "default")
+}
+
+// hasFromClause checks whether an import or export statement node carries a
+// `from` clause, i.e. it imports from or re-exports another module.
+func hasFromClause(node *ts.Node) bool {
+	if node == nil {
+		return false
+	}
+	return hasAnonymousChild(node, "from")
+}
+
+// hasAnonymousChild reports whether the node has a child token with the
+// given grammar name, e.g. anonymous keyword tokens like `default` or `from`.
+func hasAnonymousChild(node *ts.Node, name string) bool {
+	count := node.ChildCount()
+	for i := range count {
+		if node.Child(i).GrammarName() == name {
+			return true
+		}
+	}
+	return false
+}
+
 // hasStatementLevelType checks for `import type` or `export type` at statement level.
 func hasStatementLevelType(node *ts.Node) bool {
 	count := node.ChildCount()
@@ -273,12 +306,8 @@ func classifyBindings(node *ts.Node, total, typed *int) {
 	switch node.GrammarName() {
 	case "import_specifier", "export_specifier":
 		*total++
-		count := node.ChildCount()
-		for i := range count {
-			if node.Child(i).GrammarName() == "type" {
-				*typed++
-				break
-			}
+		if isTypeOnlySpecifier(node) {
+			*typed++
 		}
 	case "identifier":
 		// Default binding (import Foo, { ... }) -- never type-only
@@ -293,4 +322,25 @@ func classifyBindings(node *ts.Node, total, typed *int) {
 			classifyBindings(&child, total, typed)
 		}
 	}
+}
+
+// isTypeOnlySpecifier reports whether an import/export specifier node
+// carries a per-specifier `type` modifier (e.g. `export { type Foo }` or
+// `import { type Foo }`), which the compiler elides.
+func isTypeOnlySpecifier(node *ts.Node) bool {
+	if node == nil {
+		return false
+	}
+	switch node.GrammarName() {
+	case "import_specifier", "export_specifier":
+	default:
+		return false
+	}
+	count := node.ChildCount()
+	for i := range count {
+		if node.Child(i).GrammarName() == "type" {
+			return true
+		}
+	}
+	return false
 }

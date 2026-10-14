@@ -31,7 +31,7 @@
         },
         {
           "kind": "js",
-          "name": "ClassDefaultCe",
+          "name": "default",
           "declaration": {
             "name": "ClassDefaultCe",
             "module": "src/class-export-default.js"

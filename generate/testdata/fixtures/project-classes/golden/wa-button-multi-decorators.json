@@ -51,7 +51,7 @@
         },
         {
           "kind": "js",
-          "name": "WaButtonMulti",
+          "name": "default",
           "declaration": {
             "name": "WaButtonMulti",
             "module": "src/wa-button-multi-decorators.js"

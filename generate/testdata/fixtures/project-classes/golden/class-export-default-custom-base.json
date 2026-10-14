@@ -43,7 +43,7 @@
         },
         {
           "kind": "js",
-          "name": "ClassExportDefaultCustomBaseCe",
+          "name": "default",
           "declaration": {
             "name": "ClassExportDefaultCustomBaseCe",
             "module": "src/class-export-default-custom-base.js"

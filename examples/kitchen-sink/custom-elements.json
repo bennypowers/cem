@@ -1321,6 +1321,14 @@
             "name": "DemoIcon",
             "module": "elements/demo-icon/demo-icon.js"
           }
+        },
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "DemoIcon",
+            "module": "elements/demo-icon/demo-icon.js"
+          }
         }
       ]
     },
@@ -2099,6 +2107,14 @@
           "declaration": {
             "name": "default",
             "module": "elements/demo-icon/demo-icon.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "*",
+          "declaration": {
+            "name": "*",
+            "module": "elements/utilities.js"
           }
         }
       ]

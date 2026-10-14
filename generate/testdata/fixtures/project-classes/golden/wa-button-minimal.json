@@ -43,7 +43,7 @@
         },
         {
           "kind": "js",
-          "name": "WaButton",
+          "name": "default",
           "declaration": {
             "name": "WaButton",
             "module": "src/wa-button-minimal.js"
