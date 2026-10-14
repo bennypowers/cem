@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/untyped-parameter.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value"
+            }
+          ],
+          "name": "untyped",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-function-params/src/untyped-parameter.ts#L1"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "untyped",
+          "declaration": {
+            "name": "untyped",
+            "module": "src/untyped-parameter.js"
+          }
+        }
+      ]
+    }
+  ]
+}

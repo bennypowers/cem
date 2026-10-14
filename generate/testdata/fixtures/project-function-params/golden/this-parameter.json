@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/this-parameter.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "name": "typed",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-function-params/src/this-parameter.ts#L1"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "typed",
+          "declaration": {
+            "name": "typed",
+            "module": "src/this-parameter.js"
+          }
+        }
+      ]
+    }
+  ]
+}

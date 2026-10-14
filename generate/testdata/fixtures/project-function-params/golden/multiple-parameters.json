@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/multiple-parameters.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "first",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "second",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "name": "pair",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-function-params/src/multiple-parameters.ts#L1"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "pair",
+          "declaration": {
+            "name": "pair",
+            "module": "src/multiple-parameters.js"
+          }
+        }
+      ]
+    }
+  ]
+}

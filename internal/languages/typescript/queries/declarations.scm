@@ -18,13 +18,9 @@
       (variable_declarator
         name: (identifier) @function.name
         value: (arrow_function
-                 parameters: (formal_parameters
-                               (_
-                                 pattern: [
-                                            (identifier) @function.param.name
-                                            (rest_pattern (identifier) @function.param.name) @function.param.rest
-                                          ]
-                                 type: (type_annotation (_) @function.param.type)) @function.params)?
+                 ; one match per parameter node; name/type/default/optional/rest
+                 ; are read from the node's fields Go-side
+                 parameters: (formal_parameters (_) @function.params)?
                  return_type: (type_annotation (_) @function.return.type)?))))) @function
 
 ( ; function declarations
@@ -34,13 +30,9 @@
   (export_statement
     declaration: (_
       name: (identifier) @function.name
-      parameters: (formal_parameters
-                    (_
-                      pattern: [
-                                 (identifier) @function.param.name
-                                 (rest_pattern (identifier) @function.param.name) @function.param.rest
-                               ]
-                      type: (type_annotation (_) @function.param.type)) @function.params)?
+      ; one match per parameter node; name/type/default/optional/rest are
+      ; read from the node's fields Go-side
+      parameters: (formal_parameters (_) @function.params)?
       return_type: (type_annotation (_) @function.return.type)?))) @function
 
 ; export declaration
@@ -120,13 +112,7 @@
 (program
   (function_declaration
     name: (identifier) @function.name
-    parameters: (formal_parameters
-                  (_
-                    pattern: [
-                               (identifier) @function.param.name
-                               (rest_pattern (identifier) @function.param.name) @function.param.rest
-                             ]
-                    type: (type_annotation (_) @function.param.type)) @function.params)?
+    parameters: (formal_parameters (_) @function.params)?
     return_type: (type_annotation (_) @function.return.type)?) @local.function)
 
 ; non-exported top-level generator function declarations
@@ -136,13 +122,7 @@
 (program
   (generator_function_declaration
     name: (identifier) @function.name
-    parameters: (formal_parameters
-                  (_
-                    pattern: [
-                               (identifier) @function.param.name
-                               (rest_pattern (identifier) @function.param.name) @function.param.rest
-                             ]
-                    type: (type_annotation (_) @function.param.type)) @function.params)?
+    parameters: (formal_parameters (_) @function.params)?
     return_type: (type_annotation (_) @function.return.type)?) @local.function)
 
 ; non-exported top-level arrow-function consts
@@ -156,11 +136,5 @@
     (variable_declarator
       name: (identifier) @function.name
       value: (arrow_function
-               parameters: (formal_parameters
-                             (_
-                               pattern: [
-                                          (identifier) @function.param.name
-                                          (rest_pattern (identifier) @function.param.name) @function.param.rest
-                                        ]
-                               type: (type_annotation (_) @function.param.type)) @function.params)?
+               parameters: (formal_parameters (_) @function.params)?
                return_type: (type_annotation (_) @function.return.type)?)) @local.function))

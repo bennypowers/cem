@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/object-default-parameter.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "options",
+              "type": {
+                "text": "{ enabled?: boolean }"
+              },
+              "default": "{}",
+              "optional": true
+            }
+          ],
+          "name": "defaulted",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-function-params/src/object-default-parameter.ts#L1"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "defaulted",
+          "declaration": {
+            "name": "defaulted",
+            "module": "src/object-default-parameter.js"
+          }
+        }
+      ]
+    }
+  ]
+}

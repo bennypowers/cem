@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/optional-parameter.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "number"
+              },
+              "optional": true
+            }
+          ],
+          "name": "optional",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-function-params/src/optional-parameter.ts#L1"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "optional",
+          "declaration": {
+            "name": "optional",
+            "module": "src/optional-parameter.js"
+          }
+        }
+      ]
+    }
+  ]
+}

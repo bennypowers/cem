@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/local-function-parameters.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "first",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "second",
+              "type": {
+                "text": "string"
+              },
+              "default": "','",
+              "optional": true
+            }
+          ],
+          "name": "combine",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-function-params/src/local-function-parameters.ts#L1"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "combine",
+          "declaration": {
+            "name": "combine",
+            "module": "src/local-function-parameters.js"
+          }
+        }
+      ]
+    }
+  ]
+}

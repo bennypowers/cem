@@ -2140,6 +2140,14 @@
               "type": {
                 "text": "string"
               }
+            },
+            {
+              "name": "uppercase",
+              "description": "- Whether to uppercase the result",
+              "type": {
+                "text": "boolean"
+              },
+              "optional": true
             }
           ],
           "return": {
