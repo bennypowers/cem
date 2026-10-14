@@ -117,7 +117,41 @@
     },
     {
       "kind": "javascript-module",
-      "path": "src/index.js"
+      "path": "src/index.js",
+      "exports": [
+        {
+          "kind": "js",
+          "name": "TsButton",
+          "declaration": {
+            "name": "TsButton",
+            "module": "@components/ts-button.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "capitalize",
+          "declaration": {
+            "name": "capitalize",
+            "module": "@utils/format.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "kebabCase",
+          "declaration": {
+            "name": "kebabCase",
+            "module": "@utils/format.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "truncate",
+          "declaration": {
+            "name": "truncate",
+            "module": "@utils/format.js"
+          }
+        }
+      ]
     },
     {
       "kind": "javascript-module",
@@ -166,6 +200,13 @@
               "description": "- The string to truncate",
               "type": {
                 "text": "string"
+              }
+            },
+            {
+              "name": "maxLength",
+              "description": "- Maximum length before truncation",
+              "type": {
+                "text": "number"
               }
             }
           ],
