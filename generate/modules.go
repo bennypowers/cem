@@ -480,6 +480,12 @@ func (mp *ModuleProcessor) processDeclarations() error {
 			})
 		} else {
 			declaration := declarationNameNodes[0]
+			// `export default class C {}` and `export default function f() {}`
+			// match this pattern too; default exports are instead emitted by
+			// the exports query with name "default", per the CEM schema
+			if isDefaultExportStatement(Q.GetDescendantById(mp.root, exportNodes[0].NodeId)) {
+				continue
+			}
 			reference := M.NewReference(declaration.Text, "", mp.module.Path)
 			export := &M.JavaScriptExport{
 				Kind:        "js",
@@ -543,6 +549,11 @@ func (mp *ModuleProcessor) processDeclarations() error {
 		}
 	}
 
+	// names of local declarations referenced by default or local named
+	// exports, used below to collect non-exported top-level declarations
+	// that are reachable from exports, as the schema asks for
+	localExportTargets := S.NewSet[string]()
+
 	// re-exports: export { X } from './module.js'
 	// and: export * from './module.js'
 	// and: export * as Namespace from './module.js'
@@ -554,15 +565,16 @@ func (mp *ModuleProcessor) processDeclarations() error {
 
 		// named re-exports: export { X } from './module.js'
 		// Excludes type-only exports (export type { X }, export { type X })
+		// Each export_specifier is its own capture group, so every specifier
+		// of a clause is emitted with its own alias pairing
 		for captures := range exQm.ParentCaptures(mp.root, mp.code, "export.named.from") {
 			nameNodes, hasName := captures["export.name"]
 			sourceNodes, hasSource := captures["export.source"]
-			parentNodes, hasParent := captures["export.named.from"]
 			if !hasName || !hasSource || len(nameNodes) == 0 || len(sourceNodes) == 0 {
 				continue
 			}
-			if hasParent && len(parentNodes) > 0 {
-				stmtNode := Q.GetDescendantById(mp.root, parentNodes[0].NodeId)
+			if parentNodes, hasParent := captures["export.named.from"]; hasParent && len(parentNodes) > 0 {
+				stmtNode := findAncestor(mp.root, parentNodes[0].NodeId, "export_statement")
 				if isTypeOnlyNode(stmtNode) {
 					continue
 				}
@@ -597,6 +609,15 @@ func (mp *ModuleProcessor) processDeclarations() error {
 				}
 			}
 			sourcePath := mp.resolveImportSpec(sourceNodes[0].Text)
+			// Per the CEM schema, aggregating exports (`* from`) use the name `*`.
+			// The aggregated exports are additionally expanded onto this module
+			// by resolveReExportedCEDefinitions.
+			mp.module.Exports = append(mp.module.Exports, &M.JavaScriptExport{
+				Kind:        "js",
+				Name:        "*",
+				Declaration: M.NewReference("*", "", sourcePath),
+				StartByte:   parentNodes[0].StartByte,
+			})
 			if !slices.Contains(mp.reExportAllSources, sourcePath) {
 				mp.reExportAllSources = append(mp.reExportAllSources, sourcePath)
 			}
@@ -625,6 +646,101 @@ func (mp *ModuleProcessor) processDeclarations() error {
 				Declaration: reference,
 				StartByte:   aliasNodes[0].StartByte,
 			})
+		}
+
+		// default exports: export default X
+		// Per the CEM schema, default exports use the name "default"
+		for captures := range exQm.ParentCaptures(mp.root, mp.code, "export.default") {
+			nameNodes, hasName := captures["export.default.name"]
+			if !hasName || len(nameNodes) == 0 {
+				continue
+			}
+			name := nameNodes[0].Text
+			localExportTargets.Add(name)
+			// re-exported imports (`import X from './x.js'; export default X;`)
+			// reference the binding's source module, not this one
+			reference := M.NewReference(name, "", mp.module.Path)
+			if binding, ok := mp.importBindingToSpecMap[name]; ok {
+				reference = M.NewReference(binding.name, "", mp.resolveImportSpec(binding.spec))
+			}
+			mp.module.Exports = append(mp.module.Exports, &M.JavaScriptExport{
+				Kind:        "js",
+				Name:        "default",
+				Declaration: reference,
+				StartByte:   nameNodes[0].StartByte,
+			})
+		}
+
+		// local named exports: export { X } / export { X as Y }
+		// Re-exports carrying a source clause are handled by the
+		// export.named.from loop above, so skip those matches here.
+		// Each export_specifier is its own capture group, so every specifier
+		// of a clause is emitted with its own alias pairing
+		for captures := range exQm.ParentCaptures(mp.root, mp.code, "export.named") {
+			nameNodes, hasName := captures["export.name"]
+			if !hasName || len(nameNodes) == 0 {
+				continue
+			}
+			if parentNodes, hasParent := captures["export.named"]; hasParent && len(parentNodes) > 0 {
+				// skip per-specifier type-only bindings in mixed clauses,
+				// e.g. `export { type FontSize, helpers }` elides FontSize
+				if isTypeOnlySpecifier(Q.GetDescendantById(mp.root, parentNodes[0].NodeId)) {
+					continue
+				}
+				stmtNode := findAncestor(mp.root, parentNodes[0].NodeId, "export_statement")
+				if isTypeOnlyNode(stmtNode) || hasFromClause(stmtNode) {
+					continue
+				}
+			}
+			localName := nameNodes[0].Text
+			exportName := localName
+			if aliasNodes, ok := captures["export.alias"]; ok && len(aliasNodes) > 0 {
+				exportName = aliasNodes[0].Text
+			}
+			localExportTargets.Add(localName)
+			// re-exported imports (`import { X } from './x.js'; export { X as Y };`)
+			// reference the binding's source module, not this one
+			reference := M.NewReference(localName, "", mp.module.Path)
+			if binding, ok := mp.importBindingToSpecMap[localName]; ok {
+				reference = M.NewReference(binding.name, "", mp.resolveImportSpec(binding.spec))
+			}
+			mp.module.Exports = append(mp.module.Exports, &M.JavaScriptExport{
+				Kind:        "js",
+				Name:        exportName,
+				Declaration: reference,
+				StartByte:   nameNodes[0].StartByte,
+			})
+		}
+	}
+
+	// non-exported top-level declarations referenced by local exports
+	// (export default X, export { X as Y }); the CEM schema asks for all
+	// declarations reachable from exports to be described
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "local.variable") {
+		nameNodes, ok := captures["variable.name"]
+		if !ok || len(nameNodes) == 0 || !localExportTargets.Has(nameNodes[0].Text) {
+			continue
+		}
+		mp.attachLocalJSDoc(captures, "local.variable", "variable.jsdoc")
+		declaration, err := mp.generateVarDeclaration(captures)
+		if err != nil {
+			mp.errors = errors.Join(mp.errors, err)
+		} else {
+			mp.module.Declarations = append(mp.module.Declarations, declaration)
+		}
+	}
+
+	for captures := range qm.ParentCaptures(mp.root, mp.code, "local.function") {
+		nameNodes, ok := captures["function.name"]
+		if !ok || len(nameNodes) == 0 || !localExportTargets.Has(nameNodes[0].Text) {
+			continue
+		}
+		mp.attachLocalJSDoc(captures, "local.function", "function.jsdoc")
+		declaration, err := mp.generateFunctionDeclaration(captures)
+		if err != nil {
+			mp.errors = errors.Join(mp.errors, err)
+		} else {
+			mp.module.Declarations = append(mp.module.Declarations, declaration)
 		}
 	}
 
@@ -657,6 +773,33 @@ func (mp *ModuleProcessor) processDeclarations() error {
 	})
 
 	return err
+}
+
+// attachLocalJSDoc enriches local-declaration captures with JSDoc extracted
+// from the comment preceding the matched node, mirroring the class jsdoc
+// handling in processClasses. The local.* query patterns intentionally omit
+// a comment prefix (a zero-match `(comment) *` prefix would pin matches to
+// the program's first child), so JSDoc is recovered here when the pattern
+// didn't capture one.
+func (mp *ModuleProcessor) attachLocalJSDoc(captures Q.CaptureMap, nodeCapture, jsdocCapture string) {
+	if _, hasJSDoc := captures[jsdocCapture]; hasJSDoc {
+		return
+	}
+	nodes, ok := captures[nodeCapture]
+	if !ok || len(nodes) == 0 {
+		return
+	}
+	node := Q.GetDescendantById(mp.root, nodes[0].NodeId)
+	if node == nil {
+		return
+	}
+	// a declarator's leading comment precedes the enclosing statement
+	if p := node.Parent(); p != nil && p.Kind() == "lexical_declaration" {
+		node = p
+	}
+	if text := jsdoc.ExtractFromNode(node, mp.code); text != "" {
+		captures[jsdocCapture] = []Q.CaptureInfo{{Text: text}}
+	}
 }
 
 // NewEphemeralModuleProcessor creates a ModuleProcessor from in-memory source bytes
@@ -734,6 +877,62 @@ func (mp *ModuleProcessor) resolveImportSpec(importSpec string) string {
 	currentDir := path.Dir(mp.module.Path)
 	resolvedPath := path.Join(currentDir, importSpec)
 
+	// Extensionless relative specifiers (e.g. './foo' for foo.ts) resolve
+	// against files on disk, yielding the module's .js import path
+	if filepath.Ext(importSpec) == "" {
+		if resolved := mp.resolveExtensionlessSpec(importSpec, resolvedPath); resolved != "" {
+			return resolved
+		}
+	}
+
 	// Clean the path (remove . and .. segments)
 	return path.Clean(resolvedPath)
+}
+
+// extensionlessFileExtensions lists the file extensions tried, in order, when
+// resolving an extensionless relative import specifier.
+var extensionlessFileExtensions = []string{".ts", ".tsx", ".mts", ".js", ".jsx", ".mjs"}
+
+// extensionlessIndexExtensions lists the extensions tried for directory
+// index files when resolving an extensionless relative import specifier.
+var extensionlessIndexExtensions = []string{".ts", ".js"}
+
+// resolveExtensionlessSpec resolves a relative specifier without an extension
+// to the module file it refers to on disk, trying common TypeScript and
+// JavaScript conventions (foo.ts, foo.tsx, foo.mts, foo.js, foo/index.ts, ...).
+// importSpec is the RAW specifier as written in the source (e.g. '../foo'),
+// resolved against the importer's directory on disk; resolvedPath is the same
+// specifier joined into manifest space, from which the returned path derives.
+// It returns the specifier's manifest-space .js path, or "" when no candidate
+// exists on disk. The ephemeral module processor has no filesystem and gets "".
+func (mp *ModuleProcessor) resolveExtensionlessSpec(importSpec, resolvedPath string) string {
+	if mp.fs == nil {
+		return ""
+	}
+	// the on-disk candidate applies the specifier's own directory components
+	// ('./sub/foo' stats <importer dir>/sub/foo.ts; '../foo' applies '..')
+	clean := path.Clean(importSpec)
+	if clean == "." || clean == "/" || clean == "" {
+		return ""
+	}
+	rel := filepath.FromSlash(clean)
+	dir := path.Dir(resolvedPath)
+	base := path.Base(resolvedPath)
+	if base == "." || base == "/" || base == "" || base == ".." {
+		return ""
+	}
+	specDir := filepath.Dir(mp.absPath)
+	for _, ext := range extensionlessFileExtensions {
+		disk := filepath.Join(specDir, rel+ext)
+		if info, err := mp.fs.Stat(disk); err == nil && !info.IsDir() {
+			return path.Join(dir, M.NormalizeSourcePath(base+ext))
+		}
+	}
+	for _, ext := range extensionlessIndexExtensions {
+		disk := filepath.Join(specDir, rel, "index"+ext)
+		if info, err := mp.fs.Stat(disk); err == nil && !info.IsDir() {
+			return path.Join(dir, base, M.NormalizeSourcePath("index"+ext))
+		}
+	}
+	return ""
 }

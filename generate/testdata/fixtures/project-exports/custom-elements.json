@@ -1,0 +1,422 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/default-export.js",
+      "declarations": [
+        {
+          "name": "Example",
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "Example",
+            "module": "src/default-export.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/default-object-export-after-import.js",
+      "declarations": [
+        {
+          "name": "config",
+          "description": "Configuration for the module.",
+          "kind": "variable"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "config",
+            "module": "src/default-object-export-after-import.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/default-object-export.js",
+      "declarations": [
+        {
+          "name": "config",
+          "kind": "variable"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "config",
+            "module": "src/default-object-export.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/inline-default-export.js",
+      "declarations": [
+        {
+          "name": "Example",
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "Example",
+            "module": "src/inline-default-export.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/inline-default-function-export.js",
+      "declarations": [
+        {
+          "name": "makeThing",
+          "kind": "function"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "makeThing",
+            "module": "src/inline-default-function-export.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/inline-default-generator-export.js",
+      "declarations": [
+        {
+          "name": "gen",
+          "kind": "function"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "gen",
+            "module": "src/inline-default-generator-export.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/local-export-alias.js",
+      "declarations": [
+        {
+          "name": "localValue",
+          "kind": "variable"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "renamedValue",
+          "declaration": {
+            "name": "localValue",
+            "module": "src/local-export-alias.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/local-export-function.js",
+      "declarations": [
+        {
+          "name": "helper",
+          "kind": "function"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "util",
+          "declaration": {
+            "name": "helper",
+            "module": "src/local-export-function.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/local-function-jsdoc.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "v",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "name": "double",
+          "description": "Doubles the given number.",
+          "kind": "function"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "twice",
+          "declaration": {
+            "name": "double",
+            "module": "src/local-function-jsdoc.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/mixed-type-export.js",
+      "declarations": [
+        {
+          "name": "helpers",
+          "kind": "variable"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "helpers",
+          "declaration": {
+            "name": "helpers",
+            "module": "src/mixed-type-export.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/multi-declarator-export.js",
+      "declarations": [
+        {
+          "name": "beta",
+          "description": "Shared constants for the module.",
+          "kind": "variable"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "beta",
+          "declaration": {
+            "name": "beta",
+            "module": "src/multi-declarator-export.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/multi-specifier-local-export.js",
+      "declarations": [
+        {
+          "name": "alpha",
+          "kind": "variable"
+        },
+        {
+          "name": "beta",
+          "kind": "variable"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "x",
+          "declaration": {
+            "name": "alpha",
+            "module": "src/multi-specifier-local-export.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "beta",
+          "declaration": {
+            "name": "beta",
+            "module": "src/multi-specifier-local-export.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/multi-specifier-reexport.js",
+      "exports": [
+        {
+          "kind": "js",
+          "name": "first",
+          "declaration": {
+            "name": "first",
+            "module": "src/multi-specifier-target.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "dos",
+          "declaration": {
+            "name": "second",
+            "module": "src/multi-specifier-target.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/multi-specifier-target.js",
+      "declarations": [
+        {
+          "name": "first",
+          "kind": "variable"
+        },
+        {
+          "name": "second",
+          "kind": "variable"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "first",
+          "declaration": {
+            "name": "first",
+            "module": "src/multi-specifier-target.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "second",
+          "declaration": {
+            "name": "second",
+            "module": "src/multi-specifier-target.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/named-reexport-extensionless.js",
+      "exports": [
+        {
+          "kind": "js",
+          "name": "shared",
+          "declaration": {
+            "name": "value",
+            "module": "src/star-reexport-target.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/nested/extensionless-parent-reexport.js",
+      "exports": [
+        {
+          "kind": "js",
+          "name": "*",
+          "declaration": {
+            "name": "*",
+            "module": "src/star-reexport-target.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "value",
+          "declaration": {
+            "name": "value",
+            "module": "src/star-reexport-target.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/reexport-imported-binding.js",
+      "exports": [
+        {
+          "kind": "js",
+          "name": "reexported",
+          "declaration": {
+            "name": "value",
+            "module": "src/star-reexport-target.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "value",
+            "module": "src/star-reexport-target.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/star-reexport-target.js",
+      "declarations": [
+        {
+          "name": "value",
+          "kind": "variable"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "value",
+          "declaration": {
+            "name": "value",
+            "module": "src/star-reexport-target.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/star-reexport.js",
+      "exports": [
+        {
+          "kind": "js",
+          "name": "*",
+          "declaration": {
+            "name": "*",
+            "module": "src/star-reexport-target.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "value",
+          "declaration": {
+            "name": "value",
+            "module": "src/star-reexport-target.js"
+          }
+        }
+      ]
+    }
+  ]
+}

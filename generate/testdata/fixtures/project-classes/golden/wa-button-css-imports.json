@@ -43,7 +43,7 @@
         },
         {
           "kind": "js",
-          "name": "WaButtonCss",
+          "name": "default",
           "declaration": {
             "name": "WaButtonCss",
             "module": "src/wa-button-css-imports.js"

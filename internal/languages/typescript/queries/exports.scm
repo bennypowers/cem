@@ -57,27 +57,44 @@
 ) @import.dynamic
 
 ;; Named exports: export { Something } from "./module"
+;; The parent capture sits on each export_specifier so every specifier of a
+;; clause forms its own capture group; aliased and non-aliased specifiers
+;; match separate patterns so they can neither mispair with nor drop one
+;; another (same idiom as imports.scm).
 (export_statement
   (export_clause
     (export_specifier
       name: (identifier) @export.name
-      alias: (identifier)? @export.alias
-    )
-  )
+      !alias) @export.named.from)
   source: (string
     (string_fragment) @export.source
   )
-) @export.named.from
+)
+
+(export_statement
+  (export_clause
+    (export_specifier
+      name: (identifier) @export.name
+      alias: (identifier) @export.alias) @export.named.from)
+  source: (string
+    (string_fragment) @export.source
+  )
+)
 
 ;; Named exports without source: export { Something }
 (export_statement
   (export_clause
     (export_specifier
       name: (identifier) @export.name
-      alias: (identifier)? @export.alias
-    )
-  )
-) @export.named
+      !alias) @export.named)
+)
+
+(export_statement
+  (export_clause
+    (export_specifier
+      name: (identifier) @export.name
+      alias: (identifier) @export.alias) @export.named)
+)
 
 ;; Namespace export: export * from "./module"
 (export_statement
@@ -110,18 +127,35 @@
   )
 ) @export.default.from
 
-;; Default export declaration: export default ClassName
+;; Default export of a value: export default someIdentifier
 (export_statement
   "default"
-  value: [
-    (identifier) @export.default.name
-    (class_declaration
-      name: (type_identifier) @export.default.name
-    )
-    (function_declaration
-      name: (identifier) @export.default.name
-    )
-  ]
+  value: (identifier) @export.default.name
+) @export.default
+
+;; Default export of an inline class: export default class Foo {}
+;; tree-sitter parses the declaration under the `declaration` field
+(export_statement
+  "default"
+  declaration: (class_declaration
+    name: (type_identifier) @export.default.name
+  )
+) @export.default
+
+;; Default export of an inline function: export default function foo() {}
+(export_statement
+  "default"
+  declaration: (function_declaration
+    name: (identifier) @export.default.name
+  )
+) @export.default
+
+;; Default export of an inline generator: export default function* gen() {}
+(export_statement
+  "default"
+  declaration: (generator_function_declaration
+    name: (identifier) @export.default.name
+  )
 ) @export.default
 
 ;; Class declaration export: export class ClassName

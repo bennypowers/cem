@@ -94,3 +94,37 @@
          (string_fragment) @ce.tagName)
        (identifier) @ce.tagNameRef]
       (identifier) @ce.className)) @ce
+
+; non-exported top-level variable declarations
+; e.g. `const config = { enabled: true }; export default config;`
+; filtered in Go to names referenced by local exports (export default X,
+; export { X as Y }); the schema asks for all declarations reachable from
+; exports. Reuses `variable.*` capture names so generateVarDeclaration
+; applies unchanged. JSDoc is attached in Go from the preceding comment,
+; since a comment-prefix pattern would pin the match to the program's first
+; child. The capture sits on each variable_declarator so multi-declarator
+; statements (`const a = 1, b = 2;`) yield one group per declarator and
+; later declarators are not dropped.
+(program
+  (lexical_declaration
+    (variable_declarator
+      name: (identifier) @variable.name
+      type: (_)? @variable.type
+      value: (_ !parameters) @variable.value) @local.variable))
+
+; non-exported top-level function declarations
+; e.g. `function helper() {}; export { helper as util };`
+; filtered in Go to names referenced by local exports. Reuses `function.*`
+; capture names so generateFunctionDeclaration applies unchanged. JSDoc is
+; attached in Go from the preceding comment.
+(program
+  (function_declaration
+    name: (identifier) @function.name
+    parameters: (formal_parameters
+                  (_
+                    pattern: [
+                               (identifier) @function.param.name
+                               (rest_pattern (identifier) @function.param.name) @function.param.rest
+                             ]
+                    type: (type_annotation (_) @function.param.type)) @function.params)?
+    return_type: (type_annotation (_) @function.return.type)?) @local.function)

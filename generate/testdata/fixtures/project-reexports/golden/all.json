@@ -103,6 +103,14 @@
       "path": "src/parent-namespace-export.js",
       "exports": [
         {
+          "kind": "js",
+          "name": "*",
+          "declaration": {
+            "name": "*",
+            "module": "src/child.js"
+          }
+        },
+        {
           "kind": "custom-element-definition",
           "name": "child-element",
           "declaration": {
