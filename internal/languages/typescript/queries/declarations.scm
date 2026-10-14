@@ -128,3 +128,39 @@
                              ]
                     type: (type_annotation (_) @function.param.type)) @function.params)?
     return_type: (type_annotation (_) @function.return.type)?) @local.function)
+
+; non-exported top-level generator function declarations
+; e.g. `function* gen() {}; export { gen as util };`
+; filtered in Go to names referenced by local exports; reuses `function.*`
+; capture names so generateFunctionDeclaration applies unchanged
+(program
+  (generator_function_declaration
+    name: (identifier) @function.name
+    parameters: (formal_parameters
+                  (_
+                    pattern: [
+                               (identifier) @function.param.name
+                               (rest_pattern (identifier) @function.param.name) @function.param.rest
+                             ]
+                    type: (type_annotation (_) @function.param.type)) @function.params)?
+    return_type: (type_annotation (_) @function.return.type)?) @local.function)
+
+; non-exported top-level arrow-function consts
+; e.g. `const square = (x: number) => x * x; export { square };`
+; filtered in Go to names referenced by local exports; reuses `function.*`
+; capture names so generateFunctionDeclaration applies unchanged. The capture
+; sits on the variable_declarator so multi-declarator statements yield one
+; group per declarator.
+(program
+  (lexical_declaration
+    (variable_declarator
+      name: (identifier) @function.name
+      value: (arrow_function
+               parameters: (formal_parameters
+                             (_
+                               pattern: [
+                                          (identifier) @function.param.name
+                                          (rest_pattern (identifier) @function.param.name) @function.param.rest
+                                        ]
+                               type: (type_annotation (_) @function.param.type)) @function.params)?
+               return_type: (type_annotation (_) @function.return.type)?)) @local.function))

@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform"
+	M "bennypowers.dev/cem/manifest"
 )
 
 // Inline: pure boolean classifiers over single statements, table-driven
@@ -164,4 +165,28 @@ func TestResolveExtensionlessSpec(t *testing.T) {
 			t.Errorf("resolveExtensionlessSpec with nil fs = %q, want %q", got, "")
 		}
 	})
+}
+
+// Inline: single-return path resolution over a synthetic MapFS, table-driven
+// cases are clearer than goldens
+func TestResolveImportSpecRelativeGate(t *testing.T) {
+	mfs := platform.NewMapFileSystem(nil)
+	if err := mfs.WriteFile("src/plain.ts", []byte("export {};\n"), 0644); err != nil {
+		t.Fatalf("failed to write src/plain.ts: %v", err)
+	}
+	mp := &ModuleProcessor{
+		fs:     mfs,
+		absPath: "src/importer.ts",
+		module: M.NewModule("src/importer.js"),
+	}
+
+	// bare specifiers name packages, so they must stay on the plain
+	// package-resolution path even when a same-named file sits next to the
+	// importer on disk
+	if got := mp.resolveImportSpec("plain"); got != "src/plain" {
+		t.Errorf("resolveImportSpec(\"plain\") = %q, want %q", got, "src/plain")
+	}
+	if got := mp.resolveImportSpec("./plain"); got != "src/plain.js" {
+		t.Errorf("resolveImportSpec(\"./plain\") = %q, want %q", got, "src/plain.js")
+	}
 }

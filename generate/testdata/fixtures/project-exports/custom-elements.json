@@ -124,6 +124,34 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/local-arrow-const.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "x",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "name": "square",
+          "kind": "function"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "square",
+          "declaration": {
+            "name": "square",
+            "module": "src/local-arrow-const.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/local-export-alias.js",
       "declarations": [
         {
@@ -193,6 +221,26 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/local-generator.js",
+      "declarations": [
+        {
+          "name": "gen",
+          "kind": "function"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "util",
+          "declaration": {
+            "name": "gen",
+            "module": "src/local-generator.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/mixed-type-export.js",
       "declarations": [
         {
@@ -207,6 +255,20 @@
           "declaration": {
             "name": "helpers",
             "module": "src/mixed-type-export.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/mixed-type-reexport.js",
+      "exports": [
+        {
+          "kind": "js",
+          "name": "sharedValue",
+          "declaration": {
+            "name": "value",
+            "module": "src/star-reexport-target.js"
           }
         }
       ]

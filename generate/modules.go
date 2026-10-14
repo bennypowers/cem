@@ -574,6 +574,12 @@ func (mp *ModuleProcessor) processDeclarations() error {
 				continue
 			}
 			if parentNodes, hasParent := captures["export.named.from"]; hasParent && len(parentNodes) > 0 {
+				// skip per-specifier type-only bindings in mixed re-export
+				// clauses, e.g. `export { type FontSize, value } from './x'`
+				// elides FontSize, matching the local-export loop
+				if isTypeOnlySpecifier(Q.GetDescendantById(mp.root, parentNodes[0].NodeId)) {
+					continue
+				}
 				stmtNode := findAncestor(mp.root, parentNodes[0].NodeId, "export_statement")
 				if isTypeOnlyNode(stmtNode) {
 					continue
@@ -877,9 +883,10 @@ func (mp *ModuleProcessor) resolveImportSpec(importSpec string) string {
 	currentDir := path.Dir(mp.module.Path)
 	resolvedPath := path.Join(currentDir, importSpec)
 
-	// Extensionless relative specifiers (e.g. './foo' for foo.ts) resolve
-	// against files on disk, yielding the module's .js import path
-	if filepath.Ext(importSpec) == "" {
+	// Extensionless RELATIVE specifiers (e.g. './foo' for foo.ts) resolve
+	// against files on disk, yielding the module's .js import path; bare
+	// specifiers name packages and stay on the plain resolution path below
+	if (strings.HasPrefix(importSpec, "./") || strings.HasPrefix(importSpec, "../")) && filepath.Ext(importSpec) == "" {
 		if resolved := mp.resolveExtensionlessSpec(importSpec, resolvedPath); resolved != "" {
 			return resolved
 		}
