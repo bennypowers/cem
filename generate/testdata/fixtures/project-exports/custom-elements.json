@@ -203,6 +203,11 @@
               }
             }
           ],
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          },
           "name": "double",
           "description": "Doubles the given number.",
           "kind": "function"
@@ -215,6 +220,39 @@
           "declaration": {
             "name": "double",
             "module": "src/local-function-jsdoc.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/local-function-return-type.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "v",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          },
+          "name": "negate",
+          "kind": "function"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "inverted",
+          "declaration": {
+            "name": "negate",
+            "module": "src/local-function-return-type.js"
           }
         }
       ]

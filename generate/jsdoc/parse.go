@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	jsdoclang "bennypowers.dev/cem/internal/languages/jsdoc"
-	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
+	M "bennypowers.dev/cem/manifest"
 )
 
 type parameterInfo struct {
@@ -471,9 +471,12 @@ func (info tagInfo) toSlot() M.Slot {
 	}
 }
 
+// returnTagRe parses @return/@returns tags. Whitespace after the {T} type
+// is consumed so the description does not begin with a stray space.
+var returnTagRe = regexp.MustCompile(`(?ms)[\s*]*@return(s)?\s*(\{(?P<type>[^}]+)\}[\s*]*)?(([\\s*]+-[\s*])*(?P<description>.*))?`)
+
 func (info tagInfo) toReturn() returnInfo {
-	re := regexp.MustCompile(`(?ms)[\s*]*@return(s)?\s*(\{(?P<type>[^}]+)\})?(([\\s*]+-[\s*])*(?P<description>.*))?`)
-	matches := findNamedMatches(re, info.source, true)
+	matches := findNamedMatches(returnTagRe, info.source, true)
 	ret := returnInfo{
 		Description: normalizeJsdocLines(matches["description"]),
 	}

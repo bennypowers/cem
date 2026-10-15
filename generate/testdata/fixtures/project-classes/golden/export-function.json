@@ -81,6 +81,11 @@
               }
             }
           ],
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          },
           "name": "param",
           "kind": "function",
           "source": {
@@ -98,6 +103,9 @@
             }
           ],
           "return": {
+            "type": {
+              "text": "string"
+            },
             "description": "return description"
           },
           "name": "describedparam",
@@ -117,6 +125,11 @@
               "rest": true
             }
           ],
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          },
           "name": "rest",
           "kind": "function",
           "source": {
@@ -135,6 +148,9 @@
             }
           ],
           "return": {
+            "type": {
+              "text": "string"
+            },
             "description": "return description"
           },
           "name": "describedrest",

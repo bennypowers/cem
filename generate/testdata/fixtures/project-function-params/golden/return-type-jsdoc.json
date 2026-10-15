@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/return-type-jsdoc.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "description": "The input value.",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "number"
+            },
+            "description": "The same value."
+          },
+          "name": "identity",
+          "description": "Identity function.",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-function-params/src/return-type-jsdoc.ts#L6"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "identity",
+          "declaration": {
+            "name": "identity",
+            "module": "src/return-type-jsdoc.js"
+          }
+        }
+      ]
+    }
+  ]
+}

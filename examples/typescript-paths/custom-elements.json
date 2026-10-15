@@ -166,6 +166,11 @@
               }
             }
           ],
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          },
           "name": "capitalize",
           "description": "Utility functions for formatting text.\nDemonstrates TypeScript path mapping with @utils/* alias.",
           "kind": "function",
@@ -184,6 +189,9 @@
             }
           ],
           "return": {
+            "type": {
+              "text": "string"
+            },
             "description": "The kebab-cased string"
           },
           "name": "kebabCase",
@@ -211,6 +219,9 @@
             }
           ],
           "return": {
+            "type": {
+              "text": "string"
+            },
             "description": "The truncated string with ellipsis if needed"
           },
           "name": "truncate",
