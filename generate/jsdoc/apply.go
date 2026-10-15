@@ -182,6 +182,11 @@ func applyToFunctionLike(info *methodInfo, declaration *M.FunctionLike) {
 					declaration.Parameters[i].Optional = true
 				}
 				if iparam.Type != "" {
+					// parameters without a source type annotation have a nil
+					// Type; the JSDoc tag fills it in
+					if declaration.Parameters[i].Type == nil {
+						declaration.Parameters[i].Type = &M.Type{}
+					}
 					declaration.Parameters[i].Type.Text = iparam.Type
 				}
 				if iparam.Default != "" {
