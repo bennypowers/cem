@@ -285,7 +285,8 @@
                   "name": "options",
                   "type": {
                     "text": "FocusOptions"
-                  }
+                  },
+                  "optional": true
                 }
               ],
               "name": "focus",

@@ -18,6 +18,10 @@ class ClassMethods extends LitElement {
 
   spread(...spreads: number[]): string {}
 
+  untyped(untyped): string {}
+
+  defaulted(defaulted: number = 1): string {}
+
   /**
    * description
    * @param name name param
@@ -44,6 +48,8 @@ class ClassMethods extends LitElement {
     typedOptionalDefault: never,
     obj: never,
   ) {}
+
+  arrowParams = (value?: number): number => value ?? 0;
 
   fieldMethod = () => {}
 }

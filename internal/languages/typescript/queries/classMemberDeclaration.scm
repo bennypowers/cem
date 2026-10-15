@@ -175,13 +175,9 @@
     ["get" "set"]? @accessor
     (#not-any-of? @accessor "get" "set")
     name: (property_identifier) @member.name
-    parameters: (formal_parameters
-                  (_
-                     pattern: [
-                               (identifier) @param.name
-                               (rest_pattern (identifier) @param.name) @param.rest
-                               ]
-                     type: (type_annotation (_) @param.type)) @params)?
+    ; one match per parameter node; name/type/default/optional/rest are
+    ; read from the node's fields Go-side (parameterFromNode)
+    parameters: (formal_parameters (_) @params)?
     return_type: (type_annotation (_) @method.returns)?
     (#not-eq? @member.name "constructor")) @method @member)
 
@@ -196,11 +192,6 @@
     "static"? @member.static
     name: (property_identifier) @member.name
     value: (arrow_function
-      parameters: (formal_parameters
-                    (_
-                       pattern: [
-                                 (identifier) @param.name
-                                 (rest_pattern (identifier) @param.name) @param.rest
-                                 ]
-                       type: (type_annotation (_) @param.type)) @params)?
+      ; one match per parameter node; read fields Go-side (parameterFromNode)
+      parameters: (formal_parameters (_) @params)?
       return_type: (type_annotation (_) @method.returns)?)) @method @member)
