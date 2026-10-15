@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/return-type-annotation.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          },
+          "name": "identity",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-function-params/src/return-type-annotation.ts#L1"
+          }
+        },
+        {
+          "parameters": [
+            {
+              "name": "x",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          },
+          "name": "double",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-function-params/src/return-type-annotation.ts#L5"
+          }
+        },
+        {
+          "parameters": [
+            {
+              "name": "start",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "Generator\u003cnumber\u003e"
+            }
+          },
+          "name": "range",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-function-params/src/return-type-annotation.ts#L7"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "identity",
+          "declaration": {
+            "name": "identity",
+            "module": "src/return-type-annotation.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "double",
+          "declaration": {
+            "name": "double",
+            "module": "src/return-type-annotation.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "range",
+          "declaration": {
+            "name": "range",
+            "module": "src/return-type-annotation.js"
+          }
+        }
+      ]
+    }
+  ]
+}

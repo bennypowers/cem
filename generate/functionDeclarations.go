@@ -22,8 +22,8 @@ import (
 	"slices"
 
 	"bennypowers.dev/cem/generate/jsdoc"
-	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
+	M "bennypowers.dev/cem/manifest"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -73,6 +73,18 @@ func (mp *ModuleProcessor) generateFunctionDeclaration(
 				continue
 			}
 			declaration.Parameters = append(declaration.Parameters, parameter)
+		}
+	}
+
+	// Return type from the explicit `: T` annotation, set before JSDoc
+	// enrichment so @returns descriptions merge onto it and an @returns
+	// type annotation overrides it (mirrors method handling and parameter
+	// JSDoc-type behavior).
+	if returns, ok := captures["function.return.type"]; ok && len(returns) > 0 {
+		declaration.Return = &M.Return{
+			Type: &M.Type{
+				Text: returns[0].Text,
+			},
 		}
 	}
 
