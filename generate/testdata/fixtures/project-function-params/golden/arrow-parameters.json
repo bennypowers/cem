@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/arrow-parameters.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "number"
+              },
+              "optional": true
+            },
+            {
+              "name": "factor",
+              "default": "2",
+              "optional": true
+            }
+          ],
+          "name": "apply",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-function-params/src/arrow-parameters.ts#L1"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "apply",
+          "declaration": {
+            "name": "apply",
+            "module": "src/arrow-parameters.js"
+          }
+        }
+      ]
+    }
+  ]
+}

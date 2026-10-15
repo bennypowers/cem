@@ -99,6 +99,7 @@
               "parameters": [
                 {
                   "name": "message",
+                  "description": "- The validation message",
                   "type": {
                     "text": "string"
                   }
@@ -273,7 +274,8 @@
                   "name": "options",
                   "type": {
                     "text": "FocusOptions"
-                  }
+                  },
+                  "optional": true
                 }
               ],
               "name": "focus",
@@ -1496,7 +1498,8 @@
                   "name": "options",
                   "type": {
                     "text": "FocusOptions"
-                  }
+                  },
+                  "optional": true
                 }
               ],
               "name": "focus",
@@ -2140,6 +2143,14 @@
               "type": {
                 "text": "string"
               }
+            },
+            {
+              "name": "uppercase",
+              "description": "- Whether to uppercase the result",
+              "type": {
+                "text": "boolean"
+              },
+              "optional": true
             }
           ],
           "return": {

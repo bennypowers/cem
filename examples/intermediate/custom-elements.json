@@ -262,6 +262,14 @@
       "exports": [
         {
           "kind": "custom-element-definition",
+          "name": "ui-spinner",
+          "declaration": {
+            "name": "UiSpinner",
+            "module": "elements/ui-spinner/ui-spinner.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
           "name": "ui-button",
           "declaration": {
             "name": "UiButton",

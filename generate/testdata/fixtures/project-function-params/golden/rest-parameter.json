@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/rest-parameter.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "args",
+              "type": {
+                "text": "string[]"
+              },
+              "rest": true
+            }
+          ],
+          "name": "rest",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-function-params/src/rest-parameter.ts#L1"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "rest",
+          "declaration": {
+            "name": "rest",
+            "module": "src/rest-parameter.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -88,7 +88,8 @@
                   "name": "optional1",
                   "type": {
                     "text": "number"
-                  }
+                  },
+                  "optional": true
                 }
               ],
               "return": {
@@ -120,43 +121,89 @@
             {
               "parameters": [
                 {
+                  "name": "untyped"
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "name": "untyped",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "defaulted",
+                  "type": {
+                    "text": "number"
+                  },
+                  "default": "1",
+                  "optional": true
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "name": "defaulted",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
                   "name": "name",
+                  "description": "name param",
                   "type": {
                     "text": "never"
                   }
                 },
                 {
                   "name": "optional",
+                  "description": "optional param",
                   "type": {
                     "text": "never"
-                  }
+                  },
+                  "optional": true
                 },
                 {
                   "name": "default",
+                  "description": "default param",
                   "type": {
                     "text": "never"
-                  }
+                  },
+                  "default": "'default'",
+                  "optional": true
                 },
                 {
                   "name": "typed",
+                  "description": "typed param",
                   "type": {
-                    "text": "never"
+                    "text": "Type"
                   }
                 },
                 {
                   "name": "typedOptional",
+                  "description": "typed optional param",
                   "type": {
-                    "text": "never"
-                  }
+                    "text": "Type"
+                  },
+                  "optional": true
                 },
                 {
                   "name": "typedOptionalDefault",
+                  "description": "typed optional param with default",
                   "type": {
-                    "text": "never"
-                  }
+                    "text": "Type"
+                  },
+                  "default": "'default'",
+                  "optional": true
                 },
                 {
                   "name": "obj",
+                  "description": "object param",
                   "type": {
                     "text": "never"
                   }
@@ -167,6 +214,24 @@
               },
               "name": "jsdoc",
               "description": "description",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": {
+                    "text": "number"
+                  },
+                  "optional": true
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "number"
+                }
+              },
+              "name": "arrowParams",
               "kind": "method"
             },
             {

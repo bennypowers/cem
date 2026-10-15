@@ -404,6 +404,26 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			method.Static = isStatic
 			method.StartByte = captures["method"][0].StartByte
 
+			// Parameters, populated before JSDoc enrichment so @param tags
+			// merge onto them (mirrors generateFunctionDeclaration). One
+			// `params` capture per parameter node; sorted into source order.
+			if params, hasParams := captures["params"]; hasParams && len(params) > 0 {
+				slices.SortStableFunc(params, func(a, b Q.CaptureInfo) int {
+					return int(a.StartByte) - int(b.StartByte)
+				})
+				for _, paramCapture := range params {
+					node := Q.GetDescendantById(mp.root, paramCapture.NodeId)
+					if node == nil {
+						continue
+					}
+					parameter, ok := parameterFromNode(node, mp.code)
+					if !ok {
+						continue
+					}
+					method.Parameters = append(method.Parameters, parameter)
+				}
+			}
+
 			err := mp.amendMethodWithJsdoc(captures, &method)
 			if err != nil {
 				errs = errors.Join(errs, err)
@@ -412,32 +432,6 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			// Privacy
 			if nodes, ok := captures["member.privacy"]; ok && len(nodes) > 0 {
 				method.Privacy = M.Privacy(nodes[0].Text)
-			}
-
-			// Parameters
-			if params, hasParams := captures["params"]; hasParams && len(params) > 0 {
-				for i := range params {
-					var isRest bool
-					if _, ok := captures["param.rest"]; ok {
-						isRest = true
-					}
-					if _, hasName := captures["param.name"]; hasName {
-						parameter := M.Parameter{
-							Rest: isRest,
-							PropertyLike: M.PropertyLike{
-								FullyQualified: M.FullyQualified{
-									Name: captures["param.name"][i].Text,
-								},
-							},
-						}
-						if _, hasType := captures["param.type"]; hasType {
-							parameter.Type = &M.Type{
-								Text: captures["param.type"][i].Text,
-							}
-						}
-						method.Parameters = append(method.Parameters, parameter)
-					}
-				}
 			}
 
 			// Return type

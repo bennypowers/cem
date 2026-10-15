@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-untyped-parameter.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "name",
+              "description": "- The name to greet.",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "name": "greet",
+          "description": "Greets a person.",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-function-params/src/jsdoc-untyped-parameter.ts#L5"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "greet",
+          "declaration": {
+            "name": "greet",
+            "module": "src/jsdoc-untyped-parameter.js"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -19,10 +19,12 @@ package generate
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"bennypowers.dev/cem/generate/jsdoc"
 	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 func (mp *ModuleProcessor) generateFunctionDeclaration(
@@ -54,24 +56,21 @@ func (mp *ModuleProcessor) generateFunctionDeclaration(
 		declaration.Source = sourceRef
 	}
 
-	params, ok := captures["function.params"]
-	if ok && len(params) > 0 {
-		_, hasName := captures["function.param.name"]
-		if hasName {
-			rest, isRest := captures["function.param.rest"]
-			parameter := M.Parameter{
-				Rest: isRest && len(rest) > 0,
-				PropertyLike: M.PropertyLike{
-					FullyQualified: M.FullyQualified{
-						Name: captures["function.param.name"][0].Text,
-					},
-				},
+	// One `function.params` capture per parameter node; each query match
+	// binds a single parameter, so ParentCaptures aggregates them in match
+	// order. Sort by source position to restore declaration order.
+	if params, ok := captures["function.params"]; ok && len(params) > 0 {
+		slices.SortStableFunc(params, func(a, b Q.CaptureInfo) int {
+			return int(a.StartByte) - int(b.StartByte)
+		})
+		for _, paramCapture := range params {
+			node := Q.GetDescendantById(mp.root, paramCapture.NodeId)
+			if node == nil {
+				continue
 			}
-			_, hasType := captures["function.param.type"]
-			if hasType {
-				parameter.Type = &M.Type{
-					Text: captures["function.param.type"][0].Text,
-				}
+			parameter, ok := parameterFromNode(node, mp.code)
+			if !ok {
+				continue
 			}
 			declaration.Parameters = append(declaration.Parameters, parameter)
 		}
@@ -86,4 +85,59 @@ func (mp *ModuleProcessor) generateFunctionDeclaration(
 	}
 
 	return declaration, nil
+}
+
+// parameterFromNode builds a manifest Parameter from a required_parameter or
+// optional_parameter tree-sitter node. The `?` marker maps to Optional, and
+// the `=` initializer's source text to Default; a defaulted parameter is also
+// optional, since callers may omit it. Parameter shapes we do not model
+// (destructuring patterns, `this` parameters) report false and are omitted.
+func parameterFromNode(node *ts.Node, code []byte) (M.Parameter, bool) {
+	var parameter M.Parameter
+	if node == nil {
+		return parameter, false
+	}
+	switch node.GrammarName() {
+	case "required_parameter", "optional_parameter":
+	default:
+		return parameter, false
+	}
+	parameter.Optional = node.GrammarName() == "optional_parameter"
+
+	pattern := node.ChildByFieldName("pattern")
+	if pattern == nil {
+		return parameter, false
+	}
+	switch pattern.GrammarName() {
+	case "identifier":
+		parameter.Name = pattern.Utf8Text(code)
+	case "rest_pattern":
+		parameter.Rest = true
+		// the identifier inside a rest_pattern carries no field name
+		for i := range pattern.ChildCount() {
+			if child := pattern.Child(i); child.GrammarName() == "identifier" {
+				parameter.Name = child.Utf8Text(code)
+				break
+			}
+		}
+		// e.g. `...[a, b]`: destructuring rest has no name to expose
+		if parameter.Name == "" {
+			return parameter, false
+		}
+	default:
+		return parameter, false
+	}
+
+	if typeAnnotation := node.ChildByFieldName("type"); typeAnnotation != nil {
+		if typeExpr := typeAnnotation.NamedChild(0); typeExpr != nil {
+			parameter.Type = &M.Type{
+				Text: typeExpr.Utf8Text(code),
+			}
+		}
+	}
+	if value := node.ChildByFieldName("value"); value != nil {
+		parameter.Default = value.Utf8Text(code)
+		parameter.Optional = true
+	}
+	return parameter, true
 }
