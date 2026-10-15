@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/export-var-jsdoc.js",
+      "declarations": [
+        {
+          "name": "tagged",
+          "description": "Typed constant with JSDoc overrides.",
+          "type": {
+            "text": "boolean"
+          },
+          "default": "true",
+          "kind": "variable",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-var-jsdoc.ts#L6"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "tagged",
+          "declaration": {
+            "name": "tagged",
+            "module": "src/export-var-jsdoc.js"
+          }
+        }
+      ]
+    }
+  ]
+}

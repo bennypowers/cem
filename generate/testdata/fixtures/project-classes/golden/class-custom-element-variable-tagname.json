@@ -7,6 +7,7 @@
       "declarations": [
         {
           "name": "tagName",
+          "default": "'variable-element'",
           "kind": "variable",
           "source": {
             "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-custom-element-variable-tagname.ts#L3"

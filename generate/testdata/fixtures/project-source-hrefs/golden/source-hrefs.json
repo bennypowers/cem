@@ -8,6 +8,7 @@
         {
           "name": "testVariable",
           "description": "Test variable for source href generation",
+          "default": "'test'",
           "kind": "variable",
           "source": {
             "href": "https://github.com/example/repo/tree/main/src/source-hrefs.ts#L28"

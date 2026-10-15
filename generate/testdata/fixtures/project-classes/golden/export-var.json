@@ -8,8 +8,9 @@
         {
           "name": "$const",
           "type": {
-            "text": ": string"
+            "text": "string"
           },
+          "default": "'const'",
           "kind": "variable",
           "source": {
             "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-var.ts#L1"
@@ -17,6 +18,7 @@
         },
         {
           "name": "$let",
+          "default": "'let'",
           "kind": "variable",
           "source": {
             "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-var.ts#L2"
@@ -24,6 +26,7 @@
         },
         {
           "name": "$var",
+          "default": "'var'",
           "kind": "variable",
           "source": {
             "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-var.ts#L3"

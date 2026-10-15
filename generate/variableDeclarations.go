@@ -21,8 +21,8 @@ import (
 	"fmt"
 
 	"bennypowers.dev/cem/generate/jsdoc"
-	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
+	M "bennypowers.dev/cem/manifest"
 )
 
 func (mp *ModuleProcessor) generateVarDeclaration(
@@ -53,11 +53,19 @@ func (mp *ModuleProcessor) generateVarDeclaration(
 		declaration.Source = sourceRef
 	}
 
+	// Type text and default from the source annotation and initializer, set
+	// before JSDoc enrichment so @type and @default tags override them
+	// (mirrors function return-type and parameter behavior).
 	typeNodes, ok := captures["variable.type"]
 	if ok && len(typeNodes) > 0 {
 		declaration.Type = &M.Type{
 			Text: typeNodes[0].Text,
 		}
+	}
+
+	valueNodes, ok := captures["variable.value"]
+	if ok && len(valueNodes) > 0 {
+		declaration.Default = valueNodes[0].Text
 	}
 
 	jsdocNodes, ok := captures["variable.jsdoc"]
