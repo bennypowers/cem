@@ -18,7 +18,7 @@
             "type": {
               "text": "string"
             },
-            "description": " The value as text."
+            "description": "The value as text."
           },
           "name": "stringify",
           "description": "Stringify a number.",
