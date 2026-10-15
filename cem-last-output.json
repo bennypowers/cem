@@ -460,6 +460,7 @@
               "parameters": [
                 {
                   "name": "theme",
+                  "description": "- The theme name ('light' or 'dark')",
                   "type": {
                     "text": "string"
                   }
@@ -473,6 +474,7 @@
               "parameters": [
                 {
                   "name": "newConfig",
+                  "description": "- The new configuration to merge",
                   "type": {
                     "text": "any"
                   }
