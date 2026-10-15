@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/export-var-multiline-default.js",
+      "declarations": [
+        {
+          "name": "config",
+          "default": "{\\n  enabled: true,\\n}",
+          "kind": "variable",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-var-multiline-default.ts#L1"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "config",
+          "declaration": {
+            "name": "config",
+            "module": "src/export-var-multiline-default.js"
+          }
+        }
+      ]
+    }
+  ]
+}

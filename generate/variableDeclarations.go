@@ -19,6 +19,7 @@ package generate
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"bennypowers.dev/cem/generate/jsdoc"
 	Q "bennypowers.dev/cem/internal/treesitter"
@@ -65,7 +66,9 @@ func (mp *ModuleProcessor) generateVarDeclaration(
 
 	valueNodes, ok := captures["variable.value"]
 	if ok && len(valueNodes) > 0 {
-		declaration.Default = valueNodes[0].Text
+		// Class fields normalize newlines in initializer text to literal
+		// `\n`; variables match so multiline defaults render on one line.
+		declaration.Default = strings.ReplaceAll(valueNodes[0].Text, "\n", "\\n")
 	}
 
 	jsdocNodes, ok := captures["variable.jsdoc"]
