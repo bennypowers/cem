@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/return-type-jsdoc-override.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "string"
+            },
+            "description": " The value as text."
+          },
+          "name": "stringify",
+          "description": "Stringify a number.",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-function-params/src/return-type-jsdoc-override.ts#L5"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "stringify",
+          "declaration": {
+            "name": "stringify",
+            "module": "src/return-type-jsdoc-override.js"
+          }
+        }
+      ]
+    }
+  ]
+}
