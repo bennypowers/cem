@@ -33,7 +33,40 @@
       ; one match per parameter node; name/type/default/optional/rest are
       ; read from the node's fields Go-side
       parameters: (formal_parameters (_) @function.params)?
-      return_type: (type_annotation (_) @function.return.type)?))) @function
+      return_type: (type_annotation (_) @function.return.type)?
+      ; the grammar requires a body on function_declaration and
+      ; generator_function_declaration, so this capture marks the
+      ; implementation signature of a function overload
+      body: (statement_block) @function.body))) @function
+
+; function overload signatures
+; case:
+; export function overloaded(value: string): string;
+; tree-sitter parses body-less signatures as `function_signature` nodes,
+; distinct from body-carrying `function_declaration`; the trailing
+; implementation signature is dropped Go-side when signatures share its
+; name. The @function capture sits on the export_statement itself rather
+; than outside the grouping paren: a capture on the wrapped sibling
+; sequence binds to the sequence's first node, which for a JSDoc-prefixed
+; match is the comment, splitting captures across two parent groups.
+((comment) * @function.jsdoc (#match? @function.jsdoc "^/\\*\\*") .
+ (export_statement
+   declaration: (function_signature
+     name: (identifier) @function.name
+     parameters: (formal_parameters (_) @function.params)?
+     return_type: (type_annotation (_) @function.return.type)?)) @function)
+
+; the same match without the comment prefix: a non-JSDoc comment directly
+; above an overload signature stops the prefixed pattern above (the comment
+; cannot satisfy the jsdoc predicate), so this variant guarantees the
+; signature is captured. Both patterns capture the export_statement as the
+; parent node, so ParentCaptures merges their captures per statement,
+; keeping the JSDoc when one precedes it.
+(export_statement
+  declaration: (function_signature
+    name: (identifier) @function.name
+    parameters: (formal_parameters (_) @function.params)?
+    return_type: (type_annotation (_) @function.return.type)?)) @function
 
 ; export declaration
 (export_statement
@@ -108,9 +141,24 @@
 ; e.g. `function helper() {}; export { helper as util };`
 ; filtered in Go to names referenced by local exports. Reuses `function.*`
 ; capture names so generateFunctionDeclaration applies unchanged. JSDoc is
-; attached in Go from the preceding comment.
+; attached in Go from the preceding comment. The body capture feeds the
+; same overload filtering as the exported patterns above.
 (program
   (function_declaration
+    name: (identifier) @function.name
+    parameters: (formal_parameters (_) @function.params)?
+    return_type: (type_annotation (_) @function.return.type)?
+    body: (statement_block) @function.body) @local.function)
+
+; non-exported top-level function overload signatures
+; e.g. `function format(value: string): string; ...; export { format };`
+; Tree-sitter parses body-less signatures as `function_signature` nodes,
+; distinct from body-carrying `function_declaration`. Filtered in Go to
+; names referenced by local exports, like the pattern above; the trailing
+; implementation signature is dropped Go-side when signatures share its
+; name.
+(program
+  (function_signature
     name: (identifier) @function.name
     parameters: (formal_parameters (_) @function.params)?
     return_type: (type_annotation (_) @function.return.type)?) @local.function)

@@ -456,13 +456,18 @@ func (mp *ModuleProcessor) processDeclarations() error {
 		}
 	}
 
-	// function declarations
+	// function declarations; functionHasBody distinguishes body-carrying
+	// implementations from body-less overload signatures for the filtering
+	// below
+	functionHasBody := make(map[*M.FunctionDeclaration]bool)
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "function") {
 		declaration, err := mp.generateFunctionDeclaration(captures)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
 		} else {
 			mp.module.Declarations = append(mp.module.Declarations, declaration)
+			bodyNodes, hasBody := captures["function.body"]
+			functionHasBody[declaration] = hasBody && len(bodyNodes) > 0
 		}
 	}
 
@@ -747,8 +752,14 @@ func (mp *ModuleProcessor) processDeclarations() error {
 			mp.errors = errors.Join(mp.errors, err)
 		} else {
 			mp.module.Declarations = append(mp.module.Declarations, declaration)
+			bodyNodes, hasBody := captures["function.body"]
+			functionHasBody[declaration] = hasBody && len(bodyNodes) > 0
 		}
 	}
+
+	// a function overload's implementation signature is not callable by
+	// TypeScript consumers; only its overload signatures are
+	mp.module.Declarations = dropOverloadImplementationSignatures(mp.module.Declarations, functionHasBody)
 
 	// if the declaration for this export exists in the same module,
 	// append its reference to the export object.
@@ -805,6 +816,93 @@ func (mp *ModuleProcessor) attachLocalJSDoc(captures Q.CaptureMap, nodeCapture, 
 	}
 	if text := jsdoc.ExtractFromNode(node, mp.code); text != "" {
 		captures[jsdocCapture] = []Q.CaptureInfo{{Text: text}}
+	}
+}
+
+// dropOverloadImplementationSignatures removes the implementation signature
+// of TypeScript function overloads from a module's declarations. When a
+// module declares same-name functions where exactly one declaration carries
+// a body and the rest are body-less overload signatures, only the overload
+// signatures are callable by consumers, so the implementation signature is
+// dropped to keep the manifest honest about the module's public API. The
+// body-carrying member is identified position-independently: valid
+// TypeScript puts it last in source, but the exported and local query loops
+// append declarations in separate passes, so slice order is not source
+// order across them. Same-name functions that do not follow the overload
+// shape, and lone body-less declarations (a stray overload signature with
+// no implementation), are kept; ambient `declare function` declarations are
+// excluded earlier, at query-capture time. hasBody reports which function
+// declarations carry a body.
+func dropOverloadImplementationSignatures(
+	declarations []M.Declaration,
+	hasBody map[*M.FunctionDeclaration]bool,
+) []M.Declaration {
+	// indices into declarations, grouped by function name; each group holds
+	// slice order, which is source order within one query loop
+	groups := make(map[string][]int)
+	for i, decl := range declarations {
+		if fn, ok := decl.(*M.FunctionDeclaration); ok {
+			groups[fn.Name()] = append(groups[fn.Name()], i)
+		}
+	}
+	drop := make([]bool, len(declarations))
+	for _, indices := range groups {
+		if len(indices) < 2 {
+			continue
+		}
+		// exactly one body-carrying member among otherwise body-less
+		// same-name declarations marks the overload implementation
+		impl := -1
+		for _, i := range indices {
+			if !hasBody[declarations[i].(*M.FunctionDeclaration)] {
+				continue
+			}
+			if impl >= 0 {
+				impl = -1
+				break
+			}
+			impl = i
+		}
+		if impl < 0 {
+			continue
+		}
+		drop[impl] = true
+		mergeOverloadImplementationDocs(declarations, indices, impl)
+	}
+	if !slices.Contains(drop, true) {
+		return declarations
+	}
+	kept := make([]M.Declaration, 0, len(declarations)-1)
+	for i, decl := range declarations {
+		if !drop[i] {
+			kept = append(kept, decl)
+		}
+	}
+	return kept
+}
+
+// mergeOverloadImplementationDocs copies JSDoc-derived metadata from a
+// dropped overload implementation signature onto the first kept same-name
+// overload signature. Authors commonly document an overload set only on its
+// implementation; dropping the implementation would otherwise discard that
+// documentation from the manifest.
+func mergeOverloadImplementationDocs(declarations []M.Declaration, indices []int, impl int) {
+	implFn := declarations[impl].(*M.FunctionDeclaration)
+	for _, i := range indices {
+		if i == impl {
+			continue
+		}
+		kept := declarations[i].(*M.FunctionDeclaration)
+		if kept.Description == "" {
+			kept.Description = implFn.Description
+		}
+		if kept.Summary == "" {
+			kept.Summary = implFn.Summary
+		}
+		if kept.Deprecated == nil && implFn.Deprecated != nil {
+			kept.Deprecated = implFn.Deprecated
+		}
+		break
 	}
 }
 
