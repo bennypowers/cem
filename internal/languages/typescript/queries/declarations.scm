@@ -39,19 +39,34 @@
       ; implementation signature of a function overload
       body: (statement_block) @function.body))) @function
 
-( ; function overload signatures
-  ; case:
-  ; export function overloaded(value: string): string;
-  ; tree-sitter parses body-less signatures as `function_signature` nodes,
-  ; distinct from body-carrying `function_declaration`; the trailing
-  ; implementation signature is dropped Go-side when signatures share its
-  ; name
-  (comment) * @function.jsdoc (#match? @function.jsdoc "^/\\*\\*") .
-  (export_statement
-    declaration: (function_signature
-      name: (identifier) @function.name
-      parameters: (formal_parameters (_) @function.params)?
-      return_type: (type_annotation (_) @function.return.type)?))) @function
+; function overload signatures
+; case:
+; export function overloaded(value: string): string;
+; tree-sitter parses body-less signatures as `function_signature` nodes,
+; distinct from body-carrying `function_declaration`; the trailing
+; implementation signature is dropped Go-side when signatures share its
+; name. The @function capture sits on the export_statement itself rather
+; than outside the grouping paren: a capture on the wrapped sibling
+; sequence binds to the sequence's first node, which for a JSDoc-prefixed
+; match is the comment, splitting captures across two parent groups.
+((comment) * @function.jsdoc (#match? @function.jsdoc "^/\\*\\*") .
+ (export_statement
+   declaration: (function_signature
+     name: (identifier) @function.name
+     parameters: (formal_parameters (_) @function.params)?
+     return_type: (type_annotation (_) @function.return.type)?)) @function)
+
+; the same match without the comment prefix: a non-JSDoc comment directly
+; above an overload signature stops the prefixed pattern above (the comment
+; cannot satisfy the jsdoc predicate), so this variant guarantees the
+; signature is captured. Both patterns capture the export_statement as the
+; parent node, so ParentCaptures merges their captures per statement,
+; keeping the JSDoc when one precedes it.
+(export_statement
+  declaration: (function_signature
+    name: (identifier) @function.name
+    parameters: (formal_parameters (_) @function.params)?
+    return_type: (type_annotation (_) @function.return.type)?)) @function
 
 ; export declaration
 (export_statement

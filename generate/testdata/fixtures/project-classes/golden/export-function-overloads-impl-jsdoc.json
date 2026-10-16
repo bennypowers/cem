@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/export-function-overloads-impl-jsdoc.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          },
+          "description": "Formats a value.",
+          "summary": "Format values",
+          "name": "fmt",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-overloads-impl-jsdoc.ts#L1"
+          }
+        },
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          },
+          "name": "fmt",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-overloads-impl-jsdoc.ts#L2"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "fmt",
+          "declaration": {
+            "name": "fmt",
+            "module": "src/export-function-overloads-impl-jsdoc.js"
+          }
+        }
+      ]
+    }
+  ]
+}
