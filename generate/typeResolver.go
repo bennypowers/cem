@@ -253,6 +253,13 @@ func resolveType(typ *M.Type, module *M.Module, pkg *M.Package, typeAliases modu
 	if typ == nil || typ.Text == "" {
 		return
 	}
+	// Types carrying a Type.source anchor (generic type parameter
+	// references, set by annotateTypeParameterSources) keep their source
+	// text: rewriting it to an alias expansion would leave the anchor
+	// pointing at an identifier the text no longer contains.
+	if typ.Source != nil {
+		return
+	}
 
 	ctx := newResolutionContext()
 	resolved, refs := resolveTypeText(typ.Text, module, pkg, typeAliases, imports, externalResolver, ctx)

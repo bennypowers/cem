@@ -92,6 +92,35 @@
           "source": {
             "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics.ts#L12"
           }
+        },
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "description": "- The value to echo.",
+              "type": {
+                "text": "Value",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics.ts#L20C22"
+                }
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "Value",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics.ts#L20C22"
+              }
+            },
+            "description": "The same value."
+          },
+          "name": "echo",
+          "description": "JSDoc-typed generic.",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics.ts#L20"
+          }
         }
       ],
       "exports": [
@@ -116,6 +145,14 @@
           "name": "pickFirst",
           "declaration": {
             "name": "pickFirst",
+            "module": "src/export-function-generics.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "echo",
+          "declaration": {
+            "name": "echo",
             "module": "src/export-function-generics.js"
           }
         }

@@ -177,6 +177,16 @@ func CreateElementHoverContentFromDeclaration(decl *M.CustomElementDeclaration) 
 	return content.String()
 }
 
+// typeSourceLink renders a markdown link to a type's source declaration
+// when present (cem points types that reference generic type parameters at
+// the parameter's declaration), else an empty string.
+func typeSourceLink(typ *M.Type) string {
+	if typ == nil || typ.Source == nil {
+		return ""
+	}
+	return fmt.Sprintf(" ([declaration](%s))", typ.Source.Href)
+}
+
 // formatAttributes creates markdown content for an attributes list
 func formatAttributes(attrs []M.Attribute) string {
 	if len(attrs) == 0 {
@@ -188,7 +198,7 @@ func formatAttributes(attrs []M.Attribute) string {
 	for _, attr := range attrs {
 		fmt.Fprintf(&content, "- **`%s`**", attr.Name)
 		if attr.Type != nil && attr.Type.Text != "" {
-			fmt.Fprintf(&content, " _%s_", attr.Type.Text)
+			fmt.Fprintf(&content, " _%s_%s", attr.Type.Text, typeSourceLink(attr.Type))
 		}
 		if attr.InheritedFrom != nil {
 			fmt.Fprintf(&content, " _(inherited from %s)_", attr.InheritedFrom.Name)
@@ -213,7 +223,7 @@ func formatEvents(events []M.Event) string {
 	for _, event := range events {
 		fmt.Fprintf(&content, "- **`%s`**", event.Name)
 		if event.Type != nil && event.Type.Text != "" {
-			fmt.Fprintf(&content, " _%s_", event.Type.Text)
+			fmt.Fprintf(&content, " _%s_%s", event.Type.Text, typeSourceLink(event.Type))
 		}
 		if event.InheritedFrom != nil {
 			fmt.Fprintf(&content, " _(inherited from %s)_", event.InheritedFrom.Name)
@@ -264,7 +274,7 @@ func CreateAttributeHoverContent(attr *M.Attribute, tagName string) string {
 
 	// Type
 	if attr.Type != nil && attr.Type.Text != "" {
-		fmt.Fprintf(&content, "**Type:** `%s`\n\n", attr.Type.Text)
+		fmt.Fprintf(&content, "**Type:** `%s`%s\n\n", attr.Type.Text, typeSourceLink(attr.Type))
 	}
 
 	// Description
@@ -302,7 +312,7 @@ func CreateFieldHoverContent(field *M.ClassField, tagName string) string {
 	}
 
 	if field.Type != nil && field.Type.Text != "" {
-		fmt.Fprintf(&content, "**Type:** `%s`\n\n", field.Type.Text)
+		fmt.Fprintf(&content, "**Type:** `%s`%s\n\n", field.Type.Text, typeSourceLink(field.Type))
 	}
 
 	if field.Description != "" {
@@ -340,7 +350,7 @@ func CreateEventHoverContent(event *M.Event, tagName string) string {
 
 	// Type (event detail type)
 	if event.Type != nil && event.Type.Text != "" {
-		fmt.Fprintf(&content, "**Type:** `%s`\n\n", event.Type.Text)
+		fmt.Fprintf(&content, "**Type:** `%s`%s\n\n", event.Type.Text, typeSourceLink(event.Type))
 	}
 
 	// Description

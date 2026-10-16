@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/local-function-generics.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "Value",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/local-function-generics.ts#L1C17"
+                }
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "Value",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/local-function-generics.ts#L1C17"
+              }
+            }
+          },
+          "name": "format",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/local-function-generics.ts#L1"
+          }
+        },
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "T",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/local-function-generics.ts#L5C17"
+                }
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "T",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/local-function-generics.ts#L5C17"
+              }
+            }
+          },
+          "name": "helper",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/local-function-generics.ts#L5"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "format",
+          "declaration": {
+            "name": "format",
+            "module": "src/local-function-generics.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "helper",
+          "declaration": {
+            "name": "helper",
+            "module": "src/local-function-generics.js"
+          }
+        }
+      ]
+    }
+  ]
+}

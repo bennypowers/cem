@@ -196,7 +196,7 @@ When a module declares TypeScript function overloads, only the overload signatur
 
 The CEM schema cannot represent generic type parameter lists, so `typeParameters` fields are not emitted. Type text is published exactly as written in source, and consumers that need type semantics should run `tsc` against the linked source.
 
-When a parameter, return, or field type references a generic type parameter of its declaration, cem attaches a `source` reference to that type pointing at the parameter's declaration, anchored by line and column (for example `#L2C28`), following GitHub's fragment convention. Given:
+When a parameter, return, or field type references a generic type parameter of its declaration, cem attaches a `source` reference to that type pointing at the parameter's declaration, anchored by line and column (for example `#L1C26`), following GitHub's fragment convention. Given:
 
 ```typescript
 export function identity<Value extends string = string>(value: Value): Value {
@@ -215,7 +215,7 @@ the `value` parameter's type is emitted as:
 }
 ```
 
-The anchor is the line and column of `Value` in `<Value extends string = string>`. Matching a type text to its declaring parameter is best-effort and lexical: the first declared parameter whose name appears as a whole word in the type text wins, and method parameters shadow class parameters of the same name. A method's types consider both the method's own and its class's type parameters; field types consider the class's. Source references require `sourceControlRootUrl` to be configured.
+The anchor is the line and column of `Value` in `<Value extends string = string>`. Declaration-level `source` references stay line-only (`#L2`); type-level references add a column (`#L1C26`). Line and column are 1-based, and the column counts Unicode characters. Custom element attributes share their field's type reference. Anchors address the identifier as written when the manifest was generated; if the source file changes, regenerate the manifest. Matching a type text to its declaring parameter is best-effort and lexical: the first parameter in scope whose name appears as a whole word in the type text wins, and a method's own type parameters are considered before its class's, so a method parameter shadows a class parameter even when the names differ. A method's types consider both the method's own and its class's type parameters; field types consider the class's. Source references require `sourceControlRootUrl` to be configured.
 
 ## See Also
 

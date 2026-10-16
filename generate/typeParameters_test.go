@@ -108,6 +108,10 @@ func TestBindingForTypeText(t *testing.T) {
 		{"suffix is not a word", "MyValue", ""},
 		{"unrelated type", "number", ""},
 		{"empty text", "", ""},
+		{"string-literal content is ignored", "\"Value\"", ""},
+		{"quoted record keys are ignored", "Record<'Key', Value>", "Value"},
+		{"template-literal content is ignored", "`prefix-${Value}`", ""},
+		{"name outside quotes still matches", "Value | \"Value\"", "Value"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -152,6 +156,28 @@ func TestContainsWord(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := containsWord(tt.text, tt.word); got != tt.want {
 				t.Errorf("containsWord(%q, %q) = %v, want %v", tt.text, tt.word, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStripQuotedSegments(t *testing.T) {
+	tests := []struct {
+		name string
+		text string
+		want string
+	}{
+		{"no quotes", "Record<Key, Value>", "Record<Key, Value>"},
+		{"double-quoted string", "\"Value\"", ""},
+		{"single-quoted key", "Record<'Key', Value>", "Record<, Value>"},
+		{"backtick template", "`prefix-${Value}`", ""},
+		{"unterminated quote keeps prefix", "Value | \"unterminated", "Value | "},
+		{"mixed quotes", "'a' | \"b\" | `c`", " |  | "},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := stripQuotedSegments(tt.text); got != tt.want {
+				t.Errorf("stripQuotedSegments(%q) = %q, want %q", tt.text, got, tt.want)
 			}
 		})
 	}

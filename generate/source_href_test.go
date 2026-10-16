@@ -127,6 +127,10 @@ func TestBuildSourceHref(t *testing.T) {
 	}
 }
 
+// Inline: pure string/byte math over single offsets; table-driven cases are
+// clearer than goldens (same rationale as TestParameterFromNode). Emission
+// into manifests is covered by the generics golden fixtures.
+
 func TestBuildSourceHrefAt(t *testing.T) {
 	tests := []struct {
 		name                 string
@@ -263,6 +267,10 @@ func TestByteOffsetToLineNumber(t *testing.T) {
 	}
 }
 
+// Inline: pure byte-offset arithmetic; table-driven cases are clearer than
+// goldens (same rationale as TestParameterFromNode). Emission into manifests
+// is covered by the generics golden fixtures.
+
 func TestByteOffsetToLineColumn(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -312,6 +320,13 @@ func TestByteOffsetToLineColumn(t *testing.T) {
 			offset:      0,
 			expectedLn:  1,
 			expectedCol: 1,
+		},
+		{
+			name:        "CRLF lines count carriage returns in the column",
+			code:        []byte("function foo() {\r\n  return 'bar';\r\n}"),
+			offset:      20, // start of "return" after CRLF and two spaces
+			expectedLn:  2,
+			expectedCol: 3,
 		},
 	}
 	for _, tt := range tests {

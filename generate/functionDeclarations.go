@@ -59,12 +59,7 @@ func (mp *ModuleProcessor) generateFunctionDeclaration(
 	// Generic type parameter names from `<Value extends string = string>`;
 	// parameter and return types that reference them get a Type.source
 	// pointer to the parameter's declaration
-	var bindings []typeParameterBinding
-	if typeParams, ok := captures["function.typeParameters"]; ok && len(typeParams) > 0 {
-		if node := Q.GetDescendantById(mp.root, typeParams[0].NodeId); node != nil {
-			bindings = typeParameterBindings(node, mp.code)
-		}
-	}
+	bindings := mp.typeParameterBindingsFromCapture(captures, "function.typeParameters")
 
 	// One `function.params` capture per parameter node; each query match
 	// binds a single parameter, so ParentCaptures aggregates them in match

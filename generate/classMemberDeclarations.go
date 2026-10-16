@@ -332,6 +332,14 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 	seenAccessors := make(map[string]memberKey) // for merging get/set
 
 	for captures := range matcher.ParentCaptures(mp.root, mp.code, "member") {
+		// Members of classes nested inside method bodies fall inside the
+		// byte range but belong to the nested class; without this check
+		// they would be attributed to the outer class, receiving its
+		// type-parameter bindings.
+		if memberNodes := captures["member"]; len(memberNodes) == 0 ||
+			!mp.memberBelongsToClass(memberNodes[0].NodeId, classDeclarationNode) {
+			continue
+		}
 		memberName := captures["member.name"][0].Text
 		isStatic := len(captures["member.static"]) > 0
 		kind := getMemberKindFromCaptures(captures)
@@ -413,13 +421,8 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 
 			// Generic type parameter names from `<Value extends string>`;
 			// the method's own parameters shadow the class's
-			var methodBindings []typeParameterBinding
-			if typeParams, ok := captures["method.typeParameters"]; ok && len(typeParams) > 0 {
-				if node := Q.GetDescendantById(mp.root, typeParams[0].NodeId); node != nil {
-					methodBindings = typeParameterBindings(node, mp.code)
-				}
-			}
-			bindings := append(append([]typeParameterBinding{}, methodBindings...), classBindings...)
+			methodBindings := mp.typeParameterBindingsFromCapture(captures, "method.typeParameters")
+			bindings := slices.Concat(methodBindings, classBindings)
 
 			// Parameters, populated before JSDoc enrichment so @param tags
 			// merge onto them (mirrors generateFunctionDeclaration). One
@@ -484,6 +487,23 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 	})
 
 	return members, errs
+}
+
+// memberBelongsToClass reports whether the captured member sits directly in
+// the class body of classDeclarationNode, i.e. whether the nearest class_body
+// ancestor belongs to that declaration.
+func (mp *ModuleProcessor) memberBelongsToClass(memberNodeId int, classDeclarationNode *ts.Node) bool {
+	memberNode := Q.GetDescendantById(mp.root, memberNodeId)
+	if memberNode == nil {
+		return false
+	}
+	for parent := memberNode.Parent(); parent != nil; parent = parent.Parent() {
+		if parent.GrammarName() == "class_body" {
+			declaringClass := parent.Parent()
+			return declaringClass != nil && declaringClass.Id() == classDeclarationNode.Id()
+		}
+	}
+	return false
 }
 
 func isStaticToTypeFlag(b bool) string {

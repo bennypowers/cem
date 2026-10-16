@@ -10,3 +10,13 @@ export function readStore<Key extends string = string, Value = unknown>(key: Key
 }
 
 export const pickFirst = <Item,>(first: Item, second: Item): Item => first;
+
+/**
+ * JSDoc-typed generic.
+ *
+ * @param {Value} value - The value to echo.
+ * @returns {Value} The same value.
+ */
+export function echo<Value>(value) {
+  return value;
+}

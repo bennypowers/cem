@@ -21,6 +21,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	Q "bennypowers.dev/cem/internal/treesitter"
 	M "bennypowers.dev/cem/manifest"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
@@ -62,17 +63,56 @@ func typeParameterBindings(node *ts.Node, code []byte) []typeParameterBinding {
 	return bindings
 }
 
+// typeParameterBindingsFromCapture resolves a declaration's type_parameters
+// capture (e.g. "function.typeParameters", "class.typeParameters",
+// "method.typeParameters") to its bindings, encapsulating the capture lookup,
+// node resolution, and nil guard shared by every declaration kind.
+func (mp *ModuleProcessor) typeParameterBindingsFromCapture(captures Q.CaptureMap, capture string) []typeParameterBinding {
+	captured, ok := captures[capture]
+	if !ok || len(captured) == 0 {
+		return nil
+	}
+	node := Q.GetDescendantById(mp.root, captured[0].NodeId)
+	if node == nil {
+		return nil
+	}
+	return typeParameterBindings(node, mp.code)
+}
+
 // bindingForTypeText returns the first binding in declaration order whose
-// parameter name appears in the type text as a whole word, or nil. The match
-// is best-effort and lexical: cem does not typecheck, so a same-named import
-// or local type can also match.
+// parameter name appears in the type text as a whole word, or nil. Quoted
+// segments (string-literal and template-literal types) are ignored so their
+// content cannot satisfy the match. The match is best-effort and lexical: cem
+// does not typecheck, so a same-named import or local type can also match.
 func bindingForTypeText(bindings []typeParameterBinding, typeText string) *typeParameterBinding {
+	unquoted := stripQuotedSegments(typeText)
 	for i := range bindings {
-		if containsWord(typeText, bindings[i].name) {
+		if containsWord(unquoted, bindings[i].name) {
 			return &bindings[i]
 		}
 	}
 	return nil
+}
+
+// stripQuotedSegments removes single-, double-, and backtick-quoted spans
+// from a type text, so literal content in string-literal types (for example
+// `"Value"` or `Record<'Key', number>`) is not lexically matched.
+func stripQuotedSegments(text string) string {
+	var b strings.Builder
+	for i := 0; i < len(text); {
+		c := text[i]
+		if c == '\'' || c == '"' || c == '`' {
+			next := strings.IndexByte(text[i+1:], c)
+			if next < 0 {
+				return b.String() // unterminated quote: keep what we have
+			}
+			i += next + 2
+			continue
+		}
+		b.WriteByte(c)
+		i++
+	}
+	return b.String()
 }
 
 // annotateTypeParameterSources points each type's Source at the declaration

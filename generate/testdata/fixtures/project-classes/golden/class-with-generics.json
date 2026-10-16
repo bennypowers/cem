@@ -20,6 +20,27 @@
               "kind": "field"
             },
             {
+              "name": "initial",
+              "type": {
+                "text": "Item",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L1C25"
+                }
+              },
+              "kind": "field"
+            },
+            {
+              "name": "first",
+              "type": {
+                "text": "Item | undefined",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L1C25"
+                }
+              },
+              "readonly": true,
+              "kind": "field"
+            },
+            {
               "parameters": [
                 {
                   "name": "item",
@@ -46,7 +67,7 @@
                   "type": {
                     "text": "(item: Item) =\u003e Result",
                     "source": {
-                      "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L9C7"
+                      "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L17C7"
                     }
                   }
                 }
@@ -55,16 +76,39 @@
                 "type": {
                   "text": "Result[]",
                   "source": {
-                    "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L9C7"
+                    "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L17C7"
                   }
                 }
               },
               "name": "map",
               "kind": "method"
+            },
+            {
+              "name": "createScoped",
+              "kind": "method"
             }
           ],
           "source": {
             "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L1"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "Scoped",
+          "members": [
+            {
+              "name": "item",
+              "type": {
+                "text": "Item | undefined",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L22C18"
+                }
+              },
+              "kind": "field"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L22"
           },
           "kind": "class"
         }

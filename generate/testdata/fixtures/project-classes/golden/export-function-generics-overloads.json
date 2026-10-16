@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/export-function-generics-overloads.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "key",
+              "type": {
+                "text": "T",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics-overloads.ts#L1C22"
+                }
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "T",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics-overloads.ts#L1C22"
+              }
+            }
+          },
+          "name": "pick",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics-overloads.ts#L1"
+          }
+        },
+        {
+          "parameters": [
+            {
+              "name": "key",
+              "type": {
+                "text": "T",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics-overloads.ts#L2C22"
+                }
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "T",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics-overloads.ts#L2C22"
+              }
+            }
+          },
+          "name": "pick",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics-overloads.ts#L2"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "pick",
+          "declaration": {
+            "name": "pick",
+            "module": "src/export-function-generics-overloads.js"
+          }
+        }
+      ]
+    }
+  ]
+}
