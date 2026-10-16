@@ -229,6 +229,56 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/local-function-overloads.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          },
+          "name": "format",
+          "kind": "function"
+        },
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          },
+          "name": "format",
+          "kind": "function"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "format",
+          "declaration": {
+            "name": "format",
+            "module": "src/local-function-overloads.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/local-function-return-type.js",
       "declarations": [
         {

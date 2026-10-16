@@ -456,13 +456,18 @@ func (mp *ModuleProcessor) processDeclarations() error {
 		}
 	}
 
-	// function declarations
+	// function declarations; functionHasBody distinguishes body-carrying
+	// implementations from body-less overload signatures for the filtering
+	// below
+	functionHasBody := make(map[*M.FunctionDeclaration]bool)
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "function") {
 		declaration, err := mp.generateFunctionDeclaration(captures)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
 		} else {
 			mp.module.Declarations = append(mp.module.Declarations, declaration)
+			bodyNodes, hasBody := captures["function.body"]
+			functionHasBody[declaration] = hasBody && len(bodyNodes) > 0
 		}
 	}
 
@@ -747,8 +752,14 @@ func (mp *ModuleProcessor) processDeclarations() error {
 			mp.errors = errors.Join(mp.errors, err)
 		} else {
 			mp.module.Declarations = append(mp.module.Declarations, declaration)
+			bodyNodes, hasBody := captures["function.body"]
+			functionHasBody[declaration] = hasBody && len(bodyNodes) > 0
 		}
 	}
+
+	// a function overload's implementation signature is not callable by
+	// TypeScript consumers; only its overload signatures are
+	mp.module.Declarations = dropOverloadImplementationSignatures(mp.module.Declarations, functionHasBody)
 
 	// if the declaration for this export exists in the same module,
 	// append its reference to the export object.
@@ -806,6 +817,66 @@ func (mp *ModuleProcessor) attachLocalJSDoc(captures Q.CaptureMap, nodeCapture, 
 	if text := jsdoc.ExtractFromNode(node, mp.code); text != "" {
 		captures[jsdocCapture] = []Q.CaptureInfo{{Text: text}}
 	}
+}
+
+// dropOverloadImplementationSignatures removes the implementation signature
+// of TypeScript function overloads from a module's declarations. When a
+// module declares same-name functions whose preceding declarations are
+// body-less overload signatures and whose last declaration carries the body,
+// only the overload signatures are callable by consumers, so the
+// implementation signature is dropped to keep the manifest honest about the
+// module's public API. Same-name functions that do not follow the overload
+// shape, and lone body-less declarations (e.g. a `declare function`), are
+// kept. hasBody reports which function declarations carry a body.
+func dropOverloadImplementationSignatures(
+	declarations []M.Declaration,
+	hasBody map[*M.FunctionDeclaration]bool,
+) []M.Declaration {
+	// indices into declarations, grouped by function name. Same-name
+	// functions always come from a single query loop, and ParentCaptures
+	// yields groups in source order, so slice order is source order. The
+	// start-byte sort below keeps that true even if declarations gain
+	// populated start bytes later.
+	groups := make(map[string][]int)
+	for i, decl := range declarations {
+		if fn, ok := decl.(*M.FunctionDeclaration); ok {
+			groups[fn.Name()] = append(groups[fn.Name()], i)
+		}
+	}
+	drop := make([]bool, len(declarations))
+	for _, indices := range groups {
+		if len(indices) < 2 {
+			continue
+		}
+		slices.SortStableFunc(indices, func(a, b int) int {
+			return int(declarations[a].GetStartByte() - declarations[b].GetStartByte())
+		})
+		last := indices[len(indices)-1]
+		lastFn, ok := declarations[last].(*M.FunctionDeclaration)
+		if !ok || !hasBody[lastFn] {
+			continue
+		}
+		overloadShape := true
+		for _, i := range indices[:len(indices)-1] {
+			if hasBody[declarations[i].(*M.FunctionDeclaration)] {
+				overloadShape = false
+				break
+			}
+		}
+		if overloadShape {
+			drop[last] = true
+		}
+	}
+	if !slices.Contains(drop, true) {
+		return declarations
+	}
+	kept := make([]M.Declaration, 0, len(declarations)-1)
+	for i, decl := range declarations {
+		if !drop[i] {
+			kept = append(kept, decl)
+		}
+	}
+	return kept
 }
 
 // NewEphemeralModuleProcessor creates a ModuleProcessor from in-memory source bytes

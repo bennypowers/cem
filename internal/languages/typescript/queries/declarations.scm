@@ -33,6 +33,24 @@
       ; one match per parameter node; name/type/default/optional/rest are
       ; read from the node's fields Go-side
       parameters: (formal_parameters (_) @function.params)?
+      return_type: (type_annotation (_) @function.return.type)?
+      ; the grammar requires a body on function_declaration and
+      ; generator_function_declaration, so this capture marks the
+      ; implementation signature of a function overload
+      body: (statement_block) @function.body))) @function
+
+( ; function overload signatures
+  ; case:
+  ; export function overloaded(value: string): string;
+  ; tree-sitter parses body-less signatures as `function_signature` nodes,
+  ; distinct from body-carrying `function_declaration`; the trailing
+  ; implementation signature is dropped Go-side when signatures share its
+  ; name
+  (comment) * @function.jsdoc (#match? @function.jsdoc "^/\\*\\*") .
+  (export_statement
+    declaration: (function_signature
+      name: (identifier) @function.name
+      parameters: (formal_parameters (_) @function.params)?
       return_type: (type_annotation (_) @function.return.type)?))) @function
 
 ; export declaration
@@ -108,9 +126,24 @@
 ; e.g. `function helper() {}; export { helper as util };`
 ; filtered in Go to names referenced by local exports. Reuses `function.*`
 ; capture names so generateFunctionDeclaration applies unchanged. JSDoc is
-; attached in Go from the preceding comment.
+; attached in Go from the preceding comment. The body capture feeds the
+; same overload filtering as the exported patterns above.
 (program
   (function_declaration
+    name: (identifier) @function.name
+    parameters: (formal_parameters (_) @function.params)?
+    return_type: (type_annotation (_) @function.return.type)?
+    body: (statement_block) @function.body) @local.function)
+
+; non-exported top-level function overload signatures
+; e.g. `function format(value: string): string; ...; export { format };`
+; Tree-sitter parses body-less signatures as `function_signature` nodes,
+; distinct from body-carrying `function_declaration`. Filtered in Go to
+; names referenced by local exports, like the pattern above; the trailing
+; implementation signature is dropped Go-side when signatures share its
+; name.
+(program
+  (function_signature
     name: (identifier) @function.name
     parameters: (formal_parameters (_) @function.params)?
     return_type: (type_annotation (_) @function.return.type)?) @local.function)

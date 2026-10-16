@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/export-function-overloads.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          },
+          "name": "overloaded",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-overloads.ts#L1"
+          }
+        },
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          },
+          "name": "overloaded",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-overloads.ts#L2"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "overloaded",
+          "declaration": {
+            "name": "overloaded",
+            "module": "src/export-function-overloads.js"
+          }
+        }
+      ]
+    }
+  ]
+}
