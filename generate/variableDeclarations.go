@@ -26,6 +26,11 @@ import (
 	M "bennypowers.dev/cem/manifest"
 )
 
+// defaultNewlineReplacer escapes newlines in initializer text to literal
+// `\n` so multiline defaults render on one line. CRLF is normalized first
+// so Windows line endings do not leave stray carriage returns.
+var defaultNewlineReplacer = strings.NewReplacer("\r\n", "\\n", "\n", "\\n")
+
 func (mp *ModuleProcessor) generateVarDeclaration(
 	captures Q.CaptureMap,
 ) (declaration *M.VariableDeclaration, errs error) {
@@ -68,7 +73,7 @@ func (mp *ModuleProcessor) generateVarDeclaration(
 	if ok && len(valueNodes) > 0 {
 		// Class fields normalize newlines in initializer text to literal
 		// `\n`; variables match so multiline defaults render on one line.
-		declaration.Default = strings.ReplaceAll(valueNodes[0].Text, "\n", "\\n")
+		declaration.Default = defaultNewlineReplacer.Replace(valueNodes[0].Text)
 	}
 
 	jsdocNodes, ok := captures["variable.jsdoc"]
