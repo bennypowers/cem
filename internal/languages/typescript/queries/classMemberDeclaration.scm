@@ -175,6 +175,8 @@
     ["get" "set"]? @accessor
     (#not-any-of? @accessor "get" "set")
     name: (property_identifier) @member.name
+    ; generic type parameter declarations, e.g. <Value>
+    type_parameters: ((type_parameters) @method.typeParameters)?
     ; one match per parameter node; name/type/default/optional/rest are
     ; read from the node's fields Go-side (parameterFromNode)
     parameters: (formal_parameters (_) @params)?
@@ -192,6 +194,7 @@
     "static"? @member.static
     name: (property_identifier) @member.name
     value: (arrow_function
+      type_parameters: ((type_parameters) @method.typeParameters)?
       ; one match per parameter node; read fields Go-side (parameterFromNode)
       parameters: (formal_parameters (_) @params)?
       return_type: (type_annotation (_) @method.returns)?)) @method @member)

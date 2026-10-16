@@ -10,7 +10,7 @@
 
 | Event | When it fires | Details |
 | ----- | ------------- | ------- |
-{{range .Element.Events}}| `{{.Name}}` | {{if .Summary}}{{.Summary}}{{else if .Description}}{{.Description}}{{else}}When something happens{{end}} | {{if .Type}}{{.Type.Text}}{{else}}Event data{{end}} |
+{{range .Element.Events}}| `{{.Name}}` | {{if .Summary}}{{.Summary}}{{else if .Description}}{{.Description}}{{else}}When something happens{{end}} | {{if .Type}}`{{.Type.Text}}`{{if .Type.Source}} ([declaration]({{.Type.Source.Href}})){{end}}{{else}}Event data{{end}} |
 {{end}}
 
 ## The Full Story 📖
@@ -24,7 +24,7 @@
 {{.Description}}{{end}}
 
 **Triggers:** User interactions and state changes
-**Event data:** {{if .Type}}`{{.Type.Text}}`{{else}}Standard event object{{end}}
+**Event data:** {{if .Type}}`{{.Type.Text}}`{{if .Type.Source}} ([declaration]({{.Type.Source.Href}})){{end}}{{else}}Standard event object{{end}}
 
 {{end}}
 

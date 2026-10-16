@@ -9,6 +9,8 @@
     declaration: (class_declaration
       name: (_) @class.name
       (#not-eq? @class.name "LitElement")
+      ; generic type parameter declarations, e.g. <Data>
+      type_parameters: ((type_parameters) @class.typeParameters)?
       (class_heritage
         (extends_clause
           value: (_) @superclass.expression))?
@@ -43,6 +45,7 @@
   (class_declaration
     name: (_) @class.name
     (#not-eq? @class.name "LitElement")
+    type_parameters: ((type_parameters) @class.typeParameters)?
     (class_heritage
       (extends_clause
         value: (_) @superclass.expression))?
@@ -92,6 +95,7 @@
     (decorator) *
     declaration: (class_declaration
       name: (type_identifier) @class.name
+      type_parameters: ((type_parameters) @class.typeParameters)?
       (class_heritage
         (extends_clause
           value: (_) @superclass.expression))?
@@ -176,6 +180,7 @@
                      (#eq? @class.decorator.name "customElement"))))
     (decorator) *
     name: (type_identifier) @class.name
+    type_parameters: ((type_parameters) @class.typeParameters)?
     (class_heritage
       (extends_clause
         value: (_) @superclass.expression))?

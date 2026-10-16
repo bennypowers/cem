@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/custom-element-generics.js",
+      "declarations": [
+        {
+          "name": "DataView",
+          "description": "A custom element whose data shape is generic.",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "data",
+              "type": {
+                "text": "Data",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/custom-element-generics.ts#L8C23"
+                }
+              },
+              "kind": "field"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/custom-element-generics.ts#L8"
+          },
+          "kind": "class",
+          "tagName": "data-view",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "data-view",
+          "declaration": {
+            "name": "DataView",
+            "module": "src/custom-element-generics.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DataView",
+          "declaration": {
+            "name": "DataView",
+            "module": "src/custom-element-generics.js"
+          }
+        }
+      ]
+    }
+  ]
+}

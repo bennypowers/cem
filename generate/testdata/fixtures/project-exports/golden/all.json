@@ -195,6 +195,64 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/local-function-generics.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "Value"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "Value"
+            }
+          },
+          "name": "format",
+          "kind": "function"
+        },
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "T"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "T"
+            }
+          },
+          "name": "genericHelper",
+          "kind": "function"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "format",
+          "declaration": {
+            "name": "format",
+            "module": "src/local-function-generics.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "genericHelper",
+          "declaration": {
+            "name": "genericHelper",
+            "module": "src/local-function-generics.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/local-function-jsdoc.js",
       "declarations": [
         {

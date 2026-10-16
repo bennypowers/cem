@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-with-generics.js",
+      "declarations": [
+        {
+          "name": "Repository",
+          "members": [
+            {
+              "name": "items",
+              "type": {
+                "text": "Item[]",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L1C25"
+                }
+              },
+              "default": "[]",
+              "kind": "field"
+            },
+            {
+              "name": "initial",
+              "type": {
+                "text": "Item",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L1C25"
+                }
+              },
+              "kind": "field"
+            },
+            {
+              "name": "first",
+              "type": {
+                "text": "Item | undefined",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L1C25"
+                }
+              },
+              "readonly": true,
+              "kind": "field"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "item",
+                  "type": {
+                    "text": "Item",
+                    "source": {
+                      "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L1C25"
+                    }
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "number"
+                }
+              },
+              "name": "add",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "project",
+                  "type": {
+                    "text": "(item: Item) =\u003e Result",
+                    "source": {
+                      "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L17C7"
+                    }
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "Result[]",
+                  "source": {
+                    "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L17C7"
+                  }
+                }
+              },
+              "name": "map",
+              "kind": "method"
+            },
+            {
+              "name": "createScoped",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L1"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "Scoped",
+          "members": [
+            {
+              "name": "item",
+              "type": {
+                "text": "Item | undefined",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L22C18"
+                }
+              },
+              "kind": "field"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-with-generics.ts#L22"
+          },
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "Repository",
+          "declaration": {
+            "name": "Repository",
+            "module": "src/class-with-generics.js"
+          }
+        }
+      ]
+    }
+  ]
+}

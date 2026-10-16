@@ -28,4 +28,6 @@ Provides:
 - Usage examples and guidelines
 - Accessibility considerations
 
+Types that reference a generic type parameter carry a `source` reference pointing at the parameter's declaration. Its href is anchored `#L{line}C{column}` (1-based, following GitHub's fragment convention) so the identifier can be located in source. The `cem://element/{tagName}/attributes/{attributeName}` sub-resource returns raw JSON including `type.source`; the upstream CEM schema served at `cem://schema` does not define cem's anchor policy.
+
 Use to implement element attributes correctly.

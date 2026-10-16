@@ -18,6 +18,8 @@
       (variable_declarator
         name: (identifier) @function.name
         value: (arrow_function
+                 ; generic type parameter declarations, e.g. <Value>
+                 type_parameters: ((type_parameters) @function.typeParameters)?
                  ; one match per parameter node; name/type/default/optional/rest
                  ; are read from the node's fields Go-side
                  parameters: (formal_parameters (_) @function.params)?
@@ -30,6 +32,8 @@
   (export_statement
     declaration: (_
       name: (identifier) @function.name
+      ; generic type parameter declarations, e.g. <Value extends string>
+      type_parameters: ((type_parameters) @function.typeParameters)?
       ; one match per parameter node; name/type/default/optional/rest are
       ; read from the node's fields Go-side
       parameters: (formal_parameters (_) @function.params)?
@@ -53,6 +57,7 @@
  (export_statement
    declaration: (function_signature
      name: (identifier) @function.name
+     type_parameters: ((type_parameters) @function.typeParameters)?
      parameters: (formal_parameters (_) @function.params)?
      return_type: (type_annotation (_) @function.return.type)?)) @function)
 
@@ -65,6 +70,7 @@
 (export_statement
   declaration: (function_signature
     name: (identifier) @function.name
+    type_parameters: ((type_parameters) @function.typeParameters)?
     parameters: (formal_parameters (_) @function.params)?
     return_type: (type_annotation (_) @function.return.type)?)) @function
 
@@ -146,6 +152,7 @@
 (program
   (function_declaration
     name: (identifier) @function.name
+    type_parameters: ((type_parameters) @function.typeParameters)?
     parameters: (formal_parameters (_) @function.params)?
     return_type: (type_annotation (_) @function.return.type)?
     body: (statement_block) @function.body) @local.function)
@@ -160,6 +167,7 @@
 (program
   (function_signature
     name: (identifier) @function.name
+    type_parameters: ((type_parameters) @function.typeParameters)?
     parameters: (formal_parameters (_) @function.params)?
     return_type: (type_annotation (_) @function.return.type)?) @local.function)
 
@@ -170,6 +178,7 @@
 (program
   (generator_function_declaration
     name: (identifier) @function.name
+    type_parameters: ((type_parameters) @function.typeParameters)?
     parameters: (formal_parameters (_) @function.params)?
     return_type: (type_annotation (_) @function.return.type)?) @local.function)
 
@@ -184,5 +193,6 @@
     (variable_declarator
       name: (identifier) @function.name
       value: (arrow_function
+               type_parameters: ((type_parameters) @function.typeParameters)?
                parameters: (formal_parameters (_) @function.params)?
                return_type: (type_annotation (_) @function.return.type)?)) @local.function))

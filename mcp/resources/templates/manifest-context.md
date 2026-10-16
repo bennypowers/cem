@@ -29,7 +29,7 @@ Custom elements are JavaScript classes that extend HTML with new functionality. 
 {{- if gt (len .Attributes) 0}}
 **Attributes:**
 {{- range .Attributes}}
-- `{{.Name}}`{{if .Type}} ({{.Type}}){{end}}{{if .Description}} - {{.Description}}{{end}}
+- `{{.Name}}`{{if .Type}} (`{{.Type.Text}}`{{if .Type.Source}} ([declaration]({{.Type.Source.Href}})){{end}}){{end}}{{if .Description}} - {{.Description}}{{end}}
 {{- end}}
 {{- end}}
 

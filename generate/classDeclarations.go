@@ -139,6 +139,11 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 		},
 	}
 
+	// Generic type parameter names from `<Data>`; member types that
+	// reference them get a Type.source pointer to the parameter's
+	// declaration
+	classBindings := mp.typeParameterBindingsFromCapture(captures, "class.typeParameters")
+
 	// Add source reference if available
 	sourceRef, sourceErr := mp.generateSourceReference(classDeclarationNode)
 	if sourceErr != nil {
@@ -206,6 +211,7 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 			declaration.Name(),
 			classDeclarationNode,
 			superclassName,
+			classBindings,
 		)
 		if err != nil {
 			return err

@@ -41,6 +41,7 @@ func TestValidateGolden(t *testing.T) {
 		name    string
 	}{
 		{"valid-manifest", "valid_manifest"},
+		{"valid-generics", "valid_generics"},
 		{"invalid-class", "invalid_class"},
 		{"invalid-mixin", "invalid_mixin"},
 		{"invalid-variable", "invalid_variable"},

@@ -176,6 +176,7 @@ func (mp *ModuleProcessor) createClassFieldFromAccessorMatch(
 	isReadonly bool,
 	classType string,
 	captures Q.CaptureMap,
+	classBindings []typeParameterBinding,
 ) (field M.CustomElementField, err error) {
 	field.Kind = "field"
 	field.Static = isStatic
@@ -193,6 +194,7 @@ func (mp *ModuleProcessor) createClassFieldFromAccessorMatch(
 
 	field.StartByte = captures["accessor"][0].StartByte
 	err = mp.amendFieldWithJsdoc(captures, &field.ClassField)
+	mp.annotateTypeParameterSources(classBindings, field.Type)
 	return field, err
 }
 
@@ -200,6 +202,7 @@ func (mp *ModuleProcessor) createClassFieldFromConstructorParameterMatch(
 	fieldName string,
 	superclass string,
 	captures Q.CaptureMap,
+	classBindings []typeParameterBinding,
 ) (field M.CustomElementField, err error) {
 	// Constructor parameters are never static
 	isStatic := false
@@ -229,6 +232,7 @@ func (mp *ModuleProcessor) createClassFieldFromConstructorParameterMatch(
 	}
 
 	err = mp.amendFieldWithJsdoc(captures, &field.ClassField)
+	mp.annotateTypeParameterSources(classBindings, field.Type)
 	return field, err
 }
 
@@ -237,6 +241,7 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 	isStatic bool,
 	superclass string,
 	captures Q.CaptureMap,
+	classBindings []typeParameterBinding,
 ) (field M.CustomElementField, err error) {
 	_, readonly := captures["field.readonly"]
 
@@ -281,6 +286,7 @@ func (mp *ModuleProcessor) createClassFieldFromFieldMatch(
 	}
 
 	_ = mp.amendFieldWithJsdoc(captures, &field.ClassField)
+	mp.annotateTypeParameterSources(classBindings, field.Type)
 	return field, nil
 }
 
@@ -304,6 +310,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 	className string,
 	classDeclarationNode *ts.Node,
 	superclass string,
+	classBindings []typeParameterBinding,
 ) (
 	members []M.ClassMember,
 	errs error,
@@ -325,6 +332,14 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 	seenAccessors := make(map[string]memberKey) // for merging get/set
 
 	for captures := range matcher.ParentCaptures(mp.root, mp.code, "member") {
+		// Members of classes nested inside method bodies fall inside the
+		// byte range but belong to the nested class; without this check
+		// they would be attributed to the outer class, receiving its
+		// type-parameter bindings.
+		if memberNodes := captures["member"]; len(memberNodes) == 0 ||
+			!mp.memberBelongsToClass(memberNodes[0].NodeId, classDeclarationNode) {
+			continue
+		}
 		memberName := captures["member.name"][0].Text
 		isStatic := len(captures["member.static"]) > 0
 		kind := getMemberKindFromCaptures(captures)
@@ -350,7 +365,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 
 		switch kind {
 		case "field":
-			field, error := mp.createClassFieldFromFieldMatch(memberName, isStatic, superclass, captures)
+			field, error := mp.createClassFieldFromFieldMatch(memberName, isStatic, superclass, captures, classBindings)
 			field.StartByte = captures["field"][0].StartByte
 			if error != nil {
 				errs = errors.Join(errs, error)
@@ -358,7 +373,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 				memberMap[key] = &field
 			}
 		case "constructor-parameter":
-			field, err := mp.createClassFieldFromConstructorParameterMatch(memberName, superclass, captures)
+			field, err := mp.createClassFieldFromConstructorParameterMatch(memberName, superclass, captures, classBindings)
 			field.StartByte = captures["constructor.parameter"][0].StartByte
 			if err != nil {
 				errs = errors.Join(errs, err)
@@ -371,7 +386,7 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			pairKeyStr := className + "." + memberName + "." + isStaticToTypeFlag(isStatic)
 			isReadonly := accessorKind == "get"
 
-			field, err := mp.createClassFieldFromAccessorMatch(memberName, isStatic, isReadonly, superclass, captures)
+			field, err := mp.createClassFieldFromAccessorMatch(memberName, isStatic, isReadonly, superclass, captures, classBindings)
 			if err != nil {
 				errs = errors.Join(errs, err)
 				continue
@@ -403,6 +418,11 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			method.Name = memberName
 			method.Static = isStatic
 			method.StartByte = captures["method"][0].StartByte
+
+			// Generic type parameter names from `<Value extends string>`;
+			// the method's own parameters shadow the class's
+			methodBindings := mp.typeParameterBindingsFromCapture(captures, "method.typeParameters")
+			bindings := slices.Concat(methodBindings, classBindings)
 
 			// Parameters, populated before JSDoc enrichment so @param tags
 			// merge onto them (mirrors generateFunctionDeclaration). One
@@ -442,6 +462,17 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 					},
 				}
 			}
+
+			// After JSDoc enrichment and return-type assignment so all
+			// types are present
+			types := make([]*M.Type, 0, len(method.Parameters)+1)
+			for _, param := range method.Parameters {
+				types = append(types, param.Type)
+			}
+			if method.Return != nil {
+				types = append(types, method.Return.Type)
+			}
+			mp.annotateTypeParameterSources(bindings, types...)
 			memberMap[key] = &method
 		}
 	}
@@ -456,6 +487,23 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 	})
 
 	return members, errs
+}
+
+// memberBelongsToClass reports whether the captured member sits directly in
+// the class body of classDeclarationNode, i.e. whether the nearest class_body
+// ancestor belongs to that declaration.
+func (mp *ModuleProcessor) memberBelongsToClass(memberNodeId int, classDeclarationNode *ts.Node) bool {
+	memberNode := Q.GetDescendantById(mp.root, memberNodeId)
+	if memberNode == nil {
+		return false
+	}
+	for parent := memberNode.Parent(); parent != nil; parent = parent.Parent() {
+		if parent.GrammarName() == "class_body" {
+			declaringClass := parent.Parent()
+			return declaringClass != nil && declaringClass.Id() == classDeclarationNode.Id()
+		}
+	}
+	return false
 }
 
 func isStaticToTypeFlag(b bool) string {

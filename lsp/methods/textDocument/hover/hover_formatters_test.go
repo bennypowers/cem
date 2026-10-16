@@ -40,6 +40,19 @@ func TestFormatAttributes(t *testing.T) {
 			expected: "### Attributes\n\n- **`variant`** _string_\n\n",
 		},
 		{
+			name: "attr with generic type source",
+			attrs: []M.Attribute{
+				{
+					FullyQualified: M.FullyQualified{Name: "data"},
+					Type: &M.Type{
+						Text:   "Data",
+						Source: &M.SourceReference{Href: "https://github.com/example/repo/blob/main/src/data-view.ts#L8C23"},
+					},
+				},
+			},
+			expected: "### Attributes\n\n- **`data`** _Data_ ([declaration](https://github.com/example/repo/blob/main/src/data-view.ts#L8C23))\n\n",
+		},
+		{
 			name: "attr with inheritance",
 			attrs: []M.Attribute{
 				{
@@ -114,6 +127,19 @@ func TestFormatEvents(t *testing.T) {
 				},
 			},
 			expected: "### Events\n\n- **`change`** _CustomEvent_\n\n",
+		},
+		{
+			name: "event with generic type source",
+			events: []M.Event{
+				{
+					FullyQualified: M.FullyQualified{Name: "data-change"},
+					Type: &M.Type{
+						Text:   "DataChangeEvent<Data>",
+						Source: &M.SourceReference{Href: "https://github.com/example/repo/blob/main/src/data-view.ts#L12C30"},
+					},
+				},
+			},
+			expected: "### Events\n\n- **`data-change`** _DataChangeEvent<Data>_ ([declaration](https://github.com/example/repo/blob/main/src/data-view.ts#L12C30))\n\n",
 		},
 		{
 			name: "event with inheritance and description",
