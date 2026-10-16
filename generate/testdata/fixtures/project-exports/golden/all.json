@@ -28,6 +28,7 @@
         {
           "name": "config",
           "description": "Configuration for the module.",
+          "default": "{ enabled: true, value }",
           "kind": "variable"
         }
       ],
@@ -48,6 +49,7 @@
       "declarations": [
         {
           "name": "config",
+          "default": "{ enabled: true }",
           "kind": "variable"
         }
       ],
@@ -156,6 +158,7 @@
       "declarations": [
         {
           "name": "localValue",
+          "default": "1",
           "kind": "variable"
         }
       ],
@@ -279,10 +282,35 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/local-variable-type-default.js",
+      "declarations": [
+        {
+          "name": "offset",
+          "type": {
+            "text": "number"
+          },
+          "default": "10",
+          "kind": "variable"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "shift",
+          "declaration": {
+            "name": "offset",
+            "module": "src/local-variable-type-default.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/mixed-type-export.js",
       "declarations": [
         {
           "name": "helpers",
+          "default": "1",
           "kind": "variable"
         }
       ],
@@ -318,6 +346,7 @@
         {
           "name": "beta",
           "description": "Shared constants for the module.",
+          "default": "2",
           "kind": "variable"
         }
       ],
@@ -338,10 +367,12 @@
       "declarations": [
         {
           "name": "alpha",
+          "default": "1",
           "kind": "variable"
         },
         {
           "name": "beta",
+          "default": "2",
           "kind": "variable"
         }
       ],
@@ -392,10 +423,12 @@
       "declarations": [
         {
           "name": "first",
+          "default": "1",
           "kind": "variable"
         },
         {
           "name": "second",
+          "default": "2",
           "kind": "variable"
         }
       ],
@@ -482,6 +515,7 @@
       "declarations": [
         {
           "name": "value",
+          "default": "1",
           "kind": "variable"
         }
       ],

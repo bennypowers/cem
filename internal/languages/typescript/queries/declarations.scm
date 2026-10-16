@@ -6,7 +6,7 @@
      declaration: (_
                     (variable_declarator
                       name: (identifier) @variable.name
-                      type: (_)? @variable.type
+                      type: (type_annotation (_) @variable.type)?
                       value: (_ !parameters) @variable.value)))) @variable
 
 ( ; function declarations
@@ -101,7 +101,7 @@
   (lexical_declaration
     (variable_declarator
       name: (identifier) @variable.name
-      type: (_)? @variable.type
+      type: (type_annotation (_) @variable.type)?
       value: (_ !parameters) @variable.value) @local.variable))
 
 ; non-exported top-level function declarations

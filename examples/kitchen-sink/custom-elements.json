@@ -2130,6 +2130,7 @@
           "name": "VERSION",
           "summary": "Package version string",
           "description": "Current version of the kitchen-sink demo package.",
+          "default": "'1.0.0'",
           "kind": "variable",
           "source": {
             "href": "https://github.com/bennypowers/cem/tree/main/examples/kitchen-sink/elements/utilities.ts#L5"

@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/export-var-type-default.js",
+      "declarations": [
+        {
+          "name": "value",
+          "type": {
+            "text": "number"
+          },
+          "default": "1",
+          "kind": "variable",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-var-type-default.ts#L1"
+          }
+        },
+        {
+          "name": "limit",
+          "type": {
+            "text": "string"
+          },
+          "default": "'ten'",
+          "kind": "variable",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-var-type-default.ts#L2"
+          }
+        },
+        {
+          "name": "plain",
+          "default": "'no-annotation'",
+          "kind": "variable",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-var-type-default.ts#L3"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "value",
+          "declaration": {
+            "name": "value",
+            "module": "src/export-var-type-default.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "limit",
+          "declaration": {
+            "name": "limit",
+            "module": "src/export-var-type-default.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "plain",
+          "declaration": {
+            "name": "plain",
+            "module": "src/export-var-type-default.js"
+          }
+        }
+      ]
+    }
+  ]
+}

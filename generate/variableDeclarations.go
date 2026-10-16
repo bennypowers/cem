@@ -19,11 +19,17 @@ package generate
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"bennypowers.dev/cem/generate/jsdoc"
-	M "bennypowers.dev/cem/manifest"
 	Q "bennypowers.dev/cem/internal/treesitter"
+	M "bennypowers.dev/cem/manifest"
 )
+
+// defaultNewlineReplacer escapes newlines in initializer text to literal
+// `\n` so multiline defaults render on one line. CRLF is normalized first
+// so Windows line endings do not leave stray carriage returns.
+var defaultNewlineReplacer = strings.NewReplacer("\r\n", "\\n", "\n", "\\n")
 
 func (mp *ModuleProcessor) generateVarDeclaration(
 	captures Q.CaptureMap,
@@ -53,11 +59,21 @@ func (mp *ModuleProcessor) generateVarDeclaration(
 		declaration.Source = sourceRef
 	}
 
+	// Type text and default from the source annotation and initializer, set
+	// before JSDoc enrichment so @type and @default tags override them
+	// (mirrors function return-type and parameter behavior).
 	typeNodes, ok := captures["variable.type"]
 	if ok && len(typeNodes) > 0 {
 		declaration.Type = &M.Type{
 			Text: typeNodes[0].Text,
 		}
+	}
+
+	valueNodes, ok := captures["variable.value"]
+	if ok && len(valueNodes) > 0 {
+		// Class fields normalize newlines in initializer text to literal
+		// `\n`; variables match so multiline defaults render on one line.
+		declaration.Default = defaultNewlineReplacer.Replace(valueNodes[0].Text)
 	}
 
 	jsdocNodes, ok := captures["variable.jsdoc"]

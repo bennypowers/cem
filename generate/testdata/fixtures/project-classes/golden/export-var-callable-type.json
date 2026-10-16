@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/export-var-callable-type.js",
+      "declarations": [
+        {
+          "name": "callable",
+          "type": {
+            "text": "(value: number) =\u003e number"
+          },
+          "default": "implementation",
+          "kind": "variable",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-var-callable-type.ts#L5"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "callable",
+          "declaration": {
+            "name": "callable",
+            "module": "src/export-var-callable-type.js"
+          }
+        }
+      ]
+    }
+  ]
+}
