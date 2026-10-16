@@ -112,6 +112,7 @@ func TestBindingForTypeText(t *testing.T) {
 		{"quoted record keys are ignored", "Record<'Key', Value>", "Value"},
 		{"template-literal content is ignored", "`prefix-${Value}`", ""},
 		{"name outside quotes still matches", "Value | \"Value\"", "Value"},
+		{"escaped quote in string-literal still matches trailing name", `'it\'s' | Value`, "Value"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -173,6 +174,8 @@ func TestStripQuotedSegments(t *testing.T) {
 		{"backtick template", "`prefix-${Value}`", ""},
 		{"unterminated quote keeps prefix", "Value | \"unterminated", "Value | "},
 		{"mixed quotes", "'a' | \"b\" | `c`", " |  | "},
+		{"escaped closing quote does not close the span", `'it\'s' | Value`, " | Value"},
+		{"escaped backslash before closing quote", `'a\\' | Value`, " | Value"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

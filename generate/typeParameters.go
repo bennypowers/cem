@@ -96,17 +96,28 @@ func bindingForTypeText(bindings []typeParameterBinding, typeText string) *typeP
 
 // stripQuotedSegments removes single-, double-, and backtick-quoted spans
 // from a type text, so literal content in string-literal types (for example
-// `"Value"` or `Record<'Key', number>`) is not lexically matched.
+// `"Value"` or `Record<'Key', number>`) is not lexically matched. Escaped
+// characters inside a span (including `\'`) do not close it.
 func stripQuotedSegments(text string) string {
 	var b strings.Builder
 	for i := 0; i < len(text); {
 		c := text[i]
 		if c == '\'' || c == '"' || c == '`' {
-			next := strings.IndexByte(text[i+1:], c)
-			if next < 0 {
+			j := i + 1
+			for j < len(text) {
+				if text[j] == '\\' {
+					j += 2 // escaped character: cannot close the span
+					continue
+				}
+				if text[j] == c {
+					break
+				}
+				j++
+			}
+			if j >= len(text) {
 				return b.String() // unterminated quote: keep what we have
 			}
-			i += next + 2
+			i = j + 1
 			continue
 		}
 		b.WriteByte(c)

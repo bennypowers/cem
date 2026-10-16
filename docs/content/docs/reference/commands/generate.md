@@ -194,7 +194,7 @@ When a module declares TypeScript function overloads, only the overload signatur
 
 ### Generic Type Parameters
 
-The CEM schema cannot represent generic type parameter lists, so `typeParameters` fields are not emitted. Type text is published exactly as written in source, and consumers that need type semantics should run `tsc` against the linked source.
+The CEM schema cannot represent generic type parameter lists, so `typeParameters` fields are not emitted. Types carrying a generic source reference retain the type text as written in source, while types without one may be expanded through alias resolution. Consumers that need type semantics should run `tsc` against the linked source.
 
 When a parameter, return, or field type references a generic type parameter of its declaration, cem attaches a `source` reference to that type pointing at the parameter's declaration, anchored by line and column (for example `#L1C26`), following GitHub's fragment convention. Given:
 
