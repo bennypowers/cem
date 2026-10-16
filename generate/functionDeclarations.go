@@ -56,6 +56,16 @@ func (mp *ModuleProcessor) generateFunctionDeclaration(
 		declaration.Source = sourceRef
 	}
 
+	// Generic type parameter names from `<Value extends string = string>`;
+	// parameter and return types that reference them get a Type.source
+	// pointer to the parameter's declaration
+	var bindings []typeParameterBinding
+	if typeParams, ok := captures["function.typeParameters"]; ok && len(typeParams) > 0 {
+		if node := Q.GetDescendantById(mp.root, typeParams[0].NodeId); node != nil {
+			bindings = typeParameterBindings(node, mp.code)
+		}
+	}
+
 	// One `function.params` capture per parameter node; each query match
 	// binds a single parameter, so ParentCaptures aggregates them in match
 	// order. Sort by source position to restore declaration order.
@@ -95,6 +105,16 @@ func (mp *ModuleProcessor) generateFunctionDeclaration(
 			return nil, errors.Join(err, jsdocErr)
 		}
 	}
+
+	// After JSDoc enrichment so @type-provided types are annotated too
+	types := make([]*M.Type, 0, len(declaration.Parameters)+1)
+	for _, param := range declaration.Parameters {
+		types = append(types, param.Type)
+	}
+	if declaration.Return != nil {
+		types = append(types, declaration.Return.Type)
+	}
+	mp.annotateTypeParameterSources(bindings, types...)
 
 	return declaration, nil
 }

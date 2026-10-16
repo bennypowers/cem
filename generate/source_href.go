@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"unicode/utf8"
 
 	M "bennypowers.dev/cem/manifest"
 	ts "github.com/tree-sitter/go-tree-sitter"
@@ -56,6 +57,39 @@ func (mp *ModuleProcessor) generateSourceReference(node *ts.Node) (*M.SourceRefe
 	}, nil
 }
 
+// generateTypeParameterSourceReference creates a SourceReference for a
+// generic type parameter's declaration. The schema only requires an absolute
+// URL; the anchor follows GitHub's line-and-column fragment convention
+// (#L2C28) because several parameters usually share one line.
+func (mp *ModuleProcessor) generateTypeParameterSourceReference(node *ts.Node) (*M.SourceReference, error) {
+	if node == nil || mp.ctx == nil {
+		return nil, nil // No error, just no source reference
+	}
+
+	cfg, err := mp.ctx.Config()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get config for source reference: %w", err)
+	}
+
+	if cfg.SourceControlRootUrl == "" {
+		return nil, nil // No error, just not configured
+	}
+
+	line, column := mp.byteOffsetToLineColumn(node.StartByte())
+	href, err := buildSourceHrefAt(cfg.SourceControlRootUrl, mp.file, line, column)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build source href: %w", err)
+	}
+
+	if href == "" {
+		return nil, nil // No error, just couldn't build href
+	}
+
+	return &M.SourceReference{
+		Href: href,
+	}, nil
+}
+
 // byteOffsetToLineNumber converts a byte offset to a 1-based line number
 // Uses a line offset cache for O(log n) lookup instead of O(n) scan
 func (mp *ModuleProcessor) byteOffsetToLineNumber(offset uint) uint {
@@ -75,6 +109,27 @@ func (mp *ModuleProcessor) byteOffsetToLineNumber(offset uint) uint {
 	return uint(line + len(mp.lineOffsets))
 }
 
+// byteOffsetToLineColumn converts a byte offset to a 1-based line number and
+// a 1-based rune column within that line, for anchors that must address a
+// position inside a line (e.g. one of several type parameters).
+func (mp *ModuleProcessor) byteOffsetToLineColumn(offset uint) (line, column uint) {
+	if mp.lineOffsets == nil {
+		mp.buildLineOffsetCache()
+	}
+	line, lineStart := uint(1), uint(0)
+	for _, lineOffset := range mp.lineOffsets {
+		if offset < lineOffset {
+			break
+		}
+		line++
+		lineStart = lineOffset + 1
+	}
+	if lineStart >= offset {
+		return line, 1
+	}
+	return line, uint(utf8.RuneCount(mp.code[lineStart:offset])) + 1
+}
+
 // buildLineOffsetCache builds a cache of byte offsets for each newline
 // This enables O(log n) line number lookups instead of O(n) scans
 func (mp *ModuleProcessor) buildLineOffsetCache() {
@@ -89,6 +144,13 @@ func (mp *ModuleProcessor) buildLineOffsetCache() {
 
 // buildSourceHref constructs a source href URL from base URL, file path, and line number
 func buildSourceHref(sourceControlRootUrl, filePath string, lineNumber uint) (string, error) {
+	return buildSourceHrefAt(sourceControlRootUrl, filePath, lineNumber, 0)
+}
+
+// buildSourceHrefAt constructs a source href URL, additionally anchoring a
+// 1-based column when column > 0 (GitHub-style #L2C28); column 0 emits a
+// line-only anchor (#L2).
+func buildSourceHrefAt(sourceControlRootUrl, filePath string, lineNumber, column uint) (string, error) {
 	if sourceControlRootUrl == "" {
 		return "", fmt.Errorf("sourceControlRootUrl is empty")
 	}
@@ -125,8 +187,12 @@ func buildSourceHref(sourceControlRootUrl, filePath string, lineNumber uint) (st
 		return "", fmt.Errorf("failed to join URL %q with path %q: %w", sourceControlRootUrl, cleanPath, err)
 	}
 
-	// Add the line number fragment
-	u.Fragment = fmt.Sprintf("L%d", lineNumber)
+	// Add the line (and column, when given) fragment
+	if column > 0 {
+		u.Fragment = fmt.Sprintf("L%dC%d", lineNumber, column)
+	} else {
+		u.Fragment = fmt.Sprintf("L%d", lineNumber)
+	}
 
 	return u.String(), nil
 }

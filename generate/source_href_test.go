@@ -127,6 +127,46 @@ func TestBuildSourceHref(t *testing.T) {
 	}
 }
 
+func TestBuildSourceHrefAt(t *testing.T) {
+	tests := []struct {
+		name                 string
+		sourceControlRootUrl string
+		filePath             string
+		lineNumber           uint
+		column               uint
+		expected             string
+	}{
+		{
+			name:                 "line and column anchor",
+			sourceControlRootUrl: "https://github.com/user/repo/tree/main/",
+			filePath:             "src/components.ts",
+			lineNumber:           2,
+			column:               28,
+			expected:             "https://github.com/user/repo/tree/main/src/components.ts#L2C28",
+		},
+		{
+			name:                 "column zero is line only",
+			sourceControlRootUrl: "https://github.com/user/repo/tree/main/",
+			filePath:             "src/components.ts",
+			lineNumber:           42,
+			column:               0,
+			expected:             "https://github.com/user/repo/tree/main/src/components.ts#L42",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := buildSourceHrefAt(tt.sourceControlRootUrl, tt.filePath, tt.lineNumber, tt.column)
+			if err != nil {
+				t.Errorf("buildSourceHrefAt() unexpected error: %v", err)
+				return
+			}
+			if result != tt.expected {
+				t.Errorf("buildSourceHrefAt() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
 func TestGenerateSourceReferenceNilNode(t *testing.T) {
 	mp := &ModuleProcessor{
 		file: "test.ts",
@@ -218,6 +258,73 @@ func TestByteOffsetToLineNumber(t *testing.T) {
 			result := mp.byteOffsetToLineNumber(tt.offset)
 			if result != tt.expected {
 				t.Errorf("byteOffsetToLineNumber() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestByteOffsetToLineColumn(t *testing.T) {
+	tests := []struct {
+		name        string
+		code        []byte
+		offset      uint
+		expectedLn  uint
+		expectedCol uint
+	}{
+		{
+			name:        "start of file",
+			code:        []byte("function foo() {\n  return 'bar';\n}"),
+			offset:      0,
+			expectedLn:  1,
+			expectedCol: 1,
+		},
+		{
+			name:        "start of foo on first line",
+			code:        []byte("function foo() {\n  return 'bar';\n}"),
+			offset:      9, // "function " is 9 bytes
+			expectedLn:  1,
+			expectedCol: 10,
+		},
+		{
+			name:        "indented second line",
+			code:        []byte("function foo() {\n  return 'bar';\n}"),
+			offset:      19, // start of "return" after two spaces
+			expectedLn:  2,
+			expectedCol: 3,
+		},
+		{
+			name:        "third line",
+			code:        []byte("function foo() {\n  return 'bar';\n}"),
+			offset:      33, // start of "}"
+			expectedLn:  3,
+			expectedCol: 1,
+		},
+		{
+			name:        "column counts runes not bytes",
+			code:        []byte("// cömment\nconst x = 1;"),
+			offset:      18, // start of "x"; ö occupies two bytes, shifting byte offsets
+			expectedLn:  2,
+			expectedCol: 7,
+		},
+		{
+			name:        "empty file",
+			code:        []byte(""),
+			offset:      0,
+			expectedLn:  1,
+			expectedCol: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mp := &ModuleProcessor{
+				code: tt.code,
+			}
+			line, column := mp.byteOffsetToLineColumn(tt.offset)
+			if line != tt.expectedLn {
+				t.Errorf("byteOffsetToLineColumn() line = %v, want %v", line, tt.expectedLn)
+			}
+			if column != tt.expectedCol {
+				t.Errorf("byteOffsetToLineColumn() column = %v, want %v", column, tt.expectedCol)
 			}
 		})
 	}

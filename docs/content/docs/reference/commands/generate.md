@@ -192,6 +192,31 @@ Generates JSON conforming to the [Custom Elements Manifest][cem] schema. HTML-se
 
 When a module declares TypeScript function overloads, only the overload signatures are emitted, one declaration per signature, all sharing the function's name. The trailing implementation signature is not callable by TypeScript consumers, so it is omitted. When the implementation carries JSDoc that a kept overload signature lacks, the implementation's description, summary, and deprecation merge onto the first such signature; other tags (for example `@param` or `@returns`) are not merged. This diverges intentionally from the reference `@custom-elements-manifest/analyzer`, which emits the implementation signature as an additional declaration.
 
+### Generic Type Parameters
+
+The CEM schema cannot represent generic type parameter lists, so `typeParameters` fields are not emitted. Type text is published exactly as written in source, and consumers that need type semantics should run `tsc` against the linked source.
+
+When a parameter, return, or field type references a generic type parameter of its declaration, cem attaches a `source` reference to that type pointing at the parameter's declaration, anchored by line and column (for example `#L2C28`), following GitHub's fragment convention. Given:
+
+```typescript
+export function identity<Value extends string = string>(value: Value): Value {
+  return value;
+}
+```
+
+the `value` parameter's type is emitted as:
+
+```json
+{
+  "text": "Value",
+  "source": {
+    "href": "https://github.com/your/repo/tree/main/src/identity.ts#L1C26"
+  }
+}
+```
+
+The anchor is the line and column of `Value` in `<Value extends string = string>`. Matching a type text to its declaring parameter is best-effort and lexical: the first declared parameter whose name appears as a whole word in the type text wins, and method parameters shadow class parameters of the same name. A method's types consider both the method's own and its class's type parameters; field types consider the class's. Source references require `sourceControlRootUrl` to be configured.
+
 ## See Also
 
 - **[Documenting Components][documenting]** - JSDoc usage guide and examples

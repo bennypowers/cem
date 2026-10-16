@@ -139,6 +139,16 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 		},
 	}
 
+	// Generic type parameter names from `<Data>`; member types that
+	// reference them get a Type.source pointer to the parameter's
+	// declaration
+	var classBindings []typeParameterBinding
+	if typeParams, ok := captures["class.typeParameters"]; ok && len(typeParams) > 0 {
+		if node := Q.GetDescendantById(mp.root, typeParams[0].NodeId); node != nil {
+			classBindings = typeParameterBindings(node, mp.code)
+		}
+	}
+
 	// Add source reference if available
 	sourceRef, sourceErr := mp.generateSourceReference(classDeclarationNode)
 	if sourceErr != nil {
@@ -206,6 +216,7 @@ func (mp *ModuleProcessor) generateCommonClassDeclaration(
 			declaration.Name(),
 			classDeclarationNode,
 			superclassName,
+			classBindings,
 		)
 		if err != nil {
 			return err

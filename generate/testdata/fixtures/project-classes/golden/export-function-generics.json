@@ -1,0 +1,125 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/export-function-generics.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "Value",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics.ts#L1C26"
+                }
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "Value",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics.ts#L1C26"
+              }
+            }
+          },
+          "name": "identity",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics.ts#L1"
+          }
+        },
+        {
+          "parameters": [
+            {
+              "name": "key",
+              "type": {
+                "text": "Key",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics.ts#L8C27"
+                }
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "Value | undefined",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics.ts#L8C56"
+              }
+            }
+          },
+          "name": "readStore",
+          "description": "Reads a value from a typed store.",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics.ts#L8"
+          }
+        },
+        {
+          "parameters": [
+            {
+              "name": "first",
+              "type": {
+                "text": "Item",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics.ts#L12C27"
+                }
+              }
+            },
+            {
+              "name": "second",
+              "type": {
+                "text": "Item",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics.ts#L12C27"
+                }
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "Item",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics.ts#L12C27"
+              }
+            }
+          },
+          "name": "pickFirst",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-function-generics.ts#L12"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "identity",
+          "declaration": {
+            "name": "identity",
+            "module": "src/export-function-generics.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "readStore",
+          "declaration": {
+            "name": "readStore",
+            "module": "src/export-function-generics.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "pickFirst",
+          "declaration": {
+            "name": "pickFirst",
+            "module": "src/export-function-generics.js"
+          }
+        }
+      ]
+    }
+  ]
+}

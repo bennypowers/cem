@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/identity.js",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "identity",
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "Value",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/src/identity.ts#L1C26"
+                }
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "Value",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/src/identity.ts#L1C26"
+                }
+            }
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/src/identity.ts#L1"
+          }
+        },
+        {
+          "kind": "class",
+          "name": "Repository",
+          "members": [
+            {
+              "kind": "field",
+              "name": "items",
+              "type": {
+                "text": "Item[]",
+                "source": {
+                  "href": "https://github.com/bennypowers/cem/tree/main/src/identity.ts#L10C25"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "map",
+              "parameters": [
+                {
+                  "name": "project",
+                  "type": {
+                    "text": "(item: Item) => Result",
+                    "source": {
+                      "href": "https://github.com/bennypowers/cem/tree/main/src/identity.ts#L14C7"
+                    }
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "Result[]",
+                  "source": {
+                    "href": "https://github.com/bennypowers/cem/tree/main/src/identity.ts#L14C7"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "identity",
+          "declaration": {
+            "name": "identity",
+            "module": "src/identity.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "Repository",
+          "declaration": {
+            "name": "Repository",
+            "module": "src/identity.js"
+          }
+        }
+      ]
+    }
+  ]
+}
