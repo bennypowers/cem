@@ -190,7 +190,7 @@ Generates JSON conforming to the [Custom Elements Manifest][cem] schema. HTML-se
 
 ### Function Overloads
 
-When a module declares TypeScript function overloads, only the overload signatures are emitted, one declaration per signature, all sharing the function's name. The trailing implementation signature is not callable by TypeScript consumers, so it is omitted; any JSDoc attached only to the implementation is merged onto the first overload signature that lacks its own. This diverges intentionally from the reference `@custom-elements-manifest/analyzer`, which emits the implementation signature as an additional declaration.
+When a module declares TypeScript function overloads, only the overload signatures are emitted, one declaration per signature, all sharing the function's name. The trailing implementation signature is not callable by TypeScript consumers, so it is omitted. When the implementation carries JSDoc that a kept overload signature lacks, the implementation's description, summary, and deprecation merge onto the first such signature; other tags (for example `@param` or `@returns`) are not merged. This diverges intentionally from the reference `@custom-elements-manifest/analyzer`, which emits the implementation signature as an additional declaration.
 
 ## See Also
 
