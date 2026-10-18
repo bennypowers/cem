@@ -338,6 +338,10 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 	seenAccessors := make(map[string]memberKey) // for merging get/set
 	methodOccurrences := make(map[memberKey]int)
 	methodHasBody := make(map[*M.ClassMethod]bool)
+	// keys of body-carrying methods skipped by an ignore check; their
+	// body-less overload signatures are dropped from the final members
+	// list below
+	ignoredOverloadImpls := S.NewSet[memberKey]()
 
 	for captures := range matcher.ParentCaptures(mp.root, mp.code, "member") {
 		// Members of classes nested inside method bodies fall inside the
@@ -373,6 +377,12 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 			if err != nil {
 				errs = errors.Join(errs, err)
 			} else if ignored {
+				// an @ignored body-carrying method marks its whole
+				// overload set ignored: without this, its body-less
+				// signatures would stand in for the ignored implementation
+				if kind == "method" && len(captures["method.body"]) > 0 {
+					ignoredOverloadImpls.Add(key)
+				}
 				continue
 			}
 		}
@@ -517,6 +527,17 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 	// a method overload's implementation signature is not callable by
 	// TypeScript consumers; only its overload signatures are
 	members = dropOverloadImplementationMethods(members, methodHasBody)
+
+	// ...and an implementation skipped by @ignore suppresses its whole
+	// set: before overload signatures were emitted, ignoring the
+	// implementation hid the method entirely
+	members = slices.DeleteFunc(members, func(m M.ClassMember) bool {
+		method, ok := m.(*M.ClassMethod)
+		if !ok || methodHasBody[method] {
+			return false
+		}
+		return ignoredOverloadImpls.Has(memberKey{name: method.Name, kind: "method", static: method.Static})
+	})
 
 	return members, errs
 }

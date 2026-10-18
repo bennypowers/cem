@@ -16,5 +16,14 @@ class MethodOverloads extends LitElement {
     return Array.isArray(input) ? [input] : input;
   }
 
+  hidden(value: string): number;
+  hidden(value: number): number;
+  /**
+   * @ignore
+   */
+  hidden(value: string | number): number {
+    return Number(value);
+  }
+
   plain(): void {}
 }
