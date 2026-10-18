@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-method-overloads-annotations.js",
+      "declarations": [
+        {
+          "name": "MethodOverloadsAnnotations",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "handlers",
+              "type": {
+                "text": "{ onClick(e: Event): void }"
+              },
+              "kind": "field"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "cb",
+                  "type": {
+                    "text": "{ onReady(): void }"
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "{ dispose(): void }"
+                }
+              },
+              "name": "register",
+              "kind": "method"
+            },
+            {
+              "name": "options",
+              "type": {
+                "text": "{ format(value: string): string }"
+              },
+              "kind": "field"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "value",
+                  "type": {
+                    "text": "string | number"
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "name": "format",
+              "kind": "method"
+            },
+            {
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "name": "plain",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-method-overloads-annotations.ts#L1"
+          },
+          "kind": "class",
+          "tagName": "method-overloads-annotations",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "method-overloads-annotations",
+          "declaration": {
+            "name": "MethodOverloadsAnnotations",
+            "module": "src/class-method-overloads-annotations.js"
+          }
+        }
+      ]
+    }
+  ]
+}

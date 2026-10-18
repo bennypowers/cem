@@ -322,7 +322,8 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 	defer matcher.Close()
 	matcher.SetByteRange(classDeclarationNode.ByteRange())
 
-	// Key: className + "." + fieldName + "." + kind + ".static"
+	// Key: member name, kind, and staticity; className participates only in
+	// the accessor pairKeyStr below, not in this struct
 	type memberKey struct {
 		name   string
 		kind   string // field, accessor, method
@@ -342,9 +343,20 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 		// Members of classes nested inside method bodies fall inside the
 		// byte range but belong to the nested class; without this check
 		// they would be attributed to the outer class, receiving its
-		// type-parameter bindings.
+		// type-parameter bindings. Members inside object literals or
+		// inline object types (e.g. methods of an object passed to a
+		// method, or signatures in a type annotation) are rejected by the
+		// same walk.
 		if memberNodes := captures["member"]; len(memberNodes) == 0 ||
 			!mp.memberBelongsToClass(memberNodes[0].NodeId, classDeclarationNode) {
+			continue
+		}
+		// Members parsed through tree-sitter error recovery carry an ERROR
+		// node as a direct child. `declare` methods (unsupported by the
+		// TypeScript grammar) misparse this way, fabricating a phantom
+		// member named "declare"; error-recovered members are skipped
+		// regardless of kind.
+		if memberNode := Q.GetDescendantById(mp.root, captures["member"][0].NodeId); hasErrorChild(memberNode) {
 			continue
 		}
 		memberName := captures["member.name"][0].Text
@@ -511,16 +523,39 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 
 // memberBelongsToClass reports whether the captured member sits directly in
 // the class body of classDeclarationNode, i.e. whether the nearest class_body
-// ancestor belongs to that declaration.
+// ancestor belongs to that declaration. Members nested inside object literals
+// or inline object types — in type annotations, arguments, or method bodies —
+// sit within the class's byte range and their walk reaches the class's own
+// class_body, so an intervening `object` or `object_type` ancestor rejects
+// them before that check.
 func (mp *ModuleProcessor) memberBelongsToClass(memberNodeId int, classDeclarationNode *ts.Node) bool {
 	memberNode := Q.GetDescendantById(mp.root, memberNodeId)
 	if memberNode == nil {
 		return false
 	}
 	for parent := memberNode.Parent(); parent != nil; parent = parent.Parent() {
-		if parent.GrammarName() == "class_body" {
+		switch parent.GrammarName() {
+		case "object", "object_type":
+			// object literal or inline object type: the member belongs to
+			// the object, not to the class body
+			return false
+		case "class_body":
 			declaringClass := parent.Parent()
 			return declaringClass != nil && declaringClass.Id() == classDeclarationNode.Id()
+		}
+	}
+	return false
+}
+
+// hasErrorChild reports whether node carries a direct ERROR child,
+// tree-sitter's error-recovery marker. A nil node has none.
+func hasErrorChild(node *ts.Node) bool {
+	if node == nil {
+		return false
+	}
+	for i := range int(node.ChildCount()) {
+		if child := node.Child(uint(i)); child != nil && child.IsError() {
+			return true
 		}
 	}
 	return false

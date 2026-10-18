@@ -92,7 +92,8 @@ func dropOverloadImplementations[T any](
 // of TypeScript function overloads from a module's declarations, keeping
 // only the callable overload signatures. Ambient `declare function`
 // declarations are excluded earlier, at query-capture time. hasBody reports
-// which function declarations carry a body.
+// which function declarations carry a body; unexpected declaration types
+// fail safe by reporting body-less and are never dropped.
 func dropOverloadImplementationSignatures(
 	declarations []M.Declaration,
 	hasBody map[*M.FunctionDeclaration]bool,
@@ -107,7 +108,8 @@ func dropOverloadImplementationSignatures(
 			return fn.Name(), true
 		},
 		func(d M.Declaration) bool {
-			return hasBody[d.(*M.FunctionDeclaration)]
+			fn, ok := d.(*M.FunctionDeclaration)
+			return ok && hasBody[fn]
 		},
 		func(kept, impl M.Declaration) {
 			mergeOverloadImplementationDocs(kept, impl)
@@ -121,15 +123,7 @@ func dropOverloadImplementationSignatures(
 func mergeOverloadImplementationDocs(kept, impl M.Declaration) {
 	keptFn := kept.(*M.FunctionDeclaration)
 	implFn := impl.(*M.FunctionDeclaration)
-	if keptFn.Description == "" {
-		keptFn.Description = implFn.Description
-	}
-	if keptFn.Summary == "" {
-		keptFn.Summary = implFn.Summary
-	}
-	if keptFn.Deprecated == nil && implFn.Deprecated != nil {
-		keptFn.Deprecated = implFn.Deprecated
-	}
+	mergeOverloadDocs(&keptFn.FullyQualified, &implFn.FullyQualified, &keptFn.Deprecated, &implFn.Deprecated)
 }
 
 // dropOverloadImplementationMethods removes the implementation signature of
@@ -137,7 +131,8 @@ func mergeOverloadImplementationDocs(kept, impl M.Declaration) {
 // callable overload signatures. Static and instance methods of the same
 // name are distinct members and never form one overload set. Non-method
 // members (fields, accessors) never group. hasBody reports which methods
-// carry a body.
+// carry a body; unexpected member types fail safe by reporting body-less
+// and are never dropped.
 func dropOverloadImplementationMethods(
 	members []M.ClassMember,
 	hasBody map[*M.ClassMethod]bool,
@@ -152,7 +147,8 @@ func dropOverloadImplementationMethods(
 			return method.Name + "." + isStaticToTypeFlag(method.Static), true
 		},
 		func(m M.ClassMember) bool {
-			return hasBody[m.(*M.ClassMethod)]
+			method, ok := m.(*M.ClassMethod)
+			return ok && hasBody[method]
 		},
 		func(kept, impl M.ClassMember) {
 			mergeOverloadMethodDocs(kept, impl)
@@ -166,13 +162,23 @@ func dropOverloadImplementationMethods(
 func mergeOverloadMethodDocs(kept, impl M.ClassMember) {
 	keptMethod := kept.(*M.ClassMethod)
 	implMethod := impl.(*M.ClassMethod)
-	if keptMethod.Description == "" {
-		keptMethod.Description = implMethod.Description
+	mergeOverloadDocs(&keptMethod.FullyQualified, &implMethod.FullyQualified, &keptMethod.Deprecated, &implMethod.Deprecated)
+}
+
+// mergeOverloadDocs copies JSDoc-derived metadata from a dropped overload
+// implementation onto a kept overload signature: description, summary, and
+// deprecation each copy only when the kept signature lacks them, since
+// signature-specific documentation wins. FunctionDeclaration and ClassMethod
+// both embed FullyQualified and carry a Deprecated field; the
+// mergeOverload*Docs adapters above pass theirs through.
+func mergeOverloadDocs(kept, impl *M.FullyQualified, keptDeprecated, implDeprecated *M.Deprecated) {
+	if kept.Description == "" {
+		kept.Description = impl.Description
 	}
-	if keptMethod.Summary == "" {
-		keptMethod.Summary = implMethod.Summary
+	if kept.Summary == "" {
+		kept.Summary = impl.Summary
 	}
-	if keptMethod.Deprecated == nil && implMethod.Deprecated != nil {
-		keptMethod.Deprecated = implMethod.Deprecated
+	if *keptDeprecated == nil && *implDeprecated != nil {
+		*keptDeprecated = *implDeprecated
 	}
 }

@@ -427,6 +427,80 @@ func TestMemberRules(t *testing.T) {
 		assert.Empty(t, changes)
 	})
 
+	// Overload sets: manifests carry one member per overload signature, so
+	// same-name methods compare per overload, matched by parameter
+	// signature. A name counts as removed only when absent entirely.
+	t.Run("overload set: added overload is not breaking", func(t *testing.T) {
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+			method("format", M.Public, []M.Parameter{param("value", "number")}, nil),
+		)))
+		assert.Empty(t, findRule("method-removed").Check(base, head))
+		assert.Empty(t, findRule("method-parameter-changed").Check(base, head))
+		assert.Empty(t, findRule("method-return-type-changed").Check(base, head))
+	})
+
+	t.Run("overload set: removed overload is breaking naming the overload", func(t *testing.T) {
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+			method("format", M.Public, []M.Parameter{param("value", "number")}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+		)))
+		assert.Empty(t, findRule("method-removed").Check(base, head))
+		changes := findRule("method-parameter-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Breaking, changes[0].Severity)
+		assert.Contains(t, changes[0].Message, "(number)")
+	})
+
+	t.Run("overload set: changed params on one overload is breaking naming that overload", func(t *testing.T) {
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+			method("format", M.Public, []M.Parameter{param("value", "number")}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+			method("format", M.Public, []M.Parameter{param("value", "number"), param("radix", "number")}, nil),
+		)))
+		changes := findRule("method-parameter-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Breaking, changes[0].Severity)
+		assert.Contains(t, changes[0].Message, "(number)")
+	})
+
+	t.Run("overload set: return type compared on the param-matched overload", func(t *testing.T) {
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, &M.Return{Type: &M.Type{Text: "string"}}),
+			method("format", M.Public, []M.Parameter{param("value", "number")}, &M.Return{Type: &M.Type{Text: "number"}}),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, &M.Return{Type: &M.Type{Text: "string"}}),
+			method("format", M.Public, []M.Parameter{param("value", "number")}, &M.Return{Type: &M.Type{Text: "string"}}),
+		)))
+		changes := findRule("method-return-type-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Breaking, changes[0].Severity)
+		assert.Contains(t, changes[0].Message, "number")
+	})
+
+	t.Run("overload set: method name kept when any overload remains", func(t *testing.T) {
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "number")}, nil),
+		)))
+		assert.Empty(t, findRule("method-removed").Check(base, head))
+		changes := findRule("method-parameter-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Breaking, changes[0].Severity)
+	})
+
 	t.Run("field-added", func(t *testing.T) {
 		base := makeElements(ced("my-el"))
 		head := makeElements(ced("my-el", withMembers(field("value", M.Public, "string"))))
