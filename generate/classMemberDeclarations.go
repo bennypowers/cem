@@ -327,9 +327,16 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 		name   string
 		kind   string // field, accessor, method
 		static bool
+		// occurrence disambiguates same-key methods: overload signatures
+		// share their implementation's name, kind, and staticity, so each
+		// needs its own map slot until dropOverloadImplementationMethods
+		// resolves the set. Always 0 for other kinds.
+		occurrence int
 	}
 	memberMap := make(map[memberKey]M.ClassMember)
 	seenAccessors := make(map[string]memberKey) // for merging get/set
+	methodOccurrences := make(map[memberKey]int)
+	methodHasBody := make(map[*M.ClassMethod]bool)
 
 	for captures := range matcher.ParentCaptures(mp.root, mp.code, "member") {
 		// Members of classes nested inside method bodies fall inside the
@@ -473,7 +480,16 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 				types = append(types, method.Return.Type)
 			}
 			mp.annotateTypeParameterSources(bindings, types...)
-			memberMap[key] = &method
+
+			// each same-key method gets its own map slot (see
+			// memberKey.occurrence); the overload drop below resolves the
+			// set. Body-carrying method_definition captures mark the
+			// implementation; method_signature captures carry no body.
+			methodSlot := key
+			methodSlot.occurrence = methodOccurrences[key]
+			methodOccurrences[key]++
+			methodHasBody[&method] = len(captures["method.body"]) > 0
+			memberMap[methodSlot] = &method
 		}
 	}
 
@@ -485,6 +501,10 @@ func (mp *ModuleProcessor) getClassMembersFromClassDeclarationNode(
 	slices.SortStableFunc(members, func(a, b M.ClassMember) int {
 		return int(a.GetStartByte() - b.GetStartByte())
 	})
+
+	// a method overload's implementation signature is not callable by
+	// TypeScript consumers; only its overload signatures are
+	members = dropOverloadImplementationMethods(members, methodHasBody)
 
 	return members, errs
 }

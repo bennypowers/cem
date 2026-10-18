@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-method-overloads-generics.js",
+      "declarations": [
+        {
+          "name": "Lookup",
+          "members": [
+            {
+              "parameters": [
+                {
+                  "name": "key",
+                  "type": {
+                    "text": "Key",
+                    "source": {
+                      "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-method-overloads-generics.ts#L1C21"
+                    }
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "string | undefined"
+                }
+              },
+              "name": "find",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "keys",
+                  "type": {
+                    "text": "Key[]",
+                    "source": {
+                      "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-method-overloads-generics.ts#L1C21"
+                    }
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "(string | undefined)[]"
+                }
+              },
+              "name": "find",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "callback",
+                  "type": {
+                    "text": "(key: Key) =\u003e Value",
+                    "source": {
+                      "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-method-overloads-generics.ts#L8C7"
+                    }
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "Value[]",
+                  "source": {
+                    "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-method-overloads-generics.ts#L8C7"
+                  }
+                }
+              },
+              "name": "map",
+              "kind": "method"
+            },
+            {
+              "parameters": [
+                {
+                  "name": "callback",
+                  "type": {
+                    "text": "(key: Key, index: number) =\u003e Value",
+                    "source": {
+                      "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-method-overloads-generics.ts#L9C7"
+                    }
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "Value[]",
+                  "source": {
+                    "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-method-overloads-generics.ts#L9C7"
+                  }
+                }
+              },
+              "name": "map",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-method-overloads-generics.ts#L1"
+          },
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "Lookup",
+          "declaration": {
+            "name": "Lookup",
+            "module": "src/class-method-overloads-generics.js"
+          }
+        }
+      ]
+    }
+  ]
+}

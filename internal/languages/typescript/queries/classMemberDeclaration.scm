@@ -181,6 +181,34 @@
     ; read from the node's fields Go-side (parameterFromNode)
     parameters: (formal_parameters (_) @params)?
     return_type: (type_annotation (_) @method.returns)?
+    ; the grammar requires a body on method_definition, so this capture
+    ; marks the implementation signature of a method overload
+    body: (statement_block) @method.body
+    (#not-eq? @member.name "constructor")) @method @member)
+
+( ; class method overload signatures
+  ; @examples:
+  ; format(value: string): string;
+  ; format(value: number): string;
+  ; static parse(input: string): string[];
+  ; tree-sitter parses body-less signatures as `method_signature` nodes,
+  ; distinct from body-carrying `method_definition`; the trailing
+  ; implementation signature is dropped Go-side when signatures share its
+  ; name and staticity. Accessor signatures (get/set) and constructors are
+  ; excluded: constructors are not emitted as members, and accessor pairs
+  ; merge into fields instead.
+  (method_signature
+    (accessibility_modifier)? @member.privacy
+    "static"? @member.static
+    ["get" "set"]? @accessor
+    (#not-any-of? @accessor "get" "set")
+    name: (property_identifier) @member.name
+    ; generic type parameter declarations, e.g. <Value>
+    type_parameters: ((type_parameters) @method.typeParameters)?
+    ; one match per parameter node; name/type/default/optional/rest are
+    ; read from the node's fields Go-side (parameterFromNode)
+    parameters: (formal_parameters (_) @params)?
+    return_type: (type_annotation (_) @method.returns)?
     (#not-eq? @member.name "constructor")) @method @member)
 
 ( ; class arrow function field methods

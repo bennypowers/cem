@@ -188,9 +188,11 @@ and package selection.
 
 Generates JSON conforming to the [Custom Elements Manifest][cem] schema. HTML-sensitive characters are escaped using standard JSON unicode sequences (e.g., `<` becomes `\u003c`) for security.
 
-### Function Overloads
+### Function and Method Overloads
 
-When a module declares TypeScript function overloads, only the overload signatures are emitted, one declaration per signature, all sharing the function's name. The trailing implementation signature is not callable by TypeScript consumers, so it is omitted. When the implementation carries JSDoc that a kept overload signature lacks, the implementation's description, summary, and deprecation merge onto the first such signature; other tags (for example `@param` or `@returns`) are not merged. This diverges intentionally from the reference `@custom-elements-manifest/analyzer`, which emits the implementation signature as an additional declaration.
+When a module declares TypeScript function overloads, or a class declares method overloads, only the overload signatures are emitted, one declaration or member per signature, all sharing the function's or method's name. The trailing implementation signature is not callable by TypeScript consumers, so it is omitted. When the implementation carries JSDoc that a kept overload signature lacks, the implementation's description, summary, and deprecation merge onto the first such signature; other tags (for example `@param` or `@returns`) are not merged. Static and instance methods of the same name are distinct members and are filtered separately. This diverges intentionally from the reference `@custom-elements-manifest/analyzer`, which emits the implementation signature as an additional declaration.
+
+Constructor overload sets are not affected: constructors are not emitted as members (only their parameter properties become fields), so body-less constructor signatures are skipped like their body-carrying implementations. Body-less accessor signatures (`get`/`set` without bodies) are skipped as well; accessor pairs with bodies merge into a single field.
 
 ### Generic Type Parameters
 
