@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-ambient-declare.js",
+      "declarations": [
+        {
+          "name": "Player",
+          "members": [
+            {
+              "parameters": [
+                {
+                  "name": "cb",
+                  "type": {
+                    "text": "() =\u003e void"
+                  }
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "name": "onReady",
+              "kind": "method"
+            },
+            {
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "name": "pauseVideo",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-ambient-declare.ts#L1"
+          },
+          "kind": "class"
+        }
+      ]
+    }
+  ]
+}

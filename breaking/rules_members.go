@@ -23,11 +23,24 @@ import (
 	M "bennypowers.dev/cem/manifest"
 )
 
-func publicMethods(ced *M.CustomElementDeclaration) map[string]*M.ClassMethod {
-	methods := make(map[string]*M.ClassMethod)
+// methodGroupKey groups a declaration's public methods: static and
+// instance methods of the same name are distinct members, so both name and
+// staticity form the key.
+type methodGroupKey struct {
+	name   string
+	static bool
+}
+
+// publicMethods groups a declaration's public methods by name and
+// staticity. Manifests carry one member per overload signature, so a group
+// maps to the set of its overloads; a group counts as present when any
+// overload remains.
+func publicMethods(ced *M.CustomElementDeclaration) map[methodGroupKey][]*M.ClassMethod {
+	methods := make(map[methodGroupKey][]*M.ClassMethod)
 	for _, member := range ced.Members {
 		if m, ok := member.(*M.ClassMethod); ok && isPublic(m.Privacy) {
-			methods[m.Name] = m
+			key := methodGroupKey{name: m.Name, static: m.Static}
+			methods[key] = append(methods[key], m)
 		}
 	}
 	return methods
@@ -50,12 +63,83 @@ func publicFields(ced *M.CustomElementDeclaration) map[string]*M.ClassField {
 	return fields
 }
 
+// paramSignature renders a method's parameter list for overload pairing and
+// change reporting. Rest and optional markers are part of the signature, so
+// an optional-to-required or rest-to-non-rest transition does not pair as an
+// unchanged signature.
 func paramSignature(m *M.ClassMethod) string {
 	var params []string
 	for _, p := range m.Parameters {
-		params = append(params, typeText(p.Type))
+		param := typeText(p.Type)
+		if p.Rest {
+			param = "..." + param
+		}
+		if p.Optional {
+			param += "?"
+		}
+		params = append(params, param)
 	}
 	return "(" + strings.Join(params, ", ") + ")"
+}
+
+// overloadPair couples a base overload with the head overload it compares
+// against.
+type overloadPair struct {
+	base *M.ClassMethod
+	head *M.ClassMethod
+}
+
+// overloadInsertion describes a head overload signature absent from the
+// base set that precedes a retained overload.
+type overloadInsertion struct {
+	inserted *M.ClassMethod
+	retained *M.ClassMethod
+}
+
+// overloadPairs pairs each base overload with the head overload it compares
+// against for the parameter and return-type rules. A method with a single
+// overload on each side pairs directly, preserving the classic
+// single-method comparison; overload sets pair per overload by parameter
+// signature, each head overload pairing with at most one base overload, and
+// base overloads without an unused matching head entry come back as
+// unmatched: that call shape is gone from the set, which the caller
+// reports. Head signatures new to the set that precede a retained overload
+// come back as insertions: overloads resolve first-match in declaration
+// order, so an earlier signature can capture calls that previously selected
+// a later one.
+func overloadPairs(base, head []*M.ClassMethod) (pairs []overloadPair, unmatched []*M.ClassMethod, insertions []overloadInsertion) {
+	if len(base) == 1 && len(head) == 1 {
+		return []overloadPair{{base[0], head[0]}}, nil, nil
+	}
+	used := make([]bool, len(head))
+	for _, b := range base {
+		baseSig := paramSignature(b)
+		match := -1
+		for i, h := range head {
+			if !used[i] && paramSignature(h) == baseSig {
+				match = i
+				break
+			}
+		}
+		if match < 0 {
+			unmatched = append(unmatched, b)
+			continue
+		}
+		used[match] = true
+		pairs = append(pairs, overloadPair{base: b, head: head[match]})
+	}
+	for i := range head {
+		if used[i] {
+			continue
+		}
+		for j := i + 1; j < len(head); j++ {
+			if used[j] {
+				insertions = append(insertions, overloadInsertion{inserted: head[i], retained: head[j]})
+				break
+			}
+		}
+	}
+	return pairs, unmatched, insertions
 }
 
 // Methods
@@ -72,14 +156,14 @@ func (*methodRemovedRule) Check(base, head map[string]*M.CustomElementDeclaratio
 			continue
 		}
 		headMethods := publicMethods(headEl)
-		for name := range publicMethods(baseEl) {
-			if _, ok := headMethods[name]; !ok {
+		for key := range publicMethods(baseEl) {
+			if _, ok := headMethods[key]; !ok {
 				changes = append(changes, Change{
 					Rule:     "method-removed",
 					Severity: Breaking,
 					Element:  tag,
-					Subject:  name,
-					Message:  fmt.Sprintf("method %q removed from <%s>", name, tag),
+					Subject:  key.name,
+					Message:  fmt.Sprintf("method %q removed from <%s>", key.name, tag),
 				})
 			}
 		}
@@ -99,14 +183,14 @@ func (*methodAddedRule) Check(base, head map[string]*M.CustomElementDeclaration)
 			continue
 		}
 		baseMethods := publicMethods(baseEl)
-		for name := range publicMethods(headEl) {
-			if _, ok := baseMethods[name]; !ok {
+		for key := range publicMethods(headEl) {
+			if _, ok := baseMethods[key]; !ok {
 				changes = append(changes, Change{
 					Rule:     "method-added",
 					Severity: Safe,
 					Element:  tag,
-					Subject:  name,
-					Message:  fmt.Sprintf("method %q added to <%s>", name, tag),
+					Subject:  key.name,
+					Message:  fmt.Sprintf("method %q added to <%s>", key.name, tag),
 				})
 			}
 		}
@@ -126,21 +210,28 @@ func (*methodReturnTypeChangedRule) Check(base, head map[string]*M.CustomElement
 			continue
 		}
 		headMethods := publicMethods(headEl)
-		for name, baseMethod := range publicMethods(baseEl) {
-			headMethod, ok := headMethods[name]
+		for key, baseOverloads := range publicMethods(baseEl) {
+			headOverloads, ok := headMethods[key]
 			if !ok {
 				continue
 			}
-			baseReturn := returnTypeText(baseMethod)
-			headReturn := returnTypeText(headMethod)
-			if baseReturn != "" && headReturn != "" && baseReturn != headReturn {
-				changes = append(changes, Change{
-					Rule:     "method-return-type-changed",
-					Severity: Breaking,
-					Element:  tag,
-					Subject:  name,
-					Message:  fmt.Sprintf("method %q return type changed from %s to %s in <%s>", name, baseReturn, headReturn, tag),
-				})
+			// the return type is compared on the overload paired by
+			// overloadPairs; unmatched base overloads carry no head
+			// counterpart to compare against and are reported by
+			// method-parameter-changed instead
+			pairs, _, _ := overloadPairs(baseOverloads, headOverloads)
+			for _, pair := range pairs {
+				baseReturn := returnTypeText(pair.base)
+				headReturn := returnTypeText(pair.head)
+				if baseReturn != "" && headReturn != "" && baseReturn != headReturn {
+					changes = append(changes, Change{
+						Rule:     "method-return-type-changed",
+						Severity: Breaking,
+						Element:  tag,
+						Subject:  key.name,
+						Message:  fmt.Sprintf("method %q return type changed from %s to %s in <%s>", key.name, baseReturn, headReturn, tag),
+					})
+				}
 			}
 		}
 	}
@@ -159,20 +250,48 @@ func (*methodParameterChangedRule) Check(base, head map[string]*M.CustomElementD
 			continue
 		}
 		headMethods := publicMethods(headEl)
-		for name, baseMethod := range publicMethods(baseEl) {
-			headMethod, ok := headMethods[name]
+		for key, baseOverloads := range publicMethods(baseEl) {
+			headOverloads, ok := headMethods[key]
 			if !ok {
 				continue
 			}
-			baseSig := paramSignature(baseMethod)
-			headSig := paramSignature(headMethod)
-			if baseSig != headSig {
+			pairs, unmatched, insertions := overloadPairs(baseOverloads, headOverloads)
+			for _, pair := range pairs {
+				// only the direct single-overload pairing can differ;
+				// overload-set pairs are matched by parameter signature
+				baseSig := paramSignature(pair.base)
+				headSig := paramSignature(pair.head)
+				if baseSig == headSig {
+					continue
+				}
 				changes = append(changes, Change{
 					Rule:     "method-parameter-changed",
 					Severity: Breaking,
 					Element:  tag,
-					Subject:  name,
-					Message:  fmt.Sprintf("method %q parameters changed from %s to %s in <%s>", name, baseSig, headSig, tag),
+					Subject:  key.name,
+					Message:  fmt.Sprintf("method %q parameters changed from %s to %s in <%s>", key.name, baseSig, headSig, tag),
+				})
+			}
+			for _, baseMethod := range unmatched {
+				changes = append(changes, Change{
+					Rule:     "method-parameter-changed",
+					Severity: Breaking,
+					Element:  tag,
+					Subject:  key.name,
+					Message:  fmt.Sprintf("method %q overload parameters %s removed from <%s>", key.name, paramSignature(baseMethod), tag),
+				})
+			}
+			// whether an inserted signature actually captures the retained
+			// overload's calls depends on type compatibility, which cem
+			// does not check, so the change is dangerous rather than
+			// outright breaking
+			for _, ins := range insertions {
+				changes = append(changes, Change{
+					Rule:     "method-parameter-changed",
+					Severity: Dangerous,
+					Element:  tag,
+					Subject:  key.name,
+					Message:  fmt.Sprintf("method %q overload %s inserted before %s may capture its calls in <%s>", key.name, paramSignature(ins.inserted), paramSignature(ins.retained), tag),
 				})
 			}
 		}

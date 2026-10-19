@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-method-overloads-exclusions.js",
+      "declarations": [
+        {
+          "name": "MethodOverloadsExclusions",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "members": [
+            {
+              "name": "realLabel",
+              "type": {
+                "text": "string"
+              },
+              "kind": "field"
+            },
+            {
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "name": "type",
+              "kind": "method"
+            },
+            {
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "name": "global",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-method-overloads-exclusions.ts#L1"
+          },
+          "kind": "class",
+          "tagName": "method-overloads-exclusions",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "method-overloads-exclusions",
+          "declaration": {
+            "name": "MethodOverloadsExclusions",
+            "module": "src/class-method-overloads-exclusions.js"
+          }
+        }
+      ]
+    }
+  ]
+}

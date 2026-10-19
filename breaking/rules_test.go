@@ -427,6 +427,176 @@ func TestMemberRules(t *testing.T) {
 		assert.Empty(t, changes)
 	})
 
+	// Overload sets: manifests carry one member per overload signature, so
+	// same-name methods compare per overload, matched by parameter
+	// signature. A name counts as removed only when absent entirely.
+	t.Run("overload set: added overload is not breaking", func(t *testing.T) {
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+			method("format", M.Public, []M.Parameter{param("value", "number")}, nil),
+		)))
+		assert.Empty(t, findRule("method-removed").Check(base, head))
+		assert.Empty(t, findRule("method-parameter-changed").Check(base, head))
+		assert.Empty(t, findRule("method-return-type-changed").Check(base, head))
+	})
+
+	t.Run("overload set: removed overload is breaking naming the overload", func(t *testing.T) {
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+			method("format", M.Public, []M.Parameter{param("value", "number")}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+		)))
+		assert.Empty(t, findRule("method-removed").Check(base, head))
+		changes := findRule("method-parameter-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Breaking, changes[0].Severity)
+		assert.Contains(t, changes[0].Message, "(number)")
+	})
+
+	t.Run("overload set: changed params on one overload is breaking naming that overload", func(t *testing.T) {
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+			method("format", M.Public, []M.Parameter{param("value", "number")}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+			method("format", M.Public, []M.Parameter{param("value", "number"), param("radix", "number")}, nil),
+		)))
+		changes := findRule("method-parameter-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Breaking, changes[0].Severity)
+		assert.Contains(t, changes[0].Message, "(number)")
+	})
+
+	t.Run("overload set: return type compared on the param-matched overload", func(t *testing.T) {
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, &M.Return{Type: &M.Type{Text: "string"}}),
+			method("format", M.Public, []M.Parameter{param("value", "number")}, &M.Return{Type: &M.Type{Text: "number"}}),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, &M.Return{Type: &M.Type{Text: "string"}}),
+			method("format", M.Public, []M.Parameter{param("value", "number")}, &M.Return{Type: &M.Type{Text: "string"}}),
+		)))
+		changes := findRule("method-return-type-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Breaking, changes[0].Severity)
+		assert.Contains(t, changes[0].Message, "number")
+	})
+
+	t.Run("overload set: method name kept when any overload remains", func(t *testing.T) {
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "number")}, nil),
+		)))
+		assert.Empty(t, findRule("method-removed").Check(base, head))
+		changes := findRule("method-parameter-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Breaking, changes[0].Severity)
+	})
+
+	t.Run("overload set: optional to required is breaking naming the overload", func(t *testing.T) {
+		baseOptional := param("value", "string")
+		baseOptional.Optional = true
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{baseOptional}, nil),
+			method("format", M.Public, []M.Parameter{param("value", "number")}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+			method("format", M.Public, []M.Parameter{param("value", "number")}, nil),
+		)))
+		assert.Empty(t, findRule("method-removed").Check(base, head))
+		changes := findRule("method-parameter-changed").Check(base, head)
+		// the optional overload is removed, and the required signature
+		// replacing it is new to the set ahead of the retained number
+		// overload, so it is also reported as a possible call capture
+		assert.Len(t, changes, 2)
+		assert.Equal(t, breaking.Breaking, changes[0].Severity)
+		assert.Contains(t, changes[0].Message, "(string?)")
+		assert.Equal(t, breaking.Dangerous, changes[1].Severity)
+		assert.Contains(t, changes[1].Message, "(string)")
+		assert.Contains(t, changes[1].Message, "(number)")
+	})
+
+	t.Run("rest to non-rest is breaking", func(t *testing.T) {
+		baseRest := param("values", "string[]")
+		baseRest.Rest = true
+		base := makeElements(ced("my-el", withMembers(
+			method("emit", M.Public, []M.Parameter{baseRest}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("emit", M.Public, []M.Parameter{param("values", "string[]")}, nil),
+		)))
+		changes := findRule("method-parameter-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Breaking, changes[0].Severity)
+		assert.Contains(t, changes[0].Message, "(...string[])")
+		assert.Contains(t, changes[0].Message, "(string[])")
+	})
+
+	t.Run("static and instance methods of one name are distinct", func(t *testing.T) {
+		baseStatic := method("create", M.Public, []M.Parameter{param("input", "string")}, nil)
+		baseStatic.Static = true
+		base := makeElements(ced("my-el", withMembers(
+			baseStatic,
+			method("create", M.Public, []M.Parameter{param("input", "string")}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("create", M.Public, []M.Parameter{param("input", "string")}, nil),
+		)))
+		changes := findRule("method-removed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Breaking, changes[0].Severity)
+		assert.Contains(t, changes[0].Message, "create")
+	})
+
+	t.Run("instance method removed while same-name static method added is reported", func(t *testing.T) {
+		headStatic := method("foo", M.Public, []M.Parameter{param("x", "string")}, nil)
+		headStatic.Static = true
+		base := makeElements(ced("my-el", withMembers(
+			method("foo", M.Public, []M.Parameter{param("x", "string")}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(headStatic)))
+		changes := findRule("method-removed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Contains(t, changes[0].Message, "foo")
+	})
+
+	t.Run("overload set: duplicate signatures pair one-to-one", func(t *testing.T) {
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, &M.Return{Type: &M.Type{Text: "string"}}),
+			method("format", M.Public, []M.Parameter{param("value", "string")}, &M.Return{Type: &M.Type{Text: "number"}}),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, &M.Return{Type: &M.Type{Text: "string"}}),
+		)))
+		changes := findRule("method-parameter-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Contains(t, changes[0].Message, "(string)")
+	})
+
+	t.Run("overload inserted before a retained signature is reported", func(t *testing.T) {
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, &M.Return{Type: &M.Type{Text: "string"}}),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string | number")}, &M.Return{Type: &M.Type{Text: "string | number"}}),
+			method("format", M.Public, []M.Parameter{param("value", "string")}, &M.Return{Type: &M.Type{Text: "string"}}),
+		)))
+		changes := findRule("method-parameter-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Dangerous, changes[0].Severity)
+		assert.Contains(t, changes[0].Message, "(string | number)")
+		assert.Contains(t, changes[0].Message, "(string)")
+	})
+
 	t.Run("field-added", func(t *testing.T) {
 		base := makeElements(ced("my-el"))
 		head := makeElements(ced("my-el", withMembers(field("value", M.Public, "string"))))
