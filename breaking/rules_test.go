@@ -535,6 +535,47 @@ func TestMemberRules(t *testing.T) {
 		assert.Contains(t, changes[0].Message, "(string[])")
 	})
 
+	t.Run("static and instance methods of one name are distinct", func(t *testing.T) {
+		baseStatic := method("create", M.Public, []M.Parameter{param("input", "string")}, nil)
+		baseStatic.Static = true
+		base := makeElements(ced("my-el", withMembers(
+			baseStatic,
+			method("create", M.Public, []M.Parameter{param("input", "string")}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("create", M.Public, []M.Parameter{param("input", "string")}, nil),
+		)))
+		changes := findRule("method-removed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Breaking, changes[0].Severity)
+		assert.Contains(t, changes[0].Message, "create")
+	})
+
+	t.Run("instance method removed while same-name static method added is reported", func(t *testing.T) {
+		headStatic := method("foo", M.Public, []M.Parameter{param("x", "string")}, nil)
+		headStatic.Static = true
+		base := makeElements(ced("my-el", withMembers(
+			method("foo", M.Public, []M.Parameter{param("x", "string")}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(headStatic)))
+		changes := findRule("method-removed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Contains(t, changes[0].Message, "foo")
+	})
+
+	t.Run("overload set: duplicate signatures pair one-to-one", func(t *testing.T) {
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, &M.Return{Type: &M.Type{Text: "string"}}),
+			method("format", M.Public, []M.Parameter{param("value", "string")}, &M.Return{Type: &M.Type{Text: "number"}}),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, &M.Return{Type: &M.Type{Text: "string"}}),
+		)))
+		changes := findRule("method-parameter-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Contains(t, changes[0].Message, "(string)")
+	})
+
 	t.Run("field-added", func(t *testing.T) {
 		base := makeElements(ced("my-el"))
 		head := makeElements(ced("my-el", withMembers(field("value", M.Public, "string"))))
