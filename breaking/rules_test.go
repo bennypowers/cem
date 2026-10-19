@@ -514,9 +514,15 @@ func TestMemberRules(t *testing.T) {
 		)))
 		assert.Empty(t, findRule("method-removed").Check(base, head))
 		changes := findRule("method-parameter-changed").Check(base, head)
-		assert.Len(t, changes, 1)
+		// the optional overload is removed, and the required signature
+		// replacing it is new to the set ahead of the retained number
+		// overload, so it is also reported as a possible call capture
+		assert.Len(t, changes, 2)
 		assert.Equal(t, breaking.Breaking, changes[0].Severity)
 		assert.Contains(t, changes[0].Message, "(string?)")
+		assert.Equal(t, breaking.Dangerous, changes[1].Severity)
+		assert.Contains(t, changes[1].Message, "(string)")
+		assert.Contains(t, changes[1].Message, "(number)")
 	})
 
 	t.Run("rest to non-rest is breaking", func(t *testing.T) {
@@ -573,6 +579,21 @@ func TestMemberRules(t *testing.T) {
 		)))
 		changes := findRule("method-parameter-changed").Check(base, head)
 		assert.Len(t, changes, 1)
+		assert.Contains(t, changes[0].Message, "(string)")
+	})
+
+	t.Run("overload inserted before a retained signature is reported", func(t *testing.T) {
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, &M.Return{Type: &M.Type{Text: "string"}}),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string | number")}, &M.Return{Type: &M.Type{Text: "string | number"}}),
+			method("format", M.Public, []M.Parameter{param("value", "string")}, &M.Return{Type: &M.Type{Text: "string"}}),
+		)))
+		changes := findRule("method-parameter-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Dangerous, changes[0].Severity)
+		assert.Contains(t, changes[0].Message, "(string | number)")
 		assert.Contains(t, changes[0].Message, "(string)")
 	})
 

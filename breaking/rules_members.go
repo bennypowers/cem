@@ -89,6 +89,13 @@ type overloadPair struct {
 	head *M.ClassMethod
 }
 
+// overloadInsertion describes a head overload signature absent from the
+// base set that precedes a retained overload.
+type overloadInsertion struct {
+	inserted *M.ClassMethod
+	retained *M.ClassMethod
+}
+
 // overloadPairs pairs each base overload with the head overload it compares
 // against for the parameter and return-type rules. A method with a single
 // overload on each side pairs directly, preserving the classic
@@ -96,10 +103,13 @@ type overloadPair struct {
 // signature, each head overload pairing with at most one base overload, and
 // base overloads without an unused matching head entry come back as
 // unmatched: that call shape is gone from the set, which the caller
-// reports.
-func overloadPairs(base, head []*M.ClassMethod) (pairs []overloadPair, unmatched []*M.ClassMethod) {
+// reports. Head signatures new to the set that precede a retained overload
+// come back as insertions: overloads resolve first-match in declaration
+// order, so an earlier signature can capture calls that previously selected
+// a later one.
+func overloadPairs(base, head []*M.ClassMethod) (pairs []overloadPair, unmatched []*M.ClassMethod, insertions []overloadInsertion) {
 	if len(base) == 1 && len(head) == 1 {
-		return []overloadPair{{base[0], head[0]}}, nil
+		return []overloadPair{{base[0], head[0]}}, nil, nil
 	}
 	used := make([]bool, len(head))
 	for _, b := range base {
@@ -118,7 +128,18 @@ func overloadPairs(base, head []*M.ClassMethod) (pairs []overloadPair, unmatched
 		used[match] = true
 		pairs = append(pairs, overloadPair{base: b, head: head[match]})
 	}
-	return pairs, unmatched
+	for i := range head {
+		if used[i] {
+			continue
+		}
+		for j := i + 1; j < len(head); j++ {
+			if used[j] {
+				insertions = append(insertions, overloadInsertion{inserted: head[i], retained: head[j]})
+				break
+			}
+		}
+	}
+	return pairs, unmatched, insertions
 }
 
 // Methods
@@ -198,7 +219,7 @@ func (*methodReturnTypeChangedRule) Check(base, head map[string]*M.CustomElement
 			// overloadPairs; unmatched base overloads carry no head
 			// counterpart to compare against and are reported by
 			// method-parameter-changed instead
-			pairs, _ := overloadPairs(baseOverloads, headOverloads)
+			pairs, _, _ := overloadPairs(baseOverloads, headOverloads)
 			for _, pair := range pairs {
 				baseReturn := returnTypeText(pair.base)
 				headReturn := returnTypeText(pair.head)
@@ -234,7 +255,7 @@ func (*methodParameterChangedRule) Check(base, head map[string]*M.CustomElementD
 			if !ok {
 				continue
 			}
-			pairs, unmatched := overloadPairs(baseOverloads, headOverloads)
+			pairs, unmatched, insertions := overloadPairs(baseOverloads, headOverloads)
 			for _, pair := range pairs {
 				// only the direct single-overload pairing can differ;
 				// overload-set pairs are matched by parameter signature
@@ -258,6 +279,19 @@ func (*methodParameterChangedRule) Check(base, head map[string]*M.CustomElementD
 					Element:  tag,
 					Subject:  key.name,
 					Message:  fmt.Sprintf("method %q overload parameters %s removed from <%s>", key.name, paramSignature(baseMethod), tag),
+				})
+			}
+			// whether an inserted signature actually captures the retained
+			// overload's calls depends on type compatibility, which cem
+			// does not check, so the change is dangerous rather than
+			// outright breaking
+			for _, ins := range insertions {
+				changes = append(changes, Change{
+					Rule:     "method-parameter-changed",
+					Severity: Dangerous,
+					Element:  tag,
+					Subject:  key.name,
+					Message:  fmt.Sprintf("method %q overload %s inserted before %s may capture its calls in <%s>", key.name, paramSignature(ins.inserted), paramSignature(ins.retained), tag),
 				})
 			}
 		}
