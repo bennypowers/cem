@@ -501,6 +501,40 @@ func TestMemberRules(t *testing.T) {
 		assert.Equal(t, breaking.Breaking, changes[0].Severity)
 	})
 
+	t.Run("overload set: optional to required is breaking naming the overload", func(t *testing.T) {
+		baseOptional := param("value", "string")
+		baseOptional.Optional = true
+		base := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{baseOptional}, nil),
+			method("format", M.Public, []M.Parameter{param("value", "number")}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("format", M.Public, []M.Parameter{param("value", "string")}, nil),
+			method("format", M.Public, []M.Parameter{param("value", "number")}, nil),
+		)))
+		assert.Empty(t, findRule("method-removed").Check(base, head))
+		changes := findRule("method-parameter-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Breaking, changes[0].Severity)
+		assert.Contains(t, changes[0].Message, "(string?)")
+	})
+
+	t.Run("rest to non-rest is breaking", func(t *testing.T) {
+		baseRest := param("values", "string[]")
+		baseRest.Rest = true
+		base := makeElements(ced("my-el", withMembers(
+			method("emit", M.Public, []M.Parameter{baseRest}, nil),
+		)))
+		head := makeElements(ced("my-el", withMembers(
+			method("emit", M.Public, []M.Parameter{param("values", "string[]")}, nil),
+		)))
+		changes := findRule("method-parameter-changed").Check(base, head)
+		assert.Len(t, changes, 1)
+		assert.Equal(t, breaking.Breaking, changes[0].Severity)
+		assert.Contains(t, changes[0].Message, "(...string[])")
+		assert.Contains(t, changes[0].Message, "(string[])")
+	})
+
 	t.Run("field-added", func(t *testing.T) {
 		base := makeElements(ced("my-el"))
 		head := makeElements(ced("my-el", withMembers(field("value", M.Public, "string"))))

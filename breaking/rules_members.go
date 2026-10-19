@@ -53,10 +53,21 @@ func publicFields(ced *M.CustomElementDeclaration) map[string]*M.ClassField {
 	return fields
 }
 
+// paramSignature renders a method's parameter list for overload pairing and
+// change reporting. Rest and optional markers are part of the signature, so
+// an optional-to-required or rest-to-non-rest transition does not pair as an
+// unchanged signature.
 func paramSignature(m *M.ClassMethod) string {
 	var params []string
 	for _, p := range m.Parameters {
-		params = append(params, typeText(p.Type))
+		param := typeText(p.Type)
+		if p.Rest {
+			param = "..." + param
+		}
+		if p.Optional {
+			param += "?"
+		}
+		params = append(params, param)
 	}
 	return "(" + strings.Join(params, ", ") + ")"
 }
