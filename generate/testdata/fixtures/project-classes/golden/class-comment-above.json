@@ -16,6 +16,17 @@
           },
           "kind": "class",
           "tagName": "commented-element",
+          "slots": [
+            {
+              "name": ""
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--color",
+              "default": "red"
+            }
+          ],
           "customElement": true
         },
         {
@@ -25,10 +36,15 @@
             "package": "lit"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-comment-above.ts#L8"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-comment-above.ts#L14"
           },
           "kind": "class",
           "tagName": "commented-unexported",
+          "slots": [
+            {
+              "name": ""
+            }
+          ],
           "customElement": true
         },
         {
@@ -38,9 +54,17 @@
             "package": "global:"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-comment-above.ts#L12"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-comment-above.ts#L22"
           },
           "kind": "class",
+          "attributes": [
+            {
+              "name": "foo"
+            },
+            {
+              "name": "bar"
+            }
+          ],
           "customElement": true
         },
         {
@@ -50,7 +74,7 @@
             "package": "global:"
           },
           "source": {
-            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-comment-above.ts#L15"
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-comment-above.ts#L27"
           },
           "kind": "class",
           "customElement": true

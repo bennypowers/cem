@@ -203,7 +203,13 @@
 ; the same match without the comment prefix, for the same reason as the
 ; non-exported fallback above: without it, a non-JSDoc comment above the
 ; decorator stops the pattern, and the class falls through to the plain
-; class patterns above, losing its tag name and custom-element export
+; class patterns above, losing its tag name and custom-element export.
+; Unlike the exported plain class pattern (covered by the non-exported
+; plain fallback, which matches class_declarations inside export
+; statements too), this pattern needs its own fallback: in the exported
+; form the decorator attaches to the export_statement node rather than
+; the class_declaration, so the class_declaration-rooted non-exported
+; fallback below cannot match exported decorated classes.
 (export_statement
   (decorator) *
   decorator: (decorator
