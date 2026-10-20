@@ -1,0 +1,125 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/export-declarations-comment.js",
+      "declarations": [
+        {
+          "name": "commentedVar",
+          "default": "'qux'",
+          "kind": "variable",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-declarations-comment.ts#L10"
+          }
+        },
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "string"
+            }
+          },
+          "name": "commentedFn",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-declarations-comment.ts#L2"
+          }
+        },
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "number"
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "number"
+            }
+          },
+          "name": "commentedArrow",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-declarations-comment.ts#L7"
+          }
+        },
+        {
+          "return": {
+            "type": {
+              "text": "void"
+            }
+          },
+          "name": "documentedWithNote",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-declarations-comment.ts#L14"
+          }
+        },
+        {
+          "return": {
+            "type": {
+              "text": "void"
+            }
+          },
+          "name": "uncommentedFn",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/export-declarations-comment.ts#L16"
+          }
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "commentedFn",
+          "declaration": {
+            "name": "commentedFn",
+            "module": "src/export-declarations-comment.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "commentedArrow",
+          "declaration": {
+            "name": "commentedArrow",
+            "module": "src/export-declarations-comment.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "commentedVar",
+          "declaration": {
+            "name": "commentedVar",
+            "module": "src/export-declarations-comment.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "documentedWithNote",
+          "declaration": {
+            "name": "documentedWithNote",
+            "module": "src/export-declarations-comment.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "uncommentedFn",
+          "declaration": {
+            "name": "uncommentedFn",
+            "module": "src/export-declarations-comment.js"
+          }
+        }
+      ]
+    }
+  ]
+}
