@@ -59,6 +59,7 @@
               "text": "void"
             }
           },
+          "description": "Documented function.",
           "name": "documentedWithNote",
           "kind": "function",
           "source": {

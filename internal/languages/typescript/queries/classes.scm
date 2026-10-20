@@ -4,6 +4,8 @@
   ; ```ts
   ; export class Whatever extends Thing {}
   ; ```
+  ; Needs no fallback of its own: the non-exported plain class fallback
+  ; below also matches class_declarations inside export statements.
   (comment)* @class.jsdoc . (#match? @class.jsdoc "^/\\*\\*") .
   (export_statement
     declaration: (class_declaration
@@ -41,6 +43,7 @@
   ; ```ts
   ; export class Whatever extends Thing {}
   ; ```
+  ; Keep this pattern in sync with the comment-less fallback below.
   (comment)* @class.jsdoc . (#match? @class.jsdoc "^/\\*\\*") .
   (class_declaration
     name: (_) @class.name
@@ -121,6 +124,7 @@
   ; @customElement(tagName)
   ; export class CustomElement extends CustomBase {}
   ; ```
+  ; Keep this pattern in sync with the comment-less fallback below.
   (comment)* @class.jsdoc . (#match? @class.jsdoc "^/\\*\\*") .
   (export_statement
     (decorator) *
@@ -295,6 +299,7 @@
   ; @customElement('custom-element')
   ; class CustomElement extends LitElement {}
   ; ```
+  ; Keep this pattern in sync with the comment-less fallback below.
   (comment)* @class.jsdoc . (#match? @class.jsdoc "^/\\*\\*") .
   (class_declaration
     (decorator) *

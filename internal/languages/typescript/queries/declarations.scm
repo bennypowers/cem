@@ -5,7 +5,8 @@
   ; outside the grouping paren: a capture on the wrapped sibling sequence
   ; binds to the sequence's first node, which for a JSDoc-prefixed match is
   ; the comment, splitting captures across two parent groups and defeating
-  ; the merge with the comment-less fallback below.
+  ; the merge with the comment-less fallback below. Keep this pattern in
+  ; sync with that fallback: the pair must capture the same nodes.
   (comment) * @variable.jsdoc (#match? @variable.jsdoc "^/\\*\\*") .
    (export_statement
      declaration: (_
@@ -35,6 +36,7 @@
   ; export const foo = (whatev: string): bool => true
   ; The @function capture sits on the export_statement itself rather than
   ; outside the grouping paren, for the same reason as @variable above.
+  ; Keep this pattern in sync with the comment-less fallback below.
   (comment) * @function.jsdoc (#match? @function.jsdoc "^/\\*\\*") .
   (export_statement
     declaration: (lexical_declaration
@@ -64,6 +66,7 @@
   ; export async function *foo(whatev: string): bool { }
   ; The @function capture sits on the export_statement itself rather than
   ; outside the grouping paren, for the same reason as @variable above.
+  ; Keep this pattern in sync with the comment-less fallback below.
   (comment) * @function.jsdoc (#match? @function.jsdoc "^/\\*\\*") .
   (export_statement
     declaration: (_
@@ -98,7 +101,8 @@
 ; name. The @function capture sits on the export_statement itself rather
 ; than outside the grouping paren: a capture on the wrapped sibling
 ; sequence binds to the sequence's first node, which for a JSDoc-prefixed
-; match is the comment, splitting captures across two parent groups.
+; match is the comment, splitting captures across two parent groups. Keep
+; this pattern in sync with the comment-less fallback below.
 ((comment) * @function.jsdoc (#match? @function.jsdoc "^/\\*\\*") .
  (export_statement
    declaration: (function_signature
