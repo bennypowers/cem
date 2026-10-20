@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/jsdoc-stacked.js",
+      "declarations": [
+        {
+          "name": "stackedVar",
+          "description": "Inner variable description.",
+          "default": "1",
+          "kind": "variable",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/jsdoc-stacked.ts#L23"
+          }
+        },
+        {
+          "return": {
+            "type": {
+              "text": "void"
+            }
+          },
+          "name": "stackedFn",
+          "description": "Inner function description.",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/jsdoc-stacked.ts#L15"
+          }
+        },
+        {
+          "name": "StackedClass",
+          "description": "Inner class description.",
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/jsdoc-stacked.ts#L7"
+          },
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "StackedClass",
+          "declaration": {
+            "name": "StackedClass",
+            "module": "src/jsdoc-stacked.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "stackedFn",
+          "declaration": {
+            "name": "stackedFn",
+            "module": "src/jsdoc-stacked.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "stackedVar",
+          "declaration": {
+            "name": "stackedVar",
+            "module": "src/jsdoc-stacked.js"
+          }
+        }
+      ]
+    }
+  ]
+}

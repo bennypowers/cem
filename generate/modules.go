@@ -29,10 +29,10 @@ import (
 
 	"bennypowers.dev/cem/generate/jsdoc"
 	"bennypowers.dev/cem/internal/platform"
+	S "bennypowers.dev/cem/internal/set"
+	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/internal/tui"
 	M "bennypowers.dev/cem/manifest"
-	Q "bennypowers.dev/cem/internal/treesitter"
-	S "bennypowers.dev/cem/internal/set"
 	"bennypowers.dev/cem/types"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
@@ -326,14 +326,6 @@ func (mp *ModuleProcessor) processClasses() error {
 
 	processed := make(map[string]*ParsedClass)
 
-	// Collect all JSdoc captures once, outside the loop
-	allJsdocs := []Q.CaptureInfo{}
-	for captures := range qm.ParentCaptures(mp.root, mp.code, "class.jsdoc") {
-		if jsdocCaps, ok := captures["class.jsdoc"]; ok {
-			allJsdocs = append(allJsdocs, jsdocCaps...)
-		}
-	}
-
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "class.declaration") {
 		nameNodes, ok := captures["class.name"]
 		if !ok || len(nameNodes) == 0 {
@@ -344,16 +336,20 @@ func (mp *ModuleProcessor) processClasses() error {
 			continue
 		}
 
-		if _, hasJSDoc := captures["class.jsdoc"]; !hasJSDoc {
-			if declCaptures, ok := captures["class.declaration"]; ok && len(declCaptures) > 0 {
-				node := Q.GetDescendantById(mp.root, declCaptures[0].NodeId)
-				if node != nil {
-					if p := node.Parent(); p != nil && p.Kind() == "export_statement" {
-						node = p
-					}
-					if text := jsdoc.ExtractFromNode(node, mp.code); text != "" {
-						captures["class.jsdoc"] = []Q.CaptureInfo{{Text: text}}
-					}
+		// the class queries intentionally carry no comment prefix (one
+		// would pin matches to the program's first child and fail on
+		// plain comments above the class), so JSDoc is recovered here
+		// from the preceding sibling run, skipping decorators and
+		// non-JSDoc comments; the closest JSDoc wins, matching
+		// TypeScript's own attachment behavior
+		if declCaptures, ok := captures["class.declaration"]; ok && len(declCaptures) > 0 {
+			node := Q.GetDescendantById(mp.root, declCaptures[0].NodeId)
+			if node != nil {
+				if p := node.Parent(); p != nil && p.Kind() == "export_statement" {
+					node = p
+				}
+				if text := jsdoc.ExtractFromNode(node, mp.code); text != "" {
+					captures["class.jsdoc"] = []Q.CaptureInfo{{Text: text}}
 				}
 			}
 		}
@@ -448,11 +444,8 @@ func (mp *ModuleProcessor) processDeclarations() error {
 
 	// variable declarations
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "variable") {
-		// the comment-less fallback pattern captures no JSDoc; recover it
-		// from the comment preceding the export statement when the query
-		// didn't capture one, mirroring the class jsdoc handling in
-		// processClasses (a plain comment between the JSDoc and the
-		// statement defeats the query's comment-prefix pattern)
+		// the declarations query carries no comment prefix, so JSDoc is
+		// recovered from the comment preceding the export statement
 		mp.attachLocalJSDoc(captures, "variable", "variable.jsdoc")
 		declaration, err := mp.generateVarDeclaration(captures)
 		if err != nil {
@@ -803,16 +796,14 @@ func (mp *ModuleProcessor) processDeclarations() error {
 	return err
 }
 
-// attachLocalJSDoc enriches local-declaration captures with JSDoc extracted
-// from the comment preceding the matched node, mirroring the class jsdoc
-// handling in processClasses. The local.* query patterns intentionally omit
-// a comment prefix (a zero-match `(comment) *` prefix would pin matches to
-// the program's first child), so JSDoc is recovered here when the pattern
-// didn't capture one.
+// attachLocalJSDoc enriches declaration captures with JSDoc extracted from
+// the comment preceding the matched node, mirroring the class jsdoc
+// handling in processClasses. The query patterns intentionally omit a
+// comment prefix (a zero-match `(comment) *` prefix would pin matches to
+// the program's first child, and an anchored prefix fails on plain
+// comments above the statement), so JSDoc is recovered here for every
+// declaration shape, with the closest JSDoc comment winning.
 func (mp *ModuleProcessor) attachLocalJSDoc(captures Q.CaptureMap, nodeCapture, jsdocCapture string) {
-	if _, hasJSDoc := captures[jsdocCapture]; hasJSDoc {
-		return
-	}
 	nodes, ok := captures[nodeCapture]
 	if !ok || len(nodes) == 0 {
 		return
