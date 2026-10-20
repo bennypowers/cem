@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-comment-above.js",
+      "declarations": [
+        {
+          "name": "CommentedElement",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-comment-above.ts#L5"
+          },
+          "kind": "class",
+          "tagName": "commented-element",
+          "slots": [
+            {
+              "name": ""
+            }
+          ],
+          "cssProperties": [
+            {
+              "name": "--color",
+              "default": "red"
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "CommentedUnexported",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-comment-above.ts#L14"
+          },
+          "kind": "class",
+          "tagName": "commented-unexported",
+          "slots": [
+            {
+              "name": ""
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "CommentedPlain",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-comment-above.ts#L22"
+          },
+          "kind": "class",
+          "attributes": [
+            {
+              "name": "foo"
+            },
+            {
+              "name": "bar"
+            }
+          ],
+          "customElement": true
+        },
+        {
+          "name": "CommentedExported",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-comment-above.ts#L27"
+          },
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "commented-element",
+          "declaration": {
+            "name": "CommentedElement",
+            "module": "src/class-comment-above.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "CommentedElement",
+          "declaration": {
+            "name": "CommentedElement",
+            "module": "src/class-comment-above.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "commented-unexported",
+          "declaration": {
+            "name": "CommentedUnexported",
+            "module": "src/class-comment-above.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "CommentedExported",
+          "declaration": {
+            "name": "CommentedExported",
+            "module": "src/class-comment-above.js"
+          }
+        }
+      ]
+    }
+  ]
+}

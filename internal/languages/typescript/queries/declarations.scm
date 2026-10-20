@@ -1,17 +1,42 @@
 ( ; variable declarations
   ; let foo = 'bar'
   ; export const baz = 'qux'
+  ; The @variable capture sits on the export_statement itself rather than
+  ; outside the grouping paren: a capture on the wrapped sibling sequence
+  ; binds to the sequence's first node, which for a JSDoc-prefixed match is
+  ; the comment, splitting captures across two parent groups and defeating
+  ; the merge with the comment-less fallback below. Keep this pattern in
+  ; sync with that fallback: the pair must capture the same nodes.
   (comment) * @variable.jsdoc (#match? @variable.jsdoc "^/\\*\\*") .
    (export_statement
      declaration: (_
                     (variable_declarator
                       name: (identifier) @variable.name
                       type: (type_annotation (_) @variable.type)?
-                      value: (_ !parameters) @variable.value)))) @variable
+                      value: (_ !parameters) @variable.value))) @variable)
+
+; the same match without the comment prefix: a non-JSDoc comment directly
+; above the statement stops the pattern above (the greedy comment group
+; captures it, the jsdoc predicate fails the whole match, and tree-sitter
+; does not retry the zero-comment expansion once a longer one matched), so
+; this variant guarantees the declaration is captured. Both patterns
+; capture the export_statement as the parent node, so ParentCaptures
+; merges their captures per statement, keeping the JSDoc when one precedes
+; it. The !parameters predicate keeps arrow-function consts to the
+; function patterns below.
+(export_statement
+  declaration: (_
+                 (variable_declarator
+                   name: (identifier) @variable.name
+                   type: (type_annotation (_) @variable.type)?
+                   value: (_ !parameters) @variable.value))) @variable
 
 ( ; function declarations
   ; case:
   ; export const foo = (whatev: string): bool => true
+  ; The @function capture sits on the export_statement itself rather than
+  ; outside the grouping paren, for the same reason as @variable above.
+  ; Keep this pattern in sync with the comment-less fallback below.
   (comment) * @function.jsdoc (#match? @function.jsdoc "^/\\*\\*") .
   (export_statement
     declaration: (lexical_declaration
@@ -23,11 +48,25 @@
                  ; one match per parameter node; name/type/default/optional/rest
                  ; are read from the node's fields Go-side
                  parameters: (formal_parameters (_) @function.params)?
-                 return_type: (type_annotation (_) @function.return.type)?))))) @function
+                 return_type: (type_annotation (_) @function.return.type)?)))) @function)
+
+; the same match without the comment prefix, for the same reason as the
+; variable fallback above
+(export_statement
+  declaration: (lexical_declaration
+    (variable_declarator
+      name: (identifier) @function.name
+      value: (arrow_function
+               type_parameters: ((type_parameters) @function.typeParameters)?
+               parameters: (formal_parameters (_) @function.params)?
+               return_type: (type_annotation (_) @function.return.type)?)))) @function
 
 ( ; function declarations
   ; case:
   ; export async function *foo(whatev: string): bool { }
+  ; The @function capture sits on the export_statement itself rather than
+  ; outside the grouping paren, for the same reason as @variable above.
+  ; Keep this pattern in sync with the comment-less fallback below.
   (comment) * @function.jsdoc (#match? @function.jsdoc "^/\\*\\*") .
   (export_statement
     declaration: (_
@@ -41,7 +80,17 @@
       ; the grammar requires a body on function_declaration and
       ; generator_function_declaration, so this capture marks the
       ; implementation signature of a function overload
-      body: (statement_block) @function.body))) @function
+      body: (statement_block) @function.body)) @function)
+
+; the same match without the comment prefix, for the same reason as the
+; variable fallback above
+(export_statement
+  declaration: (_
+    name: (identifier) @function.name
+    type_parameters: ((type_parameters) @function.typeParameters)?
+    parameters: (formal_parameters (_) @function.params)?
+    return_type: (type_annotation (_) @function.return.type)?
+    body: (statement_block) @function.body)) @function
 
 ; function overload signatures
 ; case:
@@ -52,7 +101,8 @@
 ; name. The @function capture sits on the export_statement itself rather
 ; than outside the grouping paren: a capture on the wrapped sibling
 ; sequence binds to the sequence's first node, which for a JSDoc-prefixed
-; match is the comment, splitting captures across two parent groups.
+; match is the comment, splitting captures across two parent groups. Keep
+; this pattern in sync with the comment-less fallback below.
 ((comment) * @function.jsdoc (#match? @function.jsdoc "^/\\*\\*") .
  (export_statement
    declaration: (function_signature

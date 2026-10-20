@@ -448,6 +448,12 @@ func (mp *ModuleProcessor) processDeclarations() error {
 
 	// variable declarations
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "variable") {
+		// the comment-less fallback pattern captures no JSDoc; recover it
+		// from the comment preceding the export statement when the query
+		// didn't capture one, mirroring the class jsdoc handling in
+		// processClasses (a plain comment between the JSDoc and the
+		// statement defeats the query's comment-prefix pattern)
+		mp.attachLocalJSDoc(captures, "variable", "variable.jsdoc")
 		declaration, err := mp.generateVarDeclaration(captures)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
@@ -461,6 +467,11 @@ func (mp *ModuleProcessor) processDeclarations() error {
 	// below
 	functionHasBody := make(map[*M.FunctionDeclaration]bool)
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "function") {
+		// same recovery as the variable loop above; it also restores the
+		// implementation signature's JSDoc for overload sets, which
+		// dropOverloadImplementationSignatures merges onto the kept
+		// signatures below
+		mp.attachLocalJSDoc(captures, "function", "function.jsdoc")
 		declaration, err := mp.generateFunctionDeclaration(captures)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
