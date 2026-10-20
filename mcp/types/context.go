@@ -68,6 +68,12 @@ type ElementInfo interface {
 	CssParts() []manifest.CssPart
 	CssStates() []manifest.CssCustomState
 
+	// Class members flattened across mixins and superclasses. Fields
+	// excludes attribute-backed custom element fields: those surface
+	// through Attributes() instead.
+	Methods() []*manifest.ClassMethod
+	Fields() []*manifest.ClassField
+
 	// MCP-specific extensions
 	Guidelines() []string
 	Examples() []Example

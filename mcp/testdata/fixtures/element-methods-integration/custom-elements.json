@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "counter-element.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "CounterElement",
+          "tagName": "counter-element",
+          "customElement": true,
+          "description": "A counting element",
+          "attributes": [
+            {
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "fieldName": "label",
+              "description": "Accessible label for the counter"
+            }
+          ],
+          "members": [
+            {
+              "kind": "field",
+              "name": "label",
+              "type": {
+                "text": "string"
+              },
+              "attribute": "label",
+              "description": "Accessible label for the counter"
+            },
+            {
+              "kind": "field",
+              "name": "count",
+              "type": {
+                "text": "number"
+              },
+              "default": "0",
+              "description": "The current count"
+            },
+            {
+              "kind": "field",
+              "name": "history",
+              "type": {
+                "text": "number[]"
+              },
+              "default": "[]",
+              "readonly": true,
+              "privacy": "protected",
+              "description": "Every value the counter has taken"
+            },
+            {
+              "kind": "field",
+              "name": "registry",
+              "static": true,
+              "type": {
+                "text": "Map<string, CounterElement>"
+              },
+              "description": "All live instances"
+            },
+            {
+              "kind": "method",
+              "name": "increment",
+              "description": "Adds to the count",
+              "parameters": [
+                {
+                  "name": "by",
+                  "type": {
+                    "text": "number"
+                  },
+                  "default": "1",
+                  "description": "How much to add"
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "reset",
+              "description": "Resets the count to zero",
+              "return": {
+                "type": {
+                  "text": "Promise<void>"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "createRenderer",
+              "static": true,
+              "privacy": "protected",
+              "return": {
+                "type": {
+                  "text": "unknown"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "legacyTap",
+              "deprecated": "Use increment() instead.",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "counter-element",
+          "declaration": {
+            "name": "CounterElement",
+            "module": "counter-element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

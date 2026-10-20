@@ -2,11 +2,15 @@
 
 ## Custom Elements Found
 
-- **`button-element`**: Custom element
+- **`button-element`**: A custom button element
 
 ## Manifest Compliance Validation
 
 ### ✅ No Manifest Compliance Issues Found
+
+### 💡 Manifest-Defined Features
+
+- **manifest-element**: Element <button-element> properly registered in manifest
 
 ## Custom Element Content Validation
 

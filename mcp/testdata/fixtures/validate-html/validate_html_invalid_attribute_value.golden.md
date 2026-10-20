@@ -2,13 +2,17 @@
 
 ## Custom Elements Found
 
-- **`button-element`**: Custom element
+- **`button-element`**: A custom button element
 
 ## Manifest Compliance Validation
 
 ### ❌ Manifest Compliance Issues
 
 - **Invalid Attribute Value**: `variant="invalid-value"` in `<button-element>`. Valid values: ["primary" "secondary" "ghost"]
+
+### 💡 Manifest-Defined Features
+
+- **manifest-element**: Element <button-element> properly registered in manifest
 
 ## Custom Element Content Validation
 

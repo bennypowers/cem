@@ -51,9 +51,11 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 	// Test that the description is sanitized
 	t.Run("element description sanitized", func(t *testing.T) {
 		description := element.Description()
-		// Element descriptions are not currently populated from manifest declarations (architectural limitation)
-		// The important security protection is at the item level (attributes, slots, events, etc.)
-		assert.Equal(t, "", description, "Element descriptions are not currently supported")
+		// The full declaration is grafted onto the element info, so class
+		// descriptions flow through SanitizeDescription like item descriptions:
+		// template syntax preserved as literal text, whitespace normalized
+		assert.Contains(t, description, "{{", "Template syntax should be preserved as literal text")
+		assert.NotContains(t, description, "\n", "Whitespace should be normalized")
 		t.Logf("Element description: '%s'", description)
 	})
 

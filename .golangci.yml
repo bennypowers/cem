@@ -137,6 +137,9 @@ linters:
       - path: mcp/tools/generate_html_test\.go
         linters:
           - forbidigo
+      - path: mcp/tools/validate_html_test\.go
+        linters:
+          - forbidigo
       - path: mcp/tools/tools_test\.go
         linters:
           - forbidigo

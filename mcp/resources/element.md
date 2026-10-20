@@ -28,6 +28,7 @@ For focused information about specific aspects of an element, use these speciali
 - **`cem://element/{tagName}/attributes`** - Detailed attribute documentation with types, constraints, and usage patterns
 - **`cem://element/{tagName}/slots`** - Content guidelines and accessibility considerations for proper slot usage
 - **`cem://element/{tagName}/events`** - Event triggers, data payloads, and JavaScript integration patterns
+- **`cem://element/{tagName}/methods`** - Class method signatures, parameters, and non-attribute fields for JavaScript integration
 - **`cem://element/{tagName}/css`** - CSS customization guidance including custom properties, parts, and states
 
 Each subresource combines element-specific information with schema definitions and design system context to provide rich, actionable guidance for AI-assisted development.

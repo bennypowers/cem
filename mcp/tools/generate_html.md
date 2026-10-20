@@ -37,6 +37,7 @@ When choosing elements and understanding their capabilities, use these resources
 - **`cem://element/{tagName}/attributes`** - Focused attribute documentation with types and constraints
 - **`cem://element/{tagName}/slots`** - Content guidelines and accessibility considerations for slot usage
 - **`cem://element/{tagName}/events`** - Event patterns and JavaScript integration guidance
+- **`cem://element/{tagName}/methods`** - Method signatures and non-attribute fields for scripting the element
 - **`cem://element/{tagName}/css/parts`** - CSS parts styling guidance for element customization
 - **`cem://element/{tagName}/css/custom-properties`** - CSS custom properties for theming and styling
 - **`cem://element/{tagName}/css/states`** - CSS custom states for interactive styling patterns

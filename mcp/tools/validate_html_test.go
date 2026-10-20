@@ -20,6 +20,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -643,6 +645,15 @@ func testValidateHtmlWithGolden(t *testing.T, fixtureFile, contextStr, goldenFil
 
 	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
 	require.True(t, ok)
+
+	// Handle --update flag
+	goldenPath := filepath.Join("../testdata/fixtures/validate-html", goldenFile)
+	if *testutil.Update {
+		err := os.WriteFile(goldenPath, []byte(textContent.Text), 0644)
+		require.NoError(t, err, "Failed to update golden file %s", goldenPath)
+		t.Logf("Updated golden file: %s", goldenPath)
+		return
+	}
 
 	// Compare with golden file
 	expectedData := testutil.ReadFixture(t, fs, "/"+goldenFile)

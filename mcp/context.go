@@ -283,11 +283,14 @@ func (ctx *MCPContext) takeRegistrySnapshot() (*registrySnapshot, error) {
 	// Convert elements to MCPTypes while holding the lock
 	// This avoids the need for lock juggling later
 	elements := make(map[string]MCPTypes.ElementInfo, len(tagNames))
+	declsByTag := customElementDeclarationsByTag(ctx.lspRegistry.Manifests)
 	for _, tagName := range tagNames {
 		element := ctx.lspRegistry.Elements[tagName]
 		if element != nil {
-			// Convert element using the existing conversion logic
-			info := ctx.convertElement(element, tagName)
+			// Convert element using the existing conversion logic; the
+			// full declarations are indexed here because the snapshot runs
+			// under the lock, unlike GetElementInfo's conversion
+			info := ctx.convertElement(element, declsByTag[tagName], tagName)
 			elements[tagName] = info
 		}
 	}
@@ -424,10 +427,16 @@ func (ctx *MCPContext) GetElementInfo(tagName string) (MCPTypes.ElementInfo, err
 		ctx.mu.RUnlock()
 		return nil, fmt.Errorf("failed to get element info for %q: element not found in registry", tagName)
 	}
+
+	// The Elements index stores only the CustomElement sub-object of each
+	// declaration, which drops the ClassLike half (class name, superclass,
+	// mixins, members); recover the full declaration while the lock is held
+	// so class methods and fields survive the conversion below
+	decl := findCustomElementDeclaration(ctx.lspRegistry.Manifests, tagName)
 	ctx.mu.RUnlock()
 
 	// Convert to enhanced MCP format (outside of read lock to avoid blocking)
-	info := ctx.convertElement(element, tagName)
+	info := ctx.convertElement(element, decl, tagName)
 
 	// Cache the result
 	ctx.mu.Lock()
@@ -552,10 +561,57 @@ func (ctx *MCPContext) selectBestSchemaVersion(versions []string) string {
 
 // Helper methods for converting LSP types to MCP types
 
+// findCustomElementDeclaration returns the full CustomElementDeclaration for
+// a tag name from the loaded manifests, or nil when absent. Linear scan; for
+// bulk conversion over every element use customElementDeclarationsByTag.
+func findCustomElementDeclaration(manifests []*M.Package, tagName string) *M.CustomElementDeclaration {
+	for _, pkg := range manifests {
+		if pkg == nil {
+			continue
+		}
+		for i := range pkg.Modules {
+			for _, decl := range pkg.Modules[i].Declarations {
+				if ceDecl, ok := decl.(*M.CustomElementDeclaration); ok && ceDecl.TagName == tagName {
+					return ceDecl
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// customElementDeclarationsByTag indexes all custom element declarations
+// from the loaded manifests by tag name, first declaration winning.
+func customElementDeclarationsByTag(manifests []*M.Package) map[string]*M.CustomElementDeclaration {
+	byTag := make(map[string]*M.CustomElementDeclaration)
+	for _, pkg := range manifests {
+		if pkg == nil {
+			continue
+		}
+		for i := range pkg.Modules {
+			for _, decl := range pkg.Modules[i].Declarations {
+				if ceDecl, ok := decl.(*M.CustomElementDeclaration); ok && ceDecl.TagName != "" {
+					if _, exists := byTag[ceDecl.TagName]; !exists {
+						byTag[ceDecl.TagName] = ceDecl
+					}
+				}
+			}
+		}
+	}
+	return byTag
+}
+
 // convertElement converts a manifest element to enhanced MCP format using the new constructor
-func (ctx *MCPContext) convertElement(element *M.CustomElement, tagName string) MCPTypes.ElementInfo {
+func (ctx *MCPContext) convertElement(element *M.CustomElement, decl *M.CustomElementDeclaration, tagName string) MCPTypes.ElementInfo {
 	// Use the proper constructor to create the MCP element declaration
 	mcpElement := NewMCPCustomElementDeclaration(element, tagName)
+
+	// NewMCPCustomElementDeclaration builds a minimal declaration from the
+	// CustomElement sub-object alone; graft the ClassLike half (class name,
+	// superclass, mixins, members) back on so the class API is visible
+	if decl != nil {
+		mcpElement.CustomElementDeclaration.ClassDeclaration = decl.ClassDeclaration
+	}
 
 	return &MCPElementInfoAdapter{
 		MCPCustomElementDeclaration: mcpElement,
@@ -743,6 +799,44 @@ func (e *MCPElementInfoAdapter) CssStates() []M.CssCustomState {
 		return decl.CssStates()
 	}
 	return nil
+}
+
+// Methods returns the element's class methods flattened across mixins and
+// superclasses. The manifest-level Methods() also returns raw members when
+// no package context is attached, so the type assertion filters to actual
+// ClassMethod nodes in both cases.
+func (e *MCPElementInfoAdapter) Methods() []*M.ClassMethod {
+	decl := e.Declaration()
+	if decl == nil {
+		return nil
+	}
+	members := decl.Methods()
+	methods := make([]*M.ClassMethod, 0, len(members))
+	for _, member := range members {
+		if method, ok := member.(*M.ClassMethod); ok {
+			methods = append(methods, method)
+		}
+	}
+	return methods
+}
+
+// Fields returns the element's non-attribute class fields flattened across
+// mixins and superclasses. Attribute-backed custom element fields surface
+// through Attributes() instead, and the type assertion keeps them out of
+// this list even when the manifest-level Fields() falls back to raw members.
+func (e *MCPElementInfoAdapter) Fields() []*M.ClassField {
+	decl := e.Declaration()
+	if decl == nil {
+		return nil
+	}
+	members := decl.Fields()
+	fields := make([]*M.ClassField, 0, len(members))
+	for _, member := range members {
+		if field, ok := member.(*M.ClassField); ok {
+			fields = append(fields, field)
+		}
+	}
+	return fields
 }
 
 // MCP-specific behavior

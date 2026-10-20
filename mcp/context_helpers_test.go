@@ -106,6 +106,8 @@ func (m *mockElementInfo) Slots() []M.Slot                             { return 
 func (m *mockElementInfo) CssParts() []M.CssPart                      { return nil }
 func (m *mockElementInfo) CssProperties() []M.CssCustomProperty        { return m.cssProperties }
 func (m *mockElementInfo) CssStates() []M.CssCustomState               { return nil }
+func (m *mockElementInfo) Methods() []*M.ClassMethod                   { return nil }
+func (m *mockElementInfo) Fields() []*M.ClassField                     { return nil }
 func (m *mockElementInfo) Guidelines() []string                        { return nil }
 func (m *mockElementInfo) Examples() []MCPTypes.Example                { return nil }
 func (m *mockElementInfo) Relationships() []relationships.Relationship { return nil }

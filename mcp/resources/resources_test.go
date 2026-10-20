@@ -191,6 +191,142 @@ func TestPackagesResource_Golden(t *testing.T) {
 	testResourceWithGolden(t, "cem://packages", "packages_resource.golden.json")
 }
 
+// getElementMethodsTestRegistry loads a registry whose fixture element
+// declares class methods and non-attribute fields
+func getElementMethodsTestRegistry(t *testing.T) *mcp.MCPContext {
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/element-methods-integration")
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	registry, err := mcp.NewMCPContext(workspace, nil)
+	require.NoError(t, err)
+
+	err = registry.LoadManifests()
+	require.NoError(t, err)
+
+	return registry
+}
+
+func TestElementMethodsResource_Golden(t *testing.T) {
+	testNamedResourceWithGolden(t, getElementMethodsTestRegistry(t),
+		"element-methods",
+		"cem://element/counter-element/methods",
+		"../testdata/fixtures/element-methods-integration",
+		"counter_element_methods.golden.md")
+}
+
+// testNamedResourceWithGolden reads a resource by definition name (URI-prefix
+// matching in testResourceWithRegistryGolden cannot distinguish sub-resources
+// under cem://element/{tagName} from the bare element resource) and compares
+// its rendered output against a golden file.
+func testNamedResourceWithGolden(t *testing.T, registry *mcp.MCPContext, name, uri, goldenDir, goldenFile string) {
+	t.Helper()
+
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
+
+	fs := testutil.LoadTestdataFS(t, goldenDir, "/")
+
+	resourceDefs, err := resources.Resources(registryAdapter)
+	require.NoError(t, err)
+
+	var resourceHandler *types.ResourceDefinition
+	for i := range resourceDefs {
+		if resourceDefs[i].Name == name {
+			resourceHandler = &resourceDefs[i]
+			break
+		}
+	}
+	require.NotNil(t, resourceHandler, "Should find resource handler %s", name)
+
+	req := &mcpSDK.ReadResourceRequest{
+		Params: &mcpSDK.ReadResourceParams{URI: uri},
+	}
+
+	result, err := resourceHandler.Handler(context.Background(), req)
+	require.NoError(t, err, "Resource handler should not return error")
+	require.Len(t, result.Contents, 1, "Resource should return content")
+
+	content := result.Contents[0]
+	output := content.Text
+
+	// Handle --update flag
+	goldenPath := filepath.Join(goldenDir, goldenFile)
+	if *testutil.Update {
+		err := os.MkdirAll(filepath.Dir(goldenPath), 0755)
+		require.NoError(t, err, "Failed to create golden file directory")
+
+		err = os.WriteFile(goldenPath, []byte(output), 0644)
+		require.NoError(t, err, "Failed to update golden file %s", goldenPath)
+		t.Logf("Updated golden file: %s", goldenPath)
+		return
+	}
+
+	// Compare with golden file
+	expectedData := testutil.ReadFixture(t, fs, "/"+goldenFile)
+
+	assert.Equal(t, string(expectedData), output, "Resource output should match golden file")
+	assert.Equal(t, uri, content.URI, "Resource should preserve URI")
+}
+
+func TestElementMethodsSubResource_FilterByName(t *testing.T) {
+	registry := getElementMethodsTestRegistry(t)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
+
+	resourceDefs, err := resources.Resources(registryAdapter)
+	require.NoError(t, err)
+
+	var methodsResource *types.ResourceDefinition
+	for _, def := range resourceDefs {
+		if def.Name == "element-methods" {
+			methodsResource = &def
+			break
+		}
+	}
+	require.NotNil(t, methodsResource, "Should have element-methods resource")
+
+	req := &mcpSDK.ReadResourceRequest{
+		Params: &mcpSDK.ReadResourceParams{
+			URI: "cem://element/counter-element/methods/increment",
+		},
+	}
+
+	result, err := methodsResource.Handler(context.Background(), req)
+	require.NoError(t, err)
+	require.Len(t, result.Contents, 1)
+
+	var filtered map[string]any
+	require.NoError(t, json.Unmarshal([]byte(result.Contents[0].Text), &filtered))
+	assert.Equal(t, "increment", filtered["name"], "Deep link should filter to the named method")
+	assert.Contains(t, filtered, "parameters", "Filtered method should carry its parameters")
+}
+
+func TestElementInfoClassMembers(t *testing.T) {
+	registry := getElementMethodsTestRegistry(t)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
+
+	info, err := registryAdapter.ElementInfo("counter-element")
+	require.NoError(t, err)
+
+	methodNames := make([]string, 0)
+	for _, method := range info.Methods() {
+		methodNames = append(methodNames, method.Name)
+	}
+	assert.ElementsMatch(t,
+		[]string{"increment", "reset", "createRenderer", "legacyTap"},
+		methodNames, "Methods() should return all class methods")
+
+	fieldNames := make([]string, 0)
+	for _, field := range info.Fields() {
+		fieldNames = append(fieldNames, field.Name)
+	}
+	assert.ElementsMatch(t,
+		[]string{"count", "history", "registry"},
+		fieldNames, "Fields() should return non-attribute fields")
+	assert.NotContains(t, fieldNames, "label",
+		"Attribute-backed fields surface through Attributes(), not Fields()")
+}
+
+
 func TestElementResource_Integration(t *testing.T) {
 	registry := getTestRegistry(t)
 	registryAdapter := mcp.NewMCPContextAdapter(registry)
@@ -536,10 +672,16 @@ func TestAllResourcesWithFixtures(t *testing.T) {
 func testResourceWithGolden(t *testing.T, uri string, goldenFile string) {
 	t.Helper()
 
-	registry := getTestRegistry(t)
+	testResourceWithRegistryGolden(t, getTestRegistry(t), uri, "../testdata/fixtures/resource-integration", goldenFile)
+}
+
+// Helper function for testing resource output from a specific registry with golden files
+func testResourceWithRegistryGolden(t *testing.T, registry *mcp.MCPContext, uri, goldenDir, goldenFile string) {
+	t.Helper()
+
 	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
-	fs := testutil.LoadTestdataFS(t, "../testdata/fixtures/resource-integration", "/")
+	fs := testutil.LoadTestdataFS(t, goldenDir, "/")
 
 	resourceDefs, err := resources.Resources(registryAdapter)
 	require.NoError(t, err)
@@ -569,7 +711,7 @@ func testResourceWithGolden(t *testing.T, uri string, goldenFile string) {
 	output := content.Text
 
 	// Handle --update flag
-	goldenPath := filepath.Join("../testdata/fixtures/resource-integration", goldenFile)
+	goldenPath := filepath.Join(goldenDir, goldenFile)
 	if *testutil.Update {
 		err := os.MkdirAll(filepath.Dir(goldenPath), 0755)
 		require.NoError(t, err, "Failed to create golden file directory")
