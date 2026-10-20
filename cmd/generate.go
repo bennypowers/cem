@@ -27,8 +27,8 @@ import (
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/tui"
-	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/internal/workspace"
+	"bennypowers.dev/cem/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -107,6 +107,14 @@ var generateCmd = &cobra.Command{
 		}
 		if designTokensPrefix := viper.GetString("generate.designTokens.prefix"); designTokensPrefix != "" {
 			cfg.Generate.DesignTokens.Prefix = designTokensPrefix
+		}
+
+		// Source control root URL: viper resolves the persistent flag over the
+		// config file, so this makes flag, config file, and both together behave
+		// consistently with the flag winning (#449). Mutating the cached config
+		// pointer propagates to ModuleProcessor, which re-reads ctx.Config().
+		if sourceControlRootURL := viper.GetString("sourceControlRootUrl"); sourceControlRootURL != "" {
+			cfg.SourceControlRootUrl = sourceControlRootURL
 		}
 
 		// Early validation: if design tokens are specified, validate they can be loaded
@@ -344,6 +352,12 @@ func generateWorkspace(cmd *cobra.Command) error {
 		}
 		if cmd.Flags().Changed("demo-discovery-url-template") {
 			cfg.Generate.DemoDiscovery.URLTemplate = viper.GetString("generate.demoDiscovery.urlTemplate")
+		}
+		// The root flag overrides every package config; the root config file's
+		// value is deliberately not cascaded here, matching the other root-level
+		// merges above (#449).
+		if cmd.Flags().Changed("source-control-root-url") {
+			cfg.SourceControlRootUrl = viper.GetString("sourceControlRootUrl")
 		}
 
 		if len(cfg.Generate.Files) == 0 {

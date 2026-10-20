@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/element.js",
+      "declarations": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "text": "Value",
+                "source": {
+                  "href": "https://github.com/example/repo/tree/main/src/element.ts#L14C26"
+                }
+              }
+            }
+          ],
+          "return": {
+            "type": {
+              "text": "Value",
+              "source": {
+                "href": "https://github.com/example/repo/tree/main/src/element.ts#L14C26"
+              }
+            }
+          },
+          "name": "identity",
+          "description": "A documented generic function",
+          "kind": "function",
+          "source": {
+            "href": "https://github.com/example/repo/tree/main/src/element.ts#L14"
+          }
+        },
+        {
+          "name": "Documented",
+          "description": "A documented class",
+          "superclass": {
+            "name": "HTMLElement",
+            "package": "global:"
+          },
+          "members": [
+            {
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "name": "greet",
+              "description": "A documented method",
+              "kind": "method"
+            }
+          ],
+          "source": {
+            "href": "https://github.com/example/repo/tree/main/src/element.ts#L4"
+          },
+          "kind": "class",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "Documented",
+          "declaration": {
+            "name": "Documented",
+            "module": "src/element.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "identity",
+          "declaration": {
+            "name": "identity",
+            "module": "src/element.js"
+          }
+        }
+      ]
+    }
+  ]
+}

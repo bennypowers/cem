@@ -47,6 +47,8 @@ Best supports LitElements written in idiomatic style with TypeScript decorators.
 
 By default, `.d.ts` TypeScript declaration files are excluded. Use `--no-default-excludes` to include all matching files.
 
+The `--source-control-root-url` flag overrides the `sourceControlRootUrl` config file setting.
+
 ## JSDoc Tags
 
 Document your custom elements using these JSDoc tags. See [Documenting Components][documenting] for examples.
