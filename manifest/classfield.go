@@ -94,21 +94,11 @@ func (f *ClassField) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	if len(aux.Deprecated) != 0 && string(aux.Deprecated) != "null" {
-		// Try bool
-		var b bool
-		if err := json.Unmarshal(aux.Deprecated, &b); err == nil {
-			f.Deprecated = NewDeprecated(b)
-			return nil
+		// Shared decode: explicit false decodes to nil so IsDeprecated()
+		// reports false (DeprecatedFlag(false) is a non-nil interface)
+		if !decodeDeprecatedField(&f.Deprecated, aux.Deprecated) {
+			return fmt.Errorf("invalid type for deprecated field")
 		}
-		// Try string
-		var s string
-		if err := json.Unmarshal(aux.Deprecated, &s); err == nil {
-			f.Deprecated = NewDeprecated(s)
-			return nil
-		} else {
-			return err
-		}
-		// Ignore other types
 	}
 	return nil
 }

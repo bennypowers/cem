@@ -46,6 +46,7 @@ type MCPContext struct {
 	fs                   platform.FileSystem
 	mcpCache             map[string]MCPTypes.ElementInfo // Cache for converted MCP elements
 	relationshipDetector *relationships.Detector         // Detects relationships between elements
+	manifestGeneration   uint64                          // Bumped on every LoadManifests
 
 	// Lazy-computed cached values for performance
 	commonPrefixes     []string // Common element tag name prefixes
@@ -132,6 +133,10 @@ func (ctx *MCPContext) LoadManifests() error {
 	defer ctx.mu.Unlock()
 
 	helpers.SafeDebugLog("Loading manifests for MCP context")
+
+	// Bump the generation so in-flight GetElementInfo conversions started
+	// against the previous registry retry instead of caching stale results
+	ctx.manifestGeneration++
 
 	// Clear the cache when reloading manifests
 	ctx.mcpCache = make(map[string]MCPTypes.ElementInfo)
@@ -397,39 +402,48 @@ func (ctx *MCPContext) InvalidateConfig() {
 
 // GetElementInfo returns enhanced element information for MCP context
 func (ctx *MCPContext) GetElementInfo(tagName string) (MCPTypes.ElementInfo, error) {
-	ctx.mu.RLock()
+	for {
+		ctx.mu.RLock()
 
-	// Check cache first
-	if cached, exists := ctx.mcpCache[tagName]; exists {
+		// Check cache first
+		if cached, exists := ctx.mcpCache[tagName]; exists {
+			ctx.mu.RUnlock()
+			return cached, nil
+		}
+
+		// Get basic element from LSP registry
+		element := ctx.lspRegistry.Elements[tagName]
+		if element == nil {
+			ctx.mu.RUnlock()
+			return nil, fmt.Errorf("failed to get element info for %q: element not found in registry", tagName)
+		}
+
+		// The Elements index stores only the CustomElement sub-object of each
+		// declaration, which drops the ClassLike half (class name, superclass,
+		// mixins, members); recover the owning declaration while the lock is held
+		// so class methods and fields survive the conversion below. Identity
+		// matching also keeps attributes and members from the same declaration
+		// when duplicate tag names exist across manifests.
+		decl := findCustomElementDeclaration(ctx.lspRegistry.Manifests, element)
+		generation := ctx.manifestGeneration
 		ctx.mu.RUnlock()
-		return cached, nil
+
+		// Convert to enhanced MCP format (outside of read lock to avoid blocking)
+		info := ctx.convertElement(element, decl, tagName)
+
+		ctx.mu.Lock()
+		if ctx.manifestGeneration != generation {
+			// A reload replaced the registry while this conversion ran;
+			// caching it would pin stale data into the new generation's
+			// cache. Retry against the current registry instead.
+			ctx.mu.Unlock()
+			continue
+		}
+		ctx.mcpCache[tagName] = info
+		ctx.mu.Unlock()
+
+		return info, nil
 	}
-
-	// Get basic element from LSP registry
-	element := ctx.lspRegistry.Elements[tagName]
-	if element == nil {
-		ctx.mu.RUnlock()
-		return nil, fmt.Errorf("failed to get element info for %q: element not found in registry", tagName)
-	}
-
-	// The Elements index stores only the CustomElement sub-object of each
-	// declaration, which drops the ClassLike half (class name, superclass,
-	// mixins, members); recover the owning declaration while the lock is held
-	// so class methods and fields survive the conversion below. Identity
-	// matching also keeps attributes and members from the same declaration
-	// when duplicate tag names exist across manifests.
-	decl := findCustomElementDeclaration(ctx.lspRegistry.Manifests, element)
-	ctx.mu.RUnlock()
-
-	// Convert to enhanced MCP format (outside of read lock to avoid blocking)
-	info := ctx.convertElement(element, decl, tagName)
-
-	// Cache the result
-	ctx.mu.Lock()
-	ctx.mcpCache[tagName] = info
-	ctx.mu.Unlock()
-
-	return info, nil
 }
 
 // GetAllElements returns all available elements

@@ -233,3 +233,15 @@ func TestDecodeDeprecatedFieldExplicitFalse(t *testing.T) {
 	assert.True(t, ok, "decoding a reason should succeed")
 	assert.NotNil(t, dst, "explicit \"deprecated\": \"old\" should decode to a reason")
 }
+
+// Inline: JSON-decode red test; ClassField.UnmarshalJSON predates the shared
+// decodeDeprecatedField false-to-nil behavior
+func TestClassFieldDeprecatedExplicitFalse(t *testing.T) {
+	var f ClassField
+	assert.NoError(t, json.Unmarshal([]byte(`{"kind": "field", "name": "cached", "deprecated": false}`), &f))
+	assert.False(t, f.IsDeprecated(), "explicit \"deprecated\": false on a field must not read as deprecated")
+
+	var g ClassField
+	assert.NoError(t, json.Unmarshal([]byte(`{"kind": "field", "name": "gone", "deprecated": true}`), &g))
+	assert.True(t, g.IsDeprecated(), "explicit \"deprecated\": true on a field should read as deprecated")
+}
