@@ -33,6 +33,7 @@ For detailed information about element constraints and validation rules, consult
 - **`cem://element/{tagName}`** - Complete element reference including all validation constraints
 - **`cem://element/{tagName}/attributes`** - Attribute types, valid values, and constraint validation
 - **`cem://element/{tagName}/slots`** - Slot content guidelines and usage patterns for validation
+- **`cem://element/{tagName}/methods`** - Method signatures for post-render scripting
 - **`cem://guidelines`** - Design system guidelines and component usage best practices
 - **`cem://accessibility`** - Accessibility patterns and validation rules for component compliance
 

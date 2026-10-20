@@ -19,8 +19,6 @@ package resources_test
 import (
 	"context"
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -189,6 +187,206 @@ func TestSchemaResource_Golden(t *testing.T) {
 
 func TestPackagesResource_Golden(t *testing.T) {
 	testResourceWithGolden(t, "cem://packages", "packages_resource.golden.json")
+}
+
+// getElementMethodsTestRegistry loads a registry whose fixture element
+// declares class methods and non-attribute fields
+func getElementMethodsTestRegistry(t *testing.T) *mcp.MCPContext {
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/element-methods-integration")
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	// Pass the workspace's MapFileSystem rather than nil so the injected FS
+	// path is exercised (CLAUDE.md: Filesystem in Tests)
+	registry, err := mcp.NewMCPContext(workspace, workspace.FileSystem())
+	require.NoError(t, err)
+
+	err = registry.LoadManifests()
+	require.NoError(t, err)
+
+	return registry
+}
+
+func TestElementMethodsResource_Golden(t *testing.T) {
+	testNamedResourceWithGolden(t, getElementMethodsTestRegistry(t),
+		"element-methods",
+		"cem://element/counter-element/methods",
+		"../testdata/fixtures/element-methods-integration",
+		"counter_element_methods.golden.md")
+}
+
+// The element overview template renders methods/fields counts and a
+// JavaScript API link only when members exist; button/card (the existing
+// element goldens) have none, so this golden pins the nonzero branch.
+func TestElementResource_CounterElement_Golden(t *testing.T) {
+	testNamedResourceWithGolden(t, getElementMethodsTestRegistry(t),
+		"element",
+		"cem://element/counter-element",
+		"../testdata/fixtures/element-methods-integration",
+		"counter_element_resource.golden.md")
+}
+
+// The methods template renders a fields-only element (no methods) with the
+// methods separator suppressed; this golden pins that branch. button-element
+// has no members at all, pinning the fully-empty branch.
+func TestElementMethodsResource_EmptyState_Golden(t *testing.T) {
+	testNamedResourceWithGolden(t, getTestRegistry(t),
+		"element-methods",
+		"cem://element/button-element/methods",
+		"../testdata/fixtures/resource-integration",
+		"button_element_methods_empty.golden.md")
+}
+
+// testNamedResourceWithGolden reads a resource by definition name (URI-prefix
+// matching in testResourceWithRegistryGolden cannot distinguish sub-resources
+// under cem://element/{tagName} from the bare element resource) and compares
+// its rendered output against a golden file.
+func testNamedResourceWithGolden(t *testing.T, registry *mcp.MCPContext, name, uri, goldenDir, goldenFile string) {
+	t.Helper()
+
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
+
+	fs := testutil.LoadTestdataFS(t, goldenDir, "/")
+
+	resourceDefs, err := resources.Resources(registryAdapter)
+	require.NoError(t, err)
+
+	var resourceHandler *types.ResourceDefinition
+	for i := range resourceDefs {
+		if resourceDefs[i].Name == name {
+			resourceHandler = &resourceDefs[i]
+			break
+		}
+	}
+	require.NotNil(t, resourceHandler, "Should find resource handler %s", name)
+
+	req := &mcpSDK.ReadResourceRequest{
+		Params: &mcpSDK.ReadResourceParams{URI: uri},
+	}
+
+	result, err := resourceHandler.Handler(context.Background(), req)
+	require.NoError(t, err, "Resource handler should not return error")
+	require.Len(t, result.Contents, 1, "Resource should return content")
+
+	content := result.Contents[0]
+
+	compareResourceGolden(t, fs, goldenDir, goldenFile, content.Text)
+	assert.Equal(t, uri, content.URI, "Resource should preserve URI")
+}
+
+// compareResourceGolden compares resource output against a golden file via
+// the shared testutil.CheckGolden (compares from the preloaded MapFS, writes
+// --update results to the on-disk SourceDir so tracked goldens update in
+// place).
+func compareResourceGolden(t *testing.T, fs *platform.MapFileSystem, goldenDir, goldenFile, output string) {
+	t.Helper()
+	testutil.CheckGolden(t, goldenFile, []byte(output), testutil.GoldenOptions{
+		Dir:       "/",
+		FS:        fs,
+		SourceDir: goldenDir,
+	})
+}
+
+func TestElementMethodsMemberResource_Golden(t *testing.T) {
+	testNamedResourceWithGolden(t, getElementMethodsTestRegistry(t),
+		"element-methods-member",
+		"cem://element/counter-element/methods/increment",
+		"../testdata/fixtures/element-methods-integration",
+		"counter_element_method_increment.golden.json")
+}
+
+func TestElementMethodsSubResource_FilterByName(t *testing.T) {
+	registry := getElementMethodsTestRegistry(t)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
+
+	resourceDefs, err := resources.Resources(registryAdapter)
+	require.NoError(t, err)
+
+	var memberResource *types.ResourceDefinition
+	for _, def := range resourceDefs {
+		if def.Name == "element-methods-member" {
+			memberResource = &def
+			break
+		}
+	}
+	require.NotNil(t, memberResource, "Should have element-methods-member resource")
+
+	readMember := func(t *testing.T, uri string) map[string]any {
+		t.Helper()
+		req := &mcpSDK.ReadResourceRequest{
+			Params: &mcpSDK.ReadResourceParams{URI: uri},
+		}
+
+		result, err := memberResource.Handler(context.Background(), req)
+		require.NoError(t, err)
+		require.Len(t, result.Contents, 1)
+		assert.Equal(t, "application/json", result.Contents[0].MIMEType, "Member deep link should return JSON")
+
+		var filtered map[string]any
+		require.NoError(t, json.Unmarshal([]byte(result.Contents[0].Text), &filtered))
+		return filtered
+	}
+
+	// Inline assertions (not goldens): the member JSON shape is pinned field
+	// by field here because the full member object is already golden-pinned
+	// by counter_element_method_increment.golden.json for methods; these
+	// cases cover the field lookup and the method-over-field precedence.
+	t.Run("method by name", func(t *testing.T) {
+		filtered := readMember(t, "cem://element/counter-element/methods/increment")
+		assert.Equal(t, "increment", filtered["name"])
+		assert.Contains(t, filtered, "parameters", "Filtered method should carry its parameters")
+	})
+
+	t.Run("percent-encoded member name is decoded", func(t *testing.T) {
+		filtered := readMember(t, "cem://element/counter-element/methods/%69ncrement")
+		assert.Equal(t, "increment", filtered["name"], "Encoded member segment should unescape before matching")
+	})
+
+	t.Run("field by name", func(t *testing.T) {
+		filtered := readMember(t, "cem://element/counter-element/methods/count")
+		assert.Equal(t, "count", filtered["name"])
+		assert.Equal(t, "number", filtered["type"], "Filtered field should carry its type")
+	})
+
+	t.Run("method wins over same-named field", func(t *testing.T) {
+		filtered := readMember(t, "cem://element/counter-element/methods/describe")
+		assert.Contains(t, filtered, "parameters", "Method should win when a method and field share a name")
+		assert.Equal(t, "string", filtered["returnType"])
+	})
+
+	t.Run("unknown member errors", func(t *testing.T) {
+		req := &mcpSDK.ReadResourceRequest{
+			Params: &mcpSDK.ReadResourceParams{URI: "cem://element/counter-element/methods/nonexistent"},
+		}
+		_, err := memberResource.Handler(context.Background(), req)
+		assert.Error(t, err, "Unknown member name should return an error")
+	})
+}
+
+func TestElementInfoClassMembers(t *testing.T) {
+	registry := getElementMethodsTestRegistry(t)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
+
+	info, err := registryAdapter.ElementInfo("counter-element")
+	require.NoError(t, err)
+
+	methodNames := make([]string, 0)
+	for _, method := range info.Methods() {
+		methodNames = append(methodNames, method.Name)
+	}
+	assert.ElementsMatch(t,
+		[]string{"increment", "log", "reset", "createRenderer", "legacyTap", "describe"},
+		methodNames, "Methods() should return own methods plus superclass methods")
+
+	fieldNames := make([]string, 0)
+	for _, field := range info.Fields() {
+		fieldNames = append(fieldNames, field.Name)
+	}
+	assert.ElementsMatch(t,
+		[]string{"count", "describe", "history", "registry", "events"},
+		fieldNames, "Fields() should return own non-attribute fields plus superclass fields")
+	assert.NotContains(t, fieldNames, "label",
+		"Attribute-backed fields surface through Attributes(), not Fields()")
 }
 
 func TestElementResource_Integration(t *testing.T) {
@@ -500,6 +698,14 @@ func TestAllResourcesWithFixtures(t *testing.T) {
 	// Test each resource to ensure it works with fixture data
 	for _, resource := range resourceDefs {
 		t.Run(resource.Name, func(t *testing.T) {
+			// The member deep link needs a registry whose elements declare
+			// members; this fixture's elements have none. It is covered by
+			// TestElementMethodsSubResource_FilterByName and
+			// TestMemberDeepLinkRouting against the element-methods fixture.
+			if resource.Name == "element-methods-member" {
+				t.Skip("member deep links need the element-methods-integration registry")
+			}
+
 			// Use appropriate URI for each resource type
 			testURI := resource.URI
 			if resource.Name == "element" {
@@ -536,10 +742,16 @@ func TestAllResourcesWithFixtures(t *testing.T) {
 func testResourceWithGolden(t *testing.T, uri string, goldenFile string) {
 	t.Helper()
 
-	registry := getTestRegistry(t)
+	testResourceWithRegistryGolden(t, getTestRegistry(t), uri, "../testdata/fixtures/resource-integration", goldenFile)
+}
+
+// Helper function for testing resource output from a specific registry with golden files
+func testResourceWithRegistryGolden(t *testing.T, registry *mcp.MCPContext, uri, goldenDir, goldenFile string) {
+	t.Helper()
+
 	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
-	fs := testutil.LoadTestdataFS(t, "../testdata/fixtures/resource-integration", "/")
+	fs := testutil.LoadTestdataFS(t, goldenDir, "/")
 
 	resourceDefs, err := resources.Resources(registryAdapter)
 	require.NoError(t, err)
@@ -566,23 +778,7 @@ func testResourceWithGolden(t *testing.T, uri string, goldenFile string) {
 	require.Len(t, result.Contents, 1, "Resource should return content")
 
 	content := result.Contents[0]
-	output := content.Text
 
-	// Handle --update flag
-	goldenPath := filepath.Join("../testdata/fixtures/resource-integration", goldenFile)
-	if *testutil.Update {
-		err := os.MkdirAll(filepath.Dir(goldenPath), 0755)
-		require.NoError(t, err, "Failed to create golden file directory")
-
-		err = os.WriteFile(goldenPath, []byte(output), 0644)
-		require.NoError(t, err, "Failed to update golden file %s", goldenPath)
-		t.Logf("Updated golden file: %s", goldenPath)
-		return
-	}
-
-	// Compare with golden file
-	expectedData := testutil.ReadFixture(t, fs, "/"+goldenFile)
-
-	assert.Equal(t, string(expectedData), output, "Resource output should match golden file")
+	compareResourceGolden(t, fs, goldenDir, goldenFile, content.Text)
 	assert.Equal(t, uri, content.URI, "Resource should preserve URI")
 }

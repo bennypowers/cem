@@ -72,7 +72,7 @@ func TestMCPContext_GetElementInfo(t *testing.T) {
 			checkFunc: func(t *testing.T, info types.ElementInfo) {
 				assert.Equal(t, "button-element", info.TagName())
 				assert.Equal(t, "button-element", info.Name())
-				assert.Equal(t, "", info.Description()) // Description not available from CustomElement
+				assert.Equal(t, "A custom button element", info.Description())
 
 				// Test type-specific accessors using convenience methods
 				assert.Len(t, info.Attributes(), 3)    // variant, size, disabled
@@ -136,7 +136,7 @@ func TestMCPContext_GetElementInfo(t *testing.T) {
 			checkFunc: func(t *testing.T, info types.ElementInfo) {
 				assert.Equal(t, "card-element", info.TagName())
 				assert.Equal(t, "card-element", info.Name())
-				assert.Equal(t, "", info.Description()) // Description not available from CustomElement
+				assert.Equal(t, "A card container element", info.Description())
 
 				// Test type-specific accessors
 				assert.Len(t, info.Attributes(), 1)    // elevation
@@ -226,12 +226,12 @@ func TestMCPContext_GetAllElements(t *testing.T) {
 	buttonElement := elements["button-element"]
 	assert.Equal(t, "button-element", buttonElement.TagName())
 	assert.Equal(t, "button-element", buttonElement.Name())
-	assert.Equal(t, "", buttonElement.Description()) // Description not available from CustomElement
+	assert.Equal(t, "A custom button element", buttonElement.Description())
 
 	cardElement := elements["card-element"]
 	assert.Equal(t, "card-element", cardElement.TagName())
 	assert.Equal(t, "card-element", cardElement.Name())
-	assert.Equal(t, "", cardElement.Description()) // Description not available from CustomElement
+	assert.Equal(t, "A card container element", cardElement.Description())
 }
 
 func TestMCPContext_GetManifestSchema(t *testing.T) {

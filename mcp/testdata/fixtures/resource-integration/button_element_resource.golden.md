@@ -2,6 +2,7 @@
 
 **button-element** — Your next favorite custom element
 
+A custom button element
 
 
 

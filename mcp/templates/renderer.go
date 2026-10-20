@@ -210,6 +210,11 @@ func createSecureFuncMap() template.FuncMap {
 		"sanitize": func(input string) string {
 			return security.SanitizeDescription(input)
 		},
+		// escapePipes makes manifest-controlled text safe inside GFM table
+		// cells; union type texts like `"a" | "b"` would otherwise add columns
+		"escapePipes": func(input string) string {
+			return strings.ReplaceAll(input, "|", `\|`)
+		},
 	}
 }
 

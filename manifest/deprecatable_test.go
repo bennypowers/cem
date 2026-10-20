@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package manifest
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,11 +27,11 @@ import (
 
 func TestIsDeprecated_AllTypes(t *testing.T) {
 	type deprecatableCase struct {
-		name         string
-		nilCheck     func() bool
-		notDepr      func() bool
-		withFlag     func() bool
-		withReason   func() bool
+		name       string
+		nilCheck   func() bool
+		notDepr    func() bool
+		withFlag   func() bool
+		withReason func() bool
 	}
 
 	cases := []deprecatableCase{
@@ -213,4 +214,34 @@ func TestIsDeprecated_AllTypes(t *testing.T) {
 			})
 		})
 	}
+}
+
+// Inline: table-driven pure-function test for the JSON decode path
+func TestDecodeDeprecatedFieldExplicitFalse(t *testing.T) {
+	var dst Deprecated
+	ok := decodeDeprecatedField(&dst, json.RawMessage(`false`))
+	assert.True(t, ok, "decoding false should succeed")
+	assert.Nil(t, dst, "explicit \"deprecated\": false should decode to a nil Deprecated, not DeprecatedFlag(false)")
+
+	dst = nil
+	ok = decodeDeprecatedField(&dst, json.RawMessage(`true`))
+	assert.True(t, ok, "decoding true should succeed")
+	assert.NotNil(t, dst, "explicit \"deprecated\": true should decode to a flag")
+
+	dst = nil
+	ok = decodeDeprecatedField(&dst, json.RawMessage(`"old"`))
+	assert.True(t, ok, "decoding a reason should succeed")
+	assert.NotNil(t, dst, "explicit \"deprecated\": \"old\" should decode to a reason")
+}
+
+// Inline: JSON-decode red test; ClassField.UnmarshalJSON predates the shared
+// decodeDeprecatedField false-to-nil behavior
+func TestClassFieldDeprecatedExplicitFalse(t *testing.T) {
+	var f ClassField
+	assert.NoError(t, json.Unmarshal([]byte(`{"kind": "field", "name": "cached", "deprecated": false}`), &f))
+	assert.False(t, f.IsDeprecated(), "explicit \"deprecated\": false on a field must not read as deprecated")
+
+	var g ClassField
+	assert.NoError(t, json.Unmarshal([]byte(`{"kind": "field", "name": "gone", "deprecated": true}`), &g))
+	assert.True(t, g.IsDeprecated(), "explicit \"deprecated\": true on a field should read as deprecated")
 }

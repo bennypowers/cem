@@ -100,6 +100,8 @@ func (p *DataSourceProvider) createRegistryDataSource() (map[string]any, error) 
 			"cssProperties": convertCssProperties(element.CssProperties()),
 			"cssParts":      convertCssParts(element.CssParts()),
 			"cssStates":     convertCssStates(element.CssStates()),
+			"methods":       convertMethods(element.Methods()),
+			"fields":        convertFields(element.Fields()),
 			"relationships": convertRelationships(element.Relationships()),
 		}
 		elementsMap[tagName] = elementData
@@ -149,6 +151,8 @@ func (p *DataSourceProvider) createElementsSummary(allElements map[string]types.
 		cssPropertyCount := len(element.CssProperties())
 		cssPartCount := len(element.CssParts())
 		cssStateCount := len(element.CssStates())
+		methodCount := len(element.Methods())
+		fieldCount := len(element.Fields())
 
 		// Determine capabilities based on counts and element properties
 		var capabilities []string
@@ -198,6 +202,8 @@ func (p *DataSourceProvider) createElementsSummary(allElements map[string]types.
 			"cssPropertyCount": cssPropertyCount,
 			"cssPartCount":     cssPartCount,
 			"cssStateCount":    cssStateCount,
+			"methodCount":      methodCount,
+			"fieldCount":       fieldCount,
 			"capabilities":     capabilities,
 		}
 
@@ -405,6 +411,89 @@ func convertCssStates(states []manifest.CssCustomState) []map[string]any {
 		}
 	}
 	return result
+}
+
+func convertMethods(methods []*manifest.ClassMethod) []map[string]any {
+	result := make([]map[string]any, len(methods))
+	for i, method := range methods {
+		parameters := make([]map[string]any, len(method.Parameters))
+		for j, param := range method.Parameters {
+			parameters[j] = convertParameter(param)
+		}
+		m := map[string]any{
+			"name":        method.Name,
+			"static":      method.Static,
+			"privacy":     privacyOrDefault(method.Privacy),
+			"description": method.Description,
+			"summary":     method.Summary,
+			"parameters":  parameters,
+			"deprecated":  method.IsDeprecated(),
+		}
+		if method.Return != nil && method.Return.Type != nil {
+			m["returnType"] = method.Return.Type.Text
+		}
+		if method.InheritedFrom != nil {
+			m["inheritedFrom"] = method.InheritedFrom.Name
+		}
+		if method.Source != nil {
+			m["source"] = method.Source.Href
+		}
+		result[i] = m
+	}
+	return result
+}
+
+func convertFields(fields []*manifest.ClassField) []map[string]any {
+	result := make([]map[string]any, len(fields))
+	for i, field := range fields {
+		f := map[string]any{
+			"name":        field.Name,
+			"static":      field.Static,
+			"privacy":     privacyOrDefault(field.Privacy),
+			"readonly":    field.Readonly,
+			"default":     field.Default,
+			"description": field.Description,
+			"summary":     field.Summary,
+			"deprecated":  field.IsDeprecated(),
+		}
+		if field.Type != nil {
+			f["type"] = field.Type.Text
+		}
+		if field.InheritedFrom != nil {
+			f["inheritedFrom"] = field.InheritedFrom.Name
+		}
+		if field.Source != nil {
+			f["source"] = field.Source.Href
+		}
+		result[i] = f
+	}
+	return result
+}
+
+func convertParameter(param manifest.Parameter) map[string]any {
+	p := map[string]any{
+		"name":     param.Name,
+		"optional": param.Optional,
+		"rest":     param.Rest,
+		"readonly": param.Readonly,
+	}
+	if param.Type != nil {
+		p["type"] = param.Type.Text
+	}
+	if param.Default != "" {
+		p["default"] = param.Default
+	}
+	if param.Description != "" {
+		p["description"] = param.Description
+	}
+	return p
+}
+
+func privacyOrDefault(privacy manifest.Privacy) string {
+	if privacy == "" {
+		return "public"
+	}
+	return string(privacy)
 }
 
 func convertRelationships(rels []relationships.Relationship) []map[string]any {

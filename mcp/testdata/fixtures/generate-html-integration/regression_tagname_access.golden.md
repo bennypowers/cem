@@ -1,5 +1,7 @@
 # HTML Generation for `button-element` ✨
 
+A custom button element
+
 ## Your Generated HTML 🎉
 
 ```html
