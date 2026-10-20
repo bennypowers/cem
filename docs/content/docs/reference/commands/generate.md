@@ -49,6 +49,8 @@ By default, `.d.ts` TypeScript declaration files are excluded. Use `--no-default
 
 The `--source-control-root-url` flag overrides the `sourceControlRootUrl` config file setting.
 
+In workspaces, `sourceControlRootUrl` is a root-level setting: the URL points at the monorepo root, so the flag or the root config's value applies to every package. A package-level config value that conflicts with it is ignored with a warning; package values only apply when neither the flag nor the root config sets one.
+
 ## JSDoc Tags
 
 Document your custom elements using these JSDoc tags. See [Documenting Components][documenting] for examples.

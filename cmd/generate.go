@@ -291,6 +291,18 @@ func generateWorkspace(cmd *cobra.Command) error {
 	rootFiles := rootCfg.Generate.Files
 	rootExclude := rootCfg.Generate.Exclude
 
+	// sourceControlRootUrl is a workspace-level setting: the URL points at the
+	// monorepo root, so every package shares it (#449). Effective value: the
+	// flag when passed (non-empty), else the root config's value. Package
+	// configs only apply when neither is set; a conflicting package value
+	// loses, with a warning.
+	sourceControlRootURL := rootCfg.SourceControlRootUrl
+	if cmd.Flags().Changed("source-control-root-url") {
+		if v := viper.GetString("sourceControlRootUrl"); v != "" {
+			sourceControlRootURL = v
+		}
+	}
+
 	fsys := platform.NewOSFileSystem()
 	results := W.ForEachPackage(baseCtx.Root(), fsys, func(pkg W.PackageInfo) error {
 		ctx := W.NewFileSystemWorkspaceContext(pkg.Path)
@@ -353,11 +365,12 @@ func generateWorkspace(cmd *cobra.Command) error {
 		if cmd.Flags().Changed("demo-discovery-url-template") {
 			cfg.Generate.DemoDiscovery.URLTemplate = viper.GetString("generate.demoDiscovery.urlTemplate")
 		}
-		// The root flag overrides every package config; the root config file's
-		// value is deliberately not cascaded here, matching the other root-level
-		// merges above (#449).
-		if cmd.Flags().Changed("source-control-root-url") {
-			cfg.SourceControlRootUrl = viper.GetString("sourceControlRootUrl")
+		if sourceControlRootURL != "" {
+			if cfg.SourceControlRootUrl != "" && cfg.SourceControlRootUrl != sourceControlRootURL {
+				logging.Warning("package %s: sourceControlRootUrl %q conflicts with the workspace root URL %q; using the workspace value",
+					pkg.Name, cfg.SourceControlRootUrl, sourceControlRootURL)
+			}
+			cfg.SourceControlRootUrl = sourceControlRootURL
 		}
 
 		if len(cfg.Generate.Files) == 0 {
