@@ -8,18 +8,6 @@ dataFetchers:
     source: elementInfo
     path: ""
     required: true
-  - name: methods
-    source: registry
-    path: "elements.$.tagName.methods"
-    required: false
-  - name: fields
-    source: registry
-    path: "elements.$.tagName.fields"
-    required: false
-  - name: schema
-    source: schema
-    path: "definitions"
-    required: false
 template: element-methods
 ---
 
@@ -33,4 +21,4 @@ Provides extensive member details including:
 - Inheritance provenance for mixin and superclass members
 - Source links to the declaring code
 
-Use this resource when you need to call element methods from JavaScript, extend the element, or inspect its class API beyond attributes. Deep links like `cem://element/{tagName}/methods/{methodName}` return a single member as JSON.
+Use this resource when you need to call element methods from JavaScript, extend the element, or inspect its class API beyond attributes. Deep links like `cem://element/{tagName}/methods/{methodName}` (the `element-methods-member` resource) return a single member as JSON.

@@ -7,10 +7,43 @@
       "declarations": [
         {
           "kind": "class",
+          "name": "BaseCounter",
+          "members": [
+            {
+              "kind": "field",
+              "name": "events",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[]",
+              "readonly": true,
+              "description": "Names of every fired event"
+            },
+            {
+              "kind": "method",
+              "name": "describe",
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              },
+              "summary": "Returns a human-readable state",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/mcp/testdata/fixtures/element-methods-integration/src/base-counter.ts#L4"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "class",
           "name": "CounterElement",
           "tagName": "counter-element",
           "customElement": true,
           "description": "A counting element",
+          "superclass": {
+            "name": "BaseCounter",
+            "module": "counter-element.js"
+          },
           "attributes": [
             {
               "name": "label",
@@ -42,6 +75,15 @@
             },
             {
               "kind": "field",
+              "name": "describe",
+              "type": {
+                "text": "string"
+              },
+              "default": "''",
+              "description": "Cached description text; shares a name with the inherited describe() method to pin deep-link precedence"
+            },
+            {
+              "kind": "field",
               "name": "history",
               "type": {
                 "text": "number[]"
@@ -64,6 +106,9 @@
               "kind": "method",
               "name": "increment",
               "description": "Adds to the count",
+              "source": {
+                "href": "https://github.com/bennypowers/cem/tree/main/mcp/testdata/fixtures/element-methods-integration/src/counter-element.ts#L20"
+              },
               "parameters": [
                 {
                   "name": "by",
@@ -72,6 +117,33 @@
                   },
                   "default": "1",
                   "description": "How much to add"
+                }
+              ],
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "log",
+              "summary": "Writes a log line",
+              "parameters": [
+                {
+                  "name": "tags",
+                  "type": {
+                    "text": "string"
+                  },
+                  "rest": true,
+                  "description": "Tags to include"
+                },
+                {
+                  "name": "level",
+                  "type": {
+                    "text": "\"info\" | \"warn\""
+                  },
+                  "optional": true
                 }
               ],
               "return": {

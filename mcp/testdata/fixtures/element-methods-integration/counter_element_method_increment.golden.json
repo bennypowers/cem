@@ -1,0 +1,21 @@
+{
+  "deprecated": false,
+  "description": "Adds to the count",
+  "name": "increment",
+  "parameters": [
+    {
+      "default": "1",
+      "description": "How much to add",
+      "name": "by",
+      "optional": false,
+      "readonly": false,
+      "rest": false,
+      "type": "number"
+    }
+  ],
+  "privacy": "public",
+  "returnType": "void",
+  "source": "https://github.com/bennypowers/cem/tree/main/mcp/testdata/fixtures/element-methods-integration/src/counter-element.ts#L20",
+  "static": false,
+  "summary": ""
+}

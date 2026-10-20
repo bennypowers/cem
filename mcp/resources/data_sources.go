@@ -472,10 +472,10 @@ func convertFields(fields []*manifest.ClassField) []map[string]any {
 
 func convertParameter(param manifest.Parameter) map[string]any {
 	p := map[string]any{
-		"name":       param.Name,
-		"optional":   param.Optional,
-		"rest":       param.Rest,
-		"readonly":   param.Readonly,
+		"name":     param.Name,
+		"optional": param.Optional,
+		"rest":     param.Rest,
+		"readonly": param.Readonly,
 	}
 	if param.Type != nil {
 		p["type"] = param.Type.Text

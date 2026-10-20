@@ -47,8 +47,8 @@ func (s *stubElementInfo) Slots() []manifest.Slot                          { ret
 func (s *stubElementInfo) CssParts() []manifest.CssPart                    { return nil }
 func (s *stubElementInfo) CssProperties() []manifest.CssCustomProperty     { return nil }
 func (s *stubElementInfo) CssStates() []manifest.CssCustomState            { return nil }
-func (s *stubElementInfo) Methods() []*manifest.ClassMethod               { return nil }
-func (s *stubElementInfo) Fields() []*manifest.ClassField                 { return nil }
+func (s *stubElementInfo) Methods() []*manifest.ClassMethod                { return nil }
+func (s *stubElementInfo) Fields() []*manifest.ClassField                  { return nil }
 func (s *stubElementInfo) Guidelines() []string                            { return nil }
 func (s *stubElementInfo) Examples() []MCPTypes.Example                    { return nil }
 func (s *stubElementInfo) Relationships() []relationships.Relationship     { return nil }

@@ -261,3 +261,65 @@ func TestMCPContext_CacheInvalidationRace(t *testing.T) {
 
 	wg.Wait()
 }
+
+// TestMCPContext_ConcurrentMemberFlattening pins the graft fix: element info
+// must reuse the registry's own declaration so the pointer-keyed
+// flattenedMembersCache dedupes and shared member objects (InheritedFrom)
+// are only ever flattened under the original declaration's sync.Once. Before
+// the fix, each conversion minted a fresh declaration identity and
+// concurrent Methods()/Fields()/Attributes() calls raced writing InheritedFrom
+// on the shared superclass members. Run with -race.
+func TestMCPContext_ConcurrentMemberFlattening(t *testing.T) {
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/element-methods-integration")
+	err := workspace.Init()
+	if err != nil {
+		t.Fatalf("Failed to initialize workspace: %v", err)
+	}
+
+	ctx, err := NewMCPContext(workspace, workspace.FileSystem())
+	if err != nil {
+		t.Fatalf("Failed to create MCP context: %v", err)
+	}
+
+	if err := ctx.LoadManifests(); err != nil {
+		t.Fatalf("Failed to load manifests: %v", err)
+	}
+
+	const numGoroutines = 20
+	const iterations = 50
+
+	var wg sync.WaitGroup
+	wg.Add(numGoroutines + 1)
+
+	// Invalidate the cache continuously so conversions (and thus declaration
+	// resolution) keep racing against member reads
+	go func() {
+		defer wg.Done()
+		for j := 0; j < iterations; j++ {
+			_ = ctx.LoadManifests()
+		}
+	}()
+
+	for i := 0; i < numGoroutines; i++ {
+		go func() {
+			defer wg.Done()
+			for j := 0; j < iterations; j++ {
+				info, err := ctx.GetElementInfo("counter-element")
+				if err != nil {
+					t.Errorf("GetElementInfo failed: %v", err)
+					return
+				}
+				for _, method := range info.Methods() {
+					_ = method.Name
+				}
+				for _, field := range info.Fields() {
+					_ = field.Name
+				}
+				_ = info.Attributes()
+				_ = info.CssParts()
+			}
+		}()
+	}
+
+	wg.Wait()
+}

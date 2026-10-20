@@ -31,7 +31,15 @@ func decodeDeprecatedField(dst *Deprecated, data json.RawMessage) bool {
 	}
 	var b bool
 	if err := json.Unmarshal(data, &b); err == nil {
-		*dst = NewDeprecated(b)
+		// An explicit false must not read as deprecated: DeprecatedFlag(false)
+		// is a non-nil interface, so every IsDeprecated() would return true.
+		// Decode false to nil, matching the JSON default (the field round-trips
+		// away, which is schema-valid since false is the default).
+		if !b {
+			*dst = nil
+		} else {
+			*dst = NewDeprecated(b)
+		}
 		return true
 	}
 	var s string

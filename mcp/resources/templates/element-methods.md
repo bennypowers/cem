@@ -3,7 +3,7 @@
 {{.Element.Description}}
 {{end}}
 {{- if gt (len .Element.Methods) 0}}
-This element exposes **{{len .Element.Methods}} methods** you can call from JavaScript. They are the verbs of the element: everything it can do beyond reacting to attributes and slots.
+This element declares **{{len .Element.Methods}} class methods**. They are the verbs of the element: everything it does beyond reacting to attributes and slots. Only public, non-deprecated instance methods are callable on the element; static, protected, private, and deprecated members are listed for completeness.
 
 ## Quick Reference 📋
 
@@ -25,12 +25,16 @@ This element exposes **{{len .Element.Methods}} methods** you can call from Java
 {{range .Parameters}}- `{{if .Rest}}...{{end}}{{.Name}}`{{if .Optional}} (optional){{end}}{{if .Type}}: `{{.Type.Text}}`{{end}}{{if .Default}} — default `{{.Default}}`{{end}}{{if .Description}} — {{.Description}}{{end}}
 {{end}}{{end}}{{if and .Return .Return.Type}}
 **Returns:** `{{.Return.Type.Text}}`{{if .Return.Description}} — {{.Return.Description}}{{end}}
+{{end}}{{if .InheritedFrom}}
+Inherited from `{{.InheritedFrom.Name}}`{{if .InheritedFrom.Module}} ({{.InheritedFrom.Module}}){{end}}.
+{{end}}{{if .Source}}
+[See the declaration]({{.Source.Href}})
 {{end}}{{end}}
 ## Call It From JavaScript 💻
 
 ```javascript
 const el = document.querySelector('{{.Element.TagName}}');
-{{range .Element.Methods}}{{if and (not .Static) (not .IsDeprecated)}}el.{{.Name}}({{range $i, $p := .Parameters}}{{if $i}}, {{end}}{{if $p.Default}}{{$p.Default}}{{else}}/* {{if $p.Type}}{{$p.Type.Text}}{{else}}value{{end}} */{{end}}{{end}});
+{{range .Element.Methods}}{{if and (not .Static) (not .IsDeprecated) (or (not .Privacy) (eq .Privacy "public"))}}el.{{.Name}}({{range $i, $p := .Parameters}}{{if $i}}, {{end}}{{if $p.Default}}{{$p.Default}}{{else}}/* {{if $p.Type}}{{$p.Type.Text}}{{else}}value{{end}} */{{end}}{{end}});
 {{end}}{{end}}```
 {{end}}
 {{- if gt (len .Element.Fields) 0}}{{if gt (len .Element.Methods) 0}}
@@ -42,7 +46,7 @@ This element also has **{{len .Element.Fields}} class fields** that are not back
 | ----- | ---- | ------- | --------- | ------------- |
 {{range .Element.Fields}}| `{{.Name}}` | {{if .Type}}`{{.Type.Text}}`{{else}}-{{end}} | {{if .Default}}`{{.Default}}`{{else}}-{{end}} | {{if .Static}}static {{end}}{{if .Readonly}}readonly {{end}}{{if and .Privacy (ne .Privacy "public")}}{{.Privacy}} {{end}}{{if .IsDeprecated}}deprecated{{end}} | {{if .Summary}}{{.Summary}}{{else if .Description}}{{.Description}}{{else}}-{{end}} |
 {{end}}
-{{range .Element.Fields}}{{if or .Description .Summary}}- **`{{.Name}}`**{{if .Type}}: `{{.Type.Text}}`{{end}}{{if .Readonly}} *(readonly)*{{end}}{{if .Static}} *(static)*{{end}}{{if and .Privacy (ne .Privacy "public")}} *({{.Privacy}})*{{end}} — {{if .Description}}{{.Description}}{{else}}{{.Summary}}{{end}}
+{{range .Element.Fields}}{{if or .Description .Summary}}- **`{{.Name}}`**{{if .Type}}: `{{.Type.Text}}`{{end}}{{if .Readonly}} *(readonly)*{{end}}{{if .Static}} *(static)*{{end}}{{if and .Privacy (ne .Privacy "public")}} *({{.Privacy}})*{{end}}{{if .InheritedFrom}} *(inherited from `{{.InheritedFrom.Name}}`)*{{end}} — {{if .Description}}{{.Description}}{{else}}{{.Summary}}{{end}}
 {{end}}{{end}}{{end}}
 {{- if and (eq (len .Element.Methods) 0) (eq (len .Element.Fields) 0)}}
 ## Nothing to Call 🦥

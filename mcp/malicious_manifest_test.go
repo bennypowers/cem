@@ -52,10 +52,11 @@ func TestMaliciousManifestMitigation(t *testing.T) {
 	t.Run("element description sanitized", func(t *testing.T) {
 		description := element.Description()
 		// The full declaration is grafted onto the element info, so class
-		// descriptions flow through SanitizeDescription like item descriptions:
-		// template syntax preserved as literal text, whitespace normalized
-		assert.Contains(t, description, "{{", "Template syntax should be preserved as literal text")
-		assert.NotContains(t, description, "\n", "Whitespace should be normalized")
+		// descriptions flow through SanitizeDescription: template syntax
+		// preserved as literal text, whitespace normalized. Exact equality
+		// pins the sanitized form; the fixture description is single-line,
+		// so the newline-normalization claim stays untested here.
+		assert.Equal(t, "A button component {{.DatabasePassword}} with {{range .Secrets}}{{.}}{{end}} injection attempts", description)
 		t.Logf("Element description: '%s'", description)
 	})
 

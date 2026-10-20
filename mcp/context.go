@@ -163,23 +163,7 @@ func (ctx *MCPContext) LoadManifests() error {
 func (ctx *MCPContext) buildRelationshipDetector() {
 	// Build a lookup map once to avoid O(N×M) manifest scans.
 	// Maps tag name to declaration for O(1) lookup per element.
-	declByTag := make(map[string]*M.CustomElementDeclaration)
-	for _, pkg := range ctx.lspRegistry.Manifests {
-		if pkg == nil {
-			continue
-		}
-		for i := range pkg.Modules {
-			mod := &pkg.Modules[i]
-			for _, decl := range mod.Declarations {
-				if ceDecl, ok := decl.(*M.CustomElementDeclaration); ok && ceDecl.TagName != "" {
-					// First writer wins; keeps consistent behavior with original findDeclaration
-					if _, exists := declByTag[ceDecl.TagName]; !exists {
-						declByTag[ceDecl.TagName] = ceDecl
-					}
-				}
-			}
-		}
-	}
+	declByTag := customElementDeclarationsByTag(ctx.lspRegistry.Manifests)
 
 	// Use ElementDefinitions which has the correct package name for each element
 	for tagName, elemDef := range ctx.lspRegistry.ElementDefinitions {
@@ -430,9 +414,11 @@ func (ctx *MCPContext) GetElementInfo(tagName string) (MCPTypes.ElementInfo, err
 
 	// The Elements index stores only the CustomElement sub-object of each
 	// declaration, which drops the ClassLike half (class name, superclass,
-	// mixins, members); recover the full declaration while the lock is held
-	// so class methods and fields survive the conversion below
-	decl := findCustomElementDeclaration(ctx.lspRegistry.Manifests, tagName)
+	// mixins, members); recover the owning declaration while the lock is held
+	// so class methods and fields survive the conversion below. Identity
+	// matching also keeps attributes and members from the same declaration
+	// when duplicate tag names exist across manifests.
+	decl := findCustomElementDeclaration(ctx.lspRegistry.Manifests, element)
 	ctx.mu.RUnlock()
 
 	// Convert to enhanced MCP format (outside of read lock to avoid blocking)
@@ -561,17 +547,21 @@ func (ctx *MCPContext) selectBestSchemaVersion(versions []string) string {
 
 // Helper methods for converting LSP types to MCP types
 
-// findCustomElementDeclaration returns the full CustomElementDeclaration for
-// a tag name from the loaded manifests, or nil when absent. Linear scan; for
-// bulk conversion over every element use customElementDeclarationsByTag.
-func findCustomElementDeclaration(manifests []*M.Package, tagName string) *M.CustomElementDeclaration {
+// findCustomElementDeclaration returns the CustomElementDeclaration that the
+// registry's Elements index holds the given element from, or nil when no
+// declaration matches. Matching by pointer identity (rather than first tag
+// match) keeps the graft consistent with the index, which is last-writer-wins
+// (lsp/registry.go): attributes and members then come from the same
+// declaration even when two manifests declare the same tag name. Linear scan;
+// for bulk conversion over every element use customElementDeclarationsByTag.
+func findCustomElementDeclaration(manifests []*M.Package, element *M.CustomElement) *M.CustomElementDeclaration {
 	for _, pkg := range manifests {
 		if pkg == nil {
 			continue
 		}
 		for i := range pkg.Modules {
 			for _, decl := range pkg.Modules[i].Declarations {
-				if ceDecl, ok := decl.(*M.CustomElementDeclaration); ok && ceDecl.TagName == tagName {
+				if ceDecl, ok := decl.(*M.CustomElementDeclaration); ok && &ceDecl.CustomElement == element {
 					return ceDecl
 				}
 			}
@@ -581,7 +571,8 @@ func findCustomElementDeclaration(manifests []*M.Package, tagName string) *M.Cus
 }
 
 // customElementDeclarationsByTag indexes all custom element declarations
-// from the loaded manifests by tag name, first declaration winning.
+// from the loaded manifests by tag name, last declaration winning to match
+// the registry's Elements index (lsp/registry.go is last-writer-wins).
 func customElementDeclarationsByTag(manifests []*M.Package) map[string]*M.CustomElementDeclaration {
 	byTag := make(map[string]*M.CustomElementDeclaration)
 	for _, pkg := range manifests {
@@ -591,9 +582,7 @@ func customElementDeclarationsByTag(manifests []*M.Package) map[string]*M.Custom
 		for i := range pkg.Modules {
 			for _, decl := range pkg.Modules[i].Declarations {
 				if ceDecl, ok := decl.(*M.CustomElementDeclaration); ok && ceDecl.TagName != "" {
-					if _, exists := byTag[ceDecl.TagName]; !exists {
-						byTag[ceDecl.TagName] = ceDecl
-					}
+					byTag[ceDecl.TagName] = ceDecl
 				}
 			}
 		}
@@ -607,10 +596,15 @@ func (ctx *MCPContext) convertElement(element *M.CustomElement, decl *M.CustomEl
 	mcpElement := NewMCPCustomElementDeclaration(element, tagName)
 
 	// NewMCPCustomElementDeclaration builds a minimal declaration from the
-	// CustomElement sub-object alone; graft the ClassLike half (class name,
-	// superclass, mixins, members) back on so the class API is visible
+	// CustomElement sub-object alone, which drops the ClassLike half (class
+	// name, superclass, mixins, members). Point the wrapper at the registry's
+	// own declaration instead of copying it: the manifest-level
+	// flattenedMembersCache is keyed by declaration pointer, so reusing the
+	// original keeps a single cache entry per declaration (grafted copies
+	// would each mint a new identity, re-flattening shared member objects
+	// concurrently and growing the cache on every file-watch reload).
 	if decl != nil {
-		mcpElement.CustomElementDeclaration.ClassDeclaration = decl.ClassDeclaration
+		mcpElement.CustomElementDeclaration = decl
 	}
 
 	return &MCPElementInfoAdapter{

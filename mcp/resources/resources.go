@@ -112,6 +112,8 @@ func getResourceHandler(resourceDef types.ResourceDefinition, registry types.MCP
 		return makeConfigSchemaOverviewHandler(registry), nil
 	case "config-schema-section":
 		return makeConfigSchemaSectionHandler(registry), nil
+	case "element-methods-member":
+		return makeElementMethodsMemberHandler(registry), nil
 	}
 
 	if len(resourceDef.DataFetchers) == 0 {

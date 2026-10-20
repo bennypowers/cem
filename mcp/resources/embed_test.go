@@ -49,8 +49,8 @@ func TestResourceDefinitions_Embedded(t *testing.T) {
 	resourceDefs, err := resources.Resources(adapter)
 	require.NoError(t, err, "Resources() should succeed with embedded definitions")
 
-	// Verify expected number of resources (18 total)
-	assert.Len(t, resourceDefs, 18, "Should have exactly 18 embedded resource definitions")
+	// Verify expected number of resources (19 total)
+	assert.Len(t, resourceDefs, 19, "Should have exactly 19 embedded resource definitions")
 
 	// Verify expected resource names are present
 	resourceNames := make(map[string]bool)
@@ -68,6 +68,7 @@ func TestResourceDefinitions_Embedded(t *testing.T) {
 		"element-slots",
 		"element-events",
 		"element-methods",
+		"element-methods-member",
 		"element-css-custom-properties",
 		"element-css-parts",
 		"element-css-states",

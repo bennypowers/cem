@@ -17,6 +17,7 @@ Model Context Protocol server for custom elements. See [MCP Integration](/docs/i
 | `cem://element/{tagName}/slots`                 | Content guidelines and accessibility considerations for slots                                                       |
 | `cem://element/{tagName}/events`                | Event triggers, data payloads, and JavaScript integration patterns                                                                   |
 | `cem://element/{tagName}/methods`               | Class method signatures, parameters, and non-attribute fields                                                          |
+| `cem://element/{tagName}/methods/{memberName}`  | Single method or field as JSON                                                                                         |
 | `cem://element/{tagName}/css/parts`             | CSS parts styling guidance                                                                    |
 | `cem://element/{tagName}/css/custom-properties` | CSS custom properties documentation                                                           |
 | `cem://element/{tagName}/css/states`            | CSS custom states documentation                                                                  |

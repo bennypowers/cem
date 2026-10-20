@@ -20,8 +20,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -646,19 +644,13 @@ func testValidateHtmlWithGolden(t *testing.T, fixtureFile, contextStr, goldenFil
 	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
 	require.True(t, ok)
 
-	// Handle --update flag
-	goldenPath := filepath.Join("../testdata/fixtures/validate-html", goldenFile)
-	if *testutil.Update {
-		err := os.WriteFile(goldenPath, []byte(textContent.Text), 0644)
-		require.NoError(t, err, "Failed to update golden file %s", goldenPath)
-		t.Logf("Updated golden file: %s", goldenPath)
-		return
-	}
-
-	// Compare with golden file
-	expectedData := testutil.ReadFixture(t, fs, "/"+goldenFile)
-
-	assert.Equal(t, string(expectedData), textContent.Text, "Output should match golden file")
+	// Compare or update via the shared CheckGolden (reads from the preloaded
+	// MapFS, writes --update results next to the tracked goldens)
+	testutil.CheckGolden(t, goldenFile, []byte(textContent.Text), testutil.GoldenOptions{
+		Dir:       "/",
+		FS:        fs,
+		SourceDir: "../testdata/fixtures/validate-html",
+	})
 }
 
 // Fixture/Golden pattern tests for validate_html tool
