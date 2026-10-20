@@ -337,6 +337,11 @@ func TestElementMethodsSubResource_FilterByName(t *testing.T) {
 		assert.Contains(t, filtered, "parameters", "Filtered method should carry its parameters")
 	})
 
+	t.Run("percent-encoded member name is decoded", func(t *testing.T) {
+		filtered := readMember(t, "cem://element/counter-element/methods/%69ncrement")
+		assert.Equal(t, "increment", filtered["name"], "Encoded member segment should unescape before matching")
+	})
+
 	t.Run("field by name", func(t *testing.T) {
 		filtered := readMember(t, "cem://element/counter-element/methods/count")
 		assert.Equal(t, "count", filtered["name"])

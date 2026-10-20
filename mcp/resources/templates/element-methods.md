@@ -9,7 +9,7 @@ This element declares **{{len .Element.Methods}} class methods**. They are the v
 
 | Method | Returns | Modifiers | What it does |
 | ------ | ------- | --------- | ------------ |
-{{range .Element.Methods}}| `{{.Name}}` | {{if and .Return .Return.Type}}`{{.Return.Type.Text}}`{{else}}-{{end}} | {{if .Static}}static {{end}}{{if and .Privacy (ne .Privacy "public")}}{{.Privacy}} {{end}}{{if .IsDeprecated}}deprecated{{end}} | {{if .Summary}}{{.Summary}}{{else if .Description}}{{.Description}}{{else}}-{{end}} |
+{{range .Element.Methods}}| `{{.Name}}` | {{if and .Return .Return.Type}}`{{.Return.Type.Text}}`{{else}}-{{end}} | {{if .Static}}static {{end}}{{if and .Privacy (ne .Privacy "public")}}{{.Privacy}} {{end}}{{if .IsDeprecated}}deprecated{{end}} | {{if .Summary}}{{.Summary | sanitize}}{{else if .Description}}{{.Description | sanitize}}{{else}}-{{end}} |
 {{end}}
 ## The Full Story 📖
 {{range .Element.Methods}}
@@ -44,9 +44,9 @@ This element also has **{{len .Element.Fields}} class fields** that are not back
 
 | Field | Type | Default | Modifiers | What it holds |
 | ----- | ---- | ------- | --------- | ------------- |
-{{range .Element.Fields}}| `{{.Name}}` | {{if .Type}}`{{.Type.Text}}`{{else}}-{{end}} | {{if .Default}}`{{.Default}}`{{else}}-{{end}} | {{if .Static}}static {{end}}{{if .Readonly}}readonly {{end}}{{if and .Privacy (ne .Privacy "public")}}{{.Privacy}} {{end}}{{if .IsDeprecated}}deprecated{{end}} | {{if .Summary}}{{.Summary}}{{else if .Description}}{{.Description}}{{else}}-{{end}} |
+{{range .Element.Fields}}| `{{.Name}}` | {{if .Type}}`{{.Type.Text}}`{{else}}-{{end}} | {{if .Default}}`{{.Default}}`{{else}}-{{end}} | {{if .Static}}static {{end}}{{if .Readonly}}readonly {{end}}{{if and .Privacy (ne .Privacy "public")}}{{.Privacy}} {{end}}{{if .IsDeprecated}}deprecated{{end}} | {{if .Summary}}{{.Summary | sanitize}}{{else if .Description}}{{.Description | sanitize}}{{else}}-{{end}} |
 {{end}}
-{{range .Element.Fields}}{{if or .Description .Summary}}- **`{{.Name}}`**{{if .Type}}: `{{.Type.Text}}`{{end}}{{if .Readonly}} *(readonly)*{{end}}{{if .Static}} *(static)*{{end}}{{if and .Privacy (ne .Privacy "public")}} *({{.Privacy}})*{{end}}{{if .InheritedFrom}} *(inherited from `{{.InheritedFrom.Name}}`)*{{end}} — {{if .Description}}{{.Description}}{{else}}{{.Summary}}{{end}}
+{{range .Element.Fields}}{{if or .Description .Summary}}- **`{{.Name}}`**{{if .Type}}: `{{.Type.Text}}`{{end}}{{if .Readonly}} *(readonly)*{{end}}{{if .Static}} *(static)*{{end}}{{if and .Privacy (ne .Privacy "public")}} *({{.Privacy}})*{{end}}{{if .InheritedFrom}} *(inherited from `{{.InheritedFrom.Name}}`)*{{end}} — {{if .Description}}{{.Description | sanitize}}{{else}}{{.Summary | sanitize}}{{end}}
 {{end}}{{end}}{{end}}
 {{- if and (eq (len .Element.Methods) 0) (eq (len .Element.Fields) 0)}}
 ## Nothing to Call 🦥

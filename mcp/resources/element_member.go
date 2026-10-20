@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"bennypowers.dev/cem/manifest"
@@ -42,7 +43,14 @@ func makeElementMethodsMemberHandler(registry types.MCPContext) mcp.ResourceHand
 		if len(parts) != 3 || parts[1] != "methods" || parts[0] == "" || parts[2] == "" {
 			return nil, fmt.Errorf("invalid member URI %q", uri)
 		}
-		tagName, memberName := parts[0], parts[2]
+		tagName := parts[0]
+
+		// Clients percent-encode URI segments; the raw segment would not
+		// match member names containing anything outside the unreserved set
+		memberName, err := url.PathUnescape(parts[2])
+		if err != nil {
+			return nil, fmt.Errorf("invalid member URI %q: %w", uri, err)
+		}
 
 		element, err := registry.ElementInfo(tagName)
 		if err != nil {
