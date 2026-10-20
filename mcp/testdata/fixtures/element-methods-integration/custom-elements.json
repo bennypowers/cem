@@ -86,7 +86,7 @@
               "kind": "field",
               "name": "history",
               "type": {
-                "text": "number[]"
+                "text": "(number | string)[]"
               },
               "default": "[]",
               "readonly": true,
@@ -148,7 +148,7 @@
               ],
               "return": {
                 "type": {
-                  "text": "void"
+                  "text": "\"console\" | \"silent\""
                 }
               }
             },

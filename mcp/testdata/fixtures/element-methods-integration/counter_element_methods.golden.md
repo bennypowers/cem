@@ -10,7 +10,7 @@ This element declares **6 class methods**. They are the verbs of the element: ev
 | ------ | ------- | --------- | ------------ |
 | [`describe`](cem://element/counter-element/methods/describe) | `string` |  | Returns a human-readable state |
 | [`increment`](cem://element/counter-element/methods/increment) | `void` |  | Adds to the count |
-| [`log`](cem://element/counter-element/methods/log) | `void` |  | Writes a log line |
+| [`log`](cem://element/counter-element/methods/log) | `"console" \| "silent"` |  | Writes a log line |
 | [`reset`](cem://element/counter-element/methods/reset) | `Promise<void>` |  | Resets the count to zero |
 | [`createRenderer`](cem://element/counter-element/methods/createRenderer) | `unknown` | static protected  | - |
 | [`legacyTap`](cem://element/counter-element/methods/legacyTap) | `void` | deprecated | - |
@@ -38,7 +38,7 @@ Adds to the count
 
 [See the declaration](https://github.com/bennypowers/cem/tree/main/mcp/testdata/fixtures/element-methods-integration/src/counter-element.ts#L20)
 
-### [`log(...tags: string, level: "info" | "warn"): void`](cem://element/counter-element/methods/log)
+### [`log(...tags: string, level: "info" | "warn"): "console" | "silent"`](cem://element/counter-element/methods/log)
 
 Writes a log line
 
@@ -46,7 +46,7 @@ Writes a log line
 - `...tags`: `string` — Tags to include
 - `level` (optional): `"info" | "warn"`
 
-**Returns:** `void`
+**Returns:** `"console" | "silent"`
 
 ### [`reset(): Promise<void>`](cem://element/counter-element/methods/reset)
 
@@ -83,13 +83,13 @@ This element also has **5 class fields** that are not backed by attributes. Unli
 | [`events`](cem://element/counter-element/methods/events) | `string[]` | `[]` | readonly  | Names of every fired event |
 | [`count`](cem://element/counter-element/methods/count) | `number` | `0` |  | The current count |
 | [`describe`](cem://element/counter-element/methods/describe) | `string` | `''` |  | Cached description text; shares a name with the inherited describe() method to pin deep-link precedence |
-| [`history`](cem://element/counter-element/methods/history) | `number[]` | `[]` | readonly protected  | Every value the counter has taken |
+| [`history`](cem://element/counter-element/methods/history) | `(number \| string)[]` | `[]` | readonly protected  | Every value the counter has taken |
 | [`registry`](cem://element/counter-element/methods/registry) | `Map<string, CounterElement>` | - | static  | All live instances |
 
 - **[`events`](cem://element/counter-element/methods/events)**: `string[]` *(readonly)* *(inherited from `BaseCounter`)* — Names of every fired event
 - **[`count`](cem://element/counter-element/methods/count)**: `number` — The current count
 - **[`describe`](cem://element/counter-element/methods/describe)**: `string` — Cached description text; shares a name with the inherited describe() method to pin deep-link precedence
-- **[`history`](cem://element/counter-element/methods/history)**: `number[]` *(readonly)* *(protected)* — Every value the counter has taken
+- **[`history`](cem://element/counter-element/methods/history)**: `(number | string)[]` *(readonly)* *(protected)* — Every value the counter has taken
 - **[`registry`](cem://element/counter-element/methods/registry)**: `Map<string, CounterElement>` *(static)* — All live instances
 
 ## Keep Exploring 🧭
