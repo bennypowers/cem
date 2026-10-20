@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/class-jsdoc-inside-export.js",
+      "declarations": [
+        {
+          "name": "InsideExport",
+          "description": "In-statement doc.",
+          "superclass": {
+            "name": "Event",
+            "package": "global:"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-jsdoc-inside-export.ts#L1"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "InsideDefaultExport",
+          "description": "In-statement default doc.",
+          "superclass": {
+            "name": "Event",
+            "package": "global:"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-jsdoc-inside-export.ts#L3"
+          },
+          "kind": "class"
+        },
+        {
+          "name": "DecoratedInsideExport",
+          "description": "In-statement doc after decorator.",
+          "superclass": {
+            "name": "Event",
+            "package": "global:"
+          },
+          "source": {
+            "href": "https://github.com/bennypowers/cem/tree/main/generate/testdata/fixtures/project-classes/src/class-jsdoc-inside-export.ts#L11"
+          },
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "InsideExport",
+          "declaration": {
+            "name": "InsideExport",
+            "module": "src/class-jsdoc-inside-export.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "InsideDefaultExport",
+            "module": "src/class-jsdoc-inside-export.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DecoratedInsideExport",
+          "declaration": {
+            "name": "DecoratedInsideExport",
+            "module": "src/class-jsdoc-inside-export.js"
+          }
+        }
+      ]
+    }
+  ]
+}

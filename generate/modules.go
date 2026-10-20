@@ -29,10 +29,10 @@ import (
 
 	"bennypowers.dev/cem/generate/jsdoc"
 	"bennypowers.dev/cem/internal/platform"
+	S "bennypowers.dev/cem/internal/set"
+	Q "bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/internal/tui"
 	M "bennypowers.dev/cem/manifest"
-	Q "bennypowers.dev/cem/internal/treesitter"
-	S "bennypowers.dev/cem/internal/set"
 	"bennypowers.dev/cem/types"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
@@ -326,14 +326,6 @@ func (mp *ModuleProcessor) processClasses() error {
 
 	processed := make(map[string]*ParsedClass)
 
-	// Collect all JSdoc captures once, outside the loop
-	allJsdocs := []Q.CaptureInfo{}
-	for captures := range qm.ParentCaptures(mp.root, mp.code, "class.jsdoc") {
-		if jsdocCaps, ok := captures["class.jsdoc"]; ok {
-			allJsdocs = append(allJsdocs, jsdocCaps...)
-		}
-	}
-
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "class.declaration") {
 		nameNodes, ok := captures["class.name"]
 		if !ok || len(nameNodes) == 0 {
@@ -344,19 +336,10 @@ func (mp *ModuleProcessor) processClasses() error {
 			continue
 		}
 
-		if _, hasJSDoc := captures["class.jsdoc"]; !hasJSDoc {
-			if declCaptures, ok := captures["class.declaration"]; ok && len(declCaptures) > 0 {
-				node := Q.GetDescendantById(mp.root, declCaptures[0].NodeId)
-				if node != nil {
-					if p := node.Parent(); p != nil && p.Kind() == "export_statement" {
-						node = p
-					}
-					if text := jsdoc.ExtractFromNode(node, mp.code); text != "" {
-						captures["class.jsdoc"] = []Q.CaptureInfo{{Text: text}}
-					}
-				}
-			}
-		}
+		// the class queries intentionally carry no comment prefix, so
+		// JSDoc is recovered here from the class's surrounding comments,
+		// including in-statement comments on exported classes
+		mp.attachJSDoc(captures, "class.declaration", "class.jsdoc")
 
 		parsed := &ParsedClass{
 			Name:     className,
@@ -448,12 +431,7 @@ func (mp *ModuleProcessor) processDeclarations() error {
 
 	// variable declarations
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "variable") {
-		// the comment-less fallback pattern captures no JSDoc; recover it
-		// from the comment preceding the export statement when the query
-		// didn't capture one, mirroring the class jsdoc handling in
-		// processClasses (a plain comment between the JSDoc and the
-		// statement defeats the query's comment-prefix pattern)
-		mp.attachLocalJSDoc(captures, "variable", "variable.jsdoc")
+		mp.attachJSDoc(captures, "variable", "variable.jsdoc")
 		declaration, err := mp.generateVarDeclaration(captures)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
@@ -467,11 +445,11 @@ func (mp *ModuleProcessor) processDeclarations() error {
 	// below
 	functionHasBody := make(map[*M.FunctionDeclaration]bool)
 	for captures := range qm.ParentCaptures(mp.root, mp.code, "function") {
-		// same recovery as the variable loop above; it also restores the
-		// implementation signature's JSDoc for overload sets, which
+		// JSDoc recovery also restores the implementation signature's
+		// JSDoc for overload sets, which
 		// dropOverloadImplementationSignatures merges onto the kept
 		// signatures below
-		mp.attachLocalJSDoc(captures, "function", "function.jsdoc")
+		mp.attachJSDoc(captures, "function", "function.jsdoc")
 		declaration, err := mp.generateFunctionDeclaration(captures)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
@@ -743,7 +721,7 @@ func (mp *ModuleProcessor) processDeclarations() error {
 		if !ok || len(nameNodes) == 0 || !localExportTargets.Has(nameNodes[0].Text) {
 			continue
 		}
-		mp.attachLocalJSDoc(captures, "local.variable", "variable.jsdoc")
+		mp.attachJSDoc(captures, "local.variable", "variable.jsdoc", "lexical_declaration")
 		declaration, err := mp.generateVarDeclaration(captures)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
@@ -757,7 +735,7 @@ func (mp *ModuleProcessor) processDeclarations() error {
 		if !ok || len(nameNodes) == 0 || !localExportTargets.Has(nameNodes[0].Text) {
 			continue
 		}
-		mp.attachLocalJSDoc(captures, "local.function", "function.jsdoc")
+		mp.attachJSDoc(captures, "local.function", "function.jsdoc", "lexical_declaration")
 		declaration, err := mp.generateFunctionDeclaration(captures)
 		if err != nil {
 			mp.errors = errors.Join(mp.errors, err)
@@ -803,16 +781,23 @@ func (mp *ModuleProcessor) processDeclarations() error {
 	return err
 }
 
-// attachLocalJSDoc enriches local-declaration captures with JSDoc extracted
-// from the comment preceding the matched node, mirroring the class jsdoc
-// handling in processClasses. The local.* query patterns intentionally omit
-// a comment prefix (a zero-match `(comment) *` prefix would pin matches to
-// the program's first child), so JSDoc is recovered here when the pattern
-// didn't capture one.
-func (mp *ModuleProcessor) attachLocalJSDoc(captures Q.CaptureMap, nodeCapture, jsdocCapture string) {
-	if _, hasJSDoc := captures[jsdocCapture]; hasJSDoc {
-		return
-	}
+// attachJSDoc enriches declaration captures with JSDoc extracted from
+// the comment preceding the matched node. The query patterns intentionally
+// omit a comment prefix (a zero-match `(comment) *` prefix would pin
+// matches to the program's first child, and an anchored prefix fails on
+// plain comments above the statement), so JSDoc is recovered here for
+// every declaration shape, with the closest JSDoc comment winning.
+//
+// unwrapParentKinds lists the statement kinds the matched node may sit
+// directly inside whose own leading comment is the one to read: a
+// declarator's leading comment precedes the enclosing statement, not the
+// declarator, so a matching parent replaces the node before extracting.
+// An export_statement wrapper works the other way around — a JSDoc between
+// `export` and the declaration (or after a decorator) is a sibling of the
+// declaration inside the statement, and thus unreachable from the
+// statement's own preceding sibling run — so the node is consulted first
+// and the statement's leading comment is the fallback.
+func (mp *ModuleProcessor) attachJSDoc(captures Q.CaptureMap, nodeCapture, jsdocCapture string, unwrapParentKinds ...string) {
 	nodes, ok := captures[nodeCapture]
 	if !ok || len(nodes) == 0 {
 		return
@@ -821,11 +806,16 @@ func (mp *ModuleProcessor) attachLocalJSDoc(captures Q.CaptureMap, nodeCapture, 
 	if node == nil {
 		return
 	}
-	// a declarator's leading comment precedes the enclosing statement
-	if p := node.Parent(); p != nil && p.Kind() == "lexical_declaration" {
+	if p := node.Parent(); p != nil && slices.Contains(unwrapParentKinds, p.Kind()) {
 		node = p
 	}
-	if text := jsdoc.ExtractFromNode(node, mp.code); text != "" {
+	text := jsdoc.ExtractFromNode(node, mp.code)
+	if text == "" {
+		if p := node.Parent(); p != nil && p.Kind() == "export_statement" {
+			text = jsdoc.ExtractFromNode(p, mp.code)
+		}
+	}
+	if text != "" {
 		captures[jsdocCapture] = []Q.CaptureInfo{{Text: text}}
 	}
 }
