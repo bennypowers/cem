@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	G "bennypowers.dev/cem/generate"
@@ -366,11 +367,19 @@ func generateWorkspace(cmd *cobra.Command) error {
 			cfg.Generate.DemoDiscovery.URLTemplate = viper.GetString("generate.demoDiscovery.urlTemplate")
 		}
 		if sourceControlRootURL != "" {
-			if cfg.SourceControlRootUrl != "" && cfg.SourceControlRootUrl != sourceControlRootURL {
-				logging.Warning("package %s: sourceControlRootUrl %q conflicts with the workspace root URL %q; using the workspace value",
-					pkg.Name, cfg.SourceControlRootUrl, sourceControlRootURL)
+			// Module paths are package-relative, so a workspace-level URL needs
+			// the package's path from the workspace root appended to keep hrefs
+			// pointing at the real file locations. A package-only URL (below)
+			// is package-scoped already and is used unchanged.
+			pkgURL := sourceControlRootURL
+			if rel, relErr := filepath.Rel(baseCtx.Root(), pkg.Path); relErr == nil && rel != "." && !strings.HasPrefix(rel, "..") {
+				pkgURL = strings.TrimSuffix(pkgURL, "/") + "/" + filepath.ToSlash(rel) + "/"
 			}
-			cfg.SourceControlRootUrl = sourceControlRootURL
+			if cfg.SourceControlRootUrl != "" && cfg.SourceControlRootUrl != pkgURL {
+				logging.Warning("package %s: sourceControlRootUrl %q conflicts with the workspace root URL %q; using the workspace value",
+					pkg.Name, cfg.SourceControlRootUrl, pkgURL)
+			}
+			cfg.SourceControlRootUrl = pkgURL
 		}
 
 		if len(cfg.Generate.Files) == 0 {

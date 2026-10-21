@@ -133,11 +133,23 @@ func TestGenerateSourceControlRootURLFlag(t *testing.T) {
 	})
 }
 
+// workspaceButtonHref and workspaceCardHref are the complete declaration
+// source hrefs the workspace fixtures must produce when a workspace-level URL
+// (flag or root config) is in effect: the package's path from the workspace
+// root is appended to the base URL, so the links point at the real file
+// locations.
+const (
+	workspaceButtonHref = sourceURLFlag + "packages/button/src/button.ts#L6"
+	workspaceCardHref   = sourceURLFlag + "packages/card/src/card.ts#L7"
+)
+
 // TestGenerateWorkspaceSourceControlRootURLFlag verifies workspace-mode
 // precedence for sourceControlRootUrl: the URL points at the monorepo root,
 // so it is a workspace-level setting. Effective value: the flag when passed
 // (non-empty), else the root config's value, else each package's own config.
 // A package value conflicting with the workspace value loses, with a warning.
+// A workspace-level URL gets the package's path from the workspace root
+// appended; a package-only URL is used unchanged.
 func TestGenerateWorkspaceSourceControlRootURLFlag(t *testing.T) {
 	t.Run("FlagOverridesPackageConfig", func(t *testing.T) {
 		projectDir := setupTest(t, "workspace-generate")
@@ -145,17 +157,17 @@ func TestGenerateWorkspaceSourceControlRootURLFlag(t *testing.T) {
 
 		_, stderr := runCemCommand(t, projectDir, "generate", "--source-control-root-url", sourceURLFlag)
 
-		// Inline, not golden: per-package substring checks across two packages, comparative property not a fixed manifest.
+		// Inline, not golden: per-package href checks across two packages, comparative property not a fixed manifest.
 		button := readPackageManifest(t, projectDir, "button")
-		if !strings.Contains(button, sourceURLFlag) {
-			t.Errorf("--source-control-root-url flag value not reflected in packages/button source references:\n%s", button)
+		if !strings.Contains(button, workspaceButtonHref) {
+			t.Errorf("packages/button source reference should be the flag URL with the package path appended:\n%s", button)
 		}
 		if strings.Contains(button, sourceURLFile) {
 			t.Errorf("package config value should be overridden by the flag, but packages/button contains it:\n%s", button)
 		}
 		card := readPackageManifest(t, projectDir, "card")
-		if !strings.Contains(card, sourceURLFlag) {
-			t.Errorf("--source-control-root-url flag value not reflected in packages/card source references:\n%s", card)
+		if !strings.Contains(card, workspaceCardHref) {
+			t.Errorf("packages/card source reference should be the flag URL with the package path appended:\n%s", card)
 		}
 		if !strings.Contains(stderr, "conflicts with the workspace root URL") {
 			t.Errorf("button's conflicting package config should produce a warning, but stderr has none:\n%s", stderr)
@@ -168,12 +180,14 @@ func TestGenerateWorkspaceSourceControlRootURLFlag(t *testing.T) {
 
 		runCemCommand(t, projectDir, "generate")
 
-		// Inline, not golden: per-package substring checks across two packages, comparative property not a fixed manifest.
-		for _, pkg := range []string{"button", "card"} {
-			manifest := readPackageManifest(t, projectDir, pkg)
-			if !strings.Contains(manifest, sourceURLFlag) {
-				t.Errorf("root config value should cascade to packages/%s source references:\n%s", pkg, manifest)
-			}
+		// Inline, not golden: per-package href checks across two packages, comparative property not a fixed manifest.
+		button := readPackageManifest(t, projectDir, "button")
+		if !strings.Contains(button, workspaceButtonHref) {
+			t.Errorf("root config value should cascade to packages/button with the package path appended:\n%s", button)
+		}
+		card := readPackageManifest(t, projectDir, "card")
+		if !strings.Contains(card, workspaceCardHref) {
+			t.Errorf("root config value should cascade to packages/card with the package path appended:\n%s", card)
 		}
 	})
 
@@ -184,17 +198,17 @@ func TestGenerateWorkspaceSourceControlRootURLFlag(t *testing.T) {
 
 		_, stderr := runCemCommand(t, projectDir, "generate")
 
-		// Inline, not golden: per-package substring checks across two packages, comparative property not a fixed manifest.
+		// Inline, not golden: per-package href checks across two packages, comparative property not a fixed manifest.
 		button := readPackageManifest(t, projectDir, "button")
-		if !strings.Contains(button, sourceURLFlag) {
-			t.Errorf("root config value should win over packages/button's conflicting config:\n%s", button)
+		if !strings.Contains(button, workspaceButtonHref) {
+			t.Errorf("root config value should win over packages/button's conflicting config, with the package path appended:\n%s", button)
 		}
 		if strings.Contains(button, sourceURLFile) {
 			t.Errorf("conflicting package config value should not reach packages/button's manifest:\n%s", button)
 		}
 		card := readPackageManifest(t, projectDir, "card")
-		if !strings.Contains(card, sourceURLFlag) {
-			t.Errorf("root config value should cascade to packages/card source references:\n%s", card)
+		if !strings.Contains(card, workspaceCardHref) {
+			t.Errorf("root config value should cascade to packages/card with the package path appended:\n%s", card)
 		}
 		if !strings.Contains(stderr, "conflicts with the workspace root URL") {
 			t.Errorf("button's conflicting package config should produce a warning, but stderr has none:\n%s", stderr)
@@ -207,10 +221,11 @@ func TestGenerateWorkspaceSourceControlRootURLFlag(t *testing.T) {
 
 		runCemCommand(t, projectDir, "generate")
 
-		// Inline, not golden: per-package substring checks across two packages, comparative property not a fixed manifest.
+		// Inline, not golden: per-package href checks across two packages, comparative property not a fixed manifest.
+		// A package-only URL is package-scoped already, so no path is appended.
 		button := readPackageManifest(t, projectDir, "button")
-		if !strings.Contains(button, sourceURLFile) {
-			t.Errorf("package config value should apply when no workspace-level value exists:\n%s", button)
+		if !strings.Contains(button, sourceURLFile+"src/button.ts#L6") {
+			t.Errorf("package config value should apply unchanged when no workspace-level value exists:\n%s", button)
 		}
 		card := readPackageManifest(t, projectDir, "card")
 		if strings.Contains(card, sourceURLFile) {
@@ -224,15 +239,17 @@ func TestGenerateWorkspaceSourceControlRootURLFlag(t *testing.T) {
 
 		runCemCommand(t, projectDir, "generate", "--source-control-root-url", sourceURLFlag)
 
-		// Inline, not golden: per-package substring checks across two packages, comparative property not a fixed manifest.
-		for _, pkg := range []string{"button", "card"} {
-			manifest := readPackageManifest(t, projectDir, pkg)
-			if !strings.Contains(manifest, sourceURLFlag) {
-				t.Errorf("flag value should override the root config value for packages/%s:\n%s", pkg, manifest)
-			}
-			if strings.Contains(manifest, sourceURLFile) {
-				t.Errorf("root config value should be overridden by the flag, but packages/%s contains it:\n%s", pkg, manifest)
-			}
+		// Inline, not golden: per-package href checks across two packages, comparative property not a fixed manifest.
+		button := readPackageManifest(t, projectDir, "button")
+		if !strings.Contains(button, workspaceButtonHref) {
+			t.Errorf("flag value should override the root config value for packages/button, with the package path appended:\n%s", button)
+		}
+		card := readPackageManifest(t, projectDir, "card")
+		if !strings.Contains(card, workspaceCardHref) {
+			t.Errorf("flag value should override the root config value for packages/card, with the package path appended:\n%s", card)
+		}
+		if strings.Contains(button, sourceURLFile) || strings.Contains(card, sourceURLFile) {
+			t.Errorf("root config value should be overridden by the flag, but a manifest contains it")
 		}
 	})
 }
