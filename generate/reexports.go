@@ -142,20 +142,37 @@ func expandModuleReExports(mod *M.Module, moduleByPath map[string]*M.Module) boo
 			addAllCEExports(mod, jsExport.Declaration.Module, moduleByPath, seen)
 		} else {
 			className := jsExport.Declaration.Name
-			if className == "default" {
-				// `export { default } from './x.js'` names its declaration "default",
-				// which never matches a CE class; resolve x's own default export to
-				// find the underlying class name for the CE lookup.
-				if sourceMod, ok := moduleByPath[jsExport.Declaration.Module]; ok {
-					for _, export := range sourceMod.Exports {
-						if js, ok := export.(*M.JavaScriptExport); ok && js.Name == "default" && js.Declaration != nil {
-							className = js.Declaration.Name
-							break
-						}
+			sourcePath := jsExport.Declaration.Module
+			// `export { default } from './x.js'` names its declaration
+			// "default", which never matches a CE class; resolve through
+			// x's own default export to find the underlying class. Chained
+			// default re-exports (x itself re-exports y's default) carry
+			// the same "default" name, so follow the chain until a real
+			// declaration name appears, guarding against re-export cycles.
+			visited := make(map[string]bool)
+			for className == "default" {
+				if visited[sourcePath] {
+					break
+				}
+				visited[sourcePath] = true
+				sourceMod, ok := moduleByPath[sourcePath]
+				if !ok {
+					break
+				}
+				next := ""
+				for _, export := range sourceMod.Exports {
+					if js, ok := export.(*M.JavaScriptExport); ok && js.Name == "default" && js.Declaration != nil {
+						next = js.Declaration.Name
+						sourcePath = js.Declaration.Module
+						break
 					}
 				}
+				if next == "" {
+					break
+				}
+				className = next
 			}
-			addCEExportForReExportedClass(mod, className, jsExport.Declaration.Module, moduleByPath, seen)
+			addCEExportForReExportedClass(mod, className, sourcePath, moduleByPath, seen)
 		}
 	}
 
@@ -169,6 +186,11 @@ func expandModuleReExports(mod *M.Module, moduleByPath map[string]*M.Module) boo
 			switch e := export.(type) {
 			case *M.JavaScriptExport:
 				if e.Declaration == nil {
+					continue
+				}
+				// ES export * does not re-export the default binding; only an
+				// explicit `export { default } from` (Case 1) surfaces it
+				if e.Name == "default" {
 					continue
 				}
 				key := exportKey{e.Kind, e.Name}

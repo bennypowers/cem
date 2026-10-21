@@ -887,15 +887,16 @@ func (mp *ModuleProcessor) resolveImportSpec(importSpec string) string {
 		parts := strings.SplitN(importSpec, "/", 3)
 		if len(parts) >= 3 {
 			// Mirror the relative branch: resolve . and .. segments against
-			// the package root. A subpath whose .. segments escape the package
-			// is traversal-shaped; reject it to the raw specifier rather than
-			// resolve it to a path outside the package.
+			// the package root. A subpath that escapes the package (dot-dot
+			// traversal) or is absolute (leading slash) is malformed; reject
+			// it to the raw specifier rather than resolve it to a path
+			// outside the package.
 			cleaned := path.Clean(parts[2])
-			if cleaned == "." {
+			if parts[2] == "" {
 				// degenerate empty subpath ("@scope/pkg/"): keep the verbatim value
 				return parts[2]
 			}
-			if cleaned == ".." || strings.HasPrefix(cleaned, "../") {
+			if cleaned == ".." || strings.HasPrefix(cleaned, "../") || strings.HasPrefix(cleaned, "/") {
 				logging.Warning("package specifier %q escapes the package root; leaving it unresolved", importSpec)
 				return importSpec
 			}

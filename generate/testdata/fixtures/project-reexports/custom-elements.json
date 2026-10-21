@@ -68,6 +68,32 @@
     },
     {
       "kind": "javascript-module",
+      "path": "src/child-star-default.js",
+      "declarations": [
+        {
+          "name": "StarDefaultThing",
+          "members": [
+            {
+              "name": "kind",
+              "kind": "method"
+            }
+          ],
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "StarDefaultThing",
+            "module": "src/child-star-default.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/child.js",
       "declarations": [
         {
@@ -101,6 +127,28 @@
           "declaration": {
             "name": "ChildElement",
             "module": "src/child.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/middle-default-reexport.js",
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "default-child-element",
+          "declaration": {
+            "name": "DefaultChildElement",
+            "module": "src/child-default-ce.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "default",
+            "module": "src/child-default-ce.js"
           }
         }
       ]
@@ -151,6 +199,28 @@
           "declaration": {
             "name": "default",
             "module": "src/child-default.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-default-reexport-chain.js",
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "default-child-element",
+          "declaration": {
+            "name": "DefaultChildElement",
+            "module": "src/child-default-ce.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "default",
+            "module": "src/middle-default-reexport.js"
           }
         }
       ]
@@ -267,6 +337,20 @@
           "declaration": {
             "name": "ChildElement",
             "module": "src/child.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-star-from-default.js",
+      "exports": [
+        {
+          "kind": "js",
+          "name": "*",
+          "declaration": {
+            "name": "*",
+            "module": "src/child-star-default.js"
           }
         }
       ]

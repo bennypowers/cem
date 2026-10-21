@@ -236,6 +236,9 @@ func TestResolveImportSpecPackageBranch(t *testing.T) {
 		{"deep escape rejected to raw specifier", "@scope/pkg/a/../../evil.js", "@scope/pkg/a/../../evil.js"},
 		{"two-part scope specifier stays raw", "@scope/pkg", "@scope/pkg"},
 		{"trailing slash keeps empty subpath", "@scope/pkg/", ""},
+		{"double-slash absolute subpath rejected to raw specifier", "@scope/pkg//../evil.js", "@scope/pkg//../evil.js"},
+		{"absolute subpath rejected to raw specifier", "@scope/pkg//etc/evil.js", "@scope/pkg//etc/evil.js"},
+		{"dot-dot to package root normalizes to dot", "@scope/pkg/lib/..", "."},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
