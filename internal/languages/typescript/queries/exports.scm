@@ -114,18 +114,10 @@
   )
 ) @export.namespace.alias.from
 
-;; Default export with re-export: export { default } from "./module"
-(export_statement
-  (export_clause
-    (export_specifier
-      name: (identifier) @export.name
-      (#eq? @export.name "default")
-    )
-  )
-  source: (string
-    (string_fragment) @export.source
-  )
-) @export.default.from
+;; Default export with re-export (export { default } from "./module") needs no
+;; dedicated pattern: `default` parses as an identifier, so the named re-export
+;; patterns above already emit it as a `default` export entry referencing the
+;; source module.
 
 ;; Default export of a value: export default someIdentifier
 (export_statement

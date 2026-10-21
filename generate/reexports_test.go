@@ -17,9 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package generate
 
 import (
+	"slices"
 	"testing"
 
 	"bennypowers.dev/cem/internal/languages/typescript"
+	M "bennypowers.dev/cem/manifest"
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
@@ -82,5 +84,89 @@ func TestIsTypeOnlyNode(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// Inline: pure function over constructed modules, table-driven comparisons
+// are clearer than goldens (the fixture golden pins the sorted-path case)
+
+// TestResolveReExportedCEDefinitionsStarChainOrderIndependence pins #450 item
+// 2: star chains (a star-exports b, b star-exports c) must expand to the same
+// export set regardless of module order, so re-sorting modules or generating
+// from a different entry order cannot change the manifest.
+func TestResolveReExportedCEDefinitionsStarChainOrderIndependence(t *testing.T) {
+	makeChain := func() []M.Module {
+		a := M.NewModule("src/a.js")
+		b := M.NewModule("src/b.js")
+		c := M.NewModule("src/c.js")
+
+		c.Exports = append(c.Exports, &M.JavaScriptExport{
+			Kind:        "js",
+			Name:        "CThing",
+			Declaration: M.NewReference("CThing", "", "src/c.js"),
+		})
+
+		b.Exports = append(b.Exports, &M.JavaScriptExport{
+			Kind:        "js",
+			Name:        "*",
+			Declaration: M.NewReference("*", "", "src/c.js"),
+		})
+		b.Exports = append(b.Exports, &M.JavaScriptExport{
+			Kind:        "js",
+			Name:        "BThing",
+			Declaration: M.NewReference("BThing", "", "src/b.js"),
+		})
+		b.ReExportAllSources = []string{"src/c.js"}
+
+		a.Exports = append(a.Exports, &M.JavaScriptExport{
+			Kind:        "js",
+			Name:        "*",
+			Declaration: M.NewReference("*", "", "src/b.js"),
+		})
+		a.Exports = append(a.Exports, &M.JavaScriptExport{
+			Kind:        "js",
+			Name:        "AThing",
+			Declaration: M.NewReference("AThing", "", "src/a.js"),
+		})
+		a.ReExportAllSources = []string{"src/b.js"}
+
+		return []M.Module{*a, *b, *c}
+	}
+
+	exportNames := func(pkg M.Package, path string) []string {
+		var names []string
+		for _, mod := range pkg.Modules {
+			if mod.Path != path {
+				continue
+			}
+			for _, e := range mod.Exports {
+				switch ex := e.(type) {
+				case *M.JavaScriptExport:
+					names = append(names, ex.Name)
+				case *M.CustomElementExport:
+					names = append(names, ex.Name)
+				}
+			}
+		}
+		slices.Sort(names)
+		return names
+	}
+
+	// src/a.js sits above both star sources in the chain, so a single pass in
+	// path order expands only one link and drops CThing without the fixpoint
+	forward := M.NewPackage(makeChain())
+	resolveReExportedCEDefinitions(&forward)
+
+	reversed := makeChain()
+	slices.Reverse(reversed)
+	reverse := M.NewPackage(reversed)
+	resolveReExportedCEDefinitions(&reverse)
+
+	want := []string{"*", "AThing", "BThing", "CThing"}
+	if got := exportNames(forward, "src/a.js"); !slices.Equal(got, want) {
+		t.Errorf("path order: src/a.js exports = %v, want %v", got, want)
+	}
+	if got := exportNames(reverse, "src/a.js"); !slices.Equal(got, want) {
+		t.Errorf("reverse order: src/a.js exports = %v, want %v", got, want)
 	}
 }

@@ -190,3 +190,32 @@ func TestResolveImportSpecRelativeGate(t *testing.T) {
 		t.Errorf("resolveImportSpec(\"./plain\") = %q, want %q", got, "src/plain.js")
 	}
 }
+
+// Inline: single-return path resolution for the package-specifier branch,
+// table-driven cases are clearer than goldens
+func TestResolveImportSpecPackageBranch(t *testing.T) {
+	mp := &ModuleProcessor{
+		logger: NewLogCtx("src/importer.ts"),
+		module: M.NewModule("src/importer.js"),
+	}
+	tests := []struct {
+		name string
+		spec string
+		want string
+	}{
+		{"plain subpath", "@scope/pkg/lib/types.js", "lib/types.js"},
+		{"interior dot-dot collapses", "@scope/pkg/lib/../types.js", "types.js"},
+		{"current-directory segment collapses", "@scope/pkg/./lib/types.js", "lib/types.js"},
+		{"escaping dot-dot rejected to raw specifier", "@scope/pkg/../evil.js", "@scope/pkg/../evil.js"},
+		{"deep escape rejected to raw specifier", "@scope/pkg/a/../../evil.js", "@scope/pkg/a/../../evil.js"},
+		{"two-part scope specifier stays raw", "@scope/pkg", "@scope/pkg"},
+		{"trailing slash keeps empty subpath", "@scope/pkg/", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := mp.resolveImportSpec(tt.spec); got != tt.want {
+				t.Errorf("resolveImportSpec(%q) = %q, want %q", tt.spec, got, tt.want)
+			}
+		})
+	}
+}

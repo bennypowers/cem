@@ -3,6 +3,32 @@
   "modules": [
     {
       "kind": "javascript-module",
+      "path": "src/child-default.js",
+      "declarations": [
+        {
+          "name": "DefaultChild",
+          "members": [
+            {
+              "name": "greet",
+              "kind": "method"
+            }
+          ],
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "DefaultChild",
+            "module": "src/child-default.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/child.js",
       "declarations": [
         {
@@ -36,6 +62,34 @@
           "declaration": {
             "name": "ChildElement",
             "module": "src/child.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-default-alias-export.js",
+      "exports": [
+        {
+          "kind": "js",
+          "name": "DefaultThing",
+          "declaration": {
+            "name": "default",
+            "module": "src/child-default.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-default-export.js",
+      "exports": [
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "default",
+            "module": "src/child-default.js"
           }
         }
       ]

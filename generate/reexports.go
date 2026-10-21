@@ -35,6 +35,14 @@ import (
 //     → copies all JS and CE exports from child.js
 //  3. Side-effect imports: import './child.js'
 //     → adds CE exports for all CEs defined in child.js
+//
+// Star re-exports chain (a star-exports b, b star-exports c), so a single pass
+// over modules expands only one link per module whenever a re-exporter sorts
+// before its source, making the expanded set depend on module order. The pass
+// therefore repeats until it adds nothing anywhere: each pass copies sources'
+// exports as they currently stand, and once every chain has propagated a pass
+// is a no-op. Exports only ever grow and are deduplicated by key, so the loop
+// terminates even for cyclic star re-exports.
 func resolveReExportedCEDefinitions(pkg *M.Package) {
 	// Build lookup maps from all modules
 	moduleByPath := make(map[string]*M.Module, len(pkg.Modules))
@@ -42,109 +50,119 @@ func resolveReExportedCEDefinitions(pkg *M.Package) {
 		moduleByPath[pkg.Modules[i].Path] = &pkg.Modules[i]
 	}
 
-	for i := range pkg.Modules {
-		mod := &pkg.Modules[i]
-
-		// Track original export count to know if we added anything
-		originalExportCount := len(mod.Exports)
-
-		// Build set of existing export keys to avoid duplicates
-		seen := exportKeySet(mod.Exports)
-
-		// Case 1: Named/namespace-alias re-exports - check existing JS exports that reference other modules
-		// Take a snapshot of current exports length to avoid iterating over newly added exports
-		existingExports := originalExportCount
-		for j := range existingExports {
-			jsExport, ok := mod.Exports[j].(*M.JavaScriptExport)
-			if !ok || jsExport.Declaration == nil {
-				continue
+	for changed := true; changed; {
+		changed = false
+		for i := range pkg.Modules {
+			if expandModuleReExports(&pkg.Modules[i], moduleByPath) {
+				changed = true
 			}
-			// Skip exports that reference the same module (not a re-export)
-			if jsExport.Declaration.Module == mod.Path {
-				continue
-			}
-			if jsExport.Declaration.Name == "*" {
-				// Namespace alias: export * as Ns from './module.js' - add all CE exports
-				addAllCEExports(mod, jsExport.Declaration.Module, moduleByPath, seen)
-			} else {
-				addCEExportForReExportedClass(mod, jsExport.Declaration.Name, jsExport.Declaration.Module, moduleByPath, seen)
-			}
-		}
-
-		// Case 2: Namespace re-exports - export * from './module.js'
-		for _, sourcePath := range mod.ReExportAllSources {
-			sourceMod, ok := moduleByPath[sourcePath]
-			if !ok {
-				continue
-			}
-			for _, export := range sourceMod.Exports {
-				switch e := export.(type) {
-				case *M.JavaScriptExport:
-					if e.Declaration == nil {
-						continue
-					}
-					key := exportKey{e.Kind, e.Name}
-					if seen[key] {
-						continue
-					}
-					ref := M.NewReference(e.Declaration.Name, e.Declaration.Package, e.Declaration.Module)
-					mod.Exports = append(mod.Exports, &M.JavaScriptExport{
-						Kind:        "js",
-						Name:        e.Name,
-						Declaration: ref,
-					})
-					seen[key] = true
-				case *M.CustomElementExport:
-					if e.Declaration == nil {
-						continue
-					}
-					key := exportKey{e.Kind, e.Name}
-					if seen[key] {
-						continue
-					}
-					ref := M.NewReference(e.Declaration.Name, e.Declaration.Package, e.Declaration.Module)
-					mod.Exports = append(mod.Exports, M.NewCustomElementExport(
-						e.Name,
-						ref,
-						0,
-						nil,
-					))
-					seen[key] = true
-				}
-			}
-		}
-
-		// Case 3: Side-effect imports - import './module.js'
-		for _, sourcePath := range mod.SideEffectImports {
-			sourceMod, ok := moduleByPath[sourcePath]
-			if !ok {
-				continue
-			}
-			for _, export := range sourceMod.Exports {
-				if ceExport, ok := export.(*M.CustomElementExport); ok && ceExport.Declaration != nil {
-					key := exportKey{ceExport.Kind, ceExport.Name}
-					if seen[key] {
-						continue
-					}
-					ref := M.NewReference(ceExport.Declaration.Name, ceExport.Declaration.Package, ceExport.Declaration.Module)
-					mod.Exports = append(mod.Exports, M.NewCustomElementExport(
-						ceExport.Name,
-						ref,
-						0,
-						nil,
-					))
-					seen[key] = true
-				}
-			}
-		}
-
-		// Re-sort exports after adding new ones
-		if len(mod.Exports) > originalExportCount {
-			slices.SortStableFunc(mod.Exports, func(a M.Export, b M.Export) int {
-				return cmp.Compare(a.GetStartByte(), b.GetStartByte())
-			})
 		}
 	}
+}
+
+// expandModuleReExports runs one expansion pass over a single module and
+// reports whether it appended any exports.
+func expandModuleReExports(mod *M.Module, moduleByPath map[string]*M.Module) bool {
+	// Track original export count to know if we added anything
+	originalExportCount := len(mod.Exports)
+
+	// Build set of existing export keys to avoid duplicates
+	seen := exportKeySet(mod.Exports)
+
+	// Case 1: Named/namespace-alias re-exports - check existing JS exports that reference other modules
+	// Take a snapshot of current exports length to avoid iterating over newly added exports
+	existingExports := originalExportCount
+	for j := range existingExports {
+		jsExport, ok := mod.Exports[j].(*M.JavaScriptExport)
+		if !ok || jsExport.Declaration == nil {
+			continue
+		}
+		// Skip exports that reference the same module (not a re-export)
+		if jsExport.Declaration.Module == mod.Path {
+			continue
+		}
+		if jsExport.Declaration.Name == "*" {
+			// Namespace alias: export * as Ns from './module.js' - add all CE exports
+			addAllCEExports(mod, jsExport.Declaration.Module, moduleByPath, seen)
+		} else {
+			addCEExportForReExportedClass(mod, jsExport.Declaration.Name, jsExport.Declaration.Module, moduleByPath, seen)
+		}
+	}
+
+	// Case 2: Namespace re-exports - export * from './module.js'
+	for _, sourcePath := range mod.ReExportAllSources {
+		sourceMod, ok := moduleByPath[sourcePath]
+		if !ok {
+			continue
+		}
+		for _, export := range sourceMod.Exports {
+			switch e := export.(type) {
+			case *M.JavaScriptExport:
+				if e.Declaration == nil {
+					continue
+				}
+				key := exportKey{e.Kind, e.Name}
+				if seen[key] {
+					continue
+				}
+				ref := M.NewReference(e.Declaration.Name, e.Declaration.Package, e.Declaration.Module)
+				mod.Exports = append(mod.Exports, &M.JavaScriptExport{
+					Kind:        "js",
+					Name:        e.Name,
+					Declaration: ref,
+				})
+				seen[key] = true
+			case *M.CustomElementExport:
+				if e.Declaration == nil {
+					continue
+				}
+				key := exportKey{e.Kind, e.Name}
+				if seen[key] {
+					continue
+				}
+				ref := M.NewReference(e.Declaration.Name, e.Declaration.Package, e.Declaration.Module)
+				mod.Exports = append(mod.Exports, M.NewCustomElementExport(
+					e.Name,
+					ref,
+					0,
+					nil,
+				))
+				seen[key] = true
+			}
+		}
+	}
+
+	// Case 3: Side-effect imports - import './module.js'
+	for _, sourcePath := range mod.SideEffectImports {
+		sourceMod, ok := moduleByPath[sourcePath]
+		if !ok {
+			continue
+		}
+		for _, export := range sourceMod.Exports {
+			if ceExport, ok := export.(*M.CustomElementExport); ok && ceExport.Declaration != nil {
+				key := exportKey{ceExport.Kind, ceExport.Name}
+				if seen[key] {
+					continue
+				}
+				ref := M.NewReference(ceExport.Declaration.Name, ceExport.Declaration.Package, ceExport.Declaration.Module)
+				mod.Exports = append(mod.Exports, M.NewCustomElementExport(
+					ceExport.Name,
+					ref,
+					0,
+					nil,
+				))
+				seen[key] = true
+			}
+		}
+	}
+
+	// Re-sort exports after adding new ones
+	if len(mod.Exports) > originalExportCount {
+		slices.SortStableFunc(mod.Exports, func(a M.Export, b M.Export) int {
+			return cmp.Compare(a.GetStartByte(), b.GetStartByte())
+		})
+	}
+	return len(mod.Exports) > originalExportCount
 }
 
 // exportKey uniquely identifies an export by kind and name.
