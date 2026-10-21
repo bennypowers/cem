@@ -175,9 +175,9 @@ func TestResolveImportSpecRelativeGate(t *testing.T) {
 		t.Fatalf("failed to write src/plain.ts: %v", err)
 	}
 	mp := &ModuleProcessor{
-		fs:     mfs,
+		fs:      mfs,
 		absPath: "src/importer.ts",
-		module: M.NewModule("src/importer.js"),
+		module:  M.NewModule("src/importer.js"),
 	}
 
 	// bare specifiers name packages, so they must stay on the plain
@@ -188,6 +188,32 @@ func TestResolveImportSpecRelativeGate(t *testing.T) {
 	}
 	if got := mp.resolveImportSpec("./plain"); got != "src/plain.js" {
 		t.Errorf("resolveImportSpec(\"./plain\") = %q, want %q", got, "src/plain.js")
+	}
+
+	// Root-escaping relative specifiers are rejected to the raw specifier,
+	// mirroring the package branch above: a resolved path that is ".." or
+	// ".."-prefixed would name a file outside the package, so it stays
+	// unresolved rather than emitting a traversal-shaped manifest path.
+	// A single ".." from src/ collapses into the root and stays in-root.
+	if got := mp.resolveImportSpec("../evil.js"); got != "evil.js" {
+		t.Errorf("resolveImportSpec(\"../evil.js\") = %q, want %q", got, "evil.js")
+	}
+	if got := mp.resolveImportSpec("../../evil.js"); got != "../../evil.js" {
+		t.Errorf("resolveImportSpec(\"../../evil.js\") = %q, want %q", got, "../../evil.js")
+	}
+	if got := mp.resolveImportSpec("../../../evil.js"); got != "../../../evil.js" {
+		t.Errorf("resolveImportSpec(\"../../../evil.js\") = %q, want %q", got, "../../../evil.js")
+	}
+
+	// in-root ".." resolution keeps working: Join absorbs the segments
+	// into the package root rather than escaping it
+	deep := &ModuleProcessor{
+		fs:      mfs,
+		absPath: "elements/x/y.ts",
+		module:  M.NewModule("elements/x/y.js"),
+	}
+	if got := deep.resolveImportSpec("../../base/x.js"); got != "base/x.js" {
+		t.Errorf("resolveImportSpec(\"../../base/x.js\") = %q, want %q", got, "base/x.js")
 	}
 }
 

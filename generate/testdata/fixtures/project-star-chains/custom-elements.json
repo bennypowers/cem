@@ -12,6 +12,14 @@
       ],
       "exports": [
         {
+          "kind": "custom-element-definition",
+          "name": "chain-ce",
+          "declaration": {
+            "name": "ChainCE",
+            "module": "src/c.js"
+          }
+        },
+        {
           "kind": "js",
           "name": "*",
           "declaration": {
@@ -25,6 +33,22 @@
           "declaration": {
             "name": "BThing",
             "module": "src/b.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "CThing",
+          "declaration": {
+            "name": "CThing",
+            "module": "src/c.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ChainCE",
+          "declaration": {
+            "name": "ChainCE",
+            "module": "src/c.js"
           }
         },
         {
@@ -48,18 +72,18 @@
       ],
       "exports": [
         {
-          "kind": "js",
-          "name": "*",
-          "declaration": {
-            "name": "*",
-            "module": "src/c.js"
-          }
-        },
-        {
           "kind": "custom-element-definition",
           "name": "chain-ce",
           "declaration": {
             "name": "ChainCE",
+            "module": "src/c.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "*",
+          "declaration": {
+            "name": "*",
             "module": "src/c.js"
           }
         },

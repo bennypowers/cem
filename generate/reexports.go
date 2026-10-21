@@ -38,11 +38,15 @@ import (
 //
 // Star re-exports chain (a star-exports b, b star-exports c), so a single pass
 // over modules expands only one link per module whenever a re-exporter sorts
-// before its source, making the expanded set depend on module order. The pass
-// therefore repeats until it adds nothing anywhere: each pass copies sources'
-// exports as they currently stand, and once every chain has propagated a pass
-// is a no-op. Exports only ever grow and are deduplicated by key, so the loop
-// terminates even for cyclic star re-exports.
+// before its source, making the expanded set depend on module order. The
+// expansion therefore runs as a reverse-dependency worklist: every module is
+// seeded once, and a module whose exports grew re-enqueues exactly the modules
+// that read them, so each chain link is expanded where it is discovered
+// instead of restarting a whole-package sweep per link. This computes the same
+// least fixpoint as repeating full sweeps: each expansion copies its sources'
+// exports as they currently stand, exports only ever grow and are
+// deduplicated by key, and the queue drains (even for cyclic star re-exports)
+// once no module can absorb anything more.
 func resolveReExportedCEDefinitions(pkg *M.Package) {
 	// Build lookup maps from all modules
 	moduleByPath := make(map[string]*M.Module, len(pkg.Modules))
@@ -50,14 +54,66 @@ func resolveReExportedCEDefinitions(pkg *M.Package) {
 		moduleByPath[pkg.Modules[i].Path] = &pkg.Modules[i]
 	}
 
-	for changed := true; changed; {
-		changed = false
-		for i := range pkg.Modules {
-			if expandModuleReExports(&pkg.Modules[i], moduleByPath) {
-				changed = true
+	dependents := dependentsBySource(pkg.Modules)
+
+	// Seed the worklist with every module in package order. A module whose
+	// exports grew re-enqueues its dependents, deduplicated: a module already
+	// queued is not re-added and absorbs all pending growth in one expansion.
+	queue := make([]*M.Module, 0, len(pkg.Modules))
+	queued := make(map[*M.Module]bool, len(pkg.Modules))
+	for i := range pkg.Modules {
+		mod := &pkg.Modules[i]
+		queue = append(queue, mod)
+		queued[mod] = true
+	}
+	for len(queue) > 0 {
+		mod := queue[0]
+		queue = queue[1:]
+		delete(queued, mod)
+		if !expandModuleReExports(mod, moduleByPath) {
+			continue
+		}
+		for _, dependent := range dependents[mod.Path] {
+			if !queued[dependent] {
+				queued[dependent] = true
+				queue = append(queue, dependent)
 			}
 		}
 	}
+}
+
+// dependentsBySource maps each module path to the modules that read its
+// exports and may therefore absorb growth: modules listing it in
+// ReExportAllSources (star re-exporters) or SideEffectImports (side-effect
+// importers), and modules holding a JS export whose declaration names it as
+// the source module (named and namespace-alias re-exporters, whose expansion
+// reads the source's exports). The map is built once, before any expansion.
+func dependentsBySource(modules []M.Module) map[string][]*M.Module {
+	dependents := make(map[string][]*M.Module, len(modules))
+	add := func(sourcePath string, mod *M.Module) {
+		ds := dependents[sourcePath]
+		if slices.Contains(ds, mod) {
+			return
+		}
+		dependents[sourcePath] = append(ds, mod)
+	}
+	for i := range modules {
+		mod := &modules[i]
+		for _, sourcePath := range mod.ReExportAllSources {
+			add(sourcePath, mod)
+		}
+		for _, sourcePath := range mod.SideEffectImports {
+			add(sourcePath, mod)
+		}
+		for _, export := range mod.Exports {
+			jsExport, ok := export.(*M.JavaScriptExport)
+			if !ok || jsExport.Declaration == nil || jsExport.Declaration.Module == mod.Path {
+				continue
+			}
+			add(jsExport.Declaration.Module, mod)
+		}
+	}
+	return dependents
 }
 
 // expandModuleReExports runs one expansion pass over a single module and
@@ -85,7 +141,21 @@ func expandModuleReExports(mod *M.Module, moduleByPath map[string]*M.Module) boo
 			// Namespace alias: export * as Ns from './module.js' - add all CE exports
 			addAllCEExports(mod, jsExport.Declaration.Module, moduleByPath, seen)
 		} else {
-			addCEExportForReExportedClass(mod, jsExport.Declaration.Name, jsExport.Declaration.Module, moduleByPath, seen)
+			className := jsExport.Declaration.Name
+			if className == "default" {
+				// `export { default } from './x.js'` names its declaration "default",
+				// which never matches a CE class; resolve x's own default export to
+				// find the underlying class name for the CE lookup.
+				if sourceMod, ok := moduleByPath[jsExport.Declaration.Module]; ok {
+					for _, export := range sourceMod.Exports {
+						if js, ok := export.(*M.JavaScriptExport); ok && js.Name == "default" && js.Declaration != nil {
+							className = js.Declaration.Name
+							break
+						}
+					}
+				}
+			}
+			addCEExportForReExportedClass(mod, className, jsExport.Declaration.Module, moduleByPath, seen)
 		}
 	}
 
@@ -156,13 +226,41 @@ func expandModuleReExports(mod *M.Module, moduleByPath map[string]*M.Module) boo
 		}
 	}
 
-	// Re-sort exports after adding new ones
+	// Re-sort exports after adding new ones. Star-copied exports carry
+	// StartByte 0, tying with each other (and with a module's own
+	// zero-position exports), so kind then name breaks the tie and the
+	// sequence does not depend on the order modules were expanded in.
 	if len(mod.Exports) > originalExportCount {
-		slices.SortStableFunc(mod.Exports, func(a M.Export, b M.Export) int {
-			return cmp.Compare(a.GetStartByte(), b.GetStartByte())
-		})
+		slices.SortStableFunc(mod.Exports, compareExports)
 	}
 	return len(mod.Exports) > originalExportCount
+}
+
+// compareExports orders exports by source position, tie-breaking equal
+// StartByte groups (star-copied exports all carry 0) by kind then name so
+// the sequence is deterministic regardless of expansion order.
+func compareExports(a, b M.Export) int {
+	aStart, aKind, aName := exportSortKeys(a)
+	bStart, bKind, bName := exportSortKeys(b)
+	if c := cmp.Compare(aStart, bStart); c != 0 {
+		return c
+	}
+	if c := cmp.Compare(aKind, bKind); c != 0 {
+		return c
+	}
+	return cmp.Compare(aName, bName)
+}
+
+// exportSortKeys extracts an export's position, kind, and name sort keys.
+func exportSortKeys(e M.Export) (start uint, kind, name string) {
+	switch ex := e.(type) {
+	case *M.JavaScriptExport:
+		return ex.StartByte, ex.Kind, ex.Name
+	case *M.CustomElementExport:
+		return ex.StartByte, ex.Kind, ex.Name
+	default:
+		return e.GetStartByte(), "", ""
+	}
 }
 
 // exportKey uniquely identifies an export by kind and name.

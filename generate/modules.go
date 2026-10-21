@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"bennypowers.dev/cem/generate/jsdoc"
+	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/platform"
 	S "bennypowers.dev/cem/internal/set"
 	Q "bennypowers.dev/cem/internal/treesitter"
@@ -876,7 +877,8 @@ func NewEphemeralModuleProcessor(
 // resolveImportSpec resolves an import specifier relative to the current module's path.
 // For example, if the current module is "elements/demo-field/demo-field.js" and
 // the import spec is "../../base/form-associated-element.js", this resolves to
-// "base/form-associated-element.js".
+// "base/form-associated-element.js". Relative specifiers that resolve above the
+// package root are left unresolved, returned verbatim.
 func (mp *ModuleProcessor) resolveImportSpec(importSpec string) string {
 	// Handle package-scoped imports (e.g., "@scope/package/path.js")
 	if len(importSpec) > 0 && importSpec[0] == '@' {
@@ -894,9 +896,7 @@ func (mp *ModuleProcessor) resolveImportSpec(importSpec string) string {
 				return parts[2]
 			}
 			if cleaned == ".." || strings.HasPrefix(cleaned, "../") {
-				if mp.logger != nil {
-					mp.logger.Warn("package specifier %q escapes the package root; leaving it unresolved", importSpec)
-				}
+				logging.Warning("package specifier %q escapes the package root; leaving it unresolved", importSpec)
 				return importSpec
 			}
 			return cleaned
@@ -912,14 +912,23 @@ func (mp *ModuleProcessor) resolveImportSpec(importSpec string) string {
 	// Extensionless RELATIVE specifiers (e.g. './foo' for foo.ts) resolve
 	// against files on disk, yielding the module's .js import path; bare
 	// specifiers name packages and stay on the plain resolution path below
+	resolved := ""
 	if (strings.HasPrefix(importSpec, "./") || strings.HasPrefix(importSpec, "../")) && filepath.Ext(importSpec) == "" {
-		if resolved := mp.resolveExtensionlessSpec(importSpec, resolvedPath); resolved != "" {
-			return resolved
-		}
+		resolved = mp.resolveExtensionlessSpec(importSpec, resolvedPath)
+	}
+	if resolved == "" {
+		// Clean the path (remove . and .. segments)
+		resolved = path.Clean(resolvedPath)
 	}
 
-	// Clean the path (remove . and .. segments)
-	return path.Clean(resolvedPath)
+	// Mirror the package branch above: a relative specifier whose final
+	// resolution escapes the package root is traversal-shaped; reject it to
+	// the raw specifier rather than emit a manifest path outside the package.
+	if resolved == ".." || strings.HasPrefix(resolved, "../") {
+		logging.Warning("import specifier %q escapes the package root; leaving it unresolved", importSpec)
+		return importSpec
+	}
+	return resolved
 }
 
 // extensionlessFileExtensions lists the file extensions tried, in order, when

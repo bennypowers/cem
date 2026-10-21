@@ -17,8 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package generate
 
 import (
+	"fmt"
 	"slices"
+	"strconv"
 	"testing"
+	"time"
 
 	"bennypowers.dev/cem/internal/languages/typescript"
 	M "bennypowers.dev/cem/manifest"
@@ -92,9 +95,16 @@ func TestIsTypeOnlyNode(t *testing.T) {
 
 // TestResolveReExportedCEDefinitionsStarChainOrderIndependence pins #450 item
 // 2: star chains (a star-exports b, b star-exports c) must expand to the same
-// export set regardless of module order, so re-sorting modules or generating
-// from a different entry order cannot change the manifest.
+// export set and the same export SEQUENCE regardless of module order, so
+// re-sorting modules or generating from a different entry order cannot change
+// the manifest at all. Star-copied exports carry StartByte 0, so their
+// relative order needs the deterministic kind/name tie-break; without it the
+// order is whatever order the copies were appended in, which depends on
+// module order.
 func TestResolveReExportedCEDefinitionsStarChainOrderIndependence(t *testing.T) {
+	// StartByte values mirror real source positions: each module's own
+	// exports carry their statement offsets, while exports copied by star
+	// expansion always carry StartByte 0 and tie with each other.
 	makeChain := func() []M.Module {
 		a := M.NewModule("src/a.js")
 		b := M.NewModule("src/b.js")
@@ -104,17 +114,20 @@ func TestResolveReExportedCEDefinitionsStarChainOrderIndependence(t *testing.T) 
 			Kind:        "js",
 			Name:        "CThing",
 			Declaration: M.NewReference("CThing", "", "src/c.js"),
+			StartByte:   40,
 		})
 
 		b.Exports = append(b.Exports, &M.JavaScriptExport{
 			Kind:        "js",
 			Name:        "*",
 			Declaration: M.NewReference("*", "", "src/c.js"),
+			StartByte:   10,
 		})
 		b.Exports = append(b.Exports, &M.JavaScriptExport{
 			Kind:        "js",
 			Name:        "BThing",
 			Declaration: M.NewReference("BThing", "", "src/b.js"),
+			StartByte:   30,
 		})
 		b.ReExportAllSources = []string{"src/c.js"}
 
@@ -127,13 +140,45 @@ func TestResolveReExportedCEDefinitionsStarChainOrderIndependence(t *testing.T) 
 			Kind:        "js",
 			Name:        "AThing",
 			Declaration: M.NewReference("AThing", "", "src/a.js"),
+			StartByte:   50,
 		})
 		a.ReExportAllSources = []string{"src/b.js"}
 
 		return []M.Module{*a, *b, *c}
 	}
 
-	exportNames := func(pkg M.Package, path string) []string {
+	makeCycle := func() []M.Module {
+		p := M.NewModule("src/p.js")
+		q := M.NewModule("src/q.js")
+
+		p.Exports = append(p.Exports, &M.JavaScriptExport{
+			Kind:        "js",
+			Name:        "*",
+			Declaration: M.NewReference("*", "", "src/q.js"),
+		})
+		p.Exports = append(p.Exports, &M.JavaScriptExport{
+			Kind:        "js",
+			Name:        "PThing",
+			Declaration: M.NewReference("PThing", "", "src/p.js"),
+		})
+		p.ReExportAllSources = []string{"src/q.js"}
+
+		q.Exports = append(q.Exports, &M.JavaScriptExport{
+			Kind:        "js",
+			Name:        "*",
+			Declaration: M.NewReference("*", "", "src/p.js"),
+		})
+		q.Exports = append(q.Exports, &M.JavaScriptExport{
+			Kind:        "js",
+			Name:        "QThing",
+			Declaration: M.NewReference("QThing", "", "src/q.js"),
+		})
+		q.ReExportAllSources = []string{"src/p.js"}
+
+		return []M.Module{*p, *q}
+	}
+
+	exportSequence := func(pkg M.Package, path string) []string {
 		var names []string
 		for _, mod := range pkg.Modules {
 			if mod.Path != path {
@@ -148,6 +193,11 @@ func TestResolveReExportedCEDefinitionsStarChainOrderIndependence(t *testing.T) 
 				}
 			}
 		}
+		return names
+	}
+
+	exportNames := func(pkg M.Package, path string) []string {
+		names := exportSequence(pkg, path)
 		slices.Sort(names)
 		return names
 	}
@@ -168,5 +218,83 @@ func TestResolveReExportedCEDefinitionsStarChainOrderIndependence(t *testing.T) 
 	}
 	if got := exportNames(reverse, "src/a.js"); !slices.Equal(got, want) {
 		t.Errorf("reverse order: src/a.js exports = %v, want %v", got, want)
+	}
+
+	// the sequence, not just the set, must not depend on module order: the
+	// zero-StartByte star copies tie, so only the kind/name tie-break makes
+	// their relative order deterministic
+	wantSequence := []string{"*", "BThing", "CThing", "AThing"}
+	if got := exportSequence(forward, "src/a.js"); !slices.Equal(got, wantSequence) {
+		t.Errorf("path order: src/a.js export sequence = %v, want %v", got, wantSequence)
+	}
+	if got := exportSequence(reverse, "src/a.js"); !slices.Equal(got, wantSequence) {
+		t.Errorf("reverse order: src/a.js export sequence = %v, want %v", got, wantSequence)
+	}
+
+	// Cyclic star re-exports (p star-exports q, q star-exports p) must
+	// terminate: exports only ever grow and are deduplicated by key, so the
+	// fixpoint reaches a pass that adds nothing. A dedup regression would
+	// hang rather than fail an assertion, so the call runs under a
+	// completion guard.
+	cycle := M.NewPackage(makeCycle())
+	done := make(chan struct{})
+	go func() {
+		resolveReExportedCEDefinitions(&cycle)
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("resolveReExportedCEDefinitions did not terminate on cyclic star re-exports")
+	}
+
+	wantCycle := []string{"*", "PThing", "QThing"}
+	if got := exportNames(cycle, "src/p.js"); !slices.Equal(got, wantCycle) {
+		t.Errorf("cyclic: src/p.js exports = %v, want %v", got, wantCycle)
+	}
+	if got := exportNames(cycle, "src/q.js"); !slices.Equal(got, wantCycle) {
+		t.Errorf("cyclic: src/q.js exports = %v, want %v", got, wantCycle)
+	}
+}
+
+// BenchmarkResolveReExportedCEDefinitions measures the worklist fixpoint's
+// scaling on synthetic forward star chains (module i star-exports module i+1,
+// so every re-exporter sorts before its source in path order — the worst
+// shape for whole-sweep repetition, where each sweep advances only one chain
+// link). Modules are rebuilt per iteration because the fixpoint mutates the
+// package in place. No test asserts on these times; the benchmark exists to
+// document the scaling curve.
+func BenchmarkResolveReExportedCEDefinitions(b *testing.B) {
+	for _, size := range []int{50, 100, 200} {
+		b.Run(strconv.Itoa(size), func(b *testing.B) {
+			newModules := func() []M.Module {
+				modules := make([]M.Module, 0, size)
+				for i := range size {
+					path := fmt.Sprintf("src/m%04d.js", i)
+					mod := M.NewModule(path)
+					if i < size-1 {
+						next := fmt.Sprintf("src/m%04d.js", i+1)
+						mod.Exports = append(mod.Exports, &M.JavaScriptExport{
+							Kind:        "js",
+							Name:        "*",
+							Declaration: M.NewReference("*", "", next),
+						})
+						mod.ReExportAllSources = []string{next}
+					}
+					mod.Exports = append(mod.Exports, &M.JavaScriptExport{
+						Kind:        "js",
+						Name:        fmt.Sprintf("Thing%d", i),
+						Declaration: M.NewReference(fmt.Sprintf("Thing%d", i), "", path),
+					})
+					modules = append(modules, *mod)
+				}
+				return modules
+			}
+			b.ResetTimer()
+			for b.Loop() {
+				pkg := M.NewPackage(newModules())
+				resolveReExportedCEDefinitions(&pkg)
+			}
+		})
 	}
 }
