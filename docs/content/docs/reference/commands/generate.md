@@ -47,6 +47,10 @@ Best supports LitElements written in idiomatic style with TypeScript decorators.
 
 By default, `.d.ts` TypeScript declaration files are excluded. Use `--no-default-excludes` to include all matching files.
 
+The `--source-control-root-url` flag overrides the `sourceControlRootUrl` config file setting. An explicitly empty value (`--source-control-root-url=`) is a no-op and preserves the configured value.
+
+In workspaces, `sourceControlRootUrl` is a root-level setting: the URL points at the monorepo root, so the flag or the root config's value applies to every package, with the package's path from the workspace root appended automatically. A package-level config value that conflicts with it is ignored with a warning; package values only apply when neither the flag nor the root config sets one, and are used unchanged.
+
 ## JSDoc Tags
 
 Document your custom elements using these JSDoc tags. See [Documenting Components][documenting] for examples.

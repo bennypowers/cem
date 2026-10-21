@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	G "bennypowers.dev/cem/generate"
@@ -27,8 +28,8 @@ import (
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/tui"
-	"bennypowers.dev/cem/types"
 	W "bennypowers.dev/cem/internal/workspace"
+	"bennypowers.dev/cem/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -107,6 +108,14 @@ var generateCmd = &cobra.Command{
 		}
 		if designTokensPrefix := viper.GetString("generate.designTokens.prefix"); designTokensPrefix != "" {
 			cfg.Generate.DesignTokens.Prefix = designTokensPrefix
+		}
+
+		// Source control root URL: viper resolves the persistent flag over the
+		// config file, so this makes flag, config file, and both together behave
+		// consistently with the flag winning (#449). Mutating the cached config
+		// pointer propagates to ModuleProcessor, which re-reads ctx.Config().
+		if sourceControlRootURL := viper.GetString("sourceControlRootUrl"); sourceControlRootURL != "" {
+			cfg.SourceControlRootUrl = sourceControlRootURL
 		}
 
 		// Early validation: if design tokens are specified, validate they can be loaded
@@ -283,6 +292,18 @@ func generateWorkspace(cmd *cobra.Command) error {
 	rootFiles := rootCfg.Generate.Files
 	rootExclude := rootCfg.Generate.Exclude
 
+	// sourceControlRootUrl is a workspace-level setting: the URL points at the
+	// monorepo root, so every package shares it (#449). Effective value: the
+	// flag when passed (non-empty), else the root config's value. Package
+	// configs only apply when neither is set; a conflicting package value
+	// loses, with a warning.
+	sourceControlRootURL := rootCfg.SourceControlRootUrl
+	if cmd.Flags().Changed("source-control-root-url") {
+		if v := viper.GetString("sourceControlRootUrl"); v != "" {
+			sourceControlRootURL = v
+		}
+	}
+
 	fsys := platform.NewOSFileSystem()
 	results := W.ForEachPackage(baseCtx.Root(), fsys, func(pkg W.PackageInfo) error {
 		ctx := W.NewFileSystemWorkspaceContext(pkg.Path)
@@ -344,6 +365,21 @@ func generateWorkspace(cmd *cobra.Command) error {
 		}
 		if cmd.Flags().Changed("demo-discovery-url-template") {
 			cfg.Generate.DemoDiscovery.URLTemplate = viper.GetString("generate.demoDiscovery.urlTemplate")
+		}
+		if sourceControlRootURL != "" {
+			// Module paths are package-relative, so a workspace-level URL needs
+			// the package's path from the workspace root appended to keep hrefs
+			// pointing at the real file locations. A package-only URL (below)
+			// is package-scoped already and is used unchanged.
+			pkgURL := sourceControlRootURL
+			if rel, relErr := filepath.Rel(baseCtx.Root(), pkg.Path); relErr == nil && rel != "." && !strings.HasPrefix(rel, "..") {
+				pkgURL = strings.TrimSuffix(pkgURL, "/") + "/" + filepath.ToSlash(rel) + "/"
+			}
+			if cfg.SourceControlRootUrl != "" && cfg.SourceControlRootUrl != pkgURL {
+				logging.Warning("package %s: sourceControlRootUrl %q conflicts with the workspace root URL %q; using the workspace value",
+					pkg.Name, cfg.SourceControlRootUrl, pkgURL)
+			}
+			cfg.SourceControlRootUrl = pkgURL
 		}
 
 		if len(cfg.Generate.Files) == 0 {
