@@ -50,22 +50,55 @@ echo "✓ Tag $VERSION does not exist"
 echo ""
 
 NOTES_FILE="docs/releases/$VERSION.md"
+META_FILE="docs/releases/$VERSION.json"
 if [ ! -f "$NOTES_FILE" ]; then
   echo "Error: release notes not found: $NOTES_FILE"
   echo "Run 'make notes $VERSION' first, then review and commit the notes."
   exit 1
 fi
-if ! git ls-files --error-unmatch "$NOTES_FILE" >/dev/null 2>&1; then
-  echo "Error: $NOTES_FILE is not committed"
-  echo "Commit the release notes before releasing."
+if [ ! -f "$META_FILE" ]; then
+  echo "Error: release notes metadata not found: $META_FILE"
+  echo "Run 'make notes $VERSION' to regenerate the notes and metadata."
   exit 1
 fi
-if [ -n "$(git status --porcelain -- "$NOTES_FILE")" ]; then
-  echo "Error: $NOTES_FILE has uncommitted changes"
-  echo "Commit the release notes before releasing."
+for file in "$NOTES_FILE" "$META_FILE"; do
+  if ! git ls-files --error-unmatch "$file" >/dev/null 2>&1; then
+    echo "Error: $file is not committed"
+    echo "Commit the release notes before releasing."
+    exit 1
+  fi
+  if [ -n "$(git status --porcelain -- "$file")" ]; then
+    echo "Error: $file has uncommitted changes"
+    echo "Commit the release notes before releasing."
+    exit 1
+  fi
+done
+
+"$SCRIPT_DIR/release-notes/verify.sh" "$NOTES_FILE" "$VERSION"
+
+if command -v jq >/dev/null 2>&1; then
+  BASE_SHA=$(jq -r '.base // empty' "$META_FILE")
+else
+  BASE_SHA=$(sed -n 's/.*"base"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$META_FILE" | head -1)
+fi
+if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+  echo "Error: $META_FILE has no valid base commit"
+  echo "Run 'make notes $VERSION' to regenerate the notes and metadata."
   exit 1
 fi
+
+STALE_COMMITS=$(git log --format=%H "$BASE_SHA..HEAD" -- . ':(exclude)docs/releases' || true)
+if [ -n "$STALE_COMMITS" ]; then
+  echo "Error: release notes are stale"
+  echo "Commits landed after the notes were generated:"
+  git log --oneline "$BASE_SHA..HEAD" -- . ':(exclude)docs/releases'
+  echo ""
+  echo "Re-run 'make notes $VERSION' and commit the result."
+  exit 1
+fi
+
 echo "✓ Release notes found: $NOTES_FILE"
+echo "✓ Release notes are current"
 echo ""
 
 echo "Creating release $VERSION..."

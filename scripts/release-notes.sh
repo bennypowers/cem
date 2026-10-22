@@ -28,7 +28,14 @@ VERSION=$(resolve_release_version "$INPUT" "$LATEST_TAG")
 
 NOTES_DIR="$REPO_ROOT/docs/releases"
 NOTES_FILE="$NOTES_DIR/$VERSION.md"
+META_FILE="$NOTES_DIR/$VERSION.json"
 mkdir -p "$NOTES_DIR"
+
+write_meta() {
+  local base
+  base=$(git rev-parse HEAD)
+  printf '{\n  "version": "%s",\n  "base": "%s"\n}\n' "$VERSION" "$base" > "$META_FILE"
+}
 
 if [ -f "$NOTES_FILE" ]; then
   echo "Release notes already exist: $NOTES_FILE"
@@ -47,7 +54,7 @@ else
 
   if command -v "${CLAUDE_BIN:-claude}" >/dev/null 2>&1; then
     echo "Generating release notes with Claude..."
-    {
+    if ! {
       cat "$SCRIPT_DIR/release-notes/prompt.md"
       printf '\n'
       cat "$CONTEXT"
@@ -56,7 +63,11 @@ else
       # tools cannot influence or read the working tree.
       cd "$WORKDIR"
       "${CLAUDE_BIN:-claude}" -p --output-format text ${MODEL_FLAGS[@]+"${MODEL_FLAGS[@]}"}
-    ) > "$NOTES_FILE"
+    ) > "$NOTES_FILE"; then
+      rm -f "$NOTES_FILE"
+      echo "Error: Claude failed to generate release notes." >&2
+      exit 1
+    fi
 
     if [ ! -s "$NOTES_FILE" ]; then
       rm -f "$NOTES_FILE"
@@ -76,11 +87,15 @@ else
   fi
 fi
 
-"$SCRIPT_DIR/release-notes/verify.sh" "$NOTES_FILE" "$VERSION"
+if ! "$SCRIPT_DIR/release-notes/verify.sh" "$NOTES_FILE" "$VERSION"; then
+  echo "Draft verification failed. Fix the issues in the editor." >&2
+fi
 
 echo
 echo "Review the notes in your editor. Save an empty file to abort."
-"${EDITOR:-vi}" "$NOTES_FILE"
+EDITOR_CMD=()
+read -r -a EDITOR_CMD <<< "${EDITOR:-vi}"
+"${EDITOR_CMD[@]}" "$NOTES_FILE"
 
 if [ ! -s "$NOTES_FILE" ]; then
   rm -f "$NOTES_FILE"
@@ -89,14 +104,15 @@ if [ ! -s "$NOTES_FILE" ]; then
 fi
 
 "$SCRIPT_DIR/release-notes/verify.sh" "$NOTES_FILE" "$VERSION"
+write_meta
 
-if [ -n "$(git status --porcelain -- "$NOTES_FILE")" ]; then
+if [ -n "$(git status --porcelain -- "$NOTES_FILE" "$META_FILE")" ]; then
   echo
   read -p "Commit release notes? (y/n) " -n 1 -r
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
-    git add "$NOTES_FILE"
-    git commit -m "docs: add release notes for $VERSION"
+    git add -- "$NOTES_FILE" "$META_FILE"
+    git commit -m "docs: add release notes for $VERSION" -- "$NOTES_FILE" "$META_FILE"
   else
     echo "Release notes left uncommitted. Commit them before running make release."
   fi

@@ -39,13 +39,21 @@ if command -v gh >/dev/null 2>&1; then
   while IFS= read -r number; do
     [ -n "$number" ] || continue
     # Issues are allowed. Pull requests must be merged.
-    if ! state=$(gh api "repos/{owner}/{repo}/issues/$number" \
+    if ! response=$(gh api "repos/{owner}/{repo}/issues/$number" \
       --jq 'if .pull_request then (.pull_request.merged_at // "unmerged") else "issue" end' \
-      2>/dev/null); then
-      state="missing"
+      2>&1); then
+      if grep -q 'HTTP 404' <<< "$response"; then
+        state="missing"
+      else
+        state="error"
+      fi
+    else
+      state="$response"
     fi
     if [ "$state" = "missing" ]; then
       fail "referenced #$number does not exist"
+    elif [ "$state" = "error" ]; then
+      fail "failed to verify referenced #$number"
     elif [ "$state" = "unmerged" ]; then
       fail "referenced pull request #$number is not merged"
     fi
