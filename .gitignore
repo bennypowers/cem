@@ -50,3 +50,6 @@ serve/middleware/routes/templates/ssr-bundle.qbc
 
 # Makefile stamp files
 .generate.stamp
+
+# Release notes are local drafts; published notes live in GitHub releases
+docs/releases/

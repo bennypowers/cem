@@ -32,14 +32,24 @@ META_FILE="$NOTES_DIR/$VERSION.json"
 mkdir -p "$NOTES_DIR"
 
 write_meta() {
+  # Preserve the commit recorded when these notes were first generated.
+  if [ -f "$META_FILE" ]; then
+    return
+  fi
   local base
   base=$(git rev-parse HEAD)
   printf '{\n  "version": "%s",\n  "base": "%s"\n}\n' "$VERSION" "$base" > "$META_FILE"
 }
 
 if [ -f "$NOTES_FILE" ]; then
+  if [ ! -f "$META_FILE" ]; then
+    echo "Error: $NOTES_FILE exists without $META_FILE" >&2
+    echo "Remove the notes file and rerun 'make notes $VERSION'." >&2
+    exit 1
+  fi
   echo "Release notes already exist: $NOTES_FILE"
 else
+  rm -f "$META_FILE"
   CONTEXT=$(mktemp)
   WORKDIR=$(mktemp -d)
   trap 'rm -f "$CONTEXT"; rm -rf "$WORKDIR"' EXIT
@@ -87,6 +97,8 @@ else
   fi
 fi
 
+write_meta
+
 if ! "$SCRIPT_DIR/release-notes/verify.sh" "$NOTES_FILE" "$VERSION"; then
   echo "Draft verification failed. Fix the issues in the editor." >&2
 fi
@@ -98,22 +110,13 @@ read -r -a EDITOR_CMD <<< "${EDITOR:-vi}"
 "${EDITOR_CMD[@]}" "$NOTES_FILE"
 
 if [ ! -s "$NOTES_FILE" ]; then
-  rm -f "$NOTES_FILE"
+  rm -f "$NOTES_FILE" "$META_FILE"
   echo "Release notes aborted."
   exit 1
 fi
 
 "$SCRIPT_DIR/release-notes/verify.sh" "$NOTES_FILE" "$VERSION"
-write_meta
 
-if [ -n "$(git status --porcelain -- "$NOTES_FILE" "$META_FILE")" ]; then
-  echo
-  read -p "Commit release notes? (y/n) " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    git add -- "$NOTES_FILE" "$META_FILE"
-    git commit -m "docs: add release notes for $VERSION" -- "$NOTES_FILE" "$META_FILE"
-  else
-    echo "Release notes left uncommitted. Commit them before running make release."
-  fi
-fi
+echo
+echo "Draft saved to $NOTES_FILE"
+echo "Run 'make release $VERSION' when the notes are ready."
