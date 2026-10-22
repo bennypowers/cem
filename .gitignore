@@ -33,6 +33,7 @@ docs/public
 docs/static/*-last-output.*
 docs/**/custom-elements.json
 
+# Legacy local release notes draft, superseded by docs/releases/
 RELEASE_NOTES.md
 
 # Skills reference material (not shipped)
@@ -50,3 +51,6 @@ serve/middleware/routes/templates/ssr-bundle.qbc
 
 # Makefile stamp files
 .generate.stamp
+
+# Release notes are local drafts; published notes live in GitHub releases
+docs/releases/

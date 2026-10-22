@@ -147,7 +147,10 @@ all: windows
 
 ## Testing
 
-.PHONY: test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update test-pkg update
+.PHONY: test test-unit test-e2e test-frontend test-frontend-watch test-frontend-update test-pkg update test-scripts
+test-scripts:
+	@./scripts/release-notes/test.sh
+
 test-unit: .generate.stamp
 	gotestsum --rerun-fails --rerun-fails-max-failures=3 --packages=./... -- -race $(RACE_LDFLAGS)
 
@@ -237,9 +240,17 @@ update:
 
 ## Code quality
 
-.PHONY: lint format
+.PHONY: lint format lint-shell
 lint:
 	golangci-lint run
+	@if command -v shellcheck >/dev/null 2>&1; then \
+		shellcheck -x scripts/release.sh scripts/notes.sh scripts/lib/*.sh scripts/release-notes/*.sh; \
+	else \
+		echo "shellcheck not installed; skipping shell lint"; \
+	fi
+
+lint-shell:
+	shellcheck -x scripts/release.sh scripts/notes.sh scripts/lib/*.sh scripts/release-notes/*.sh
 
 format:
 	gofmt -s -w .
@@ -449,22 +460,36 @@ verify-npm: dist/cem
 v%:
 	@:
 
-.PHONY: patch minor major release
+.PHONY: patch minor major notes release
 patch minor major:
 	@:
+
+## Release notes (generates an untracked draft in docs/releases/, opens $EDITOR)
+notes:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION or bump type is required" >&2; \
+		echo "Usage: make notes <vX.Y.Z|patch|minor|major>" >&2; \
+		echo "  make notes v0.6.6   - Notes for an explicit version" >&2; \
+		echo "  make notes patch    - Notes for the next patch version" >&2; \
+		echo "  Versions must be v-prefixed." >&2; \
+		echo "  Set RELEASE_NOTES_NO_EDIT=1 to skip the editor." >&2; \
+		exit 1; \
+	fi
+	@./scripts/notes.sh '$(VERSION)'
 
 ## Release (creates version commit, pushes it, then uses gh to tag and create release)
 release:
 	@if [ -z "$(VERSION)" ]; then \
 		echo "Error: VERSION or bump type is required"; \
-		echo "Usage: make release <version|patch|minor|major>"; \
+		echo "Usage: make release <vX.Y.Z|patch|minor|major>"; \
+		echo "  Versions must be v-prefixed."; \
 		echo "  make release v0.6.6   - Release explicit version"; \
 		echo "  make release patch    - Bump patch version (0.0.x)"; \
 		echo "  make release minor    - Bump minor version (0.x.0)"; \
 		echo "  make release major    - Bump major version (x.0.0)"; \
 		exit 1; \
 	fi
-	@./scripts/release.sh $(VERSION)
+	@./scripts/release.sh '$(VERSION)'
 
 ## Examples
 

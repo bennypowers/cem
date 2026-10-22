@@ -96,8 +96,18 @@ cem uses an esbuild-style optionalDependencies strategy for platform binaries.
 
 ## Releasing
 
-1. Tag your release (e.g., `v1.2.3`) in the main branch.
-2. The CI workflow will:
+1. Generate a release notes draft:
+   ```sh
+   make notes patch
+   ```
+   This writes `docs/releases/<version>.md` and a small `.json` sidecar as
+   untracked local files. Review and edit the draft. Set
+   `RELEASE_NOTES_NO_EDIT=1` to skip the editor. Published notes live in
+   GitHub releases; local drafts are not committed.
+2. Run `make release patch` (or `make release v1.2.3`). The script requires the
+   local notes, re-validates them, and refuses to continue when code commits
+   landed after the notes were generated.
+3. The CI workflow will:
    - Cross-compile and publish each `@pwrs/cem-PLATFORM-ARCH` package with the correct binary.
    - Publish the main `@pwrs/cem` package with all subpackages as `optionalDependencies`.
 
