@@ -215,6 +215,16 @@ func TestResolveImportSpecRelativeGate(t *testing.T) {
 	if got := deep.resolveImportSpec("../../base/x.js"); got != "base/x.js" {
 		t.Errorf("resolveImportSpec(\"../../base/x.js\") = %q, want %q", got, "base/x.js")
 	}
+
+	// Absolute specifiers name a path outside the package root; joining them
+	// against the module directory would silently rewrite them as in-package
+	// paths ("/etc/x.css" -> "src/etc/x.css"), so they stay raw.
+	if got := mp.resolveImportSpec("/etc/x.css"); got != "/etc/x.css" {
+		t.Errorf("resolveImportSpec(\"/etc/x.css\") = %q, want %q", got, "/etc/x.css")
+	}
+	if got := deep.resolveImportSpec("/abs/y.js"); got != "/abs/y.js" {
+		t.Errorf("resolveImportSpec(\"/abs/y.js\") = %q, want %q", got, "/abs/y.js")
+	}
 }
 
 // Inline: single-return path resolution for the package-specifier branch,
@@ -235,7 +245,7 @@ func TestResolveImportSpecPackageBranch(t *testing.T) {
 		{"escaping dot-dot rejected to raw specifier", "@scope/pkg/../evil.js", "@scope/pkg/../evil.js"},
 		{"deep escape rejected to raw specifier", "@scope/pkg/a/../../evil.js", "@scope/pkg/a/../../evil.js"},
 		{"two-part scope specifier stays raw", "@scope/pkg", "@scope/pkg"},
-		{"trailing slash keeps empty subpath", "@scope/pkg/", ""},
+		{"package-root specifier stays raw", "@scope/pkg/", "@scope/pkg/"},
 		{"double-slash absolute subpath rejected to raw specifier", "@scope/pkg//../evil.js", "@scope/pkg//../evil.js"},
 		{"absolute subpath rejected to raw specifier", "@scope/pkg//etc/evil.js", "@scope/pkg//etc/evil.js"},
 		{"dot-dot to package root normalizes to dot", "@scope/pkg/lib/..", "."},

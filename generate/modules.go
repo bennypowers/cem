@@ -893,8 +893,9 @@ func (mp *ModuleProcessor) resolveImportSpec(importSpec string) string {
 			// outside the package.
 			cleaned := path.Clean(parts[2])
 			if parts[2] == "" {
-				// degenerate empty subpath ("@scope/pkg/"): keep the verbatim value
-				return parts[2]
+				// package-root specifier ("@scope/pkg/"): keep the verbatim
+				// value so the reference still names the package
+				return importSpec
 			}
 			if cleaned == ".." || strings.HasPrefix(cleaned, "../") || strings.HasPrefix(cleaned, "/") {
 				logging.Warning("package specifier %q escapes the package root; leaving it unresolved", importSpec)
@@ -906,7 +907,14 @@ func (mp *ModuleProcessor) resolveImportSpec(importSpec string) string {
 		return importSpec
 	}
 
-	// Relative import - resolve relative to current module directory
+	// Relative import - resolve relative to current module directory.
+	// Absolute specifiers name a location outside the package root; joining
+	// them against the module directory would silently rewrite them as
+	// in-package paths, so they stay raw like other escaping specifiers.
+	if strings.HasPrefix(importSpec, "/") {
+		logging.Warning("import specifier %q is absolute; leaving it unresolved", importSpec)
+		return importSpec
+	}
 	currentDir := path.Dir(mp.module.Path)
 	resolvedPath := path.Join(currentDir, importSpec)
 
