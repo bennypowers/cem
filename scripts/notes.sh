@@ -136,7 +136,7 @@ else
       # tools cannot influence or read the working tree.
       cd "$WORKDIR"
       "${TIMEOUT_FLAGS[@]+"${TIMEOUT_FLAGS[@]}"}" \
-        "${CLAUDE_BIN:-claude}" -p --output-format text \
+        "${CLAUDE_BIN:-claude}" -p --output-format text --tools "" \
         ${MODEL_FLAGS[@]+"${MODEL_FLAGS[@]}"}
     ) > "$TMP_NOTES"; then
       rm -f "$TMP_NOTES"
