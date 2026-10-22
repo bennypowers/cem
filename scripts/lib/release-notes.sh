@@ -46,8 +46,17 @@ write_release_notes_meta() {
   local meta="$1"
   local version="$2"
   local base="$3"
-  printf '{\n  "version": "%s",\n  "base": "%s"\n}\n' "$version" "$base" > "$meta.tmp"
-  mv "$meta.tmp" "$meta"
+  local tmp
+
+  tmp=$(mktemp "$meta.XXXXXX") || return 1
+  if ! printf '{\n  "version": "%s",\n  "base": "%s"\n}\n' "$version" "$base" > "$tmp"; then
+    rm -f "$tmp"
+    return 1
+  fi
+  if ! mv "$tmp" "$meta"; then
+    rm -f "$tmp"
+    return 1
+  fi
 }
 
 # Returns 0 when the notes are current, 1 when commits landed after the base,

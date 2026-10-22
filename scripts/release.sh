@@ -182,6 +182,6 @@ git push
 echo ""
 
 echo "Step 6: Creating GitHub release (gh will tag and push)..."
-run_gh release create "$VERSION" \
+gh release create "$VERSION" \
   --target "$(git rev-parse HEAD)" \
   --notes-file "$NOTES_FILE"

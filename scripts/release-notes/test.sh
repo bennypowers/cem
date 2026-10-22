@@ -39,6 +39,7 @@ echo "git helpers"
   printf 'one\n' > file.txt
   git add file.txt
   git commit -qm 'chore: init'
+  git branch --show-current > "$TMP/branch"
   git tag v1.2.3
 
   assert_eq "$(latest_release_tag)" "v1.2.3" "latest tag"
@@ -93,7 +94,7 @@ pass "metadata writer and reader"
 echo "verify references"
 (
   cd "$TMP"
-  git checkout -q main 2>/dev/null || git checkout -q master
+  git checkout -q "$(cat "$TMP/branch")"
 
   printf 'one\n' > pr-one.txt
   git add pr-one.txt
@@ -178,6 +179,19 @@ STUB
   PATH="$stub:$PATH" RELEASE_NOTES_NO_EDIT=1 CLAUDE_BIN="$stub/claude" \
     "$e2e/scripts/notes.sh" v1.2.4 >/dev/null
   assert_eq "$(jq -r .base docs/releases/v1.2.4.json)" "$(git rev-parse HEAD)" "rerun preserves base"
+
+  if PATH="$stub:$PATH" RELEASE_NOTES_FORCE_EDIT=1 EDITOR=false CLAUDE_BIN="$stub/claude" \
+    "$e2e/scripts/notes.sh" v1.2.4 >/dev/null 2>&1; then
+    fail "editor failure was ignored for existing notes"
+  fi
+  [ -f docs/releases/v1.2.4.md ] || fail "existing notes were removed on editor failure"
+
+  if PATH="$stub:$PATH" RELEASE_NOTES_FORCE_EDIT=1 EDITOR=false CLAUDE_BIN="$stub/claude" \
+    "$e2e/scripts/notes.sh" v1.2.5 >/dev/null 2>&1; then
+    fail "editor failure was ignored for a new draft"
+  fi
+  [ ! -f docs/releases/v1.2.5.md ] || fail "new draft was not removed on editor failure"
+  [ ! -f docs/releases/v1.2.5.json ] || fail "new metadata was not removed on editor failure"
 
   rm docs/releases/v1.2.4.json
   if PATH="$stub:$PATH" RELEASE_NOTES_NO_EDIT=1 CLAUDE_BIN="$stub/claude" \

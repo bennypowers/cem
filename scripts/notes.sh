@@ -9,6 +9,7 @@
 #   RELEASE_NOTES_TIMEOUT    Claude timeout in seconds (default: 600)
 #   EDITOR                   Editor command, with arguments (default: vi)
 #   RELEASE_NOTES_NO_EDIT    Set to 1 to skip the editor
+#   RELEASE_NOTES_FORCE_EDIT Set to 1 to run the editor without a TTY
 #
 # Notes are untracked local drafts under docs/releases/. Published notes live
 # in GitHub releases.
@@ -35,6 +36,7 @@ Environment:
   RELEASE_NOTES_TIMEOUT    Claude timeout in seconds (default: 600)
   EDITOR                   Editor command, with arguments (default: vi)
   RELEASE_NOTES_NO_EDIT    Set to 1 to skip the editor
+  RELEASE_NOTES_FORCE_EDIT Set to 1 to run the editor without a TTY
 EOF
 }
 
@@ -82,6 +84,7 @@ trap cleanup EXIT
 
 # Capture the commit the notes describe before the slow generation step.
 BASE_SHA=$(git rev-parse HEAD)
+GENERATED=0
 
 if [ -f "$NOTES_FILE" ]; then
   if [ ! -f "$META_FILE" ]; then
@@ -156,6 +159,7 @@ else
   fi
 
   mv "$TMP_NOTES" "$NOTES_FILE"
+  GENERATED=1
 fi
 
 if [ ! -f "$META_FILE" ]; then
@@ -166,7 +170,14 @@ if ! "$SCRIPT_DIR/release-notes/verify.sh" "$NOTES_FILE" "$VERSION"; then
   echo "Draft verification failed. Fix the issues in the editor." >&2
 fi
 
-if [ "${RELEASE_NOTES_NO_EDIT:-0}" = "1" ] || [ ! -t 0 ]; then
+SKIP_EDITOR=0
+if [ "${RELEASE_NOTES_NO_EDIT:-0}" = "1" ]; then
+  SKIP_EDITOR=1
+elif [ "${RELEASE_NOTES_FORCE_EDIT:-0}" != "1" ] && [ ! -t 0 ]; then
+  SKIP_EDITOR=1
+fi
+
+if [ "$SKIP_EDITOR" = "1" ]; then
   echo
   echo "Non-interactive: draft saved to $NOTES_FILE"
 else
@@ -175,8 +186,12 @@ else
   EDITOR_CMD=()
   read -r -a EDITOR_CMD <<< "${EDITOR:-vi}"
   if ! "${EDITOR_CMD[@]}" "$NOTES_FILE"; then
-    rm -f "$NOTES_FILE" "$META_FILE"
-    echo "Editor failed; release notes discarded." >&2
+    if [ "$GENERATED" -eq 1 ]; then
+      rm -f "$NOTES_FILE" "$META_FILE"
+      echo "Editor failed; newly generated release notes discarded." >&2
+    else
+      echo "Editor failed; existing release notes left unchanged." >&2
+    fi
     exit 1
   fi
 fi
