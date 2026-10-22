@@ -11,6 +11,11 @@ set -e
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=scripts/lib/release-version.sh
 source "$SCRIPT_DIR/lib/release-version.sh"
+# shellcheck source=scripts/lib/release-notes.sh
+source "$SCRIPT_DIR/lib/release-notes.sh"
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd "$REPO_ROOT"
 
 if [ -z "$1" ]; then
   echo "Error: VERSION or bump type is required"
@@ -29,7 +34,7 @@ if [[ "$INPUT" =~ ^(patch|minor|major)$ ]]; then
   BUMP_TYPE="$INPUT"
 
   # Get the latest tag
-  LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+  LATEST_TAG=$(latest_release_tag)
   echo "Latest tag: $LATEST_TAG"
 
   VERSION=$(resolve_release_version "$BUMP_TYPE" "$LATEST_TAG") || exit 1
@@ -49,8 +54,15 @@ fi
 echo "✓ Tag $VERSION does not exist"
 echo ""
 
-NOTES_FILE="docs/releases/$VERSION.md"
-META_FILE="docs/releases/$VERSION.json"
+if git remote get-url origin >/dev/null 2>&1; then
+  if git ls-remote --tags origin "refs/tags/$VERSION" 2>/dev/null | grep -q .; then
+    echo "Error: Tag $VERSION already exists on origin"
+    exit 1
+  fi
+fi
+
+NOTES_FILE=$(release_notes_file "$REPO_ROOT" "$VERSION")
+META_FILE=$(release_notes_meta_file "$REPO_ROOT" "$VERSION")
 if [ ! -f "$NOTES_FILE" ]; then
   echo "Error: release notes not found: $NOTES_FILE"
   echo "Run 'make notes $VERSION' first, then review the draft."
@@ -63,24 +75,30 @@ if [ ! -f "$META_FILE" ]; then
 fi
 "$SCRIPT_DIR/release-notes/verify.sh" "$NOTES_FILE" "$VERSION"
 
-if command -v jq >/dev/null 2>&1; then
-  BASE_SHA=$(jq -r '.base // empty' "$META_FILE")
-else
-  BASE_SHA=$(sed -n 's/.*"base"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$META_FILE" | head -1)
-fi
-if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+BASE_SHA=$(read_release_notes_base "$META_FILE") || BASE_SHA=""
+if [ -z "$BASE_SHA" ]; then
   echo "Error: $META_FILE has no valid base commit"
   echo "Run 'make notes $VERSION' to regenerate the notes and metadata."
   exit 1
 fi
 
-STALE_COMMITS=$(git log --format=%H "$BASE_SHA..HEAD" -- . ':(exclude)docs/releases' || true)
-if [ -n "$STALE_COMMITS" ]; then
+set +e
+check_release_notes_freshness "$BASE_SHA"
+freshness=$?
+set -e
+if [ "$freshness" -eq 1 ]; then
   echo "Error: release notes are stale"
-  echo "Commits landed after the notes were generated:"
-  git log --oneline "$BASE_SHA..HEAD" -- . ':(exclude)docs/releases'
+  if git merge-base --is-ancestor "$BASE_SHA" HEAD 2>/dev/null; then
+    echo "Commits landed after the notes were generated:"
+    git log --oneline "$BASE_SHA..HEAD" -- . ':(exclude)docs/releases'
+  else
+    echo "The notes were generated from a commit that is not an ancestor of HEAD."
+  fi
   echo ""
   echo "Remove $NOTES_FILE and $META_FILE, then rerun 'make notes $VERSION'."
+  exit 1
+elif [ "$freshness" -ne 0 ]; then
+  echo "Error: cannot verify release notes base $BASE_SHA"
   exit 1
 fi
 
@@ -106,6 +124,7 @@ if ! git diff --quiet serve/middleware/routes/templates/; then
   echo "  Generated files have changed, committing..."
   git add serve/middleware/routes/templates/
   git commit -m "chore: regenerate embedded assets"
+  write_release_notes_meta "$META_FILE" "$VERSION" "$(git rev-parse HEAD)"
   echo "  Done."
 else
   echo "  Generated files are up to date."
@@ -119,6 +138,7 @@ echo "Step 3: Updating version files and committing..."
   echo "Release flow aborted"
   exit 1
 }
+write_release_notes_meta "$META_FILE" "$VERSION" "$(git rev-parse HEAD)"
 echo ""
 
 # Strip 'v' prefix for version comparison
@@ -162,4 +182,6 @@ git push
 echo ""
 
 echo "Step 6: Creating GitHub release (gh will tag and push)..."
-gh release create "$VERSION" --notes-file "$NOTES_FILE"
+run_gh release create "$VERSION" \
+  --target "$(git rev-parse HEAD)" \
+  --notes-file "$NOTES_FILE"

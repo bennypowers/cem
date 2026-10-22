@@ -6,13 +6,23 @@
 #
 # Prints a v-prefixed version to stdout. The caller is responsible for
 # printing user-facing status messages.
+latest_release_tag() {
+  git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0"
+}
+
 resolve_release_version() {
   local input="${1:-}"
   local latest_tag="${2:-}"
 
+  # Accept both vX.Y.Z and X.Y.Z, and always return the v-prefixed form.
+  if [[ "$input" =~ ^v?([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    echo "v${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
+    return 0
+  fi
+
   if [[ "$input" =~ ^(patch|minor|major)$ ]]; then
     if [[ -z "$latest_tag" ]]; then
-      latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+      latest_tag=$(latest_release_tag)
     fi
 
     local current="${latest_tag#v}"
@@ -42,7 +52,9 @@ resolve_release_version() {
     esac
 
     echo "v${major}.${minor}.${patch}"
-  else
-    echo "$input"
+    return 0
   fi
+
+  echo "Error: version must be X.Y.Z, vX.Y.Z, or patch|minor|major" >&2
+  return 1
 }

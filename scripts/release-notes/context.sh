@@ -7,6 +7,12 @@
 
 set -euo pipefail
 
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=scripts/lib/release-version.sh
+source "$SCRIPT_DIR/../lib/release-version.sh"
+# shellcheck source=scripts/lib/release-notes.sh
+source "$SCRIPT_DIR/../lib/release-notes.sh"
+
 VERSION="${1:-}"
 if [ -z "$VERSION" ]; then
   echo "Usage: $0 <version>" >&2
@@ -16,8 +22,8 @@ fi
 REPO_ROOT=$(git rev-parse --show-toplevel)
 cd "$REPO_ROOT"
 
-PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
-if [ -z "$PREV_TAG" ]; then
+PREV_TAG=$(latest_release_tag)
+if [ "$PREV_TAG" = "v0.0.0" ]; then
   PREV_TAG=$(git rev-list --max-parents=0 HEAD)
 fi
 
@@ -47,7 +53,7 @@ PR_NUMBERS=$(git log --no-merges --pretty=format:'%s' "$PREV_TAG..HEAD" \
     while IFS= read -r number; do
       [ -n "$number" ] || continue
       echo "### #$number"
-      gh pr view "$number" \
+      run_gh pr view "$number" \
         --json number,title,body,labels \
         --jq '"Title: \(.title)\nLabels: \([.labels[].name] | join(", "))\n\n\((.body // "")[0:2000])"' \
         2>/dev/null || echo "(pull request metadata unavailable)"
@@ -64,24 +70,26 @@ PR_NUMBERS=$(git log --no-merges --pretty=format:'%s' "$PREV_TAG..HEAD" \
   echo
   echo "## GitHub generated notes"
   echo
-  gh api --method POST "repos/{owner}/{repo}/releases/generate-notes" \
-    -f tag_name="$VERSION" \
-    -f target_commitish="$HEAD_SHA" \
-    --jq .body 2>/dev/null || echo "(GitHub generated notes unavailable)"
+  github_generated_notes "$VERSION" "$HEAD_SHA" 2>/dev/null \
+    || echo "(GitHub generated notes unavailable)"
   echo
   echo "## Previous releases"
   echo
 
   if command -v gh >/dev/null 2>&1; then
-    {
-      gh release list --limit 5 --json tagName,publishedAt \
-        --jq '.[] | [.tagName, .publishedAt] | @tsv' 2>/dev/null || true
-    } | while IFS=$'\t' read -r tag published; do
-      [ -n "$tag" ] || continue
-      echo "### $tag (${published%%T*})"
-      gh release view "$tag" --json body --jq .body 2>/dev/null || true
+    RELEASES=$(run_gh release list --limit 5 --json tagName,publishedAt \
+      --jq '.[] | [.tagName, .publishedAt] | @tsv' 2>/dev/null) || RELEASES=""
+    if [ -z "$RELEASES" ]; then
+      echo "(previous releases unavailable)"
       echo
-    done
+    else
+      while IFS=$'\t' read -r tag published; do
+        [ -n "$tag" ] || continue
+        echo "### $tag (${published%%T*})"
+        run_gh release view "$tag" --json body --jq .body 2>/dev/null || echo "(release notes unavailable)"
+        echo
+      done <<< "$RELEASES"
+    fi
   else
     echo "(gh not available)"
     echo

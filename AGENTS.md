@@ -158,6 +158,16 @@ When adding or modifying configuration fields, update all three locations:
 
 If the field is detectable from the project (e.g. file patterns, git remote), add detection in `cmd/config_init_detect.go`. If it needs validation, add it to `internal/config/validate.go` and wire it into the wizard's `ValidateFn`.
 
+## Release notes
+
+- `make notes <version|patch|minor|major>` generates an untracked draft in
+  `docs/releases/` and opens `$EDITOR` for review.
+- Set `RELEASE_NOTES_NO_EDIT=1` for non-interactive generation. The draft is
+  still left on disk for review.
+- `make release ...` pushes to `main` and publishes. Run it only when the user
+  explicitly asks for a release.
+- Published notes live in GitHub releases; `docs/releases/` is gitignored.
+
 ## Git
 
 - Always run `make lint` and address issues before committing
