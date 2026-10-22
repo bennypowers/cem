@@ -1,0 +1,263 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/a.js",
+      "declarations": [
+        {
+          "name": "AThing",
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "chain-ce",
+          "declaration": {
+            "name": "ChainCE",
+            "module": "src/c.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "*",
+          "declaration": {
+            "name": "*",
+            "module": "src/b.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "BThing",
+          "declaration": {
+            "name": "BThing",
+            "module": "src/b.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "CThing",
+          "declaration": {
+            "name": "CThing",
+            "module": "src/c.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ChainCE",
+          "declaration": {
+            "name": "ChainCE",
+            "module": "src/c.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "AThing",
+          "declaration": {
+            "name": "AThing",
+            "module": "src/a.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/b.js",
+      "declarations": [
+        {
+          "name": "BThing",
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "chain-ce",
+          "declaration": {
+            "name": "ChainCE",
+            "module": "src/c.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "*",
+          "declaration": {
+            "name": "*",
+            "module": "src/c.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "CThing",
+          "declaration": {
+            "name": "CThing",
+            "module": "src/c.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ChainCE",
+          "declaration": {
+            "name": "ChainCE",
+            "module": "src/c.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "BThing",
+          "declaration": {
+            "name": "BThing",
+            "module": "src/b.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/c.js",
+      "declarations": [
+        {
+          "name": "CThing",
+          "kind": "class"
+        },
+        {
+          "name": "ChainCE",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "chain-ce",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "CThing",
+          "declaration": {
+            "name": "CThing",
+            "module": "src/c.js"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "chain-ce",
+          "declaration": {
+            "name": "ChainCE",
+            "module": "src/c.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ChainCE",
+          "declaration": {
+            "name": "ChainCE",
+            "module": "src/c.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/x.js",
+      "declarations": [
+        {
+          "name": "XThing",
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "XThing",
+          "declaration": {
+            "name": "XThing",
+            "module": "src/x.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/y.js",
+      "declarations": [
+        {
+          "name": "YThing",
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "*",
+          "declaration": {
+            "name": "*",
+            "module": "src/x.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "XThing",
+          "declaration": {
+            "name": "XThing",
+            "module": "src/x.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "YThing",
+          "declaration": {
+            "name": "YThing",
+            "module": "src/y.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/z.js",
+      "declarations": [
+        {
+          "name": "ZThing",
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "*",
+          "declaration": {
+            "name": "*",
+            "module": "src/y.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "XThing",
+          "declaration": {
+            "name": "XThing",
+            "module": "src/x.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "YThing",
+          "declaration": {
+            "name": "YThing",
+            "module": "src/y.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "ZThing",
+          "declaration": {
+            "name": "ZThing",
+            "module": "src/z.js"
+          }
+        }
+      ]
+    }
+  ]
+}

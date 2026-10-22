@@ -3,6 +3,97 @@
   "modules": [
     {
       "kind": "javascript-module",
+      "path": "src/child-default-ce.js",
+      "declarations": [
+        {
+          "name": "DefaultChildElement",
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "kind": "class",
+          "tagName": "default-child-element",
+          "slots": [
+            {
+              "name": ""
+            }
+          ],
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "default-child-element",
+          "declaration": {
+            "name": "DefaultChildElement",
+            "module": "src/child-default-ce.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "DefaultChildElement",
+            "module": "src/child-default-ce.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/child-default.js",
+      "declarations": [
+        {
+          "name": "DefaultChild",
+          "members": [
+            {
+              "name": "greet",
+              "kind": "method"
+            }
+          ],
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "DefaultChild",
+            "module": "src/child-default.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/child-star-default.js",
+      "declarations": [
+        {
+          "name": "StarDefaultThing",
+          "members": [
+            {
+              "name": "kind",
+              "kind": "method"
+            }
+          ],
+          "kind": "class"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "StarDefaultThing",
+            "module": "src/child-star-default.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "src/child.js",
       "declarations": [
         {
@@ -36,6 +127,100 @@
           "declaration": {
             "name": "ChildElement",
             "module": "src/child.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/middle-default-reexport.js",
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "default-child-element",
+          "declaration": {
+            "name": "DefaultChildElement",
+            "module": "src/child-default-ce.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "default",
+            "module": "src/child-default-ce.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-default-alias-export.js",
+      "exports": [
+        {
+          "kind": "js",
+          "name": "DefaultThing",
+          "declaration": {
+            "name": "default",
+            "module": "src/child-default.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-default-ce-export.js",
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "default-child-element",
+          "declaration": {
+            "name": "DefaultChildElement",
+            "module": "src/child-default-ce.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "default",
+            "module": "src/child-default-ce.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-default-export.js",
+      "exports": [
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "default",
+            "module": "src/child-default.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-default-reexport-chain.js",
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "default-child-element",
+          "declaration": {
+            "name": "DefaultChildElement",
+            "module": "src/child-default-ce.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "default",
+          "declaration": {
+            "name": "default",
+            "module": "src/middle-default-reexport.js"
           }
         }
       ]
@@ -103,18 +288,18 @@
       "path": "src/parent-namespace-export.js",
       "exports": [
         {
-          "kind": "js",
-          "name": "*",
-          "declaration": {
-            "name": "*",
-            "module": "src/child.js"
-          }
-        },
-        {
           "kind": "custom-element-definition",
           "name": "child-element",
           "declaration": {
             "name": "ChildElement",
+            "module": "src/child.js"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "*",
+          "declaration": {
+            "name": "*",
             "module": "src/child.js"
           }
         },
@@ -152,6 +337,20 @@
           "declaration": {
             "name": "ChildElement",
             "module": "src/child.js"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/parent-star-from-default.js",
+      "exports": [
+        {
+          "kind": "js",
+          "name": "*",
+          "declaration": {
+            "name": "*",
+            "module": "src/child-star-default.js"
           }
         }
       ]

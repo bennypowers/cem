@@ -10,7 +10,7 @@
           "summary": "Buttons represent actions that are available to the user.",
           "superclass": {
             "name": "WebAwesomeFormAssociatedElement",
-            "module": "../internal/webawesome-form-associated-element.js"
+            "module": "../../internal/webawesome-form-associated-element.js"
           },
           "members": [
             {
