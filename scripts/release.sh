@@ -8,6 +8,10 @@
 
 set -e
 
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=scripts/lib/release-version.sh
+source "$SCRIPT_DIR/lib/release-version.sh"
+
 if [ -z "$1" ]; then
   echo "Error: VERSION or bump type is required"
   echo "Usage: $0 <version|patch|minor|major>"
@@ -28,37 +32,7 @@ if [[ "$INPUT" =~ ^(patch|minor|major)$ ]]; then
   LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
   echo "Latest tag: $LATEST_TAG"
 
-  # Remove 'v' prefix if present
-  CURRENT_VERSION="${LATEST_TAG#v}"
-
-  # Parse version components
-  if [[ ! "$CURRENT_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-    echo "Error: Latest tag '$LATEST_TAG' is not a valid semver version"
-    echo "Expected format: v0.0.0"
-    exit 1
-  fi
-
-  MAJOR="${BASH_REMATCH[1]}"
-  MINOR="${BASH_REMATCH[2]}"
-  PATCH="${BASH_REMATCH[3]}"
-
-  # Bump the appropriate component
-  case "$BUMP_TYPE" in
-    patch)
-      PATCH=$((PATCH + 1))
-      ;;
-    minor)
-      MINOR=$((MINOR + 1))
-      PATCH=0
-      ;;
-    major)
-      MAJOR=$((MAJOR + 1))
-      MINOR=0
-      PATCH=0
-      ;;
-  esac
-
-  VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+  VERSION=$(resolve_release_version "$BUMP_TYPE" "$LATEST_TAG") || exit 1
   echo "Bumping $BUMP_TYPE: $LATEST_TAG → $VERSION"
   echo ""
 else
@@ -73,6 +47,25 @@ if git rev-parse "$VERSION" >/dev/null 2>&1; then
   exit 1
 fi
 echo "✓ Tag $VERSION does not exist"
+echo ""
+
+NOTES_FILE="docs/releases/$VERSION.md"
+if [ ! -f "$NOTES_FILE" ]; then
+  echo "Error: release notes not found: $NOTES_FILE"
+  echo "Run 'make notes $VERSION' first, then review and commit the notes."
+  exit 1
+fi
+if ! git ls-files --error-unmatch "$NOTES_FILE" >/dev/null 2>&1; then
+  echo "Error: $NOTES_FILE is not committed"
+  echo "Commit the release notes before releasing."
+  exit 1
+fi
+if [ -n "$(git status --porcelain -- "$NOTES_FILE")" ]; then
+  echo "Error: $NOTES_FILE has uncommitted changes"
+  echo "Commit the release notes before releasing."
+  exit 1
+fi
+echo "✓ Release notes found: $NOTES_FILE"
 echo ""
 
 echo "Creating release $VERSION..."
@@ -149,4 +142,4 @@ git push
 echo ""
 
 echo "Step 6: Creating GitHub release (gh will tag and push)..."
-gh release create "$VERSION"
+gh release create "$VERSION" --notes-file "$NOTES_FILE"

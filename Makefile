@@ -449,9 +449,20 @@ verify-npm: dist/cem
 v%:
 	@:
 
-.PHONY: patch minor major release
+.PHONY: patch minor major notes release
 patch minor major:
 	@:
+
+## Release notes (generates a draft, opens $EDITOR, commits the result)
+notes:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION or bump type is required"; \
+		echo "Usage: make notes <version|patch|minor|major>"; \
+		echo "  make notes v0.6.6   - Notes for an explicit version"; \
+		echo "  make notes patch    - Notes for the next patch version"; \
+		exit 1; \
+	fi
+	@./scripts/release-notes.sh $(VERSION)
 
 ## Release (creates version commit, pushes it, then uses gh to tag and create release)
 release:
