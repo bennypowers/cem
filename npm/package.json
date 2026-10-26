@@ -2,6 +2,7 @@
   "name": "@pwrs/cem",
   "version": "0.11.4",
   "description": "CLI tool for generating and working with Custom Elements Manifests",
+  "license": "GPL-3.0-or-later",
   "type": "module",
   "engines": {
     "node": ">=22.0.0"

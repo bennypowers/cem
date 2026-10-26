@@ -24,6 +24,23 @@ esac
 
 echo "Verifying npm packaging for ${TARGET}..."
 
+# Verify the main package declares license and ships a README, since npm
+# publishes those as registry metadata
+echo "  Checking package metadata..."
+if ! jq -e '.license' npm/package.json >/dev/null; then
+  echo "✗ npm/package.json is missing the license field"
+  exit 1
+fi
+if ! jq -e '.files | index("README.md")' npm/package.json >/dev/null; then
+  echo "✗ npm/package.json files array does not include README.md"
+  exit 1
+fi
+if [ ! -f npm/README.md ]; then
+  echo "✗ npm/package.json lists README.md but npm/README.md does not exist"
+  exit 1
+fi
+echo "  license: $(jq -r '.license' npm/package.json)"
+
 # Need a built binary
 if [ ! -f dist/cem ]; then
   echo "✗ dist/cem not found. Run 'make build' first."
