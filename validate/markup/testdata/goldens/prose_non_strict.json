@@ -1,0 +1,20 @@
+[
+  {
+    "rule": "deprecated-element",
+    "severity": "warning",
+    "confidence": "high",
+    "message": "Custom element 'my-card' is deprecated: use my-panel instead",
+    "element": "my-card",
+    "line": 4,
+    "column": 2
+  },
+  {
+    "rule": "deprecated-element",
+    "severity": "warning",
+    "confidence": "high",
+    "message": "Custom element 'my-card' is deprecated: use my-panel instead",
+    "element": "my-card",
+    "line": 5,
+    "column": 2
+  }
+]

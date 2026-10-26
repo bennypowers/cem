@@ -1,0 +1,43 @@
+[
+  {
+    "rule": "deprecated-element",
+    "severity": "warning",
+    "confidence": "high",
+    "message": "Custom element 'my-card' is deprecated: use my-panel instead",
+    "element": "my-card",
+    "line": 1,
+    "column": 2
+  },
+  {
+    "rule": "attribute-conflict",
+    "severity": "warning",
+    "confidence": "low",
+    "message": "Eager loading conflicts with lazy loading",
+    "element": "my-card",
+    "line": 1,
+    "column": 2,
+    "details": {
+      "attribute1": "loading",
+      "attribute2": "lazy",
+      "reason": "Eager loading conflicts with lazy loading",
+      "value1": "eager",
+      "value2": ""
+    }
+  },
+  {
+    "rule": "attribute-conflict",
+    "severity": "warning",
+    "confidence": "low",
+    "message": "Disabled elements cannot be interactive",
+    "element": "my-card",
+    "line": 1,
+    "column": 2,
+    "details": {
+      "attribute1": "disabled",
+      "attribute2": "interactive",
+      "reason": "Disabled elements cannot be interactive",
+      "value1": "",
+      "value2": ""
+    }
+  }
+]

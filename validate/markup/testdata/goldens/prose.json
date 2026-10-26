@@ -1,0 +1,81 @@
+[
+  {
+    "rule": "slot-content-guideline",
+    "severity": "warning",
+    "confidence": "low",
+    "message": "Potential interactive content guideline - check slot content manually",
+    "element": "my-button",
+    "line": 1,
+    "column": 2,
+    "details": {
+      "guideline": "Only interactive content is allowed. You must avoid plain text.",
+      "slot": "label",
+      "violation": "Potential interactive content guideline - check slot content manually"
+    }
+  },
+  {
+    "rule": "deprecated-element",
+    "severity": "warning",
+    "confidence": "high",
+    "message": "Custom element 'my-card' is deprecated: use my-panel instead",
+    "element": "my-card",
+    "line": 4,
+    "column": 2
+  },
+  {
+    "rule": "attribute-conflict",
+    "severity": "warning",
+    "confidence": "low",
+    "message": "Eager loading conflicts with lazy loading",
+    "element": "my-card",
+    "line": 4,
+    "column": 2,
+    "details": {
+      "attribute1": "loading",
+      "attribute2": "lazy",
+      "reason": "Eager loading conflicts with lazy loading",
+      "value1": "eager",
+      "value2": ""
+    }
+  },
+  {
+    "rule": "attribute-conflict",
+    "severity": "warning",
+    "confidence": "low",
+    "message": "Disabled elements cannot be interactive",
+    "element": "my-card",
+    "line": 4,
+    "column": 2,
+    "details": {
+      "attribute1": "disabled",
+      "attribute2": "interactive",
+      "reason": "Disabled elements cannot be interactive",
+      "value1": "",
+      "value2": ""
+    }
+  },
+  {
+    "rule": "deprecated-element",
+    "severity": "warning",
+    "confidence": "high",
+    "message": "Custom element 'my-card' is deprecated: use my-panel instead",
+    "element": "my-card",
+    "line": 5,
+    "column": 2
+  },
+  {
+    "rule": "content-attribute-redundancy",
+    "severity": "info",
+    "confidence": "low",
+    "message": "Attribute 'title' on <my-card> is redundant with the 'title' slot",
+    "element": "my-card",
+    "line": 5,
+    "column": 2,
+    "details": {
+      "attribute": "title",
+      "content": "[slot content not analyzed - tree-sitter enhancement needed]",
+      "slot": "title",
+      "value": "Hello"
+    }
+  }
+]

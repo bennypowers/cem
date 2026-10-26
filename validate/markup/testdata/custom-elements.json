@@ -1,0 +1,136 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "base-button.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "BaseButton",
+          "tagName": "base-button",
+          "customElement": true,
+          "description": "Base button",
+          "attributes": [
+            {
+              "name": "density",
+              "type": {
+                "text": "\"compact\" | \"comfortable\""
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "components.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyButton",
+          "tagName": "my-button",
+          "customElement": true,
+          "summary": "A button",
+          "description": "A button element",
+          "superclass": {
+            "name": "BaseButton",
+            "module": "base-button.js"
+          },
+          "attributes": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "\"primary\" | \"secondary\""
+              }
+            },
+            {
+              "name": "legacy",
+              "deprecated": "use variant instead",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "slots": [
+            {
+              "name": "label",
+              "description": "Only interactive content is allowed. You must avoid plain text."
+            },
+            {
+              "name": "icon",
+              "description": "Optional icon"
+            },
+            {
+              "name": "legacy-slot",
+              "deprecated": true
+            }
+          ]
+        },
+        {
+          "kind": "class",
+          "name": "MyCard",
+          "tagName": "my-card",
+          "customElement": true,
+          "description": "A card",
+          "deprecated": "use my-panel instead",
+          "attributes": [
+            {
+              "name": "title",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "label",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "icon",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "loading",
+              "type": {
+                "text": "\"eager\" | \"lazy\""
+              }
+            },
+            {
+              "name": "lazy",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "interactive",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "slots": [
+            {
+              "name": "title"
+            },
+            {
+              "name": "icon"
+            },
+            {
+              "name": "label"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

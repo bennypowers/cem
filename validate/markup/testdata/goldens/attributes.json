@@ -1,0 +1,29 @@
+[
+  {
+    "rule": "invalid-attribute-value",
+    "severity": "error",
+    "confidence": "high",
+    "message": "Invalid attribute value: `variant=\"bogus\"` in `<my-button>`. Valid values: [\"primary\" \"secondary\"]",
+    "element": "my-button",
+    "line": 1,
+    "column": 12,
+    "details": {
+      "attribute": "variant",
+      "expected": "[\"primary\" \"secondary\"]",
+      "value": "bogus"
+    }
+  },
+  {
+    "rule": "unknown-attribute",
+    "severity": "error",
+    "confidence": "high",
+    "message": "Unknown attribute 'vriant' for element <my-button>. Did you mean 'variant'?",
+    "element": "my-button",
+    "line": 1,
+    "column": 28,
+    "details": {
+      "attribute": "vriant",
+      "suggestion": "variant"
+    }
+  }
+]
