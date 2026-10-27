@@ -343,8 +343,18 @@ func TestValidateAttributeCombinations(t *testing.T) {
 			want:   0,
 		},
 		{
+			name:   "literal false still enables lazy",
+			source: `<my-card loading="eager" lazy="false">Card</my-card>`,
+			want:   1,
+		},
+		{
 			name:   "disabled and interactive conflict",
 			source: `<my-card disabled interactive>Card</my-card>`,
+			want:   1,
+		},
+		{
+			name:   "literal false still enables disabled",
+			source: `<my-card disabled="false" interactive>Card</my-card>`,
 			want:   1,
 		},
 		{

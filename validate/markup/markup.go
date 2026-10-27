@@ -447,8 +447,8 @@ func (v *validator) validateAttributeCombinations(el *elementNode) {
 		attributes[attr.name] = attr.value
 	}
 
-	if loading, ok := attributes["loading"]; ok {
-		if lazy, ok := attributes["lazy"]; ok && loading == "eager" && (lazy == "true" || lazy == "") {
+	if loading, ok := attributes["loading"]; ok && loading == "eager" {
+		if lazy, ok := attributes["lazy"]; ok {
 			v.add(el, RuleAttributeConflict, SeverityWarning, ConfidenceLow,
 				"Eager loading conflicts with lazy loading", map[string]string{
 					DetailAttribute1: "loading",
@@ -461,8 +461,7 @@ func (v *validator) validateAttributeCombinations(el *elementNode) {
 	}
 
 	if disabled, ok := attributes["disabled"]; ok {
-		if interactive, ok := attributes["interactive"]; ok &&
-			(disabled == "true" || disabled == "") && (interactive == "true" || interactive == "") {
+		if interactive, ok := attributes["interactive"]; ok {
 			v.add(el, RuleAttributeConflict, SeverityWarning, ConfidenceLow,
 				"Disabled elements cannot be interactive", map[string]string{
 					DetailAttribute1: "disabled",
