@@ -22,9 +22,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 // manifests.
 //
 // The types mirror schema 2.1.x from
-// https://github.com/webcomponents/custom-elements-manifest. Fields that are
-// not part of the schema are ignored while decoding, so manifests produced by
-// newer schema revisions can still be read.
+// https://github.com/webcomponents/custom-elements-manifest. Properties that
+// are not part of the schema are ignored while decoding and are not preserved,
+// so a manifest that adds unrecognized properties still decodes. Unknown
+// declaration, export, and class member kinds are not supported and cause a
+// decoding error.
 //
 // # External use
 //

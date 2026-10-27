@@ -17,13 +17,16 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Package breaking compares two Custom Elements Manifest documents and
-// classifies the differences as safe, dangerous, or breaking changes.
+// Package breaking compares the custom element declarations in two Custom
+// Elements Manifest documents and classifies changes to their public API as
+// safe, dangerous, or breaking.
 //
-// Rules cover elements, attributes, slots, events, CSS custom properties and
-// parts, and members. Each detected change carries a rule ID, a severity, and a
-// human-readable message. Use Options.Disable to silence rule IDs that do not
-// apply to a project.
+// Rules cover element additions and removals, plus the attributes, slots,
+// events, CSS custom properties, parts, states, and members of each custom
+// element. Compare indexes tagged custom element declarations, so it does not
+// report changes to other declaration kinds, such as exported functions. Each
+// detected change carries a rule ID, a severity, and a human-readable message.
+// Use Options.Disable to silence rule IDs that do not apply to a project.
 //
 // # External use
 //

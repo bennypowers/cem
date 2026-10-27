@@ -50,8 +50,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 //		return err
 //	}
 //	if !result.IsValid || len(result.Warnings) > 0 {
-//		return validate.PrintValidationResult(os.Stderr, "custom-elements.json", result, validate.DisplayOptions{})
+//		if err := validate.PrintValidationResult(os.Stderr, "custom-elements.json", result, validate.DisplayOptions{}); err != nil {
+//			return err
+//		}
 //	}
+//	if !result.IsValid {
+//		return fmt.Errorf("manifest has %d validation error(s)", len(result.Errors))
+//	}
+//
+// Printing a result does not fail the caller: PrintValidationResult returns a
+// nil error when it successfully writes the result, even when the manifest is
+// invalid. Warnings are reported but do not fail validation unless the caller
+// treats them as errors.
 //
 // ValidateFile is a convenience wrapper for callers that do not need to supply
 // their own filesystem:
