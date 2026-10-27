@@ -34,8 +34,10 @@ type formatFamilyValue int
 const (
 	formatHTML formatFamilyValue = iota
 	formatJinja
-	// formatHandlebars parses with the HTML grammar but keeps template value
-	// semantics, so "{{ ... }}" attribute values are not validated literally.
+	// formatLiquid uses the Jinja grammar but excludes Liquid comment bodies.
+	formatLiquid
+	// formatHandlebars parses with the HTML grammar but masks Handlebars
+	// expressions, so they are never treated as attributes or markup.
 	formatHandlebars
 )
 
@@ -59,8 +61,10 @@ func formatFamily(format string) (formatFamilyValue, error) {
 	switch strings.ToLower(strings.TrimSpace(format)) {
 	case "", "html", "htm":
 		return formatHTML, nil
-	case "twig", "njk", "jinja", "jinja2", "j2", "liquid":
+	case "twig", "njk", "jinja", "jinja2", "j2":
 		return formatJinja, nil
+	case "liquid":
+		return formatLiquid, nil
 	case "hbs", "handlebars":
 		// Parsing Handlebars as HTML is best effort; linking the Handlebars
 		// grammar would pull an unnecessary dependency into this package.
@@ -79,8 +83,9 @@ func parseElements(source string, family formatFamilyValue) ([]*elementNode, err
 	defer htmllang.ReturnParser(parser)
 
 	var dynamicRanges []ts.Range
-	if family == formatJinja {
-		textRanges, dynamic, err := analyzeJinjaRanges(source)
+	switch family {
+	case formatJinja, formatLiquid:
+		textRanges, dynamic, err := analyzeJinjaRanges(source, family == formatLiquid)
 		if err != nil {
 			return nil, err
 		}
@@ -94,6 +99,16 @@ func parseElements(source string, family formatFamilyValue) ([]*elementNode, err
 		}
 		defer func() { _ = parser.SetIncludedRanges(nil) }()
 		dynamicRanges = dynamic
+	case formatHandlebars:
+		dynamicRanges = handlebarsRanges(source)
+		textRanges := complementRanges(source, dynamicRanges)
+		if len(textRanges) == 0 {
+			return nil, nil
+		}
+		if err := parser.SetIncludedRanges(textRanges); err != nil {
+			return nil, fmt.Errorf("markup: failed to set template ranges: %w", err)
+		}
+		defer func() { _ = parser.SetIncludedRanges(nil) }()
 	}
 
 	sourceBytes := []byte(source)
@@ -119,7 +134,9 @@ func elementsFromNode(node *ts.Node, source []byte, dynamicRanges []ts.Range, sk
 		switch child.Kind() {
 		case "element":
 			if el := parseTag(child, source, dynamicRanges); el != nil {
-				el.children = elementsFromNode(child, source, dynamicRanges, true)
+				if !isTextContentElement(el.tagName) {
+					el.children = elementsFromNode(child, source, dynamicRanges, true)
+				}
 				elements = append(elements, el)
 			} else {
 				elements = append(elements, elementsFromNode(child, source, dynamicRanges, false)...)
@@ -302,6 +319,18 @@ func isLowerDigit(c byte) bool {
 	return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
 }
 
+// isTextContentElement reports whether HTML parses the element's content as
+// text (raw text or RCDATA), so markup-looking text inside it is not an
+// element. This mirrors the HTML parsing rules browsers apply.
+func isTextContentElement(tagName string) bool {
+	switch tagName {
+	case "iframe", "noembed", "noframes", "noscript", "plaintext",
+		"script", "style", "textarea", "title", "xmp":
+		return true
+	}
+	return false
+}
+
 func isGlobalAttribute(name string) bool {
 	return validations.IsGlobalAttribute(name)
 }
@@ -317,7 +346,8 @@ var (
 // analyzeJinjaRanges parses a template once and returns both the HTML text
 // ranges and the ranges occupied by template syntax. Dynamic ranges let the
 // HTML pass mark attributes whose values mix static text with expressions.
-func analyzeJinjaRanges(source string) (text, dynamic []ts.Range, err error) {
+// Liquid comments are removed from the text ranges because they never render.
+func analyzeJinjaRanges(source string, liquid bool) (text, dynamic []ts.Range, err error) {
 	jinjaTextQueryOnce.Do(func() {
 		jinjaTextQuery, jinjaTextQueryErr = ts.NewQuery(jinjalang.TSLanguage(), `(text) @html`)
 	})
@@ -352,7 +382,212 @@ func analyzeJinjaRanges(source string) (text, dynamic []ts.Range, err error) {
 	sort.Slice(dynamic, func(i, j int) bool {
 		return dynamic[i].EndByte < dynamic[j].EndByte
 	})
+	if liquid {
+		text = excludeRanges(source, text, liquidCommentSpans(source))
+	}
 	return text, dynamic, nil
+}
+
+// handlebarsRanges returns the byte ranges occupied by Handlebars expressions
+// and comments. Masking them before the HTML parse keeps block helpers such as
+// {{#if}} and helper string arguments from becoming attributes or elements.
+// Unterminated expressions are left as HTML so later markup is still checked.
+func handlebarsRanges(source string) []ts.Range {
+	tracker := &pointTracker{source: []byte(source)}
+	var ranges []ts.Range
+
+	for i := 0; i+1 < len(source); {
+		rel := strings.Index(source[i:], "{{")
+		if rel < 0 {
+			break
+		}
+		start := i + rel
+		width := 2
+		if start+2 < len(source) && source[start+2] == '{' {
+			width = 3
+		}
+		closing := strings.Repeat("}", width)
+
+		j := start + width
+		var quote byte
+		end := -1
+		for j < len(source) {
+			c := source[j]
+			if quote != 0 {
+				if c == '\\' {
+					j += 2
+					continue
+				}
+				if c == quote {
+					quote = 0
+				}
+				j++
+				continue
+			}
+			if c == '\'' || c == '"' {
+				quote = c
+				j++
+				continue
+			}
+			if strings.HasPrefix(source[j:], closing) {
+				end = j + width
+				break
+			}
+			j++
+		}
+		if end < 0 {
+			break
+		}
+		ranges = append(ranges, tracker.between(start, end))
+		i = end
+	}
+	return ranges
+}
+
+// liquidCommentSpans returns the ranges of Liquid comment blocks. Comments do
+// not nest, so the first endcomment closes the block.
+func liquidCommentSpans(source string) []ts.Range {
+	tracker := &pointTracker{source: []byte(source)}
+	var spans []ts.Range
+
+	for i := 0; i < len(source); {
+		start, end, name, ok := nextLiquidTag(source, i)
+		if !ok {
+			break
+		}
+		if name != "comment" {
+			i = end
+			continue
+		}
+
+		closed := false
+		for j := end; j < len(source); {
+			_, end2, name2, ok2 := nextLiquidTag(source, j)
+			if !ok2 {
+				break
+			}
+			if name2 == "endcomment" {
+				spans = append(spans, tracker.between(start, end2))
+				i = end2
+				closed = true
+				break
+			}
+			j = end2
+		}
+		if !closed {
+			return spans
+		}
+	}
+	return spans
+}
+
+// nextLiquidTag finds the next Liquid tag at or after from.
+func nextLiquidTag(source string, from int) (start, end int, name string, ok bool) {
+	rel := strings.Index(source[from:], "{%")
+	if rel < 0 {
+		return 0, 0, "", false
+	}
+	start = from + rel
+	closeRel := strings.Index(source[start+2:], "%}")
+	if closeRel < 0 {
+		return 0, 0, "", false
+	}
+	end = start + 2 + closeRel + 2
+
+	inner := strings.TrimSpace(source[start+2 : start+2+closeRel])
+	inner = strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(inner, "-"), "-"))
+	if fields := strings.Fields(inner); len(fields) > 0 {
+		name = fields[0]
+	}
+	return start, end, name, true
+}
+
+// complementRanges returns the source ranges not covered by masks. Masks must
+// be sorted and disjoint, as handlebarsRanges returns them.
+func complementRanges(source string, masks []ts.Range) []ts.Range {
+	tracker := &pointTracker{source: []byte(source)}
+	var out []ts.Range
+
+	prev := 0
+	for _, mask := range masks {
+		start, end := int(mask.StartByte), int(mask.EndByte)
+		if start > prev {
+			out = append(out, tracker.between(prev, start))
+		}
+		if end > prev {
+			prev = end
+		}
+	}
+	if prev < len(source) {
+		out = append(out, tracker.between(prev, len(source)))
+	}
+	return out
+}
+
+// excludeRanges subtracts masks from ranges. Both inputs must be sorted, and
+// masks must be disjoint.
+func excludeRanges(source string, ranges, masks []ts.Range) []ts.Range {
+	if len(masks) == 0 {
+		return ranges
+	}
+
+	tracker := &pointTracker{source: []byte(source)}
+	var out []ts.Range
+	for _, r := range ranges {
+		start, end := int(r.StartByte), int(r.EndByte)
+		for _, mask := range masks {
+			maskStart, maskEnd := int(mask.StartByte), int(mask.EndByte)
+			if maskEnd <= start || maskStart >= end {
+				continue
+			}
+			if maskStart > start {
+				out = append(out, tracker.between(start, maskStart))
+			}
+			if maskEnd > start {
+				start = maskEnd
+			}
+			if start >= end {
+				break
+			}
+		}
+		if start < end {
+			out = append(out, tracker.between(start, end))
+		}
+	}
+	return out
+}
+
+// pointTracker converts byte offsets to tree-sitter points in one forward
+// pass. Offsets must be queried in non-decreasing order.
+type pointTracker struct {
+	source []byte
+	offset int
+	point  ts.Point
+}
+
+func (t *pointTracker) at(offset int) ts.Point {
+	if offset < t.offset {
+		t.offset, t.point = 0, ts.Point{}
+	}
+	for t.offset < offset && t.offset < len(t.source) {
+		if t.source[t.offset] == '\n' {
+			t.point.Row++
+			t.point.Column = 0
+		} else {
+			t.point.Column++
+		}
+		t.offset++
+	}
+	return t.point
+}
+
+func (t *pointTracker) between(start, end int) ts.Range {
+	return ts.Range{
+		StartByte:  uint(start),
+		EndByte:    uint(end),
+		StartPoint: t.at(start),
+		EndPoint:   t.at(end),
+	}
 }
 
 // jinjaDynamicRanges collects leaf nodes that represent template syntax.

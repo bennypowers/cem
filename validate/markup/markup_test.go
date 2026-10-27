@@ -177,6 +177,13 @@ func TestValidateGolden(t *testing.T) {
 			opts:   markup.Options{ValidateAttrs: true},
 		},
 		{
+			name:   "hbs block helpers and helper arguments are not markup",
+			golden: "hbs_helpers.json",
+			file:   "hbs-helpers.hbs",
+			format: "hbs",
+			opts:   markup.Options{ValidateAttrs: true},
+		},
+		{
 			name:   "duplicate attributes keep the first value",
 			golden: "duplicates.json",
 			file:   "duplicates.html",
@@ -196,6 +203,13 @@ func TestValidateGolden(t *testing.T) {
 			file:   "entities.html",
 			format: "html",
 			opts:   markup.Options{ValidateAttrs: true},
+		},
+		{
+			name:   "raw text and rcdata elements are not parsed as markup",
+			golden: "rcdata.json",
+			file:   "rcdata.html",
+			format: "html",
+			opts:   markup.Options{ValidateAttrs: true, ValidateSlots: true, Strict: true},
 		},
 		{
 			name:   "non ascii columns are byte based",
@@ -375,6 +389,25 @@ func TestValidateOptionGating(t *testing.T) {
 		rules(t, markup.Options{ValidateAttrs: true, ValidateSlots: true}))
 	assert.Empty(t, rules(t, markup.Options{Strict: true}),
 		"Strict alone adds no findings")
+}
+
+// Liquid comments never render, so markup inside them must not be validated;
+// markup outside them must still be. Inline assertions state both halves.
+func TestValidateLiquidComments(t *testing.T) {
+	pkg := loadPackage(t)
+
+	commented, err := markup.Validate(pkg,
+		`{% comment %}<my-button variant="bogus">{% endcomment %}`,
+		markup.Options{Format: "liquid", ValidateAttrs: true})
+	require.NoError(t, err)
+	assert.Empty(t, commented)
+
+	live, err := markup.Validate(pkg,
+		`{% comment %}ignored{% endcomment %}<my-button variant="bogus">`,
+		markup.Options{Format: "liquid", ValidateAttrs: true})
+	require.NoError(t, err)
+	require.Len(t, live, 1)
+	assert.Equal(t, markup.RuleInvalidAttributeValue, live[0].Rule)
 }
 
 // Issue is a JSON-serializable result type; a consumer that marshals the

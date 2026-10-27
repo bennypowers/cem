@@ -108,11 +108,24 @@ func validateHtmlWithTreeSitter(html string, registry mcpTypes.MCPContext) (stri
 		return "", fmt.Errorf("failed to find custom elements: %w", err)
 	}
 
+	// Track declarations for tags actually present in the markup. Reusing the
+	// resolved ElementInfo values avoids converting the whole registry on every
+	// call and keeps discovery and validation on the same snapshot.
+	declarations := make([]manifest.Declaration, 0, len(elements))
+	seen := make(map[string]struct{}, len(elements))
+
 	for _, element := range elements {
 		registryElement, err := registry.ElementInfo(element.TagName)
 		if err != nil {
 			// Unknown elements are reported by markup.Validate.
 			continue
+		}
+
+		if _, ok := seen[element.TagName]; !ok {
+			seen[element.TagName] = struct{}{}
+			if decl := registryElement.Declaration(); decl != nil {
+				declarations = append(declarations, decl)
+			}
 		}
 
 		data.FoundElements = append(data.FoundElements, ElementWithIssues{
@@ -131,11 +144,8 @@ func validateHtmlWithTreeSitter(html string, registry mcpTypes.MCPContext) (stri
 
 	// Discovery and validation each parse the markup once. Sharing a parse
 	// would require a richer result API; two passes are bounded and keep the
-	// public Validate signature small. registryManifest is rebuilt per call
-	// from the registry's cached element map instead of being cached here, so
-	// reloaded manifests are always reflected and no lifecycle owner is
-	// introduced.
-	issues, err := markup.Validate(registryManifest(registry), html, markup.Options{
+	// public Validate signature small.
+	issues, err := markup.Validate(manifestPackage(declarations), html, markup.Options{
 		Format:        "html",
 		ValidateAttrs: true,
 		ValidateSlots: true,
@@ -149,23 +159,18 @@ func validateHtmlWithTreeSitter(html string, registry mcpTypes.MCPContext) (stri
 	return RenderTemplate("html_validation_results", data)
 }
 
-// registryManifest builds a manifest package view over the registry's element
-// declarations so the markup validator can resolve tags without depending on
-// the MCP context or an LSP document manager. Declarations keep their original
-// module and package backreferences, so inherited members remain visible.
-func registryManifest(registry mcpTypes.MCPContext) *manifest.Package {
-	mod := manifest.Module{
-		Kind: "javascript-module",
-		Path: "mcp://registry",
-	}
-	for _, element := range registry.AllElements() {
-		if decl := element.Declaration(); decl != nil {
-			mod.Declarations = append(mod.Declarations, decl)
-		}
-	}
+// manifestPackage wraps declarations resolved for the tags present in the
+// markup so the validator can look them up without an LSP document manager.
+// Declarations keep their original module and package backreferences, so
+// inherited members remain visible.
+func manifestPackage(declarations []manifest.Declaration) *manifest.Package {
 	return &manifest.Package{
 		SchemaVersion: "2.1.0",
-		Modules:       []manifest.Module{mod},
+		Modules: []manifest.Module{{
+			Kind:         "javascript-module",
+			Path:         "mcp://registry",
+			Declarations: declarations,
+		}},
 	}
 }
 

@@ -70,7 +70,7 @@ func TestJinjaHTMLRanges(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ranges, _, err := analyzeJinjaRanges(tt.source)
+			ranges, _, err := analyzeJinjaRanges(tt.source, false)
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantRange, len(ranges) > 0)
 
@@ -86,6 +86,49 @@ func TestJinjaHTMLRanges(t *testing.T) {
 						"markup inside an expression must not become a text range")
 				}
 			}
+		})
+	}
+}
+
+// Handlebars expressions in tag position are not attributes, and Handlebars
+// comments are not markup. Inline assertions keep the parsed names visible.
+func TestParseElementsHandlebarsMasksExpressions(t *testing.T) {
+	tests := []struct {
+		name      string
+		source    string
+		wantAttrs []string
+	}{
+		{
+			name:      "conditional attribute",
+			source:    `<my-button {{#if primary}}variant="primary"{{/if}}>Save</my-button>`,
+			wantAttrs: []string{"variant"},
+		},
+		{
+			name:      "comment containing markup",
+			source:    `<my-button>{{!-- <my-bad bogus> --}}Save</my-button>`,
+			wantAttrs: []string{},
+		},
+		{
+			name:      "helper with a string argument",
+			source:    `<my-button variant="{{t "save"}}">Save</my-button>`,
+			wantAttrs: []string{"variant"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			elements, err := parseElements(tt.source, formatHandlebars)
+			require.NoError(t, err)
+			require.Len(t, elements, 1)
+			assert.Equal(t, "my-button", elements[0].tagName)
+
+			names := make([]string, len(elements[0].attributes))
+			for i, attr := range elements[0].attributes {
+				names[i] = attr.name
+				assert.NotContains(t, attr.name, "{{", "template syntax leaked into an attribute name")
+				assert.NotContains(t, attr.name, "}}", "template syntax leaked into an attribute name")
+			}
+			assert.Equal(t, tt.wantAttrs, names)
 		})
 	}
 }
