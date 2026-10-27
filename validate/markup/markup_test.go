@@ -149,6 +149,13 @@ func TestValidateGolden(t *testing.T) {
 			opts:   markup.Options{ValidateAttrs: true},
 		},
 		{
+			name:   "hbs template expression value keeps template semantics",
+			golden: "hbs_template_value.json",
+			file:   "hbs-template-value.hbs",
+			format: "hbs",
+			opts:   markup.Options{ValidateAttrs: true},
+		},
+		{
 			name:   "duplicate attributes report once",
 			golden: "duplicates.json",
 			file:   "duplicates.html",
@@ -251,7 +258,7 @@ func FuzzValidate(f *testing.F) {
 	pkg := fuzzPackage()
 
 	f.Fuzz(func(t *testing.T, source string) {
-		for _, format := range []string{"html", "twig"} {
+		for _, format := range []string{"html", "twig", "hbs"} {
 			issues, err := markup.Validate(pkg, source, markup.Options{
 				Format:        format,
 				ValidateAttrs: true,

@@ -6,7 +6,7 @@
     "message": "Unknown attribute 'bogus' for element <my-button>",
     "element": "my-button",
     "line": 1,
-    "column": 21,
+    "column": 23,
     "details": {
       "attribute": "bogus"
     }

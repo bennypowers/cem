@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package markup
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -86,6 +87,34 @@ func TestParseElementsJinjaUnbalanced(t *testing.T) {
 	assert.Equal(t, "my-el", elements[0].tagName)
 }
 
+// TestParseElementsManySiblings guards against quadratic child iteration.
+// It asserts correctness only; timing lives in BenchmarkParseElementsManySiblings.
+func TestParseElementsManySiblings(t *testing.T) {
+	const count = 20000
+	source := strings.Repeat(`<div></div>`, count)
+
+	elements, err := parseElements(source, formatHTML)
+	require.NoError(t, err)
+	require.Len(t, elements, count)
+}
+
+func BenchmarkParseElementsManySiblings(b *testing.B) {
+	const count = 20000
+	source := strings.Repeat(`<div></div>`, count)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for b.Loop() {
+		elements, err := parseElements(source, formatHTML)
+		if err != nil {
+			b.Fatal(err)
+		}
+		if len(elements) != count {
+			b.Fatalf("got %d elements, want %d", len(elements), count)
+		}
+	}
+}
+
 func TestPositionForNonASCII(t *testing.T) {
 	elements, err := parseElements(`<p>éé</p><my-button bogus="1">`, formatHTML)
 	require.NoError(t, err)
@@ -99,6 +128,6 @@ func TestPositionForNonASCII(t *testing.T) {
 	}
 	require.NotNil(t, button)
 	require.Len(t, button.attributes, 1)
-	// Runes: <p> é é </p> <my-button [space] b...
-	assert.Equal(t, 21, button.attributes[0].column)
+	// Columns are bytes: "<p>" (3) + "éé" (4) + "</p>" (4) + "<my-button " (11).
+	assert.Equal(t, 23, button.attributes[0].column)
 }

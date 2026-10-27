@@ -56,7 +56,8 @@ const (
 // Format selects the parser. Supported values are "html" (the default), and
 // the Jinja-family template formats "twig", "njk", "jinja", "jinja2", "j2",
 // and "liquid". "hbs" and "handlebars" are parsed as HTML on a best-effort
-// basis without linking the Handlebars grammar.
+// basis without linking the Handlebars grammar, but their expression values
+// keep template semantics and are not validated literally.
 //
 // ValidateAttrs enables attribute name, enum value, and deprecation checks.
 // ValidateSlots enables slot name, slot deprecation, and slot content checks.
@@ -71,8 +72,8 @@ type Options struct {
 }
 
 // Issue is a single markup validation finding. Line is a one-based line
-// number and Column is a one-based rune offset within that line. Tree-sitter's
-// byte columns are converted so non-ASCII text does not shift positions.
+// number and Column is a one-based UTF-8 byte offset within that line. Byte
+// offsets keep position lookup O(1) and match tree-sitter's native points.
 type Issue struct {
 	Rule       string `json:"rule"`
 	Severity   string `json:"severity"`
@@ -122,7 +123,7 @@ func Validate(pkg *manifest.Package, markup string, opts Options) ([]Issue, erro
 	v := validator{
 		pkg:      pkg,
 		opts:     opts,
-		template: family == formatJinja,
+		template: family != formatHTML,
 	}
 	return v.validate(elements), nil
 }

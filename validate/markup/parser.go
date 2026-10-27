@@ -17,11 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package markup
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 	"sync"
-	"unicode/utf8"
 
 	htmllang "bennypowers.dev/cem/internal/languages/html"
 	jinjalang "bennypowers.dev/cem/internal/languages/jinja"
@@ -34,6 +32,9 @@ type formatFamilyValue int
 const (
 	formatHTML formatFamilyValue = iota
 	formatJinja
+	// formatHandlebars parses with the HTML grammar but keeps template value
+	// semantics, so "{{ ... }}" attribute values are not validated literally.
+	formatHandlebars
 )
 
 type elementNode struct {
@@ -60,7 +61,8 @@ func formatFamily(format string) (formatFamilyValue, error) {
 	case "hbs", "handlebars":
 		// Parsing Handlebars as HTML is best effort; linking the Handlebars
 		// grammar would pull an unnecessary dependency into this package.
-		return formatHTML, nil
+		// Template values still use template semantics.
+		return formatHandlebars, nil
 	default:
 		return 0, fmt.Errorf("markup: unsupported format %q", format)
 	}
@@ -101,12 +103,11 @@ func parseElements(source string, family formatFamilyValue) ([]*elementNode, err
 
 func elementsFromNode(node *ts.Node, source []byte) []*elementNode {
 	var elements []*elementNode
-	for i := uint(0); i < node.ChildCount(); i++ {
-		child := node.Child(i)
-		if child == nil {
-			continue
-		}
+	cursor := node.Walk()
+	defer cursor.Close()
 
+	for ok := cursor.GotoFirstChild(); ok; ok = cursor.GotoNextSibling() {
+		child := cursor.Node()
 		switch child.Kind() {
 		case "element":
 			if el := parseTag(child, source); el != nil {
@@ -138,15 +139,18 @@ func parseTag(node *ts.Node, source []byte) *elementNode {
 	el := &elementNode{
 		tagName: string(source[tagName.StartByte():tagName.EndByte()]),
 	}
-	el.line, el.column = positionFor(tagName, source)
+	el.line, el.column = positionFor(tagName)
 
 	// Duplicate attributes are kept at their first position with the last
-	// value, matching the browser and the previous MCP map-based behavior of
-	// emitting one issue per attribute name.
+	// value. This matches the previous MCP map semantics (one entry per name,
+	// last assignment wins), not browser behavior, which keeps the first value.
 	index := make(map[string]int, startTag.ChildCount())
-	for i := uint(0); i < startTag.ChildCount(); i++ {
-		child := startTag.Child(i)
-		if child == nil || child.Kind() != "attribute" {
+	cursor := startTag.Walk()
+	defer cursor.Close()
+
+	for ok := cursor.GotoFirstChild(); ok; ok = cursor.GotoNextSibling() {
+		child := cursor.Node()
+		if child.Kind() != "attribute" {
 			continue
 		}
 
@@ -156,7 +160,7 @@ func parseTag(node *ts.Node, source []byte) *elementNode {
 		}
 
 		name := string(source[nameNode.StartByte():nameNode.EndByte()])
-		line, column := positionFor(nameNode, source)
+		line, column := positionFor(nameNode)
 		attr := parsedAttribute{
 			name:   name,
 			value:  attributeValue(child, source),
@@ -175,21 +179,20 @@ func parseTag(node *ts.Node, source []byte) *elementNode {
 	return el
 }
 
-// positionFor returns a one-based line and a one-based rune column. Tree-sitter
-// reports columns as UTF-8 byte offsets within the line, which differs from
-// character columns for non-ASCII text.
-func positionFor(node *ts.Node, source []byte) (line, column int) {
-	start := int(node.StartByte())
-	lineStart := bytes.LastIndexByte(source[:start], '\n') + 1
-	return int(node.StartPosition().Row) + 1, utf8.RuneCount(source[lineStart:start]) + 1
+// positionFor returns a one-based line and a one-based UTF-8 byte column.
+// Tree-sitter reports columns as byte offsets within the line, and using them
+// directly keeps position lookup O(1) for every node.
+func positionFor(node *ts.Node) (line, column int) {
+	point := node.StartPosition()
+	return int(point.Row) + 1, int(point.Column) + 1
 }
 
 func attributeValue(attribute *ts.Node, source []byte) string {
-	for i := uint(0); i < attribute.ChildCount(); i++ {
-		child := attribute.Child(i)
-		if child == nil {
-			continue
-		}
+	cursor := attribute.Walk()
+	defer cursor.Close()
+
+	for ok := cursor.GotoFirstChild(); ok; ok = cursor.GotoNextSibling() {
+		child := cursor.Node()
 		switch child.Kind() {
 		case "quoted_attribute_value":
 			if value := findChildKind(child, "attribute_value"); value != nil {
@@ -206,9 +209,12 @@ func attributeValue(attribute *ts.Node, source []byte) string {
 }
 
 func findChildKind(node *ts.Node, kind string) *ts.Node {
-	for i := uint(0); i < node.ChildCount(); i++ {
-		child := node.Child(i)
-		if child != nil && child.Kind() == kind {
+	cursor := node.Walk()
+	defer cursor.Close()
+
+	for ok := cursor.GotoFirstChild(); ok; ok = cursor.GotoNextSibling() {
+		child := cursor.Node()
+		if child.Kind() == kind {
 			return child
 		}
 	}
