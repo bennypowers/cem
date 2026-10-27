@@ -54,6 +54,37 @@ You can build a specific Windows architecture:
 
 The `workspace` package provides a consistent interface for working with local and remote packages. It abstracts away the details of whether files are on the local filesystem or need to be fetched from a remote source like the npm registry. This allows the `list` command to work with both local and remote packages seamlessly.
 
+## Public Go Packages
+
+Most of cem is a CLI and is not a supported Go library. The packages intended
+for external consumption are:
+
+- `bennypowers.dev/cem/version`: version and build metadata
+- `bennypowers.dev/cem/manifest`: Custom Elements Manifest types and helpers
+- `bennypowers.dev/cem/breaking`: manifest comparison and change classification
+- `bennypowers.dev/cem/validate`: manifest schema validation and warnings,
+  including subpackages under `validate/` such as `validate/markup`
+
+Everything under `internal/` is private by Go's internal-package rule. The
+CLI-oriented packages (`cmd`, `lsp`, `serve`, `mcp`, `generate`, `health`,
+`list`, `search`, and `export`) are not part of the supported public API.
+
+### 0.x Compatibility Policy
+
+The public packages are still at version 0.x, so treat them as prerelease.
+While the module is below v1.0.0:
+
+- Pin an exact version, or a commit, and upgrade deliberately. Do not assume
+  that a newer 0.x release is drop-in compatible.
+- Exported identifiers may change or be removed in a minor release. Patch
+  releases should not intentionally break the documented public API.
+- APIs that are being retired are marked as deprecated in their Go doc and,
+  where practical, remain available for at least one minor release.
+- The package map can grow in minor releases. New public packages are added
+  only when they are intended to be stable enough to document.
+
+After v1.0.0, these packages follow standard semantic versioning.
+
 ## Testing
 
 This project includes both unit tests and end-to-end (E2E) tests.
