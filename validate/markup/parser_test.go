@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // isCustomElementTag is a pure function; a table is clearer than a golden.
@@ -46,4 +47,58 @@ func TestIsCustomElementTag(t *testing.T) {
 			assert.Equal(t, tt.want, isCustomElementTag(tt.tag))
 		})
 	}
+}
+
+func TestJinjaHTMLRanges(t *testing.T) {
+	tests := []struct {
+		name      string
+		source    string
+		wantRange bool
+	}{
+		{"plain html", `<my-el></my-el>`, true},
+		{"html region", `<my-el>{% if x %}<my-el>{% endif %}</my-el>`, true},
+		{"unbalanced control flow", `{% if x %}<my-el bogus>`, true},
+		{"comment", `{# <my-el bogus> #}`, false},
+		{"expression string", `{{ "<my-el bogus>" }}`, false},
+		{"raw block", `{% raw %}<my-el bogus>{% endraw %}`, false},
+		{"set string", `{% set x = "<my-el bogus>" %}`, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ranges, err := jinjaHTMLRanges(tt.source)
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantRange, len(ranges) > 0)
+		})
+	}
+}
+
+func TestParseElementsJinjaWithoutHTMLRanges(t *testing.T) {
+	elements, err := parseElements(`{% set x = "<my-el bogus>" %}`, formatJinja)
+	require.NoError(t, err)
+	assert.Empty(t, elements)
+}
+
+func TestParseElementsJinjaUnbalanced(t *testing.T) {
+	elements, err := parseElements(`{% if x %}<my-el bogus>`, formatJinja)
+	require.NoError(t, err)
+	require.Len(t, elements, 1)
+	assert.Equal(t, "my-el", elements[0].tagName)
+}
+
+func TestPositionForNonASCII(t *testing.T) {
+	elements, err := parseElements(`<p>éé</p><my-button bogus="1">`, formatHTML)
+	require.NoError(t, err)
+
+	var button *elementNode
+	for _, element := range elements {
+		if element.tagName == "my-button" {
+			button = element
+			break
+		}
+	}
+	require.NotNil(t, button)
+	require.Len(t, button.attributes, 1)
+	// Runes: <p> é é </p> <my-button [space] b...
+	assert.Equal(t, 21, button.attributes[0].column)
 }

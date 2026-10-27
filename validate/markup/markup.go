@@ -70,8 +70,9 @@ type Options struct {
 	Strict        bool
 }
 
-// Issue is a single markup validation finding. Line and Column are one-based
-// positions in the original source.
+// Issue is a single markup validation finding. Line is a one-based line
+// number and Column is a one-based rune offset within that line. Tree-sitter's
+// byte columns are converted so non-ASCII text does not shift positions.
 type Issue struct {
 	Rule       string `json:"rule"`
 	Severity   string `json:"severity"`
@@ -118,14 +119,22 @@ func Validate(pkg *manifest.Package, markup string, opts Options) ([]Issue, erro
 		return nil, err
 	}
 
-	v := validator{pkg: pkg, opts: opts}
+	v := validator{
+		pkg:      pkg,
+		opts:     opts,
+		template: family == formatJinja,
+	}
 	return v.validate(elements), nil
 }
 
 type validator struct {
-	pkg    *manifest.Package
-	opts   Options
-	issues []Issue
+	pkg  *manifest.Package
+	opts Options
+	// template marks Jinja-family input. Template expressions are dynamic
+	// values, so enum checks skip them. Plain HTML keeps the historical MCP
+	// behavior of validating the literal value.
+	template bool
+	issues   []Issue
 }
 
 func (v *validator) validate(elements []*elementNode) []Issue {
@@ -214,7 +223,7 @@ func (v *validator) validateAttributes(el *elementNode, decl *manifest.CustomEle
 			v.addAttribute(el, attr, RuleDeprecatedAttribute, SeverityWarning, ConfidenceHigh, message, details)
 		}
 
-		if manifestAttr.IsEnum() && attr.value != "" && !containsTemplateExpression(attr.value) {
+		if manifestAttr.IsEnum() && attr.value != "" && (!v.template || !containsTemplateExpression(attr.value)) {
 			if !manifestAttr.IsValidValue(attr.value) {
 				validValues := manifestAttr.EnumValues()
 				message := fmt.Sprintf("Invalid attribute value: `%s=\"%s\"` in `<%s>`. Valid values: %v",
@@ -231,7 +240,7 @@ func (v *validator) validateAttributes(el *elementNode, decl *manifest.CustomEle
 
 func (v *validator) validateSlotAttribute(el, parent *elementNode) {
 	slotAttr := findParsedAttribute(el.attributes, "slot")
-	if slotAttr == nil || slotAttr.value == "" || containsTemplateExpression(slotAttr.value) {
+	if slotAttr == nil || slotAttr.value == "" || (v.template && containsTemplateExpression(slotAttr.value)) {
 		return
 	}
 

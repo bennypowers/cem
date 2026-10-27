@@ -1,0 +1,16 @@
+[
+  {
+    "rule": "invalid-attribute-value",
+    "severity": "error",
+    "confidence": "high",
+    "message": "Invalid attribute value: `variant=\"{{ not-valid }}\"` in `<my-button>`. Valid values: [\"primary\" \"secondary\"]",
+    "element": "my-button",
+    "line": 1,
+    "column": 12,
+    "details": {
+      "attribute": "variant",
+      "expected": "[\"primary\" \"secondary\"]",
+      "value": "{{ not-valid }}"
+    }
+  }
+]

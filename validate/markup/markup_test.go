@@ -134,13 +134,43 @@ func TestValidateGolden(t *testing.T) {
 			format: "twig",
 			opts:   markup.Options{ValidateAttrs: true},
 		},
+		{
+			name:   "twig markup-like text outside html ranges",
+			golden: "twig_non_markup.json",
+			file:   "twig-non-markup.twig",
+			format: "twig",
+			opts:   markup.Options{ValidateAttrs: true, ValidateSlots: true, Strict: true},
+		},
+		{
+			name:   "html template expression value keeps literal validation",
+			golden: "html_template_value.json",
+			file:   "html-template-value.html",
+			format: "html",
+			opts:   markup.Options{ValidateAttrs: true},
+		},
+		{
+			name:   "duplicate attributes report once",
+			golden: "duplicates.json",
+			file:   "duplicates.html",
+			format: "html",
+			opts:   markup.Options{ValidateAttrs: true},
+		},
+		{
+			name:   "non ascii columns are rune based",
+			golden: "unicode.json",
+			file:   "unicode.html",
+			format: "html",
+			opts:   markup.Options{ValidateAttrs: true},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			source := testutil.ReadFixture(t, fs, "/markup/"+tt.file)
 
-			issues, err := markup.Validate(pkg, string(source), tt.opts)
+			opts := tt.opts
+			opts.Format = tt.format
+			issues, err := markup.Validate(pkg, string(source), opts)
 			require.NoError(t, err)
 
 			actual := make([]goldenIssue, len(issues))
@@ -207,4 +237,59 @@ func TestValidateDefaultFormat(t *testing.T) {
 	require.Len(t, issues, 1)
 	assert.Equal(t, markup.RuleUnknownElement, issues[0].Rule)
 	assert.Equal(t, markup.ConfidenceHigh, issues[0].Confidence)
+}
+
+// FuzzValidate checks that arbitrary markup, including malformed template
+// syntax, never panics the parser or validator. Seeds cover both formats.
+func FuzzValidate(f *testing.F) {
+	f.Add(`<my-el variant="a"><span slot="label">x</span></my-el>`)
+	f.Add(`{% if x %}<my-el bogus>{% endif %}`)
+	f.Add(`{# <my-el bogus> #}`)
+	f.Add(`{% raw %}<my-el bogus>{% endraw %}`)
+	f.Add(``)
+
+	pkg := fuzzPackage()
+
+	f.Fuzz(func(t *testing.T, source string) {
+		for _, format := range []string{"html", "twig"} {
+			issues, err := markup.Validate(pkg, source, markup.Options{
+				Format:        format,
+				ValidateAttrs: true,
+				ValidateSlots: true,
+				Strict:        true,
+			})
+			if err != nil {
+				t.Fatalf("Validate(%q, %q) returned error: %v", format, source, err)
+			}
+			for _, issue := range issues {
+				if issue.Confidence != markup.ConfidenceHigh && issue.Confidence != markup.ConfidenceLow {
+					t.Fatalf("issue has unknown confidence %q: %+v", issue.Confidence, issue)
+				}
+			}
+		}
+	})
+}
+
+func fuzzPackage() *manifest.Package {
+	const data = `{
+		"schemaVersion": "2.1.0",
+		"modules": [{
+			"kind": "javascript-module",
+			"path": "fuzz.js",
+			"declarations": [{
+				"kind": "class",
+				"name": "MyEl",
+				"tagName": "my-el",
+				"customElement": true,
+				"attributes": [{"name": "variant", "type": {"text": "\"a\" | \"b\""}}],
+				"slots": [{"name": "label", "description": "Only interactive content must avoid plain text."}]
+			}]
+		}]
+	}`
+
+	var pkg manifest.Package
+	if err := json.Unmarshal([]byte(data), &pkg); err != nil {
+		panic(err)
+	}
+	return &pkg
 }

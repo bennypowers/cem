@@ -135,6 +135,12 @@ func validateHtmlWithTreeSitter(html string, registry mcpTypes.MCPContext) (stri
 		}
 	}
 
+	// The document manager parses once to discover elements for the template,
+	// and markup.Validate parses again to produce compliance issues. Keeping
+	// element discovery on the existing document manager preserves the tool's
+	// rendered output. registryManifest is rebuilt per call from the registry's
+	// cached element map instead of being cached here, so reloaded manifests
+	// are always reflected and no lifecycle owner is introduced.
 	issues, err := markup.Validate(registryManifest(registry), html, markup.Options{
 		Format:        "html",
 		ValidateAttrs: true,
@@ -218,6 +224,11 @@ func applyMarkupIssues(data *ValidationTemplateData, issues []markup.Issue) {
 				SlotName:       details["slot"],
 				SlotContent:    details["content"],
 			})
+		case markup.RuleDeprecatedElement, markup.RuleDeprecatedAttribute, markup.RuleDeprecatedSlot, markup.RuleUnknownSlot:
+			// Intentionally not rendered. The validate_html tool has never
+			// surfaced these findings, so dropping them here keeps existing
+			// MCP output stable. The exported markup API reports them for
+			// other consumers.
 		}
 	}
 }

@@ -17,9 +17,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package markup
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"sync"
+	"unicode/utf8"
 
 	htmllang "bennypowers.dev/cem/internal/languages/html"
 	jinjalang "bennypowers.dev/cem/internal/languages/jinja"
@@ -72,13 +74,19 @@ func parseElements(source string, family formatFamilyValue) ([]*elementNode, err
 	defer htmllang.ReturnParser(parser)
 
 	if family == formatJinja {
-		ranges := jinjaHTMLRanges(source)
-		if len(ranges) > 0 {
-			if err := parser.SetIncludedRanges(ranges); err != nil {
-				return nil, fmt.Errorf("markup: failed to set template ranges: %w", err)
-			}
-			defer func() { _ = parser.SetIncludedRanges(nil) }()
+		ranges, err := jinjaHTMLRanges(source)
+		if err != nil {
+			return nil, err
 		}
+		// With no text ranges there is no HTML to validate. Parsing the raw
+		// template would treat template syntax as markup, so stop here.
+		if len(ranges) == 0 {
+			return nil, nil
+		}
+		if err := parser.SetIncludedRanges(ranges); err != nil {
+			return nil, fmt.Errorf("markup: failed to set template ranges: %w", err)
+		}
+		defer func() { _ = parser.SetIncludedRanges(nil) }()
 	}
 
 	sourceBytes := []byte(source)
@@ -129,10 +137,13 @@ func parseTag(node *ts.Node, source []byte) *elementNode {
 
 	el := &elementNode{
 		tagName: string(source[tagName.StartByte():tagName.EndByte()]),
-		line:    int(tagName.StartPosition().Row) + 1,
-		column:  int(tagName.StartPosition().Column) + 1,
 	}
+	el.line, el.column = positionFor(tagName, source)
 
+	// Duplicate attributes are kept at their first position with the last
+	// value, matching the browser and the previous MCP map-based behavior of
+	// emitting one issue per attribute name.
+	index := make(map[string]int, startTag.ChildCount())
 	for i := uint(0); i < startTag.ChildCount(); i++ {
 		child := startTag.Child(i)
 		if child == nil || child.Kind() != "attribute" {
@@ -144,15 +155,33 @@ func parseTag(node *ts.Node, source []byte) *elementNode {
 			continue
 		}
 
-		el.attributes = append(el.attributes, parsedAttribute{
-			name:   string(source[nameNode.StartByte():nameNode.EndByte()]),
+		name := string(source[nameNode.StartByte():nameNode.EndByte()])
+		line, column := positionFor(nameNode, source)
+		attr := parsedAttribute{
+			name:   name,
 			value:  attributeValue(child, source),
-			line:   int(nameNode.StartPosition().Row) + 1,
-			column: int(nameNode.StartPosition().Column) + 1,
-		})
+			line:   line,
+			column: column,
+		}
+
+		if existing, ok := index[name]; ok {
+			el.attributes[existing].value = attr.value
+			continue
+		}
+		index[name] = len(el.attributes)
+		el.attributes = append(el.attributes, attr)
 	}
 
 	return el
+}
+
+// positionFor returns a one-based line and a one-based rune column. Tree-sitter
+// reports columns as UTF-8 byte offsets within the line, which differs from
+// character columns for non-ASCII text.
+func positionFor(node *ts.Node, source []byte) (line, column int) {
+	start := int(node.StartByte())
+	lineStart := bytes.LastIndexByte(source[:start], '\n') + 1
+	return int(node.StartPosition().Row) + 1, utf8.RuneCount(source[lineStart:start]) + 1
 }
 
 func attributeValue(attribute *ts.Node, source []byte) string {
@@ -231,31 +260,33 @@ func isGlobalAttribute(name string) bool {
 var (
 	jinjaTextQueryOnce sync.Once
 	jinjaTextQuery     *ts.Query
-	jinjaTextQueryErr  error
+	// ts.NewQuery returns *ts.QueryError, not error. Keeping the concrete
+	// pointer avoids storing a typed nil in a non-nil error interface.
+	jinjaTextQueryErr *ts.QueryError
 )
 
 // jinjaHTMLRanges returns the source byte ranges that the Jinja grammar marks
 // as plain text (that is, HTML regions). The HTML parser is restricted to
 // those ranges so template statements and expressions are not parsed as
 // markup. Unbalanced control flow still yields usable text ranges.
-func jinjaHTMLRanges(source string) []ts.Range {
+func jinjaHTMLRanges(source string) ([]ts.Range, error) {
 	jinjaTextQueryOnce.Do(func() {
 		jinjaTextQuery, jinjaTextQueryErr = ts.NewQuery(jinjalang.TSLanguage(), `(text) @html`)
 	})
 	if jinjaTextQueryErr != nil {
-		return nil
+		return nil, fmt.Errorf("markup: failed to compile Jinja text query: %w", jinjaTextQueryErr)
 	}
 
 	parser := jinjalang.BorrowParser()
 	if parser == nil {
-		return nil
+		return nil, fmt.Errorf("markup: failed to borrow Jinja parser")
 	}
 	defer jinjalang.ReturnParser(parser)
 
 	sourceBytes := []byte(source)
 	tree := parser.Parse(sourceBytes, nil)
 	if tree == nil {
-		return nil
+		return nil, fmt.Errorf("markup: failed to parse template")
 	}
 	defer tree.Close()
 
@@ -269,5 +300,5 @@ func jinjaHTMLRanges(source string) []ts.Range {
 			ranges = append(ranges, capture.Node.Range())
 		}
 	}
-	return ranges
+	return ranges, nil
 }

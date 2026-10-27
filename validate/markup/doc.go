@@ -20,9 +20,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 // Unlike the parent [bennypowers.dev/cem/validate] package, which validates
 // manifests themselves, this package needs tree-sitter and therefore cgo. It
-// links only the HTML grammar and the Jinja dialect grammar used for Twig and
-// Nunjucks, so it can be used without an LSP document manager, MCP server, or
-// workspace.
+// can be used without an LSP document manager, MCP server, or workspace, and it
+// does not link the Blade, PHP, CSS, or Handlebars grammars.
+//
+// The package imports the HTML grammar and the Jinja dialect grammar used for
+// Twig and Nunjucks. The manifest package currently pulls in the TypeScript
+// grammar through internal/tstype so that [manifest.Attribute.IsValidValue]
+// can parse union types; cem #459 removes that transitive link. Until then,
+// the effective dependency surface includes TypeScript even though this
+// package does not use it directly.
 //
 // Callers opt in to attribute and slot checks:
 //
