@@ -9,8 +9,7 @@
     "column": 2,
     "details": {
       "guideline": "Only interactive content is allowed. You must avoid plain text.",
-      "slot": "label",
-      "violation": "Potential interactive content guideline - check slot content manually"
+      "slot": "label"
     }
   },
   {

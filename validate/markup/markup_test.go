@@ -28,13 +28,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// goldenIssue augments the public Issue with the optional structured details
-// so the golden files pin both the public API and the data MCP renders.
-type goldenIssue struct {
-	markup.Issue
-	Details map[string]string `json:"details,omitempty"`
-}
-
 func loadPackage(t *testing.T) *manifest.Package {
 	t.Helper()
 
@@ -221,20 +214,16 @@ func TestValidateGolden(t *testing.T) {
 			opts.Format = tt.format
 			issues, err := markup.Validate(pkg, string(source), opts)
 			require.NoError(t, err)
-
-			actual := make([]goldenIssue, len(issues))
-			for i, issue := range issues {
-				actual[i] = goldenIssue{
-					Issue:   issue,
-					Details: issue.Details(),
-				}
+			if issues == nil {
+				// Goldens represent the empty result as [] rather than null.
+				issues = []markup.Issue{}
 			}
 
 			var buf bytes.Buffer
 			encoder := json.NewEncoder(&buf)
 			encoder.SetEscapeHTML(false)
 			encoder.SetIndent("", "  ")
-			require.NoError(t, encoder.Encode(actual))
+			require.NoError(t, encoder.Encode(issues))
 			data := buf.Bytes()
 
 			testutil.CheckGolden(t, tt.golden, data, testutil.GoldenOptions{
@@ -252,18 +241,19 @@ func TestValidateErrors(t *testing.T) {
 	pkg := loadPackage(t)
 
 	tests := []struct {
-		name   string
-		pkg    *manifest.Package
-		format string
+		name    string
+		pkg     *manifest.Package
+		format  string
+		wantErr error
 	}{
-		{name: "nil package", pkg: nil, format: "html"},
-		{name: "unsupported format", pkg: pkg, format: "markdown"},
+		{name: "nil package", pkg: nil, format: "html", wantErr: markup.ErrNilPackage},
+		{name: "unsupported format", pkg: pkg, format: "markdown", wantErr: markup.ErrUnsupportedFormat},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := markup.Validate(tt.pkg, "<my-button></my-button>", markup.Options{Format: tt.format})
-			assert.Error(t, err)
+			require.ErrorIs(t, err, tt.wantErr)
 		})
 	}
 }
@@ -286,6 +276,126 @@ func TestValidateDefaultFormat(t *testing.T) {
 	require.Len(t, issues, 1)
 	assert.Equal(t, markup.RuleUnknownElement, issues[0].Rule)
 	assert.Equal(t, markup.ConfidenceHigh, issues[0].Confidence)
+}
+
+// Dynamic template values are unknown when validating, so conflict heuristics
+// must skip them. This filters one rule because a golden for the same input
+// would also pin unrelated deprecation and unknown-attribute findings.
+func TestValidateAttributeCombinations(t *testing.T) {
+	pkg := loadPackage(t)
+
+	conflicts := func(t *testing.T, source string) []markup.Issue {
+		t.Helper()
+
+		issues, err := markup.Validate(pkg, source, markup.Options{
+			Format:        "twig",
+			ValidateAttrs: true,
+			Strict:        true,
+		})
+		require.NoError(t, err)
+
+		var found []markup.Issue
+		for _, issue := range issues {
+			if issue.Rule == markup.RuleAttributeConflict {
+				found = append(found, issue)
+			}
+		}
+		return found
+	}
+
+	tests := []struct {
+		name   string
+		source string
+		want   int
+	}{
+		{
+			name:   "dynamic value is unknown",
+			source: `<my-card loading="eager" lazy="{{ dynamic }}">Card</my-card>`,
+			want:   0,
+		},
+		{
+			name:   "eager loading with a true lazy attribute conflicts",
+			source: `<my-card loading="eager" lazy="true">Card</my-card>`,
+			want:   1,
+		},
+		{
+			name:   "eager loading with a bare lazy attribute conflicts",
+			source: `<my-card loading="eager" lazy>Card</my-card>`,
+			want:   1,
+		},
+		{
+			name:   "lazy loading does not conflict",
+			source: `<my-card loading="lazy" lazy>Card</my-card>`,
+			want:   0,
+		},
+		{
+			name:   "disabled and interactive conflict",
+			source: `<my-card disabled interactive>Card</my-card>`,
+			want:   1,
+		},
+		{
+			name:   "disabled alone does not conflict",
+			source: `<my-card disabled>Card</my-card>`,
+			want:   0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Len(t, conflicts(t, tt.source), tt.want)
+		})
+	}
+}
+
+// Options gate rule families independently. A golden per flag combination
+// would duplicate the same markup, so these assertions name each flag's effect.
+func TestValidateOptionGating(t *testing.T) {
+	pkg := loadPackage(t)
+
+	source := `<my-button bogus="1"><span slot="nope">x</span></my-button>`
+
+	rules := func(t *testing.T, opts markup.Options) []string {
+		t.Helper()
+
+		issues, err := markup.Validate(pkg, source, opts)
+		require.NoError(t, err)
+
+		names := make([]string, len(issues))
+		for i, issue := range issues {
+			names[i] = issue.Rule
+		}
+		return names
+	}
+
+	assert.Equal(t, []string{markup.RuleUnknownAttribute},
+		rules(t, markup.Options{ValidateAttrs: true}))
+	assert.Equal(t, []string{markup.RuleUnknownSlot},
+		rules(t, markup.Options{ValidateSlots: true}))
+	assert.Equal(t, []string{markup.RuleUnknownAttribute, markup.RuleUnknownSlot},
+		rules(t, markup.Options{ValidateAttrs: true, ValidateSlots: true}))
+	assert.Empty(t, rules(t, markup.Options{Strict: true}),
+		"Strict alone adds no findings")
+}
+
+// Issue is a JSON-serializable result type; a consumer that marshals the
+// slice must not silently lose the rule-specific details.
+func TestIssueJSONIncludesDetails(t *testing.T) {
+	pkg := loadPackage(t)
+
+	issues, err := markup.Validate(pkg, `<my-button bogus="1">Save</my-button>`, markup.Options{ValidateAttrs: true})
+	require.NoError(t, err)
+	require.Len(t, issues, 1)
+
+	data, err := json.Marshal(issues)
+	require.NoError(t, err)
+
+	var decoded []map[string]any
+	require.NoError(t, json.Unmarshal(data, &decoded))
+	require.Len(t, decoded, 1)
+
+	details, ok := decoded[0]["details"].(map[string]any)
+	require.True(t, ok, "serialized issue must include details")
+	assert.Equal(t, "bogus", details[markup.DetailAttribute])
 }
 
 // FindCustomElements is a pure discovery API; a table-like inline assertion is

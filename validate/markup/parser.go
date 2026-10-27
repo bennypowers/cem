@@ -67,7 +67,7 @@ func formatFamily(format string) (formatFamilyValue, error) {
 		// Template values still use template semantics.
 		return formatHandlebars, nil
 	default:
-		return 0, fmt.Errorf("markup: unsupported format %q", format)
+		return 0, fmt.Errorf("%w %q", ErrUnsupportedFormat, format)
 	}
 }
 
@@ -132,9 +132,7 @@ func elementsFromNode(node *ts.Node, source []byte, dynamicRanges []ts.Range, sk
 				elements = append(elements, el)
 			}
 		case "end_tag":
-			if skipTags {
-				continue
-			}
+			// End tags never yield elements, in either traversal mode.
 		default:
 			elements = append(elements, elementsFromNode(child, source, dynamicRanges, false)...)
 		}
@@ -315,15 +313,6 @@ var (
 	// pointer avoids storing a typed nil in a non-nil error interface.
 	jinjaTextQueryErr *ts.QueryError
 )
-
-// jinjaHTMLRanges returns the source byte ranges that the Jinja grammar marks
-// as plain text (that is, HTML regions). The HTML parser is restricted to
-// those ranges so template statements and expressions are not parsed as
-// markup. Unbalanced control flow still yields usable text ranges.
-func jinjaHTMLRanges(source string) ([]ts.Range, error) {
-	text, _, err := analyzeJinjaRanges(source)
-	return text, err
-}
 
 // analyzeJinjaRanges parses a template once and returns both the HTML text
 // ranges and the ranges occupied by template syntax. Dynamic ranges let the

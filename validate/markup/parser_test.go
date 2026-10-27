@@ -50,6 +50,8 @@ func TestIsCustomElementTag(t *testing.T) {
 	}
 }
 
+// TestJinjaHTMLRanges asserts the return shape of one pure range function;
+// exact byte ranges are the point, so an inline table is clearer than a golden.
 func TestJinjaHTMLRanges(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -63,23 +65,40 @@ func TestJinjaHTMLRanges(t *testing.T) {
 		{"expression string", `{{ "<my-el bogus>" }}`, false},
 		{"raw block", `{% raw %}<my-el bogus>{% endraw %}`, false},
 		{"set string", `{% set x = "<my-el bogus>" %}`, false},
+		{"mixed html and expression string", `<div>{{ "<my-el bogus>" }}</div>`, true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ranges, err := jinjaHTMLRanges(tt.source)
+			ranges, _, err := analyzeJinjaRanges(tt.source)
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantRange, len(ranges) > 0)
+
+			// Text ranges must never widen to cover template syntax.
+			for _, r := range ranges {
+				text := tt.source[r.StartByte:r.EndByte]
+				assert.NotContains(t, text, "{{", "range covers an expression")
+				assert.NotContains(t, text, "{%", "range covers a statement")
+			}
+			if tt.name == "mixed html and expression string" {
+				for _, r := range ranges {
+					assert.NotContains(t, tt.source[r.StartByte:r.EndByte], "my-el",
+						"markup inside an expression must not become a text range")
+				}
+			}
 		})
 	}
 }
 
+// This is an empty-result edge case; a golden would only pin [].
 func TestParseElementsJinjaWithoutHTMLRanges(t *testing.T) {
 	elements, err := parseElements(`{% set x = "<my-el bogus>" %}`, formatJinja)
 	require.NoError(t, err)
 	assert.Empty(t, elements)
 }
 
+// A golden would pin the full parsed node tree for a one-element edge case;
+// the asserted subset states the behavior directly.
 func TestParseElementsJinjaUnbalanced(t *testing.T) {
 	elements, err := parseElements(`{% if x %}<my-el bogus>`, formatJinja)
 	require.NoError(t, err)
@@ -116,6 +135,8 @@ func BenchmarkParseElementsManySiblings(b *testing.B) {
 	}
 }
 
+// The assertion is about the dynamic flag on each parsed attribute, which a
+// golden of validation issues cannot observe.
 func TestParseElementsDynamicValues(t *testing.T) {
 	elements, err := parseElements(
 		`<my-el a="{{ x }}-suffix" b="pre-{{ x }}" c="{{ x }}" d="static">`,
@@ -132,6 +153,8 @@ func TestParseElementsDynamicValues(t *testing.T) {
 	assert.False(t, attributes[3].dynamic, "static value")
 }
 
+// This pins decoded attribute values, a parser detail that validation goldens
+// only observe indirectly.
 func TestAttributeValueUnescape(t *testing.T) {
 	elements, err := parseElements(
 		`<my-el a="a&amp;b" b="prim&#97;ry" c="primar&#x79;" d=a&amp;b e="&amp;amp;" slot="i&amp;con">`,
@@ -149,6 +172,8 @@ func TestAttributeValueUnescape(t *testing.T) {
 	assert.Equal(t, "i&con", elements[0].attributes[5].value)   // slot value
 }
 
+// The byte column assertion is a parser detail; a validation golden would not
+// distinguish byte columns from rune columns.
 func TestPositionForNonASCII(t *testing.T) {
 	elements, err := parseElements(`<p>éé</p><my-button bogus="1">`, formatHTML)
 	require.NoError(t, err)

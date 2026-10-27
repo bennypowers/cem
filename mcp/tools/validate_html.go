@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"bennypowers.dev/cem/manifest"
 	mcpTypes "bennypowers.dev/cem/mcp/types"
@@ -188,40 +189,44 @@ func applyMarkupIssues(data *ValidationTemplateData, issues []markup.Issue) {
 			data.ManifestIssues = append(data.ManifestIssues, ValidationIssue{
 				Type:      "invalid-attribute-value",
 				Element:   issue.Element,
-				Attribute: details["attribute"],
-				Actual:    details["value"],
-				Expected:  details["expected"],
+				Attribute: details[markup.DetailAttribute],
+				Actual:    details[markup.DetailValue],
+				Expected:  details[markup.DetailExpected],
 				Message:   issue.Message,
 			})
 		case markup.RuleSlotContentGuideline:
 			data.SlotContentIssues = append(data.SlotContentIssues, SlotContentIssue{
-				SlotName:         details["slot"],
+				SlotName:         details[markup.DetailSlot],
 				ElementTagName:   issue.Element,
-				Guideline:        details["guideline"],
+				Guideline:        details[markup.DetailGuideline],
 				ViolationMessage: issue.Message,
 			})
 		case markup.RuleAttributeConflict:
 			data.AttributeConflicts = append(data.AttributeConflicts, AttributeConflict{
 				ElementTagName: issue.Element,
-				Attribute1:     details["attribute1"],
-				Value1:         details["value1"],
-				Attribute2:     details["attribute2"],
-				Value2:         details["value2"],
-				ConflictReason: details["reason"],
+				Attribute1:     details[markup.DetailAttribute1],
+				Value1:         details[markup.DetailValue1],
+				Attribute2:     details[markup.DetailAttribute2],
+				Value2:         details[markup.DetailValue2],
+				ConflictReason: details[markup.DetailReason],
 			})
 		case markup.RuleContentAttributeRedundancy:
 			data.ContentAttributeRedundancies = append(data.ContentAttributeRedundancies, ContentAttributeRedundancy{
 				ElementTagName: issue.Element,
-				AttributeName:  details["attribute"],
-				AttributeValue: details["value"],
-				SlotName:       details["slot"],
-				SlotContent:    details["content"],
+				AttributeName:  details[markup.DetailAttribute],
+				AttributeValue: details[markup.DetailValue],
+				SlotName:       details[markup.DetailSlot],
+				SlotContent:    details[markup.DetailContent],
 			})
 		case markup.RuleDeprecatedElement, markup.RuleDeprecatedAttribute, markup.RuleDeprecatedSlot, markup.RuleUnknownSlot:
 			// Intentionally not rendered. The validate_html tool has never
 			// surfaced these findings, so dropping them here keeps existing
 			// MCP output stable. The exported markup API reports them for
 			// other consumers.
+		default:
+			// A rule added to validate/markup without a mapping here would
+			// otherwise disappear from the tool output silently.
+			slog.Warn("unhandled markup rule in validate_html output", "rule", issue.Rule)
 		}
 	}
 }

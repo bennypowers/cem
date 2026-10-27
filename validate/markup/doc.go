@@ -48,5 +48,5 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 // Manifest-backed findings (unknown elements, attributes, slot names, invalid
 // enum values, deprecated APIs) carry [ConfidenceHigh]. Findings inferred from
 // prose or heuristics carry [ConfidenceLow] and are only reported when
-// [Options.Strict] is set.
+// [Options.Strict] and the corresponding category flag are both set.
 package markup

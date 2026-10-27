@@ -17,10 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package markup
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
 	"bennypowers.dev/cem/manifest"
+)
+
+// Errors returned by Validate and FindCustomElements.
+var (
+	ErrNilPackage        = errors.New("markup: nil manifest package")
+	ErrUnsupportedFormat = errors.New("markup: unsupported format")
 )
 
 // Rule identifies the validation rule that produced an Issue.
@@ -51,7 +60,27 @@ const (
 	ConfidenceLow  = "low"
 )
 
-// Options controls which validations run.
+// Detail keys used in Issue.Details. Each rule reports a subset of these keys;
+// consumers such as the MCP tool should use the constants rather than string
+// literals so a rename is a compile error.
+const (
+	DetailAttribute  = "attribute"
+	DetailSuggestion = "suggestion"
+	DetailValue      = "value"
+	DetailExpected   = "expected"
+	DetailSlot       = "slot"
+	DetailParent     = "parent"
+	DetailGuideline  = "guideline"
+	DetailReason     = "reason"
+	DetailAttribute1 = "attribute1"
+	DetailValue1     = "value1"
+	DetailAttribute2 = "attribute2"
+	DetailValue2     = "value2"
+	DetailContent    = "content"
+)
+
+// Options controls which validations run. Unknown element and deprecated
+// element checks always run; the remaining rule families require a flag.
 //
 // Format selects the parser. Supported values are "html" (the default), and
 // the Jinja-family template formats "twig", "njk", "jinja", "jinja2", "j2",
@@ -59,11 +88,13 @@ const (
 // basis without linking the Handlebars grammar, but their expression values
 // keep template semantics and are not validated literally.
 //
-// ValidateAttrs enables attribute name, enum value, and deprecation checks.
-// ValidateSlots enables slot name, slot deprecation, and slot content checks.
-// Strict enables low-confidence findings inferred from prose or heuristics,
-// such as slot content guidelines, attribute conflicts, and redundant
-// content/attribute pairs.
+// ValidateAttrs enables attribute name, enum value, and attribute deprecation
+// checks. ValidateSlots enables slot name and slot deprecation checks.
+//
+// Strict enables low-confidence findings, but only for a rule family whose
+// category flag is also set: slot content guidelines require ValidateSlots,
+// attribute conflicts require ValidateAttrs, and content/attribute redundancy
+// requires ValidateSlots. Strict alone adds no findings.
 type Options struct {
 	Format        string
 	ValidateSlots bool
@@ -74,6 +105,13 @@ type Options struct {
 // Issue is a single markup validation finding. Line is a one-based line
 // number and Column is a one-based UTF-8 byte offset within that line. Byte
 // offsets keep position lookup O(1) and match tree-sitter's native points.
+//
+// Element and the position fields identify the reported token per rule:
+// element rules and the slot content/redundancy heuristics report the custom
+// element's tag name; attribute rules report the attribute name on that
+// element; unknown-slot and deprecated-slot report the slotted child's tag
+// name and the position of its `slot` attribute. For those slot rules, the
+// owning custom element is available as DetailParent.
 type Issue struct {
 	Rule       string `json:"rule"`
 	Severity   string `json:"severity"`
@@ -87,7 +125,22 @@ type Issue struct {
 }
 
 // Details returns rule-specific structured data for consumers that render
-// findings themselves. Keys vary by rule and the map may be nil or empty.
+// findings themselves. Keys are the Detail* constants and the map may be nil
+// or empty. Each rule reports:
+//
+//   - unknown-attribute: DetailAttribute, plus DetailSuggestion when a close
+//     match exists.
+//   - invalid-attribute-value: DetailAttribute, DetailValue, DetailExpected.
+//   - deprecated-attribute: DetailAttribute, plus DetailReason when present.
+//   - deprecated-element: no details.
+//   - unknown-slot: DetailSlot, DetailParent.
+//   - deprecated-slot: DetailSlot, DetailParent, plus DetailReason when
+//     present.
+//   - slot-content-guideline: DetailSlot, DetailGuideline.
+//   - attribute-conflict: DetailAttribute1, DetailValue1, DetailAttribute2,
+//     DetailValue2, DetailReason.
+//   - content-attribute-redundancy: DetailAttribute, DetailValue, DetailSlot,
+//     DetailContent.
 func (i Issue) Details() map[string]string {
 	if len(i.details) == 0 {
 		return nil
@@ -97,6 +150,27 @@ func (i Issue) Details() map[string]string {
 		out[k] = v
 	}
 	return out
+}
+
+// MarshalJSON includes the rule-specific details, which are otherwise
+// unexported, so serializing an Issue does not silently drop them. Findings
+// are code-oriented, so HTML characters are left unescaped.
+func (i Issue) MarshalJSON() ([]byte, error) {
+	type issueAlias Issue
+
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(struct {
+		issueAlias
+		Details map[string]string `json:"details,omitempty"`
+	}{
+		issueAlias: issueAlias(i),
+		Details:    i.Details(),
+	}); err != nil {
+		return nil, err
+	}
+	return bytes.TrimSuffix(buf.Bytes(), []byte{'\n'}), nil
 }
 
 // Element is a custom element occurrence found in markup. Line is one-based
@@ -146,7 +220,7 @@ func FindCustomElements(markup string, opts Options) ([]Element, error) {
 // that can be parsed.
 func Validate(pkg *manifest.Package, markup string, opts Options) ([]Issue, error) {
 	if pkg == nil {
-		return nil, fmt.Errorf("markup: nil manifest package")
+		return nil, ErrNilPackage
 	}
 
 	family, err := formatFamily(opts.Format)
@@ -244,10 +318,10 @@ func (v *validator) validateAttributes(el *elementNode, decl *manifest.CustomEle
 		manifestAttr := findAttribute(attributes, attr.name)
 		if manifestAttr == nil {
 			message := fmt.Sprintf("Unknown attribute '%s' for element <%s>", attr.name, el.tagName)
-			details := map[string]string{"attribute": attr.name}
+			details := map[string]string{DetailAttribute: attr.name}
 			if suggestion := suggestAttributeCorrection(attr.name, attributes); suggestion != "" {
 				message += fmt.Sprintf(". Did you mean '%s'?", suggestion)
-				details["suggestion"] = suggestion
+				details[DetailSuggestion] = suggestion
 			}
 			v.addAttribute(el, attr, RuleUnknownAttribute, SeverityError, ConfidenceHigh, message, details)
 			continue
@@ -255,10 +329,10 @@ func (v *validator) validateAttributes(el *elementNode, decl *manifest.CustomEle
 
 		if manifestAttr.IsDeprecated() {
 			message := fmt.Sprintf("Attribute '%s' on '%s' is deprecated", attr.name, el.tagName)
-			details := map[string]string{"attribute": attr.name}
+			details := map[string]string{DetailAttribute: attr.name}
 			if reason := deprecationReason(manifestAttr.Deprecated); reason != "" {
 				message += ": " + reason
-				details["reason"] = reason
+				details[DetailReason] = reason
 			}
 			v.addAttribute(el, attr, RuleDeprecatedAttribute, SeverityWarning, ConfidenceHigh, message, details)
 		}
@@ -270,9 +344,9 @@ func (v *validator) validateAttributes(el *elementNode, decl *manifest.CustomEle
 				message := fmt.Sprintf("Invalid attribute value: `%s=\"%s\"` in `<%s>`. Valid values: %v",
 					attr.name, attr.value, el.tagName, validValues)
 				v.addAttribute(el, attr, RuleInvalidAttributeValue, SeverityError, ConfidenceHigh, message, map[string]string{
-					"attribute": attr.name,
-					"value":     attr.value,
-					"expected":  fmt.Sprintf("%v", validValues),
+					DetailAttribute: attr.name,
+					DetailValue:     attr.value,
+					DetailExpected:  fmt.Sprintf("%v", validValues),
 				})
 			}
 		}
@@ -302,10 +376,10 @@ func (v *validator) validateSlotAttribute(el, parent *elementNode) {
 		}
 		if slot.IsDeprecated() {
 			message := fmt.Sprintf("Slot '%s' on '%s' is deprecated", slot.Name, parent.tagName)
-			details := map[string]string{"slot": slot.Name, "parent": parent.tagName}
+			details := map[string]string{DetailSlot: slot.Name, DetailParent: parent.tagName}
 			if reason := deprecationReason(slot.Deprecated); reason != "" {
 				message += ": " + reason
-				details["reason"] = reason
+				details[DetailReason] = reason
 			}
 			v.addAttribute(el, *slotAttr, RuleDeprecatedSlot, SeverityWarning, ConfidenceHigh, message, details)
 		}
@@ -319,8 +393,8 @@ func (v *validator) validateSlotAttribute(el, parent *elementNode) {
 	message := fmt.Sprintf("Unknown slot '%s' for element <%s>. Available slots: '%s'",
 		slotAttr.value, parent.tagName, strings.Join(names, "', '"))
 	v.addAttribute(el, *slotAttr, RuleUnknownSlot, SeverityError, ConfidenceHigh, message, map[string]string{
-		"slot":   slotAttr.value,
-		"parent": parent.tagName,
+		DetailSlot:   slotAttr.value,
+		DetailParent: parent.tagName,
 	})
 }
 
@@ -344,9 +418,8 @@ func (v *validator) validateSlotContentGuidelines(el *elementNode, decl *manifes
 
 		message := "Potential interactive content guideline - check slot content manually"
 		v.add(el, RuleSlotContentGuideline, SeverityWarning, ConfidenceLow, message, map[string]string{
-			"slot":      slot.Name,
-			"guideline": description,
-			"violation": message,
+			DetailSlot:      slot.Name,
+			DetailGuideline: description,
 		})
 	}
 }
@@ -354,6 +427,11 @@ func (v *validator) validateSlotContentGuidelines(el *elementNode, decl *manifes
 func (v *validator) validateAttributeCombinations(el *elementNode) {
 	attributes := make(map[string]string, len(el.attributes))
 	for _, attr := range el.attributes {
+		// A dynamic value is unknown at validation time, so it cannot
+		// participate in a conflict heuristic.
+		if attr.dynamic {
+			continue
+		}
 		attributes[attr.name] = attr.value
 	}
 
@@ -361,11 +439,11 @@ func (v *validator) validateAttributeCombinations(el *elementNode) {
 		if lazy, ok := attributes["lazy"]; ok && loading == "eager" && (lazy == "true" || lazy == "") {
 			v.add(el, RuleAttributeConflict, SeverityWarning, ConfidenceLow,
 				"Eager loading conflicts with lazy loading", map[string]string{
-					"attribute1": "loading",
-					"value1":     loading,
-					"attribute2": "lazy",
-					"value2":     lazy,
-					"reason":     "Eager loading conflicts with lazy loading",
+					DetailAttribute1: "loading",
+					DetailValue1:     loading,
+					DetailAttribute2: "lazy",
+					DetailValue2:     lazy,
+					DetailReason:     "Eager loading conflicts with lazy loading",
 				})
 		}
 	}
@@ -375,11 +453,11 @@ func (v *validator) validateAttributeCombinations(el *elementNode) {
 			(disabled == "true" || disabled == "") && (interactive == "true" || interactive == "") {
 			v.add(el, RuleAttributeConflict, SeverityWarning, ConfidenceLow,
 				"Disabled elements cannot be interactive", map[string]string{
-					"attribute1": "disabled",
-					"value1":     disabled,
-					"attribute2": "interactive",
-					"value2":     interactive,
-					"reason":     "Disabled elements cannot be interactive",
+					DetailAttribute1: "disabled",
+					DetailValue1:     disabled,
+					DetailAttribute2: "interactive",
+					DetailValue2:     interactive,
+					DetailReason:     "Disabled elements cannot be interactive",
 				})
 		}
 	}
@@ -402,10 +480,10 @@ func (v *validator) validateContentAttributeRedundancy(el *elementNode, decl *ma
 		v.add(el, RuleContentAttributeRedundancy, SeverityInfo, ConfidenceLow,
 			fmt.Sprintf("Attribute '%s' on <%s> is redundant with the '%s' slot", slot.Name, el.tagName, slot.Name),
 			map[string]string{
-				"attribute": slot.Name,
-				"value":     value,
-				"slot":      slot.Name,
-				"content":   "[slot content not analyzed - tree-sitter enhancement needed]",
+				DetailAttribute: slot.Name,
+				DetailValue:     value,
+				DetailSlot:      slot.Name,
+				DetailContent:   "[slot content not analyzed - tree-sitter enhancement needed]",
 			})
 	}
 }

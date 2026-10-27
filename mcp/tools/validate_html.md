@@ -25,6 +25,8 @@ Validates:
 
 Use to validate custom element usage in HTML. Does NOT validate general HTML structure.
 
+Names and values follow HTML parsing semantics: tag and attribute names are matched case-insensitively (ASCII lowercase), character references are decoded, and when an attribute is repeated the first value is the one validated.
+
 ## Reference Resources
 
 For detailed information about element constraints and validation rules, consult these resources:
