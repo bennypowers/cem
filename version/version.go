@@ -32,8 +32,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 //	  -X bennypowers.dev/cem/version.GitTag=v1.2.3" .
 //
 // When the metadata is absent, Get falls back to the version recorded by the
-// Go toolchain in the binary's build information. If that is unavailable too,
-// Get returns "dev".
+// Go toolchain in the binary's build information. For a program that embeds
+// cem packages, that value is the embedder's main module version, not cem's, so
+// set Version explicitly when you need cem's version. If build information is
+// unavailable, Get assembles a version from GitTag, GitCommit, and GitDirty
+// when they are set, and finally returns "dev".
 //
 // Usage:
 //
@@ -76,7 +79,9 @@ var (
 //
 // It prefers the value injected at build time, then the main module version
 // recorded by the Go toolchain, then a string assembled from git metadata,
-// and finally "dev".
+// and finally "dev". The build-info fallback reports the main module version,
+// which is the embedder's version when this package is linked into another
+// program, not cem's version.
 func Get() string {
 	// If Version was set via ldflags, use it.
 	if Version != "dev" {

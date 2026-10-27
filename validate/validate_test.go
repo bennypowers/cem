@@ -18,8 +18,10 @@ package validate
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"bennypowers.dev/cem/internal/platform"
@@ -272,4 +274,72 @@ func TestGetSchemaUpgrade210(t *testing.T) {
 		// without needing to load any fixture files
 		testGetSchemaUpgrade210(t, platform.NewMapFileSystem(nil))
 	})
+}
+
+// Hardening of pre-existing behavior: schemaVersion was previously passed
+// unchecked into embedded-schema and cache path construction. Unsafe values
+// must be rejected before they can become path components.
+func TestGetSchemaRejectsUnsafeVersions(t *testing.T) {
+	fsys := platform.NewMapFileSystem(nil)
+	versions := []string{
+		"../../../../tmp/x",
+		"/tmp/x",
+		`..\..\..\..\tmp\x`,
+		"2.1.0/../../x",
+	}
+
+	for _, version := range versions {
+		t.Run(version, func(t *testing.T) {
+			_, err := getSchema(fsys, version)
+			if err == nil {
+				t.Fatalf("getSchema(%q) = nil error, want rejection", version)
+			}
+			if !strings.Contains(err.Error(), "invalid schema version") {
+				t.Errorf("getSchema(%q) error = %q, want an invalid schema version error", version, err)
+			}
+		})
+	}
+}
+
+// Hardening of pre-existing behavior: an unsafe schemaVersion still produces
+// the invalid-version warning, but validation falls back to an embedded schema
+// instead of using the raw value as a path component.
+func TestValidateFallsBackForUnsafeSchemaVersion(t *testing.T) {
+	versions := []string{
+		"../../../../tmp/x",
+		"/tmp/x",
+	}
+
+	for _, version := range versions {
+		t.Run(version, func(t *testing.T) {
+			manifest := []byte(fmt.Sprintf(`{"schemaVersion":%q,"modules":[]}`, version))
+			pipeline, err := NewValidationPipeline(platform.NewMapFileSystem(nil), manifest)
+			if err != nil {
+				t.Fatalf("NewValidationPipeline: %v", err)
+			}
+
+			result, err := pipeline.Validate(ValidationOptions{})
+			if err != nil {
+				t.Fatalf("Validate: %v", err)
+			}
+
+			if result.SchemaVersion != version {
+				t.Errorf("SchemaVersion = %q, want the raw value %q", result.SchemaVersion, version)
+			}
+			if !result.IsValid {
+				t.Errorf("Validate reported invalid manifest: %+v", result.Errors)
+			}
+
+			found := false
+			for _, warning := range result.Warnings {
+				if warning.ID == "schema-version-invalid" {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("missing schema-version-invalid warning: %+v", result.Warnings)
+			}
+		})
+	}
 }

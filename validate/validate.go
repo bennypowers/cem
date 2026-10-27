@@ -27,7 +27,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"bennypowers.dev/cem/internal/platform"
 	"github.com/adrg/xdg"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/spf13/viper"
@@ -60,7 +59,7 @@ type ValidationOptions struct {
 }
 
 // Validate validates a custom-elements.json manifest
-func Validate(fsys platform.FileSystem, manifestPath string, options ValidationOptions) (*ValidationResult, error) {
+func Validate(fsys FileSystem, manifestPath string, options ValidationOptions) (*ValidationResult, error) {
 	manifestData, err := fsys.ReadFile(manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading manifest file: %w", err)
@@ -76,7 +75,7 @@ func Validate(fsys platform.FileSystem, manifestPath string, options ValidationO
 
 // ValidationPipeline orchestrates the validation process
 type ValidationPipeline struct {
-	fsys             platform.FileSystem
+	fsys             FileSystem
 	manifestData     []byte
 	schemaVersion    string
 	navigator        *ManifestNavigator
@@ -85,7 +84,7 @@ type ValidationPipeline struct {
 }
 
 // NewValidationPipeline creates a new validation pipeline
-func NewValidationPipeline(fsys platform.FileSystem, manifestData []byte) (*ValidationPipeline, error) {
+func NewValidationPipeline(fsys FileSystem, manifestData []byte) (*ValidationPipeline, error) {
 	// Parse manifest once for efficiency
 	var manifestJSON map[string]any
 	if err := json.Unmarshal(manifestData, &manifestJSON); err != nil {
@@ -148,8 +147,10 @@ func (p *ValidationPipeline) Validate(options ValidationOptions) (*ValidationRes
 }
 
 func (p *ValidationPipeline) checkSchemaVersion(result *ValidationResult) error {
-	// Validate schema version format
-	if !semver.IsValid("v" + p.schemaVersion) {
+	// Validate schema version format. An unsafe or invalid version must not be
+	// used as a path component later, so warn and fall back to an embedded
+	// schema during validation.
+	if !isSafeSchemaVersion(p.schemaVersion) {
 		result.Warnings = append(result.Warnings, ValidationWarning{
 			ID:       "schema-version-invalid",
 			Message:  fmt.Sprintf("schemaVersion is not a valid semantic version: %s", p.schemaVersion),
@@ -168,6 +169,15 @@ func (p *ValidationPipeline) checkSchemaVersion(result *ValidationResult) error 
 	return nil
 }
 
+// isSafeSchemaVersion reports whether version is a valid semantic version and
+// is safe to use as a path component or URL path segment.
+func isSafeSchemaVersion(version string) bool {
+	if version == "" || strings.ContainsAny(version, `/\`) || strings.Contains(version, "..") {
+		return false
+	}
+	return semver.IsValid("v" + version)
+}
+
 // isSemverLessThan compares two semantic version strings
 func isSemverLessThan(version1, version2 string) bool {
 	return semver.Compare(
@@ -177,7 +187,14 @@ func isSemverLessThan(version1, version2 string) bool {
 }
 
 func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
-	schemaData, err := getSchema(p.fsys, p.schemaVersion)
+	// Hardening: never pass an untrusted schemaVersion into embedded-schema or
+	// cache path construction. Invalid values keep their warning from
+	// checkSchemaVersion and validation continues against an embedded schema.
+	schemaVersion := p.schemaVersion
+	if !isSafeSchemaVersion(schemaVersion) {
+		schemaVersion = "2.1.1-speculative"
+	}
+	schemaData, err := getSchema(p.fsys, schemaVersion)
 	if err != nil {
 		return fmt.Errorf("error getting schema: %w", err)
 	}
@@ -362,11 +379,18 @@ func isWarningDisabled(warning ValidationWarning, disabledRules []string) bool {
 
 // GetSchema returns the JSON schema for a given version, using embedded schemas
 // and falling back to fetching from external sources if needed
-func GetSchema(fsys platform.FileSystem, version string) ([]byte, error) {
+func GetSchema(fsys FileSystem, version string) ([]byte, error) {
 	return getSchema(fsys, version)
 }
 
-func getSchema(fsys platform.FileSystem, version string) ([]byte, error) {
+func getSchema(fsys FileSystem, version string) ([]byte, error) {
+	// Hardening: GetSchema can be called directly with caller-controlled input.
+	// Reject values that are not valid semantic versions or that could escape a
+	// path when used as a cache filename.
+	if !isSafeSchemaVersion(version) {
+		return nil, fmt.Errorf("invalid schema version %q: must be a semantic version", version)
+	}
+
 	// Upgrade known problematic versions to speculative schema first
 	if version == "2.1.0" || version == "2.1.1" {
 		return getEmbeddedSchema("2.1.1-speculative")
@@ -386,7 +410,7 @@ func getEmbeddedSchema(version string) ([]byte, error) {
 	return embeddedSchemas.ReadFile(schemaPath)
 }
 
-func tryFetchSchema(fsys platform.FileSystem, version string) ([]byte, error) {
+func tryFetchSchema(fsys FileSystem, version string) ([]byte, error) {
 	// Skip file cache when no cache directory is available (e.g. wasm)
 	// TODO(#371): wasm targets may want their own cache backed by IndexedDB or similar
 	if xdg.CacheHome != "" {

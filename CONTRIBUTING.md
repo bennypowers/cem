@@ -62,12 +62,20 @@ for external consumption are:
 - `bennypowers.dev/cem/version`: version and build metadata
 - `bennypowers.dev/cem/manifest`: Custom Elements Manifest types and helpers
 - `bennypowers.dev/cem/breaking`: manifest comparison and change classification
-- `bennypowers.dev/cem/validate`: manifest schema validation and warnings,
-  including subpackages under `validate/` such as `validate/markup`
+- `bennypowers.dev/cem/validate`: manifest schema validation and warnings.
+  A future markup-validation subpackage will live under `validate/` and be
+  part of this public family.
 
 Everything under `internal/` is private by Go's internal-package rule. The
 CLI-oriented packages (`cmd`, `lsp`, `serve`, `mcp`, `generate`, `health`,
 `list`, `search`, and `export`) are not part of the supported public API.
+
+`manifest` and `breaking` currently require cgo because `manifest` parses type
+expressions with tree-sitter through an internal package. `version` and
+`validate` build with `CGO_ENABLED=0`. Until
+[cem #459](https://github.com/bennypowers/cem/issues/459) lands, external
+consumers that import `manifest` or `breaking` need cgo enabled and a C
+toolchain.
 
 ### 0.x Compatibility Policy
 

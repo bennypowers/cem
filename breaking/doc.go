@@ -21,9 +21,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 // classifies the differences as safe, dangerous, or breaking changes.
 //
 // Rules cover elements, attributes, slots, events, CSS custom properties and
-// parts, members, and events. Each detected change carries a rule ID, a
-// severity, and a human-readable message. Use Options.Disable to silence rule
-// IDs that do not apply to a project.
+// parts, and members. Each detected change carries a rule ID, a severity, and a
+// human-readable message. Use Options.Disable to silence rule IDs that do not
+// apply to a project.
 //
 // # External use
 //

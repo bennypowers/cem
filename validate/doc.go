@@ -35,21 +35,30 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 // # Validating a manifest
 //
-//	fsys := platform.NewOSFileSystem()
+//	fsys := validate.NewOSFileSystem()
 //	result, err := validate.Validate(fsys, "custom-elements.json", validate.ValidationOptions{
 //		IncludeWarnings: true,
 //	})
 //	if err != nil {
 //		return err
 //	}
-//	if !result.IsValid {
+//	if !result.IsValid || len(result.Warnings) > 0 {
 //		return validate.PrintValidationResult(os.Stderr, "custom-elements.json", result, validate.DisplayOptions{})
 //	}
 //
-// The filesystem-aware entry points accept an implementation of
-// platform.FileSystem so callers can validate manifests in memory. For finer
-// control, build a ValidationPipeline with NewValidationPipeline and call its
-// Validate method directly.
+// ValidateFile is a convenience wrapper for callers that do not need to supply
+// their own filesystem:
+//
+//	result, err := validate.ValidateFile("custom-elements.json", validate.ValidationOptions{
+//		IncludeWarnings: true,
+//	})
+//
+// The filesystem-aware entry points accept a filesystem implementation. Use
+// NewOSFileSystem for the host operating system, or pass a custom
+// implementation for in-memory or sandboxed input; the interface is satisfied
+// structurally, so callers do not need to import an internal package. For
+// finer control, build a ValidationPipeline with NewValidationPipeline and call
+// its Validate method directly.
 //
 // Warning rules can be disabled by ID with ValidationOptions.DisabledRules.
 // Use PrintValidationResult for human-readable or JSON output, or inspect
