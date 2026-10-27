@@ -24,6 +24,18 @@ import (
 
 // TestSplitTopLevelUnion verifies splitting across nested and quoted type
 // forms, including malformed input.
+//
+// The cases stay inline rather than in testdata goldens on purpose.
+// SplitTopLevelUnion is a pure string -> []string function, so a golden would
+// require inventing a serialization format for both the input and the expected
+// members. The table also mirrors internal/tstype/union_test.go, which tests
+// the tree-sitter backed implementation of the same signature; keeping both
+// tables in the same shape is what makes a parity gap visible when reading
+// them, and TestPureSplitTopLevelUnionMatchesTreeSitter in internal/tstype
+// compares the two implementations over this corpus. Finally, each case runs
+// as a named subtest, so a failure names the form that regressed, which a
+// single golden diff would not. internal/jsoncmerge/merge_test.go documents
+// the same exception for comparisons that are not a single golden document.
 func TestSplitTopLevelUnion(t *testing.T) {
 	tests := []struct {
 		name string
