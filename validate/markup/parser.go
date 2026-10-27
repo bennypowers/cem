@@ -103,10 +103,13 @@ func parseElements(source string, family formatFamilyValue) ([]*elementNode, err
 	}
 	defer tree.Close()
 
-	return elementsFromNode(tree.RootNode(), sourceBytes, dynamicRanges), nil
+	return elementsFromNode(tree.RootNode(), sourceBytes, dynamicRanges, false), nil
 }
 
-func elementsFromNode(node *ts.Node, source []byte, dynamicRanges []ts.Range) []*elementNode {
+// elementsFromNode walks structural nodes. When skipTags is set, the node is
+// an element's own tag container, so its start/end tags are not emitted as
+// separate elements. ERROR nodes that wrap a start_tag are still traversed.
+func elementsFromNode(node *ts.Node, source []byte, dynamicRanges []ts.Range, skipTags bool) []*elementNode {
 	var elements []*elementNode
 	cursor := node.Walk()
 	defer cursor.Close()
@@ -116,15 +119,24 @@ func elementsFromNode(node *ts.Node, source []byte, dynamicRanges []ts.Range) []
 		switch child.Kind() {
 		case "element":
 			if el := parseTag(child, source, dynamicRanges); el != nil {
-				el.children = elementsFromNode(child, source, dynamicRanges)
+				el.children = elementsFromNode(child, source, dynamicRanges, true)
 				elements = append(elements, el)
+			} else {
+				elements = append(elements, elementsFromNode(child, source, dynamicRanges, false)...)
 			}
-		case "self_closing_tag":
+		case "self_closing_tag", "start_tag":
+			if skipTags {
+				continue
+			}
 			if el := parseTag(child, source, dynamicRanges); el != nil {
 				elements = append(elements, el)
 			}
+		case "end_tag":
+			if skipTags {
+				continue
+			}
 		default:
-			elements = append(elements, elementsFromNode(child, source, dynamicRanges)...)
+			elements = append(elements, elementsFromNode(child, source, dynamicRanges, false)...)
 		}
 	}
 	return elements
@@ -133,6 +145,12 @@ func elementsFromNode(node *ts.Node, source []byte, dynamicRanges []ts.Range) []
 func parseTag(node *ts.Node, source []byte, dynamicRanges []ts.Range) *elementNode {
 	startTag := findChildKind(node, "start_tag")
 	if startTag == nil {
+		// Self-closing tags are nested as element -> self_closing_tag.
+		startTag = findChildKind(node, "self_closing_tag")
+	}
+	if startTag == nil {
+		// The node itself may be a start_tag or self_closing_tag, for example
+		// when it is reached through an ERROR node for an unclosed tag.
 		startTag = node
 	}
 

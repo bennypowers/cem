@@ -1,0 +1,20 @@
+[
+  {
+    "rule": "unknown-element",
+    "severity": "error",
+    "confidence": "high",
+    "message": "Custom element 'my-el' not found in registry",
+    "element": "my-el",
+    "line": 1,
+    "column": 2
+  },
+  {
+    "rule": "unknown-element",
+    "severity": "error",
+    "confidence": "high",
+    "message": "Custom element 'my-el' not found in registry",
+    "element": "my-el",
+    "line": 2,
+    "column": 2
+  }
+]

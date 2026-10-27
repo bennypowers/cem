@@ -149,6 +149,27 @@ func TestValidateGolden(t *testing.T) {
 			opts:   markup.Options{ValidateAttrs: true, ValidateSlots: true},
 		},
 		{
+			name:   "twig unclosed custom elements are discovered",
+			golden: "twig_unclosed.json",
+			file:   "twig-unclosed.twig",
+			format: "twig",
+			opts:   markup.Options{ValidateAttrs: true},
+		},
+		{
+			name:   "self closing custom elements are validated",
+			golden: "self_closing.json",
+			file:   "self-closing.html",
+			format: "html",
+			opts:   markup.Options{ValidateAttrs: true},
+		},
+		{
+			name:   "unclosed custom elements are discovered",
+			golden: "unclosed.json",
+			file:   "unclosed.html",
+			format: "html",
+			opts:   markup.Options{ValidateAttrs: true},
+		},
+		{
 			name:   "html template expression value keeps literal validation",
 			golden: "html_template_value.json",
 			file:   "html-template-value.html",
@@ -265,6 +286,23 @@ func TestValidateDefaultFormat(t *testing.T) {
 	require.Len(t, issues, 1)
 	assert.Equal(t, markup.RuleUnknownElement, issues[0].Rule)
 	assert.Equal(t, markup.ConfidenceHigh, issues[0].Confidence)
+}
+
+// FindCustomElements is a pure discovery API; a table-like inline assertion is
+// clearer than a golden because the expected value is just tag order.
+func TestFindCustomElements(t *testing.T) {
+	source := `<MY-CHILD><my-child/><span><my-nested></my-nested></span></MY-CHILD><my-el>`
+
+	elements, err := markup.FindCustomElements(source, markup.Options{Format: "html"})
+	require.NoError(t, err)
+
+	tagNames := make([]string, len(elements))
+	for i, element := range elements {
+		tagNames[i] = element.TagName
+	}
+	assert.Equal(t, []string{"my-child", "my-child", "my-nested", "my-el"}, tagNames)
+	assert.Equal(t, 2, elements[0].Column, "outer element column")
+	assert.Equal(t, 12, elements[1].Column, "self-closing element column")
 }
 
 // FuzzValidate checks that arbitrary markup, including malformed template
