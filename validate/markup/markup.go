@@ -265,6 +265,13 @@ func (v *validator) validateElement(el *elementNode, parent *elementNode) {
 		v.validateSlotAttribute(el, parent)
 	}
 
+	// A tag name built from template syntax cannot be resolved against the
+	// manifest, so skip the element itself but still inspect its children.
+	if el.dynamic {
+		v.walkChildren(el, nil)
+		return
+	}
+
 	if !isCustomElementTag(el.tagName) {
 		v.walkChildren(el, nil)
 		return
@@ -311,6 +318,11 @@ func (v *validator) walkChildren(el *elementNode, customParent *elementNode) {
 func (v *validator) validateAttributes(el *elementNode, decl *manifest.CustomElementDeclaration) {
 	attributes := decl.Attributes()
 	for _, attr := range el.attributes {
+		if attr.nameDynamic {
+			// The attribute name depends on template data, so it cannot be
+			// matched against the manifest.
+			continue
+		}
 		if isGlobalAttribute(attr.name) {
 			continue
 		}
@@ -473,7 +485,7 @@ func (v *validator) validateContentAttributeRedundancy(el *elementNode, decl *ma
 		if slot.Name != "label" && slot.Name != "title" && slot.Name != "icon" {
 			continue
 		}
-		value, ok := attributes[slot.Name]
+		value, ok := attributes[asciiLower(slot.Name)]
 		if !ok {
 			continue
 		}
@@ -516,7 +528,9 @@ func (v *validator) addAttribute(el *elementNode, attr parsedAttribute, rule, se
 
 func findAttribute(attributes []manifest.Attribute, name string) *manifest.Attribute {
 	for i := range attributes {
-		if attributes[i].Name == name {
+		// Markup names are ASCII-lowercased by the parser; manifest names may
+		// be camelCase, so match case-insensitively like the LSP lookup did.
+		if asciiLower(attributes[i].Name) == name {
 			return &attributes[i]
 		}
 	}

@@ -408,6 +408,89 @@ func TestValidateLiquidComments(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, live, 1)
 	assert.Equal(t, markup.RuleInvalidAttributeValue, live[0].Rule)
+
+	// A tag-looking string inside an output expression is not a comment.
+	tricky, err := markup.Validate(pkg,
+		`{{ "{% comment %}" }}<my-button variant="bogus">{% comment %}real{% endcomment %}`,
+		markup.Options{Format: "liquid", ValidateAttrs: true})
+	require.NoError(t, err)
+	require.Len(t, tricky, 1)
+	assert.Equal(t, markup.RuleInvalidAttributeValue, tricky[0].Rule)
+}
+
+// These parser regressions each exercise one masking quirk, so a focused table
+// states the expected rule presence without unrelated output.
+func TestValidateTemplateEdgeCases(t *testing.T) {
+	pkg := loadPackage(t)
+
+	hasRule := func(t *testing.T, source, format, rule string) bool {
+		t.Helper()
+
+		issues, err := markup.Validate(pkg, source, markup.Options{
+			Format:        format,
+			ValidateAttrs: true,
+		})
+		require.NoError(t, err)
+		for _, issue := range issues {
+			if issue.Rule == rule {
+				return true
+			}
+		}
+		return false
+	}
+
+	t.Run("unquoted twig value is dynamic", func(t *testing.T) {
+		assert.False(t, hasRule(t, `<my-button variant=prim{{ suffix }}>`, "twig",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("unquoted twig value keeps the element", func(t *testing.T) {
+		assert.True(t, hasRule(t, `{% if x %}<my-unknown variant={{ v }}>{% endif %}`, "twig",
+			markup.RuleUnknownElement))
+	})
+
+	t.Run("unquoted hbs value is dynamic", func(t *testing.T) {
+		assert.False(t, hasRule(t, `<my-button variant={{ v }}>`, "hbs",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("hbs comment apostrophe does not corrupt masking", func(t *testing.T) {
+		assert.False(t, hasRule(t, `{{!-- don't --}}<my-button {{#if x}}variant="primary"{{/if}}>`, "hbs",
+			markup.RuleUnknownAttribute))
+	})
+
+	t.Run("escaped mustache is literal text", func(t *testing.T) {
+		elements, err := markup.FindCustomElements(
+			`<p>Use \{{ braces</p><my-card {{#if x}}variant="primary"{{/if}}></my-card>`,
+			markup.Options{Format: "hbs"})
+		require.NoError(t, err)
+
+		tags := make([]string, len(elements))
+		for i, element := range elements {
+			tags[i] = element.TagName
+		}
+		assert.Contains(t, tags, "my-card")
+	})
+
+	t.Run("camel case manifest attribute matches", func(t *testing.T) {
+		assert.False(t, hasRule(t, `<my-card flipBoundary="x">`, "html",
+			markup.RuleUnknownAttribute))
+	})
+
+	t.Run("dynamic tag name is skipped", func(t *testing.T) {
+		assert.False(t, hasRule(t, `<my-{{ x }} variant="bogus">`, "twig",
+			markup.RuleUnknownElement))
+	})
+
+	t.Run("dynamic attribute name is skipped", func(t *testing.T) {
+		assert.False(t, hasRule(t, `<my-button {{ n }}ariant="bogus">`, "twig",
+			markup.RuleUnknownAttribute))
+	})
+
+	t.Run("noscript children are markup", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<noscript><my-button variant="bogus"></my-button></noscript>`, "html",
+			markup.RuleInvalidAttributeValue))
+	})
 }
 
 // Issue is a JSON-serializable result type; a consumer that marshals the

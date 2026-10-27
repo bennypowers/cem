@@ -118,6 +118,12 @@
               }
             },
             {
+              "name": "flipBoundary",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
               "name": "interactive",
               "type": {
                 "text": "boolean"

@@ -32,7 +32,8 @@ func suggestAttributeCorrection(typed string, attributes []manifest.Attribute) s
 	bestMatch := ""
 	minDistance := len(typed) + 1
 	for _, attr := range attributes {
-		distance := levenshtein.Distance(typed, attr.Name, nil)
+		// Markup names are ASCII-lowercased, so compare on the same footing.
+		distance := levenshtein.Distance(typed, asciiLower(attr.Name), nil)
 		if distance < minDistance && distance <= len(typed)/2 {
 			bestMatch = attr.Name
 			minDistance = distance

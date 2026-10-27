@@ -20,8 +20,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 
+	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/manifest"
 	mcpTypes "bennypowers.dev/cem/mcp/types"
 	"bennypowers.dev/cem/validate/markup"
@@ -231,7 +231,7 @@ func applyMarkupIssues(data *ValidationTemplateData, issues []markup.Issue) {
 		default:
 			// A rule added to validate/markup without a mapping here would
 			// otherwise disappear from the tool output silently.
-			slog.Warn("unhandled markup rule in validate_html output", "rule", issue.Rule)
+			logging.Warning("unhandled markup rule in validate_html output: %s", issue.Rule)
 		}
 	}
 }
