@@ -46,10 +46,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 //	}
 //
 //	result := breaking.Compare(&base, &head, breaking.Options{})
+//	if err := breaking.PrintResult(os.Stdout, result, breaking.DisplayOptions{Format: "text"}); err != nil {
+//		return err
+//	}
 //	if result.Breaking > 0 {
-//		return breaking.PrintResult(os.Stdout, result, breaking.DisplayOptions{Format: "text"})
+//		return fmt.Errorf("%d breaking change(s) detected", result.Breaking)
 //	}
 //
-// PrintResult supports "text", "markdown", and "json" output. The Result
+// PrintResult supports "text", "markdown", and "json" output. It returns a nil
+// error when it successfully writes the report, even when changes exist, so
+// callers decide whether breaking changes are a failure. The Result
 // value is also directly inspectable through its Changes field.
 package breaking

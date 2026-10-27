@@ -25,8 +25,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 // https://github.com/webcomponents/custom-elements-manifest. Properties that
 // are not part of the schema are ignored while decoding and are not preserved,
 // so a manifest that adds unrecognized properties still decodes. Unknown
-// declaration, export, and class member kinds are not supported and cause a
-// decoding error.
+// top-level declaration and export kinds cause a decoding error, while unknown
+// class member kinds may be discarded.
 //
 // # External use
 //
