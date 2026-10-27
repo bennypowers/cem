@@ -26,6 +26,29 @@ import (
 )
 
 func TestInternalShimDelegatesToPublicPackage(t *testing.T) {
+	// Inline assertions: this test compares scalar metadata strings and a
+	// small map, where a golden file would only duplicate the expected value.
+	//
+	// Use distinctive values so a shim that returns defaults instead of
+	// delegating cannot pass.
+	oldVersion := publicversion.Version
+	oldCommit := publicversion.GitCommit
+	oldTag := publicversion.GitTag
+	oldBuildTime := publicversion.BuildTime
+	oldDirty := publicversion.GitDirty
+	publicversion.Version = "v9.9.9-test"
+	publicversion.GitCommit = "deadbeef"
+	publicversion.GitTag = "v9.9.9-test"
+	publicversion.BuildTime = "2026-10-27T00:00:00Z"
+	publicversion.GitDirty = "dirty"
+	t.Cleanup(func() {
+		publicversion.Version = oldVersion
+		publicversion.GitCommit = oldCommit
+		publicversion.GitTag = oldTag
+		publicversion.BuildTime = oldBuildTime
+		publicversion.GitDirty = oldDirty
+	})
+
 	if got, want := internalversion.GetVersion(), publicversion.Get(); got != want {
 		t.Errorf("GetVersion() = %q, want %q", got, want)
 	}

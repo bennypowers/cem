@@ -50,6 +50,8 @@ func setBuildState(t *testing.T, v, commit, tag, buildTime, dirty string) {
 	})
 }
 
+// Inline assertions: this test compares a scalar version string, where a
+// golden file would only duplicate the expected value.
 func TestGetDefaultsToDev(t *testing.T) {
 	setBuildState(t, "dev", "unknown", "unknown", "unknown", "")
 
@@ -58,6 +60,8 @@ func TestGetDefaultsToDev(t *testing.T) {
 	}
 }
 
+// Inline assertions: this test compares a scalar version string, where a
+// golden file would only duplicate the expected value.
 func TestGetUsesVersionOverride(t *testing.T) {
 	setBuildState(t, "v1.2.3", "abcdef1", "v1.2.3", "2026-01-02T03:04:05Z", "")
 
@@ -66,6 +70,8 @@ func TestGetUsesVersionOverride(t *testing.T) {
 	}
 }
 
+// Inline assertions: this table compares scalar version strings, where a
+// golden file would only duplicate the expected values.
 func TestGetCombinesGitMetadata(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -106,6 +112,8 @@ func TestGetCombinesGitMetadata(t *testing.T) {
 	}
 }
 
+// Inline assertions: this test compares a scalar version string, where a
+// golden file would only duplicate the expected value.
 func TestFullIncludesCommit(t *testing.T) {
 	setBuildState(t, "v1.2.3", "abcdef123456", "v1.2.3", "unknown", "")
 
@@ -114,6 +122,8 @@ func TestFullIncludesCommit(t *testing.T) {
 	}
 }
 
+// Inline assertions: this test compares a scalar version string, where a
+// golden file would only duplicate the expected value.
 func TestFullWithoutCommit(t *testing.T) {
 	setBuildState(t, "v1.2.3", "unknown", "v1.2.3", "unknown", "")
 
@@ -122,6 +132,8 @@ func TestFullWithoutCommit(t *testing.T) {
 	}
 }
 
+// Inline assertions: this test compares a small map of scalar metadata, where
+// a golden file would only duplicate the expected values.
 func TestInfoReportsBuildMetadata(t *testing.T) {
 	setBuildState(t, "v1.2.3", "abcdef123456", "v1.2.3", "2026-01-02T03:04:05Z", "")
 
