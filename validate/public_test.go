@@ -136,6 +136,9 @@ func (m *memoryFS) Open(name string) (fs.File, error) {
 
 // TestCustomFileSystemImplementation validates a manifest through a
 // from-scratch FileSystem implementation and returns a custom TempFile.
+//
+// Inline assertions: this test checks that a hand-written interface
+// implementation works, where a golden file would not express the contract.
 func TestCustomFileSystemImplementation(t *testing.T) {
 	fsys := &memoryFS{files: map[string][]byte{
 		"custom-elements.json": []byte(`{"schemaVersion":"2.1.0","modules":[]}`),
@@ -170,6 +173,9 @@ func TestCustomFileSystemImplementation(t *testing.T) {
 // package. It deliberately imports only the public validate package and the
 // standard library, so it fails to compile if an internal type leaks into the
 // public example.
+//
+// Inline assertions: this test checks the public success contract on a
+// temporary manifest, where a golden file would add indirection only.
 func TestPublicValidateAPI(t *testing.T) {
 	fsys := validate.NewOSFileSystem()
 	manifestPath := filepath.Join(t.TempDir(), "custom-elements.json")

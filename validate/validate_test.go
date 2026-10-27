@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package validate
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -231,6 +232,11 @@ func testGetSchemaUpgrade210(t *testing.T, fsys platform.FileSystem) {
 		// to the same embedded schema as the unprefixed form.
 		{"v2.1.0", "2.1.1-speculative", true},
 		{"v2.1.1-speculative", "2.1.1-speculative", true},
+		// Shortened and build-metadata spellings are canonicalized before the
+		// embedded lookup, so they resolve without a network request.
+		{"2.1", "2.1.1-speculative", true},
+		{"v2.1", "2.1.1-speculative", true},
+		{"v2.1.0+build.5", "2.1.1-speculative", true},
 		{"v2.0.0", "2.0.0", false},
 		{"2.0.0", "2.0.0", false},
 		{"1.0.0", "1.0.0", false},
@@ -244,9 +250,15 @@ func testGetSchemaUpgrade210(t *testing.T, fsys platform.FileSystem) {
 			}
 
 			if !tc.checkTitle {
-				var schema map[string]any
-				if err := json.Unmarshal(schemaData, &schema); err != nil {
-					t.Fatalf("Failed to parse schema JSON: %v", err)
+				// These schemas have no title, so compare the bytes against the
+				// embedded schema to prove the intended file was returned rather
+				// than a fetched one.
+				want, err := getEmbeddedSchema(tc.expected)
+				if err != nil {
+					t.Fatalf("getEmbeddedSchema(%q): %v", tc.expected, err)
+				}
+				if !bytes.Equal(schemaData, want) {
+					t.Errorf("getSchema(%q) returned a different schema than %q", tc.version, tc.expected)
 				}
 				return
 			}
@@ -284,6 +296,9 @@ func TestGetSchemaUpgrade210(t *testing.T) {
 // Hardening of pre-existing behavior: schemaVersion was previously passed
 // unchecked into embedded-schema and cache path construction. Unsafe values
 // must be rejected before they can become path components.
+//
+// Inline assertions: this test checks rejection of scalar version strings,
+// where a golden file would only duplicate the input list.
 func TestGetSchemaRejectsUnsafeVersions(t *testing.T) {
 	fsys := platform.NewMapFileSystem(nil)
 	versions := []string{
@@ -291,8 +306,9 @@ func TestGetSchemaRejectsUnsafeVersions(t *testing.T) {
 		"/tmp/x",
 		`..\..\..\..\tmp\x`,
 		"2.1.0/../../x",
-		// A doubled prefix is not a semantic version and must stay rejected.
-		"vv2.1.0",
+		// URL and query delimiters must not reach the fetch path.
+		"2.1.0?x",
+		"2.1.0 x",
 	}
 
 	for _, version := range versions {
@@ -308,9 +324,100 @@ func TestGetSchemaRejectsUnsafeVersions(t *testing.T) {
 	}
 }
 
+// Inline assertions: this test checks classification of scalar version
+// strings, where a golden file would only duplicate the input/output table.
+func TestSchemaVersionClassification(t *testing.T) {
+	canonical := []struct {
+		version string
+		want    string
+	}{
+		{"2.1.0", "2.1.0"},
+		{"v2.1.0", "2.1.0"},
+		{"2.1", "2.1.0"},
+		{"v2.1", "2.1.0"},
+		{"v2.1.0+build.5", "2.1.0"},
+		{"2.1.1-speculative", "2.1.1-speculative"},
+	}
+	for _, tc := range canonical {
+		got, ok := canonicalSchemaVersion(tc.version)
+		if !ok || got != tc.want {
+			t.Errorf("canonicalSchemaVersion(%q) = (%q, %v), want (%q, true)", tc.version, got, ok, tc.want)
+		}
+	}
+
+	for _, version := range []string{"latest", "^2.0.0", "2.x", "next"} {
+		if got, ok := canonicalSchemaVersion(version); ok {
+			t.Errorf("canonicalSchemaVersion(%q) = (%q, true), want not a semantic version", version, got)
+		}
+	}
+
+	safe := []string{"2.1.0", "v2.1.0", "latest", "^2.0.0", "2.x"}
+	for _, version := range safe {
+		if !isPathSafeSchemaVersion(version) {
+			t.Errorf("isPathSafeSchemaVersion(%q) = false, want true", version)
+		}
+	}
+
+	unsafe := []string{"", "../../x", "/tmp/x", `..\x`, "2.1.0/../../x", "2.1.0?x", "2.1.0 x"}
+	for _, version := range unsafe {
+		if isPathSafeSchemaVersion(version) {
+			t.Errorf("isPathSafeSchemaVersion(%q) = true, want false", version)
+		}
+	}
+}
+
+// TestValidateAcceptsPathSafeNonSemverVersionFromCache verifies that a
+// path-safe non-semver schemaVersion, such as a dist-tag, still resolves
+// through the schema cache instead of being rejected as unsafe.
+func TestValidateAcceptsPathSafeNonSemverVersionFromCache(t *testing.T) {
+	// Inline assertions: this test checks a boolean result and one warning,
+	// where a golden file would obscure the cache setup under test.
+	oldCacheHome := xdg.CacheHome
+	xdg.CacheHome = t.TempDir()
+	t.Cleanup(func() { xdg.CacheHome = oldCacheHome })
+
+	fsys := platform.NewMapFileSystem(nil)
+	cacheDir, err := xdg.CacheFile(filepath.Join("cem", "schemas"))
+	if err != nil {
+		t.Fatalf("xdg.CacheFile: %v", err)
+	}
+	schemaData, err := getEmbeddedSchema("2.1.1-speculative")
+	if err != nil {
+		t.Fatalf("getEmbeddedSchema: %v", err)
+	}
+	if err := fsys.WriteFile(filepath.Join(cacheDir, "latest.json"), schemaData, 0o644); err != nil {
+		t.Fatalf("writing cached schema: %v", err)
+	}
+
+	pipeline, err := NewValidationPipeline(fsys, []byte(`{"schemaVersion":"latest","modules":[]}`))
+	if err != nil {
+		t.Fatalf("NewValidationPipeline: %v", err)
+	}
+	result, err := pipeline.Validate(ValidationOptions{})
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if !result.IsValid {
+		t.Errorf("Validate rejected a dist-tag version that resolved from cache: %+v", result.Errors)
+	}
+
+	foundWarning := false
+	for _, warning := range result.Warnings {
+		if warning.ID == "schema-version-invalid" {
+			foundWarning = true
+		}
+	}
+	if !foundWarning {
+		t.Errorf("missing schema-version-invalid warning: %+v", result.Warnings)
+	}
+}
+
 // Hardening of pre-existing behavior: an unsafe schemaVersion still produces
 // the invalid-version warning, but validation falls back to an embedded schema
 // instead of using the raw value as a path component.
+//
+// Inline assertions: this test checks the error and warning IDs for scalar
+// version strings, where a golden file would add indirection only.
 func TestValidateFallsBackForUnsafeSchemaVersion(t *testing.T) {
 	versions := []string{
 		"../../../../tmp/x",

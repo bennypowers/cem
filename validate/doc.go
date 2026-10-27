@@ -77,7 +77,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 // import an internal package. For finer control, build a ValidationPipeline
 // with NewValidationPipeline and call its Validate method directly.
 //
-// Warning rules can be disabled by ID with ValidationOptions.DisabledRules.
-// Use PrintValidationResult for human-readable or JSON output, or inspect
-// ValidationResult.Errors and ValidationResult.Warnings directly.
+// Warning rules for manifest content can be disabled by ID with
+// ValidationOptions.DisabledRules. Schema-version warnings are always
+// reported, independent of IncludeWarnings and DisabledRules, because they
+// describe the validation itself. Use PrintValidationResult for human-readable
+// or JSON output, or inspect ValidationResult.Errors and
+// ValidationResult.Warnings directly.
 package validate

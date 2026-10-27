@@ -147,10 +147,10 @@ func (p *ValidationPipeline) Validate(options ValidationOptions) (*ValidationRes
 }
 
 func (p *ValidationPipeline) checkSchemaVersion(result *ValidationResult) error {
-	// Validate schema version format. An unsafe or invalid version must not be
-	// used as a path component later, so warn and fall back to an embedded
-	// schema during validation.
-	if !isSafeSchemaVersion(p.schemaVersion) {
+	// Validate schema version format. A value that is not a semantic version
+	// gets a warning; validateSchema separately decides whether it is unsafe
+	// to use as a path component.
+	if !isSemverSchemaVersion(p.schemaVersion) {
 		result.Warnings = append(result.Warnings, ValidationWarning{
 			ID:       "schema-version-invalid",
 			Message:  fmt.Sprintf("schemaVersion is not a valid semantic version: %s", p.schemaVersion),
@@ -169,43 +169,43 @@ func (p *ValidationPipeline) checkSchemaVersion(result *ValidationResult) error 
 	return nil
 }
 
-// normalizeSchemaVersion removes one optional leading "v" and reports whether
-// the result is a valid semantic version that is safe to use as a path
-// component or URL path segment. Both "2.1.0" and "v2.1.0" are accepted, but a
-// malformed spelling such as "vv2.1.0" is not.
-func normalizeSchemaVersion(version string) (string, bool) {
-	normalized := strings.TrimPrefix(version, "v")
-	if normalized == "" || strings.ContainsAny(normalized, `/\`) || strings.Contains(normalized, "..") {
-		return "", false
+// speculativeSchemaVersion is the embedded schema used for the known-broken
+// 2.1.0 and 2.1.1 versions and for values that are unsafe as path components.
+const speculativeSchemaVersion = "2.1.1-speculative"
+
+// isPathSafeSchemaVersion reports whether version can be used as a path
+// component or URL path segment. It permits dist-tags and semver ranges but
+// rejects path separators, traversal segments, whitespace, and URL delimiters.
+func isPathSafeSchemaVersion(version string) bool {
+	if version == "" || strings.ContainsAny(version, `/\`) || strings.Contains(version, "..") {
+		return false
 	}
+	return !strings.ContainsAny(version, " \t\r\n?#%")
+}
+
+// canonicalSchemaVersion returns the canonical semantic version for version,
+// accepting an optional leading "v" and shortened spellings. It reports false
+// when version is not a semantic version, such as a dist-tag or range.
+func canonicalSchemaVersion(version string) (string, bool) {
+	normalized := strings.TrimPrefix(version, "v")
 	if !semver.IsValid("v" + normalized) {
 		return "", false
 	}
-	return normalized, true
+	return strings.TrimPrefix(semver.Canonical("v"+normalized), "v"), true
 }
 
-// isSafeSchemaVersion reports whether version is a valid semantic version and
-// is safe to use as a path component or URL path segment.
-func isSafeSchemaVersion(version string) bool {
-	_, ok := normalizeSchemaVersion(version)
+// isSemverSchemaVersion reports whether version is a semantic version with an
+// optional leading "v".
+func isSemverSchemaVersion(version string) bool {
+	_, ok := canonicalSchemaVersion(version)
 	return ok
-}
-
-// canonicalSemver returns the canonical form of a semantic version that may
-// carry an optional leading "v".
-func canonicalSemver(version string) string {
-	if !strings.HasPrefix(version, "v") {
-		version = "v" + version
-	}
-	return semver.Canonical(version)
 }
 
 // isSemverLessThan compares two semantic version strings
 func isSemverLessThan(version1, version2 string) bool {
-	return semver.Compare(
-		canonicalSemver(version1),
-		canonicalSemver(version2),
-	) < 0
+	canonical1, _ := canonicalSchemaVersion(version1)
+	canonical2, _ := canonicalSchemaVersion(version2)
+	return semver.Compare("v"+canonical1, "v"+canonical2) < 0
 }
 
 func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
@@ -213,9 +213,9 @@ func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
 	// cache path construction. Invalid values keep their warning from
 	// checkSchemaVersion and validation continues against an embedded schema.
 	schemaVersion := p.schemaVersion
-	unsafeSchemaVersion := !isSafeSchemaVersion(schemaVersion)
+	unsafeSchemaVersion := !isPathSafeSchemaVersion(schemaVersion)
 	if unsafeSchemaVersion {
-		schemaVersion = "2.1.1-speculative"
+		schemaVersion = speculativeSchemaVersion
 	}
 	schemaData, err := getSchema(p.fsys, schemaVersion)
 	if err != nil {
@@ -258,7 +258,7 @@ func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
 	if unsafeSchemaVersion {
 		result.Errors = append([]ValidationError{{
 			ID:      "schema-version-invalid",
-			Message: fmt.Sprintf("schemaVersion %q is unsafe and was rejected; validation used the embedded 2.1.1-speculative schema instead", p.schemaVersion),
+			Message: fmt.Sprintf("schemaVersion %q is unsafe and was rejected; validation used the embedded %s schema instead", p.schemaVersion, speculativeSchemaVersion),
 		}}, result.Errors...)
 		result.IsValid = false
 	}
@@ -415,27 +415,31 @@ func isWarningDisabled(warning ValidationWarning, disabledRules []string) bool {
 // GetSchema returns the JSON schema for a given version, using embedded schemas
 // and falling back to fetching from external sources if needed.
 //
-// version must be a semantic version, optionally with a leading "v". Other
-// values are rejected so caller-controlled input cannot be used as a
-// filesystem path component or URL path segment.
+// version must not contain path separators, traversal segments, whitespace, or
+// URL delimiters, so caller-controlled input cannot escape the embedded
+// schema, cache, or fetch paths. Semantic versions, with an optional leading
+// "v", are canonicalized and resolved against the embedded schemas first.
+// Other path-safe values, such as dist-tags, fall through to the cache and
+// fetch.
 func GetSchema(fsys FileSystem, version string) ([]byte, error) {
 	return getSchema(fsys, version)
 }
 
 func getSchema(fsys FileSystem, version string) ([]byte, error) {
 	// Hardening: GetSchema can be called directly with caller-controlled input.
-	// Reject values that are not valid semantic versions or that could escape a
-	// path when used as a cache filename. Normalizing the optional leading "v"
-	// keeps both "2.1.0" and "v2.1.0" resolving to the same embedded schema.
-	normalized, ok := normalizeSchemaVersion(version)
-	if !ok {
-		return nil, fmt.Errorf("invalid schema version %q: must be a semantic version", version)
+	// Reject values that could escape a path when used as a cache filename or
+	// URL segment. Canonicalizing valid semantic versions keeps spellings such
+	// as "v2.1" and "v2.1.0+build" resolving to the same embedded schema.
+	if !isPathSafeSchemaVersion(version) {
+		return nil, fmt.Errorf("invalid schema version %q: must not contain path separators, traversal segments, or URL delimiters", version)
 	}
-	version = normalized
+	if canonical, ok := canonicalSchemaVersion(version); ok {
+		version = canonical
+	}
 
 	// Upgrade known problematic versions to speculative schema first
 	if version == "2.1.0" || version == "2.1.1" {
-		return getEmbeddedSchema("2.1.1-speculative")
+		return getEmbeddedSchema(speculativeSchemaVersion)
 	}
 
 	// Try to use embedded schema
