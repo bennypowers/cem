@@ -47,6 +47,10 @@ func TestSplitTopLevelUnion(t *testing.T) {
 		{"deeply nested", "Map<string, Set<'a' | 'b'>>", []string{"Map<string, Set<'a' | 'b'>>"}},
 		{"whitespace preserved", " 'a'  |  'b' ", []string{"'a'", "'b'"}},
 		{"template literal passthrough", "`${Side}-${Scale}`", []string{"`${Side}-${Scale}`"}},
+		{"nested template literal passthrough", "`${`a|b`}`", []string{"`${`a|b`}`"}},
+		{"template substitution union", "`${A | B}`", []string{"`${A | B}`"}},
+		{"nested template with union", "`${`a|b`}` | null", []string{"`${`a|b`}`", "null"}},
+		{"quoted pipe in substitution", "`${'a|b'}` | C", []string{"`${'a|b'}`", "C"}},
 		{"Map generic with null", "Map<string, string> | null", []string{"Map<string, string>", "null"}},
 
 		// These cases mirror tree-sitter's parse result so that callers moving
@@ -67,6 +71,8 @@ func TestSplitTopLevelUnion(t *testing.T) {
 		{"intersection members", "A & B | C", []string{"A & B", "C"}},
 		{"object type member", "{ a: string } | null", []string{"{ a: string }", "null"}},
 		{"comment stripped", "// comment\nA | B", []string{"A", "B"}},
+		{"line comment between members", "A // note\n| B", []string{"A", "B"}},
+		{"block comment between members", "A /* note */ | B", []string{"A", "B"}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

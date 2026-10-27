@@ -61,6 +61,10 @@ func TestPureSplitTopLevelUnionMatchesTreeSitter(t *testing.T) {
 		"| 'a' | 'b'",
 		"'a' | 'b' |",
 		"'a' | (",
+		"`${`a|b`}`",
+		"`${A | B}`",
+		"`${`a|b`}` | null",
+		"`${'a|b'}` | C",
 	}
 	for _, typeText := range types {
 		t.Run(typeText, func(t *testing.T) {
@@ -69,4 +73,13 @@ func TestPureSplitTopLevelUnionMatchesTreeSitter(t *testing.T) {
 			assert.Equal(t, want, got)
 		})
 	}
+}
+
+// TestCommentMembersAreIntentionalDivergence documents that the pure splitter
+// strips comments between union members, while tree-sitter exposes them as
+// members. Comments are not types, so the pure result is the intended one.
+func TestCommentMembersAreIntentionalDivergence(t *testing.T) {
+	const typeText = "A // note\n| B"
+	assert.Equal(t, []string{"A", "B"}, typesplit.SplitTopLevelUnion(typeText))
+	assert.Equal(t, []string{"A", "// note", "B"}, SplitTopLevelUnion(typeText))
 }

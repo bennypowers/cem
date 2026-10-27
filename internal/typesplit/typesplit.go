@@ -313,15 +313,71 @@ func skipQuoted(s string, start int, quote byte) (int, bool) {
 	return len(s), false
 }
 
-// skipTemplate returns the offset just past the closing backtick. Pipes inside
-// template substitutions are not top-level union separators either way.
+// skipTemplate returns the offset just past the closing backtick. It tracks
+// ${...} substitutions, including nested template literals, quoted strings, and
+// braces inside substitution type expressions.
 func skipTemplate(s string, start int) (int, bool) {
-	for i := start + 1; i < len(s); i++ {
-		switch s[i] {
-		case '\\':
-			i++
-		case '`':
+	for i := start + 1; i < len(s); {
+		switch {
+		case s[i] == '\\':
+			i += 2
+		case s[i] == '`':
 			return i + 1, true
+		case s[i] == '$' && i+1 < len(s) && s[i+1] == '{':
+			end, ok := skipTemplateSubstitution(s, i+2)
+			if !ok {
+				return len(s), false
+			}
+			i = end
+		default:
+			i++
+		}
+	}
+	return len(s), false
+}
+
+// skipTemplateSubstitution returns the offset just past the '}' that closes a
+// ${...} substitution. start is the offset immediately after "${".
+func skipTemplateSubstitution(s string, start int) (int, bool) {
+	depth := 1
+	for i := start; i < len(s); {
+		switch {
+		case s[i] == '\'' || s[i] == '"':
+			end, ok := skipQuoted(s, i, s[i])
+			if !ok {
+				return len(s), false
+			}
+			i = end
+		case s[i] == '`':
+			end, ok := skipTemplate(s, i)
+			if !ok {
+				return len(s), false
+			}
+			i = end
+		case s[i] == '/' && i+1 < len(s) && s[i+1] == '/':
+			for i < len(s) && s[i] != '\n' {
+				i++
+			}
+		case s[i] == '/' && i+1 < len(s) && s[i+1] == '*':
+			i += 2
+			for i+1 < len(s) && (s[i] != '*' || s[i+1] != '/') {
+				i++
+			}
+			if i+1 >= len(s) {
+				return len(s), false
+			}
+			i += 2
+		case s[i] == '{':
+			depth++
+			i++
+		case s[i] == '}':
+			depth--
+			i++
+			if depth == 0 {
+				return i, true
+			}
+		default:
+			i++
 		}
 	}
 	return len(s), false
