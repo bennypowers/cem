@@ -59,6 +59,14 @@ type parsedAttribute struct {
 	nameDynamic bool
 }
 
+// parseContext carries the template ranges the parser needs to classify
+// tokens. dynamic covers all template syntax; expressions covers only output
+// expressions, which can compose a tag or attribute name.
+type parseContext struct {
+	dynamic     []ts.Range
+	expressions []ts.Range
+}
+
 func formatFamily(format string) (formatFamilyValue, error) {
 	switch strings.ToLower(strings.TrimSpace(format)) {
 	case "", "html", "htm":
@@ -85,8 +93,8 @@ func parseElements(source string, family formatFamilyValue) ([]*elementNode, err
 	defer htmllang.ReturnParser(parser)
 
 	var (
-		dynamicRanges []ts.Range
-		masked        = []byte(source)
+		ctx    parseContext
+		masked = []byte(source)
 	)
 	switch family {
 	case formatJinja, formatLiquid:
@@ -103,12 +111,15 @@ func parseElements(source string, family formatFamilyValue) ([]*elementNode, err
 		// template value such as variant={{ v }} into a dangling variant= and
 		// can drop the whole tag. Masking preserves byte length and line
 		// breaks, so node positions still index the original source.
+		ctx.dynamic = dynamic
+		ctx.expressions = jinjaExpressionRanges(source)
 		masked = maskOutside(source, textRanges)
-		dynamicRanges = dynamic
 	case formatHandlebars:
-		dynamicRanges = handlebarsRanges(source)
-		if len(dynamicRanges) > 0 {
-			masked = maskSpans(source, dynamicRanges)
+		masks, expressions := handlebarsRanges(source)
+		ctx.dynamic = masks
+		ctx.expressions = expressions
+		if len(masks) > 0 {
+			masked = maskSpans(source, masks)
 		}
 	}
 
@@ -120,13 +131,13 @@ func parseElements(source string, family formatFamilyValue) ([]*elementNode, err
 
 	// Node byte ranges are identical in the masked and original source, so
 	// slice names and values from the original text.
-	return elementsFromNode(tree.RootNode(), []byte(source), dynamicRanges, false), nil
+	return elementsFromNode(tree.RootNode(), []byte(source), ctx, false), nil
 }
 
 // elementsFromNode walks structural nodes. When skipTags is set, the node is
 // an element's own tag container, so its start/end tags are not emitted as
 // separate elements. ERROR nodes that wrap a start_tag are still traversed.
-func elementsFromNode(node *ts.Node, source []byte, dynamicRanges []ts.Range, skipTags bool) []*elementNode {
+func elementsFromNode(node *ts.Node, source []byte, ctx parseContext, skipTags bool) []*elementNode {
 	var elements []*elementNode
 	cursor := node.Walk()
 	defer cursor.Close()
@@ -135,31 +146,31 @@ func elementsFromNode(node *ts.Node, source []byte, dynamicRanges []ts.Range, sk
 		child := cursor.Node()
 		switch child.Kind() {
 		case "element":
-			if el := parseTag(child, source, dynamicRanges); el != nil {
+			if el := parseTag(child, source, ctx); el != nil {
 				if !isTextContentElement(el.tagName) {
-					el.children = elementsFromNode(child, source, dynamicRanges, true)
+					el.children = elementsFromNode(child, source, ctx, true)
 				}
 				elements = append(elements, el)
 			} else {
-				elements = append(elements, elementsFromNode(child, source, dynamicRanges, false)...)
+				elements = append(elements, elementsFromNode(child, source, ctx, false)...)
 			}
 		case "self_closing_tag", "start_tag":
 			if skipTags {
 				continue
 			}
-			if el := parseTag(child, source, dynamicRanges); el != nil {
+			if el := parseTag(child, source, ctx); el != nil {
 				elements = append(elements, el)
 			}
 		case "end_tag":
 			// End tags never yield elements, in either traversal mode.
 		default:
-			elements = append(elements, elementsFromNode(child, source, dynamicRanges, false)...)
+			elements = append(elements, elementsFromNode(child, source, ctx, false)...)
 		}
 	}
 	return elements
 }
 
-func parseTag(node *ts.Node, source []byte, dynamicRanges []ts.Range) *elementNode {
+func parseTag(node *ts.Node, source []byte, ctx parseContext) *elementNode {
 	startTag := findChildKind(node, "start_tag")
 	if startTag == nil {
 		// Self-closing tags are nested as element -> self_closing_tag.
@@ -178,7 +189,8 @@ func parseTag(node *ts.Node, source []byte, dynamicRanges []ts.Range) *elementNo
 
 	el := &elementNode{
 		tagName: asciiLower(string(source[tagName.StartByte():tagName.EndByte()])),
-		dynamic: overlapsOrAdjacent(dynamicRanges, tagName.StartByte(), tagName.EndByte()),
+		dynamic: overlapsAny(ctx.dynamic, tagName.StartByte(), tagName.EndByte()) ||
+			adjacentToAny(ctx.expressions, tagName.StartByte(), tagName.EndByte()),
 	}
 	el.line, el.column = positionFor(tagName)
 
@@ -202,12 +214,13 @@ func parseTag(node *ts.Node, source []byte, dynamicRanges []ts.Range) *elementNo
 		name := asciiLower(string(source[nameNode.StartByte():nameNode.EndByte()]))
 		line, column := positionFor(nameNode)
 		attr := parsedAttribute{
-			name:        name,
-			value:       attributeValue(child, source),
-			line:        line,
-			column:      column,
-			dynamic:     overlapsOrAdjacent(dynamicRanges, child.StartByte(), child.EndByte()),
-			nameDynamic: overlapsOrAdjacent(dynamicRanges, nameNode.StartByte(), nameNode.EndByte()),
+			name:    name,
+			value:   attributeValue(child, source),
+			line:    line,
+			column:  column,
+			dynamic: overlapsAny(ctx.dynamic, child.StartByte(), child.EndByte()),
+			nameDynamic: overlapsAny(ctx.dynamic, nameNode.StartByte(), nameNode.EndByte()) ||
+				adjacentToAny(ctx.expressions, nameNode.StartByte(), nameNode.EndByte()),
 		}
 
 		if _, ok := index[name]; ok {
@@ -328,7 +341,7 @@ func isLowerDigit(c byte) bool {
 // element. This mirrors the HTML parsing rules browsers apply.
 func isTextContentElement(tagName string) bool {
 	switch tagName {
-	case "iframe", "noembed", "noframes",
+	case "iframe", "noembed", "noframes", "plaintext",
 		"script", "style", "textarea", "title", "xmp":
 		return true
 	}
@@ -392,13 +405,21 @@ func analyzeJinjaRanges(source string, liquid bool) (text, dynamic []ts.Range, e
 	return text, dynamic, nil
 }
 
-// handlebarsRanges returns the byte ranges occupied by Handlebars expressions
-// and comments. Masking them before the HTML parse keeps block helpers such as
-// {{#if}} and helper string arguments from becoming attributes or elements.
-// Unterminated expressions are left as HTML so later markup is still checked.
-func handlebarsRanges(source string) []ts.Range {
+// handlebarsRanges returns the ranges occupied by Handlebars expressions and
+// comments, plus the subset that are output expressions. Masking them before
+// the HTML parse keeps block helpers and helper string arguments from becoming
+// attributes or elements. Unterminated expressions are left as text, and
+// scanning resumes so later expressions are still masked.
+func handlebarsRanges(source string) (masks, expressions []ts.Range) {
 	tracker := &pointTracker{source: []byte(source)}
-	var ranges []ts.Range
+
+	add := func(start, end int, expression bool) {
+		r := tracker.between(start, end)
+		masks = append(masks, r)
+		if expression {
+			expressions = append(expressions, r)
+		}
+	}
 
 	for i := 0; i+1 < len(source); {
 		rel := strings.Index(source[i:], "{{")
@@ -416,22 +437,22 @@ func handlebarsRanges(source string) []ts.Range {
 		// Handlebars comments contain arbitrary text, so they do not follow
 		// expression quoting rules.
 		if strings.HasPrefix(source[start:], "{{!--") {
-			relEnd := strings.Index(source[start+6:], "--}}")
+			relEnd := strings.Index(source[start+5:], "--}}")
 			if relEnd < 0 {
-				break
+				continue
 			}
-			end := start + 6 + relEnd + 4
-			ranges = append(ranges, tracker.between(start, end))
+			end := start + 5 + relEnd + 4
+			add(start, end, false)
 			i = end
 			continue
 		}
 		if strings.HasPrefix(source[start:], "{{!") {
 			relEnd := strings.Index(source[start+3:], "}}")
 			if relEnd < 0 {
-				break
+				continue
 			}
 			end := start + 3 + relEnd + 2
-			ranges = append(ranges, tracker.between(start, end))
+			add(start, end, false)
 			i = end
 			continue
 		}
@@ -470,12 +491,29 @@ func handlebarsRanges(source string) []ts.Range {
 			j++
 		}
 		if end < 0 {
-			break
+			continue
 		}
-		ranges = append(ranges, tracker.between(start, end))
+		add(start, end, !handlebarsIsBlock(source, start, width))
 		i = end
 	}
-	return ranges
+	return masks, expressions
+}
+
+// handlebarsIsBlock reports whether a mustache is a block helper, partial, or
+// else branch. These separate tokens instead of composing a name.
+func handlebarsIsBlock(source string, start, width int) bool {
+	j := start + width
+	for j < len(source) && isHTMLSpace(source[j]) {
+		j++
+	}
+	if j >= len(source) {
+		return false
+	}
+	switch source[j] {
+	case '#', '/', '^', '>', '!':
+		return true
+	}
+	return strings.HasPrefix(source[j:], "else")
 }
 
 // isEscaped reports whether the byte at start follows an odd number of
@@ -567,77 +605,120 @@ func nextLiquidTag(source string, from int) (start, end int, name string, ok boo
 // placeholder. Byte length and line breaks are preserved so tree-sitter node
 // ranges still index the original source.
 func maskOutside(source string, keep []ts.Range) []byte {
-	masked := []byte(source)
+	var gaps []ts.Range
 	prev := 0
 	for _, r := range keep {
-		maskBytes(masked, source, prev, int(r.StartByte))
-		prev = int(r.EndByte)
+		if int(r.StartByte) > prev {
+			gaps = append(gaps, ts.Range{StartByte: uint(prev), EndByte: r.StartByte})
+		}
+		if int(r.EndByte) > prev {
+			prev = int(r.EndByte)
+		}
 	}
-	maskBytes(masked, source, prev, len(source))
-	return masked
+	if prev < len(source) {
+		gaps = append(gaps, ts.Range{StartByte: uint(prev), EndByte: uint(len(source))})
+	}
+	return maskSpans(source, gaps)
 }
 
-// maskSpans replaces the given spans with a context-aware placeholder.
+// maskSpans replaces the given spans with a context-aware placeholder in one
+// forward pass. A space is inert between attributes and inside quoted values;
+// an unquoted value or attribute-name position needs value characters so the
+// mask does not leave a dangling equals sign or split the tag. Line breaks are
+// kept so positions stay aligned with the original.
 func maskSpans(source string, spans []ts.Range) []byte {
 	masked := []byte(source)
+	var state maskState
+	prev := 0
+
 	for _, span := range spans {
-		maskBytes(masked, source, int(span.StartByte), int(span.EndByte))
+		start, end := int(span.StartByte), int(span.EndByte)
+		for i := prev; i < start && i < len(source); i++ {
+			state.step(source[i])
+		}
+		placeholder := state.placeholder(source, end)
+		for i := start; i < end && i < len(source); i++ {
+			switch source[i] {
+			case '\n', '\r':
+				// Preserve line breaks.
+			default:
+				masked[i] = placeholder
+			}
+		}
+		prev = end
+	}
+	for i := prev; i < len(source); i++ {
+		state.step(source[i])
 	}
 	return masked
 }
 
-// maskBytes fills a template span with a placeholder. A space is inert between
-// attributes and inside quoted values; an unquoted value needs value
-// characters so the mask does not leave a dangling equals sign or split the
-// tag. Line breaks are kept so positions stay aligned with the original.
-func maskBytes(masked []byte, source string, start, end int) {
-	if start >= end {
+// maskState tracks HTML tag and attribute-value context in one pass.
+type maskState struct {
+	inTag       bool
+	quote       byte
+	afterEquals bool
+	unquoted    bool
+}
+
+func (s *maskState) step(c byte) {
+	if !s.inTag {
+		if c == '<' {
+			s.inTag = true
+			s.quote = 0
+			s.afterEquals = false
+			s.unquoted = false
+		}
 		return
 	}
-	placeholder := placeholderFor(source, start)
-	for i := start; i < end; i++ {
-		switch source[i] {
-		case '\n', '\r':
-			// Preserve line breaks.
-		default:
-			masked[i] = placeholder
-		}
-	}
-}
 
-func placeholderFor(source string, start int) byte {
-	prev := start - 1
-	for prev >= 0 && isHTMLSpace(source[prev]) {
-		prev--
+	if s.quote != 0 {
+		if c == s.quote {
+			s.quote = 0
+			s.afterEquals = false
+			s.unquoted = false
+		}
+		return
 	}
-	if prev < 0 {
-		return ' '
-	}
-	switch source[prev] {
+
+	switch c {
+	case '>':
+		s.inTag = false
+		s.afterEquals = false
+		s.unquoted = false
 	case '=':
-		// Value position, including spaces around the equals sign.
-		return 'x'
-	case '"', '\'', '<', '>':
-		return ' '
+		s.afterEquals = true
+		s.unquoted = false
+	case '"', '\'':
+		s.quote = c
+		s.afterEquals = false
+		s.unquoted = false
+	case ' ', '\t', '\n', '\r', '\f':
+		s.unquoted = false
+	default:
+		if s.afterEquals {
+			s.unquoted = true
+			s.afterEquals = false
+		}
 	}
-	if prev != start-1 {
-		// Whitespace separates the span from the previous token, so it is in
-		// tag or text position rather than an unquoted value.
-		return ' '
-	}
-	return unquotedPlaceholder(source, prev)
 }
 
-// unquotedPlaceholder reports whether from is inside an unquoted attribute
-// value by scanning back to the nearest tag, quote, or whitespace boundary.
-func unquotedPlaceholder(source string, from int) byte {
-	for i := from; i >= 0; i-- {
-		switch c := source[i]; {
-		case isHTMLSpace(c), c == '<', c == '>', c == '"', c == '\'':
-			return ' '
-		case c == '=':
-			return 'x'
-		}
+func (s *maskState) placeholder(source string, end int) byte {
+	if !s.inTag || s.quote != 0 {
+		return ' '
+	}
+	if s.afterEquals || s.unquoted {
+		return 'x'
+	}
+
+	// Template syntax used as an attribute name is followed by '='; an
+	// identifier keeps the rest of the tag parseable.
+	j := end
+	for j < len(source) && isHTMLSpace(source[j]) {
+		j++
+	}
+	if j < len(source) && source[j] == '=' {
+		return 'x'
 	}
 	return ' '
 }
@@ -760,13 +841,10 @@ func overlapsAny(ranges []ts.Range, start, end uint) bool {
 	return i < len(ranges) && ranges[i].StartByte < end
 }
 
-// overlapsOrAdjacent reports whether [start, end) intersects a template range
-// or touches one. Adjacency catches a token whose template fragment was masked
-// away, such as the static remainder of a dynamic attribute or tag name.
-func overlapsOrAdjacent(ranges []ts.Range, start, end uint) bool {
-	if overlapsAny(ranges, start, end) {
-		return true
-	}
+// adjacentToAny reports whether [start, end) touches any range. Only output
+// expressions qualify, because they can compose a tag or attribute name;
+// statements and comments separate tokens rather than joining them.
+func adjacentToAny(ranges []ts.Range, start, end uint) bool {
 	if len(ranges) == 0 {
 		return false
 	}
@@ -780,4 +858,27 @@ func overlapsOrAdjacent(ranges []ts.Range, start, end uint) bool {
 		return ranges[i].StartByte >= end
 	})
 	return i < len(ranges) && ranges[i].StartByte == end
+}
+
+// jinjaExpressionRanges returns the ranges of {{ ... }} output expressions.
+// Statements and comments are deliberately excluded.
+func jinjaExpressionRanges(source string) []ts.Range {
+	tracker := &pointTracker{source: []byte(source)}
+	var ranges []ts.Range
+
+	for i := 0; i+1 < len(source); {
+		rel := strings.Index(source[i:], "{{")
+		if rel < 0 {
+			break
+		}
+		start := i + rel
+		closeRel := strings.Index(source[start+2:], "}}")
+		if closeRel < 0 {
+			break
+		}
+		end := start + 2 + closeRel + 2
+		ranges = append(ranges, tracker.between(start, end))
+		i = end
+	}
+	return ranges
 }

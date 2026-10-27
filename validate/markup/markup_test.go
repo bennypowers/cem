@@ -491,6 +491,57 @@ func TestValidateTemplateEdgeCases(t *testing.T) {
 		assert.True(t, hasRule(t, `<noscript><my-button variant="bogus"></my-button></noscript>`, "html",
 			markup.RuleInvalidAttributeValue))
 	})
+
+	t.Run("conditional twig attribute is still validated", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<my-button {% if x %}variant="bogus"{% endif %}>`, "twig",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("conditional hbs attribute is still validated", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<my-button {{#if x}}variant="bogus"{{/if}}>`, "hbs",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("twig statement after a static attribute does not suppress it", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<my-button variant="bogus"{% if x %}class="a"{% endif %}>`, "twig",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("twig comment before an attribute does not suppress it", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<my-button {# c #}variant="bogus">`, "twig",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("unterminated literal mustache does not stop masking", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<p>Use "{{" here</p><my-button {{#if x}}variant="bogus"{{/if}}>`, "hbs",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("empty hbs comment is masked", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<my-button {{!----}}variant="bogus">`, "hbs",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("dynamic hbs attribute name does not drop later attributes", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<my-button {{x}}="v" bogus="1">`, "hbs",
+			markup.RuleUnknownAttribute))
+	})
+
+	t.Run("dynamic twig attribute name does not drop later attributes", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<my-button {{x}}=v bogus="1">`, "twig",
+			markup.RuleUnknownAttribute))
+	})
+
+	t.Run("dynamic tag name is not discovered", func(t *testing.T) {
+		elements, err := markup.FindCustomElements(`<my-{{ x }}>`, markup.Options{Format: "twig"})
+		require.NoError(t, err)
+		assert.Empty(t, elements)
+	})
+
+	t.Run("dynamic attribute name is not redundant", func(t *testing.T) {
+		assert.False(t, hasRule(t, `<my-card {{ x }}label="Save">`, "twig",
+			markup.RuleContentAttributeRedundancy))
+	})
 }
 
 // Issue is a JSON-serializable result type; a consumer that marshals the

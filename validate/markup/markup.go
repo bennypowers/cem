@@ -198,7 +198,7 @@ func FindCustomElements(markup string, opts Options) ([]Element, error) {
 	var walk func([]*elementNode)
 	walk = func(nodes []*elementNode) {
 		for _, node := range nodes {
-			if isCustomElementTag(node.tagName) {
+			if isCustomElementTag(node.tagName) && !node.dynamic {
 				elements = append(elements, Element{
 					TagName: node.tagName,
 					Line:    node.line,
@@ -478,6 +478,9 @@ func (v *validator) validateAttributeCombinations(el *elementNode) {
 func (v *validator) validateContentAttributeRedundancy(el *elementNode, decl *manifest.CustomElementDeclaration) {
 	attributes := make(map[string]string, len(el.attributes))
 	for _, attr := range el.attributes {
+		if attr.nameDynamic {
+			continue
+		}
 		attributes[attr.name] = attr.value
 	}
 
