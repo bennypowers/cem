@@ -230,8 +230,14 @@ func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
 	}
 
 	// The manifest was checked against a fallback schema, not the schema its
-	// schemaVersion names, so it must never be reported as valid.
+	// schemaVersion names, so it must never be reported as valid. Record a real
+	// error so the failure is meaningful to callers and displays, followed by
+	// any errors from the fallback validation pass.
 	if unsafeSchemaVersion {
+		result.Errors = append([]ValidationError{{
+			ID:      "schema-version-invalid",
+			Message: fmt.Sprintf("schemaVersion %q is unsafe and was rejected; validation used the embedded 2.1.1-speculative schema instead", p.schemaVersion),
+		}}, result.Errors...)
 		result.IsValid = false
 	}
 

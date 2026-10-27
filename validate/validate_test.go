@@ -331,10 +331,16 @@ func TestValidateFallsBackForUnsafeSchemaVersion(t *testing.T) {
 			if result.IsValid {
 				t.Errorf("Validate reported a manifest with unsafe schemaVersion %q as valid: %+v", version, result.Errors)
 			}
-			// This manifest is valid under the fallback schema, so an empty error
-			// list shows the fallback validation pass still ran.
-			if len(result.Errors) != 0 {
-				t.Errorf("fallback validation reported unexpected errors: %+v", result.Errors)
+			// The only error is the unsafe-version error: the manifest itself is
+			// valid under the fallback schema, so no other errors are expected.
+			if len(result.Errors) != 1 {
+				t.Fatalf("Errors = %+v, want exactly one unsafe schema version error", result.Errors)
+			}
+			if result.Errors[0].ID != "schema-version-invalid" {
+				t.Errorf("Errors[0].ID = %q, want %q", result.Errors[0].ID, "schema-version-invalid")
+			}
+			if !strings.Contains(result.Errors[0].Message, version) {
+				t.Errorf("Errors[0].Message = %q, want it to carry the offending schemaVersion %q", result.Errors[0].Message, version)
 			}
 
 			found := false
@@ -368,8 +374,23 @@ func TestValidateFallsBackForUnsafeSchemaVersion(t *testing.T) {
 		if result.IsValid {
 			t.Errorf("Validate reported a manifest with unsafe schemaVersion as valid: %+v", result.Errors)
 		}
-		if len(result.Errors) == 0 {
-			t.Fatal("expected the fallback schema to reject the additional top-level property, got no errors")
+		if len(result.Errors) < 2 {
+			t.Fatalf("Errors = %+v, want the unsafe schema version error plus fallback schema errors", result.Errors)
+		}
+		// The unsafe-version error comes first, then any errors produced by the
+		// fallback validation pass.
+		if result.Errors[0].ID != "schema-version-invalid" {
+			t.Errorf("Errors[0].ID = %q, want %q", result.Errors[0].ID, "schema-version-invalid")
+		}
+		foundFallbackError := false
+		for _, issue := range result.Errors[1:] {
+			if strings.Contains(issue.Message, "unexpected") {
+				foundFallbackError = true
+				break
+			}
+		}
+		if !foundFallbackError {
+			t.Errorf("fallback validation did not report the unexpected top-level property: %+v", result.Errors)
 		}
 	})
 }
