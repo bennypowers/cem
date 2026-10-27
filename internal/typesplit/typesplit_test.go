@@ -53,6 +53,15 @@ func TestSplitTopLevelUnion(t *testing.T) {
 		{"quoted pipe in substitution", "`${'a|b'}` | C", []string{"`${'a|b'}`", "C"}},
 		{"Map generic with null", "Map<string, string> | null", []string{"Map<string, string>", "null"}},
 
+		// Malformed template literals and comments inside substitutions. An
+		// unterminated construct must be returned as one unchanged member.
+		{"unterminated substitution", "`${A | B", []string{"`${A | B"}},
+		{"unterminated template", "`abc | D", []string{"`abc | D"}},
+		{"unterminated string in substitution", "`${'a} | C", []string{"`${'a} | C"}},
+		{"unterminated block comment in substitution", "`${A /* } | C", []string{"`${A /* } | C"}},
+		{"block comment brace in substitution", "`${A /* } */}` | C", []string{"`${A /* } */}`", "C"}},
+		{"line comment brace in substitution", "`${A // }\n}` | C", []string{"`${A // }\n}`", "C"}},
+
 		// These cases mirror tree-sitter's parse result so that callers moving
 		// off the cgo-backed parser observe no change.
 		{"pipe inside string", "'a|b' | 'c'", []string{"'a|b'", "'c'"}},
