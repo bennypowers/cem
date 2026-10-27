@@ -438,10 +438,11 @@ func (v *validator) validateSlotContentGuidelines(el *elementNode, decl *manifes
 func (v *validator) validateAttributeCombinations(el *elementNode) {
 	attributes := make(map[string]string, len(el.attributes))
 	for _, attr := range el.attributes {
-		// A dynamic value is unknown at validation time, so it cannot
-		// participate in a conflict heuristic. A dynamic name may resolve to
-		// something else entirely.
-		if attr.dynamic || attr.nameDynamic {
+		// A dynamic name may resolve to something else entirely. A dynamic
+		// value is kept: presence-based boolean checks only care that the
+		// attribute exists, and a value-dependent check such as
+		// loading == "eager" cannot match an unknown value.
+		if attr.nameDynamic {
 			continue
 		}
 		attributes[attr.name] = attr.value

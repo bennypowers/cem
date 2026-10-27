@@ -323,8 +323,13 @@ func TestValidateAttributeCombinations(t *testing.T) {
 		want   int
 	}{
 		{
-			name:   "dynamic value is unknown",
+			name:   "dynamic boolean value still counts as present",
 			source: `<my-card loading="eager" lazy="{{ dynamic }}">Card</my-card>`,
+			want:   1,
+		},
+		{
+			name:   "dynamic loading value cannot equal eager",
+			source: `<my-card loading="{{ dynamic }}" lazy>Card</my-card>`,
 			want:   0,
 		},
 		{
