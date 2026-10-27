@@ -293,6 +293,165 @@ func TestGetSchemaUpgrade210(t *testing.T) {
 	})
 }
 
+// TestGetSchemaShortVersionsResolveEmbedded verifies that shortened semantic
+// versions are ranges, not exact versions: a bare major selects the newest
+// embedded schema with that major. Treating "0" as the canonical 0.0.0 broke
+// validation (0.0.0 is not embedded, so the fetch used to 404), and treating
+// "2" as 2.0.0 silently loosened validation.
+//
+// Inline assertions: this test checks which embedded schema was selected,
+// where a golden file would obscure the cache fixture used to keep the
+// pre-fix behavior offline.
+func TestGetSchemaShortVersionsResolveEmbedded(t *testing.T) {
+	// Register the reload before Setenv so cleanups run in the right order:
+	// the environment is restored first, then xdg re-reads it.
+	t.Cleanup(xdg.Reload)
+	cacheHome := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", cacheHome)
+	xdg.Reload()
+
+	fsys := platform.NewMapFileSystem(nil)
+	// Seed the cache under the canonical 0.0.0 spelling so the pre-fix code
+	// resolves offline: it must not be mistaken for "0", which npm resolves to
+	// 0.1.0.
+	cacheDir := filepath.Join(cacheHome, "cem", "schemas")
+	if err := fsys.WriteFile(filepath.Join(cacheDir, "0.0.0.json"), []byte(`{"title":"wrong schema"}`), 0o644); err != nil {
+		t.Fatalf("writing cached schema: %v", err)
+	}
+
+	testCases := []struct {
+		version  string
+		embedded string
+	}{
+		{"0", "0.1.0"},
+		{"2", speculativeSchemaVersion},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.version, func(t *testing.T) {
+			got, err := getSchema(fsys, tc.version)
+			if err != nil {
+				t.Fatalf("getSchema(%q): %v", tc.version, err)
+			}
+			want, err := getEmbeddedSchema(tc.embedded)
+			if err != nil {
+				t.Fatalf("getEmbeddedSchema(%q): %v", tc.embedded, err)
+			}
+			if !bytes.Equal(got, want) {
+				t.Errorf("getSchema(%q) did not select the newest embedded %s schema", tc.version, tc.embedded)
+			}
+		})
+	}
+}
+
+// TestValidateBareMajorUsesNewestEmbeddedSchema verifies the validation
+// consequence of resolving a bare major as a range. The 2.0.0 schema ignores
+// cssStates, while the 2.1.x and speculative schemas require a name on each
+// entry. Resolving "2" to 2.0.0 therefore reported this manifest as valid.
+//
+// Inline assertions: this test checks the validity and error IDs of one
+// result, where a golden file would add indirection only.
+func TestValidateBareMajorUsesNewestEmbeddedSchema(t *testing.T) {
+	manifest := []byte(`{
+	  "schemaVersion": "2",
+	  "modules": [
+	    {
+	      "kind": "javascript-module",
+	      "path": "css-states.js",
+	      "declarations": [
+	        {
+	          "kind": "class",
+	          "name": "CssStatesElement",
+	          "customElement": true,
+	          "tagName": "css-states-element",
+	          "cssStates": [{ "summary": "Missing name" }]
+	        }
+	      ]
+	    }
+	  ]
+	}`)
+
+	pipeline, err := NewValidationPipeline(platform.NewMapFileSystem(nil), manifest)
+	if err != nil {
+		t.Fatalf("NewValidationPipeline: %v", err)
+	}
+	result, err := pipeline.Validate(ValidationOptions{})
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if result.IsValid {
+		t.Fatalf("Validate accepted a cssState without a name under schemaVersion \"2\": %+v", result.Errors)
+	}
+
+	found := false
+	for _, issue := range result.Errors {
+		if strings.Contains(issue.Message, "name") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Errors = %+v, want a missing name error from the newest embedded 2.x schema", result.Errors)
+	}
+}
+
+// TestValidateBareMajorDoesNotWarnAsOld verifies that the old-version warning
+// follows the schema actually used. A bare major "2" selects the newest
+// embedded 2.x schema, not the exact 2.0.0 spelling, so it must not be
+// reported as older than 2.1.0.
+//
+// Inline assertions: this test checks for the absence of one warning ID,
+// where a golden file would add indirection only.
+func TestValidateBareMajorDoesNotWarnAsOld(t *testing.T) {
+	manifest := []byte(`{"schemaVersion":"2","modules":[]}`)
+	pipeline, err := NewValidationPipeline(platform.NewMapFileSystem(nil), manifest)
+	if err != nil {
+		t.Fatalf("NewValidationPipeline: %v", err)
+	}
+	result, err := pipeline.Validate(ValidationOptions{IncludeWarnings: true})
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	for _, warning := range result.Warnings {
+		if warning.ID == "schema-version-old" {
+			t.Errorf("Warnings = %+v, want no schema-version-old warning for a range that resolves to the newest embedded 2.x schema", result.Warnings)
+		}
+	}
+}
+
+// TestGetSchemaCacheUsesInjectedFileSystem verifies that cache lookup and
+// storage go through the caller's FileSystem. xdg.CacheFile creates
+// directories on the host, which escaped in-memory and sandboxed filesystems.
+//
+// Inline assertions: this test checks one sentinel value and one host path,
+// where a golden file would obscure the filesystem boundary under test.
+func TestGetSchemaCacheUsesInjectedFileSystem(t *testing.T) {
+	// Register the reload before Setenv so cleanups run in the right order:
+	// the environment is restored first, then xdg re-reads it.
+	t.Cleanup(xdg.Reload)
+	cacheHome := filepath.Join(t.TempDir(), "cache")
+	t.Setenv("XDG_CACHE_HOME", cacheHome)
+	xdg.Reload()
+
+	fsys := platform.NewMapFileSystem(nil)
+	cacheDir := filepath.Join(cacheHome, "cem", "schemas")
+	sentinel := []byte(`{"type":"object","required":["schemaVersion"]}`)
+	if err := fsys.WriteFile(filepath.Join(cacheDir, "latest.json"), sentinel, 0o644); err != nil {
+		t.Fatalf("writing cached schema: %v", err)
+	}
+
+	got, err := getSchema(fsys, "latest")
+	if err != nil {
+		t.Fatalf("getSchema: %v", err)
+	}
+	if !bytes.Equal(got, sentinel) {
+		t.Errorf("getSchema did not read the cached schema through the supplied FileSystem")
+	}
+	if _, err := os.Stat(cacheHome); !os.IsNotExist(err) {
+		t.Errorf("getSchema created %s on the host filesystem; cache I/O must go through the supplied FileSystem", cacheHome)
+	}
+}
+
 // Hardening of pre-existing behavior: schemaVersion was previously passed
 // unchecked into embedded-schema and cache path construction. Unsafe values
 // must be rejected before they can become path components.

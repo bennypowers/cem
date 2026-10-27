@@ -34,6 +34,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 // speculative schema rejects additional top-level properties, so an
 // unrecognized key at the manifest's top level is reported as an error.
 //
+// Shortened schema versions are ranges, not exact versions. A bare major such
+// as "2" selects the newest embedded schema with that major, and a
+// major.minor spelling such as "2.1" selects the newest embedded schema with
+// those components. For example, schemaVersion "2" is validated against the
+// embedded 2.1.1-speculative schema, like 2.1.0 and 2.1.1, rather than against
+// 2.0.0. Exact versions with no embedded schema, and path-safe non-semver
+// values such as dist-tags, fall back to the schema cache and then to npm
+// using the spelling the manifest supplied. The "schema-version-old" warning
+// follows the schema actually used, so a range that resolves to 2.1.x or newer
+// is not reported as older than 2.1.0.
+//
 // # External use
 //
 // This package is public and is part of cem's Go API. It follows the 0.x

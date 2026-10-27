@@ -110,19 +110,19 @@ func get(version, gitCommit, gitTag, gitDirty string, info *debug.BuildInfo) str
 		return v
 	}
 
-	// Fallback: construct from git information if available.
-	if gitTag != "unknown" && gitCommit != "unknown" {
+	// Fallback: construct from git information if available. Empty values are
+	// treated like the "unknown" sentinel; otherwise an empty tag produces a
+	// version made only of a commit suffix, and two empty values produce "".
+	if gitTag != "" && gitTag != "unknown" && gitCommit != "" && gitCommit != "unknown" {
 		v := gitTag
-		if gitCommit != "" {
-			// Safe substring that handles short commits.
-			commitSuffix := gitCommit
-			if len(gitCommit) > 7 {
-				commitSuffix = gitCommit[:7]
-			}
-			if !strings.HasSuffix(gitTag, commitSuffix) {
-				// Add commit hash if tag does not contain it.
-				v = fmt.Sprintf("%s-%s", gitTag, commitSuffix)
-			}
+		// Safe substring that handles short commits.
+		commitSuffix := gitCommit
+		if len(gitCommit) > 7 {
+			commitSuffix = gitCommit[:7]
+		}
+		if !strings.HasSuffix(gitTag, commitSuffix) {
+			// Add commit hash if tag does not contain it.
+			v = fmt.Sprintf("%s-%s", gitTag, commitSuffix)
 		}
 		if gitDirty == "dirty" {
 			v += "-dirty"

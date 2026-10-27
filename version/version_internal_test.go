@@ -72,6 +72,32 @@ func TestGetCombinesGitMetadata(t *testing.T) {
 
 // Inline assertions: this test compares a scalar version string, where a
 // golden file would only duplicate the expected value.
+//
+// Empty git metadata must be treated the same as the "unknown" sentinel. An
+// empty tag previously produced a version made only of a commit suffix, such
+// as "-abcdef1", and two empty values produced an empty version string.
+func TestGetRejectsEmptyGitMetadata(t *testing.T) {
+	tests := []struct {
+		name   string
+		commit string
+		tag    string
+	}{
+		{name: "empty tag", commit: "abcdef1234", tag: ""},
+		{name: "empty commit", commit: "", tag: "v1.2.3"},
+		{name: "both empty", commit: "", tag: ""},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := get("dev", tc.commit, tc.tag, "", nil); got != "dev" {
+				t.Errorf("get() = %q, want %q for empty git metadata", got, "dev")
+			}
+		})
+	}
+}
+
+// Inline assertions: this test compares a scalar version string, where a
+// golden file would only duplicate the expected value.
 func TestGetHandlesNilBuildInfo(t *testing.T) {
 	got := get("dev", "unknown", "unknown", "", nil)
 	if got != "dev" {

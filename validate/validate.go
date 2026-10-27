@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"path/filepath"
 	"slices"
@@ -162,8 +163,15 @@ func (p *ValidationPipeline) checkSchemaVersion(result *ValidationResult) error 
 		})
 		return nil
 	}
+	// Warn based on the schema that will actually validate the manifest, since
+	// a shortened version such as "2" selects the newest embedded 2.x schema
+	// rather than the exact 2.0.0 spelling.
+	resolvedVersion := p.schemaVersion
+	if embedded, ok := resolveEmbeddedSchemaVersion(p.schemaVersion); ok {
+		resolvedVersion = embedded
+	}
 	// Only warn for versions < 2.1.0, since we handle 2.1.0 with our speculative schema
-	if isSemverLessThan(p.schemaVersion, "2.1.0") {
+	if isSemverLessThan(resolvedVersion, "2.1.0") {
 		result.Warnings = append(result.Warnings, ValidationWarning{
 			ID:       "schema-version-old",
 			Message:  fmt.Sprintf("validation for manifests with schemaVersion < 2.1.0 may not produce accurate results (version: %s)", p.schemaVersion),
@@ -208,6 +216,85 @@ func canonicalSchemaVersion(version string) (string, bool) {
 func isSemverSchemaVersion(version string) bool {
 	_, ok := canonicalSchemaVersion(version)
 	return ok
+}
+
+// schemaVersionIsShort reports whether version is a shortened semantic
+// version spelling with only a major, or a major and minor, component, such as
+// "2" or "2.1". Short spellings are ranges: they select the newest embedded
+// schema that matches the supplied components. Prerelease and build suffixes
+// require a full major.minor.patch spelling.
+func schemaVersionIsShort(version string) bool {
+	normalized := strings.TrimPrefix(version, "v")
+	if !semver.IsValid("v" + normalized) {
+		return false
+	}
+	core := normalized
+	if i := strings.IndexAny(core, "-+"); i >= 0 {
+		core = core[:i]
+	}
+	return strings.Count(core, ".") < 2
+}
+
+// resolveEmbeddedSchemaVersion returns the embedded schema that version
+// selects. Exact versions must match an embedded schema after
+// canonicalization; shortened versions select the newest embedded schema with
+// the same major, or major and minor, components. It reports false when no
+// embedded schema matches, so the caller can fall back to the original
+// spelling for cache and network resolution.
+func resolveEmbeddedSchemaVersion(version string) (string, bool) {
+	canonical, ok := canonicalSchemaVersion(version)
+	if !ok {
+		return "", false
+	}
+	if schemaVersionIsShort(version) {
+		return newestEmbeddedSchemaVersion(strings.TrimPrefix(version, "v"))
+	}
+	// 2.1.0 and 2.1.1 are known-broken upstream; use the embedded stand-in.
+	if canonical == "2.1.0" || canonical == "2.1.1" {
+		return speculativeSchemaVersion, true
+	}
+	if _, err := getEmbeddedSchema(canonical); err == nil {
+		return canonical, true
+	}
+	return "", false
+}
+
+// newestEmbeddedSchemaVersion returns the greatest embedded schema version
+// that belongs to short, a major or major.minor spelling. The speculative
+// schema participates like any other embedded version.
+func newestEmbeddedSchemaVersion(short string) (string, bool) {
+	names, err := fs.Glob(embeddedSchemas, "schemas/*.json")
+	if err != nil {
+		return "", false
+	}
+	best := ""
+	for _, name := range names {
+		candidate := strings.TrimSuffix(strings.TrimPrefix(name, "schemas/"), ".json")
+		canonical, ok := canonicalSchemaVersion(candidate)
+		if !ok || !schemaVersionHasPrefix(canonical, short) {
+			continue
+		}
+		if best == "" || semver.Compare("v"+canonical, "v"+best) > 0 {
+			best = canonical
+		}
+	}
+	return best, best != ""
+}
+
+// schemaVersionHasPrefix reports whether canonical belongs to the range
+// selected by short, a major or major.minor spelling.
+func schemaVersionHasPrefix(canonical, short string) bool {
+	canonical = strings.TrimPrefix(canonical, "v")
+	short = strings.TrimPrefix(short, "v")
+	if !strings.Contains(short, ".") {
+		major, _, _ := strings.Cut(canonical, ".")
+		return major == short
+	}
+	parts := strings.SplitN(canonical, ".", 3)
+	if len(parts) < 2 {
+		return false
+	}
+	return parts[0]+"."+parts[1] == short
 }
 
 // isSemverLessThan compares two semantic version strings
@@ -426,10 +513,21 @@ func isWarningDisabled(warning ValidationWarning, disabledRules []string) bool {
 //
 // version must not contain path separators, traversal segments, whitespace, or
 // URL delimiters, so caller-controlled input cannot escape the embedded
-// schema, cache, or fetch paths. Semantic versions, with an optional leading
-// "v", are canonicalized and resolved against the embedded schemas first.
-// Other path-safe values, such as dist-tags, fall through to the cache and
-// fetch.
+// schema, cache, or fetch paths. Semantic versions with a full
+// major.minor.patch spelling, with an optional leading "v", are canonicalized
+// and resolved against the embedded schemas first. Shortened spellings are
+// ranges: a bare major such as "2" selects the newest embedded schema with
+// that major, and a major.minor spelling such as "2.1" selects the newest
+// embedded schema with those components. Other path-safe values, such as
+// dist-tags, and exact versions with no embedded schema fall through to the
+// cache and fetch using the spelling supplied by the caller.
+//
+// For versions 2.1.0 and 2.1.1, GetSchema returns the embedded
+// 2.1.1-speculative schema instead of the official upstream schema, because
+// the upstream 2.1.0 schema is known to be broken. The speculative schema is
+// stricter than the official schema: it rejects additional properties.
+// Callers that require strict validation against the official 2.1.0 schema
+// should not use GetSchema for those versions.
 func GetSchema(fsys FileSystem, version string) ([]byte, error) {
 	return getSchema(fsys, version)
 }
@@ -437,26 +535,22 @@ func GetSchema(fsys FileSystem, version string) ([]byte, error) {
 func getSchema(fsys FileSystem, version string) ([]byte, error) {
 	// Hardening: GetSchema can be called directly with caller-controlled input.
 	// Reject values that could escape a path when used as a cache filename or
-	// URL segment. Canonicalizing valid semantic versions keeps spellings such
-	// as "v2.1" and "v2.1.0+build" resolving to the same embedded schema.
+	// URL segment.
 	if !isPathSafeSchemaVersion(version) {
 		return nil, fmt.Errorf("invalid schema version %q: must not contain path separators, traversal segments, or URL delimiters", version)
 	}
-	if canonical, ok := canonicalSchemaVersion(version); ok {
-		version = canonical
+
+	// Resolve against the embedded schemas first. Canonicalizing valid
+	// semantic versions keeps spellings such as "v2.1.0+build" and shortened
+	// spellings such as "2.1" resolving to the same embedded schema.
+	if embedded, ok := resolveEmbeddedSchemaVersion(version); ok {
+		return getEmbeddedSchema(embedded)
 	}
 
-	// Upgrade known problematic versions to speculative schema first
-	if version == "2.1.0" || version == "2.1.1" {
-		return getEmbeddedSchema(speculativeSchemaVersion)
-	}
-
-	// Try to use embedded schema
-	if schemaData, err := getEmbeddedSchema(version); err == nil {
-		return schemaData, nil
-	}
-
-	// For other versions, try fetching from CDN
+	// Nothing embedded matches. Resolve the caller's original spelling: a
+	// shortened version such as "0.0" is a range, and a dist-tag is resolved
+	// by the cache and npm, so substituting a canonical exact version would
+	// change which schema they return.
 	return tryFetchSchema(fsys, version)
 }
 
@@ -465,16 +559,28 @@ func getEmbeddedSchema(version string) ([]byte, error) {
 	return embeddedSchemas.ReadFile(schemaPath)
 }
 
+// schemaCacheDir returns the directory used to cache fetched schemas, or an
+// empty string when no cache directory is available (for example, in wasm).
+//
+// It derives the path from xdg.CacheHome instead of calling xdg.CacheFile:
+// xdg.CacheFile creates the directory on the host filesystem, which would
+// escape a caller-supplied in-memory or sandboxed FileSystem. All cache reads
+// and writes go through fsys.
+//
+// TODO(#371): wasm targets may want their own cache backed by IndexedDB or similar
+func schemaCacheDir() string {
+	if xdg.CacheHome == "" {
+		return ""
+	}
+	return filepath.Join(xdg.CacheHome, "cem", "schemas")
+}
+
 func tryFetchSchema(fsys FileSystem, version string) ([]byte, error) {
-	// Skip file cache when no cache directory is available (e.g. wasm)
-	// TODO(#371): wasm targets may want their own cache backed by IndexedDB or similar
-	if xdg.CacheHome != "" {
-		cacheDir, err := xdg.CacheFile(filepath.Join("cem", "schemas"))
-		if err == nil {
-			schemaPath := filepath.Join(cacheDir, version+".json")
-			if _, err := fsys.Stat(schemaPath); err == nil {
-				return fsys.ReadFile(schemaPath)
-			}
+	cacheDir := schemaCacheDir()
+	if cacheDir != "" {
+		schemaPath := filepath.Join(cacheDir, version+".json")
+		if _, err := fsys.Stat(schemaPath); err == nil {
+			return fsys.ReadFile(schemaPath)
 		}
 	}
 
@@ -494,14 +600,11 @@ func tryFetchSchema(fsys FileSystem, version string) ([]byte, error) {
 		return nil, fmt.Errorf("could not read schema from response body: %w", err)
 	}
 
-	// Cache the result if cache directory available
-	if xdg.CacheHome != "" {
-		cacheDir, err := xdg.CacheFile(filepath.Join("cem", "schemas"))
-		if err == nil {
-			schemaPath := filepath.Join(cacheDir, version+".json")
-			_ = fsys.MkdirAll(filepath.Dir(schemaPath), 0755)
-			_ = fsys.WriteFile(schemaPath, schemaData, 0644)
-		}
+	// Cache the result if a cache directory is available.
+	if cacheDir != "" {
+		schemaPath := filepath.Join(cacheDir, version+".json")
+		_ = fsys.MkdirAll(cacheDir, 0755)
+		_ = fsys.WriteFile(schemaPath, schemaData, 0644)
 	}
 
 	return schemaData, nil
