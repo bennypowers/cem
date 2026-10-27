@@ -99,6 +99,45 @@ func (i Issue) Details() map[string]string {
 	return out
 }
 
+// Element is a custom element occurrence found in markup. Line is one-based
+// and Column is a one-based UTF-8 byte offset within that line.
+type Element struct {
+	TagName string `json:"tagName"`
+	Line    int    `json:"line"`
+	Column  int    `json:"column"`
+}
+
+// FindCustomElements returns custom element occurrences in source order,
+// without validating them. Tag names are normalized to ASCII lowercase.
+func FindCustomElements(markup string, opts Options) ([]Element, error) {
+	family, err := formatFamily(opts.Format)
+	if err != nil {
+		return nil, err
+	}
+
+	nodes, err := parseElements(markup, family)
+	if err != nil {
+		return nil, err
+	}
+
+	var elements []Element
+	var walk func([]*elementNode)
+	walk = func(nodes []*elementNode) {
+		for _, node := range nodes {
+			if isCustomElementTag(node.tagName) {
+				elements = append(elements, Element{
+					TagName: node.tagName,
+					Line:    node.line,
+					Column:  node.column,
+				})
+			}
+			walk(node.children)
+		}
+	}
+	walk(nodes)
+	return elements, nil
+}
+
 // Validate parses markup and reports manifest compliance issues for custom
 // elements found in it. It does not use an LSP document manager or workspace.
 //
@@ -224,7 +263,8 @@ func (v *validator) validateAttributes(el *elementNode, decl *manifest.CustomEle
 			v.addAttribute(el, attr, RuleDeprecatedAttribute, SeverityWarning, ConfidenceHigh, message, details)
 		}
 
-		if manifestAttr.IsEnum() && attr.value != "" && (!v.template || !containsTemplateExpression(attr.value)) {
+		if !attr.dynamic && manifestAttr.IsEnum() && attr.value != "" &&
+			(!v.template || !containsTemplateExpression(attr.value)) {
 			if !manifestAttr.IsValidValue(attr.value) {
 				validValues := manifestAttr.EnumValues()
 				message := fmt.Sprintf("Invalid attribute value: `%s=\"%s\"` in `<%s>`. Valid values: %v",
@@ -241,7 +281,8 @@ func (v *validator) validateAttributes(el *elementNode, decl *manifest.CustomEle
 
 func (v *validator) validateSlotAttribute(el, parent *elementNode) {
 	slotAttr := findParsedAttribute(el.attributes, "slot")
-	if slotAttr == nil || slotAttr.value == "" || (v.template && containsTemplateExpression(slotAttr.value)) {
+	if slotAttr == nil || slotAttr.value == "" || slotAttr.dynamic ||
+		(v.template && containsTemplateExpression(slotAttr.value)) {
 		return
 	}
 

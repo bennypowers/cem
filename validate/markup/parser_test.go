@@ -116,15 +116,37 @@ func BenchmarkParseElementsManySiblings(b *testing.B) {
 	}
 }
 
-func TestAttributeValueUnescape(t *testing.T) {
-	elements, err := parseElements(`<my-el a="a&amp;b" b="prim&#97;ry" c="primar&#x79;">`, formatHTML)
+func TestParseElementsDynamicValues(t *testing.T) {
+	elements, err := parseElements(
+		`<my-el a="{{ x }}-suffix" b="pre-{{ x }}" c="{{ x }}" d="static">`,
+		formatJinja,
+	)
 	require.NoError(t, err)
 	require.Len(t, elements, 1)
-	require.Len(t, elements[0].attributes, 3)
 
-	assert.Equal(t, "a&b", elements[0].attributes[0].value)
-	assert.Equal(t, "primary", elements[0].attributes[1].value)
-	assert.Equal(t, "primary", elements[0].attributes[2].value)
+	attributes := elements[0].attributes
+	require.Len(t, attributes, 4)
+	assert.True(t, attributes[0].dynamic, "expression plus suffix")
+	assert.True(t, attributes[1].dynamic, "static prefix plus expression")
+	assert.True(t, attributes[2].dynamic, "pure expression")
+	assert.False(t, attributes[3].dynamic, "static value")
+}
+
+func TestAttributeValueUnescape(t *testing.T) {
+	elements, err := parseElements(
+		`<my-el a="a&amp;b" b="prim&#97;ry" c="primar&#x79;" d=a&amp;b e="&amp;amp;" slot="i&amp;con">`,
+		formatHTML,
+	)
+	require.NoError(t, err)
+	require.Len(t, elements, 1)
+	require.Len(t, elements[0].attributes, 6)
+
+	assert.Equal(t, "a&b", elements[0].attributes[0].value)     // named
+	assert.Equal(t, "primary", elements[0].attributes[1].value) // decimal
+	assert.Equal(t, "primary", elements[0].attributes[2].value) // hex
+	assert.Equal(t, "a&b", elements[0].attributes[3].value)     // unquoted
+	assert.Equal(t, "&amp;", elements[0].attributes[4].value)   // decoded once
+	assert.Equal(t, "i&con", elements[0].attributes[5].value)   // slot value
 }
 
 func TestPositionForNonASCII(t *testing.T) {

@@ -142,6 +142,13 @@ func TestValidateGolden(t *testing.T) {
 			opts:   markup.Options{ValidateAttrs: true, ValidateSlots: true, Strict: true},
 		},
 		{
+			name:   "twig mixed static and expression values are dynamic",
+			golden: "twig_mixed_values.json",
+			file:   "twig-mixed-values.twig",
+			format: "twig",
+			opts:   markup.Options{ValidateAttrs: true, ValidateSlots: true},
+		},
+		{
 			name:   "html template expression value keeps literal validation",
 			golden: "html_template_value.json",
 			file:   "html-template-value.html",

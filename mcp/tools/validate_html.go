@@ -88,12 +88,6 @@ func handleValidateHtml(
 
 // validateHtmlWithTreeSitter performs HTML validation using tree-sitter parsing
 func validateHtmlWithTreeSitter(html string, registry mcpTypes.MCPContext) (string, error) {
-	// Get the shared document manager from registry
-	dm := registry.DocumentManager()
-
-	// Create a document from the HTML content
-	doc := dm.OpenDocument("temp://validation.html", html, 1)
-
 	// Prepare validation data using existing template structure
 	data := ValidationTemplateData{
 		Html:                         html,
@@ -106,10 +100,9 @@ func validateHtmlWithTreeSitter(html string, registry mcpTypes.MCPContext) (stri
 		ContentAttributeRedundancies: []ContentAttributeRedundancy{},
 	}
 
-	// Use tree-sitter to find custom elements so the template can show the
-	// elements and manifest features it found. Compliance issues come from the
-	// shared markup validation package.
-	elements, err := doc.FindCustomElements(dm)
+	// Discovery uses the same normalized parser as validation, so uppercase
+	// markup produces both a FoundElements entry and compliance issues.
+	elements, err := markup.FindCustomElements(html, markup.Options{Format: "html"})
 	if err != nil {
 		return "", fmt.Errorf("failed to find custom elements: %w", err)
 	}
@@ -135,12 +128,12 @@ func validateHtmlWithTreeSitter(html string, registry mcpTypes.MCPContext) (stri
 		}
 	}
 
-	// The document manager parses once to discover elements for the template,
-	// and markup.Validate parses again to produce compliance issues. Keeping
-	// element discovery on the existing document manager preserves the tool's
-	// rendered output. registryManifest is rebuilt per call from the registry's
-	// cached element map instead of being cached here, so reloaded manifests
-	// are always reflected and no lifecycle owner is introduced.
+	// Discovery and validation each parse the markup once. Sharing a parse
+	// would require a richer result API; two passes are bounded and keep the
+	// public Validate signature small. registryManifest is rebuilt per call
+	// from the registry's cached element map instead of being cached here, so
+	// reloaded manifests are always reflected and no lifecycle owner is
+	// introduced.
 	issues, err := markup.Validate(registryManifest(registry), html, markup.Options{
 		Format:        "html",
 		ValidateAttrs: true,

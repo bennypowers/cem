@@ -19,6 +19,7 @@ package markup
 import (
 	"fmt"
 	"html"
+	"sort"
 	"strings"
 	"sync"
 
@@ -47,10 +48,11 @@ type elementNode struct {
 }
 
 type parsedAttribute struct {
-	name   string
-	value  string
-	line   int
-	column int
+	name    string
+	value   string
+	line    int
+	column  int
+	dynamic bool
 }
 
 func formatFamily(format string) (formatFamilyValue, error) {
@@ -76,20 +78,22 @@ func parseElements(source string, family formatFamilyValue) ([]*elementNode, err
 	}
 	defer htmllang.ReturnParser(parser)
 
+	var dynamicRanges []ts.Range
 	if family == formatJinja {
-		ranges, err := jinjaHTMLRanges(source)
+		textRanges, dynamic, err := analyzeJinjaRanges(source)
 		if err != nil {
 			return nil, err
 		}
 		// With no text ranges there is no HTML to validate. Parsing the raw
 		// template would treat template syntax as markup, so stop here.
-		if len(ranges) == 0 {
+		if len(textRanges) == 0 {
 			return nil, nil
 		}
-		if err := parser.SetIncludedRanges(ranges); err != nil {
+		if err := parser.SetIncludedRanges(textRanges); err != nil {
 			return nil, fmt.Errorf("markup: failed to set template ranges: %w", err)
 		}
 		defer func() { _ = parser.SetIncludedRanges(nil) }()
+		dynamicRanges = dynamic
 	}
 
 	sourceBytes := []byte(source)
@@ -99,10 +103,10 @@ func parseElements(source string, family formatFamilyValue) ([]*elementNode, err
 	}
 	defer tree.Close()
 
-	return elementsFromNode(tree.RootNode(), sourceBytes), nil
+	return elementsFromNode(tree.RootNode(), sourceBytes, dynamicRanges), nil
 }
 
-func elementsFromNode(node *ts.Node, source []byte) []*elementNode {
+func elementsFromNode(node *ts.Node, source []byte, dynamicRanges []ts.Range) []*elementNode {
 	var elements []*elementNode
 	cursor := node.Walk()
 	defer cursor.Close()
@@ -111,22 +115,22 @@ func elementsFromNode(node *ts.Node, source []byte) []*elementNode {
 		child := cursor.Node()
 		switch child.Kind() {
 		case "element":
-			if el := parseTag(child, source); el != nil {
-				el.children = elementsFromNode(child, source)
+			if el := parseTag(child, source, dynamicRanges); el != nil {
+				el.children = elementsFromNode(child, source, dynamicRanges)
 				elements = append(elements, el)
 			}
 		case "self_closing_tag":
-			if el := parseTag(child, source); el != nil {
+			if el := parseTag(child, source, dynamicRanges); el != nil {
 				elements = append(elements, el)
 			}
 		default:
-			elements = append(elements, elementsFromNode(child, source)...)
+			elements = append(elements, elementsFromNode(child, source, dynamicRanges)...)
 		}
 	}
 	return elements
 }
 
-func parseTag(node *ts.Node, source []byte) *elementNode {
+func parseTag(node *ts.Node, source []byte, dynamicRanges []ts.Range) *elementNode {
 	startTag := findChildKind(node, "start_tag")
 	if startTag == nil {
 		startTag = node
@@ -162,10 +166,11 @@ func parseTag(node *ts.Node, source []byte) *elementNode {
 		name := asciiLower(string(source[nameNode.StartByte():nameNode.EndByte()]))
 		line, column := positionFor(nameNode)
 		attr := parsedAttribute{
-			name:   name,
-			value:  attributeValue(child, source),
-			line:   line,
-			column: column,
+			name:    name,
+			value:   attributeValue(child, source),
+			line:    line,
+			column:  column,
+			dynamic: overlapsAny(dynamicRanges, child.StartByte(), child.EndByte()),
 		}
 
 		if _, ok := index[name]; ok {
@@ -298,35 +303,91 @@ var (
 // those ranges so template statements and expressions are not parsed as
 // markup. Unbalanced control flow still yields usable text ranges.
 func jinjaHTMLRanges(source string) ([]ts.Range, error) {
+	text, _, err := analyzeJinjaRanges(source)
+	return text, err
+}
+
+// analyzeJinjaRanges parses a template once and returns both the HTML text
+// ranges and the ranges occupied by template syntax. Dynamic ranges let the
+// HTML pass mark attributes whose values mix static text with expressions.
+func analyzeJinjaRanges(source string) (text, dynamic []ts.Range, err error) {
 	jinjaTextQueryOnce.Do(func() {
 		jinjaTextQuery, jinjaTextQueryErr = ts.NewQuery(jinjalang.TSLanguage(), `(text) @html`)
 	})
 	if jinjaTextQueryErr != nil {
-		return nil, fmt.Errorf("markup: failed to compile Jinja text query: %w", jinjaTextQueryErr)
+		return nil, nil, fmt.Errorf("markup: failed to compile Jinja text query: %w", jinjaTextQueryErr)
 	}
 
 	parser := jinjalang.BorrowParser()
 	if parser == nil {
-		return nil, fmt.Errorf("markup: failed to borrow Jinja parser")
+		return nil, nil, fmt.Errorf("markup: failed to borrow Jinja parser")
 	}
 	defer jinjalang.ReturnParser(parser)
 
 	sourceBytes := []byte(source)
 	tree := parser.Parse(sourceBytes, nil)
 	if tree == nil {
-		return nil, fmt.Errorf("markup: failed to parse template")
+		return nil, nil, fmt.Errorf("markup: failed to parse template")
 	}
 	defer tree.Close()
 
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
 
-	var ranges []ts.Range
 	matches := cursor.Matches(jinjaTextQuery, tree.RootNode(), sourceBytes)
 	for match := matches.Next(); match != nil; match = matches.Next() {
 		for _, capture := range match.Captures {
-			ranges = append(ranges, capture.Node.Range())
+			text = append(text, capture.Node.Range())
 		}
 	}
-	return ranges, nil
+
+	dynamic = jinjaDynamicRanges(tree.RootNode())
+	sort.Slice(dynamic, func(i, j int) bool {
+		return dynamic[i].EndByte < dynamic[j].EndByte
+	})
+	return text, dynamic, nil
+}
+
+// jinjaDynamicRanges collects leaf nodes that represent template syntax.
+// Leaf ranges avoid the enclosing statement span, which also covers the HTML
+// between {% ... %} delimiters.
+func jinjaDynamicRanges(root *ts.Node) []ts.Range {
+	var ranges []ts.Range
+	cursor := root.Walk()
+	defer cursor.Close()
+
+	if !cursor.GotoFirstChild() {
+		return nil
+	}
+	for {
+		node := cursor.Node()
+		if node.ChildCount() == 0 {
+			switch node.Kind() {
+			case "text", "raw_text":
+			default:
+				ranges = append(ranges, node.Range())
+			}
+		}
+
+		if cursor.GotoFirstChild() {
+			continue
+		}
+		for !cursor.GotoNextSibling() {
+			if !cursor.GotoParent() {
+				return ranges
+			}
+		}
+	}
+}
+
+// overlapsAny reports whether [start, end) intersects any range. Ranges must
+// be sorted by EndByte and disjoint, which is true for template syntax leaves.
+func overlapsAny(ranges []ts.Range, start, end uint) bool {
+	if len(ranges) == 0 || start >= end {
+		return false
+	}
+	i := sort.Search(len(ranges), func(i int) bool {
+		return ranges[i].EndByte > start
+	})
+	return i < len(ranges) && ranges[i].StartByte < end
 }

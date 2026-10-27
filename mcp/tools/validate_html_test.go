@@ -323,6 +323,49 @@ func TestValidateHtml_InvalidAttributeValue(t *testing.T) {
 	}
 }
 
+func TestValidateHtml_UppercaseMarkup(t *testing.T) {
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/multiple-elements-integration")
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	registry, err := mcp.NewMCPContext(workspace, nil)
+	require.NoError(t, err)
+
+	err = registry.LoadManifests()
+	require.NoError(t, err)
+
+	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+
+	html := `<BUTTON-ELEMENT VARIANT="invalid-value">Call to action</BUTTON-ELEMENT>`
+
+	argsJSON, err := json.Marshal(map[string]any{
+		"html":    html,
+		"context": "uppercase validation",
+	})
+	require.NoError(t, err)
+
+	req := &mcpSDK.CallToolRequest{
+		Params: &mcpSDK.CallToolParamsRaw{
+			Name:      "validate_html",
+			Arguments: json.RawMessage(argsJSON),
+		},
+	}
+
+	handler := tools.MakeValidateHtmlHandler(registryAdapter)
+	result, err := handler(context.Background(), req)
+	require.NoError(t, err)
+	require.Len(t, result.Content, 1)
+
+	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
+	require.True(t, ok)
+
+	// Uppercase markup is normalized, so discovery and compliance agree.
+	assert.Contains(t, textContent.Text, "## Custom Elements Found")
+	assert.Contains(t, textContent.Text, "`button-element`")
+	assert.Contains(t, textContent.Text, "Invalid Attribute Value")
+	assert.Contains(t, textContent.Text, `variant="invalid-value"`)
+}
+
 func TestValidateHtml_AttributeValueParsing_Regression(t *testing.T) {
 	// Regression test for attribute value parsing bug where boolean attributes
 	// cause misaligned indices between attr.name and attr.value arrays
