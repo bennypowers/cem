@@ -87,8 +87,9 @@ func TestParseElementsJinjaUnbalanced(t *testing.T) {
 	assert.Equal(t, "my-el", elements[0].tagName)
 }
 
-// TestParseElementsManySiblings guards against quadratic child iteration.
-// It asserts correctness only; timing lives in BenchmarkParseElementsManySiblings.
+// TestParseElementsManySiblings guards linear traversal of large sibling
+// lists. It asserts correctness only; timing lives in
+// BenchmarkParseElementsManySiblings.
 func TestParseElementsManySiblings(t *testing.T) {
 	const count = 20000
 	source := strings.Repeat(`<div></div>`, count)

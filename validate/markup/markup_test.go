@@ -163,7 +163,7 @@ func TestValidateGolden(t *testing.T) {
 			opts:   markup.Options{ValidateAttrs: true},
 		},
 		{
-			name:   "non ascii columns are rune based",
+			name:   "non ascii columns are byte based",
 			golden: "unicode.json",
 			file:   "unicode.html",
 			format: "html",
