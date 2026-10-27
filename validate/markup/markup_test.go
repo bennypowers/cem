@@ -416,6 +416,14 @@ func TestValidateLiquidComments(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, tricky, 1)
 	assert.Equal(t, markup.RuleInvalidAttributeValue, tricky[0].Rule)
+
+	// A literal comment opener inside a raw block is not a comment.
+	raw, err := markup.Validate(pkg,
+		`{% raw %}{% comment %}{% endraw %}<my-button variant="bogus">{% comment %} real {% endcomment %}`,
+		markup.Options{Format: "liquid", ValidateAttrs: true})
+	require.NoError(t, err)
+	require.Len(t, raw, 1)
+	assert.Equal(t, markup.RuleInvalidAttributeValue, raw[0].Rule)
 }
 
 // These parser regressions each exercise one masking quirk, so a focused table
@@ -429,6 +437,7 @@ func TestValidateTemplateEdgeCases(t *testing.T) {
 		issues, err := markup.Validate(pkg, source, markup.Options{
 			Format:        format,
 			ValidateAttrs: true,
+			ValidateSlots: true,
 		})
 		require.NoError(t, err)
 		for _, issue := range issues {
@@ -541,6 +550,81 @@ func TestValidateTemplateEdgeCases(t *testing.T) {
 	t.Run("dynamic attribute name is not redundant", func(t *testing.T) {
 		assert.False(t, hasRule(t, `<my-card {{ x }}label="Save">`, "twig",
 			markup.RuleContentAttributeRedundancy))
+	})
+
+	t.Run("html comment quote does not corrupt masking", func(t *testing.T) {
+		source := `<!-- don't --><my-button variant=prim{{ x }}>`
+
+		assert.False(t, hasRule(t, source, "twig", markup.RuleInvalidAttributeValue))
+
+		elements, err := markup.FindCustomElements(source, markup.Options{Format: "twig"})
+		require.NoError(t, err)
+		assert.Len(t, elements, 1)
+	})
+
+	t.Run("mask state advances past a value span", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<my-card flipBoundary={{ x }} {# c #}loading="bogus">`, "twig",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("dynamic name does not trigger a conflict", func(t *testing.T) {
+		assert.False(t, hasRule(t, `<my-card {{ x }}lazy="true" loading="eager">`, "twig",
+			markup.RuleAttributeConflict))
+	})
+
+	t.Run("dynamic slot name is not an unknown slot", func(t *testing.T) {
+		assert.False(t, hasRule(t, `<my-card><span {{ x }}slot="nope">x</span></my-card>`, "twig",
+			markup.RuleUnknownSlot))
+	})
+
+	t.Run("whitespace control block does not suppress an attribute", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<my-card {{~#if x~}}loading="bogus"{{~/if~}}>`, "hbs",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("comment before equals does not suppress an attribute", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<my-button variant{# c #}="bogus">`, "twig",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("statement before equals does not suppress an attribute", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<my-button variant{% if x %}{% endif %}="bogus">`, "twig",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("dollar braces are literal in twig", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<my-button variant="${bogus}">`, "twig",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("jinja statement is literal in hbs values", func(t *testing.T) {
+		assert.True(t, hasRule(t, `<my-button variant="{% bogus %}">`, "hbs",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("expression containing closing braces is measured correctly", func(t *testing.T) {
+		assert.False(t, hasRule(t, `<my-card {{ "}}" }}variant="primary">`, "twig",
+			markup.RuleUnknownAttribute))
+	})
+
+	t.Run("else-prefixed helper is an expression", func(t *testing.T) {
+		assert.False(t, hasRule(t, `<my-button {{elsewhere}}variant="bogus">`, "hbs",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("plaintext consumes following markup", func(t *testing.T) {
+		assert.False(t, hasRule(t, `<plaintext><my-card variant="bogus">`, "html",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("self-closing textarea consumes following markup", func(t *testing.T) {
+		assert.False(t, hasRule(t, `<textarea/><my-card variant="bogus">`, "html",
+			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("unclosed textarea consumes following markup", func(t *testing.T) {
+		assert.False(t, hasRule(t, `<textarea><my-card variant="bogus">`, "html",
+			markup.RuleInvalidAttributeValue))
 	})
 }
 

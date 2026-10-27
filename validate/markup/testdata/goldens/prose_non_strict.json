@@ -14,7 +14,7 @@
     "confidence": "high",
     "message": "Custom element 'my-card' is deprecated: use my-panel instead",
     "element": "my-card",
-    "line": 5,
+    "line": 8,
     "column": 2
   }
 ]

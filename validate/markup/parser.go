@@ -113,7 +113,11 @@ func parseElements(source string, family formatFamilyValue) ([]*elementNode, err
 		// breaks, so node positions still index the original source.
 		ctx.dynamic = dynamic
 		ctx.expressions = jinjaExpressionRanges(source)
-		masked = maskOutside(source, textRanges)
+		var comments []ts.Range
+		if family == formatLiquid {
+			comments = liquidCommentSpans(source)
+		}
+		masked = maskTemplate(source, textRanges, comments)
 	case formatHandlebars:
 		masks, expressions := handlebarsRanges(source)
 		ctx.dynamic = masks
@@ -151,6 +155,10 @@ func elementsFromNode(node *ts.Node, source []byte, ctx parseContext, skipTags b
 					el.children = elementsFromNode(child, source, ctx, true)
 				}
 				elements = append(elements, el)
+				if el.tagName == "plaintext" {
+					// Everything after <plaintext> is text.
+					return elements
+				}
 			} else {
 				elements = append(elements, elementsFromNode(child, source, ctx, false)...)
 			}
@@ -160,6 +168,11 @@ func elementsFromNode(node *ts.Node, source []byte, ctx parseContext, skipTags b
 			}
 			if el := parseTag(child, source, ctx); el != nil {
 				elements = append(elements, el)
+				if isTextContentElement(el.tagName) {
+					// An unclosed or self-closing raw-text element consumes
+					// the rest of its container as text.
+					return elements
+				}
 			}
 		case "end_tag":
 			// End tags never yield elements, in either traversal mode.
@@ -213,12 +226,13 @@ func parseTag(node *ts.Node, source []byte, ctx parseContext) *elementNode {
 
 		name := asciiLower(string(source[nameNode.StartByte():nameNode.EndByte()]))
 		line, column := positionFor(nameNode)
+		valueStart, valueEnd, hasValue := attributeValueSpan(child)
 		attr := parsedAttribute{
 			name:    name,
 			value:   attributeValue(child, source),
 			line:    line,
 			column:  column,
-			dynamic: overlapsAny(ctx.dynamic, child.StartByte(), child.EndByte()),
+			dynamic: hasValue && overlapsAny(ctx.dynamic, valueStart, valueEnd),
 			nameDynamic: overlapsAny(ctx.dynamic, nameNode.StartByte(), nameNode.EndByte()) ||
 				adjacentToAny(ctx.expressions, nameNode.StartByte(), nameNode.EndByte()),
 		}
@@ -283,6 +297,23 @@ func attributeValue(attribute *ts.Node, source []byte) string {
 		}
 	}
 	return ""
+}
+
+// attributeValueSpan returns the value node's byte range. Dynamics are
+// measured on the value alone, so template syntax between a name and '=' does
+// not make a static value dynamic.
+func attributeValueSpan(attribute *ts.Node) (start, end uint, ok bool) {
+	cursor := attribute.Walk()
+	defer cursor.Close()
+
+	for ok := cursor.GotoFirstChild(); ok; ok = cursor.GotoNextSibling() {
+		node := cursor.Node()
+		switch node.Kind() {
+		case "quoted_attribute_value", "attribute_value":
+			return node.StartByte(), node.EndByte(), true
+		}
+	}
+	return 0, 0, false
 }
 
 func findChildKind(node *ts.Node, kind string) *ts.Node {
@@ -503,7 +534,7 @@ func handlebarsRanges(source string) (masks, expressions []ts.Range) {
 // else branch. These separate tokens instead of composing a name.
 func handlebarsIsBlock(source string, start, width int) bool {
 	j := start + width
-	for j < len(source) && isHTMLSpace(source[j]) {
+	for j < len(source) && (source[j] == '~' || isHTMLSpace(source[j])) {
 		j++
 	}
 	if j >= len(source) {
@@ -513,7 +544,11 @@ func handlebarsIsBlock(source string, start, width int) bool {
 	case '#', '/', '^', '>', '!':
 		return true
 	}
-	return strings.HasPrefix(source[j:], "else")
+	if strings.HasPrefix(source[j:], "else") {
+		after := j + 4
+		return after >= len(source) || isHTMLSpace(source[after]) || source[after] == '}' || source[after] == '~'
+	}
+	return false
 }
 
 // isEscaped reports whether the byte at start follows an odd number of
@@ -536,6 +571,27 @@ func liquidCommentSpans(source string) []ts.Range {
 		start, end, name, ok := nextLiquidTag(source, i)
 		if !ok {
 			break
+		}
+		if name == "raw" {
+			// Raw bodies are literal text, so a comment marker inside one
+			// must not pair with a later endcomment.
+			closed := false
+			for j := end; j < len(source); {
+				_, end2, name2, ok2 := nextLiquidTag(source, j)
+				if !ok2 {
+					break
+				}
+				if name2 == "endraw" {
+					i = end2
+					closed = true
+					break
+				}
+				j = end2
+			}
+			if !closed {
+				return spans
+			}
+			continue
 		}
 		if name != "comment" {
 			i = end
@@ -576,11 +632,11 @@ func nextLiquidTag(source string, from int) (start, end int, name string, ok boo
 
 		if outRel := strings.Index(source[from:], "{{"); outRel >= 0 && from+outRel < tagStart {
 			outStart := from + outRel
-			closeRel := strings.Index(source[outStart+2:], "}}")
-			if closeRel < 0 {
+			end := templateExpressionEnd(source, outStart)
+			if end < 0 {
 				return 0, 0, "", false
 			}
-			from = outStart + 2 + closeRel + 2
+			from = end
 			continue
 		}
 
@@ -601,24 +657,109 @@ func nextLiquidTag(source string, from int) (start, end int, name string, ok boo
 	return 0, 0, "", false
 }
 
-// maskOutside replaces every byte not covered by keep with a context-aware
-// placeholder. Byte length and line breaks are preserved so tree-sitter node
-// ranges still index the original source.
-func maskOutside(source string, keep []ts.Range) []byte {
-	var gaps []ts.Range
+// maskTemplate masks each template construct in the gaps between keep ranges,
+// leaving whitespace between constructs intact. Comment blocks are masked
+// whole because their bodies must not be validated.
+func maskTemplate(source string, keep, commentBlocks []ts.Range) []byte {
+	var spans []ts.Range
+
 	prev := 0
 	for _, r := range keep {
-		if int(r.StartByte) > prev {
-			gaps = append(gaps, ts.Range{StartByte: uint(prev), EndByte: r.StartByte})
-		}
+		spans = append(spans, templateMasks(source, prev, int(r.StartByte), commentBlocks)...)
 		if int(r.EndByte) > prev {
 			prev = int(r.EndByte)
 		}
 	}
-	if prev < len(source) {
-		gaps = append(gaps, ts.Range{StartByte: uint(prev), EndByte: uint(len(source))})
+	spans = append(spans, templateMasks(source, prev, len(source), commentBlocks)...)
+	return maskSpans(source, spans)
+}
+
+func templateMasks(source string, start, end int, commentBlocks []ts.Range) []ts.Range {
+	var spans []ts.Range
+
+	cursor := start
+	for _, block := range commentBlocks {
+		blockStart, blockEnd := int(block.StartByte), int(block.EndByte)
+		if blockEnd <= start || blockStart >= end {
+			continue
+		}
+		if blockStart > cursor {
+			spans = append(spans, templateConstructs(source, cursor, min(blockStart, end))...)
+		}
+		if blockStart < start {
+			blockStart = start
+		}
+		if blockEnd > end {
+			blockEnd = end
+		}
+		spans = append(spans, ts.Range{StartByte: uint(blockStart), EndByte: uint(blockEnd)})
+		if blockEnd > cursor {
+			cursor = blockEnd
+		}
 	}
-	return maskSpans(source, gaps)
+	if cursor < end {
+		spans = append(spans, templateConstructs(source, cursor, end)...)
+	}
+	return spans
+}
+
+// templateConstructs returns the {{ ... }}, {% ... %}, and {# ... #} ranges in
+// source[start:end]. Unterminated constructs are left unmasked.
+func templateConstructs(source string, start, end int) []ts.Range {
+	var spans []ts.Range
+
+	for i := start; i < end; {
+		next, opener := nextTemplateOpener(source, i, end)
+		if next < 0 {
+			break
+		}
+
+		var closeEnd int
+		switch opener {
+		case '{':
+			closeEnd = templateExpressionEnd(source, next)
+		case '%':
+			closeEnd = templateDelimitedEnd(source, next+2, end, "%}")
+		case '#':
+			closeEnd = templateDelimitedEnd(source, next+2, end, "#}")
+		}
+		if closeEnd <= next || closeEnd > end {
+			break
+		}
+		spans = append(spans, ts.Range{StartByte: uint(next), EndByte: uint(closeEnd)})
+		i = closeEnd
+	}
+	return spans
+}
+
+func nextTemplateOpener(source string, from, end int) (int, byte) {
+	best, opener := -1, byte(0)
+	for _, candidate := range []struct {
+		text   string
+		opener byte
+	}{
+		{"{{", '{'},
+		{"{%", '%'},
+		{"{#", '#'},
+	} {
+		rel := strings.Index(source[from:end], candidate.text)
+		if rel < 0 {
+			continue
+		}
+		pos := from + rel
+		if best < 0 || pos < best {
+			best, opener = pos, candidate.opener
+		}
+	}
+	return best, opener
+}
+
+func templateDelimitedEnd(source string, from, end int, closer string) int {
+	rel := strings.Index(source[from:end], closer)
+	if rel < 0 {
+		return -1
+	}
+	return from + rel + len(closer)
 }
 
 // maskSpans replaces the given spans with a context-aware placeholder in one
@@ -633,10 +774,8 @@ func maskSpans(source string, spans []ts.Range) []byte {
 
 	for _, span := range spans {
 		start, end := int(span.StartByte), int(span.EndByte)
-		for i := prev; i < start && i < len(source); i++ {
-			state.step(source[i])
-		}
-		placeholder := state.placeholder(source, end)
+		state.advance(source, prev, start)
+		placeholder := state.placeholder(source, end, spanIsExpression(source, start, end))
 		for i := start; i < end && i < len(source); i++ {
 			switch source[i] {
 			case '\n', '\r':
@@ -645,20 +784,43 @@ func maskSpans(source string, spans []ts.Range) []byte {
 				masked[i] = placeholder
 			}
 		}
+		state.applyPlaceholder(placeholder)
 		prev = end
 	}
-	for i := prev; i < len(source); i++ {
-		state.step(source[i])
-	}
+	state.advance(source, prev, len(source))
 	return masked
 }
 
-// maskState tracks HTML tag and attribute-value context in one pass.
+// maskState tracks HTML tag, comment, and attribute-value context in one pass.
 type maskState struct {
 	inTag       bool
+	inComment   bool
 	quote       byte
 	afterEquals bool
 	unquoted    bool
+}
+
+// advance steps over source[start:end], treating HTML comment bodies as
+// opaque so quotes and angle brackets inside them do not change tag state.
+func (s *maskState) advance(source string, start, end int) {
+	for i := start; i < end && i < len(source); {
+		if s.inComment {
+			if strings.HasPrefix(source[i:], "-->") {
+				s.inComment = false
+				i += 3
+				continue
+			}
+			i++
+			continue
+		}
+		if !s.inTag && strings.HasPrefix(source[i:], "<!--") {
+			s.inComment = true
+			i += 4
+			continue
+		}
+		s.step(source[i])
+		i++
+	}
 }
 
 func (s *maskState) step(c byte) {
@@ -703,16 +865,40 @@ func (s *maskState) step(c byte) {
 	}
 }
 
-func (s *maskState) placeholder(source string, end int) byte {
+// applyPlaceholder advances the state past a masked span as if its placeholder
+// had been source text.
+func (s *maskState) applyPlaceholder(placeholder byte) {
+	if s.quote != 0 || s.inComment {
+		return
+	}
+	s.afterEquals = false
+	s.unquoted = placeholder == 'x'
+}
+
+func (s *maskState) placeholder(source string, end int, expression bool) byte {
+	if s.inComment {
+		return ' '
+	}
 	if !s.inTag || s.quote != 0 {
 		return ' '
 	}
-	if s.afterEquals || s.unquoted {
+	if s.unquoted {
 		return 'x'
+	}
+	if s.afterEquals {
+		if expression {
+			return 'x'
+		}
+		// A comment or statement after '=' leaves the value position for the
+		// following static value.
+		return ' '
 	}
 
 	// Template syntax used as an attribute name is followed by '='; an
 	// identifier keeps the rest of the tag parseable.
+	if !expression {
+		return ' '
+	}
 	j := end
 	for j < len(source) && isHTMLSpace(source[j]) {
 		j++
@@ -721,6 +907,42 @@ func (s *maskState) placeholder(source string, end int) byte {
 		return 'x'
 	}
 	return ' '
+}
+
+// spanIsExpression reports whether a masked span is an output expression
+// rather than a statement, comment, or block helper.
+func spanIsExpression(source string, start, end int) bool {
+	i := start
+	for i < end && isHTMLSpace(source[i]) {
+		i++
+	}
+	if i+1 >= end || source[i] != '{' {
+		return false
+	}
+	switch source[i+1] {
+	case '{':
+		j := i + 2
+		for j < end && (source[j] == '~' || isHTMLSpace(source[j])) {
+			j++
+		}
+		if j >= end {
+			return true
+		}
+		switch source[j] {
+		case '!', '#', '/', '^', '>':
+			return false
+		}
+		if strings.HasPrefix(source[i:], "{{else") {
+			after := i + 6
+			if after >= end || isHTMLSpace(source[after]) || source[after] == '}' || source[after] == '~' {
+				return false
+			}
+		}
+		return true
+	case '%', '#':
+		return false
+	}
+	return false
 }
 
 func isHTMLSpace(c byte) bool {
@@ -862,6 +1084,37 @@ func adjacentToAny(ranges []ts.Range, start, end uint) bool {
 
 // jinjaExpressionRanges returns the ranges of {{ ... }} output expressions.
 // Statements and comments are deliberately excluded.
+// templateExpressionEnd returns the end offset of a {{ ... }} expression,
+// honoring quoted strings. It returns -1 for an unterminated expression.
+func templateExpressionEnd(source string, start int) int {
+	j := start + 2
+	var quote byte
+	for j < len(source) {
+		c := source[j]
+		if quote != 0 {
+			if c == '\\' {
+				j += 2
+				continue
+			}
+			if c == quote {
+				quote = 0
+			}
+			j++
+			continue
+		}
+		if c == '\'' || c == '"' {
+			quote = c
+			j++
+			continue
+		}
+		if strings.HasPrefix(source[j:], "}}") {
+			return j + 2
+		}
+		j++
+	}
+	return -1
+}
+
 func jinjaExpressionRanges(source string) []ts.Range {
 	tracker := &pointTracker{source: []byte(source)}
 	var ranges []ts.Range
@@ -872,11 +1125,10 @@ func jinjaExpressionRanges(source string) []ts.Range {
 			break
 		}
 		start := i + rel
-		closeRel := strings.Index(source[start+2:], "}}")
-		if closeRel < 0 {
+		end := templateExpressionEnd(source, start)
+		if end < 0 {
 			break
 		}
-		end := start + 2 + closeRel + 2
 		ranges = append(ranges, tracker.between(start, end))
 		i = end
 	}

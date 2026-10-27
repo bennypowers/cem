@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 
 	"bennypowers.dev/cem/manifest"
@@ -145,11 +146,7 @@ func (i Issue) Details() map[string]string {
 	if len(i.details) == 0 {
 		return nil
 	}
-	out := make(map[string]string, len(i.details))
-	for k, v := range i.details {
-		out[k] = v
-	}
-	return out
+	return maps.Clone(i.details)
 }
 
 // MarshalJSON includes the rule-specific details, which are otherwise
@@ -234,9 +231,10 @@ func Validate(pkg *manifest.Package, markup string, opts Options) ([]Issue, erro
 	}
 
 	v := validator{
-		pkg:      pkg,
-		opts:     opts,
-		template: family != formatHTML,
+		pkg:        pkg,
+		opts:       opts,
+		template:   family != formatHTML,
+		handlebars: family == formatHandlebars,
 	}
 	return v.validate(elements), nil
 }
@@ -244,11 +242,12 @@ func Validate(pkg *manifest.Package, markup string, opts Options) ([]Issue, erro
 type validator struct {
 	pkg  *manifest.Package
 	opts Options
-	// template marks Jinja-family input. Template expressions are dynamic
-	// values, so enum checks skip them. Plain HTML keeps the historical MCP
-	// behavior of validating the literal value.
-	template bool
-	issues   []Issue
+	// template marks Jinja-family or Handlebars input. Template expressions
+	// are dynamic values, so enum checks skip them. Plain HTML keeps the
+	// historical MCP behavior of validating the literal value.
+	template   bool
+	handlebars bool
+	issues     []Issue
 }
 
 func (v *validator) validate(elements []*elementNode) []Issue {
@@ -350,7 +349,7 @@ func (v *validator) validateAttributes(el *elementNode, decl *manifest.CustomEle
 		}
 
 		if !attr.dynamic && manifestAttr.IsEnum() && attr.value != "" &&
-			(!v.template || !containsTemplateExpression(attr.value)) {
+			(!v.template || !containsTemplateExpression(attr.value, v.handlebars)) {
 			if !manifestAttr.IsValidValue(attr.value) {
 				validValues := manifestAttr.EnumValues()
 				message := fmt.Sprintf("Invalid attribute value: `%s=\"%s\"` in `<%s>`. Valid values: %v",
@@ -367,8 +366,8 @@ func (v *validator) validateAttributes(el *elementNode, decl *manifest.CustomEle
 
 func (v *validator) validateSlotAttribute(el, parent *elementNode) {
 	slotAttr := findParsedAttribute(el.attributes, "slot")
-	if slotAttr == nil || slotAttr.value == "" || slotAttr.dynamic ||
-		(v.template && containsTemplateExpression(slotAttr.value)) {
+	if slotAttr == nil || slotAttr.nameDynamic || slotAttr.value == "" || slotAttr.dynamic ||
+		(v.template && containsTemplateExpression(slotAttr.value, v.handlebars)) {
 		return
 	}
 
@@ -440,8 +439,9 @@ func (v *validator) validateAttributeCombinations(el *elementNode) {
 	attributes := make(map[string]string, len(el.attributes))
 	for _, attr := range el.attributes {
 		// A dynamic value is unknown at validation time, so it cannot
-		// participate in a conflict heuristic.
-		if attr.dynamic {
+		// participate in a conflict heuristic. A dynamic name may resolve to
+		// something else entirely.
+		if attr.dynamic || attr.nameDynamic {
 			continue
 		}
 		attributes[attr.name] = attr.value
@@ -559,8 +559,12 @@ func deprecationReason(deprecated manifest.Deprecated) string {
 	return ""
 }
 
-func containsTemplateExpression(value string) bool {
-	return strings.Contains(value, "{{") ||
-		strings.Contains(value, "{%") ||
-		strings.Contains(value, "${")
+func containsTemplateExpression(value string, handlebars bool) bool {
+	if strings.Contains(value, "{{") {
+		return true
+	}
+	if handlebars {
+		return false
+	}
+	return strings.Contains(value, "{%") || strings.Contains(value, "{#")
 }

@@ -59,7 +59,7 @@
     "confidence": "high",
     "message": "Custom element 'my-card' is deprecated: use my-panel instead",
     "element": "my-card",
-    "line": 5,
+    "line": 8,
     "column": 2
   },
   {
@@ -68,7 +68,7 @@
     "confidence": "low",
     "message": "Attribute 'title' on <my-card> is redundant with the 'title' slot",
     "element": "my-card",
-    "line": 5,
+    "line": 8,
     "column": 2,
     "details": {
       "attribute": "title",

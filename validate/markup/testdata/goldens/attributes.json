@@ -19,8 +19,8 @@
     "confidence": "high",
     "message": "Unknown attribute 'vriant' for element <my-button>. Did you mean 'variant'?",
     "element": "my-button",
-    "line": 1,
-    "column": 28,
+    "line": 2,
+    "column": 12,
     "details": {
       "attribute": "vriant",
       "suggestion": "variant"
