@@ -63,8 +63,7 @@ for external consumption are:
 - `bennypowers.dev/cem/manifest`: Custom Elements Manifest types and helpers
 - `bennypowers.dev/cem/breaking`: manifest comparison and change classification
 - `bennypowers.dev/cem/validate`: manifest schema validation and warnings.
-  A future markup-validation subpackage will live under `validate/` and be
-  part of this public family.
+  Markup validation may be added under `validate/`.
 
 Everything under `internal/` is private by Go's internal-package rule. The
 CLI-oriented packages (`cmd`, `lsp`, `serve`, `mcp`, `generate`, `health`,

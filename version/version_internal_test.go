@@ -27,6 +27,69 @@ func buildInfo(main debug.Module, deps ...*debug.Module) *debug.BuildInfo {
 	return &debug.BuildInfo{Main: main, Deps: deps}
 }
 
+func TestGetHandlesNilBuildInfo(t *testing.T) {
+	got := get("dev", "unknown", "unknown", "", nil)
+	if got != "dev" {
+		t.Fatalf("get() = %q, want %q", got, "dev")
+	}
+}
+
+func TestGetFallsThroughDevelMainModuleToGitMetadata(t *testing.T) {
+	got := get("dev", "abcdef1234567890", "v0.3.3", "", buildInfo(debug.Module{
+		Path:    modulePath,
+		Version: "(devel)",
+	}))
+	if got != "v0.3.3-abcdef1" {
+		t.Fatalf("get() = %q, want %q", got, "v0.3.3-abcdef1")
+	}
+}
+
+func TestGetUsesDifferentPathReplacementVersion(t *testing.T) {
+	got := get("dev", "unknown", "unknown", "", buildInfo(
+		debug.Module{Path: "example.com/host", Version: "v9.9.9"},
+		&debug.Module{
+			Path:    modulePath,
+			Version: "v0.0.0",
+			Replace: &debug.Module{Path: "example.com/cem-fork", Version: "v0.4.0"},
+		},
+	))
+	if got != "v0.4.0" {
+		t.Fatalf("get() = %q, want different-path replacement version %q", got, "v0.4.0")
+	}
+}
+
+func TestGetSkipsLocalReplaceWithoutVersion(t *testing.T) {
+	got := get("dev", "abcdef1234567890", "v0.3.3", "", buildInfo(
+		debug.Module{Path: "example.com/host", Version: "v9.9.9"},
+		&debug.Module{
+			Path:    modulePath,
+			Version: "v0.3.3",
+			Replace: &debug.Module{Path: "../cem", Version: ""},
+		},
+	))
+	if got != "v0.3.3-abcdef1" {
+		t.Fatalf("get() = %q, want git fallback %q", got, "v0.3.3-abcdef1")
+	}
+}
+
+func TestGetPrefersInjectedVersionWithoutReadingBuildInfo(t *testing.T) {
+	oldVersion := Version
+	oldReadBuildInfo := readBuildInfo
+	Version = "v2.0.0"
+	readBuildInfo = func() (*debug.BuildInfo, bool) {
+		t.Fatal("build info should not be read when Version is injected")
+		return nil, false
+	}
+	t.Cleanup(func() {
+		Version = oldVersion
+		readBuildInfo = oldReadBuildInfo
+	})
+
+	if got := Get(); got != "v2.0.0" {
+		t.Fatalf("Get() = %q, want %q", got, "v2.0.0")
+	}
+}
+
 func TestGetUsesMainModuleVersionForCLI(t *testing.T) {
 	got := get("dev", "unknown", "unknown", "", buildInfo(debug.Module{
 		Path:    modulePath,

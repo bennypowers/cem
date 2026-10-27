@@ -55,6 +55,9 @@ import (
 // modulePath is the import path recorded in Go build information.
 const modulePath = "bennypowers.dev/cem"
 
+// readBuildInfo is indirected so tests can inject build information.
+var readBuildInfo = debug.ReadBuildInfo
+
 var (
 	// Version is the release version, for example "v1.2.3". It is normally
 	// set at build time with -ldflags -X and defaults to "dev".
@@ -86,7 +89,13 @@ var (
 // the main module; otherwise it scans dependencies for the cem module, so
 // embedders report cem's version rather than the host program's version.
 func Get() string {
-	info, _ := debug.ReadBuildInfo()
+	// Fast path: if Version was set via ldflags, use it without reading build
+	// information.
+	if Version != "dev" {
+		return Version
+	}
+
+	info, _ := readBuildInfo()
 	return get(Version, GitCommit, GitTag, GitDirty, info)
 }
 
@@ -127,7 +136,8 @@ func get(version, gitCommit, gitTag, gitDirty string, info *debug.BuildInfo) str
 // moduleVersion returns the cem module version recorded in build information.
 // It reports the main module version only when cem is the main module;
 // otherwise it scans dependencies so embedders report the cem version, not the
-// host program's version.
+// host program's version. Replacement versions are honored for any replacement
+// path; local directory replacements have no version and are skipped.
 func moduleVersion(info *debug.BuildInfo) string {
 	if info == nil {
 		return ""
@@ -139,14 +149,14 @@ func moduleVersion(info *debug.BuildInfo) string {
 		if dep == nil || dep.Path != modulePath {
 			continue
 		}
-		module := dep
 		if dep.Replace != nil {
-			module = dep.Replace
-		}
-		if module.Path != modulePath {
+			if v := usableVersion(dep.Replace.Version); v != "" {
+				return v
+			}
+			// Local directory replacements have no version to report.
 			continue
 		}
-		if v := usableVersion(module.Version); v != "" {
+		if v := usableVersion(dep.Version); v != "" {
 			return v
 		}
 	}
