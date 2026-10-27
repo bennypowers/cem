@@ -440,7 +440,7 @@ func (v *validator) validateSlotContentGuidelines(el *elementNode, decl *manifes
 // value enables them. Attributes declared with another type use value
 // semantics, where the literal string "false" disables the behavior.
 func (v *validator) validateAttributeCombinations(el *elementNode, decl *manifest.CustomElementDeclaration) {
-	attributes := make(map[string]string, len(el.attributes))
+	attributes := make(map[string]parsedAttribute, len(el.attributes))
 	for _, attr := range el.attributes {
 		// A dynamic name may resolve to something else entirely. A dynamic
 		// value is kept: presence-based boolean checks only care that the
@@ -449,27 +449,31 @@ func (v *validator) validateAttributeCombinations(el *elementNode, decl *manifes
 		if attr.nameDynamic {
 			continue
 		}
-		attributes[attr.name] = attr.value
+		attributes[attr.name] = attr
 	}
 
 	manifestAttributes := decl.Attributes()
 	enabled := func(name string) (value string, ok bool) {
-		value, present := attributes[name]
+		attr, present := attributes[name]
 		if !present {
 			return "", false
 		}
 		if isBooleanAttribute(findAttribute(manifestAttributes, name)) {
-			return value, true
+			return attr.value, true
 		}
-		return value, !strings.EqualFold(strings.TrimSpace(value), "false")
+		if attr.dynamic {
+			// A dynamic string value is unknown; it may resolve to "false".
+			return attr.value, false
+		}
+		return attr.value, !strings.EqualFold(strings.TrimSpace(attr.value), "false")
 	}
 
-	if loading, ok := attributes["loading"]; ok && loading == "eager" {
+	if loading, ok := attributes["loading"]; ok && loading.value == "eager" {
 		if lazy, ok := enabled("lazy"); ok {
 			v.add(el, RuleAttributeConflict, SeverityWarning, ConfidenceLow,
 				"Eager loading conflicts with lazy loading", map[string]string{
 					DetailAttribute1: "loading",
-					DetailValue1:     loading,
+					DetailValue1:     loading.value,
 					DetailAttribute2: "lazy",
 					DetailValue2:     lazy,
 					DetailReason:     "Eager loading conflicts with lazy loading",
@@ -515,6 +519,9 @@ func (v *validator) validateContentAttributeRedundancy(el *elementNode, decl *ma
 		}
 		value, ok := attributes[asciiLower(slot.Name)]
 		if !ok {
+			continue
+		}
+		if !hasSlottedContent(el, slot.Name) {
 			continue
 		}
 		v.add(el, RuleContentAttributeRedundancy, SeverityInfo, ConfidenceLow,
@@ -572,6 +579,24 @@ func findParsedAttribute(attributes []parsedAttribute, name string) *parsedAttri
 		}
 	}
 	return nil
+}
+
+// hasSlottedContent reports whether a direct child assigns content to the
+// named slot. Slot assignment applies to direct children only.
+func hasSlottedContent(el *elementNode, slotName string) bool {
+	for _, child := range el.children {
+		if child.dynamic {
+			continue
+		}
+		slotAttr := findParsedAttribute(child.attributes, "slot")
+		if slotAttr == nil || slotAttr.nameDynamic || slotAttr.dynamic {
+			continue
+		}
+		if slotAttr.value == slotName {
+			return true
+		}
+	}
+	return false
 }
 
 func deprecationReason(deprecated manifest.Deprecated) string {

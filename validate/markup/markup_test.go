@@ -383,6 +383,16 @@ func TestValidateAttributeCombinations(t *testing.T) {
 			want:   1,
 		},
 		{
+			name:   "dynamic string lazy value is unknown",
+			source: `<my-string-card loading="eager" lazy="{{ dynamic }}">Card</my-string-card>`,
+			want:   0,
+		},
+		{
+			name:   "dynamic string disabled value is unknown",
+			source: `<my-string-card disabled="{{ dynamic }}" interactive>Card</my-string-card>`,
+			want:   0,
+		},
+		{
 			name:   "disabled alone does not conflict",
 			source: `<my-card disabled>Card</my-card>`,
 			want:   0,
@@ -687,6 +697,33 @@ func TestIssueJSONIncludesDetails(t *testing.T) {
 	details, ok := decoded[0]["details"].(map[string]any)
 	require.True(t, ok, "serialized issue must include details")
 	assert.Equal(t, "bogus", details[markup.DetailAttribute])
+}
+
+// Redundancy means slotted content overrides the attribute, so an attribute
+// without matching slot content must not report.
+func TestValidateRedundancyRequiresSlotContent(t *testing.T) {
+	pkg := loadPackage(t)
+
+	hasRedundancy := func(t *testing.T, source string) bool {
+		t.Helper()
+
+		issues, err := markup.Validate(pkg, source, markup.Options{
+			ValidateSlots: true,
+			Strict:        true,
+		})
+		require.NoError(t, err)
+		for _, issue := range issues {
+			if issue.Rule == markup.RuleContentAttributeRedundancy {
+				return true
+			}
+		}
+		return false
+	}
+
+	assert.False(t, hasRedundancy(t, `<my-card title="Hello"></my-card>`),
+		"attribute without slot content is not redundant")
+	assert.True(t, hasRedundancy(t, `<my-card title="Hello"><span slot="title">Hello</span></my-card>`),
+		"slotted content overrides the attribute")
 }
 
 // FindCustomElements is a pure discovery API; a table-like inline assertion is

@@ -383,7 +383,7 @@ func TestValidateHtml_StrictMarkupMapping(t *testing.T) {
 
 	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
 
-	html := `<strict-panel variant="bogus" disabled interactive label="Save"><span slot="nope">x</span></strict-panel>`
+	html := `<strict-panel variant="bogus" disabled interactive label="Save"><span slot="label">Name</span><span slot="nope">x</span></strict-panel>`
 
 	argsJSON, err := json.Marshal(map[string]any{
 		"html":    html,
