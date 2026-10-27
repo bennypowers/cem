@@ -1,14 +1,16 @@
 [
   {
-    "rule": "unknown-attribute",
+    "rule": "invalid-attribute-value",
     "severity": "error",
     "confidence": "high",
-    "message": "Unknown attribute 'bogus' for element <my-button>",
+    "message": "Invalid attribute value: `variant=\"bogus\"` in `<my-button>`. Valid values: [\"primary\" \"secondary\"]",
     "element": "my-button",
     "line": 1,
     "column": 12,
     "details": {
-      "attribute": "bogus"
+      "attribute": "variant",
+      "expected": "[\"primary\" \"secondary\"]",
+      "value": "bogus"
     }
   }
 ]

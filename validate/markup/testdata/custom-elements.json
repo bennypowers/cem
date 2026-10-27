@@ -50,6 +50,12 @@
               "type": {
                 "text": "string"
               }
+            },
+            {
+              "name": "symbol",
+              "type": {
+                "text": "\"a&b\" | \"c\""
+              }
             }
           ],
           "slots": [

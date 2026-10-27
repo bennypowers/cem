@@ -18,6 +18,7 @@ package markup
 
 import (
 	"fmt"
+	"html"
 	"strings"
 	"sync"
 
@@ -137,13 +138,12 @@ func parseTag(node *ts.Node, source []byte) *elementNode {
 	}
 
 	el := &elementNode{
-		tagName: string(source[tagName.StartByte():tagName.EndByte()]),
+		tagName: asciiLower(string(source[tagName.StartByte():tagName.EndByte()])),
 	}
 	el.line, el.column = positionFor(tagName)
 
-	// Duplicate attributes are kept at their first position with the last
-	// value. This matches the previous MCP map semantics (one entry per name,
-	// last assignment wins), not browser behavior, which keeps the first value.
+	// Duplicate attributes keep their first value and position, matching HTML
+	// parsing and browser behavior. Later duplicates are ignored.
 	index := make(map[string]int, startTag.ChildCount())
 	cursor := startTag.Walk()
 	defer cursor.Close()
@@ -159,7 +159,7 @@ func parseTag(node *ts.Node, source []byte) *elementNode {
 			continue
 		}
 
-		name := string(source[nameNode.StartByte():nameNode.EndByte()])
+		name := asciiLower(string(source[nameNode.StartByte():nameNode.EndByte()]))
 		line, column := positionFor(nameNode)
 		attr := parsedAttribute{
 			name:   name,
@@ -168,8 +168,7 @@ func parseTag(node *ts.Node, source []byte) *elementNode {
 			column: column,
 		}
 
-		if existing, ok := index[name]; ok {
-			el.attributes[existing].value = attr.value
+		if _, ok := index[name]; ok {
 			continue
 		}
 		index[name] = len(el.attributes)
@@ -177,6 +176,29 @@ func parseTag(node *ts.Node, source []byte) *elementNode {
 	}
 
 	return el
+}
+
+func asciiLower(value string) string {
+	for i := 0; i < len(value); i++ {
+		if value[i] < 'A' || value[i] > 'Z' {
+			continue
+		}
+		lower := []byte(value)
+		for j := i; j < len(lower); j++ {
+			if lower[j] >= 'A' && lower[j] <= 'Z' {
+				lower[j] += 'a' - 'A'
+			}
+		}
+		return string(lower)
+	}
+	return value
+}
+
+// unescapeStaticValue decodes HTML character references in a static attribute
+// value. Interpolated template values have no attribute_value node and never
+// reach this path.
+func unescapeStaticValue(raw []byte) string {
+	return html.UnescapeString(string(raw))
 }
 
 // positionFor returns a one-based line and a one-based UTF-8 byte column.
@@ -196,13 +218,13 @@ func attributeValue(attribute *ts.Node, source []byte) string {
 		switch child.Kind() {
 		case "quoted_attribute_value":
 			if value := findChildKind(child, "attribute_value"); value != nil {
-				return string(source[value.StartByte():value.EndByte()])
+				return unescapeStaticValue(source[value.StartByte():value.EndByte()])
 			}
 			// Interpolated values have no attribute_value node; the value is
 			// dynamic, so leave it empty and skip value validation.
 			return ""
 		case "attribute_value":
-			return string(source[child.StartByte():child.EndByte()])
+			return unescapeStaticValue(source[child.StartByte():child.EndByte()])
 		}
 	}
 	return ""

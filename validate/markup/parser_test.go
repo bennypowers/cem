@@ -116,6 +116,17 @@ func BenchmarkParseElementsManySiblings(b *testing.B) {
 	}
 }
 
+func TestAttributeValueUnescape(t *testing.T) {
+	elements, err := parseElements(`<my-el a="a&amp;b" b="prim&#97;ry" c="primar&#x79;">`, formatHTML)
+	require.NoError(t, err)
+	require.Len(t, elements, 1)
+	require.Len(t, elements[0].attributes, 3)
+
+	assert.Equal(t, "a&b", elements[0].attributes[0].value)
+	assert.Equal(t, "primary", elements[0].attributes[1].value)
+	assert.Equal(t, "primary", elements[0].attributes[2].value)
+}
+
 func TestPositionForNonASCII(t *testing.T) {
 	elements, err := parseElements(`<p>éé</p><my-button bogus="1">`, formatHTML)
 	require.NoError(t, err)
