@@ -25,7 +25,9 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"strings"
+	"unicode"
 
 	"github.com/adrg/xdg"
 	"github.com/santhosh-tekuri/jsonschema/v6"
@@ -109,8 +111,10 @@ func NewValidationPipeline(fsys FileSystem, manifestData []byte) (*ValidationPip
 	errorProcessor := NewErrorProcessor(navigator)
 
 	return &ValidationPipeline{
-		fsys:             fsys,
-		manifestData:     manifestData,
+		fsys: fsys,
+		// Clone so a caller reusing the read buffer cannot change the bytes
+		// validated after the navigator was built from the original snapshot.
+		manifestData:     slices.Clone(manifestData),
 		schemaVersion:    versionStruct.SchemaVersion,
 		navigator:        navigator,
 		warningProcessor: warningProcessor,
@@ -180,7 +184,12 @@ func isPathSafeSchemaVersion(version string) bool {
 	if version == "" || strings.ContainsAny(version, `/\`) || strings.Contains(version, "..") {
 		return false
 	}
-	return !strings.ContainsAny(version, " \t\r\n?#%")
+	for _, r := range version {
+		if unicode.IsSpace(r) || unicode.IsControl(r) || strings.ContainsRune("?#%", r) {
+			return false
+		}
+	}
+	return true
 }
 
 // canonicalSchemaVersion returns the canonical semantic version for version,

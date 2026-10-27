@@ -24,7 +24,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 // supported public Go API, so it follows the compatibility policy described
 // in CONTRIBUTING.md.
 //
-// Release builds inject metadata with -ldflags -X, for example:
+// A build can inject metadata with -ldflags -X, for example:
 //
 //	go build -ldflags "\
 //	  -X bennypowers.dev/cem/version.Version=v1.2.3 \
@@ -143,6 +143,13 @@ func moduleVersion(info *debug.BuildInfo) string {
 		return ""
 	}
 	if info.Main.Path == modulePath {
+		if info.Main.Replace != nil {
+			if v := usableVersion(info.Main.Replace.Version); v != "" {
+				return v
+			}
+			// Local directory replacements have no version to report.
+			return ""
+		}
 		return usableVersion(info.Main.Version)
 	}
 	for _, dep := range info.Deps {

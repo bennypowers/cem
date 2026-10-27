@@ -52,63 +52,11 @@ func setBuildState(t *testing.T, v, commit, tag, buildTime, dirty string) {
 
 // Inline assertions: this test compares a scalar version string, where a
 // golden file would only duplicate the expected value.
-func TestGetDefaultsToDev(t *testing.T) {
-	setBuildState(t, "dev", "unknown", "unknown", "unknown", "")
-
-	if got := version.Get(); got != "dev" {
-		t.Errorf("Get() = %q, want %q", got, "dev")
-	}
-}
-
-// Inline assertions: this test compares a scalar version string, where a
-// golden file would only duplicate the expected value.
 func TestGetUsesVersionOverride(t *testing.T) {
 	setBuildState(t, "v1.2.3", "abcdef1", "v1.2.3", "2026-01-02T03:04:05Z", "")
 
 	if got := version.Get(); got != "v1.2.3" {
 		t.Errorf("Get() = %q, want %q", got, "v1.2.3")
-	}
-}
-
-// Inline assertions: this table compares scalar version strings, where a
-// golden file would only duplicate the expected values.
-func TestGetCombinesGitMetadata(t *testing.T) {
-	tests := []struct {
-		name   string
-		commit string
-		tag    string
-		dirty  string
-		want   string
-	}{
-		{
-			name:   "tag and commit",
-			commit: "abcdef123456",
-			tag:    "v1.2.3",
-			want:   "v1.2.3-abcdef1",
-		},
-		{
-			name:   "tag already contains short commit",
-			commit: "abcdef123456",
-			tag:    "v1.2.3-abcdef1",
-			want:   "v1.2.3-abcdef1",
-		},
-		{
-			name:   "dirty working tree",
-			commit: "abcdef123456",
-			tag:    "v1.2.3",
-			dirty:  "dirty",
-			want:   "v1.2.3-abcdef1-dirty",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			setBuildState(t, "dev", tc.commit, tc.tag, "unknown", tc.dirty)
-
-			if got := version.Get(); got != tc.want {
-				t.Errorf("Get() = %q, want %q", got, tc.want)
-			}
-		})
 	}
 }
 

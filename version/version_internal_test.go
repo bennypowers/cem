@@ -27,6 +27,49 @@ func buildInfo(main debug.Module, deps ...*debug.Module) *debug.BuildInfo {
 	return &debug.BuildInfo{Main: main, Deps: deps}
 }
 
+// Inline assertions: this table compares scalar version strings, where a
+// golden file would only duplicate the expected values.
+//
+// This lives in the internal test because it passes explicit build
+// information, so it cannot depend on how the test binary was built.
+func TestGetCombinesGitMetadata(t *testing.T) {
+	tests := []struct {
+		name   string
+		commit string
+		tag    string
+		dirty  string
+		want   string
+	}{
+		{
+			name:   "tag and commit",
+			commit: "abcdef123456",
+			tag:    "v1.2.3",
+			want:   "v1.2.3-abcdef1",
+		},
+		{
+			name:   "tag already contains short commit",
+			commit: "abcdef123456",
+			tag:    "v1.2.3-abcdef1",
+			want:   "v1.2.3-abcdef1",
+		},
+		{
+			name:   "dirty working tree",
+			commit: "abcdef123456",
+			tag:    "v1.2.3",
+			dirty:  "dirty",
+			want:   "v1.2.3-abcdef1-dirty",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := get("dev", tc.commit, tc.tag, tc.dirty, nil); got != tc.want {
+				t.Errorf("get() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
 // Inline assertions: this test compares a scalar version string, where a
 // golden file would only duplicate the expected value.
 func TestGetHandlesNilBuildInfo(t *testing.T) {
@@ -100,6 +143,32 @@ func TestGetPrefersInjectedVersionWithoutReadingBuildInfo(t *testing.T) {
 
 	if got := Get(); got != "v2.0.0" {
 		t.Fatalf("Get() = %q, want %q", got, "v2.0.0")
+	}
+}
+
+// Inline assertions: this test compares a scalar version string, where a
+// golden file would only duplicate the expected value.
+func TestGetUsesMainModuleReplacementVersion(t *testing.T) {
+	got := get("dev", "unknown", "unknown", "", buildInfo(debug.Module{
+		Path:    modulePath,
+		Version: "v0.0.0",
+		Replace: &debug.Module{Path: "example.com/cem-fork", Version: "v0.4.0"},
+	}))
+	if got != "v0.4.0" {
+		t.Fatalf("get() = %q, want main-module replacement version %q", got, "v0.4.0")
+	}
+}
+
+// Inline assertions: this test compares a scalar version string, where a
+// golden file would only duplicate the expected value.
+func TestGetSkipsLocalMainModuleReplace(t *testing.T) {
+	got := get("dev", "abcdef1234567890", "v0.3.3", "", buildInfo(debug.Module{
+		Path:    modulePath,
+		Version: "v0.0.0",
+		Replace: &debug.Module{Path: "../cem", Version: "(devel)"},
+	}))
+	if got != "v0.3.3-abcdef1" {
+		t.Fatalf("get() = %q, want git fallback %q", got, "v0.3.3-abcdef1")
 	}
 }
 

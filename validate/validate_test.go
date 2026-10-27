@@ -358,7 +358,12 @@ func TestSchemaVersionClassification(t *testing.T) {
 		}
 	}
 
-	unsafe := []string{"", "../../x", "/tmp/x", `..\x`, "2.1.0/../../x", "2.1.0?x", "2.1.0 x"}
+	unsafe := []string{
+		"", "../../x", "/tmp/x", `..\x`, "2.1.0/../../x", "2.1.0?x", "2.1.0 x",
+		// Unicode whitespace and control characters must not reach the URL or
+		// cache path either.
+		" ", " ", "\u0085", "\u000b", "\u000c",
+	}
 	for _, version := range unsafe {
 		if isPathSafeSchemaVersion(version) {
 			t.Errorf("isPathSafeSchemaVersion(%q) = true, want false", version)
@@ -372,24 +377,26 @@ func TestSchemaVersionClassification(t *testing.T) {
 func TestValidateAcceptsPathSafeNonSemverVersionFromCache(t *testing.T) {
 	// Inline assertions: this test checks a boolean result and one warning,
 	// where a golden file would obscure the cache setup under test.
-	oldCacheHome := xdg.CacheHome
-	xdg.CacheHome = t.TempDir()
-	t.Cleanup(func() { xdg.CacheHome = oldCacheHome })
+	// Register the reload before Setenv so cleanups run in the right order:
+	// the environment is restored first, then xdg re-reads it.
+	t.Cleanup(xdg.Reload)
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	xdg.Reload()
 
 	fsys := platform.NewMapFileSystem(nil)
 	cacheDir, err := xdg.CacheFile(filepath.Join("cem", "schemas"))
 	if err != nil {
 		t.Fatalf("xdg.CacheFile: %v", err)
 	}
-	schemaData, err := getEmbeddedSchema("2.1.1-speculative")
-	if err != nil {
-		t.Fatalf("getEmbeddedSchema: %v", err)
-	}
-	if err := fsys.WriteFile(filepath.Join(cacheDir, "latest.json"), schemaData, 0o644); err != nil {
+	// Use a sentinel schema that accepts modules as an object. The official
+	// schema requires an array, so a network fallback cannot make this test
+	// pass by accident.
+	sentinel := []byte(`{"type":"object","required":["schemaVersion"]}`)
+	if err := fsys.WriteFile(filepath.Join(cacheDir, "latest.json"), sentinel, 0o644); err != nil {
 		t.Fatalf("writing cached schema: %v", err)
 	}
 
-	pipeline, err := NewValidationPipeline(fsys, []byte(`{"schemaVersion":"latest","modules":[]}`))
+	pipeline, err := NewValidationPipeline(fsys, []byte(`{"schemaVersion":"latest","modules":{}}`))
 	if err != nil {
 		t.Fatalf("NewValidationPipeline: %v", err)
 	}
@@ -409,6 +416,30 @@ func TestValidateAcceptsPathSafeNonSemverVersionFromCache(t *testing.T) {
 	}
 	if !foundWarning {
 		t.Errorf("missing schema-version-invalid warning: %+v", result.Warnings)
+	}
+}
+
+// TestNewValidationPipelineClonesManifestData verifies that mutating the
+// caller's buffer after construction cannot change the bytes that Validate
+// checks.
+func TestNewValidationPipelineClonesManifestData(t *testing.T) {
+	// Inline assertions: this test checks a boolean result and one error,
+	// where a golden file would obscure the aliasing scenario under test.
+	manifest := []byte(`{"schemaVersion":"2.0.0","modules":[]}`)
+	pipeline, err := NewValidationPipeline(platform.NewMapFileSystem(nil), manifest)
+	if err != nil {
+		t.Fatalf("NewValidationPipeline: %v", err)
+	}
+
+	// Same length, so the mutation happens in place.
+	copy(manifest, `{"schemaVersion":"2.0.0","modules":{}}`)
+
+	result, err := pipeline.Validate(ValidationOptions{})
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if !result.IsValid {
+		t.Errorf("Validate checked the mutated caller buffer: %+v", result.Errors)
 	}
 }
 
