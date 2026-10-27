@@ -24,7 +24,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 // function types, conditional types, and type operators such as readonly.
 package typesplit
 
-import "strings"
+import (
+	"slices"
+	"strings"
+)
 
 // SplitTopLevelUnion returns the top-level union members of typeText.
 //
@@ -37,17 +40,27 @@ func SplitTopLevelUnion(typeText string) []string {
 		return nil
 	}
 
-	typeText = strings.TrimSpace(stripComments(typeText))
-	if typeText == "" {
-		return nil
-	}
-
 	scan := scanType(typeText)
-	if !scan.rootMayBeUnion(typeText) {
+	if scan.trailingSemicolon && scan.lastSemicolon >= 0 {
+		// A top-level ';' terminates the type expression; anything after it is
+		// not part of the type.
+		trimmed := strings.TrimSpace(typeText[:scan.lastSemicolon])
+		if trimmed == "" {
+			return []string{typeText}
+		}
+		typeText = trimmed
+		scan = scanType(typeText)
+	}
+	if !scan.balanced || scan.topLevelComma || scan.trailingPipe {
 		return []string{typeText}
 	}
 
-	parts := splitAt(typeText, scan.pipes)
+	pipes := scan.separators()
+	if len(pipes) == 0 {
+		return []string{typeText}
+	}
+
+	parts := splitAt(typeText, pipes)
 	if len(parts) == 0 {
 		return []string{typeText}
 	}
@@ -56,49 +69,58 @@ func SplitTopLevelUnion(typeText string) []string {
 
 // scanResult records the top-level structure of a type string.
 type scanResult struct {
-	pipes            []int // byte offsets of top-level '|'
-	firstPipe        int   // first top-level pipe, -1 if none
-	topLevelArrow    int   // offset of a top-level "=>", -1 if none
-	topLevelQuestion bool  // top-level '?'
-	topLevelExtends  bool  // top-level "extends" keyword
-	topLevelComma    bool  // top-level ','
-	balanced         bool  // all brackets and quotes closed
-	trailingPipe     bool  // the type ends with a top-level '|'
+	pipes         []int // byte offsets of top-level '|'
+	firstAbsorber int   // first offset where a construct absorbs later pipes, -1 if none
+	topLevelComma bool  // top-level ','
+	balanced      bool  // all brackets and quotes closed
+	trailingPipe  bool  // the type ends with a '|'
+
+	topLevelQuestion bool // top-level '?'
+	firstExtends     int  // offset of the first top-level "extends", -1 if none
+
+	lastSemicolon     int  // offset of the last top-level ';', -1 if none
+	trailingSemicolon bool // the type ends with a top-level ';'
+
+	// keyofAbsorbedPipes are top-level pipes that tree-sitter parses inside
+	// the operand of a keyof over a constructor type, so they are not root
+	// separators.
+	keyofAbsorbedPipes []int
 }
 
-// rootMayBeUnion reports whether tree-sitter would parse the text as a
-// top-level union. Forms whose grammar node wraps the union (readonly, function
-// return types, and conditional types) are not unions at the root.
-func (s scanResult) rootMayBeUnion(typeText string) bool {
-	if !s.balanced || s.topLevelComma || s.trailingPipe {
-		return false
+// separators returns the top-level pipes that split the root union. Constructs
+// whose grammar node wraps a union (readonly, function return types, and
+// conditional types) absorb every pipe at or after their first offset, so those
+// pipes are not root separators.
+func (s scanResult) separators() []int {
+	pipes := make([]int, 0, len(s.pipes))
+	for _, pos := range s.pipes {
+		if slices.Contains(s.keyofAbsorbedPipes, pos) {
+			continue
+		}
+		if s.firstAbsorber >= 0 && pos >= s.firstAbsorber {
+			continue
+		}
+		pipes = append(pipes, pos)
 	}
-
-	words := leadingWords(typeText, 2)
-	first, second := words[0], words[1]
-	if first == "readonly" {
-		return false
-	}
-	isConstructorType := first == "new" || (first == "abstract" && second == "new")
-	if !isConstructorType && s.topLevelArrow >= 0 &&
-		(s.firstPipe < 0 || s.topLevelArrow < s.firstPipe) {
-		// The root is a function type, so a union in its return type is
-		// not a top-level union.
-		return false
-	}
-	if s.topLevelExtends && s.topLevelQuestion {
-		// The root is a conditional type.
-		return false
-	}
-	return true
+	return pipes
 }
+
+// tokenKind classifies the last significant top-level token.
+type tokenKind uint8
+
+const (
+	tokenOther tokenKind = iota
+	tokenPipe
+	tokenSemicolon
+)
 
 // scanType walks typeText and records top-level delimiters. It is not a
 // TypeScript parser; it only tracks bracket depth and string literals.
 func scanType(s string) scanResult {
 	res := scanResult{
-		firstPipe:     -1,
-		topLevelArrow: -1,
+		firstAbsorber: -1,
+		firstExtends:  -1,
+		lastSemicolon: -1,
 		balanced:      true,
 	}
 
@@ -107,9 +129,27 @@ func scanType(s string) scanResult {
 		return parens == 0 && brackets == 0 && braces == 0 && angles == 0
 	}
 
+	sawNew := false
+	keyofPending := false
+	keyofCtor := false
+	ctorArrow := -1
+	ctorAmp := false
+	firstPipeAfterCtor := -1
+	extendsInKeyofCtor := false
+	conditionalCtorArrow := -1
+	lastToken := tokenOther
+
 	i := 0
 	for i < len(s) {
 		c := s[i]
+		top := atTopLevel()
+
+		// A keyof operand starts with an identifier. Any other top-level
+		// token means it is not a constructor type.
+		if top && keyofPending && !isSpace(c) && !isIdentStart(c) && !isCommentStart(s, i) {
+			keyofPending = false
+		}
+
 		switch {
 		case c == '\'' || c == '"':
 			end, ok := skipQuoted(s, i, c)
@@ -117,6 +157,7 @@ func scanType(s string) scanResult {
 				res.balanced = false
 				return res
 			}
+			lastToken = tokenOther
 			i = end
 
 		case c == '`':
@@ -125,26 +166,20 @@ func scanType(s string) scanResult {
 				res.balanced = false
 				return res
 			}
+			lastToken = tokenOther
 			i = end
 
-		case c == '/' && i+1 < len(s) && s[i+1] == '/':
-			for i < len(s) && s[i] != '\n' {
-				i++
-			}
-
-		case c == '/' && i+1 < len(s) && s[i+1] == '*':
-			i += 2
-			for i+1 < len(s) && (s[i] != '*' || s[i+1] != '/') {
-				i++
-			}
-			if i+1 >= len(s) {
+		case isCommentStart(s, i):
+			end, ok := skipComment(s, i)
+			if !ok {
 				res.balanced = false
 				return res
 			}
-			i += 2
+			i = end
 
 		case c == '(':
 			parens++
+			lastToken = tokenOther
 			i++
 		case c == ')':
 			parens--
@@ -152,9 +187,11 @@ func scanType(s string) scanResult {
 				res.balanced = false
 				return res
 			}
+			lastToken = tokenOther
 			i++
 		case c == '[':
 			brackets++
+			lastToken = tokenOther
 			i++
 		case c == ']':
 			brackets--
@@ -162,9 +199,11 @@ func scanType(s string) scanResult {
 				res.balanced = false
 				return res
 			}
+			lastToken = tokenOther
 			i++
 		case c == '{':
 			braces++
+			lastToken = tokenOther
 			i++
 		case c == '}':
 			braces--
@@ -172,49 +211,132 @@ func scanType(s string) scanResult {
 				res.balanced = false
 				return res
 			}
+			lastToken = tokenOther
 			i++
 		case c == '<':
 			angles++
+			lastToken = tokenOther
 			i++
 		case c == '>':
-			if angles > 0 {
-				angles--
+			if angles == 0 {
+				res.balanced = false
+				return res
 			}
+			angles--
+			lastToken = tokenOther
 			i++
 		case c == '=' && i+1 < len(s) && s[i+1] == '>':
-			if atTopLevel() {
-				res.topLevelArrow = i
+			if top {
+				if keyofCtor && sawNew && ctorArrow < 0 {
+					ctorArrow = i
+				}
+				// A non-constructor function type's return type extends to
+				// the right, so it absorbs later pipes. Constructor types do
+				// not: tree-sitter splits their return type at the root.
+				if !sawNew && (res.firstAbsorber < 0 || i < res.firstAbsorber) {
+					res.firstAbsorber = i
+				}
+				sawNew = false
 			}
+			lastToken = tokenOther
 			i += 2
+		case c == '&':
+			if top && keyofCtor && ctorArrow >= 0 && firstPipeAfterCtor < 0 {
+				ctorAmp = true
+			}
+			lastToken = tokenOther
+			i++
 		case c == '|':
-			if atTopLevel() {
-				if res.firstPipe < 0 {
-					res.firstPipe = i
+			if top {
+				if keyofCtor && ctorArrow >= 0 && firstPipeAfterCtor < 0 {
+					firstPipeAfterCtor = i
+					if !ctorAmp {
+						res.keyofAbsorbedPipes = append(res.keyofAbsorbedPipes, i)
+					}
 				}
 				res.pipes = append(res.pipes, i)
+				sawNew = false
 			}
+			lastToken = tokenPipe
 			i++
 		case c == ',':
-			if atTopLevel() {
+			if top {
 				res.topLevelComma = true
 			}
+			lastToken = tokenOther
 			i++
 		case c == '?':
-			if atTopLevel() {
+			if top {
 				res.topLevelQuestion = true
+			}
+			lastToken = tokenOther
+			i++
+		case c == ';':
+			if top {
+				res.lastSemicolon = i
+				lastToken = tokenSemicolon
+			} else {
+				lastToken = tokenOther
 			}
 			i++
 		default:
-			if atTopLevel() && isIdentStart(c) {
+			if top && isIdentStart(c) {
 				end := i + 1
 				for end < len(s) && isIdentPart(s[end]) {
 					end++
 				}
-				if s[i:end] == "extends" {
-					res.topLevelExtends = true
+				word := s[i:end]
+				switch {
+				case word == "keyof":
+					switch {
+					case keyofCtor && ctorArrow >= 0 && firstPipeAfterCtor < 0:
+						// Nested in the constructor's return type: the outer
+						// keyof operand still owns the following pipe.
+					case !keyofPending:
+						keyofPending = true
+						keyofCtor = false
+						ctorArrow = -1
+						ctorAmp = false
+						firstPipeAfterCtor = -1
+					}
+				case keyofPending:
+					switch word {
+					case "abstract":
+						// Keep waiting for the new keyword.
+					case "new":
+						keyofPending = false
+						keyofCtor = true
+					default:
+						keyofPending = false
+					}
 				}
+				switch word {
+				case "new":
+					sawNew = true
+				case "readonly":
+					// readonly is a prefix operator whose operand is the
+					// whole union to its right, so it absorbs later pipes.
+					if res.firstAbsorber < 0 || i < res.firstAbsorber {
+						res.firstAbsorber = i
+					}
+				case "extends":
+					if res.firstExtends < 0 {
+						res.firstExtends = i
+						// A conditional directly in a keyof constructor's
+						// return type is scoped inside the keyof operand.
+						if keyofCtor && ctorArrow >= 0 && i > ctorArrow &&
+							firstPipeAfterCtor < 0 && !ctorAmp {
+							extendsInKeyofCtor = true
+							conditionalCtorArrow = ctorArrow
+						}
+					}
+				}
+				lastToken = tokenOther
 				i = end
 				continue
+			}
+			if !isSpace(c) {
+				lastToken = tokenOther
 			}
 			i++
 		}
@@ -225,11 +347,55 @@ func scanType(s string) scanResult {
 		return res
 	}
 
-	if last := lastNonSpace(s); last >= 0 && s[last] == '|' && len(res.pipes) > 0 &&
-		res.pipes[len(res.pipes)-1] == last {
-		res.trailingPipe = true
+	// A conditional type wraps everything to its left into its check type, so
+	// it absorbs earlier pipes. A readonly or function absorber that starts
+	// before the extends keyword still wins.
+	if res.topLevelQuestion && res.firstExtends >= 0 && !extendsInKeyofCtor &&
+		(res.firstAbsorber < 0 || res.firstAbsorber > res.firstExtends) {
+		res.firstAbsorber = 0
 	}
+
+	// A conditional in a keyof constructor's return type owns every following
+	// pipe, including unions in its branches.
+	if conditionalCtorArrow >= 0 {
+		for _, pos := range res.pipes {
+			if pos > conditionalCtorArrow && !slices.Contains(res.keyofAbsorbedPipes, pos) {
+				res.keyofAbsorbedPipes = append(res.keyofAbsorbedPipes, pos)
+			}
+		}
+	}
+
+	res.trailingPipe = lastToken == tokenPipe
+	res.trailingSemicolon = lastToken == tokenSemicolon
 	return res
+}
+
+// isCommentStart reports whether a line or block comment starts at i.
+func isCommentStart(s string, i int) bool {
+	return i+1 < len(s) && s[i] == '/' && (s[i+1] == '/' || s[i+1] == '*')
+}
+
+// skipComment returns the offset just past the comment starting at i. It
+// reports false for a block comment that reaches the end of s.
+func skipComment(s string, i int) (int, bool) {
+	if !isCommentStart(s, i) {
+		return i, false
+	}
+	second := s[i+1]
+	i += 2
+	if second == '/' {
+		for i < len(s) && s[i] != '\n' {
+			i++
+		}
+		return i, true
+	}
+	for i+1 < len(s) && (s[i] != '*' || s[i+1] != '/') {
+		i++
+	}
+	if i+1 >= len(s) {
+		return len(s), false
+	}
+	return i + 2, true
 }
 
 // splitAt splits s at the given top-level pipe offsets, trimming members and
@@ -238,66 +404,67 @@ func splitAt(s string, pipes []int) []string {
 	parts := make([]string, 0, len(pipes)+1)
 	start := 0
 	for _, pos := range pipes {
-		if part := strings.TrimSpace(s[start:pos]); part != "" {
+		if part := trimTopLevelComments(s[start:pos]); part != "" {
 			parts = append(parts, part)
 		}
 		start = pos + 1
 	}
-	if part := strings.TrimSpace(s[start:]); part != "" {
+	if part := trimTopLevelComments(s[start:]); part != "" {
 		parts = append(parts, part)
 	}
 	return parts
 }
 
-// stripComments removes line and block comments while preserving string and
-// template literal contents.
-func stripComments(s string) string {
-	var b strings.Builder
-	b.Grow(len(s))
+// trimTopLevelComments removes line and block comments at the edges of a union
+// member while preserving comments inside the member's type expression and
+// inside string and template literals. Returned text is trimmed of whitespace.
+func trimTopLevelComments(s string) string {
+	first, last := -1, -1
 
 	i := 0
 	for i < len(s) {
 		switch {
+		case isSpace(s[i]):
+			i++
+
 		case s[i] == '\'' || s[i] == '"':
 			end, ok := skipQuoted(s, i, s[i])
 			if !ok {
-				b.WriteString(s[i:])
-				return b.String()
+				end = len(s)
 			}
-			b.WriteString(s[i:end])
+			if first < 0 {
+				first = i
+			}
+			last = end
 			i = end
 
 		case s[i] == '`':
 			end, ok := skipTemplate(s, i)
 			if !ok {
-				b.WriteString(s[i:])
-				return b.String()
+				end = len(s)
 			}
-			b.WriteString(s[i:end])
+			if first < 0 {
+				first = i
+			}
+			last = end
 			i = end
 
-		case s[i] == '/' && i+1 < len(s) && s[i+1] == '/':
-			for i < len(s) && s[i] != '\n' {
-				i++
-			}
-
-		case s[i] == '/' && i+1 < len(s) && s[i+1] == '*':
-			i += 2
-			for i+1 < len(s) && (s[i] != '*' || s[i+1] != '/') {
-				i++
-			}
-			if i+1 >= len(s) {
-				return b.String()
-			}
-			i += 2
-			b.WriteByte(' ')
+		case isCommentStart(s, i):
+			i, _ = skipComment(s, i)
 
 		default:
-			b.WriteByte(s[i])
+			if first < 0 {
+				first = i
+			}
+			last = i + 1
 			i++
 		}
 	}
-	return b.String()
+
+	if first < 0 || last <= first {
+		return ""
+	}
+	return strings.TrimSpace(s[first:last])
 }
 
 // skipQuoted returns the offset just past the closing quote.
@@ -354,19 +521,12 @@ func skipTemplateSubstitution(s string, start int) (int, bool) {
 				return len(s), false
 			}
 			i = end
-		case s[i] == '/' && i+1 < len(s) && s[i+1] == '/':
-			for i < len(s) && s[i] != '\n' {
-				i++
-			}
-		case s[i] == '/' && i+1 < len(s) && s[i+1] == '*':
-			i += 2
-			for i+1 < len(s) && (s[i] != '*' || s[i+1] != '/') {
-				i++
-			}
-			if i+1 >= len(s) {
+		case isCommentStart(s, i):
+			end, ok := skipComment(s, i)
+			if !ok {
 				return len(s), false
 			}
-			i += 2
+			i = end
 		case s[i] == '{':
 			depth++
 			i++
@@ -381,40 +541,6 @@ func skipTemplateSubstitution(s string, start int) (int, bool) {
 		}
 	}
 	return len(s), false
-}
-
-// leadingWords returns up to n leading identifier-like words.
-func leadingWords(s string, n int) []string {
-	words := make([]string, 0, n)
-	i := 0
-	for len(words) < n {
-		for i < len(s) && isSpace(s[i]) {
-			i++
-		}
-		if i >= len(s) || !isIdentStart(s[i]) {
-			break
-		}
-		end := i + 1
-		for end < len(s) && isIdentPart(s[end]) {
-			end++
-		}
-		words = append(words, s[i:end])
-		i = end
-	}
-	for len(words) < n {
-		words = append(words, "")
-	}
-	return words
-}
-
-// lastNonSpace returns the index of the last non-whitespace byte, or -1.
-func lastNonSpace(s string) int {
-	for i := len(s) - 1; i >= 0; i-- {
-		if !isSpace(s[i]) {
-			return i
-		}
-	}
-	return -1
 }
 
 // isIdentStart reports whether c can start a TypeScript identifier.
