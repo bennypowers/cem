@@ -31,12 +31,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 //	  -X bennypowers.dev/cem/version.GitCommit=abcdef1 \
 //	  -X bennypowers.dev/cem/version.GitTag=v1.2.3" .
 //
-// When the metadata is absent, Get falls back to the version recorded by the
-// Go toolchain in the binary's build information. For a program that embeds
-// cem packages, that value is the embedder's main module version, not cem's, so
-// set Version explicitly when you need cem's version. If build information is
-// unavailable, Get assembles a version from GitTag, GitCommit, and GitDirty
-// when they are set, and finally returns "dev".
+// When the metadata is absent, Get reads the Go build information. If cem is
+// the main module, it uses that module's version. If cem is embedded as a
+// dependency, it reports the cem dependency version, honoring any Replace
+// directive, rather than the host program's version. If no module version is
+// available, Get assembles a version from GitTag, GitCommit, and GitDirty when
+// they are set, and finally returns "dev".
 //
 // Usage:
 //
@@ -51,6 +51,9 @@ import (
 	"runtime/debug"
 	"strings"
 )
+
+// modulePath is the import path recorded in Go build information.
+const modulePath = "bennypowers.dev/cem"
 
 var (
 	// Version is the release version, for example "v1.2.3". It is normally
@@ -77,45 +80,85 @@ var (
 
 // Get returns the version string for the application.
 //
-// It prefers the value injected at build time, then the main module version
-// recorded by the Go toolchain, then a string assembled from git metadata,
-// and finally "dev". The build-info fallback reports the main module version,
-// which is the embedder's version when this package is linked into another
-// program, not cem's version.
+// It prefers the value injected at build time, then a usable version from Go
+// build information, then a string assembled from git metadata, and finally
+// "dev". For build information, it uses the main module version when cem is
+// the main module; otherwise it scans dependencies for the cem module, so
+// embedders report cem's version rather than the host program's version.
 func Get() string {
-	// If Version was set via ldflags, use it.
-	if Version != "dev" {
-		return Version
-	}
+	info, _ := debug.ReadBuildInfo()
+	return get(Version, GitCommit, GitTag, GitDirty, info)
+}
 
-	// Fallback: try to get version from build info.
-	if info, ok := debug.ReadBuildInfo(); ok {
-		if info.Main.Version != "(devel)" && info.Main.Version != "" {
-			return info.Main.Version
-		}
-	}
-
-	// Final fallback: construct from git information if available.
-	if GitTag != "unknown" && GitCommit != "unknown" {
-		version := GitTag
-		if GitCommit != "" {
-			// Safe substring that handles short commits.
-			commitSuffix := GitCommit
-			if len(GitCommit) > 7 {
-				commitSuffix = GitCommit[:7]
-			}
-			if !strings.HasSuffix(GitTag, commitSuffix) {
-				// Add commit hash if tag does not contain it.
-				version = fmt.Sprintf("%s-%s", GitTag, commitSuffix)
-			}
-		}
-		if GitDirty == "dirty" {
-			version += "-dirty"
-		}
+// get implements Get with its inputs supplied explicitly so the version
+// resolution logic can be tested without build-time injection.
+func get(version, gitCommit, gitTag, gitDirty string, info *debug.BuildInfo) string {
+	if version != "dev" {
 		return version
 	}
 
+	if v := moduleVersion(info); v != "" {
+		return v
+	}
+
+	// Fallback: construct from git information if available.
+	if gitTag != "unknown" && gitCommit != "unknown" {
+		v := gitTag
+		if gitCommit != "" {
+			// Safe substring that handles short commits.
+			commitSuffix := gitCommit
+			if len(gitCommit) > 7 {
+				commitSuffix = gitCommit[:7]
+			}
+			if !strings.HasSuffix(gitTag, commitSuffix) {
+				// Add commit hash if tag does not contain it.
+				v = fmt.Sprintf("%s-%s", gitTag, commitSuffix)
+			}
+		}
+		if gitDirty == "dirty" {
+			v += "-dirty"
+		}
+		return v
+	}
+
 	return "dev"
+}
+
+// moduleVersion returns the cem module version recorded in build information.
+// It reports the main module version only when cem is the main module;
+// otherwise it scans dependencies so embedders report the cem version, not the
+// host program's version.
+func moduleVersion(info *debug.BuildInfo) string {
+	if info == nil {
+		return ""
+	}
+	if info.Main.Path == modulePath {
+		return usableVersion(info.Main.Version)
+	}
+	for _, dep := range info.Deps {
+		if dep == nil || dep.Path != modulePath {
+			continue
+		}
+		module := dep
+		if dep.Replace != nil {
+			module = dep.Replace
+		}
+		if module.Path != modulePath {
+			continue
+		}
+		if v := usableVersion(module.Version); v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+// usableVersion filters out versions that do not identify a release.
+func usableVersion(v string) string {
+	if v == "" || v == "(devel)" {
+		return ""
+	}
+	return v
 }
 
 // Full returns the version string with the commit hash appended when it is
