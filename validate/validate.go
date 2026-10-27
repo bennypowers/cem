@@ -169,20 +169,42 @@ func (p *ValidationPipeline) checkSchemaVersion(result *ValidationResult) error 
 	return nil
 }
 
+// normalizeSchemaVersion removes one optional leading "v" and reports whether
+// the result is a valid semantic version that is safe to use as a path
+// component or URL path segment. Both "2.1.0" and "v2.1.0" are accepted, but a
+// malformed spelling such as "vv2.1.0" is not.
+func normalizeSchemaVersion(version string) (string, bool) {
+	normalized := strings.TrimPrefix(version, "v")
+	if normalized == "" || strings.ContainsAny(normalized, `/\`) || strings.Contains(normalized, "..") {
+		return "", false
+	}
+	if !semver.IsValid("v" + normalized) {
+		return "", false
+	}
+	return normalized, true
+}
+
 // isSafeSchemaVersion reports whether version is a valid semantic version and
 // is safe to use as a path component or URL path segment.
 func isSafeSchemaVersion(version string) bool {
-	if version == "" || strings.ContainsAny(version, `/\`) || strings.Contains(version, "..") {
-		return false
+	_, ok := normalizeSchemaVersion(version)
+	return ok
+}
+
+// canonicalSemver returns the canonical form of a semantic version that may
+// carry an optional leading "v".
+func canonicalSemver(version string) string {
+	if !strings.HasPrefix(version, "v") {
+		version = "v" + version
 	}
-	return semver.IsValid("v" + version)
+	return semver.Canonical(version)
 }
 
 // isSemverLessThan compares two semantic version strings
 func isSemverLessThan(version1, version2 string) bool {
 	return semver.Compare(
-		semver.Canonical("v"+version1),
-		semver.Canonical("v"+version2),
+		canonicalSemver(version1),
+		canonicalSemver(version2),
 	) < 0
 }
 
@@ -391,7 +413,11 @@ func isWarningDisabled(warning ValidationWarning, disabledRules []string) bool {
 }
 
 // GetSchema returns the JSON schema for a given version, using embedded schemas
-// and falling back to fetching from external sources if needed
+// and falling back to fetching from external sources if needed.
+//
+// version must be a semantic version, optionally with a leading "v". Other
+// values are rejected so caller-controlled input cannot be used as a
+// filesystem path component or URL path segment.
 func GetSchema(fsys FileSystem, version string) ([]byte, error) {
 	return getSchema(fsys, version)
 }
@@ -399,10 +425,13 @@ func GetSchema(fsys FileSystem, version string) ([]byte, error) {
 func getSchema(fsys FileSystem, version string) ([]byte, error) {
 	// Hardening: GetSchema can be called directly with caller-controlled input.
 	// Reject values that are not valid semantic versions or that could escape a
-	// path when used as a cache filename.
-	if !isSafeSchemaVersion(version) {
+	// path when used as a cache filename. Normalizing the optional leading "v"
+	// keeps both "2.1.0" and "v2.1.0" resolving to the same embedded schema.
+	normalized, ok := normalizeSchemaVersion(version)
+	if !ok {
 		return nil, fmt.Errorf("invalid schema version %q: must be a semantic version", version)
 	}
+	version = normalized
 
 	// Upgrade known problematic versions to speculative schema first
 	if version == "2.1.0" || version == "2.1.1" {

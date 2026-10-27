@@ -227,6 +227,11 @@ func testGetSchemaUpgrade210(t *testing.T, fsys platform.FileSystem) {
 		{"2.1.0", "2.1.1-speculative", true},
 		{"2.1.1", "2.1.1-speculative", true},
 		{"2.1.1-speculative", "2.1.1-speculative", true},
+		// A leading "v" is a valid semantic version spelling and must resolve
+		// to the same embedded schema as the unprefixed form.
+		{"v2.1.0", "2.1.1-speculative", true},
+		{"v2.1.1-speculative", "2.1.1-speculative", true},
+		{"v2.0.0", "2.0.0", false},
 		{"2.0.0", "2.0.0", false},
 		{"1.0.0", "1.0.0", false},
 	}
@@ -286,6 +291,8 @@ func TestGetSchemaRejectsUnsafeVersions(t *testing.T) {
 		"/tmp/x",
 		`..\..\..\..\tmp\x`,
 		"2.1.0/../../x",
+		// A doubled prefix is not a semantic version and must stay rejected.
+		"vv2.1.0",
 	}
 
 	for _, version := range versions {
