@@ -23,6 +23,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestAttributeEnumValidation covers enum detection and value validation.
+//
 // Inline assertions are used here: the behavior under test is a handful of
 // predicates over a single string, so a golden file would obscure the cases
 // rather than document them.

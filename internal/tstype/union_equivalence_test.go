@@ -58,6 +58,9 @@ func TestPureSplitTopLevelUnionMatchesTreeSitter(t *testing.T) {
 		"A & B | C",
 		"{ a: string } | null",
 		"// comment\nA | B",
+		"| 'a' | 'b'",
+		"'a' | 'b' |",
+		"'a' | (",
 	}
 	for _, typeText := range types {
 		t.Run(typeText, func(t *testing.T) {

@@ -22,6 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestSplitTopLevelUnion verifies splitting across nested and quoted type
+// forms, including malformed input.
 func TestSplitTopLevelUnion(t *testing.T) {
 	tests := []struct {
 		name string
@@ -30,6 +32,9 @@ func TestSplitTopLevelUnion(t *testing.T) {
 	}{
 		{"empty", "", nil},
 		{"whitespace only", "   ", nil},
+		{"leading pipe", "| 'a' | 'b'", []string{"'a'", "'b'"}},
+		{"trailing pipe", "'a' | 'b' |", []string{"'a' | 'b' |"}},
+		{"unbalanced", "'a' | (", []string{"'a' | ("}},
 		{"single type", "string", []string{"string"}},
 		{"simple union", "'a' | 'b'", []string{"'a'", "'b'"}},
 		{"three-way union", "'a' | 'b' | 'c'", []string{"'a'", "'b'", "'c'"}},

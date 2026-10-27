@@ -351,6 +351,7 @@ func leadingWords(s string, n int) []string {
 	return words
 }
 
+// lastNonSpace returns the index of the last non-whitespace byte, or -1.
 func lastNonSpace(s string) int {
 	for i := len(s) - 1; i >= 0; i-- {
 		if !isSpace(s[i]) {
@@ -360,14 +361,17 @@ func lastNonSpace(s string) int {
 	return -1
 }
 
+// isIdentStart reports whether c can start a TypeScript identifier.
 func isIdentStart(c byte) bool {
 	return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_' || c == '$'
 }
 
+// isIdentPart reports whether c can continue a TypeScript identifier.
 func isIdentPart(c byte) bool {
 	return isIdentStart(c) || c >= '0' && c <= '9'
 }
 
+// isSpace reports whether c is ASCII whitespace.
 func isSpace(c byte) bool {
 	return c == ' ' || c == '\t' || c == '\r' || c == '\n'
 }
