@@ -143,6 +143,44 @@
           ]
         }
       ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "string-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyStringCard",
+          "tagName": "my-string-card",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "loading",
+              "type": {
+                "text": "\"eager\" | \"lazy\""
+              }
+            },
+            {
+              "name": "lazy",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "interactive",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

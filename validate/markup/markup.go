@@ -299,7 +299,7 @@ func (v *validator) validateElement(el *elementNode, parent *elementNode) {
 		v.validateSlotContentGuidelines(el, decl)
 	}
 	if v.opts.Strict && v.opts.ValidateAttrs {
-		v.validateAttributeCombinations(el)
+		v.validateAttributeCombinations(el, decl)
 	}
 	if v.opts.Strict && v.opts.ValidateSlots {
 		v.validateContentAttributeRedundancy(el, decl)
@@ -435,7 +435,11 @@ func (v *validator) validateSlotContentGuidelines(el *elementNode, decl *manifes
 	}
 }
 
-func (v *validator) validateAttributeCombinations(el *elementNode) {
+// validateAttributeCombinations checks for contradictory attribute pairs.
+// Manifest boolean attributes follow HTML presence semantics, so any present
+// value enables them. Attributes declared with another type use value
+// semantics, where the literal string "false" disables the behavior.
+func (v *validator) validateAttributeCombinations(el *elementNode, decl *manifest.CustomElementDeclaration) {
 	attributes := make(map[string]string, len(el.attributes))
 	for _, attr := range el.attributes {
 		// A dynamic name may resolve to something else entirely. A dynamic
@@ -448,8 +452,20 @@ func (v *validator) validateAttributeCombinations(el *elementNode) {
 		attributes[attr.name] = attr.value
 	}
 
+	manifestAttributes := decl.Attributes()
+	enabled := func(name string) (value string, ok bool) {
+		value, present := attributes[name]
+		if !present {
+			return "", false
+		}
+		if isBooleanAttribute(findAttribute(manifestAttributes, name)) {
+			return value, true
+		}
+		return value, !strings.EqualFold(strings.TrimSpace(value), "false")
+	}
+
 	if loading, ok := attributes["loading"]; ok && loading == "eager" {
-		if lazy, ok := attributes["lazy"]; ok {
+		if lazy, ok := enabled("lazy"); ok {
 			v.add(el, RuleAttributeConflict, SeverityWarning, ConfidenceLow,
 				"Eager loading conflicts with lazy loading", map[string]string{
 					DetailAttribute1: "loading",
@@ -461,8 +477,8 @@ func (v *validator) validateAttributeCombinations(el *elementNode) {
 		}
 	}
 
-	if disabled, ok := attributes["disabled"]; ok {
-		if interactive, ok := attributes["interactive"]; ok {
+	if disabled, ok := enabled("disabled"); ok {
+		if interactive, ok := enabled("interactive"); ok {
 			v.add(el, RuleAttributeConflict, SeverityWarning, ConfidenceLow,
 				"Disabled elements cannot be interactive", map[string]string{
 					DetailAttribute1: "disabled",
@@ -473,6 +489,15 @@ func (v *validator) validateAttributeCombinations(el *elementNode) {
 				})
 		}
 	}
+}
+
+// isBooleanAttribute reports whether the manifest declares an attribute as a
+// boolean. An absent declaration or type is not treated as boolean.
+func isBooleanAttribute(attr *manifest.Attribute) bool {
+	if attr == nil || attr.Type == nil {
+		return false
+	}
+	return strings.EqualFold(strings.TrimSpace(attr.Type.Text), "boolean")
 }
 
 func (v *validator) validateContentAttributeRedundancy(el *elementNode, decl *manifest.CustomElementDeclaration) {

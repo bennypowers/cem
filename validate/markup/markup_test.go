@@ -363,6 +363,26 @@ func TestValidateAttributeCombinations(t *testing.T) {
 			want:   1,
 		},
 		{
+			name:   "string lazy false disables the behavior",
+			source: `<my-string-card loading="eager" lazy="false">Card</my-string-card>`,
+			want:   0,
+		},
+		{
+			name:   "string lazy true conflicts",
+			source: `<my-string-card loading="eager" lazy="true">Card</my-string-card>`,
+			want:   1,
+		},
+		{
+			name:   "string disabled false disables the behavior",
+			source: `<my-string-card disabled="false" interactive>Card</my-string-card>`,
+			want:   0,
+		},
+		{
+			name:   "string disabled true conflicts",
+			source: `<my-string-card disabled="true" interactive>Card</my-string-card>`,
+			want:   1,
+		},
+		{
 			name:   "disabled alone does not conflict",
 			source: `<my-card disabled>Card</my-card>`,
 			want:   0,
