@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"bennypowers.dev/cem/internal/tstype"
+	"bennypowers.dev/cem/internal/typesplit"
 )
 
 var _ Deprecatable = (*Attribute)(nil)
@@ -104,7 +104,7 @@ func (a *Attribute) enumParts() []string {
 	if a.Type == nil || a.Type.Text == "" {
 		return nil
 	}
-	parts := tstype.SplitTopLevelUnion(a.Type.Text)
+	parts := typesplit.SplitTopLevelUnion(a.Type.Text)
 	if len(parts) <= 1 {
 		return nil
 	}
