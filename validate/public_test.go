@@ -202,3 +202,29 @@ func TestPublicValidateAPI(t *testing.T) {
 		t.Errorf("ValidateFile reported invalid manifest: %+v", result.Errors)
 	}
 }
+
+// TestPublicValidateAPIRejectsUnsafeSchemaVersion verifies the behavior
+// external callers rely on: a path-unsafe schemaVersion can never produce a
+// valid result through the exported API.
+//
+// Inline assertions: this test checks two fields of one result, where a golden
+// file would add indirection only.
+func TestPublicValidateAPIRejectsUnsafeSchemaVersion(t *testing.T) {
+	fsys := validate.NewOSFileSystem()
+	manifestPath := filepath.Join(t.TempDir(), "custom-elements.json")
+	manifest := []byte(`{"schemaVersion":"../../tmp/x","modules":[]}`)
+	if err := fsys.WriteFile(manifestPath, manifest, 0o644); err != nil {
+		t.Fatalf("writing manifest: %v", err)
+	}
+
+	result, err := validate.ValidateFile(manifestPath, validate.ValidationOptions{})
+	if err != nil {
+		t.Fatalf("ValidateFile: %v", err)
+	}
+	if result.IsValid {
+		t.Errorf("ValidateFile reported an unsafe schemaVersion as valid: %+v", result.Errors)
+	}
+	if len(result.Errors) == 0 || result.Errors[0].ID != "schema-version-invalid" {
+		t.Errorf("Errors = %+v, want a schema-version-invalid error", result.Errors)
+	}
+}
