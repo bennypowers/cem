@@ -191,7 +191,8 @@ func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
 	// cache path construction. Invalid values keep their warning from
 	// checkSchemaVersion and validation continues against an embedded schema.
 	schemaVersion := p.schemaVersion
-	if !isSafeSchemaVersion(schemaVersion) {
+	unsafeSchemaVersion := !isSafeSchemaVersion(schemaVersion)
+	if unsafeSchemaVersion {
 		schemaVersion = "2.1.1-speculative"
 	}
 	schemaData, err := getSchema(p.fsys, schemaVersion)
@@ -226,6 +227,12 @@ func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
 		result.IsValid = false
 	} else {
 		result.IsValid = true
+	}
+
+	// The manifest was checked against a fallback schema, not the schema its
+	// schemaVersion names, so it must never be reported as valid.
+	if unsafeSchemaVersion {
+		result.IsValid = false
 	}
 
 	return nil

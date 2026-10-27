@@ -27,6 +27,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 // private or internal methods, implementation details, and builtin
 // superclasses leaking into the manifest.
 //
+// Manifests with schemaVersion 2.1.0 (and 2.1.1) are validated against an
+// embedded 2.1.1-speculative schema rather than the official 2.1.0 schema.
+// This works around upstream schema issues, but it means validation for those
+// versions is not strict validation against the official 2.1.0 schema. The
+// speculative schema rejects additional top-level properties, so an
+// unrecognized key at the manifest's top level is reported as an error.
+//
 // # External use
 //
 // This package is public and is part of cem's Go API. It follows the 0.x

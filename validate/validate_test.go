@@ -326,8 +326,15 @@ func TestValidateFallsBackForUnsafeSchemaVersion(t *testing.T) {
 			if result.SchemaVersion != version {
 				t.Errorf("SchemaVersion = %q, want the raw value %q", result.SchemaVersion, version)
 			}
-			if !result.IsValid {
-				t.Errorf("Validate reported invalid manifest: %+v", result.Errors)
+			// An unsafe schemaVersion must never be reported as valid, even when
+			// the manifest passes the embedded schema used as a fallback.
+			if result.IsValid {
+				t.Errorf("Validate reported a manifest with unsafe schemaVersion %q as valid: %+v", version, result.Errors)
+			}
+			// This manifest is valid under the fallback schema, so an empty error
+			// list shows the fallback validation pass still ran.
+			if len(result.Errors) != 0 {
+				t.Errorf("fallback validation reported unexpected errors: %+v", result.Errors)
 			}
 
 			found := false
@@ -342,4 +349,27 @@ func TestValidateFallsBackForUnsafeSchemaVersion(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("fallback validation still reports schema errors", func(t *testing.T) {
+		// The speculative schema rejects additional top-level properties, so
+		// these errors prove validation actually ran against the fallback
+		// schema rather than being skipped.
+		manifest := []byte(`{"schemaVersion":"../../../../tmp/x","modules":[],"unexpected":true}`)
+		pipeline, err := NewValidationPipeline(platform.NewMapFileSystem(nil), manifest)
+		if err != nil {
+			t.Fatalf("NewValidationPipeline: %v", err)
+		}
+
+		result, err := pipeline.Validate(ValidationOptions{})
+		if err != nil {
+			t.Fatalf("Validate: %v", err)
+		}
+
+		if result.IsValid {
+			t.Errorf("Validate reported a manifest with unsafe schemaVersion as valid: %+v", result.Errors)
+		}
+		if len(result.Errors) == 0 {
+			t.Fatal("expected the fallback schema to reject the additional top-level property, got no errors")
+		}
+	})
 }
