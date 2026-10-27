@@ -102,10 +102,6 @@ func parseElements(source string, family formatFamilyValue) ([]*elementNode, err
 		if err != nil {
 			return nil, err
 		}
-		// With no text ranges there is no HTML to validate.
-		if len(textRanges) == 0 {
-			return nil, nil
-		}
 		// Mask template syntax instead of restricting the parser to the text
 		// ranges. Included ranges concatenate text, which turns an unquoted
 		// template value such as variant={{ v }} into a dangling variant= and

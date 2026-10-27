@@ -612,6 +612,11 @@ func TestValidateTemplateEdgeCases(t *testing.T) {
 			markup.RuleInvalidAttributeValue))
 	})
 
+	t.Run("raw-only content is validated", func(t *testing.T) {
+		assert.True(t, hasRule(t, `{% raw %}<my-bad-el bogus>{% endraw %}`, "twig",
+			markup.RuleUnknownElement))
+	})
+
 	t.Run("plaintext consumes following markup", func(t *testing.T) {
 		assert.False(t, hasRule(t, `<plaintext><my-card variant="bogus">`, "html",
 			markup.RuleInvalidAttributeValue))
