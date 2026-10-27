@@ -27,6 +27,8 @@ jobs:
           go install gotest.tools/gotestsum@latest
       - name: Generate code
         run: make generate
+      - name: Verify manifest builds without cgo
+        run: make check-cgo-free-manifest
       - name: Run unit tests
         run: make test-unit
 

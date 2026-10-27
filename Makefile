@@ -238,6 +238,12 @@ update:
 	go test -race $(RACE_LDFLAGS) -json ./... --update | go tool tparse -all
 	make test-frontend-update
 
+# Manifest and traversal must stay buildable without cgo. Tree-sitter is only
+# needed for markup validation, not for reading custom elements manifests.
+.PHONY: check-cgo-free-manifest
+check-cgo-free-manifest:
+	CGO_ENABLED=0 go build ./manifest/...
+
 ## Code quality
 
 .PHONY: lint format lint-shell
