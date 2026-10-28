@@ -554,6 +554,10 @@ func TestValidateTemplateEdgeCases(t *testing.T) {
 		}
 	})
 
+	t.Run("apostrophe in a jinja comment does not unmask it", func(t *testing.T) {
+		assert.False(t, hasRule(t, `{# don't <my-bad-el bogus> #}`, "twig", markup.RuleUnknownElement))
+	})
+
 	t.Run("conditional unquoted values stay values", func(t *testing.T) {
 		twig := `<my-card flipBoundary={% if x %}b{% else %}c{% endif %}>`
 		assert.False(t, hasRule(t, twig, "twig", markup.RuleUnknownAttribute))
@@ -800,7 +804,9 @@ func TestFormatConstants(t *testing.T) {
 }
 
 // Positions match LSP: one-based lines and zero-based UTF-16 code units, so an
-// astral character counts as two columns.
+// astral character counts as two columns. Inline assertions stay inline because
+// the expected values are a two-field position contract, not a full finding set
+// that a golden would capture more legibly.
 func TestUTF16Columns(t *testing.T) {
 	pkg := loadPackage(t)
 	source := "😀<my-button bogus=\"1\">Save</my-button>"

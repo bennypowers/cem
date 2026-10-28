@@ -216,7 +216,8 @@ func TestAttributeValueUnescape(t *testing.T) {
 }
 
 // The parser keeps zero-based UTF-8 byte columns; the exported API converts
-// them to UTF-16 at the boundary.
+// them to UTF-16 at the boundary. The assertion stays inline because it checks
+// an internal parser detail, not a validation finding a golden could capture.
 func TestPositionForNonASCII(t *testing.T) {
 	elements, err := parseElements(`<p>éé</p><my-button bogus="1">`, formatHTML)
 	require.NoError(t, err)

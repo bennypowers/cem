@@ -759,7 +759,7 @@ func templateConstructs(source string, start, end int) []ts.Range {
 		case '%':
 			closeEnd = templateDelimitedEnd(source, next+2, end, "%}")
 		case '#':
-			closeEnd = templateDelimitedEnd(source, next+2, end, "#}")
+			closeEnd = templateCommentEnd(source, next+2, end)
 		}
 		if closeEnd <= next {
 			// Leave an unterminated opener as literal text, but keep scanning
@@ -792,6 +792,16 @@ func nextTemplateOpener(source string, from, end int) (int, byte) {
 		}
 	}
 	return -1, 0
+}
+
+// templateCommentEnd returns the end offset of a Jinja comment. Comment bodies
+// are opaque text, so quotes and apostrophes have no special meaning.
+func templateCommentEnd(source string, from, end int) int {
+	rel := strings.Index(source[from:end], "#}")
+	if rel < 0 {
+		return -1
+	}
+	return from + rel + 2
 }
 
 func templateDelimitedEnd(source string, from, end int, closer string) int {
