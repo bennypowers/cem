@@ -157,6 +157,11 @@ func elementsFromNode(node *ts.Node, source []byte, ctx parseContext, skipTags b
 					// Everything after <plaintext> is text.
 					return elements
 				}
+				if isTextContentElement(el.tagName) && !hasEndTag(child) {
+					// A self-closing or unclosed raw-text element makes the
+					// rest of the container text, so later markup is inert.
+					return elements
+				}
 			} else {
 				elements = append(elements, elementsFromNode(child, source, ctx, false)...)
 			}
@@ -175,10 +180,44 @@ func elementsFromNode(node *ts.Node, source []byte, ctx parseContext, skipTags b
 		case "end_tag":
 			// End tags never yield elements, in either traversal mode.
 		default:
+			if selfClosingRawTextError(child, source) {
+				// tree-sitter wraps <script/> and <style/> in an ERROR node.
+				return elements
+			}
 			elements = append(elements, elementsFromNode(child, source, ctx, false)...)
 		}
 	}
 	return elements
+}
+
+// selfClosingRawTextError reports whether an ERROR node is a self-closing
+// script or style tag, which tree-sitter does not represent as an element.
+func selfClosingRawTextError(node *ts.Node, source []byte) bool {
+	if node.Kind() != "ERROR" {
+		return false
+	}
+	tagName := findChildKind(node, "tag_name")
+	if tagName == nil {
+		return false
+	}
+	name := asciiLower(string(source[tagName.StartByte():tagName.EndByte()]))
+	if !isTextContentElement(name) {
+		return false
+	}
+	return strings.Contains(string(source[node.StartByte():node.EndByte()]), "/>")
+}
+
+// hasEndTag reports whether an element node contains its own end tag.
+func hasEndTag(node *ts.Node) bool {
+	cursor := node.Walk()
+	defer cursor.Close()
+
+	for ok := cursor.GotoFirstChild(); ok; ok = cursor.GotoNextSibling() {
+		if cursor.Node().Kind() == "end_tag" {
+			return true
+		}
+	}
+	return false
 }
 
 func parseTag(node *ts.Node, source []byte, ctx parseContext) *elementNode {

@@ -734,9 +734,11 @@ func TestValidateTemplateEdgeCases(t *testing.T) {
 			markup.RuleInvalidAttributeValue))
 	})
 
-	t.Run("self-closing textarea consumes following markup", func(t *testing.T) {
-		assert.False(t, hasRule(t, `<textarea/><my-card variant="bogus">`, "html",
-			markup.RuleInvalidAttributeValue))
+	t.Run("self-closing raw-text elements consume following markup", func(t *testing.T) {
+		for _, tag := range []string{"textarea", "title", "iframe", "xmp", "noembed", "noframes", "script", "style"} {
+			source := "<" + tag + "/><my-button variant=\"bogus\">"
+			assert.False(t, hasRule(t, source, "html", markup.RuleInvalidAttributeValue), "tag %s", tag)
+		}
 	})
 
 	t.Run("unclosed textarea consumes following markup", func(t *testing.T) {
