@@ -39,9 +39,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 // major.minor spelling such as "2.1" selects the newest embedded schema with
 // those components. For example, schemaVersion "2" is validated against the
 // embedded 2.1.1-speculative schema, like 2.1.0 and 2.1.1, rather than against
-// 2.0.0. Exact versions with no embedded schema, and path-safe non-semver
-// values such as dist-tags, fall back to the schema cache and then to npm
-// using the spelling the manifest supplied. The "schema-version-old" warning
+// 2.0.0. Build metadata is ignored for full and shortened spellings alike, so
+// 2.1.0+build resolves like 2.1.0 and 2.1+build resolves like 2.1. Exact
+// versions with no embedded schema, and path-safe non-semver values such as
+// dist-tags, fall back to the schema cache and then to npm using the spelling
+// the manifest supplied. The "schema-version-old" warning
 // follows the schema actually used, so a range that resolves to 2.1.x or newer
 // is not reported as older than 2.1.0.
 //
@@ -81,15 +83,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 //		IncludeWarnings: true,
 //	})
 //
-// The filesystem-aware entry points use narrow interfaces, so embedders
-// implement only what the entry point needs. Schema accepts a ReadFS, which is
-// just ReadFile and Stat. Validate and NewValidationPipeline accept a
-// ValidateFS, which embeds ReadFS and adds WriteFile, MkdirAll, CreateTemp,
-// and Remove. TempFile remains exported for CreateTemp implementations. Use
-// NewOSFileSystem for the host operating system, or implement the interface
-// for in-memory or sandboxed input. For finer control, build a
-// ValidationPipeline with NewValidationPipeline and call its Validate method
-// directly.
+// The filesystem-aware entry points accept a narrow ReadFS, which is just
+// ReadFile and Stat. Validation does not need write methods. When the supplied
+// value also implements WriteFile and MkdirAll, schemas fetched from unpkg are
+// cached; a read-only implementation returns them without caching. TempFile
+// remains exported for implementations that expose a CreateTemp method. Use
+// NewOSFileSystem for the host operating system, or implement ReadFS for
+// in-memory or sandboxed input. For finer control, build a ValidationPipeline
+// with NewValidationPipeline and call its Validate method directly.
 //
 // Schema fetches a schema from unpkg when the version is neither embedded nor
 // cached. Callers that must not use the network can pass WithoutNetwork to

@@ -1,6 +1,8 @@
 /*
 Copyright © 2025 Benny Powers <web@bennypowers.com>
 
+SPDX-License-Identifier: GPL-3.0-or-later
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -69,8 +71,8 @@ type ValidationOptions struct {
 //
 // Set ValidationOptions.NoNetwork to prevent schema fetches; embedded and
 // cached schemas still validate. The filesystem argument must implement
-// ValidateFS.
-func Validate(fsys ValidateFS, manifestPath string, options ValidationOptions) (*ValidationResult, error) {
+// ReadFS; write methods are not required.
+func Validate(fsys ReadFS, manifestPath string, options ValidationOptions) (*ValidationResult, error) {
 	manifestData, err := fsys.ReadFile(manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading manifest file: %w", err)
@@ -86,7 +88,7 @@ func Validate(fsys ValidateFS, manifestPath string, options ValidationOptions) (
 
 // ValidationPipeline orchestrates the validation process
 type ValidationPipeline struct {
-	fsys             ValidateFS
+	fsys             ReadFS
 	manifestData     []byte
 	schemaVersion    string
 	navigator        *ManifestNavigator
@@ -95,7 +97,7 @@ type ValidationPipeline struct {
 }
 
 // NewValidationPipeline creates a new validation pipeline
-func NewValidationPipeline(fsys ValidateFS, manifestData []byte) (*ValidationPipeline, error) {
+func NewValidationPipeline(fsys ReadFS, manifestData []byte) (*ValidationPipeline, error) {
 	// Parse manifest once for efficiency
 	var manifestJSON map[string]any
 	if err := json.Unmarshal(manifestData, &manifestJSON); err != nil {
@@ -226,21 +228,20 @@ func isSemverSchemaVersion(version string) bool {
 	return ok
 }
 
-// schemaVersionIsShort reports whether version is a shortened semantic
-// version spelling with only a major, or a major and minor, component, such as
-// "2" or "2.1". Short spellings are ranges: they select the newest embedded
-// schema that matches the supplied components. Prerelease and build suffixes
-// require a full major.minor.patch spelling.
-func schemaVersionIsShort(version string) bool {
-	normalized := strings.TrimPrefix(version, "v")
-	if !semver.IsValid("v" + normalized) {
-		return false
-	}
-	core := normalized
-	if i := strings.IndexAny(core, "-+"); i >= 0 {
+// shortSchemaVersionCore returns the major, or major and minor, components of
+// a shortened spelling such as "2", "2.1", or "2.1+build", ignoring an
+// optional leading "v" and build metadata. It reports false when version is
+// not a shortened spelling. Build metadata is ignored for shortened and full
+// spellings alike, so "2.1+build" names the same range as "2.1".
+func shortSchemaVersionCore(version string) (string, bool) {
+	core := strings.TrimPrefix(version, "v")
+	if i := strings.IndexByte(core, '+'); i >= 0 {
 		core = core[:i]
 	}
-	return strings.Count(core, ".") < 2
+	if !semver.IsValid("v"+core) || strings.Count(core, ".") >= 2 {
+		return "", false
+	}
+	return core, true
 }
 
 // resolveEmbeddedSchemaVersion returns the embedded schema that version
@@ -250,12 +251,12 @@ func schemaVersionIsShort(version string) bool {
 // embedded schema matches, so the caller can fall back to the original
 // spelling for cache and network resolution.
 func resolveEmbeddedSchemaVersion(version string) (string, bool) {
+	if core, ok := shortSchemaVersionCore(version); ok {
+		return newestEmbeddedSchemaVersion(core)
+	}
 	canonical, ok := canonicalSchemaVersion(version)
 	if !ok {
 		return "", false
-	}
-	if schemaVersionIsShort(version) {
-		return newestEmbeddedSchemaVersion(strings.TrimPrefix(version, "v"))
 	}
 	// 2.1.0 and 2.1.1 are known-broken upstream; use the embedded stand-in.
 	if canonical == "2.1.0" || canonical == "2.1.1" {
@@ -545,9 +546,9 @@ func WithoutNetwork() SchemaOption {
 //
 //     schema, err := Schema(fsys, "2.1.2", WithoutNetwork())
 //
-// fsys may implement only ReadFS. Caching a fetched schema additionally uses
-// WriteFile and MkdirAll when fsys implements them, as ValidateFS does; a
-// ReadFS-only implementation still returns the fetched schema.
+// fsys may implement only ReadFS. Schema never requires write methods from it.
+// When fsys also implements WriteFile and MkdirAll, a schema fetched from
+// unpkg is cached; otherwise the fetched schema is returned without caching.
 //
 // version must not contain path separators, traversal segments, whitespace, or
 // URL delimiters, so caller-controlled input cannot escape the embedded
@@ -556,9 +557,11 @@ func WithoutNetwork() SchemaOption {
 // and resolved against the embedded schemas first. Shortened spellings are
 // ranges: a bare major such as "2" selects the newest embedded schema with
 // that major, and a major.minor spelling such as "2.1" selects the newest
-// embedded schema with those components. Other path-safe values, such as
-// dist-tags, and exact versions with no embedded schema fall through to the
-// cache and fetch using the spelling supplied by the caller.
+// embedded schema with those components. Build metadata is ignored for both
+// full and shortened spellings, so "2.1.0+build" resolves like "2.1.0" and
+// "2.1+build" resolves like "2.1". Other path-safe values, such as dist-tags,
+// and exact versions with no embedded schema fall through to the cache and
+// fetch using the spelling supplied by the caller.
 //
 // For versions 2.1.0 and 2.1.1, Schema returns the embedded
 // 2.1.1-speculative schema instead of the official upstream schema, because
@@ -574,6 +577,13 @@ func Schema(fsys ReadFS, version string, opts ...SchemaOption) ([]byte, error) {
 		}
 	}
 	return getSchema(fsys, version, options)
+}
+
+// GetSchema returns the JSON schema for a given version.
+//
+// Deprecated: use Schema instead.
+func GetSchema(fsys ReadFS, version string) ([]byte, error) {
+	return Schema(fsys, version)
 }
 
 func getSchema(fsys ReadFS, version string, options schemaOptions) ([]byte, error) {
@@ -627,6 +637,12 @@ type schemaCacheWriter interface {
 	MkdirAll(path string, perm fs.FileMode) error
 }
 
+// schemaCacheRemover is the optional cleanup half of the schema cache. It
+// lets a failed write remove a truncated cache file.
+type schemaCacheRemover interface {
+	Remove(name string) error
+}
+
 // httpGet is the HTTP seam used to fetch schemas. Tests replace it so they
 // never reach the network.
 var httpGet = http.Get
@@ -666,7 +682,14 @@ func tryFetchSchema(fsys ReadFS, version string, options schemaOptions) ([]byte,
 		if writer, ok := fsys.(schemaCacheWriter); ok {
 			schemaPath := filepath.Join(cacheDir, version+".json")
 			_ = writer.MkdirAll(cacheDir, 0755)
-			_ = writer.WriteFile(schemaPath, schemaData, 0644)
+			if err := writer.WriteFile(schemaPath, schemaData, 0644); err != nil {
+				// A failed write may have left a truncated file that would be
+				// read as a corrupt schema later. Remove it when the filesystem
+				// supports removal.
+				if remover, ok := fsys.(schemaCacheRemover); ok {
+					_ = remover.Remove(schemaPath)
+				}
+			}
 		}
 	}
 

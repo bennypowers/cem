@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright © 2026 Benny Powers <web@bennypowers.com>
+
 set -euo pipefail
 
 # Check if working directory has ANY changes (tracked or untracked)

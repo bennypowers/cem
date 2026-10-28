@@ -25,44 +25,24 @@ import (
 	"bennypowers.dev/cem/internal/platform"
 )
 
-// ReadFS is the filesystem abstraction Schema needs. It is the smallest
-// interface an embedder must implement to read embedded schemas and cached
+// ReadFS is the filesystem abstraction accepted by Schema, Validate,
+// ValidateFile, and NewValidationPipeline. It is the smallest interface an
+// embedder must implement to read a manifest and load embedded or cached
 // schemas:
 //
 //	ReadFile(name string) ([]byte, error)
 //	Stat(name string) (fs.FileInfo, error)
 //
-// Schema does not write through ReadFS. When the supplied value also
-// implements WriteFile and MkdirAll, Schema caches schemas fetched from unpkg;
-// otherwise a fetch result is returned without being cached.
+// Validation never requires write methods from ReadFS. When the supplied value
+// also implements WriteFile and MkdirAll, Schema caches schemas fetched from
+// unpkg; otherwise a fetched schema is returned without being cached.
 type ReadFS interface {
 	ReadFile(name string) ([]byte, error)
 	Stat(name string) (fs.FileInfo, error)
 }
 
-// ValidateFS is the filesystem abstraction accepted by Validate and
-// NewValidationPipeline. It embeds ReadFS and adds the write and temporary-file
-// operations validation needs:
-//
-//	WriteFile(name string, data []byte, perm fs.FileMode) error
-//	MkdirAll(path string, perm fs.FileMode) error
-//	CreateTemp(dir, pattern string) (TempFile, error)
-//	Remove(name string) error
-//
-// Callers can use NewOSFileSystem, which implements the interface, or provide
-// their own in-memory or sandboxed implementation. Embedders that only read
-// schemas can implement ReadFS alone and call Schema.
-type ValidateFS interface {
-	ReadFS
-	WriteFile(name string, data []byte, perm fs.FileMode) error
-	MkdirAll(path string, perm fs.FileMode) error
-	CreateTemp(dir, pattern string) (TempFile, error)
-	Remove(name string) error
-}
-
-// TempFile is returned by ValidateFS.CreateTemp. It provides write access and
-// the generated name without exposing *os.File. It embeds io.WriteCloser and
-// adds Name:
+// TempFile provides write access and the generated name without exposing
+// *os.File. It embeds io.WriteCloser and adds Name:
 //
 //	type TempFile interface {
 //		io.WriteCloser
@@ -70,13 +50,15 @@ type ValidateFS interface {
 //	}
 type TempFile = platform.TempFile
 
-// NewOSFileSystem returns a ValidateFS backed by the operating system. It lets
-// external callers use Validate, NewValidationPipeline, and Schema without
-// importing an internal package or naming the interface type:
+// NewOSFileSystem returns a ReadFS backed by the operating system. The
+// concrete value also implements WriteFile and MkdirAll, so fetched schemas are
+// cached automatically. It lets external callers use Validate,
+// NewValidationPipeline, and Schema without importing an internal package or
+// naming the interface type:
 //
 //	fsys := validate.NewOSFileSystem()
 //	result, err := validate.Validate(fsys, "custom-elements.json", validate.ValidationOptions{})
-func NewOSFileSystem() ValidateFS {
+func NewOSFileSystem() ReadFS {
 	return platform.NewOSFileSystem()
 }
 

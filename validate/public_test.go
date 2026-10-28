@@ -28,22 +28,47 @@ import (
 	"bennypowers.dev/cem/validate"
 )
 
-// The public interfaces and aliases must be nameable from an external package.
-// The minimal types prove each entry point needs only the methods it declares.
-var _ validate.ReadFS = (*minimalReadFS)(nil)
-var _ validate.ValidateFS = validate.NewOSFileSystem()
-var _ validate.ValidateFS = (*memoryFS)(nil)
-var _ validate.TempFile = (*memoryTempFile)(nil)
-
-// minimalReadFS implements only ReadFS. Schema must not require more.
-type minimalReadFS struct{}
-
-func (minimalReadFS) ReadFile(name string) ([]byte, error) {
-	return nil, fs.ErrNotExist
+// writeFile writes through the optional write half of a ReadFS. It proves
+// callers can write with the operating-system implementation without a wider
+// public interface.
+func writeFile(t *testing.T, fsys validate.ReadFS, name string, data []byte) {
+	t.Helper()
+	writer, ok := fsys.(interface {
+		WriteFile(name string, data []byte, perm fs.FileMode) error
+	})
+	if !ok {
+		t.Fatalf("filesystem %T does not implement WriteFile", fsys)
+	}
+	if err := writer.WriteFile(name, data, 0o644); err != nil {
+		t.Fatalf("writing %s: %v", name, err)
+	}
 }
 
-func (minimalReadFS) Stat(name string) (fs.FileInfo, error) {
-	return nil, fs.ErrNotExist
+// The public interfaces and aliases must be nameable from an external package.
+// The minimal type proves each entry point needs only the methods it declares.
+var _ validate.ReadFS = (*minimalReadFS)(nil)
+var _ validate.ReadFS = validate.NewOSFileSystem()
+var _ validate.ReadFS = (*memoryFS)(nil)
+var _ validate.TempFile = (*memoryTempFile)(nil)
+
+// minimalReadFS implements only ReadFS. Schema and Validate must not require
+// more.
+type minimalReadFS map[string][]byte
+
+func (m minimalReadFS) ReadFile(name string) ([]byte, error) {
+	data, ok := m[name]
+	if !ok {
+		return nil, fs.ErrNotExist
+	}
+	return data, nil
+}
+
+func (m minimalReadFS) Stat(name string) (fs.FileInfo, error) {
+	data, ok := m[name]
+	if !ok {
+		return nil, fs.ErrNotExist
+	}
+	return memoryFileInfo{name: name, size: int64(len(data))}, nil
 }
 
 type memoryTempFile struct {
@@ -71,9 +96,9 @@ func (i memoryFileInfo) ModTime() time.Time { return time.Time{} }
 func (i memoryFileInfo) IsDir() bool        { return false }
 func (i memoryFileInfo) Sys() any           { return nil }
 
-// memoryFS implements validate.ValidateFS from scratch with exactly the
-// methods Validate needs. It proves external callers do not need to embed
-// NewOSFileSystem or import an internal package.
+// memoryFS implements ReadFS plus write methods so tests can cache schemas. It
+// proves external callers do not need to embed NewOSFileSystem or import an
+// internal package.
 type memoryFS struct {
 	files map[string][]byte
 }
@@ -132,8 +157,46 @@ func TestPublicSchemaMinimalReadFS(t *testing.T) {
 	if err == nil {
 		t.Fatal("Schema returned no error for an unknown version with WithoutNetwork")
 	}
-	if !strings.Contains(err.Error(), "9.9.9") {
-		t.Errorf("error = %q, want it to name the requested version", err)
+	// Require the exact no-network contract so a no-op WithoutNetwork, which
+	// would surface a fetch or filesystem error instead, cannot pass this test.
+	if !strings.Contains(err.Error(), `schema for version "9.9.9" is not embedded or cached and network access is disabled`) {
+		t.Errorf("error = %q, want the unknown-version network-disabled error", err)
+	}
+}
+
+// TestPublicValidateMinimalReadFS proves external callers can validate with an
+// implementation of only the two ReadFS methods when the schema is embedded.
+//
+// Inline assertions: this test checks one validity result, where a golden file
+// would add indirection only.
+func TestPublicValidateMinimalReadFS(t *testing.T) {
+	fsys := minimalReadFS{
+		"custom-elements.json": []byte(`{"schemaVersion":"2.1.0","modules":[]}`),
+	}
+
+	result, err := validate.Validate(fsys, "custom-elements.json", validate.ValidationOptions{
+		NoNetwork: true,
+	})
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if !result.IsValid {
+		t.Errorf("Validate reported invalid manifest: %+v", result.Errors)
+	}
+}
+
+// TestPublicGetSchemaCompatibility verifies the deprecated shim released
+// callers can still use.
+//
+// Inline assertions: this test checks that the shim returns an embedded
+// schema, where a golden file would add indirection only.
+func TestPublicGetSchemaCompatibility(t *testing.T) {
+	data, err := validate.GetSchema(minimalReadFS{}, "2.1.0")
+	if err != nil {
+		t.Fatalf("GetSchema: %v", err)
+	}
+	if len(data) == 0 {
+		t.Error("GetSchema returned an empty schema")
 	}
 }
 
@@ -183,9 +246,7 @@ func TestPublicValidateAPI(t *testing.T) {
 	fsys := validate.NewOSFileSystem()
 	manifestPath := filepath.Join(t.TempDir(), "custom-elements.json")
 	manifest := []byte(`{"schemaVersion":"2.1.0","modules":[]}`)
-	if err := fsys.WriteFile(manifestPath, manifest, 0o644); err != nil {
-		t.Fatalf("writing manifest: %v", err)
-	}
+	writeFile(t, fsys, manifestPath, manifest)
 
 	result, err := validate.Validate(fsys, manifestPath, validate.ValidationOptions{
 		IncludeWarnings: true,
@@ -216,9 +277,7 @@ func TestPublicValidateAPIRejectsUnsafeSchemaVersion(t *testing.T) {
 	fsys := validate.NewOSFileSystem()
 	manifestPath := filepath.Join(t.TempDir(), "custom-elements.json")
 	manifest := []byte(`{"schemaVersion":"../../tmp/x","modules":[]}`)
-	if err := fsys.WriteFile(manifestPath, manifest, 0o644); err != nil {
-		t.Fatalf("writing manifest: %v", err)
-	}
+	writeFile(t, fsys, manifestPath, manifest)
 
 	result, err := validate.ValidateFile(manifestPath, validate.ValidationOptions{})
 	if err != nil {

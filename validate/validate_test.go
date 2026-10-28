@@ -1,6 +1,8 @@
 /*
 Copyright © 2025 Benny Powers <web@bennypowers.com>
 
+SPDX-License-Identifier: GPL-3.0-or-later
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -19,6 +21,7 @@ package validate
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -27,11 +30,22 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/platform/testutil"
 	"github.com/adrg/xdg"
 )
+
+// TestMain installs a fail-fast fetch default so a test that unexpectedly
+// reaches the network fails instead of requesting unpkg. Tests that exercise
+// fetching install their own stub with stubHTTPGet.
+func TestMain(m *testing.M) {
+	httpGet = func(url string) (*http.Response, error) {
+		return nil, fmt.Errorf("unexpected schema fetch in tests: %s", url)
+	}
+	os.Exit(m.Run())
+}
 
 // stubHTTPGet replaces the schema fetch seam for the duration of a test.
 // Tests must not reach the real network.
@@ -218,7 +232,7 @@ func TestTryFetchSchema_NoCacheDir(t *testing.T) {
 	fsys := platform.NewMapFS(nil)
 
 	// getSchema for an embedded version should succeed without cache
-	schemaData, err := getSchema(fsys, "2.1.0", schemaOptions{})
+	schemaData, err := getSchema(fsys, "2.1.0", schemaOptions{noNetwork: true})
 	if err != nil {
 		t.Fatalf("getSchema with empty CacheHome returned error: %v", err)
 	}
@@ -345,11 +359,17 @@ func TestGetSchemaShortVersionsResolveEmbedded(t *testing.T) {
 	}{
 		{"0", "0.1.0"},
 		{"2", speculativeSchemaVersion},
+		// Build metadata on a shortened spelling names the same range as the
+		// spelling without it, matching how canonical versions drop metadata.
+		{"2.1+build", speculativeSchemaVersion},
+		{"v2.1+build.5", speculativeSchemaVersion},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.version, func(t *testing.T) {
-			got, err := getSchema(fsys, tc.version, schemaOptions{})
+			// Network access is disabled so any resolution that misses the
+			// embedded schemas fails loudly instead of reaching unpkg.
+			got, err := getSchema(fsys, tc.version, schemaOptions{noNetwork: true})
 			if err != nil {
 				t.Fatalf("getSchema(%q): %v", tc.version, err)
 			}
@@ -460,7 +480,7 @@ func TestGetSchemaCacheUsesInjectedFileSystem(t *testing.T) {
 		t.Fatalf("writing cached schema: %v", err)
 	}
 
-	got, err := getSchema(fsys, "latest", schemaOptions{})
+	got, err := getSchema(fsys, "latest", schemaOptions{noNetwork: true})
 	if err != nil {
 		t.Fatalf("getSchema: %v", err)
 	}
@@ -500,12 +520,12 @@ func TestSchemaWithoutNetworkDoesNotFetch(t *testing.T) {
 	}
 }
 
-// TestSchemaWithoutNetworkUsesCache verifies that WithoutNetwork still serves
-// a cached schema.
+// TestSchemaReadsCacheBeforeNetwork verifies that a cached schema wins over a
+// network fetch even when fetching is allowed.
 //
 // Inline assertions: this test checks one sentinel value, where a golden file
 // would obscure the cache setup under test.
-func TestSchemaWithoutNetworkUsesCache(t *testing.T) {
+func TestSchemaReadsCacheBeforeNetwork(t *testing.T) {
 	t.Cleanup(xdg.Reload)
 	cacheHome := t.TempDir()
 	t.Setenv("XDG_CACHE_HOME", cacheHome)
@@ -522,7 +542,7 @@ func TestSchemaWithoutNetworkUsesCache(t *testing.T) {
 		t.Fatalf("writing cached schema: %v", err)
 	}
 
-	got, err := Schema(fsys, "9.9.9", WithoutNetwork())
+	got, err := Schema(fsys, "9.9.9")
 	if err != nil {
 		t.Fatalf("Schema: %v", err)
 	}
@@ -599,6 +619,98 @@ func TestSchemaDefaultFetchesWithReadOnlyFS(t *testing.T) {
 	}
 	if !bytes.Equal(got, fetched) {
 		t.Errorf("Schema returned %q, want the fetched schema", got)
+	}
+}
+
+// partialWriteFS writes half of the requested data and then fails, simulating
+// a short write that leaves a truncated cache file. It implements Remove so
+// the cache can clean up the partial entry.
+type partialWriteFS struct {
+	files map[string][]byte
+}
+
+func (p *partialWriteFS) ReadFile(name string) ([]byte, error) {
+	data, ok := p.files[name]
+	if !ok {
+		return nil, fs.ErrNotExist
+	}
+	return data, nil
+}
+
+func (p *partialWriteFS) Stat(name string) (fs.FileInfo, error) {
+	data, ok := p.files[name]
+	if !ok {
+		return nil, fs.ErrNotExist
+	}
+	return partialWriteFileInfo{name: name, size: int64(len(data))}, nil
+}
+
+func (p *partialWriteFS) WriteFile(name string, data []byte, perm fs.FileMode) error {
+	p.files[name] = append([]byte(nil), data[:len(data)/2]...)
+	return errors.New("simulated write failure")
+}
+
+func (p *partialWriteFS) MkdirAll(path string, perm fs.FileMode) error { return nil }
+
+func (p *partialWriteFS) Remove(name string) error {
+	delete(p.files, name)
+	return nil
+}
+
+type partialWriteFileInfo struct {
+	name string
+	size int64
+}
+
+func (i partialWriteFileInfo) Name() string       { return i.name }
+func (i partialWriteFileInfo) Size() int64        { return i.size }
+func (i partialWriteFileInfo) Mode() fs.FileMode  { return 0o644 }
+func (i partialWriteFileInfo) ModTime() time.Time { return time.Time{} }
+func (i partialWriteFileInfo) IsDir() bool        { return false }
+func (i partialWriteFileInfo) Sys() any           { return nil }
+
+// TestSchemaCacheWriteErrorRemovesPartialFile verifies that a failed cache
+// write does not leave truncated bytes that later resolve as a cached schema.
+//
+// Inline assertions: this test checks the returned bytes, the cache state, and
+// the fetch count, where a golden file would obscure the short write under
+// test.
+func TestSchemaCacheWriteErrorRemovesPartialFile(t *testing.T) {
+	t.Cleanup(xdg.Reload)
+	cacheHome := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", cacheHome)
+	xdg.Reload()
+
+	fetched := []byte(`{"title":"fetched schema"}`)
+	fetches := 0
+	stubHTTPGet(t, func(url string) (*http.Response, error) {
+		fetches++
+		return schemaResponse(fetched), nil
+	})
+
+	fsys := &partialWriteFS{files: map[string][]byte{}}
+	first, err := Schema(fsys, "9.9.9")
+	if err != nil {
+		t.Fatalf("Schema: %v", err)
+	}
+	if !bytes.Equal(first, fetched) {
+		t.Errorf("Schema returned %q, want the fetched schema", first)
+	}
+
+	cachePath := filepath.Join(cacheHome, "cem", "schemas", "9.9.9.json")
+	if _, err := fsys.Stat(cachePath); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("partial cache file was left behind after a write error")
+	}
+
+	second, err := Schema(fsys, "9.9.9")
+	if err != nil {
+		t.Fatalf("second Schema: %v", err)
+	}
+	if fetches != 2 {
+		t.Errorf("fetches = %d, want 2: a partial cache entry must not be reused", fetches)
+	}
+	if !bytes.Equal(second, fetched) {
+		t.Errorf("second Schema returned %q, want the fetched schema", second)
 	}
 }
 
@@ -741,10 +853,7 @@ func TestValidateAcceptsPathSafeNonSemverVersionFromCache(t *testing.T) {
 	xdg.Reload()
 
 	fsys := platform.NewMapFileSystem(nil)
-	cacheDir, err := xdg.CacheFile(filepath.Join("cem", "schemas"))
-	if err != nil {
-		t.Fatalf("xdg.CacheFile: %v", err)
-	}
+	cacheDir := filepath.Join(xdg.CacheHome, "cem", "schemas")
 	// Use a sentinel schema that accepts modules as an object. The official
 	// schema requires an array, so a network fallback cannot make this test
 	// pass by accident.
@@ -757,7 +866,7 @@ func TestValidateAcceptsPathSafeNonSemverVersionFromCache(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewValidationPipeline: %v", err)
 	}
-	result, err := pipeline.Validate(ValidationOptions{})
+	result, err := pipeline.Validate(ValidationOptions{NoNetwork: true})
 	if err != nil {
 		t.Fatalf("Validate: %v", err)
 	}
