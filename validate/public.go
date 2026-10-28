@@ -34,8 +34,9 @@ import (
 //	Stat(name string) (fs.FileInfo, error)
 //
 // Validation never requires write methods from ReadFS. When the supplied value
-// also implements WriteFile and MkdirAll, Schema caches schemas fetched from
-// unpkg; otherwise a fetched schema is returned without being cached.
+// also implements WriteFile, MkdirAll, and Remove, Schema caches schemas
+// fetched from unpkg; otherwise a fetched schema is returned without being
+// cached.
 type ReadFS interface {
 	ReadFile(name string) ([]byte, error)
 	Stat(name string) (fs.FileInfo, error)
@@ -51,8 +52,8 @@ type ReadFS interface {
 type TempFile = platform.TempFile
 
 // NewOSFileSystem returns a ReadFS backed by the operating system. The
-// concrete value also implements WriteFile and MkdirAll, so fetched schemas are
-// cached automatically. It lets external callers use Validate,
+// concrete value also implements WriteFile, MkdirAll, and Remove, so fetched
+// schemas are cached automatically. It lets external callers use Validate,
 // NewValidationPipeline, and Schema without importing an internal package or
 // naming the interface type:
 //

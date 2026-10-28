@@ -85,9 +85,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 // The filesystem-aware entry points accept a narrow ReadFS, which is just
 // ReadFile and Stat. Validation does not need write methods. When the supplied
-// value also implements WriteFile and MkdirAll, schemas fetched from unpkg are
-// cached; a read-only implementation returns them without caching. TempFile
-// remains exported for implementations that expose a CreateTemp method. Use
+// value also implements WriteFile, MkdirAll, and Remove, schemas fetched from
+// unpkg are cached; a read-only implementation returns them without caching.
+// TempFile remains exported for implementations that expose a CreateTemp
+// method. Use
 // NewOSFileSystem for the host operating system, or implement ReadFS for
 // in-memory or sandboxed input. For finer control, build a ValidationPipeline
 // with NewValidationPipeline and call its Validate method directly.

@@ -547,8 +547,9 @@ func WithoutNetwork() SchemaOption {
 //     schema, err := Schema(fsys, "2.1.2", WithoutNetwork())
 //
 // fsys may implement only ReadFS. Schema never requires write methods from it.
-// When fsys also implements WriteFile and MkdirAll, a schema fetched from
-// unpkg is cached; otherwise the fetched schema is returned without caching.
+// When fsys also implements WriteFile, MkdirAll, and Remove, a schema fetched
+// from unpkg is cached; otherwise the fetched schema is returned without
+// caching. Requiring Remove lets a failed write clean up its partial entry.
 //
 // version must not contain path separators, traversal segments, whitespace, or
 // URL delimiters, so caller-controlled input cannot escape the embedded
@@ -629,17 +630,15 @@ func schemaCacheDir() string {
 	return filepath.Join(xdg.CacheHome, "cem", "schemas")
 }
 
-// schemaCacheWriter is the optional write half of the schema cache. ReadFS
-// does not require these methods, so a read-only implementation simply skips
+// schemaCacheStore is the optional cache half of the filesystem contract.
+// Schema caches only when a filesystem can both write and remove a cache file.
+// Requiring Remove means a failed write can always clean up its partial entry,
+// so a later call cannot read a truncated schema as a cache hit. ReadFS does
+// not require these methods, so a read-only implementation simply skips
 // caching.
-type schemaCacheWriter interface {
+type schemaCacheStore interface {
 	WriteFile(name string, data []byte, perm fs.FileMode) error
 	MkdirAll(path string, perm fs.FileMode) error
-}
-
-// schemaCacheRemover is the optional cleanup half of the schema cache. It
-// lets a failed write remove a truncated cache file.
-type schemaCacheRemover interface {
 	Remove(name string) error
 }
 
@@ -677,18 +676,17 @@ func tryFetchSchema(fsys ReadFS, version string, options schemaOptions) ([]byte,
 	}
 
 	// Cache the result when a cache directory is available and the supplied
-	// filesystem can write. A ReadFS-only implementation skips this step.
+	// filesystem can write and remove a cache file. A ReadFS-only
+	// implementation, or one that cannot remove a failed write, skips this
+	// step.
 	if cacheDir != "" {
-		if writer, ok := fsys.(schemaCacheWriter); ok {
+		if store, ok := fsys.(schemaCacheStore); ok {
 			schemaPath := filepath.Join(cacheDir, version+".json")
-			_ = writer.MkdirAll(cacheDir, 0755)
-			if err := writer.WriteFile(schemaPath, schemaData, 0644); err != nil {
-				// A failed write may have left a truncated file that would be
-				// read as a corrupt schema later. Remove it when the filesystem
-				// supports removal.
-				if remover, ok := fsys.(schemaCacheRemover); ok {
-					_ = remover.Remove(schemaPath)
-				}
+			_ = store.MkdirAll(cacheDir, 0755)
+			if err := store.WriteFile(schemaPath, schemaData, 0644); err != nil {
+				// The failed write may have left a truncated file. Remove it so
+				// a later call refetches instead of reading partial JSON.
+				_ = store.Remove(schemaPath)
 			}
 		}
 	}

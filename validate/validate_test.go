@@ -714,6 +714,79 @@ func TestSchemaCacheWriteErrorRemovesPartialFile(t *testing.T) {
 	}
 }
 
+// writeOnlyCacheFS can write but cannot remove, so a failed write would leave
+// partial bytes behind with no way to clean them up.
+type writeOnlyCacheFS struct {
+	files      map[string][]byte
+	writeCalls int
+}
+
+func (f *writeOnlyCacheFS) ReadFile(name string) ([]byte, error) {
+	data, ok := f.files[name]
+	if !ok {
+		return nil, fs.ErrNotExist
+	}
+	return data, nil
+}
+
+func (f *writeOnlyCacheFS) Stat(name string) (fs.FileInfo, error) {
+	data, ok := f.files[name]
+	if !ok {
+		return nil, fs.ErrNotExist
+	}
+	return partialWriteFileInfo{name: name, size: int64(len(data))}, nil
+}
+
+func (f *writeOnlyCacheFS) WriteFile(name string, data []byte, perm fs.FileMode) error {
+	f.writeCalls++
+	f.files[name] = append([]byte(nil), data[:len(data)/2]...)
+	return errors.New("simulated write failure")
+}
+
+func (f *writeOnlyCacheFS) MkdirAll(path string, perm fs.FileMode) error { return nil }
+
+// TestSchemaDoesNotCacheWithoutRemove verifies that Schema only writes a cache
+// entry when it can also remove a partial entry after a failed write.
+//
+// Inline assertions: this test checks the write count, the fetch count, and
+// the cache state, where a golden file would obscure the cache contract under
+// test.
+func TestSchemaDoesNotCacheWithoutRemove(t *testing.T) {
+	t.Cleanup(xdg.Reload)
+	cacheHome := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", cacheHome)
+	xdg.Reload()
+
+	fetched := []byte(`{"title":"fetched schema"}`)
+	fetches := 0
+	stubHTTPGet(t, func(url string) (*http.Response, error) {
+		fetches++
+		return schemaResponse(fetched), nil
+	})
+
+	fsys := &writeOnlyCacheFS{files: map[string][]byte{}}
+	for i := 0; i < 2; i++ {
+		got, err := Schema(fsys, "9.9.9")
+		if err != nil {
+			t.Fatalf("Schema call %d: %v", i+1, err)
+		}
+		if !bytes.Equal(got, fetched) {
+			t.Errorf("Schema call %d returned %q, want the fetched schema", i+1, got)
+		}
+	}
+
+	if fsys.writeCalls != 0 {
+		t.Errorf("writeCalls = %d, want 0: Schema must not cache when it cannot remove a partial write", fsys.writeCalls)
+	}
+	if fetches != 2 {
+		t.Errorf("fetches = %d, want 2", fetches)
+	}
+	cachePath := filepath.Join(cacheHome, "cem", "schemas", "9.9.9.json")
+	if _, err := fsys.Stat(cachePath); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("cache file exists even though the filesystem cannot clean up a failed write")
+	}
+}
+
 // TestValidateNoNetworkDoesNotFetch verifies that ValidationOptions.NoNetwork
 // reaches the schema loader and prevents an unpkg request.
 //
