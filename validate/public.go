@@ -19,36 +19,48 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package validate
 
-import "bennypowers.dev/cem/internal/platform"
+import (
+	"io/fs"
 
-// FileSystem is the filesystem abstraction accepted by Validate,
-// NewValidationPipeline, and Schema.
+	"bennypowers.dev/cem/internal/platform"
+)
+
+// ReadFS is the filesystem abstraction Schema needs. It is the smallest
+// interface an embedder must implement to read embedded schemas and cached
+// schemas:
 //
-// It is an alias for an internal interface, exported so external callers can
-// name and implement it without importing the internal package. The full
-// method set is:
+//	ReadFile(name string) ([]byte, error)
+//	Stat(name string) (fs.FileInfo, error)
+//
+// Schema does not write through ReadFS. When the supplied value also
+// implements WriteFile and MkdirAll, Schema caches schemas fetched from unpkg;
+// otherwise a fetch result is returned without being cached.
+type ReadFS interface {
+	ReadFile(name string) ([]byte, error)
+	Stat(name string) (fs.FileInfo, error)
+}
+
+// ValidateFS is the filesystem abstraction accepted by Validate and
+// NewValidationPipeline. It embeds ReadFS and adds the write and temporary-file
+// operations validation needs:
 //
 //	WriteFile(name string, data []byte, perm fs.FileMode) error
-//	ReadFile(name string) ([]byte, error)
-//	Remove(name string) error
-//	Create(name string) (io.WriteCloser, error)
-//	CreateTemp(dir, pattern string) (TempFile, error)
-//	Rename(oldpath, newpath string) error
 //	MkdirAll(path string, perm fs.FileMode) error
-//	MkdirTemp(dir, pattern string) (string, error)
-//	ReadDir(name string) ([]fs.DirEntry, error)
-//	TempDir() string
-//	Stat(name string) (fs.FileInfo, error)
-//	Exists(path string) bool
-//	Glob(pattern string) ([]string, error)
-//	Open(name string) (fs.File, error)
+//	CreateTemp(dir, pattern string) (TempFile, error)
+//	Remove(name string) error
 //
-// CreateTemp returns a TempFile. Callers can use NewOSFileSystem, which
-// implements the interface, or provide their own in-memory or sandboxed
-// implementation.
-type FileSystem = platform.FileSystem
+// Callers can use NewOSFileSystem, which implements the interface, or provide
+// their own in-memory or sandboxed implementation. Embedders that only read
+// schemas can implement ReadFS alone and call Schema.
+type ValidateFS interface {
+	ReadFS
+	WriteFile(name string, data []byte, perm fs.FileMode) error
+	MkdirAll(path string, perm fs.FileMode) error
+	CreateTemp(dir, pattern string) (TempFile, error)
+	Remove(name string) error
+}
 
-// TempFile is returned by FileSystem.CreateTemp. It provides write access and
+// TempFile is returned by ValidateFS.CreateTemp. It provides write access and
 // the generated name without exposing *os.File. It embeds io.WriteCloser and
 // adds Name:
 //
@@ -58,20 +70,21 @@ type FileSystem = platform.FileSystem
 //	}
 type TempFile = platform.TempFile
 
-// NewOSFileSystem returns a FileSystem backed by the operating system. It lets
+// NewOSFileSystem returns a ValidateFS backed by the operating system. It lets
 // external callers use Validate, NewValidationPipeline, and Schema without
 // importing an internal package or naming the interface type:
 //
 //	fsys := validate.NewOSFileSystem()
 //	result, err := validate.Validate(fsys, "custom-elements.json", validate.ValidationOptions{})
-func NewOSFileSystem() FileSystem {
+func NewOSFileSystem() ValidateFS {
 	return platform.NewOSFileSystem()
 }
 
 // ValidateFile validates a manifest on the operating system filesystem.
 //
 // It is a convenience wrapper around Validate and NewOSFileSystem for callers
-// that do not need to supply their own filesystem implementation.
+// that do not need to supply their own filesystem implementation. Set
+// ValidationOptions.NoNetwork to prevent schema fetches.
 func ValidateFile(manifestPath string, options ValidationOptions) (*ValidationResult, error) {
 	return Validate(NewOSFileSystem(), manifestPath, options)
 }

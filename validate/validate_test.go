@@ -20,6 +20,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -29,6 +32,23 @@ import (
 	"bennypowers.dev/cem/internal/platform/testutil"
 	"github.com/adrg/xdg"
 )
+
+// stubHTTPGet replaces the schema fetch seam for the duration of a test.
+// Tests must not reach the real network.
+func stubHTTPGet(t *testing.T, fn func(url string) (*http.Response, error)) {
+	t.Helper()
+	orig := httpGet
+	t.Cleanup(func() { httpGet = orig })
+	httpGet = fn
+}
+
+func schemaResponse(body []byte) *http.Response {
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Status:     "200 OK",
+		Body:       io.NopCloser(bytes.NewReader(body)),
+	}
+}
 
 // loadValidateFixtureMapFS loads a fixture manifest into a MapFileSystem
 // and returns the MapFileSystem and virtual path.
@@ -198,7 +218,7 @@ func TestTryFetchSchema_NoCacheDir(t *testing.T) {
 	fsys := platform.NewMapFS(nil)
 
 	// getSchema for an embedded version should succeed without cache
-	schemaData, err := getSchema(fsys, "2.1.0")
+	schemaData, err := getSchema(fsys, "2.1.0", schemaOptions{})
 	if err != nil {
 		t.Fatalf("getSchema with empty CacheHome returned error: %v", err)
 	}
@@ -244,7 +264,7 @@ func testGetSchemaUpgrade210(t *testing.T, fsys platform.FileSystem) {
 
 	for _, tc := range testCases {
 		t.Run(tc.version, func(t *testing.T) {
-			schemaData, err := getSchema(fsys, tc.version)
+			schemaData, err := getSchema(fsys, tc.version, schemaOptions{})
 			if err != nil {
 				t.Fatalf("getSchema(%q) returned error: %v", tc.version, err)
 			}
@@ -329,7 +349,7 @@ func TestGetSchemaShortVersionsResolveEmbedded(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.version, func(t *testing.T) {
-			got, err := getSchema(fsys, tc.version)
+			got, err := getSchema(fsys, tc.version, schemaOptions{})
 			if err != nil {
 				t.Fatalf("getSchema(%q): %v", tc.version, err)
 			}
@@ -440,7 +460,7 @@ func TestGetSchemaCacheUsesInjectedFileSystem(t *testing.T) {
 		t.Fatalf("writing cached schema: %v", err)
 	}
 
-	got, err := getSchema(fsys, "latest")
+	got, err := getSchema(fsys, "latest", schemaOptions{})
 	if err != nil {
 		t.Fatalf("getSchema: %v", err)
 	}
@@ -449,6 +469,184 @@ func TestGetSchemaCacheUsesInjectedFileSystem(t *testing.T) {
 	}
 	if _, err := os.Stat(cacheHome); !os.IsNotExist(err) {
 		t.Errorf("getSchema created %s on the host filesystem; cache I/O must go through the supplied FileSystem", cacheHome)
+	}
+}
+
+// TestSchemaWithoutNetworkDoesNotFetch verifies that WithoutNetwork turns a
+// cache miss for an unknown version into an error instead of an unpkg request.
+//
+// Inline assertions: this test checks the error contract for one version,
+// where a golden file would obscure the fetch seam under test.
+func TestSchemaWithoutNetworkDoesNotFetch(t *testing.T) {
+	origCacheHome := xdg.CacheHome
+	t.Cleanup(func() { xdg.CacheHome = origCacheHome })
+	xdg.CacheHome = "" // no cache directory
+	stubHTTPGet(t, func(url string) (*http.Response, error) {
+		t.Fatalf("Schema fetched %s even though WithoutNetwork was set", url)
+		return nil, nil
+	})
+
+	// readOnlySchemaFS cannot write, so this also proves the no-network path
+	// does not try to cache anything.
+	_, err := Schema(readOnlySchemaFS{}, "9.9.9", WithoutNetwork())
+	if err == nil {
+		t.Fatal("Schema returned no error for an unknown version with WithoutNetwork")
+	}
+	if !strings.Contains(err.Error(), `"9.9.9"`) {
+		t.Errorf("error = %q, want it to name the requested version", err)
+	}
+	if !strings.Contains(err.Error(), "network access is disabled") {
+		t.Errorf("error = %q, want it to explain that network access is disabled", err)
+	}
+}
+
+// TestSchemaWithoutNetworkUsesCache verifies that WithoutNetwork still serves
+// a cached schema.
+//
+// Inline assertions: this test checks one sentinel value, where a golden file
+// would obscure the cache setup under test.
+func TestSchemaWithoutNetworkUsesCache(t *testing.T) {
+	t.Cleanup(xdg.Reload)
+	cacheHome := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", cacheHome)
+	xdg.Reload()
+	stubHTTPGet(t, func(url string) (*http.Response, error) {
+		t.Fatalf("Schema fetched %s for a cached version", url)
+		return nil, nil
+	})
+
+	fsys := platform.NewMapFileSystem(nil)
+	sentinel := []byte(`{"title":"cached schema"}`)
+	cachePath := filepath.Join(cacheHome, "cem", "schemas", "9.9.9.json")
+	if err := fsys.WriteFile(cachePath, sentinel, 0o644); err != nil {
+		t.Fatalf("writing cached schema: %v", err)
+	}
+
+	got, err := Schema(fsys, "9.9.9", WithoutNetwork())
+	if err != nil {
+		t.Fatalf("Schema: %v", err)
+	}
+	if !bytes.Equal(got, sentinel) {
+		t.Errorf("Schema did not return the cached schema")
+	}
+}
+
+// TestSchemaDefaultFetchesWhenNotEmbedded verifies that the default behavior
+// still fetches an unknown version and caches the result through the supplied
+// filesystem.
+//
+// Inline assertions: this test checks the fetched bytes, the URL, and the
+// cached copy, where a golden file would obscure the fetch seam under test.
+func TestSchemaDefaultFetchesWhenNotEmbedded(t *testing.T) {
+	t.Cleanup(xdg.Reload)
+	cacheHome := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", cacheHome)
+	xdg.Reload()
+
+	fetched := []byte(`{"title":"fetched schema"}`)
+	var gotURL string
+	stubHTTPGet(t, func(url string) (*http.Response, error) {
+		gotURL = url
+		return schemaResponse(fetched), nil
+	})
+
+	fsys := platform.NewMapFileSystem(nil)
+	got, err := Schema(fsys, "9.9.9")
+	if err != nil {
+		t.Fatalf("Schema: %v", err)
+	}
+	if !bytes.Equal(got, fetched) {
+		t.Errorf("Schema returned %q, want the fetched schema", got)
+	}
+	if !strings.Contains(gotURL, "custom-elements-manifest@9.9.9") {
+		t.Errorf("fetch URL = %q, want it to name version 9.9.9", gotURL)
+	}
+
+	cached, err := fsys.ReadFile(filepath.Join(cacheHome, "cem", "schemas", "9.9.9.json"))
+	if err != nil {
+		t.Fatalf("reading cached schema: %v", err)
+	}
+	if !bytes.Equal(cached, fetched) {
+		t.Errorf("cached schema = %q, want the fetched schema", cached)
+	}
+}
+
+// readOnlySchemaFS implements only ReadFS. It cannot cache fetched schemas.
+type readOnlySchemaFS struct{}
+
+func (readOnlySchemaFS) ReadFile(name string) ([]byte, error) { return nil, fs.ErrNotExist }
+
+func (readOnlySchemaFS) Stat(name string) (fs.FileInfo, error) { return nil, fs.ErrNotExist }
+
+// TestSchemaDefaultFetchesWithReadOnlyFS verifies that a ReadFS-only
+// implementation can still fetch an unknown version: caching is optional.
+//
+// Inline assertions: this test checks the fetched bytes, where a golden file
+// would obscure the fetch seam under test.
+func TestSchemaDefaultFetchesWithReadOnlyFS(t *testing.T) {
+	t.Cleanup(xdg.Reload)
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	xdg.Reload()
+
+	fetched := []byte(`{"title":"fetched schema"}`)
+	stubHTTPGet(t, func(url string) (*http.Response, error) {
+		return schemaResponse(fetched), nil
+	})
+
+	got, err := Schema(readOnlySchemaFS{}, "9.9.9")
+	if err != nil {
+		t.Fatalf("Schema: %v", err)
+	}
+	if !bytes.Equal(got, fetched) {
+		t.Errorf("Schema returned %q, want the fetched schema", got)
+	}
+}
+
+// TestValidateNoNetworkDoesNotFetch verifies that ValidationOptions.NoNetwork
+// reaches the schema loader and prevents an unpkg request.
+//
+// Inline assertions: this test checks the error contract for one manifest,
+// where a golden file would obscure the fetch seam under test.
+func TestValidateNoNetworkDoesNotFetch(t *testing.T) {
+	origCacheHome := xdg.CacheHome
+	t.Cleanup(func() { xdg.CacheHome = origCacheHome })
+	xdg.CacheHome = ""
+	stubHTTPGet(t, func(url string) (*http.Response, error) {
+		t.Fatalf("Validate fetched %s even though NoNetwork was set", url)
+		return nil, nil
+	})
+
+	manifest := []byte(`{"schemaVersion":"9.9.9","modules":[]}`)
+	pipeline, err := NewValidationPipeline(platform.NewMapFileSystem(nil), manifest)
+	if err != nil {
+		t.Fatalf("NewValidationPipeline: %v", err)
+	}
+	_, err = pipeline.Validate(ValidationOptions{NoNetwork: true})
+	if err == nil {
+		t.Fatal("Validate returned no error for an unknown version with NoNetwork")
+	}
+	if !strings.Contains(err.Error(), "9.9.9") {
+		t.Errorf("error = %q, want it to name the requested version", err)
+	}
+}
+
+// TestValidateNoNetworkAcceptsEmbeddedSchema verifies that NoNetwork does not
+// affect versions served from embedded schemas.
+//
+// Inline assertions: this test checks one validity result, where a golden file
+// would add indirection only.
+func TestValidateNoNetworkAcceptsEmbeddedSchema(t *testing.T) {
+	manifest := []byte(`{"schemaVersion":"2.1.0","modules":[]}`)
+	pipeline, err := NewValidationPipeline(platform.NewMapFileSystem(nil), manifest)
+	if err != nil {
+		t.Fatalf("NewValidationPipeline: %v", err)
+	}
+	result, err := pipeline.Validate(ValidationOptions{NoNetwork: true})
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if !result.IsValid {
+		t.Errorf("Validate rejected a manifest with an embedded schema under NoNetwork: %+v", result.Errors)
 	}
 }
 
@@ -472,7 +670,7 @@ func TestGetSchemaRejectsUnsafeVersions(t *testing.T) {
 
 	for _, version := range versions {
 		t.Run(version, func(t *testing.T) {
-			_, err := getSchema(fsys, version)
+			_, err := getSchema(fsys, version, schemaOptions{})
 			if err == nil {
 				t.Fatalf("getSchema(%q) = nil error, want rejection", version)
 			}

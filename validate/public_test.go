@@ -19,22 +19,32 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package validate_test
 
 import (
-	"errors"
-	"io"
 	"io/fs"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"bennypowers.dev/cem/validate"
 )
 
-// The public aliases must be nameable from an external package.
-var _ validate.FileSystem = validate.NewOSFileSystem()
-var _ validate.FileSystem = (*memoryFS)(nil)
+// The public interfaces and aliases must be nameable from an external package.
+// The minimal types prove each entry point needs only the methods it declares.
+var _ validate.ReadFS = (*minimalReadFS)(nil)
+var _ validate.ValidateFS = validate.NewOSFileSystem()
+var _ validate.ValidateFS = (*memoryFS)(nil)
 var _ validate.TempFile = (*memoryTempFile)(nil)
 
-var errNotImplemented = errors.New("not implemented")
+// minimalReadFS implements only ReadFS. Schema must not require more.
+type minimalReadFS struct{}
+
+func (minimalReadFS) ReadFile(name string) ([]byte, error) {
+	return nil, fs.ErrNotExist
+}
+
+func (minimalReadFS) Stat(name string) (fs.FileInfo, error) {
+	return nil, fs.ErrNotExist
+}
 
 type memoryTempFile struct {
 	name string
@@ -61,8 +71,9 @@ func (i memoryFileInfo) ModTime() time.Time { return time.Time{} }
 func (i memoryFileInfo) IsDir() bool        { return false }
 func (i memoryFileInfo) Sys() any           { return nil }
 
-// memoryFS implements validate.FileSystem from scratch. It proves external
-// callers do not need to embed NewOSFileSystem or import an internal package.
+// memoryFS implements validate.ValidateFS from scratch with exactly the
+// methods Validate needs. It proves external callers do not need to embed
+// NewOSFileSystem or import an internal package.
 type memoryFS struct {
 	files map[string][]byte
 }
@@ -85,32 +96,12 @@ func (m *memoryFS) Remove(name string) error {
 	return nil
 }
 
-func (m *memoryFS) Create(name string) (io.WriteCloser, error) {
-	return nil, errNotImplemented
-}
-
 func (m *memoryFS) CreateTemp(dir, pattern string) (validate.TempFile, error) {
 	return &memoryTempFile{name: filepath.Join(dir, pattern)}, nil
 }
 
-func (m *memoryFS) Rename(oldpath, newpath string) error {
-	return errNotImplemented
-}
-
 func (m *memoryFS) MkdirAll(path string, perm fs.FileMode) error {
 	return nil
-}
-
-func (m *memoryFS) MkdirTemp(dir, pattern string) (string, error) {
-	return "", errNotImplemented
-}
-
-func (m *memoryFS) ReadDir(name string) ([]fs.DirEntry, error) {
-	return nil, errNotImplemented
-}
-
-func (m *memoryFS) TempDir() string {
-	return ""
 }
 
 func (m *memoryFS) Stat(name string) (fs.FileInfo, error) {
@@ -121,17 +112,29 @@ func (m *memoryFS) Stat(name string) (fs.FileInfo, error) {
 	return memoryFileInfo{name: name, size: int64(len(data))}, nil
 }
 
-func (m *memoryFS) Exists(path string) bool {
-	_, ok := m.files[path]
-	return ok
-}
+// TestPublicSchemaMinimalReadFS proves external callers can use Schema with an
+// implementation of only the two ReadFS methods.
+//
+// Inline assertions: this test checks the embedded result and the error
+// contract, where a golden file would add indirection only.
+func TestPublicSchemaMinimalReadFS(t *testing.T) {
+	fsys := minimalReadFS{}
 
-func (m *memoryFS) Glob(pattern string) ([]string, error) {
-	return nil, errNotImplemented
-}
+	embedded, err := validate.Schema(fsys, "2.1.0")
+	if err != nil {
+		t.Fatalf("Schema: %v", err)
+	}
+	if len(embedded) == 0 {
+		t.Error("Schema returned an empty embedded schema")
+	}
 
-func (m *memoryFS) Open(name string) (fs.File, error) {
-	return nil, errNotImplemented
+	_, err = validate.Schema(fsys, "9.9.9", validate.WithoutNetwork())
+	if err == nil {
+		t.Fatal("Schema returned no error for an unknown version with WithoutNetwork")
+	}
+	if !strings.Contains(err.Error(), "9.9.9") {
+		t.Errorf("error = %q, want it to name the requested version", err)
+	}
 }
 
 // TestCustomFileSystemImplementation validates a manifest through a

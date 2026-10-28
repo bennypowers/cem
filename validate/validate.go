@@ -59,10 +59,18 @@ type ValidationResult struct {
 type ValidationOptions struct {
 	IncludeWarnings bool
 	DisabledRules   []string
+
+	// NoNetwork prevents validation from fetching a schema that is neither
+	// embedded nor cached. It is passed to Schema as WithoutNetwork.
+	NoNetwork bool
 }
 
-// Validate validates a custom-elements.json manifest
-func Validate(fsys FileSystem, manifestPath string, options ValidationOptions) (*ValidationResult, error) {
+// Validate validates a custom-elements.json manifest.
+//
+// Set ValidationOptions.NoNetwork to prevent schema fetches; embedded and
+// cached schemas still validate. The filesystem argument must implement
+// ValidateFS.
+func Validate(fsys ValidateFS, manifestPath string, options ValidationOptions) (*ValidationResult, error) {
 	manifestData, err := fsys.ReadFile(manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading manifest file: %w", err)
@@ -78,7 +86,7 @@ func Validate(fsys FileSystem, manifestPath string, options ValidationOptions) (
 
 // ValidationPipeline orchestrates the validation process
 type ValidationPipeline struct {
-	fsys             FileSystem
+	fsys             ValidateFS
 	manifestData     []byte
 	schemaVersion    string
 	navigator        *ManifestNavigator
@@ -87,7 +95,7 @@ type ValidationPipeline struct {
 }
 
 // NewValidationPipeline creates a new validation pipeline
-func NewValidationPipeline(fsys FileSystem, manifestData []byte) (*ValidationPipeline, error) {
+func NewValidationPipeline(fsys ValidateFS, manifestData []byte) (*ValidationPipeline, error) {
 	// Parse manifest once for efficiency
 	var manifestJSON map[string]any
 	if err := json.Unmarshal(manifestData, &manifestJSON); err != nil {
@@ -137,7 +145,7 @@ func (p *ValidationPipeline) Validate(options ValidationOptions) (*ValidationRes
 	}
 
 	// Perform JSON schema validation
-	if err := p.validateSchema(result); err != nil {
+	if err := p.validateSchema(result, options); err != nil {
 		return nil, err
 	}
 
@@ -304,7 +312,7 @@ func isSemverLessThan(version1, version2 string) bool {
 	return semver.Compare("v"+canonical1, "v"+canonical2) < 0
 }
 
-func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
+func (p *ValidationPipeline) validateSchema(result *ValidationResult, options ValidationOptions) error {
 	// Hardening: never pass an untrusted schemaVersion into embedded-schema or
 	// cache path construction. Invalid values keep their warning from
 	// checkSchemaVersion and validation continues against an embedded schema.
@@ -313,7 +321,7 @@ func (p *ValidationPipeline) validateSchema(result *ValidationResult) error {
 	if unsafeSchemaVersion {
 		schemaVersion = speculativeSchemaVersion
 	}
-	schemaData, err := getSchema(p.fsys, schemaVersion)
+	schemaData, err := getSchema(p.fsys, schemaVersion, schemaOptions{noNetwork: options.NoNetwork})
 	if err != nil {
 		return fmt.Errorf("error getting schema: %w", err)
 	}
@@ -508,8 +516,38 @@ func isWarningDisabled(warning ValidationWarning, disabledRules []string) bool {
 	return false
 }
 
+// SchemaOption configures Schema.
+type SchemaOption func(*schemaOptions)
+
+// schemaOptions is the resolved configuration for Schema.
+type schemaOptions struct {
+	noNetwork bool
+}
+
+// WithoutNetwork prevents Schema from fetching a schema that is neither
+// embedded nor cached. When the version cannot be resolved offline, Schema
+// returns an error naming the version instead of requesting it from unpkg.
+//
+// Embedded schemas and cached schemas still resolve normally.
+func WithoutNetwork() SchemaOption {
+	return func(options *schemaOptions) {
+		options.noNetwork = true
+	}
+}
+
 // Schema returns the JSON schema for a given version, using embedded schemas
 // and falling back to fetching from external sources if needed.
+//
+// Options:
+//
+//   - WithoutNetwork: do not fetch from unpkg. Schema returns an error when
+//     version is neither embedded nor cached. For example:
+//
+//     schema, err := Schema(fsys, "2.1.2", WithoutNetwork())
+//
+// fsys may implement only ReadFS. Caching a fetched schema additionally uses
+// WriteFile and MkdirAll when fsys implements them, as ValidateFS does; a
+// ReadFS-only implementation still returns the fetched schema.
 //
 // version must not contain path separators, traversal segments, whitespace, or
 // URL delimiters, so caller-controlled input cannot escape the embedded
@@ -528,11 +566,17 @@ func isWarningDisabled(warning ValidationWarning, disabledRules []string) bool {
 // stricter than the official schema: it rejects additional properties.
 // Callers that require strict validation against the official 2.1.0 schema
 // should not use Schema for those versions.
-func Schema(fsys FileSystem, version string) ([]byte, error) {
-	return getSchema(fsys, version)
+func Schema(fsys ReadFS, version string, opts ...SchemaOption) ([]byte, error) {
+	var options schemaOptions
+	for _, opt := range opts {
+		if opt != nil {
+			opt(&options)
+		}
+	}
+	return getSchema(fsys, version, options)
 }
 
-func getSchema(fsys FileSystem, version string) ([]byte, error) {
+func getSchema(fsys ReadFS, version string, options schemaOptions) ([]byte, error) {
 	// Hardening: Schema can be called directly with caller-controlled input.
 	// Reject values that could escape a path when used as a cache filename or
 	// URL segment.
@@ -551,7 +595,7 @@ func getSchema(fsys FileSystem, version string) ([]byte, error) {
 	// shortened version such as "0.0" is a range, and a dist-tag is resolved
 	// by the cache and npm, so substituting a canonical exact version would
 	// change which schema they return.
-	return tryFetchSchema(fsys, version)
+	return tryFetchSchema(fsys, version, options)
 }
 
 func getEmbeddedSchema(version string) ([]byte, error) {
@@ -575,7 +619,19 @@ func schemaCacheDir() string {
 	return filepath.Join(xdg.CacheHome, "cem", "schemas")
 }
 
-func tryFetchSchema(fsys FileSystem, version string) ([]byte, error) {
+// schemaCacheWriter is the optional write half of the schema cache. ReadFS
+// does not require these methods, so a read-only implementation simply skips
+// caching.
+type schemaCacheWriter interface {
+	WriteFile(name string, data []byte, perm fs.FileMode) error
+	MkdirAll(path string, perm fs.FileMode) error
+}
+
+// httpGet is the HTTP seam used to fetch schemas. Tests replace it so they
+// never reach the network.
+var httpGet = http.Get
+
+func tryFetchSchema(fsys ReadFS, version string, options schemaOptions) ([]byte, error) {
 	cacheDir := schemaCacheDir()
 	if cacheDir != "" {
 		schemaPath := filepath.Join(cacheDir, version+".json")
@@ -584,8 +640,12 @@ func tryFetchSchema(fsys FileSystem, version string) ([]byte, error) {
 		}
 	}
 
+	if options.noNetwork {
+		return nil, fmt.Errorf("schema for version %q is not embedded or cached and network access is disabled", version)
+	}
+
 	url := fmt.Sprintf("https://unpkg.com/custom-elements-manifest@%s/schema.json", version)
-	resp, err := http.Get(url)
+	resp, err := httpGet(url)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch schema from %s: %w", url, err)
 	}
@@ -600,11 +660,14 @@ func tryFetchSchema(fsys FileSystem, version string) ([]byte, error) {
 		return nil, fmt.Errorf("could not read schema from response body: %w", err)
 	}
 
-	// Cache the result if a cache directory is available.
+	// Cache the result when a cache directory is available and the supplied
+	// filesystem can write. A ReadFS-only implementation skips this step.
 	if cacheDir != "" {
-		schemaPath := filepath.Join(cacheDir, version+".json")
-		_ = fsys.MkdirAll(cacheDir, 0755)
-		_ = fsys.WriteFile(schemaPath, schemaData, 0644)
+		if writer, ok := fsys.(schemaCacheWriter); ok {
+			schemaPath := filepath.Join(cacheDir, version+".json")
+			_ = writer.MkdirAll(cacheDir, 0755)
+			_ = writer.WriteFile(schemaPath, schemaData, 0644)
+		}
 	}
 
 	return schemaData, nil

@@ -81,12 +81,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 //		IncludeWarnings: true,
 //	})
 //
-// The filesystem-aware entry points accept a FileSystem. Use NewOSFileSystem
-// for the host operating system, or implement the interface for in-memory or
-// sandboxed input. FileSystem and TempFile are exported aliases, and the
-// FileSystem type documents the full method set, so callers do not need to
-// import an internal package. For finer control, build a ValidationPipeline
-// with NewValidationPipeline and call its Validate method directly.
+// The filesystem-aware entry points use narrow interfaces, so embedders
+// implement only what the entry point needs. Schema accepts a ReadFS, which is
+// just ReadFile and Stat. Validate and NewValidationPipeline accept a
+// ValidateFS, which embeds ReadFS and adds WriteFile, MkdirAll, CreateTemp,
+// and Remove. TempFile remains exported for CreateTemp implementations. Use
+// NewOSFileSystem for the host operating system, or implement the interface
+// for in-memory or sandboxed input. For finer control, build a
+// ValidationPipeline with NewValidationPipeline and call its Validate method
+// directly.
+//
+// Schema fetches a schema from unpkg when the version is neither embedded nor
+// cached. Callers that must not use the network can pass WithoutNetwork to
+// Schema, or set ValidationOptions.NoNetwork when using Validate. Both still
+// resolve embedded and cached schemas.
 //
 // Warning rules for manifest content can be disabled by ID with
 // ValidationOptions.DisabledRules. Schema-version warnings are always
