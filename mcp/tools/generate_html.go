@@ -371,7 +371,7 @@ func getSchemaDefinitions(registry types.MCPContext) (SchemaDefinitionMap, error
 
 	// Use the first version to load schema
 	schemaVersion := versions[0]
-	schemaData, err := V.GetSchema(registry.FileSystem(), schemaVersion)
+	schemaData, err := V.Schema(registry.FileSystem(), schemaVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load schema %s: %w", schemaVersion, err)
 	}

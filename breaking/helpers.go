@@ -14,6 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
+
 package breaking
 
 import M "bennypowers.dev/cem/manifest"
@@ -26,12 +27,12 @@ func indexByName[T any](items []T, name func(T) string) map[string]T {
 	return m
 }
 
-func attrName(a M.Attribute) string           { return a.Name }
-func slotName(s M.Slot) string                { return s.Name }
-func eventName(e M.Event) string              { return e.Name }
+func attrName(a M.Attribute) string                { return a.Name }
+func slotName(s M.Slot) string                     { return s.Name }
+func eventName(e M.Event) string                   { return e.Name }
 func cssPropertyName(p M.CssCustomProperty) string { return p.Name }
-func cssPartName(p M.CssPart) string          { return p.Name }
-func cssStateName(s M.CssCustomState) string  { return s.Name }
+func cssPartName(p M.CssPart) string               { return p.Name }
+func cssStateName(s M.CssCustomState) string       { return s.Name }
 
 func typeText(t *M.Type) string {
 	if t == nil {

@@ -145,6 +145,27 @@ See each example project's README for more info.
 
 ---
 
+## Go libraries
+
+`cem` also publishes a small Go API for tools that work with Custom Elements
+Manifest data:
+
+- `bennypowers.dev/cem/version`: version and build metadata
+- `bennypowers.dev/cem/manifest`: manifest types, querying, and serialization
+- `bennypowers.dev/cem/breaking`: compatibility checks between two manifests
+- `bennypowers.dev/cem/validate`: schema validation and manifest warnings
+
+These packages are pre-1.0. Pin exact versions, upgrade deliberately, and see
+the [compatibility policy][publicpackages] in CONTRIBUTING.md. The CLI packages
+and everything under `internal/` are not a supported public API.
+
+`manifest` and `breaking` currently require cgo because `manifest` parses type
+expressions with tree-sitter through an internal package. `version` and
+`validate` build with `CGO_ENABLED=0`. See [cem #459][cgoissue] for the work to
+remove the cgo requirement from `manifest` and `breaking`.
+
+---
+
 ## Contributing
 
 For information on building and testing, please see
@@ -164,6 +185,8 @@ the terms of the [GNU General Public License v3.0][gpl3].
 [gpl3]:             https://www.gnu.org/licenses/gpl-3.0.html
 [issuenew]:         https://github.com/bennypowers/cem/issues/new
 [contributingmd]:   https://bennypowers.dev/cem/docs/contributing/
+[publicpackages]:   https://github.com/bennypowers/cem/blob/main/CONTRIBUTING.md#0x-compatibility-policy
+[cgoissue]:         https://github.com/bennypowers/cem/issues/459
 [installationdocs]: https://bennypowers.dev/cem/docs/installation/
 [generatedocs]:     https://bennypowers.dev/cem/docs/commands/generate/
 [listdocs]:         https://bennypowers.dev/cem/docs/commands/list/
