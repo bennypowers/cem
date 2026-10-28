@@ -22,7 +22,7 @@ package validate
 import "bennypowers.dev/cem/internal/platform"
 
 // FileSystem is the filesystem abstraction accepted by Validate,
-// NewValidationPipeline, and GetSchema.
+// NewValidationPipeline, and Schema.
 //
 // It is an alias for an internal interface, exported so external callers can
 // name and implement it without importing the internal package. The full
@@ -59,7 +59,7 @@ type FileSystem = platform.FileSystem
 type TempFile = platform.TempFile
 
 // NewOSFileSystem returns a FileSystem backed by the operating system. It lets
-// external callers use Validate, NewValidationPipeline, and GetSchema without
+// external callers use Validate, NewValidationPipeline, and Schema without
 // importing an internal package or naming the interface type:
 //
 //	fsys := validate.NewOSFileSystem()

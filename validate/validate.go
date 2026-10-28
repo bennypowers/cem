@@ -508,7 +508,7 @@ func isWarningDisabled(warning ValidationWarning, disabledRules []string) bool {
 	return false
 }
 
-// GetSchema returns the JSON schema for a given version, using embedded schemas
+// Schema returns the JSON schema for a given version, using embedded schemas
 // and falling back to fetching from external sources if needed.
 //
 // version must not contain path separators, traversal segments, whitespace, or
@@ -522,18 +522,18 @@ func isWarningDisabled(warning ValidationWarning, disabledRules []string) bool {
 // dist-tags, and exact versions with no embedded schema fall through to the
 // cache and fetch using the spelling supplied by the caller.
 //
-// For versions 2.1.0 and 2.1.1, GetSchema returns the embedded
+// For versions 2.1.0 and 2.1.1, Schema returns the embedded
 // 2.1.1-speculative schema instead of the official upstream schema, because
 // the upstream 2.1.0 schema is known to be broken. The speculative schema is
 // stricter than the official schema: it rejects additional properties.
 // Callers that require strict validation against the official 2.1.0 schema
-// should not use GetSchema for those versions.
-func GetSchema(fsys FileSystem, version string) ([]byte, error) {
+// should not use Schema for those versions.
+func Schema(fsys FileSystem, version string) ([]byte, error) {
 	return getSchema(fsys, version)
 }
 
 func getSchema(fsys FileSystem, version string) ([]byte, error) {
-	// Hardening: GetSchema can be called directly with caller-controlled input.
+	// Hardening: Schema can be called directly with caller-controlled input.
 	// Reject values that could escape a path when used as a cache filename or
 	// URL segment.
 	if !isPathSafeSchemaVersion(version) {
