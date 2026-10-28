@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "2.1.1",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "strict-panel.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "StrictPanel",
+          "tagName": "strict-panel",
+          "customElement": true,
+          "description": "A panel used to exercise strict validation",
+          "attributes": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "\"primary\" | \"secondary\""
+              }
+            },
+            {
+              "name": "loading",
+              "type": {
+                "text": "\"eager\" | \"lazy\""
+              }
+            },
+            {
+              "name": "lazy",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "interactive",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "label",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "title",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "icon",
+              "type": {
+                "text": "string"
+              }
+            }
+          ],
+          "slots": [
+            {
+              "name": "label",
+              "description": "Only interactive content is allowed. You must avoid plain text."
+            },
+            {
+              "name": "title"
+            },
+            {
+              "name": "icon"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

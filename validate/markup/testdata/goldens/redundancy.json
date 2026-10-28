@@ -1,0 +1,26 @@
+[
+  {
+    "rule": "deprecated-element",
+    "severity": "warning",
+    "confidence": "high",
+    "message": "Custom element 'my-card' is deprecated: use my-panel instead",
+    "element": "my-card",
+    "line": 1,
+    "column": 1
+  },
+  {
+    "rule": "content-attribute-redundancy",
+    "severity": "info",
+    "confidence": "low",
+    "message": "Attribute 'title' on <my-card> is redundant with the 'title' slot",
+    "element": "my-card",
+    "line": 1,
+    "column": 1,
+    "details": {
+      "attribute": "title",
+      "content": "[slot content not analyzed - tree-sitter enhancement needed]",
+      "slot": "title",
+      "value": "Hello"
+    }
+  }
+]

@@ -1,0 +1,8 @@
+{% set density = 'compact' %}
+<my-button variant="primary"
+           density="{{ density }}">
+  {% if show %}
+  <span slot="icon">*</span>
+  {% endif %}
+  Save
+</my-button>

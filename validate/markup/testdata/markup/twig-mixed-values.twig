@@ -1,0 +1,7 @@
+<my-button variant="{{ x }}-suffix">One</my-button>
+<my-button variant="pre-{{ x }}">Two</my-button>
+<my-button><span slot="{{ x }}&amp;">Three</span></my-button>
+<my-button variant="{{ x }}">Four</my-button>
+{% if show %}
+<my-button variant="bogus">Five</my-button>
+{% endif %}
