@@ -146,6 +146,36 @@
     },
     {
       "kind": "javascript-module",
+      "path": "slot-only.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MySlotOnly",
+          "tagName": "my-slot-only",
+          "customElement": true,
+          "slots": [
+            {
+              "name": "title"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "closed-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyClosedCard",
+          "tagName": "my-closed-card",
+          "customElement": true,
+          "slots": []
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
       "path": "string-card.js",
       "declarations": [
         {

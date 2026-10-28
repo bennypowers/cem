@@ -45,6 +45,7 @@ type elementNode struct {
 	tagName    string
 	line       int
 	column     int
+	lineStart  int
 	dynamic    bool
 	attributes []parsedAttribute
 	children   []*elementNode
@@ -55,6 +56,7 @@ type parsedAttribute struct {
 	value       string
 	line        int
 	column      int
+	lineStart   int
 	dynamic     bool
 	nameDynamic bool
 }
@@ -67,8 +69,8 @@ type parseContext struct {
 	expressions []ts.Range
 }
 
-func formatFamily(format string) (formatFamilyValue, error) {
-	switch strings.ToLower(strings.TrimSpace(format)) {
+func formatFamily(format Format) (formatFamilyValue, error) {
+	switch strings.ToLower(strings.TrimSpace(string(format))) {
 	case "", "html", "htm":
 		return formatHTML, nil
 	case "twig", "njk", "jinja", "jinja2", "j2":
@@ -201,7 +203,7 @@ func parseTag(node *ts.Node, source []byte, ctx parseContext) *elementNode {
 		dynamic: overlapsAny(ctx.dynamic, tagName.StartByte(), tagName.EndByte()) ||
 			adjacentToAny(ctx.expressions, tagName.StartByte(), tagName.EndByte()),
 	}
-	el.line, el.column = positionFor(tagName)
+	el.line, el.column, el.lineStart = positionFor(tagName)
 
 	// Duplicate attributes keep their first value and position, matching HTML
 	// parsing and browser behavior. Later duplicates are ignored.
@@ -221,14 +223,15 @@ func parseTag(node *ts.Node, source []byte, ctx parseContext) *elementNode {
 		}
 
 		name := asciiLower(string(source[nameNode.StartByte():nameNode.EndByte()]))
-		line, column := positionFor(nameNode)
+		line, column, lineStart := positionFor(nameNode)
 		valueStart, valueEnd, hasValue := attributeValueSpan(child)
 		attr := parsedAttribute{
-			name:    name,
-			value:   attributeValue(child, source),
-			line:    line,
-			column:  column,
-			dynamic: hasValue && overlapsAny(ctx.dynamic, valueStart, valueEnd),
+			name:      name,
+			value:     attributeValue(child, source),
+			line:      line,
+			column:    column,
+			lineStart: lineStart,
+			dynamic:   hasValue && overlapsAny(ctx.dynamic, valueStart, valueEnd),
 			nameDynamic: overlapsAny(ctx.dynamic, nameNode.StartByte(), nameNode.EndByte()) ||
 				adjacentToAny(ctx.expressions, nameNode.StartByte(), nameNode.EndByte()),
 		}
@@ -266,12 +269,18 @@ func unescapeStaticValue(raw []byte) string {
 	return html.UnescapeString(string(raw))
 }
 
-// positionFor returns a one-based line and a one-based UTF-8 byte column.
-// Tree-sitter reports columns as byte offsets within the line, and using them
-// directly keeps position lookup O(1) for every node.
-func positionFor(node *ts.Node) (line, column int) {
+// positionFor returns a one-based line, a zero-based UTF-8 byte column, and
+// the byte offset where that line starts. Tree-sitter reports columns as byte
+// offsets within the line; consumers convert the column to UTF-16 at the
+// exported API boundary.
+func positionFor(node *ts.Node) (line, column, lineStart int) {
 	point := node.StartPosition()
-	return int(point.Row) + 1, int(point.Column) + 1
+	column = int(point.Column)
+	lineStart = int(node.StartByte()) - column
+	if lineStart < 0 {
+		lineStart = 0
+	}
+	return int(point.Row) + 1, column, lineStart
 }
 
 func attributeValue(attribute *ts.Node, source []byte) string {
@@ -423,6 +432,7 @@ func analyzeJinjaRanges(source string, liquid bool) (text, dynamic []ts.Range, e
 	}
 
 	dynamic = jinjaDynamicRanges(tree.RootNode())
+	dynamic = retainTerminatedConstructs(source, dynamic)
 	sort.Slice(dynamic, func(i, j int) bool {
 		return dynamic[i].EndByte < dynamic[j].EndByte
 	})
@@ -430,6 +440,31 @@ func analyzeJinjaRanges(source string, liquid bool) (text, dynamic []ts.Range, e
 		text = excludeRanges(source, text, liquidCommentSpans(source))
 	}
 	return text, dynamic, nil
+}
+
+// retainTerminatedConstructs drops syntax leaves that belong to an
+// unterminated template construct. The Jinja grammar wraps everything after a
+// stray opener in one expression node, so keeping those leaves would mark all
+// following markup as dynamic and silently skip validation.
+func retainTerminatedConstructs(source string, ranges []ts.Range) []ts.Range {
+	if len(ranges) == 0 {
+		return nil
+	}
+	constructs := templateConstructs(source, 0, len(source))
+	if len(constructs) == 0 {
+		return nil
+	}
+
+	kept := ranges[:0]
+	for _, r := range ranges {
+		i := sort.Search(len(constructs), func(i int) bool {
+			return constructs[i].EndByte > r.StartByte
+		})
+		if i < len(constructs) && constructs[i].StartByte <= r.StartByte && constructs[i].EndByte >= r.EndByte {
+			kept = append(kept, r)
+		}
+	}
+	return kept
 }
 
 // handlebarsRanges returns the ranges occupied by Handlebars expressions and
@@ -626,24 +661,31 @@ func nextLiquidTag(source string, from int) (start, end int, name string, ok boo
 		}
 		tagStart := from + tagRel
 
-		if outRel := strings.Index(source[from:], "{{"); outRel >= 0 && from+outRel < tagStart {
+		// Only output expressions between from and the tag can precede it, so
+		// search that gap instead of rescanning the rest of the file.
+		if outRel := strings.Index(source[from:tagStart], "{{"); outRel >= 0 {
 			outStart := from + outRel
 			end := templateExpressionEnd(source, outStart)
 			if end < 0 {
-				return 0, 0, "", false
+				// A stray opener is literal text; keep looking for tags.
+				from = outStart + 2
+				continue
 			}
 			from = end
 			continue
 		}
 
 		start = tagStart
-		closeRel := strings.Index(source[start+2:], "%}")
+		closeRel := templateDelimitedEnd(source, start+2, len(source), "%}")
 		if closeRel < 0 {
-			return 0, 0, "", false
+			// An unterminated tag is literal text; resume after its opener so
+			// later tags are still recognized.
+			from = start + 2
+			continue
 		}
-		end = start + 2 + closeRel + 2
+		end = closeRel
 
-		inner := strings.TrimSpace(source[start+2 : start+2+closeRel])
+		inner := strings.TrimSpace(source[start+2 : closeRel-2])
 		inner = strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(inner, "-"), "-"))
 		if fields := strings.Fields(inner); len(fields) > 0 {
 			name = fields[0]
@@ -719,7 +761,14 @@ func templateConstructs(source string, start, end int) []ts.Range {
 		case '#':
 			closeEnd = templateDelimitedEnd(source, next+2, end, "#}")
 		}
-		if closeEnd <= next || closeEnd > end {
+		if closeEnd <= next {
+			// Leave an unterminated opener as literal text, but keep scanning
+			// so later constructs are still masked.
+			i = next + 2
+			continue
+		}
+		if closeEnd > end {
+			// The construct crosses a text range boundary; its own gap masks it.
 			break
 		}
 		spans = append(spans, ts.Range{StartByte: uint(next), EndByte: uint(closeEnd)})
@@ -729,33 +778,48 @@ func templateConstructs(source string, start, end int) []ts.Range {
 }
 
 func nextTemplateOpener(source string, from, end int) (int, byte) {
-	best, opener := -1, byte(0)
-	for _, candidate := range []struct {
-		text   string
-		opener byte
-	}{
-		{"{{", '{'},
-		{"{%", '%'},
-		{"{#", '#'},
-	} {
-		rel := strings.Index(source[from:end], candidate.text)
-		if rel < 0 {
+	for i := from; i+1 < end; i++ {
+		if source[i] != '{' {
 			continue
 		}
-		pos := from + rel
-		if best < 0 || pos < best {
-			best, opener = pos, candidate.opener
+		switch source[i+1] {
+		case '{':
+			return i, '{'
+		case '%':
+			return i, '%'
+		case '#':
+			return i, '#'
 		}
 	}
-	return best, opener
+	return -1, 0
 }
 
 func templateDelimitedEnd(source string, from, end int, closer string) int {
-	rel := strings.Index(source[from:end], closer)
-	if rel < 0 {
-		return -1
+	var quote byte
+	for i := from; i < end; {
+		c := source[i]
+		if quote != 0 {
+			if c == '\\' {
+				i += 2
+				continue
+			}
+			if c == quote {
+				quote = 0
+			}
+			i++
+			continue
+		}
+		if c == '\'' || c == '"' {
+			quote = c
+			i++
+			continue
+		}
+		if strings.HasPrefix(source[i:end], closer) {
+			return i + len(closer)
+		}
+		i++
 	}
-	return from + rel + len(closer)
+	return -1
 }
 
 // maskSpans replaces the given spans with a context-aware placeholder in one
@@ -865,6 +929,13 @@ func (s *maskState) step(c byte) {
 // had been source text.
 func (s *maskState) applyPlaceholder(placeholder byte) {
 	if s.quote != 0 || s.inComment {
+		return
+	}
+	if s.afterEquals || s.unquoted {
+		// A statement between value branches does not end the value, so keep
+		// the following static text in the same unquoted value.
+		s.unquoted = true
+		s.afterEquals = false
 		return
 	}
 	s.afterEquals = false
@@ -1078,8 +1149,6 @@ func adjacentToAny(ranges []ts.Range, start, end uint) bool {
 	return i < len(ranges) && ranges[i].StartByte == end
 }
 
-// jinjaExpressionRanges returns the ranges of {{ ... }} output expressions.
-// Statements and comments are deliberately excluded.
 // templateExpressionEnd returns the end offset of a {{ ... }} expression,
 // honoring quoted strings. It returns -1 for an unterminated expression.
 func templateExpressionEnd(source string, start int) int {
@@ -1111,6 +1180,8 @@ func templateExpressionEnd(source string, start int) int {
 	return -1
 }
 
+// jinjaExpressionRanges returns the ranges of {{ ... }} output expressions.
+// Statements and comments are deliberately excluded.
 func jinjaExpressionRanges(source string) []ts.Range {
 	tracker := &pointTracker{source: []byte(source)}
 	var ranges []ts.Range

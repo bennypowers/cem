@@ -34,7 +34,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 //	pkg := &manifest.Package{ /* ... */ }
 //	issues, err := markup.Validate(pkg, `<my-button variant="primary">Save</my-button>`, markup.Options{
-//		Format:        "html",
+//		Format:        markup.FormatHTML,
 //		ValidateAttrs: true,
 //		ValidateSlots: true,
 //	})

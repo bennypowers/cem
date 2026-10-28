@@ -6,7 +6,7 @@
     "message": "Custom element 'my-card' is deprecated: use my-panel instead",
     "element": "my-card",
     "line": 1,
-    "column": 2
+    "column": 1
   },
   {
     "rule": "attribute-conflict",
@@ -15,7 +15,7 @@
     "message": "Eager loading conflicts with lazy loading",
     "element": "my-card",
     "line": 1,
-    "column": 2,
+    "column": 1,
     "details": {
       "attribute1": "loading",
       "attribute2": "lazy",
@@ -31,7 +31,7 @@
     "message": "Disabled elements cannot be interactive",
     "element": "my-card",
     "line": 1,
-    "column": 2,
+    "column": 1,
     "details": {
       "attribute1": "disabled",
       "attribute2": "interactive",

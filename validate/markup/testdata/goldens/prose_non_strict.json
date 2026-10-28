@@ -6,7 +6,7 @@
     "message": "Custom element 'my-card' is deprecated: use my-panel instead",
     "element": "my-card",
     "line": 4,
-    "column": 2
+    "column": 1
   },
   {
     "rule": "deprecated-element",
@@ -15,6 +15,6 @@
     "message": "Custom element 'my-card' is deprecated: use my-panel instead",
     "element": "my-card",
     "line": 8,
-    "column": 2
+    "column": 1
   }
 ]

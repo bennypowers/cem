@@ -21,8 +21,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"maps"
 	"strings"
+	"unicode/utf8"
 
 	"bennypowers.dev/cem/manifest"
 )
@@ -80,14 +80,33 @@ const (
 	DetailContent    = "content"
 )
 
+// Format selects the markup or template dialect parsed by [Validate] and
+// [FindCustomElements]. The zero value means [FormatHTML].
+type Format string
+
+// Supported formats. Aliases are kept for callers that already pass the
+// extension or dialect name.
+const (
+	FormatHTML       Format = "html"
+	FormatHTM        Format = "htm"
+	FormatTwig       Format = "twig"
+	FormatNJK        Format = "njk"
+	FormatJinja      Format = "jinja"
+	FormatJinja2     Format = "jinja2"
+	FormatJ2         Format = "j2"
+	FormatLiquid     Format = "liquid"
+	FormatHandlebars Format = "handlebars"
+	FormatHBS        Format = "hbs"
+)
+
 // Options controls which validations run. Unknown element and deprecated
 // element checks always run; the remaining rule families require a flag.
 //
-// Format selects the parser. Supported values are "html" (the default), and
-// the Jinja-family template formats "twig", "njk", "jinja", "jinja2", "j2",
-// and "liquid". "hbs" and "handlebars" are parsed as HTML on a best-effort
-// basis without linking the Handlebars grammar, but their expression values
-// keep template semantics and are not validated literally.
+// Format selects the parser. The zero value means [FormatHTML]. The Jinja
+// family covers [FormatTwig], [FormatNJK], [FormatJinja], [FormatJinja2], and
+// [FormatJ2]. [FormatHBS] and [FormatHandlebars] are parsed as HTML on a
+// best-effort basis without linking the Handlebars grammar, but their
+// expression values keep template semantics and are not validated literally.
 //
 // ValidateAttrs enables attribute name, enum value, and attribute deprecation
 // checks. ValidateSlots enables slot name and slot deprecation checks.
@@ -97,22 +116,22 @@ const (
 // attribute conflicts require ValidateAttrs, and content/attribute redundancy
 // requires ValidateSlots. Strict alone adds no findings.
 type Options struct {
-	Format        string
+	Format        Format
 	ValidateSlots bool
 	ValidateAttrs bool
 	Strict        bool
 }
 
 // Issue is a single markup validation finding. Line is a one-based line
-// number and Column is a one-based UTF-8 byte offset within that line. Byte
-// offsets keep position lookup O(1) and match tree-sitter's native points.
+// number and Column is a zero-based UTF-16 code-unit offset within that line,
+// matching LSP positions.
 //
 // Element and the position fields identify the reported token per rule:
 // element rules and the slot content/redundancy heuristics report the custom
 // element's tag name; attribute rules report the attribute name on that
 // element; unknown-slot and deprecated-slot report the slotted child's tag
 // name and the position of its `slot` attribute. For those slot rules, the
-// owning custom element is available as DetailParent.
+// owning custom element is available as Details[DetailParent].
 type Issue struct {
 	Rule       string `json:"rule"`
 	Severity   string `json:"severity"`
@@ -122,60 +141,73 @@ type Issue struct {
 	Line       int    `json:"line"`
 	Column     int    `json:"column"`
 
-	details map[string]string
+	// Details holds rule-specific structured data. Keys are the Detail*
+	// constants and the map may be nil or empty. Each rule reports:
+	//
+	//   - unknown-attribute: DetailAttribute, plus DetailSuggestion when a close
+	//     match exists.
+	//   - invalid-attribute-value: DetailAttribute, DetailValue, DetailExpected.
+	//   - deprecated-attribute: DetailAttribute, plus DetailReason when present.
+	//   - deprecated-element: no details.
+	//   - unknown-slot: DetailSlot, DetailParent.
+	//   - deprecated-slot: DetailSlot, DetailParent, plus DetailReason when
+	//     present.
+	//   - slot-content-guideline: DetailSlot, DetailGuideline.
+	//   - attribute-conflict: DetailAttribute1, DetailValue1, DetailAttribute2,
+	//     DetailValue2, DetailReason.
+	//   - content-attribute-redundancy: DetailAttribute, DetailValue, DetailSlot,
+	//     DetailContent.
+	Details map[string]string `json:"details,omitempty"`
 }
 
-// Details returns rule-specific structured data for consumers that render
-// findings themselves. Keys are the Detail* constants and the map may be nil
-// or empty. Each rule reports:
-//
-//   - unknown-attribute: DetailAttribute, plus DetailSuggestion when a close
-//     match exists.
-//   - invalid-attribute-value: DetailAttribute, DetailValue, DetailExpected.
-//   - deprecated-attribute: DetailAttribute, plus DetailReason when present.
-//   - deprecated-element: no details.
-//   - unknown-slot: DetailSlot, DetailParent.
-//   - deprecated-slot: DetailSlot, DetailParent, plus DetailReason when
-//     present.
-//   - slot-content-guideline: DetailSlot, DetailGuideline.
-//   - attribute-conflict: DetailAttribute1, DetailValue1, DetailAttribute2,
-//     DetailValue2, DetailReason.
-//   - content-attribute-redundancy: DetailAttribute, DetailValue, DetailSlot,
-//     DetailContent.
-func (i Issue) Details() map[string]string {
-	if len(i.details) == 0 {
-		return nil
-	}
-	return maps.Clone(i.details)
-}
-
-// MarshalJSON includes the rule-specific details, which are otherwise
-// unexported, so serializing an Issue does not silently drop them. Findings
-// are code-oriented, so HTML characters are left unescaped.
+// MarshalJSON leaves HTML characters unescaped because findings are
+// code-oriented.
 func (i Issue) MarshalJSON() ([]byte, error) {
 	type issueAlias Issue
 
 	var buf bytes.Buffer
 	encoder := json.NewEncoder(&buf)
 	encoder.SetEscapeHTML(false)
-	if err := encoder.Encode(struct {
-		issueAlias
-		Details map[string]string `json:"details,omitempty"`
-	}{
-		issueAlias: issueAlias(i),
-		Details:    i.Details(),
-	}); err != nil {
+	if err := encoder.Encode(issueAlias(i)); err != nil {
 		return nil, err
 	}
 	return bytes.TrimSuffix(buf.Bytes(), []byte{'\n'}), nil
 }
 
 // Element is a custom element occurrence found in markup. Line is one-based
-// and Column is a one-based UTF-8 byte offset within that line.
+// and Column is a zero-based UTF-16 code-unit offset within that line.
 type Element struct {
 	TagName string `json:"tagName"`
 	Line    int    `json:"line"`
 	Column  int    `json:"column"`
+}
+
+// utf16Column converts a zero-based UTF-8 byte column into a zero-based
+// UTF-16 code-unit column, matching LSP positions. Astral characters count as
+// two units and invalid bytes as one.
+func utf16Column(source []byte, lineStart, byteColumn int) int {
+	if lineStart < 0 {
+		lineStart = 0
+	}
+	end := lineStart + byteColumn
+	if end > len(source) {
+		end = len(source)
+	}
+
+	units := 0
+	for i := lineStart; i < end; {
+		r, size := utf8.DecodeRune(source[i:end])
+		if size == 0 {
+			break
+		}
+		if r > 0xFFFF {
+			units += 2
+		} else {
+			units++
+		}
+		i += size
+	}
+	return units
 }
 
 // FindCustomElements returns custom element occurrences in source order,
@@ -192,6 +224,7 @@ func FindCustomElements(markup string, opts Options) ([]Element, error) {
 	}
 
 	var elements []Element
+	source := []byte(markup)
 	var walk func([]*elementNode)
 	walk = func(nodes []*elementNode) {
 		for _, node := range nodes {
@@ -199,7 +232,7 @@ func FindCustomElements(markup string, opts Options) ([]Element, error) {
 				elements = append(elements, Element{
 					TagName: node.tagName,
 					Line:    node.line,
-					Column:  node.column,
+					Column:  utf16Column(source, node.lineStart, node.column),
 				})
 			}
 			walk(node.children)
@@ -233,6 +266,7 @@ func Validate(pkg *manifest.Package, markup string, opts Options) ([]Issue, erro
 	v := validator{
 		pkg:        pkg,
 		opts:       opts,
+		source:     []byte(markup),
 		template:   family != formatHTML,
 		handlebars: family == formatHandlebars,
 	}
@@ -240,8 +274,9 @@ func Validate(pkg *manifest.Package, markup string, opts Options) ([]Issue, erro
 }
 
 type validator struct {
-	pkg  *manifest.Package
-	opts Options
+	pkg    *manifest.Package
+	opts   Options
+	source []byte
 	// template marks Jinja-family or Handlebars input. Template expressions
 	// are dynamic values, so enum checks skip them. Plain HTML keeps the
 	// historical MCP behavior of validating the literal value.
@@ -377,7 +412,7 @@ func (v *validator) validateSlotAttribute(el, parent *elementNode) {
 	}
 
 	slots := parentDecl.Slots()
-	if len(slots) == 0 {
+	if len(slots) == 0 && parentDecl.OwnSlots() == nil {
 		return
 	}
 
@@ -549,6 +584,11 @@ func (v *validator) validateContentAttributeRedundancy(el *elementNode, decl *ma
 		if !ok {
 			continue
 		}
+		// A global HTML attribute such as title is not the component's own
+		// API, so it cannot be redundant with a same-named slot.
+		if findAttribute(decl.Attributes(), slot.Name) == nil {
+			continue
+		}
 		if !hasSlottedContent(el, slot.Name) {
 			continue
 		}
@@ -571,8 +611,8 @@ func (v *validator) add(el *elementNode, rule, severity, confidence, message str
 		Message:    message,
 		Element:    el.tagName,
 		Line:       el.line,
-		Column:     el.column,
-		details:    details,
+		Column:     utf16Column(v.source, el.lineStart, el.column),
+		Details:    details,
 	})
 }
 
@@ -584,8 +624,8 @@ func (v *validator) addAttribute(el *elementNode, attr parsedAttribute, rule, se
 		Message:    message,
 		Element:    el.tagName,
 		Line:       attr.line,
-		Column:     attr.column,
-		details:    details,
+		Column:     utf16Column(v.source, attr.lineStart, attr.column),
+		Details:    details,
 	})
 }
 

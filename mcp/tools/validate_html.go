@@ -176,7 +176,7 @@ func manifestPackage(declarations []manifest.Declaration) *manifest.Package {
 
 func applyMarkupIssues(data *ValidationTemplateData, issues []markup.Issue) {
 	for _, issue := range issues {
-		details := issue.Details()
+		details := issue.Details
 		switch issue.Rule {
 		case markup.RuleUnknownElement:
 			data.ManifestIssues = append(data.ManifestIssues, ValidationIssue{

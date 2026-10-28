@@ -6,7 +6,7 @@
     "message": "Invalid attribute value: `variant=\"{{ not-valid }}\"` in `<my-button>`. Valid values: [\"primary\" \"secondary\"]",
     "element": "my-button",
     "line": 1,
-    "column": 12,
+    "column": 11,
     "details": {
       "attribute": "variant",
       "expected": "[\"primary\" \"secondary\"]",

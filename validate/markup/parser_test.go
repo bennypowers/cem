@@ -215,8 +215,8 @@ func TestAttributeValueUnescape(t *testing.T) {
 	assert.Equal(t, "i&con", elements[0].attributes[5].value)   // slot value
 }
 
-// The byte column assertion is a parser detail; a validation golden would not
-// distinguish byte columns from rune columns.
+// The parser keeps zero-based UTF-8 byte columns; the exported API converts
+// them to UTF-16 at the boundary.
 func TestPositionForNonASCII(t *testing.T) {
 	elements, err := parseElements(`<p>éé</p><my-button bogus="1">`, formatHTML)
 	require.NoError(t, err)
@@ -231,5 +231,5 @@ func TestPositionForNonASCII(t *testing.T) {
 	require.NotNil(t, button)
 	require.Len(t, button.attributes, 1)
 	// Columns are bytes: "<p>" (3) + "éé" (4) + "</p>" (4) + "<my-button " (11).
-	assert.Equal(t, 23, button.attributes[0].column)
+	assert.Equal(t, 22, button.attributes[0].column)
 }

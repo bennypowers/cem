@@ -6,7 +6,7 @@
     "message": "Attribute 'legacy' on 'my-button' is deprecated: use variant instead",
     "element": "my-button",
     "line": 1,
-    "column": 12,
+    "column": 11,
     "details": {
       "attribute": "legacy",
       "reason": "use variant instead"
@@ -19,6 +19,6 @@
     "message": "Custom element 'my-card' is deprecated: use my-panel instead",
     "element": "my-card",
     "line": 2,
-    "column": 2
+    "column": 1
   }
 ]

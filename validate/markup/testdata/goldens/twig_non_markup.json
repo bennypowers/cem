@@ -6,6 +6,6 @@
     "message": "Custom element 'my-bad-el' not found in registry",
     "element": "my-bad-el",
     "line": 3,
-    "column": 11
+    "column": 10
   }
 ]

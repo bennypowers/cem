@@ -47,7 +47,7 @@ func TestValidateGolden(t *testing.T) {
 		name   string
 		golden string
 		file   string
-		format string
+		format markup.Format
 		opts   markup.Options
 	}{
 		{
@@ -257,7 +257,7 @@ func TestValidateErrors(t *testing.T) {
 	tests := []struct {
 		name    string
 		pkg     *manifest.Package
-		format  string
+		format  markup.Format
 		wantErr error
 	}{
 		{name: "nil package", pkg: nil, format: "html", wantErr: markup.ErrNilPackage},
@@ -510,7 +510,7 @@ func TestValidateTemplateEdgeCases(t *testing.T) {
 		t.Helper()
 
 		issues, err := markup.Validate(pkg, source, markup.Options{
-			Format:        format,
+			Format:        markup.Format(format),
 			ValidateAttrs: true,
 			ValidateSlots: true,
 		})
@@ -526,6 +526,39 @@ func TestValidateTemplateEdgeCases(t *testing.T) {
 	t.Run("unquoted twig value is dynamic", func(t *testing.T) {
 		assert.False(t, hasRule(t, `<my-button variant=prim{{ suffix }}>`, "twig",
 			markup.RuleInvalidAttributeValue))
+	})
+
+	t.Run("unterminated opener does not disable later markup", func(t *testing.T) {
+		for _, format := range []string{"twig", "liquid", "jinja", "hbs"} {
+			assert.True(t, hasRule(t, "{{ oops\n<my-button variant=\"bogus\">", format,
+				markup.RuleInvalidAttributeValue), "format %s", format)
+		}
+	})
+
+	t.Run("unterminated opener still masks a later comment", func(t *testing.T) {
+		source := `<p>Use {{ braces</p>{# <my-bad-el bogus> #}`
+		assert.False(t, hasRule(t, source, "twig", markup.RuleUnknownElement))
+	})
+
+	t.Run("unterminated liquid expression still masks a later comment", func(t *testing.T) {
+		source := `<p>Use {{ braces</p>{% comment %}<my-bad-el bogus>{% endcomment %}`
+		assert.False(t, hasRule(t, source, "liquid", markup.RuleUnknownElement))
+	})
+
+	t.Run("quoted terminator does not end a statement", func(t *testing.T) {
+		for _, tt := range []struct{ source, format string }{
+			{`{% set x = "%} <my-bad-el bogus>" %}`, "twig"},
+			{`{% assign x = "%} <my-bad-el bogus>" %}`, "liquid"},
+		} {
+			assert.False(t, hasRule(t, tt.source, tt.format, markup.RuleUnknownElement), "format %s", tt.format)
+		}
+	})
+
+	t.Run("conditional unquoted values stay values", func(t *testing.T) {
+		twig := `<my-card flipBoundary={% if x %}b{% else %}c{% endif %}>`
+		assert.False(t, hasRule(t, twig, "twig", markup.RuleUnknownAttribute))
+		hbs := `<my-card flipBoundary={{#if x}}b{{else}}c{{/if}}>`
+		assert.False(t, hasRule(t, hbs, "hbs", markup.RuleUnknownAttribute))
 	})
 
 	t.Run("unquoted twig value keeps the element", func(t *testing.T) {
@@ -727,6 +760,85 @@ func TestIssueJSONIncludesDetails(t *testing.T) {
 	details, ok := decoded[0]["details"].(map[string]any)
 	require.True(t, ok, "serialized issue must include details")
 	assert.Equal(t, "bogus", details[markup.DetailAttribute])
+	assert.Equal(t, "bogus", issues[0].Details[markup.DetailAttribute],
+		"callers read Details directly")
+}
+
+func TestIssueJSONRoundTripPreservesDetails(t *testing.T) {
+	pkg := loadPackage(t)
+
+	issues, err := markup.Validate(pkg, `<my-button bogus="1">Save</my-button>`, markup.Options{ValidateAttrs: true})
+	require.NoError(t, err)
+	require.Len(t, issues, 1)
+
+	data, err := json.Marshal(issues[0])
+	require.NoError(t, err)
+
+	var decoded markup.Issue
+	require.NoError(t, json.Unmarshal(data, &decoded))
+	assert.Equal(t, issues[0], decoded)
+	assert.Equal(t, "bogus", decoded.Details[markup.DetailAttribute])
+}
+
+// Every exported Format constant must be accepted, and the zero value must
+// remain the HTML default.
+func TestFormatConstants(t *testing.T) {
+	pkg := loadPackage(t)
+
+	for _, format := range []markup.Format{
+		"",
+		markup.FormatHTML, markup.FormatHTM,
+		markup.FormatTwig, markup.FormatNJK, markup.FormatJinja, markup.FormatJinja2, markup.FormatJ2,
+		markup.FormatLiquid,
+		markup.FormatHBS, markup.FormatHandlebars,
+	} {
+		t.Run(string(format), func(t *testing.T) {
+			_, err := markup.Validate(pkg, `<my-button></my-button>`, markup.Options{Format: format})
+			require.NoError(t, err)
+		})
+	}
+}
+
+// Positions match LSP: one-based lines and zero-based UTF-16 code units, so an
+// astral character counts as two columns.
+func TestUTF16Columns(t *testing.T) {
+	pkg := loadPackage(t)
+	source := "😀<my-button bogus=\"1\">Save</my-button>"
+
+	issues, err := markup.Validate(pkg, source, markup.Options{ValidateAttrs: true})
+	require.NoError(t, err)
+	require.Len(t, issues, 1)
+	assert.Equal(t, 1, issues[0].Line)
+	assert.Equal(t, 13, issues[0].Column, "emoji is two units, then '<my-button '")
+
+	elements, err := markup.FindCustomElements(source, markup.Options{})
+	require.NoError(t, err)
+	require.Len(t, elements, 1)
+	assert.Equal(t, 3, elements[0].Column, "emoji is two units, then '<'")
+}
+
+// An explicit empty slots array declares that the element accepts no slots,
+// so a slot assignment is unknown; an omitted array means slots are unknown.
+func TestValidateExplicitEmptySlots(t *testing.T) {
+	pkg := loadPackage(t)
+
+	hasUnknownSlot := func(t *testing.T, source string) bool {
+		t.Helper()
+
+		issues, err := markup.Validate(pkg, source, markup.Options{ValidateSlots: true})
+		require.NoError(t, err)
+		for _, issue := range issues {
+			if issue.Rule == markup.RuleUnknownSlot {
+				return true
+			}
+		}
+		return false
+	}
+
+	assert.True(t, hasUnknownSlot(t, `<my-closed-card><span slot="label">x</span></my-closed-card>`),
+		"explicit empty slots array must report unknown slots")
+	assert.False(t, hasUnknownSlot(t, `<base-button><span slot="label">x</span></base-button>`),
+		"omitted slots metadata must not report unknown slots")
 }
 
 // Redundancy means slotted content overrides the attribute, so an attribute
@@ -754,6 +866,8 @@ func TestValidateRedundancyRequiresSlotContent(t *testing.T) {
 		"attribute without slot content is not redundant")
 	assert.True(t, hasRedundancy(t, `<my-card title="Hello"><span slot="title">Hello</span></my-card>`),
 		"slotted content overrides the attribute")
+	assert.False(t, hasRedundancy(t, `<my-slot-only title="Tooltip"><span slot="title">X</span></my-slot-only>`),
+		"a global attribute sharing a slot name is not redundant")
 }
 
 // FindCustomElements is a pure discovery API; a table-like inline assertion is
@@ -769,8 +883,8 @@ func TestFindCustomElements(t *testing.T) {
 		tagNames[i] = element.TagName
 	}
 	assert.Equal(t, []string{"my-child", "my-child", "my-nested", "my-el"}, tagNames)
-	assert.Equal(t, 2, elements[0].Column, "outer element column")
-	assert.Equal(t, 12, elements[1].Column, "self-closing element column")
+	assert.Equal(t, 1, elements[0].Column, "outer element column")
+	assert.Equal(t, 11, elements[1].Column, "self-closing element column")
 }
 
 // FuzzValidate checks that arbitrary markup, including malformed template
@@ -785,7 +899,7 @@ func FuzzValidate(f *testing.F) {
 	pkg := fuzzPackage()
 
 	f.Fuzz(func(t *testing.T, source string) {
-		for _, format := range []string{"html", "twig", "hbs"} {
+		for _, format := range []markup.Format{"html", "twig", "hbs"} {
 			issues, err := markup.Validate(pkg, source, markup.Options{
 				Format:        format,
 				ValidateAttrs: true,

@@ -6,7 +6,7 @@
     "message": "Custom element 'my-el' not found in registry",
     "element": "my-el",
     "line": 2,
-    "column": 2
+    "column": 1
   },
   {
     "rule": "unknown-element",
@@ -15,6 +15,6 @@
     "message": "Custom element 'my-el' not found in registry",
     "element": "my-el",
     "line": 3,
-    "column": 2
+    "column": 1
   }
 ]

@@ -6,7 +6,7 @@
     "message": "Potential interactive content guideline - check slot content manually",
     "element": "my-button",
     "line": 1,
-    "column": 2,
+    "column": 1,
     "details": {
       "guideline": "Only interactive content is allowed. You must avoid plain text.",
       "slot": "label"
