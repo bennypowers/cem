@@ -363,9 +363,9 @@ func TestValidateAttributeCombinations(t *testing.T) {
 			want:   1,
 		},
 		{
-			name:   "string lazy false disables the behavior",
+			name:   "string lazy false still counts as present",
 			source: `<my-string-card loading="eager" lazy="false">Card</my-string-card>`,
-			want:   0,
+			want:   1,
 		},
 		{
 			name:   "string lazy true conflicts",
@@ -373,9 +373,9 @@ func TestValidateAttributeCombinations(t *testing.T) {
 			want:   1,
 		},
 		{
-			name:   "string disabled false disables the behavior",
+			name:   "string disabled false still counts as present",
 			source: `<my-string-card disabled="false" interactive>Card</my-string-card>`,
-			want:   0,
+			want:   1,
 		},
 		{
 			name:   "string disabled true conflicts",
@@ -383,14 +383,44 @@ func TestValidateAttributeCombinations(t *testing.T) {
 			want:   1,
 		},
 		{
-			name:   "dynamic string lazy value is unknown",
+			name:   "dynamic string lazy value still counts as present",
 			source: `<my-string-card loading="eager" lazy="{{ dynamic }}">Card</my-string-card>`,
+			want:   1,
+		},
+		{
+			name:   "dynamic string disabled value still counts as present",
+			source: `<my-string-card disabled="{{ dynamic }}" interactive>Card</my-string-card>`,
+			want:   1,
+		},
+		{
+			name:   "untyped false still counts as present",
+			source: `<my-untyped-card disabled="false" interactive>Card</my-untyped-card>`,
+			want:   1,
+		},
+		{
+			name:   "union false disables the behavior",
+			source: `<my-aria-card loading="eager" lazy="false">Card</my-aria-card>`,
 			want:   0,
 		},
 		{
-			name:   "dynamic string disabled value is unknown",
-			source: `<my-string-card disabled="{{ dynamic }}" interactive>Card</my-string-card>`,
+			name:   "union true conflicts",
+			source: `<my-aria-card loading="eager" lazy="true">Card</my-aria-card>`,
+			want:   1,
+		},
+		{
+			name:   "dynamic union value is unknown",
+			source: `<my-aria-card loading="eager" lazy="{{ dynamic }}">Card</my-aria-card>`,
 			want:   0,
+		},
+		{
+			name:   "union disabled false disables the behavior",
+			source: `<my-aria-card disabled="false" interactive>Card</my-aria-card>`,
+			want:   0,
+		},
+		{
+			name:   "union disabled true conflicts",
+			source: `<my-aria-card disabled="true" interactive>Card</my-aria-card>`,
+			want:   1,
 		},
 		{
 			name:   "disabled alone does not conflict",

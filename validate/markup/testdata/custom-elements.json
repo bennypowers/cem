@@ -181,6 +181,70 @@
           ]
         }
       ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "untyped-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyUntypedCard",
+          "tagName": "my-untyped-card",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "disabled"
+            },
+            {
+              "name": "interactive"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "aria-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyAriaCard",
+          "tagName": "my-aria-card",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "loading",
+              "type": {
+                "text": "\"eager\" | \"lazy\""
+              }
+            },
+            {
+              "name": "lazy",
+              "type": {
+                "text": "\"true\" | \"false\""
+              }
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "true | false"
+              }
+            },
+            {
+              "name": "interactive",
+              "type": {
+                "text": "\"true\" | \"false\""
+              }
+            },
+            {
+              "name": "aria-expanded",
+              "type": {
+                "text": "\"true\" | \"false\""
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

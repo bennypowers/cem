@@ -436,16 +436,16 @@ func (v *validator) validateSlotContentGuidelines(el *elementNode, decl *manifes
 }
 
 // validateAttributeCombinations checks for contradictory attribute pairs.
-// Manifest boolean attributes follow HTML presence semantics, so any present
-// value enables them. Attributes declared with another type use value
-// semantics, where the literal string "false" disables the behavior.
+// Conflict truthiness follows the manifest type:
+//   - exactly boolean: presence semantics, so any present value enables.
+//   - a literal union containing both "true" and "false": value semantics,
+//     where a static "false" disables and a dynamic value is unknown.
+//   - any other declared type or no declaration: presence semantics, so any
+//     present value enables.
 func (v *validator) validateAttributeCombinations(el *elementNode, decl *manifest.CustomElementDeclaration) {
 	attributes := make(map[string]parsedAttribute, len(el.attributes))
 	for _, attr := range el.attributes {
-		// A dynamic name may resolve to something else entirely. A dynamic
-		// value is kept: presence-based boolean checks only care that the
-		// attribute exists, and a value-dependent check such as
-		// loading == "eager" cannot match an unknown value.
+		// A dynamic name may resolve to something else entirely.
 		if attr.nameDynamic {
 			continue
 		}
@@ -458,14 +458,22 @@ func (v *validator) validateAttributeCombinations(el *elementNode, decl *manifes
 		if !present {
 			return "", false
 		}
-		if isBooleanAttribute(findAttribute(manifestAttributes, name)) {
+
+		manifestAttr := findAttribute(manifestAttributes, name)
+		switch {
+		case isBooleanAttribute(manifestAttr):
+			return attr.value, true
+		case isTrueFalseUnion(manifestAttr):
+			if attr.dynamic {
+				// The value is unknown and may resolve to "false".
+				return attr.value, false
+			}
+			return attr.value, !strings.EqualFold(strings.TrimSpace(attr.value), "false")
+		default:
+			// Presence semantics: any present value enables, including the
+			// truthy string "false" on a plain string-typed attribute.
 			return attr.value, true
 		}
-		if attr.dynamic {
-			// A dynamic string value is unknown; it may resolve to "false".
-			return attr.value, false
-		}
-		return attr.value, !strings.EqualFold(strings.TrimSpace(attr.value), "false")
 	}
 
 	if loading, ok := attributes["loading"]; ok && loading.value == "eager" {
@@ -502,6 +510,26 @@ func isBooleanAttribute(attr *manifest.Attribute) bool {
 		return false
 	}
 	return strings.EqualFold(strings.TrimSpace(attr.Type.Text), "boolean")
+}
+
+// isTrueFalseUnion reports whether the manifest type is a literal union that
+// contains both "true" and "false", with quotes optional.
+func isTrueFalseUnion(attr *manifest.Attribute) bool {
+	if attr == nil || !attr.IsEnum() {
+		return false
+	}
+
+	hasTrue, hasFalse := false, false
+	for _, value := range attr.EnumValues() {
+		normalized := strings.ToLower(strings.Trim(strings.TrimSpace(value), `"'`))
+		switch normalized {
+		case "true":
+			hasTrue = true
+		case "false":
+			hasFalse = true
+		}
+	}
+	return hasTrue && hasFalse
 }
 
 func (v *validator) validateContentAttributeRedundancy(el *elementNode, decl *manifest.CustomElementDeclaration) {
