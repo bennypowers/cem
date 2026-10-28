@@ -741,6 +741,16 @@ func TestValidateTemplateEdgeCases(t *testing.T) {
 		}
 	})
 
+	t.Run("nested unclosed raw text consumes ancestors", func(t *testing.T) {
+		for _, source := range []string{
+			`<div><textarea/><my-button variant="bogus"></div>`,
+			`<div><textarea/></div><my-button variant="bogus">`,
+			`<div><script/></div><my-button variant="bogus">`,
+		} {
+			assert.False(t, hasRule(t, source, "html", markup.RuleInvalidAttributeValue), "source %s", source)
+		}
+	})
+
 	t.Run("unclosed textarea consumes following markup", func(t *testing.T) {
 		assert.False(t, hasRule(t, `<textarea><my-card variant="bogus">`, "html",
 			markup.RuleInvalidAttributeValue))

@@ -133,13 +133,16 @@ func parseElements(source string, family formatFamilyValue) ([]*elementNode, err
 
 	// Node byte ranges are identical in the masked and original source, so
 	// slice names and values from the original text.
-	return elementsFromNode(tree.RootNode(), []byte(source), ctx, false), nil
+	elements, _ := elementsFromNode(tree.RootNode(), []byte(source), ctx, false)
+	return elements, nil
 }
 
 // elementsFromNode walks structural nodes. When skipTags is set, the node is
 // an element's own tag container, so its start/end tags are not emitted as
 // separate elements. ERROR nodes that wrap a start_tag are still traversed.
-func elementsFromNode(node *ts.Node, source []byte, ctx parseContext, skipTags bool) []*elementNode {
+// The second result reports that an unclosed raw-text element consumed the
+// rest of the document, so ancestor traversals must stop too.
+func elementsFromNode(node *ts.Node, source []byte, ctx parseContext, skipTags bool) ([]*elementNode, bool) {
 	var elements []*elementNode
 	cursor := node.Walk()
 	defer cursor.Close()
@@ -150,20 +153,30 @@ func elementsFromNode(node *ts.Node, source []byte, ctx parseContext, skipTags b
 		case "element":
 			if el := parseTag(child, source, ctx); el != nil {
 				if !isTextContentElement(el.tagName) {
-					el.children = elementsFromNode(child, source, ctx, true)
+					children, stop := elementsFromNode(child, source, ctx, true)
+					el.children = children
+					elements = append(elements, el)
+					if stop {
+						return elements, true
+					}
+				} else {
+					elements = append(elements, el)
 				}
-				elements = append(elements, el)
 				if el.tagName == "plaintext" {
 					// Everything after <plaintext> is text.
-					return elements
+					return elements, true
 				}
 				if isTextContentElement(el.tagName) && !hasEndTag(child) {
 					// A self-closing or unclosed raw-text element makes the
 					// rest of the container text, so later markup is inert.
-					return elements
+					return elements, true
 				}
 			} else {
-				elements = append(elements, elementsFromNode(child, source, ctx, false)...)
+				children, stop := elementsFromNode(child, source, ctx, false)
+				elements = append(elements, children...)
+				if stop {
+					return elements, true
+				}
 			}
 		case "self_closing_tag", "start_tag":
 			if skipTags {
@@ -174,7 +187,7 @@ func elementsFromNode(node *ts.Node, source []byte, ctx parseContext, skipTags b
 				if isTextContentElement(el.tagName) {
 					// An unclosed or self-closing raw-text element consumes
 					// the rest of its container as text.
-					return elements
+					return elements, true
 				}
 			}
 		case "end_tag":
@@ -182,12 +195,16 @@ func elementsFromNode(node *ts.Node, source []byte, ctx parseContext, skipTags b
 		default:
 			if selfClosingRawTextError(child, source) {
 				// tree-sitter wraps <script/> and <style/> in an ERROR node.
-				return elements
+				return elements, true
 			}
-			elements = append(elements, elementsFromNode(child, source, ctx, false)...)
+			children, stop := elementsFromNode(child, source, ctx, false)
+			elements = append(elements, children...)
+			if stop {
+				return elements, true
+			}
 		}
 	}
-	return elements
+	return elements, false
 }
 
 // selfClosingRawTextError reports whether an ERROR node is a self-closing
