@@ -17,8 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package markup
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -81,7 +79,8 @@ const (
 )
 
 // Format selects the markup or template dialect parsed by [Validate] and
-// [FindCustomElements]. The zero value means [FormatHTML].
+// [FindCustomElements]. The zero value means [FormatHTML]. [FormatLiquid] uses
+// the Jinja grammar, with Liquid comment bodies excluded from validation.
 type Format string
 
 // Supported formats. Aliases are kept for callers that already pass the
@@ -124,7 +123,9 @@ type Options struct {
 
 // Issue is a single markup validation finding. Line is a one-based line
 // number and Column is a zero-based UTF-16 code-unit offset within that line,
-// matching LSP positions.
+// matching LSP positions. JSON encoding uses encoding/json defaults, so HTML
+// characters are escaped; callers that need raw HTML in messages should use an
+// encoder with SetEscapeHTML(false).
 //
 // Element and the position fields identify the reported token per rule:
 // element rules and the slot content/redundancy heuristics report the custom
@@ -158,20 +159,6 @@ type Issue struct {
 	//   - content-attribute-redundancy: DetailAttribute, DetailValue, DetailSlot,
 	//     DetailContent.
 	Details map[string]string `json:"details,omitempty"`
-}
-
-// MarshalJSON leaves HTML characters unescaped because findings are
-// code-oriented.
-func (i Issue) MarshalJSON() ([]byte, error) {
-	type issueAlias Issue
-
-	var buf bytes.Buffer
-	encoder := json.NewEncoder(&buf)
-	encoder.SetEscapeHTML(false)
-	if err := encoder.Encode(issueAlias(i)); err != nil {
-		return nil, err
-	}
-	return bytes.TrimSuffix(buf.Bytes(), []byte{'\n'}), nil
 }
 
 // Element is a custom element occurrence found in markup. Line is one-based

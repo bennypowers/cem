@@ -212,7 +212,7 @@ func TestValidateGolden(t *testing.T) {
 			opts:   markup.Options{ValidateAttrs: true, ValidateSlots: true, Strict: true},
 		},
 		{
-			name:   "non ascii columns are byte based",
+			name:   "non ascii columns are utf16 code units",
 			golden: "unicode.json",
 			file:   "unicode.html",
 			format: "html",
@@ -796,21 +796,67 @@ func TestIssueJSONRoundTripPreservesDetails(t *testing.T) {
 	assert.Equal(t, "bogus", decoded.Details[markup.DetailAttribute])
 }
 
-// Every exported Format constant must be accepted, and the zero value must
-// remain the HTML default.
+// encoding/json defaults escape HTML, and callers who want raw markup in
+// messages opt in at the encoder. Pinning both paths keeps that contract from
+// drifting back to a custom marshaler.
+func TestIssueJSONEscaping(t *testing.T) {
+	pkg := loadPackage(t)
+
+	issues, err := markup.Validate(pkg, `<my-button bogus="1">Save</my-button>`, markup.Options{ValidateAttrs: true})
+	require.NoError(t, err)
+	require.Len(t, issues, 1)
+
+	data, err := json.Marshal(issues[0])
+	require.NoError(t, err)
+	assert.Contains(t, string(data), "\\u003cmy-button\\u003e")
+	assert.NotContains(t, string(data), "<my-button>")
+
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	require.NoError(t, encoder.Encode(issues[0]))
+	assert.Contains(t, buf.String(), "<my-button>")
+}
+
+// Every exported Format constant must be accepted, and each one must route to
+// the matching parser: template expressions are dynamic in template dialects
+// but literal in HTML.
 func TestFormatConstants(t *testing.T) {
 	pkg := loadPackage(t)
 
-	for _, format := range []markup.Format{
-		"",
-		markup.FormatHTML, markup.FormatHTM,
-		markup.FormatTwig, markup.FormatNJK, markup.FormatJinja, markup.FormatJinja2, markup.FormatJ2,
-		markup.FormatLiquid,
-		markup.FormatHBS, markup.FormatHandlebars,
-	} {
-		t.Run(string(format), func(t *testing.T) {
-			_, err := markup.Validate(pkg, `<my-button></my-button>`, markup.Options{Format: format})
+	tests := []struct {
+		format       markup.Format
+		wantTemplate bool
+	}{
+		{"", false},
+		{markup.FormatHTML, false},
+		{markup.FormatHTM, false},
+		{markup.FormatTwig, true},
+		{markup.FormatNJK, true},
+		{markup.FormatJinja, true},
+		{markup.FormatJinja2, true},
+		{markup.FormatJ2, true},
+		{markup.FormatLiquid, true},
+		{markup.FormatHBS, true},
+		{markup.FormatHandlebars, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(string(tt.format), func(t *testing.T) {
+			issues, err := markup.Validate(pkg, `<my-button variant="{{ x }}"></my-button>`, markup.Options{
+				Format:        tt.format,
+				ValidateAttrs: true,
+			})
 			require.NoError(t, err)
+
+			found := false
+			for _, issue := range issues {
+				if issue.Rule == markup.RuleInvalidAttributeValue {
+					found = true
+				}
+			}
+			assert.Equal(t, !tt.wantTemplate, found,
+				"template dialects treat the expression as dynamic; HTML validates it literally")
 		})
 	}
 }
@@ -821,18 +867,66 @@ func TestFormatConstants(t *testing.T) {
 // that a golden would capture more legibly.
 func TestUTF16Columns(t *testing.T) {
 	pkg := loadPackage(t)
-	source := "😀<my-button bogus=\"1\">Save</my-button>"
 
-	issues, err := markup.Validate(pkg, source, markup.Options{ValidateAttrs: true})
-	require.NoError(t, err)
-	require.Len(t, issues, 1)
-	assert.Equal(t, 1, issues[0].Line)
-	assert.Equal(t, 13, issues[0].Column, "emoji is two units, then '<my-button '")
+	tests := []struct {
+		name        string
+		source      string
+		wantLine    int
+		wantElement int
+		wantIssue   int
+	}{
+		{
+			name:        "astral character",
+			source:      "😀<my-button bogus=\"1\">Save</my-button>",
+			wantLine:    1,
+			wantElement: 3,
+			wantIssue:   13,
+		},
+		{
+			name:        "second line",
+			source:      "first\n😀<my-button bogus=\"1\">Save</my-button>",
+			wantLine:    2,
+			wantElement: 3,
+			wantIssue:   13,
+		},
+		{
+			name:        "crlf line ending",
+			source:      "first\r\n😀<my-button bogus=\"1\">Save</my-button>",
+			wantLine:    2,
+			wantElement: 3,
+			wantIssue:   13,
+		},
+		{
+			name:        "combining mark",
+			source:      "é<my-button bogus=\"1\">Save</my-button>",
+			wantLine:    1,
+			wantElement: 3,
+			wantIssue:   13,
+		},
+		{
+			name:        "zwj emoji sequence",
+			source:      "👨‍👩‍👧<my-button bogus=\"1\">Save</my-button>",
+			wantLine:    1,
+			wantElement: 9,
+			wantIssue:   19,
+		},
+	}
 
-	elements, err := markup.FindCustomElements(source, markup.Options{})
-	require.NoError(t, err)
-	require.Len(t, elements, 1)
-	assert.Equal(t, 3, elements[0].Column, "emoji is two units, then '<'")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issues, err := markup.Validate(pkg, tt.source, markup.Options{ValidateAttrs: true})
+			require.NoError(t, err)
+			require.Len(t, issues, 1)
+			assert.Equal(t, tt.wantLine, issues[0].Line)
+			assert.Equal(t, tt.wantIssue, issues[0].Column)
+
+			elements, err := markup.FindCustomElements(tt.source, markup.Options{})
+			require.NoError(t, err)
+			require.Len(t, elements, 1)
+			assert.Equal(t, tt.wantLine, elements[0].Line)
+			assert.Equal(t, tt.wantElement, elements[0].Column)
+		})
+	}
 }
 
 // An explicit empty slots array declares that the element accepts no slots,
