@@ -27,6 +27,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	cemworkspace "bennypowers.dev/cem/internal/workspace"
 	"bennypowers.dev/cem/types"
 )
 
@@ -191,17 +192,24 @@ type Registration struct {
 // from whatever the workspace returns, which may be cached; such workspaces
 // are responsible for observing their own changes. Reload does not re-run
 // WorkspaceContext.Init, so config-file discovery and package.json changes are
-// not observed.
+// not observed. A workspace without a manifest fails Reload if the registry
+// cannot generate one from source.
 //
 // Additional package failures are returned as errors by Reload, unlike
-// Register, where they are logged and ignored. Reload does not start file
-// watching; call it when the host knows the workspace changed. The context
-// bounds the decision to start and commit the reload, but the synchronous
-// load itself is not interruptible.
+// Register, where they are logged and ignored. Individual package manifests
+// discovered under workspace packages or node_modules remain best effort,
+// matching the registry's normal loading behavior; workspace manifest,
+// configuration, explicit additional-package, and top-level discovery
+// failures are returned. Reload does not start file watching; call it when
+// the host knows the workspace changed. The context bounds the decision to
+// start and commit the reload, but the synchronous load itself is not
+// interruptible. Remote additional-package resolution may block on network
+// I/O, and Reload serializes concurrent calls while loading.
 //
 // Register is additive: calling it again adds or replaces entries on the
 // server, and the earlier Registration keeps the handlers it installed bound
-// to its own registry.
+// to its own registry. Server.Run has a separate, lenient in-place watcher
+// reload; keep cache invalidation changes in sync with it.
 func (r *Registration) Reload(ctx context.Context) error {
 	if r == nil || r.registry == nil || r.workspace == nil {
 		return fmt.Errorf("registration did not own a reloadable registry")
@@ -267,9 +275,10 @@ func validateReloadManifest(workspace types.WorkspaceContext) error {
 		return nil
 	}
 	if _, err := workspace.Stat(path); err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			// No manifest at the configured path: the registry may still build
-			// one from source, which is not a reload failure.
+		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, cemworkspace.ErrRemoteUnsupported) {
+			// No inspectable local manifest at the configured path: the
+			// registry may still build one from source, which is not a reload
+			// failure.
 			return nil
 		}
 		return fmt.Errorf("cannot inspect manifest %q: %w", path, err)
@@ -287,14 +296,14 @@ func validateReloadManifest(workspace types.WorkspaceContext) error {
 // generations; the swap is atomic per access, not per request. The old context
 // stays valid for requests already in flight.
 type reloadableContext struct {
-	*MCPContextAdapter
+	*mcpContextAdapter
 	current atomic.Pointer[MCPContext]
 }
 
 func newReloadableContext(initial *MCPContext) *reloadableContext {
 	r := &reloadableContext{}
 	r.current.Store(initial)
-	r.MCPContextAdapter = newMCPContextAdapter(initial, r.load)
+	r.mcpContextAdapter = newMCPContextAdapter(r.load)
 	return r
 }
 

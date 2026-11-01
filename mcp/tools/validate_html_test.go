@@ -160,7 +160,7 @@ func TestValidationTemplateData_WithFixtures(t *testing.T) {
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	buttonElement, err := registryAdapter.ElementInfo("button-element")
 	require.NoError(t, err)
@@ -193,7 +193,7 @@ func TestValidateHtml_UnknownAttributeDetection(t *testing.T) {
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	// First verify the element exists in the registry
 	buttonElement, err := registryAdapter.ElementInfo("button-element")
@@ -248,7 +248,7 @@ func TestValidateHtml_ValidAttributes(t *testing.T) {
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	// Test with correct variant attribute
 	html := `<button-element variant="primary">Call to action</button-element>`
@@ -290,7 +290,7 @@ func TestValidateHtml_InvalidAttributeValue(t *testing.T) {
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	// Test with invalid attribute value (assuming variant has restricted values)
 	html := `<button-element variant="invalid-value">Call to action</button-element>`
@@ -336,7 +336,7 @@ func TestValidateHtml_UppercaseMarkup(t *testing.T) {
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	html := `<BUTTON-ELEMENT VARIANT="invalid-value">Call to action</BUTTON-ELEMENT>`
 
@@ -381,7 +381,7 @@ func TestValidateHtml_StrictMarkupMapping(t *testing.T) {
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	html := `<strict-panel variant="bogus" disabled interactive label="Save"><span slot="label">Name</span><span slot="nope">x</span></strict-panel>`
 
@@ -431,7 +431,7 @@ func TestValidateHtml_AttributeValueParsing_Regression(t *testing.T) {
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	// Test HTML with boolean attributes AND valued attributes - this was causing the bug
 	// The "disabled" boolean attribute should not interfere with "variant" value parsing
@@ -491,7 +491,7 @@ func TestValidateHtml_UnknownElement(t *testing.T) {
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	// Test with unknown custom element
 	html := `<unknown-custom-element attribute="value">Content</unknown-custom-element>`
@@ -533,7 +533,7 @@ func TestValidateHtml_MultipleIssues(t *testing.T) {
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	// HTML with multiple validation issues
 	html := `
@@ -578,7 +578,7 @@ func TestValidateHtml_GlobalAttributesAllowed(t *testing.T) {
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	// Test HTML with various global attributes that should NOT be flagged as unknown
 	html := `
@@ -656,7 +656,7 @@ func TestValidateHtml_GlobalAttributesWithUnknownCustomAttribute(t *testing.T) {
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	// Test HTML with both global attributes (which should be OK) and unknown custom attribute (which should be flagged)
 	html := `<button-element
@@ -711,7 +711,7 @@ func testValidateHtmlWithGolden(t *testing.T, fixtureFile, contextStr, goldenFil
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+	registryAdapter := mcp.NewMCPContextAdapter(registry)
 
 	fs := testutil.LoadTestdataFS(t, "../testdata/fixtures/validate-html", "/")
 

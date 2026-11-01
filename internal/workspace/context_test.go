@@ -49,6 +49,46 @@ func TestFileSystemWorkspaceContext_Manifest(t *testing.T) {
 	})
 }
 
+func TestFileSystemWorkspaceContext_InvalidateManifest(t *testing.T) {
+	dir := t.TempDir()
+	fsys := platform.NewOSFileSystem()
+
+	require.NoError(t, fsys.WriteFile(
+		filepath.Join(dir, "package.json"),
+		[]byte(`{"name": "invalidate-manifest", "customElements": "custom-elements.json"}`),
+		0o644,
+	))
+
+	manifestPath := filepath.Join(dir, "custom-elements.json")
+	writeManifest := func(modulePath string) {
+		t.Helper()
+		require.NoError(t, fsys.WriteFile(manifestPath, []byte(`{
+  "schemaVersion": "2.1.1",
+  "modules": [{"kind": "javascript-module", "path": "`+modulePath+`", "declarations": []}]
+}`), 0o644))
+	}
+
+	writeManifest("a.js")
+	ctx := workspace.NewFileSystemWorkspaceContext(dir)
+	require.NoError(t, ctx.Init())
+
+	original, err := ctx.Manifest()
+	require.NoError(t, err)
+	require.Len(t, original.Modules, 1)
+	assert.Equal(t, "a.js", original.Modules[0].Path)
+
+	writeManifest("b.js")
+	cached, err := ctx.Manifest()
+	require.NoError(t, err)
+	assert.Same(t, original, cached, "Manifest returns the cached value before invalidation")
+
+	ctx.InvalidateManifest()
+	reloaded, err := ctx.Manifest()
+	require.NoError(t, err)
+	require.Len(t, reloaded.Modules, 1)
+	assert.Equal(t, "b.js", reloaded.Modules[0].Path)
+}
+
 func TestFileSystemWorkspaceContext_ModulePathToFS(t *testing.T) {
 	root := absFixture(t, "project-with-manifest")
 	ctx := workspace.NewFileSystemWorkspaceContext(root)
@@ -91,7 +131,7 @@ func TestLoadWorkspaceManifests(t *testing.T) {
 
 	t.Run("mapfs", func(t *testing.T) {
 		fsys := platform.NewMapFS(map[string]string{
-			"workspace/package.json": `{"name": "single-package-workspace", "workspaces": ["packages/*"]}`,
+			"workspace/package.json":                           `{"name": "single-package-workspace", "workspaces": ["packages/*"]}`,
 			"workspace/packages/elements/package.json":         `{"name": "@test/elements", "version": "1.0.0", "customElements": "custom-elements.json"}`,
 			"workspace/packages/elements/custom-elements.json": `{"schemaVersion": "2.0.0", "readme": "", "modules": []}`,
 		})

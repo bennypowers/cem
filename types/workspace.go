@@ -66,14 +66,30 @@ type WorkspaceContext interface {
 	DesignTokensCache() DesignTokensCache
 }
 
+// ConfigInvalidator is implemented by WorkspaceContext implementations that
+// cache parsed configuration.
+type ConfigInvalidator interface {
+	InvalidateConfig()
+}
+
+// ManifestInvalidator is implemented by WorkspaceContext implementations that
+// cache the parsed manifest.
+type ManifestInvalidator interface {
+	InvalidateManifest()
+}
+
 // CacheInvalidator is implemented by WorkspaceContext implementations that
-// cache parsed configuration or manifest data.
+// cache parsed configuration and manifest data.
 //
 // Registration.Reload calls these methods, when available, before rebuilding
 // its registry so the new generation observes changes made after the previous
-// load. Workspaces that do not implement CacheInvalidator are still usable,
-// but Reload can only observe changes that the workspace itself re-reads.
+// load. Implementations must be safe to call while MCP handlers are serving.
+// Invalidation is not transactional: Reload may invalidate these caches even
+// when it later returns an error, although the previous registry generation
+// and its configuration snapshot stay active. Workspaces that do not implement
+// CacheInvalidator are still usable, but Reload can only observe changes that
+// the workspace itself re-reads.
 type CacheInvalidator interface {
-	InvalidateConfig()
-	InvalidateManifest()
+	ConfigInvalidator
+	ManifestInvalidator
 }

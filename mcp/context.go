@@ -163,9 +163,9 @@ func (ctx *MCPContext) LoadManifests() error {
 }
 
 // LoadManifestsStrict loads all available manifests and returns an error if
-// any manifest or the workspace configuration cannot be loaded. Reload uses
-// this path so a failed reload does not replace a working registry with a
-// partial one.
+// any manifest or the workspace configuration cannot be loaded. It mutates the
+// receiver, so on error the receiver may hold partial state. Reload uses a
+// fresh context instead of calling this on an active generation.
 func (ctx *MCPContext) LoadManifestsStrict() error {
 	return ctx.loadManifests(true)
 }
@@ -430,9 +430,9 @@ func (ctx *MCPContext) LSPRegistry() *LSP.Registry {
 	return ctx.lspRegistry
 }
 
-// Config returns the configuration snapshot captured with the current
-// manifest generation. The first call after LoadManifests or InvalidateConfig
-// reads the workspace configuration and caches the result.
+// Config returns the configuration snapshot captured by LoadManifests. If no
+// snapshot exists, or it was cleared by InvalidateConfig, Config reads and
+// caches the workspace configuration.
 func (ctx *MCPContext) Config() (*IC.CemConfig, error) {
 	ctx.configMu.RLock()
 	if ctx.configLoaded {
@@ -478,7 +478,7 @@ func (ctx *MCPContext) InvalidateConfig() {
 	ctx.configLoaded = false
 	ctx.configMu.Unlock()
 
-	if ws, ok := ctx.workspace.(interface{ InvalidateConfig() }); ok {
+	if ws, ok := ctx.workspace.(types.ConfigInvalidator); ok {
 		ws.InvalidateConfig()
 	}
 }
@@ -486,7 +486,7 @@ func (ctx *MCPContext) InvalidateConfig() {
 // InvalidateManifest clears the workspace manifest cache when the workspace
 // supports it, so the next LoadManifests re-reads the manifest.
 func (ctx *MCPContext) InvalidateManifest() {
-	if ws, ok := ctx.workspace.(interface{ InvalidateManifest() }); ok {
+	if ws, ok := ctx.workspace.(types.ManifestInvalidator); ok {
 		ws.InvalidateManifest()
 	}
 }
@@ -741,81 +741,78 @@ func generateCacheKey(tagName string, _ *M.CustomElement) string {
 	return tagName
 }
 
-// MCPContextAdapter implements MCPTypes.MCPContext interface for tools package.
-// MCPContext is the context captured when the adapter was created; methods
-// resolve through resolve so reloadable registries can swap generations.
-type MCPContextAdapter struct {
-	*MCPContext
+// mcpContextAdapter implements MCPTypes.MCPContext interface for tools package.
+type mcpContextAdapter struct {
 	resolve func() *MCPContext
 }
 
 // NewMCPContextAdapter creates an adapter that implements the tools interface
 func NewMCPContextAdapter(context *MCPContext) MCPTypes.MCPContext {
-	return newMCPContextAdapter(context, func() *MCPContext { return context })
+	return newMCPContextAdapter(func() *MCPContext { return context })
 }
 
 // newMCPContextAdapter creates an adapter that resolves the current context on
 // every call, which lets reloadable registries swap generations.
-func newMCPContextAdapter(initial *MCPContext, resolve func() *MCPContext) *MCPContextAdapter {
-	return &MCPContextAdapter{MCPContext: initial, resolve: resolve}
+func newMCPContextAdapter(resolve func() *MCPContext) *mcpContextAdapter {
+	return &mcpContextAdapter{resolve: resolve}
 }
 
-func (ctx *MCPContextAdapter) context() *MCPContext {
+func (ctx *mcpContextAdapter) context() *MCPContext {
 	return ctx.resolve()
 }
 
 // ElementInfo implements MCPTypes.MCPContext interface
-func (ctx *MCPContextAdapter) ElementInfo(tagName string) (MCPTypes.ElementInfo, error) {
+func (ctx *mcpContextAdapter) ElementInfo(tagName string) (MCPTypes.ElementInfo, error) {
 	return ctx.context().GetElementInfo(tagName)
 }
 
 // AllElements implements MCPTypes.MCPContext interface
-func (ctx *MCPContextAdapter) AllElements() map[string]MCPTypes.ElementInfo {
+func (ctx *mcpContextAdapter) AllElements() map[string]MCPTypes.ElementInfo {
 	return ctx.context().GetAllElements()
 }
 
 // LoadManifests implements MCPTypes.MCPContext interface
-func (ctx *MCPContextAdapter) LoadManifests() error {
+func (ctx *mcpContextAdapter) LoadManifests() error {
 	return ctx.context().LoadManifests()
 }
 
 // GetManifestSchemaVersions implements MCPTypes.MCPContext interface
-func (ctx *MCPContextAdapter) GetManifestSchemaVersions() []string {
+func (ctx *mcpContextAdapter) GetManifestSchemaVersions() []string {
 	return ctx.context().GetManifestSchemaVersions()
 }
 
 // DocumentManager implements MCPTypes.MCPContext interface
-func (ctx *MCPContextAdapter) DocumentManager() lspTypes.DocumentManager {
+func (ctx *mcpContextAdapter) DocumentManager() lspTypes.DocumentManager {
 	return ctx.context().DocumentManager()
 }
 
 // CommonPrefixes implements MCPTypes.MCPContext interface
-func (ctx *MCPContextAdapter) CommonPrefixes() []string {
+func (ctx *mcpContextAdapter) CommonPrefixes() []string {
 	return ctx.context().CommonPrefixes()
 }
 
 // AllCSSProperties implements MCPTypes.MCPContext interface
-func (ctx *MCPContextAdapter) AllCSSProperties() []string {
+func (ctx *mcpContextAdapter) AllCSSProperties() []string {
 	return ctx.context().AllCSSProperties()
 }
 
-func (ctx *MCPContextAdapter) Config() (*IC.CemConfig, error) {
+func (ctx *mcpContextAdapter) Config() (*IC.CemConfig, error) {
 	return ctx.context().Config()
 }
 
-func (ctx *MCPContextAdapter) ConfigFile() string {
+func (ctx *mcpContextAdapter) ConfigFile() string {
 	return ctx.context().ConfigFile()
 }
 
-func (ctx *MCPContextAdapter) ConfigSchemaJSON() []byte {
+func (ctx *mcpContextAdapter) ConfigSchemaJSON() []byte {
 	return ctx.context().ConfigSchemaJSON()
 }
 
-func (ctx *MCPContextAdapter) Root() string {
+func (ctx *mcpContextAdapter) Root() string {
 	return ctx.context().Root()
 }
 
-func (ctx *MCPContextAdapter) FileSystem() platform.FileSystem {
+func (ctx *mcpContextAdapter) FileSystem() platform.FileSystem {
 	return ctx.context().FileSystem()
 }
 
