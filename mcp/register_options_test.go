@@ -31,6 +31,7 @@ import (
 
 	"bennypowers.dev/cem/internal/platform"
 	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
+	cemworkspace "bennypowers.dev/cem/internal/workspace"
 	M "bennypowers.dev/cem/manifest"
 	cemtypes "bennypowers.dev/cem/types"
 	fileworkspace "bennypowers.dev/cem/workspace"
@@ -928,6 +929,105 @@ func TestValidateReloadManifestStatErrors(t *testing.T) {
 
 	require.NoError(t, validateReloadManifest(emptyManifestPathWorkspace{WorkspaceContext: workspace}),
 		"a workspace without a manifest path is not a reload failure")
+
+	require.NoError(t, validateReloadManifest(statErrorWorkspace{
+		WorkspaceContext: workspace,
+		err:              errors.ErrUnsupported,
+		nilManifest:      true,
+	}), "a nil manifest with no error is treated as unavailable")
+
+	for _, manifestErr := range []error{
+		cemworkspace.ErrNoManifest,
+		cemworkspace.ErrManifestNotFound,
+		cemworkspace.ErrNoPackageJSON,
+	} {
+		require.NoError(t, validateReloadManifest(statErrorWorkspace{
+			WorkspaceContext: workspace,
+			err:              errors.ErrUnsupported,
+			manifestErr:      manifestErr,
+		}), "an unavailable manifest sentinel may use the generation fallback")
+	}
+}
+
+func TestRegistrationReloadHonorsManifestInvalidatorOnly(t *testing.T) {
+	base, manifestPath, configPath := newReloadTestWorkspaceWithConfig(t,
+		reloadTestManifest("original description"),
+		"serve:\n  port: 5000\n",
+	)
+	invalidator, ok := base.(cemtypes.ManifestInvalidator)
+	require.True(t, ok)
+	workspace := manifestOnlyWorkspace{
+		WorkspaceContext:    base,
+		manifestInvalidator: invalidator,
+	}
+
+	server := newRegisterOptionsTestServer(t)
+	handle, err := Register(server, workspace, ServerConfig{})
+	require.NoError(t, err)
+
+	writeReloadTestFile(t, manifestPath, reloadTestManifest("updated description"))
+	writeReloadTestFile(t, configPath, "serve:\n  port: 6000\n")
+	require.NoError(t, handle.Reload(context.Background()))
+
+	next := handle.registry.current.Load()
+	client := connectRegisterTestClient(t, server)
+	assert.Contains(t, readRegisterOptionsTestResource(t, client, "cem://element/reload-element"), "updated description",
+		"types.ManifestInvalidator alone must refresh the manifest")
+	cfg, err := next.Config()
+	require.NoError(t, err)
+	assert.Equal(t, 5000, cfg.Serve.Port,
+		"without types.ConfigInvalidator the workspace config cache must stay in use")
+}
+
+func TestRegistrationReloadHonorsConfigInvalidatorOnly(t *testing.T) {
+	base, manifestPath, configPath := newReloadTestWorkspaceWithConfig(t,
+		reloadTestManifest("original description"),
+		"serve:\n  port: 5000\n",
+	)
+	invalidator, ok := base.(cemtypes.ConfigInvalidator)
+	require.True(t, ok)
+	workspace := configOnlyWorkspace{
+		WorkspaceContext:  base,
+		configInvalidator: invalidator,
+	}
+
+	server := newRegisterOptionsTestServer(t)
+	handle, err := Register(server, workspace, ServerConfig{})
+	require.NoError(t, err)
+
+	writeReloadTestFile(t, manifestPath, reloadTestManifest("updated description"))
+	writeReloadTestFile(t, configPath, "serve:\n  port: 6000\n")
+	require.NoError(t, handle.Reload(context.Background()))
+
+	next := handle.registry.current.Load()
+	client := connectRegisterTestClient(t, server)
+	assert.Contains(t, readRegisterOptionsTestResource(t, client, "cem://element/reload-element"), "original description",
+		"without types.ManifestInvalidator the workspace manifest cache must stay in use")
+	cfg, err := next.Config()
+	require.NoError(t, err)
+	assert.Equal(t, 6000, cfg.Serve.Port,
+		"types.ConfigInvalidator alone must refresh the configuration")
+}
+
+func TestRegistrationReloadFailsWhenUnavailableManifestCannotBeGenerated(t *testing.T) {
+	base, _ := newReloadTestWorkspace(t, reloadTestManifest("original description"))
+	root := t.TempDir()
+	writeReloadTestFile(t, filepath.Join(root, "package.json"), "{")
+
+	workspace := unavailableManifestWorkspace{
+		WorkspaceContext: base,
+		root:             root,
+	}
+
+	server := newRegisterOptionsTestServer(t)
+	handle, err := Register(server, workspace, ServerConfig{})
+	require.NoError(t, err, "Register keeps its lenient generation fallback")
+
+	before := handle.registry.current.Load()
+	require.ErrorContains(t, handle.Reload(context.Background()), "could not be generated",
+		"a strict reload must not report success when no manifest is available")
+	assert.Same(t, before, handle.registry.current.Load(),
+		"a reload that cannot produce a manifest must not swap an empty generation")
 }
 
 func TestRegistrationReloadWithoutCacheInvalidatorUsesCachedWorkspaceData(t *testing.T) {
@@ -1098,6 +1198,7 @@ type statErrorWorkspace struct {
 	cemtypes.WorkspaceContext
 	err         error
 	manifestErr error
+	nilManifest bool
 }
 
 func (w statErrorWorkspace) Stat(string) (fs.FileInfo, error) {
@@ -1105,10 +1206,55 @@ func (w statErrorWorkspace) Stat(string) (fs.FileInfo, error) {
 }
 
 func (w statErrorWorkspace) Manifest() (*M.Package, error) {
+	if w.nilManifest {
+		return nil, nil
+	}
 	if w.manifestErr != nil {
 		return nil, w.manifestErr
 	}
 	return w.WorkspaceContext.Manifest()
+}
+
+// unavailableManifestWorkspace models an external workspace that cannot
+// inspect paths and reports a nil manifest with no error.
+type unavailableManifestWorkspace struct {
+	cemtypes.WorkspaceContext
+	root string
+}
+
+func (w unavailableManifestWorkspace) Stat(string) (fs.FileInfo, error) {
+	return nil, errors.ErrUnsupported
+}
+
+func (w unavailableManifestWorkspace) Manifest() (*M.Package, error) {
+	return nil, nil
+}
+
+func (w unavailableManifestWorkspace) Root() string {
+	return w.root
+}
+
+// manifestOnlyWorkspace exposes types.ManifestInvalidator while hiding the
+// base workspace's types.ConfigInvalidator, so Reload's use of each capability
+// can be observed independently.
+type manifestOnlyWorkspace struct {
+	cemtypes.WorkspaceContext
+	manifestInvalidator cemtypes.ManifestInvalidator
+}
+
+func (w manifestOnlyWorkspace) InvalidateManifest() {
+	w.manifestInvalidator.InvalidateManifest()
+}
+
+// configOnlyWorkspace exposes types.ConfigInvalidator while hiding the base
+// workspace's types.ManifestInvalidator.
+type configOnlyWorkspace struct {
+	cemtypes.WorkspaceContext
+	configInvalidator cemtypes.ConfigInvalidator
+}
+
+func (w configOnlyWorkspace) InvalidateConfig() {
+	w.configInvalidator.InvalidateConfig()
 }
 
 // nonInvalidatingWorkspace hides the base workspace's InvalidateConfig and

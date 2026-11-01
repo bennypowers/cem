@@ -137,6 +137,7 @@ func (c *MapWorkspaceContext) loadConfig() error {
 			cfg.Generate.Exclude = make([]string, 0)
 		}
 		c.config = cfg
+		c.configErr = nil
 		return nil
 	}
 
@@ -147,6 +148,7 @@ func (c *MapWorkspaceContext) loadConfig() error {
 			Exclude: make([]string, 0),
 		},
 	}
+	c.configErr = nil
 	return nil
 }
 

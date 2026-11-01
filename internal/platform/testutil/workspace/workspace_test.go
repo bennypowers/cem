@@ -210,6 +210,28 @@ func TestMapWorkspaceContext_Cleanup(t *testing.T) {
 	assert.NoError(t, ctx.Cleanup())
 }
 
+func TestMapWorkspaceContext_InitClearsStaleConfigError(t *testing.T) {
+	mfs := platform.NewMapFileSystem(nil)
+	mfs.AddFile("/package.json", `{"name": "init-clears-config-error"}`, 0o644)
+	mfs.AddFile("/.config/cem.yaml", "serve:\n  port: 5000\n", 0o644)
+
+	ctx := workspace.NewMapWorkspaceContextFromFS(mfs, "/")
+	require.NoError(t, ctx.Init())
+
+	mfs.AddFile("/.config/cem.yaml", "serve: [\n", 0o644)
+	ctx.InvalidateConfig()
+	_, err := ctx.Config()
+	require.Error(t, err)
+
+	mfs.AddFile("/.config/cem.yaml", "serve:\n  port: 6000\n", 0o644)
+	require.NoError(t, ctx.Init())
+
+	config, err := ctx.Config()
+	require.NoError(t, err, "Init must clear the error left by a failed invalidation")
+	require.NotNil(t, config)
+	assert.Equal(t, 6000, config.Serve.Port)
+}
+
 func TestMapWorkspaceContext_InvalidateConfig(t *testing.T) {
 	mfs := platform.NewMapFileSystem(nil)
 	mfs.AddFile("/package.json", `{"name": "invalidate-config"}`, 0o644)
