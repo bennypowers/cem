@@ -914,6 +914,18 @@ func TestValidateReloadManifestStatErrors(t *testing.T) {
 		err:              fmt.Errorf("remote inspection: %w", errors.ErrUnsupported),
 	}), "unsupported local inspection is handled by the in-memory generation fallback")
 
+	require.ErrorContains(t, validateReloadManifest(statErrorWorkspace{
+		WorkspaceContext: workspace,
+		err:              errors.ErrUnsupported,
+		manifestErr:      errors.New("malformed manifest"),
+	}), "malformed manifest", "a readable but malformed manifest must still fail reload")
+
+	require.NoError(t, validateReloadManifest(statErrorWorkspace{
+		WorkspaceContext: workspace,
+		err:              errors.ErrUnsupported,
+		manifestErr:      fs.ErrNotExist,
+	}), "an unavailable manifest may use the generation fallback")
+
 	require.NoError(t, validateReloadManifest(emptyManifestPathWorkspace{WorkspaceContext: workspace}),
 		"a workspace without a manifest path is not a reload failure")
 }
@@ -1080,14 +1092,23 @@ func newReloadTestWorkspaceWithConfig(t *testing.T, manifest, config string) (ce
 	return workspace, manifestPath, configPath
 }
 
-// statErrorWorkspace overrides Stat so tests can exercise validation errors.
+// statErrorWorkspace overrides Stat and Manifest so tests can exercise
+// validation errors.
 type statErrorWorkspace struct {
 	cemtypes.WorkspaceContext
-	err error
+	err         error
+	manifestErr error
 }
 
 func (w statErrorWorkspace) Stat(string) (fs.FileInfo, error) {
 	return nil, w.err
+}
+
+func (w statErrorWorkspace) Manifest() (*M.Package, error) {
+	if w.manifestErr != nil {
+		return nil, w.manifestErr
+	}
+	return w.WorkspaceContext.Manifest()
 }
 
 // nonInvalidatingWorkspace hides the base workspace's InvalidateConfig and

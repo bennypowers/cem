@@ -27,6 +27,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	cemworkspace "bennypowers.dev/cem/internal/workspace"
 	"bennypowers.dev/cem/types"
 )
 
@@ -277,11 +278,14 @@ func validateReloadManifest(workspace types.WorkspaceContext) error {
 		return nil
 	}
 	if _, err := workspace.Stat(path); err != nil {
-		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, errors.ErrUnsupported) {
-			// No inspectable local manifest at the configured path: the
-			// registry may still build one from source, which is not a reload
-			// failure.
+		if errors.Is(err, fs.ErrNotExist) {
+			// The registry may still build a manifest from source.
 			return nil
+		}
+		if errors.Is(err, errors.ErrUnsupported) {
+			// The workspace cannot inspect paths, but it may still expose a
+			// readable manifest. Validate it when it is available.
+			return validateOptionalManifest(workspace)
 		}
 		return fmt.Errorf("cannot inspect manifest %q: %w", path, err)
 	}
@@ -289,6 +293,22 @@ func validateReloadManifest(workspace types.WorkspaceContext) error {
 		return err
 	}
 	return nil
+}
+
+// validateOptionalManifest accepts an unavailable manifest, which lets the
+// registry fall back to generation, but rejects a manifest that is present and
+// malformed.
+func validateOptionalManifest(workspace types.WorkspaceContext) error {
+	_, err := workspace.Manifest()
+	if err == nil ||
+		errors.Is(err, fs.ErrNotExist) ||
+		errors.Is(err, errors.ErrUnsupported) ||
+		errors.Is(err, cemworkspace.ErrNoManifest) ||
+		errors.Is(err, cemworkspace.ErrManifestNotFound) ||
+		errors.Is(err, cemworkspace.ErrNoPackageJSON) {
+		return nil
+	}
+	return err
 }
 
 // reloadableContext gives handlers a stable view of the current MCPContext.
