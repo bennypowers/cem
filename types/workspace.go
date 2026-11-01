@@ -81,13 +81,13 @@ type ManifestInvalidator interface {
 // CacheInvalidator is implemented by WorkspaceContext implementations that
 // cache parsed configuration and manifest data.
 //
-// Registration.Reload calls these methods, when available, before rebuilding
-// its registry so the new generation observes changes made after the previous
-// load. Implementations must be safe to call while MCP handlers are serving.
+// Registration.Reload honors ConfigInvalidator and ManifestInvalidator
+// independently, so a workspace may implement either capability alone.
+// Implementations must be safe to call while MCP handlers are serving.
 // Invalidation is not transactional: Reload may invalidate these caches even
 // when it later returns an error, although the previous registry generation
-// and its configuration snapshot stay active. Workspaces that do not implement
-// CacheInvalidator are still usable, but Reload can only observe changes that
+// and its configuration snapshot stay active. Workspaces that implement
+// neither interface are still usable, but Reload can only observe changes that
 // the workspace itself re-reads.
 type CacheInvalidator interface {
 	ConfigInvalidator

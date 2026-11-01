@@ -131,7 +131,9 @@ func NewServerWithConfig(workspace types.WorkspaceContext, config ServerConfig) 
 // returns a *RegistrationConflictError. ConflictSkip leaves such entries in
 // place and registers only the rest. All option validation and conflict
 // detection happen before the first handler is registered, so an error leaves
-// server unchanged.
+// the server's registered tools and resources unchanged. The initialize
+// handshake still fires ServerOptions.InitializedHandler even when Register
+// returns an error.
 //
 // The returned Registration reloads the manifests, configuration, and
 // additional packages behind the handlers installed by this call. Reload does
@@ -164,7 +166,7 @@ type mountOptions struct {
 // mount builds a registry, applies registration options, and adds the
 // selected handlers to server. Filters and conflicts are validated before
 // workspace data is loaded, so a bad option or conflict fails fast and leaves
-// the server unchanged.
+// the server's registered tools and resources unchanged.
 func mount(server *mcp.Server, workspace types.WorkspaceContext, config ServerConfig, cfg registerConfig, opts mountOptions) (*Registration, error) {
 	initial, err := newMCPContext(workspace, config.FileSystem, opts.watch)
 	if err != nil {

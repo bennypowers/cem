@@ -27,7 +27,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	cemworkspace "bennypowers.dev/cem/internal/workspace"
 	"bennypowers.dev/cem/types"
 )
 
@@ -188,23 +187,25 @@ type Registration struct {
 // configuration snapshot captured with it, and the error is returned.
 //
 // Workspace data is refreshed when the workspace implements
-// types.CacheInvalidator. For other workspaces, Reload rebuilds the registry
-// from whatever the workspace returns, which may be cached; such workspaces
-// are responsible for observing their own changes. Reload does not re-run
+// types.ManifestInvalidator or types.ConfigInvalidator; types.CacheInvalidator
+// implements both. For other workspaces, Reload rebuilds the registry from
+// whatever the workspace returns, which may be cached; such workspaces are
+// responsible for observing their own changes. Reload does not re-run
 // WorkspaceContext.Init, so config-file discovery and package.json changes are
 // not observed. A workspace without a manifest fails Reload if the registry
 // cannot generate one from source.
 //
 // Additional package failures are returned as errors by Reload, unlike
 // Register, where they are logged and ignored. Individual package manifests
-// discovered under workspace packages or node_modules remain best effort,
-// matching the registry's normal loading behavior; workspace manifest,
-// configuration, explicit additional-package, and top-level discovery
-// failures are returned. Reload does not start file watching; call it when
-// the host knows the workspace changed. The context bounds the decision to
-// start and commit the reload, but the synchronous load itself is not
-// interruptible. Remote additional-package resolution may block on network
-// I/O, and Reload serializes concurrent calls while loading.
+// discovered under workspace packages or node_modules, and workspace-package
+// pattern expansion, remain best effort, matching the registry's normal
+// loading behavior. Workspace manifest, configuration, explicit
+// additional-package, and node_modules inspection failures are returned.
+// Reload does not start file watching; call it when the host knows the
+// workspace changed. The context bounds the decision to start and commit the
+// reload, but the synchronous load itself is not interruptible. Remote
+// additional-package resolution may block on network I/O, and Reload
+// serializes concurrent calls while loading.
 //
 // Register is additive: calling it again adds or replaces entries on the
 // server, and the earlier Registration keeps the handlers it installed bound
@@ -229,9 +230,9 @@ func (r *Registration) Reload(ctx context.Context) error {
 	}
 
 	current := r.registry.load()
-	invalidator, canInvalidate := r.workspace.(types.CacheInvalidator)
-	if canInvalidate {
-		invalidator.InvalidateManifest()
+	manifestInvalidator, canInvalidateManifest := r.workspace.(types.ManifestInvalidator)
+	if canInvalidateManifest {
+		manifestInvalidator.InvalidateManifest()
 	}
 
 	// The LSP registry deliberately falls back to in-memory generation when a
@@ -245,8 +246,9 @@ func (r *Registration) Reload(ctx context.Context) error {
 	// Invalidate configuration only after the manifest is known to parse. The
 	// replacement context snapshots the new configuration before the swap, so
 	// a later failure cannot change what the active generation serves either.
-	if canInvalidate {
-		invalidator.InvalidateConfig()
+	configInvalidator, canInvalidateConfig := r.workspace.(types.ConfigInvalidator)
+	if canInvalidateConfig {
+		configInvalidator.InvalidateConfig()
 	}
 
 	// Reuse the document manager: MCP handlers do not use it, and allocating a
@@ -275,7 +277,7 @@ func validateReloadManifest(workspace types.WorkspaceContext) error {
 		return nil
 	}
 	if _, err := workspace.Stat(path); err != nil {
-		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, cemworkspace.ErrRemoteUnsupported) {
+		if errors.Is(err, fs.ErrNotExist) || errors.Is(err, errors.ErrUnsupported) {
 			// No inspectable local manifest at the configured path: the
 			// registry may still build one from source, which is not a reload
 			// failure.

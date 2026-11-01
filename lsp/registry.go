@@ -180,13 +180,13 @@ func (r *Registry) LoadFromWorkspace(workspace types.WorkspaceContext) error {
 }
 
 // LoadFromWorkspaceStrict loads all available custom elements manifests from
-// the workspace context and returns an error if a strict source cannot be
-// loaded. Strict sources are the workspace manifest, configuration and
-// config-declared additional packages, top-level workspace-package discovery,
-// and node_modules discovery. Individual manifests under workspace packages
-// and node_modules remain best effort, matching the non-strict loader. Missing
-// optional sources, such as node_modules or unsupported remote inspection, are
-// not failures.
+// the workspace context and returns an error for failures that the strict path
+// treats as fatal. These are workspace manifest failures when in-memory
+// generation also fails, configuration and config-declared additional packages,
+// and node_modules inspection. Individual manifests discovered under workspace
+// packages or node_modules, and workspace-package pattern expansion, remain
+// best effort, matching the non-strict loader. Missing optional sources, such
+// as node_modules or unsupported remote inspection, are not failures.
 func (r *Registry) LoadFromWorkspaceStrict(workspace types.WorkspaceContext) error {
 	return r.loadFromWorkspace(workspace, true)
 }
@@ -219,7 +219,7 @@ func (r *Registry) loadFromWorkspace(ws types.WorkspaceContext, strict bool) err
 	// reload failures.
 	if err := r.loadNodeModulesManifests(ws); err != nil &&
 		!errors.Is(err, fs.ErrNotExist) &&
-		!errors.Is(err, workspace.ErrRemoteUnsupported) {
+		!errors.Is(err, errors.ErrUnsupported) {
 		record("node_modules manifests", err)
 	}
 

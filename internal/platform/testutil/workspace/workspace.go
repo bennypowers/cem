@@ -161,10 +161,16 @@ func (c *MapWorkspaceContext) Config() (*C.CemConfig, error) {
 }
 
 // InvalidateConfig re-reads the configuration from the in-memory filesystem.
+// On failure the previous config is cleared, matching FileSystemWorkspaceContext.
 func (c *MapWorkspaceContext) InvalidateConfig() {
 	c.configMu.Lock()
 	defer c.configMu.Unlock()
-	c.configErr = c.loadConfig()
+	if err := c.loadConfig(); err != nil {
+		c.config = nil
+		c.configErr = err
+		return
+	}
+	c.configErr = nil
 }
 
 func (c *MapWorkspaceContext) PackageJSON() (*M.PackageJSON, error) {

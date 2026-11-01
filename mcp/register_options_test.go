@@ -20,6 +20,7 @@ package mcp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -30,7 +31,6 @@ import (
 
 	"bennypowers.dev/cem/internal/platform"
 	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
-	cemworkspace "bennypowers.dev/cem/internal/workspace"
 	M "bennypowers.dev/cem/manifest"
 	cemtypes "bennypowers.dev/cem/types"
 	fileworkspace "bennypowers.dev/cem/workspace"
@@ -525,6 +525,39 @@ func TestRegisterConflictPolicies(t *testing.T) {
 		assert.Equal(t, []string{"generate_config", "validate_html"}, listRegisterTestToolNames(t, client))
 	})
 
+	t.Run("filtered-out resource conflicts do not fail ConflictError", func(t *testing.T) {
+		server := newRegisterOptionsTestServer(t)
+		addHostResource(server, "cem://elements", "host resource")
+
+		_, err := Register(server, workspace, config,
+			WithResources(Selection{Include: []string{"cem://packages"}}),
+			WithConflictPolicy(ConflictError),
+		)
+		require.NoError(t, err)
+
+		client := connectRegisterTestClient(t, server)
+		assert.Equal(t, []string{"cem://elements", "cem://packages"}, listRegisterTestResourceURIs(t, client))
+		assert.Equal(t, "host resource", readRegisterOptionsTestResource(t, client, "cem://elements"))
+	})
+
+	t.Run("filtered-out template conflicts do not fail ConflictError", func(t *testing.T) {
+		server := newRegisterOptionsTestServer(t)
+		addHostResourceTemplate(server, "cem://element/{tagName}", "host template")
+
+		_, err := Register(server, workspace, config,
+			WithTemplates(Selection{Include: []string{"cem://element/{tagName}/attributes"}}),
+			WithConflictPolicy(ConflictError),
+		)
+		require.NoError(t, err)
+
+		client := connectRegisterTestClient(t, server)
+		assert.Equal(t,
+			[]string{"cem://element/{tagName}", "cem://element/{tagName}/attributes"},
+			listRegisterTestResourceTemplateURIs(t, client),
+		)
+		assert.Equal(t, "host template", readRegisterOptionsTestResource(t, client, "cem://element/test-element"))
+	})
+
 	t.Run("default options replace on conflict", func(t *testing.T) {
 		server := newRegisterOptionsTestServer(t)
 		addHostTool(server, "generate_config", "host handler")
@@ -592,8 +625,11 @@ func TestRegisterDoesNotAllocateFileWatcher(t *testing.T) {
 		"NewServerWithConfig must keep its watch lifecycle")
 }
 
-func TestServerReloadFromWatcherRefreshesManifest(t *testing.T) {
-	workspace, manifestPath := newReloadTestWorkspace(t, reloadTestManifest("original description"))
+func TestServerReloadFromWatcherRefreshesManifestAndConfig(t *testing.T) {
+	workspace, manifestPath, configPath := newReloadTestWorkspaceWithConfig(t,
+		reloadTestManifest("original description"),
+		"serve:\n  port: 5000\n",
+	)
 
 	server, err := NewServerWithConfig(workspace, ServerConfig{})
 	require.NoError(t, err)
@@ -601,14 +637,22 @@ func TestServerReloadFromWatcherRefreshesManifest(t *testing.T) {
 
 	require.NoError(t, server.Registry().LoadManifests())
 
+	config, err := server.Registry().Config()
+	require.NoError(t, err)
+	assert.Equal(t, 5000, config.Serve.Port)
+
 	client := connectRegisterTestClient(t, server.server)
 	assert.Contains(t, readRegisterOptionsTestResource(t, client, "cem://element/reload-element"), "original description")
 
 	writeReloadTestFile(t, manifestPath, reloadTestManifest("updated description"))
+	writeReloadTestFile(t, configPath, "serve:\n  port: 6000\n")
 	server.reloadFromWatcher()
 
 	assert.Contains(t, readRegisterOptionsTestResource(t, client, "cem://element/reload-element"), "updated description",
 		"the watcher path must invalidate the manifest cache before reloading")
+	config, err = server.Registry().Config()
+	require.NoError(t, err)
+	assert.Equal(t, 6000, config.Serve.Port, "the watcher path must invalidate the configuration cache")
 }
 
 func TestRegistrationReloadReadsUpdatedManifest(t *testing.T) {
@@ -827,7 +871,7 @@ func TestRegistrationReloadContextErrors(t *testing.T) {
 		"rejected reloads must not change the served state")
 }
 
-func TestRegistrationReloadCanceledAfterLoadDoesNotSwap(t *testing.T) {
+func TestRegistrationReloadCanceledDuringLoadDoesNotSwap(t *testing.T) {
 	base, _ := newReloadTestWorkspace(t, reloadTestManifest("original description"))
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -867,7 +911,7 @@ func TestValidateReloadManifestStatErrors(t *testing.T) {
 
 	require.NoError(t, validateReloadManifest(statErrorWorkspace{
 		WorkspaceContext: workspace,
-		err:              cemworkspace.ErrRemoteUnsupported,
+		err:              fmt.Errorf("remote inspection: %w", errors.ErrUnsupported),
 	}), "unsupported local inspection is handled by the in-memory generation fallback")
 
 	require.NoError(t, validateReloadManifest(emptyManifestPathWorkspace{WorkspaceContext: workspace}),

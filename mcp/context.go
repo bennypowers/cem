@@ -469,8 +469,9 @@ func (ctx *MCPContext) FileSystem() platform.FileSystem {
 	return ctx.fs
 }
 
-// InvalidateConfig drops the configuration snapshot and the workspace
-// configuration cache so the next Config call re-reads the current file.
+// InvalidateConfig drops the configuration snapshot and, when the workspace
+// implements types.ConfigInvalidator, its cached configuration, so the next
+// Config call re-reads the current file.
 func (ctx *MCPContext) InvalidateConfig() {
 	ctx.configMu.Lock()
 	ctx.config = nil
