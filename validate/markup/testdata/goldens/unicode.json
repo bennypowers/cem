@@ -1,0 +1,14 @@
+[
+  {
+    "rule": "unknown-attribute",
+    "severity": "error",
+    "confidence": "high",
+    "message": "Unknown attribute 'bogus' for element <my-button>",
+    "element": "my-button",
+    "line": 1,
+    "column": 20,
+    "details": {
+      "attribute": "bogus"
+    }
+  }
+]

@@ -1,0 +1,280 @@
+{
+  "schemaVersion": "2.1.0",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "base-button.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "BaseButton",
+          "tagName": "base-button",
+          "customElement": true,
+          "description": "Base button",
+          "attributes": [
+            {
+              "name": "density",
+              "type": {
+                "text": "\"compact\" | \"comfortable\""
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "components.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyButton",
+          "tagName": "my-button",
+          "customElement": true,
+          "summary": "A button",
+          "description": "A button element",
+          "superclass": {
+            "name": "BaseButton",
+            "module": "base-button.js"
+          },
+          "attributes": [
+            {
+              "name": "variant",
+              "type": {
+                "text": "\"primary\" | \"secondary\""
+              }
+            },
+            {
+              "name": "legacy",
+              "deprecated": "use variant instead",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "symbol",
+              "type": {
+                "text": "\"a&b\" | \"c\""
+              }
+            }
+          ],
+          "slots": [
+            {
+              "name": "label",
+              "description": "Only interactive content is allowed. You must avoid plain text."
+            },
+            {
+              "name": "icon",
+              "description": "Optional icon"
+            },
+            {
+              "name": "legacy-slot",
+              "deprecated": true
+            }
+          ]
+        },
+        {
+          "kind": "class",
+          "name": "MyCard",
+          "tagName": "my-card",
+          "customElement": true,
+          "description": "A card",
+          "deprecated": "use my-panel instead",
+          "attributes": [
+            {
+              "name": "title",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "label",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "icon",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "loading",
+              "type": {
+                "text": "\"eager\" | \"lazy\""
+              }
+            },
+            {
+              "name": "lazy",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "boolean"
+              }
+            },
+            {
+              "name": "flipBoundary",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "interactive",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ],
+          "slots": [
+            {
+              "name": "title"
+            },
+            {
+              "name": "icon"
+            },
+            {
+              "name": "label"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "slot-only.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MySlotOnly",
+          "tagName": "my-slot-only",
+          "customElement": true,
+          "slots": [
+            {
+              "name": "title"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "closed-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyClosedCard",
+          "tagName": "my-closed-card",
+          "customElement": true,
+          "slots": []
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "string-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyStringCard",
+          "tagName": "my-string-card",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "loading",
+              "type": {
+                "text": "\"eager\" | \"lazy\""
+              }
+            },
+            {
+              "name": "lazy",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "name": "interactive",
+              "type": {
+                "text": "boolean"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "untyped-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyUntypedCard",
+          "tagName": "my-untyped-card",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "disabled"
+            },
+            {
+              "name": "interactive"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "aria-card.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "MyAriaCard",
+          "tagName": "my-aria-card",
+          "customElement": true,
+          "attributes": [
+            {
+              "name": "loading",
+              "type": {
+                "text": "\"eager\" | \"lazy\""
+              }
+            },
+            {
+              "name": "lazy",
+              "type": {
+                "text": "\"true\" | \"false\""
+              }
+            },
+            {
+              "name": "disabled",
+              "type": {
+                "text": "true | false"
+              }
+            },
+            {
+              "name": "interactive",
+              "type": {
+                "text": "\"true\" | \"false\""
+              }
+            },
+            {
+              "name": "aria-expanded",
+              "type": {
+                "text": "\"true\" | \"false\""
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

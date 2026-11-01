@@ -25,6 +25,10 @@ Validates:
 
 Use to validate custom element usage in HTML. Does NOT validate general HTML structure.
 
+Names and values follow HTML parsing semantics: tag and attribute names are matched case-insensitively (ASCII lowercase), character references are decoded, and when an attribute is repeated the first value is the one validated.
+
+Deprecated elements, deprecated attributes, deprecated slots, and unknown slots are reported by the exported `validate/markup` API but are not rendered by this tool. Attribute conflicts honor manifest types: boolean and untyped attributes are presence-based, while an enum containing both `true` and `false` treats a literal `false` as disabling. Content-attribute redundancy is reported only when a child element is actually assigned to the matching slot.
+
 ## Reference Resources
 
 For detailed information about element constraints and validation rules, consult these resources:

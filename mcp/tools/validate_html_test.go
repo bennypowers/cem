@@ -323,6 +323,101 @@ func TestValidateHtml_InvalidAttributeValue(t *testing.T) {
 	}
 }
 
+// Uppercase normalization is asserted inline because the point is agreement
+// between discovery and compliance output, not the full rendered document.
+func TestValidateHtml_UppercaseMarkup(t *testing.T) {
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/multiple-elements-integration")
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	registry, err := mcp.NewMCPContext(workspace, nil)
+	require.NoError(t, err)
+
+	err = registry.LoadManifests()
+	require.NoError(t, err)
+
+	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+
+	html := `<BUTTON-ELEMENT VARIANT="invalid-value">Call to action</BUTTON-ELEMENT>`
+
+	argsJSON, err := json.Marshal(map[string]any{
+		"html":    html,
+		"context": "uppercase validation",
+	})
+	require.NoError(t, err)
+
+	req := &mcpSDK.CallToolRequest{
+		Params: &mcpSDK.CallToolParamsRaw{
+			Name:      "validate_html",
+			Arguments: json.RawMessage(argsJSON),
+		},
+	}
+
+	handler := tools.MakeValidateHtmlHandler(registryAdapter)
+	result, err := handler(context.Background(), req)
+	require.NoError(t, err)
+	require.Len(t, result.Content, 1)
+
+	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
+	require.True(t, ok)
+
+	// Uppercase markup is normalized, so discovery and compliance agree.
+	assert.Contains(t, textContent.Text, "## Custom Elements Found")
+	assert.Contains(t, textContent.Text, "`button-element`")
+	assert.Contains(t, textContent.Text, "Invalid Attribute Value")
+	assert.Contains(t, textContent.Text, `variant="invalid-value"`)
+}
+
+// The rendered sections are asserted inline because this test pins the mapping
+// from markup rules to template data, not the whole document.
+func TestValidateHtml_StrictMarkupMapping(t *testing.T) {
+	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/strict-markup")
+	err := workspace.Init()
+	require.NoError(t, err)
+
+	registry, err := mcp.NewMCPContext(workspace, nil)
+	require.NoError(t, err)
+
+	err = registry.LoadManifests()
+	require.NoError(t, err)
+
+	registryAdapter := mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+
+	html := `<strict-panel variant="bogus" disabled interactive label="Save"><span slot="label">Name</span><span slot="nope">x</span></strict-panel>`
+
+	argsJSON, err := json.Marshal(map[string]any{
+		"html":    html,
+		"context": "strict validation",
+	})
+	require.NoError(t, err)
+
+	req := &mcpSDK.CallToolRequest{
+		Params: &mcpSDK.CallToolParamsRaw{
+			Name:      "validate_html",
+			Arguments: json.RawMessage(argsJSON),
+		},
+	}
+
+	handler := tools.MakeValidateHtmlHandler(registryAdapter)
+	result, err := handler(context.Background(), req)
+	require.NoError(t, err)
+	require.Len(t, result.Content, 1)
+
+	textContent, ok := result.Content[0].(*mcpSDK.TextContent)
+	require.True(t, ok)
+
+	assert.Contains(t, textContent.Text, "Invalid Attribute Value")
+	assert.Contains(t, textContent.Text, `variant="bogus"`)
+	assert.Contains(t, textContent.Text, "### ❌ Slot Content Issues")
+	assert.Contains(t, textContent.Text, "slot `label`")
+	assert.Contains(t, textContent.Text, "### ⚠️ Attribute Conflicts")
+	assert.Contains(t, textContent.Text, "`disabled=\"\"` conflicts with `interactive=\"\"`")
+	assert.Contains(t, textContent.Text, "### 🔄 Content/Attribute Redundancy")
+	assert.Contains(t, textContent.Text, "Attribute `label=\"Save\"`")
+	// Unknown-slot findings stay unrendered to keep the tool output stable.
+	assert.NotContains(t, textContent.Text, "Unknown slot")
+}
+
 func TestValidateHtml_AttributeValueParsing_Regression(t *testing.T) {
 	// Regression test for attribute value parsing bug where boolean attributes
 	// cause misaligned indices between attr.name and attr.value arrays

@@ -1,0 +1,28 @@
+[
+  {
+    "rule": "unknown-slot",
+    "severity": "error",
+    "confidence": "high",
+    "message": "Unknown slot 'nope' for element <my-button>. Available slots: 'label', 'icon', 'legacy-slot'",
+    "element": "span",
+    "line": 2,
+    "column": 8,
+    "details": {
+      "parent": "my-button",
+      "slot": "nope"
+    }
+  },
+  {
+    "rule": "deprecated-slot",
+    "severity": "warning",
+    "confidence": "high",
+    "message": "Slot 'legacy-slot' on 'my-button' is deprecated",
+    "element": "span",
+    "line": 3,
+    "column": 8,
+    "details": {
+      "parent": "my-button",
+      "slot": "legacy-slot"
+    }
+  }
+]
