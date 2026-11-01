@@ -785,6 +785,27 @@ func TestSchemaDoesNotCacheWithoutRemove(t *testing.T) {
 	if _, err := fsys.Stat(cachePath); !errors.Is(err, fs.ErrNotExist) {
 		t.Errorf("cache file exists even though the filesystem cannot clean up a failed write")
 	}
+
+	// A later call with a filesystem that can cache must still work: skipping
+	// the unsafe write must not leave state that blocks a successful cache.
+	healthy := platform.NewMapFileSystem(nil)
+	third, err := Schema(healthy, "9.9.9")
+	if err != nil {
+		t.Fatalf("Schema with a writable filesystem: %v", err)
+	}
+	if !bytes.Equal(third, fetched) {
+		t.Errorf("Schema with a writable filesystem returned %q, want the fetched schema", third)
+	}
+	if fetches != 3 {
+		t.Errorf("fetches = %d, want 3", fetches)
+	}
+	cached, err := healthy.ReadFile(cachePath)
+	if err != nil {
+		t.Fatalf("reading cache from writable filesystem: %v", err)
+	}
+	if !bytes.Equal(cached, fetched) {
+		t.Errorf("cached schema = %q, want the complete fetched schema", cached)
+	}
 }
 
 // TestValidateNoNetworkDoesNotFetch verifies that ValidationOptions.NoNetwork

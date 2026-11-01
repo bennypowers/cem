@@ -88,10 +88,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 // value also implements WriteFile, MkdirAll, and Remove, schemas fetched from
 // unpkg are cached; a read-only implementation returns them without caching.
 // TempFile remains exported for implementations that expose a CreateTemp
-// method. Use
-// NewOSFileSystem for the host operating system, or implement ReadFS for
-// in-memory or sandboxed input. For finer control, build a ValidationPipeline
-// with NewValidationPipeline and call its Validate method directly.
+// method. Use NewOSFileSystem for the host operating system, or implement
+// ReadFS for in-memory or sandboxed input. For finer control, build a
+// ValidationPipeline with NewValidationPipeline and call its Validate method
+// directly.
 //
 // Schema fetches a schema from unpkg when the version is neither embedded nor
 // cached. Callers that must not use the network can pass WithoutNetwork to
