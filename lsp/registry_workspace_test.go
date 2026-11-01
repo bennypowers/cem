@@ -17,10 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package lsp_test
 
 import (
+	"errors"
+	"fmt"
+	"io/fs"
+	"strings"
 	"testing"
 
-	"bennypowers.dev/cem/lsp"
 	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
+	"bennypowers.dev/cem/lsp"
+	cemtypes "bennypowers.dev/cem/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -136,4 +141,27 @@ func TestWorkspaceManifestLoading_pnpm(t *testing.T) {
 		assert.Contains(t, allTagNames, "my-element-a")
 		assert.Contains(t, allTagNames, "my-element-b")
 	})
+}
+
+// unsupportedNodeModulesWorkspace models a workspace that cannot inspect
+// node_modules, such as a remote workspace. The wrapped stdlib sentinel is
+// what external WorkspaceContext implementations can produce.
+type unsupportedNodeModulesWorkspace struct {
+	cemtypes.WorkspaceContext
+}
+
+func (w unsupportedNodeModulesWorkspace) ReadDir(path string) ([]fs.DirEntry, error) {
+	if strings.HasSuffix(path, "node_modules") {
+		return nil, fmt.Errorf("remote inspection: %w", errors.ErrUnsupported)
+	}
+	return w.WorkspaceContext.ReadDir(path)
+}
+
+func TestLoadFromWorkspaceStrictToleratesUnsupportedRemoteInspection(t *testing.T) {
+	base := testworkspace.NewMapWorkspaceContext(t, "testdata/integration/workspace-npm")
+	require.NoError(t, base.Init())
+
+	registry := lsp.NewRegistry(nil, base.FileSystem())
+	require.NoError(t, registry.LoadFromWorkspaceStrict(unsupportedNodeModulesWorkspace{WorkspaceContext: base}))
+	assert.NotEmpty(t, registry.AllTagNames())
 }

@@ -20,15 +20,18 @@ package mcp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"bennypowers.dev/cem/internal/platform"
 	testworkspace "bennypowers.dev/cem/internal/platform/testutil/workspace"
+	M "bennypowers.dev/cem/manifest"
 	cemtypes "bennypowers.dev/cem/types"
 	fileworkspace "bennypowers.dev/cem/workspace"
 	"github.com/google/jsonschema-go/jsonschema"
@@ -201,6 +204,21 @@ func TestRegisterResourceAndTemplateFilters(t *testing.T) {
 		assert.Equal(t, []string{"cem://element/{tagName}"}, listRegisterTestResourceTemplateURIs(t, client))
 		assert.NotEmpty(t, listRegisterTestResourceURIs(t, client),
 			"template filters must not affect static resources")
+	})
+
+	t.Run("template exclude wins over include", func(t *testing.T) {
+		server := newRegisterOptionsTestServer(t)
+		_, err := Register(server, workspace, config, WithTemplates(Selection{
+			Include: []string{"cem://element/{tagName}", "cem://element/{tagName}/attributes"},
+			Exclude: []string{"cem://element/{tagName}"},
+		}))
+		require.NoError(t, err)
+
+		client := connectRegisterTestClient(t, server)
+		assert.Equal(t,
+			[]string{"cem://element/{tagName}/attributes"},
+			listRegisterTestResourceTemplateURIs(t, client),
+		)
 	})
 
 	t.Run("exclude everything from a category", func(t *testing.T) {
@@ -493,6 +511,68 @@ func TestRegisterConflictPolicies(t *testing.T) {
 		assert.NotEqual(t, "host handler", text.Text)
 	})
 
+	t.Run("filtered-out conflicts do not fail ConflictError", func(t *testing.T) {
+		server := newRegisterOptionsTestServer(t)
+		addHostTool(server, "generate_config", "host handler")
+
+		_, err := Register(server, workspace, config,
+			WithTools(Selection{Include: []string{"validate_html"}}),
+			WithConflictPolicy(ConflictError),
+		)
+		require.NoError(t, err)
+
+		client := connectRegisterTestClient(t, server)
+		assert.Equal(t, []string{"generate_config", "validate_html"}, listRegisterTestToolNames(t, client))
+	})
+
+	t.Run("filtered-out resource conflicts do not fail ConflictError", func(t *testing.T) {
+		server := newRegisterOptionsTestServer(t)
+		addHostResource(server, "cem://elements", "host resource")
+
+		_, err := Register(server, workspace, config,
+			WithResources(Selection{Include: []string{"cem://packages"}}),
+			WithConflictPolicy(ConflictError),
+		)
+		require.NoError(t, err)
+
+		client := connectRegisterTestClient(t, server)
+		assert.Equal(t, []string{"cem://elements", "cem://packages"}, listRegisterTestResourceURIs(t, client))
+		assert.Equal(t, "host resource", readRegisterOptionsTestResource(t, client, "cem://elements"))
+	})
+
+	t.Run("filtered-out template conflicts do not fail ConflictError", func(t *testing.T) {
+		server := newRegisterOptionsTestServer(t)
+		addHostResourceTemplate(server, "cem://element/{tagName}", "host template")
+
+		_, err := Register(server, workspace, config,
+			WithTemplates(Selection{Include: []string{"cem://element/{tagName}/attributes"}}),
+			WithConflictPolicy(ConflictError),
+		)
+		require.NoError(t, err)
+
+		client := connectRegisterTestClient(t, server)
+		assert.Equal(t,
+			[]string{"cem://element/{tagName}", "cem://element/{tagName}/attributes"},
+			listRegisterTestResourceTemplateURIs(t, client),
+		)
+		assert.Equal(t, "host template", readRegisterOptionsTestResource(t, client, "cem://element/test-element"))
+	})
+
+	t.Run("default options replace on conflict", func(t *testing.T) {
+		server := newRegisterOptionsTestServer(t)
+		addHostTool(server, "generate_config", "host handler")
+
+		_, err := Register(server, workspace, config)
+		require.NoError(t, err)
+
+		client := connectRegisterTestClient(t, server)
+		result := callRegisterOptionsTestTool(t, client, "generate_config", map[string]any{"focus": "generate"})
+		require.NotEmpty(t, result.Content)
+		text, ok := result.Content[0].(*mcp.TextContent)
+		require.True(t, ok)
+		assert.Contains(t, text.Text, "Current config")
+	})
+
 	t.Run("last conflict policy wins", func(t *testing.T) {
 		server := newRegisterOptionsTestServer(t)
 		addHostTool(server, "generate_config", "host handler")
@@ -543,6 +623,36 @@ func TestRegisterDoesNotAllocateFileWatcher(t *testing.T) {
 	t.Cleanup(func() { _ = cemServer.Registry().LSPRegistry().StopFileWatching() })
 	assert.NotNil(t, cemServer.Registry().LSPRegistry().GetFileWatcher(),
 		"NewServerWithConfig must keep its watch lifecycle")
+}
+
+func TestServerReloadFromWatcherRefreshesManifestAndConfig(t *testing.T) {
+	workspace, manifestPath, configPath := newReloadTestWorkspaceWithConfig(t,
+		reloadTestManifest("original description"),
+		"serve:\n  port: 5000\n",
+	)
+
+	server, err := NewServerWithConfig(workspace, ServerConfig{})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = server.Registry().LSPRegistry().StopFileWatching() })
+
+	require.NoError(t, server.Registry().LoadManifests())
+
+	config, err := server.Registry().Config()
+	require.NoError(t, err)
+	assert.Equal(t, 5000, config.Serve.Port)
+
+	client := connectRegisterTestClient(t, server.server)
+	assert.Contains(t, readRegisterOptionsTestResource(t, client, "cem://element/reload-element"), "original description")
+
+	writeReloadTestFile(t, manifestPath, reloadTestManifest("updated description"))
+	writeReloadTestFile(t, configPath, "serve:\n  port: 6000\n")
+	server.reloadFromWatcher()
+
+	assert.Contains(t, readRegisterOptionsTestResource(t, client, "cem://element/reload-element"), "updated description",
+		"the watcher path must invalidate the manifest cache before reloading")
+	config, err = server.Registry().Config()
+	require.NoError(t, err)
+	assert.Equal(t, 6000, config.Serve.Port, "the watcher path must invalidate the configuration cache")
 }
 
 func TestRegistrationReloadReadsUpdatedManifest(t *testing.T) {
@@ -669,6 +779,37 @@ func TestRegistrationReloadZeroValueReturnsError(t *testing.T) {
 	})
 }
 
+func TestRegisterConflictPreflightFiresInitializedHandler(t *testing.T) {
+	workspace := newRegisterOptionsTestWorkspace(t)
+	config := ServerConfig{MaxDescriptionLength: 2000}
+
+	var defaultCalls int
+	defaultServer := mcp.NewServer(&mcp.Implementation{
+		Name:    "host-server",
+		Version: "test",
+	}, &mcp.ServerOptions{
+		InitializedHandler: func(context.Context, *mcp.InitializedRequest) {
+			defaultCalls++
+		},
+	})
+	_, err := Register(defaultServer, workspace, config)
+	require.NoError(t, err)
+	assert.Zero(t, defaultCalls, "ConflictReplace must not open a preflight session")
+
+	var conflictCalls int
+	conflictServer := mcp.NewServer(&mcp.Implementation{
+		Name:    "host-server",
+		Version: "test",
+	}, &mcp.ServerOptions{
+		InitializedHandler: func(context.Context, *mcp.InitializedRequest) {
+			conflictCalls++
+		},
+	})
+	_, err = Register(conflictServer, workspace, config, WithConflictPolicy(ConflictError))
+	require.NoError(t, err)
+	assert.Equal(t, 1, conflictCalls, "preflight opens and initializes one in-memory session")
+}
+
 func TestRegisterSecondCallIsAdditive(t *testing.T) {
 	workspace := newRegisterOptionsTestWorkspace(t)
 	config := ServerConfig{MaxDescriptionLength: 2000}
@@ -730,6 +871,31 @@ func TestRegistrationReloadContextErrors(t *testing.T) {
 		"rejected reloads must not change the served state")
 }
 
+func TestRegistrationReloadCanceledDuringLoadDoesNotSwap(t *testing.T) {
+	base, _ := newReloadTestWorkspace(t, reloadTestManifest("original description"))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	workspace := &cancelOnManifestWorkspace{
+		WorkspaceContext: base,
+		cancel:           cancel,
+	}
+
+	server := newRegisterOptionsTestServer(t)
+	handle, err := Register(server, workspace, ServerConfig{})
+	require.NoError(t, err)
+
+	before := handle.registry.current.Load()
+	workspace.armed.Store(true)
+
+	err = handle.Reload(ctx)
+	require.ErrorIs(t, err, context.Canceled)
+	assert.Same(t, before, handle.registry.current.Load(),
+		"a canceled reload must not swap the registry after loading")
+
+	client := connectRegisterTestClient(t, server)
+	assert.Contains(t, readRegisterOptionsTestResource(t, client, "cem://element/reload-element"), "original description")
+}
+
 func TestValidateReloadManifestStatErrors(t *testing.T) {
 	workspace, _ := newReloadTestWorkspace(t, reloadTestManifest("original description"))
 
@@ -742,6 +908,26 @@ func TestValidateReloadManifestStatErrors(t *testing.T) {
 		WorkspaceContext: workspace,
 		err:              fs.ErrPermission,
 	}), fs.ErrPermission)
+
+	require.NoError(t, validateReloadManifest(statErrorWorkspace{
+		WorkspaceContext: workspace,
+		err:              fmt.Errorf("remote inspection: %w", errors.ErrUnsupported),
+	}), "unsupported local inspection is handled by the in-memory generation fallback")
+
+	require.ErrorContains(t, validateReloadManifest(statErrorWorkspace{
+		WorkspaceContext: workspace,
+		err:              errors.ErrUnsupported,
+		manifestErr:      errors.New("malformed manifest"),
+	}), "malformed manifest", "a readable but malformed manifest must still fail reload")
+
+	require.NoError(t, validateReloadManifest(statErrorWorkspace{
+		WorkspaceContext: workspace,
+		err:              errors.ErrUnsupported,
+		manifestErr:      fs.ErrNotExist,
+	}), "an unavailable manifest may use the generation fallback")
+
+	require.NoError(t, validateReloadManifest(emptyManifestPathWorkspace{WorkspaceContext: workspace}),
+		"a workspace without a manifest path is not a reload failure")
 }
 
 func TestRegistrationReloadWithoutCacheInvalidatorUsesCachedWorkspaceData(t *testing.T) {
@@ -754,9 +940,14 @@ func TestRegistrationReloadWithoutCacheInvalidatorUsesCachedWorkspaceData(t *tes
 
 	client := connectRegisterTestClient(t, server)
 	assert.Contains(t, readRegisterOptionsTestResource(t, client, "cem://element/reload-element"), "original description")
+	before := handle.registry.current.Load()
 
 	writeReloadTestFile(t, manifestPath, reloadTestManifest("updated description"))
 	require.NoError(t, handle.Reload(context.Background()))
+
+	after := handle.registry.current.Load()
+	require.NotSame(t, before, after, "Reload must rebuild the registry even without types.CacheInvalidator")
+	assert.NotEmpty(t, after.GetAllElements())
 
 	assert.Contains(t, readRegisterOptionsTestResource(t, client, "cem://element/reload-element"), "original description",
 		"without types.CacheInvalidator, Reload rebuilds from the workspace's cached data")
@@ -775,7 +966,9 @@ func TestRegistrationReloadFailsWhenAdditionalPackageFails(t *testing.T) {
 	client := connectRegisterTestClient(t, server)
 	assert.Contains(t, readRegisterOptionsTestResource(t, client, "cem://element/reload-element"), "original description")
 
-	require.Error(t, handle.Reload(context.Background()), "Reload must fail when an additional package fails")
+	err = handle.Reload(context.Background())
+	require.ErrorContains(t, err, "additional package")
+	require.ErrorContains(t, err, "does-not-exist")
 
 	assert.Contains(t, readRegisterOptionsTestResource(t, client, "cem://element/reload-element"), "original description",
 		"a failed reload must leave the previous state active")
@@ -806,6 +999,15 @@ func TestRegistrationReloadKeepsConfigSnapshotOnFailure(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 5000, cfg.Serve.Port,
 		"the previous generation must keep its configuration snapshot")
+
+	writeReloadTestFile(t, configPath, "serve:\n  port: 6000\n")
+	require.NoError(t, handle.Reload(context.Background()))
+	next := handle.registry.current.Load()
+	require.NotSame(t, active, next)
+	cfg, err = next.Config()
+	require.NoError(t, err)
+	assert.Equal(t, 6000, cfg.Serve.Port,
+		"a successful reload must serve the updated configuration")
 }
 
 func TestRegistrationReloadReusesDocumentManager(t *testing.T) {
@@ -816,9 +1018,11 @@ func TestRegistrationReloadReusesDocumentManager(t *testing.T) {
 	require.NoError(t, err)
 
 	before := handle.registry.current.Load().DocumentManager()
-	require.NoError(t, handle.Reload(context.Background()))
-	after := handle.registry.current.Load().DocumentManager()
-	assert.Same(t, before, after, "reload generations must reuse the tree-sitter document manager")
+	for range 5 {
+		require.NoError(t, handle.Reload(context.Background()))
+		after := handle.registry.current.Load().DocumentManager()
+		assert.Same(t, before, after, "every reload generation must reuse the tree-sitter document manager")
+	}
 }
 
 func TestRegistrationConcurrentReloads(t *testing.T) {
@@ -888,14 +1092,23 @@ func newReloadTestWorkspaceWithConfig(t *testing.T, manifest, config string) (ce
 	return workspace, manifestPath, configPath
 }
 
-// statErrorWorkspace overrides Stat so tests can exercise validation errors.
+// statErrorWorkspace overrides Stat and Manifest so tests can exercise
+// validation errors.
 type statErrorWorkspace struct {
 	cemtypes.WorkspaceContext
-	err error
+	err         error
+	manifestErr error
 }
 
 func (w statErrorWorkspace) Stat(string) (fs.FileInfo, error) {
 	return nil, w.err
+}
+
+func (w statErrorWorkspace) Manifest() (*M.Package, error) {
+	if w.manifestErr != nil {
+		return nil, w.manifestErr
+	}
+	return w.WorkspaceContext.Manifest()
 }
 
 // nonInvalidatingWorkspace hides the base workspace's InvalidateConfig and
@@ -903,6 +1116,31 @@ func (w statErrorWorkspace) Stat(string) (fs.FileInfo, error) {
 // does not implement types.CacheInvalidator.
 type nonInvalidatingWorkspace struct {
 	cemtypes.WorkspaceContext
+}
+
+// cancelOnManifestWorkspace cancels a reload context when Manifest is read
+// after the test arms it, so the post-load cancellation check is exercised.
+type cancelOnManifestWorkspace struct {
+	cemtypes.WorkspaceContext
+	cancel context.CancelFunc
+	armed  atomic.Bool
+}
+
+func (w *cancelOnManifestWorkspace) Manifest() (*M.Package, error) {
+	if w.armed.Load() {
+		w.cancel()
+	}
+	return w.WorkspaceContext.Manifest()
+}
+
+// emptyManifestPathWorkspace models a workspace that does not expose a
+// manifest path, for example one that relies entirely on generation.
+type emptyManifestPathWorkspace struct {
+	cemtypes.WorkspaceContext
+}
+
+func (w emptyManifestPathWorkspace) CustomElementsManifestPath() string {
+	return ""
 }
 
 // rootPanicWorkspace proves option validation does not touch the workspace.

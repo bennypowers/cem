@@ -20,6 +20,7 @@ import (
 	"io"
 	"testing"
 
+	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/platform/testutil/workspace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -207,4 +208,33 @@ func TestMapWorkspaceContext_Cleanup(t *testing.T) {
 	err := ctx.Init()
 	require.NoError(t, err)
 	assert.NoError(t, ctx.Cleanup())
+}
+
+func TestMapWorkspaceContext_InvalidateConfig(t *testing.T) {
+	mfs := platform.NewMapFileSystem(nil)
+	mfs.AddFile("/package.json", `{"name": "invalidate-config"}`, 0o644)
+	mfs.AddFile("/.config/cem.yaml", "serve:\n  port: 5000\n", 0o644)
+
+	ctx := workspace.NewMapWorkspaceContextFromFS(mfs, "/")
+	require.NoError(t, ctx.Init())
+
+	config, err := ctx.Config()
+	require.NoError(t, err)
+	require.NotNil(t, config)
+	assert.Equal(t, 5000, config.Serve.Port)
+
+	mfs.AddFile("/.config/cem.yaml", "serve:\n  port: 6000\n", 0o644)
+	ctx.InvalidateConfig()
+
+	config, err = ctx.Config()
+	require.NoError(t, err)
+	require.NotNil(t, config)
+	assert.Equal(t, 6000, config.Serve.Port)
+
+	mfs.AddFile("/.config/cem.yaml", "serve: [\n", 0o644)
+	ctx.InvalidateConfig()
+
+	config, err = ctx.Config()
+	require.Error(t, err)
+	assert.Nil(t, config, "a failed config invalidation must not publish the previous config")
 }

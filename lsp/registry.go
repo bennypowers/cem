@@ -180,14 +180,19 @@ func (r *Registry) LoadFromWorkspace(workspace types.WorkspaceContext) error {
 }
 
 // LoadFromWorkspaceStrict loads all available custom elements manifests from
-// the workspace context and returns an error if a manifest source cannot be
-// loaded. Missing optional sources, such as node_modules, are not failures.
+// the workspace context and returns an error for failures that the strict path
+// treats as fatal. These are workspace manifest failures when in-memory
+// generation also fails, configuration and config-declared additional packages,
+// and node_modules inspection. Individual manifests discovered under workspace
+// packages or node_modules, and workspace-package pattern expansion, remain
+// best effort, matching the non-strict loader. Missing optional sources, such
+// as node_modules or unsupported remote inspection, are not failures.
 func (r *Registry) LoadFromWorkspaceStrict(workspace types.WorkspaceContext) error {
 	return r.loadFromWorkspace(workspace, true)
 }
 
-func (r *Registry) loadFromWorkspace(workspace types.WorkspaceContext, strict bool) error {
-	logging.Info("[REGISTRY] Loading manifests from workspace root: %s", workspace.Root())
+func (r *Registry) loadFromWorkspace(ws types.WorkspaceContext, strict bool) error {
+	logging.Info("[REGISTRY] Loading manifests from workspace root: %s", ws.Root())
 
 	// Clear existing data
 	r.clear()
@@ -204,25 +209,28 @@ func (r *Registry) loadFromWorkspace(workspace types.WorkspaceContext, strict bo
 	}
 
 	// 1. Load manifest from workspace itself (if available)
-	record("workspace manifest", r.loadWorkspaceManifest(workspace))
+	record("workspace manifest", r.loadWorkspaceManifest(ws))
 
 	// 2. Load manifests from workspace packages (npm/yarn/pnpm workspaces)
-	record("workspace package manifests", r.loadWorkspacePackageManifests(workspace))
+	record("workspace package manifests", r.loadWorkspacePackageManifests(ws))
 
 	// 3. Load manifests from node_modules packages. A missing node_modules
-	// directory is normal and is not a reload failure.
-	if err := r.loadNodeModulesManifests(workspace); err != nil && !errors.Is(err, fs.ErrNotExist) {
+	// directory and workspaces without local inspection are normal and are not
+	// reload failures.
+	if err := r.loadNodeModulesManifests(ws); err != nil &&
+		!errors.Is(err, fs.ErrNotExist) &&
+		!errors.Is(err, errors.ErrUnsupported) {
 		record("node_modules manifests", err)
 	}
 
 	// 4. Load manifests specified in config
-	record("config manifests", r.loadConfigManifests(workspace, strict))
+	record("config manifests", r.loadConfigManifests(ws, strict))
 
 	// 5. Initialize module graph for lazy building
 	// Instead of scanning the entire workspace upfront (which was 5000+ files),
 	// we now build the module graph lazily as imports are discovered in open documents.
 	// This provides fast startup while maintaining accurate re-export resolution.
-	r.initializeLazyModuleGraph(workspace)
+	r.initializeLazyModuleGraph(ws)
 
 	helpers.SafeDebugLog("Loaded %d custom elements from %d manifests", len(r.Elements), len(r.Manifests))
 	if strict {
@@ -691,7 +699,6 @@ func (r *Registry) generateInMemoryManifest(packagePath string, packageName stri
 	return pkg
 }
 
-// loadConfigManifests loads manifests specified in the config
 // loadConfigManifests loads manifests specified in the config. In strict
 // mode config and additional-package failures are returned.
 func (r *Registry) loadConfigManifests(workspace types.WorkspaceContext, strict bool) error {
@@ -720,26 +727,25 @@ func (r *Registry) loadConfigManifests(workspace types.WorkspaceContext, strict 
 // Accepts URLs (https://...), npm specifiers (npm:@scope/pkg), and jsr specifiers (jsr:...).
 // Packages that fail to load are logged as warnings; loading continues with remaining packages.
 func (r *Registry) LoadAdditionalPackages(packages []string) error {
-	var failed int
-	for _, spec := range packages {
-		if err := r.loadAdditionalPackage(spec); err != nil {
-			helpers.SafeDebugLog("Warning: Could not load additional package %s: %v", spec, err)
-			failed++
-			// Continue loading other packages
-		}
-	}
-	if failed > 0 {
-		helpers.SafeDebugLog("Loaded %d/%d additional packages (%d failed)", len(packages)-failed, len(packages), failed)
-	}
+	_ = r.loadAdditionalPackages(packages, func(spec string, err error) {
+		helpers.SafeDebugLog("Warning: Could not load additional package %s: %v", spec, err)
+	})
 	return nil
 }
 
 // LoadAdditionalPackagesStrict loads manifests from additional package
 // specifiers and returns an error listing every package that failed.
 func (r *Registry) LoadAdditionalPackagesStrict(packages []string) error {
+	return r.loadAdditionalPackages(packages, nil)
+}
+
+func (r *Registry) loadAdditionalPackages(packages []string, onError func(spec string, err error)) error {
 	var loadErrors []error
 	for _, spec := range packages {
 		if err := r.loadAdditionalPackage(spec); err != nil {
+			if onError != nil {
+				onError(spec, err)
+			}
 			loadErrors = append(loadErrors, fmt.Errorf("additional package %s: %w", spec, err))
 		}
 	}
