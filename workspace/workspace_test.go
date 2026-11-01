@@ -125,10 +125,42 @@ func TestNewFileSystemWorkspaceContextRejectsNonDirectory(t *testing.T) {
 }
 
 func TestNewFileSystemWorkspaceContextInvalidConfig(t *testing.T) {
-	ctx, err := cemworkspace.NewFileSystemWorkspaceContext("testdata/invalid-config")
+	dir := "testdata/invalid-config"
+
+	ctx, err := cemworkspace.NewFileSystemWorkspaceContext(dir)
 	require.Error(t, err)
 	assert.Nil(t, ctx)
 	assert.ErrorContains(t, err, "initializing")
+	assert.ErrorContains(t, err, dir)
+}
+
+func TestNewFileSystemWorkspaceContextMissingManifest(t *testing.T) {
+	ctx, err := cemworkspace.NewFileSystemWorkspaceContext("testdata/missing-manifest")
+	require.NoError(t, err)
+	require.NotNil(t, ctx)
+	t.Cleanup(func() { require.NoError(t, ctx.Cleanup()) })
+
+	manifest, err := ctx.Manifest()
+	require.Error(t, err)
+	assert.Nil(t, manifest)
+	assert.ErrorIs(t, err, fs.ErrNotExist)
+}
+
+func TestNewFileSystemWorkspaceContextDiscoversConfig(t *testing.T) {
+	dir := "testdata/config"
+
+	ctx, err := cemworkspace.NewFileSystemWorkspaceContext(dir)
+	require.NoError(t, err)
+	require.NotNil(t, ctx)
+	t.Cleanup(func() { require.NoError(t, ctx.Cleanup()) })
+
+	assert.Equal(t, filepath.Join(dir, ".config", "cem.yaml"), ctx.ConfigFile())
+
+	cfg, err := ctx.Config()
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+	assert.Equal(t, filepath.Join(dir, "dist", "custom-elements.json"), cfg.Generate.Output)
+	assert.Equal(t, cfg.Generate.Output, ctx.CustomElementsManifestPath())
 }
 
 // TestNewFileSystemWorkspaceContextSupportsRegister proves that the public
