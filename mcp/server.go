@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/version"
@@ -118,11 +119,11 @@ func Register(server *mcp.Server, workspace types.WorkspaceContext, config Serve
 	if server == nil {
 		return fmt.Errorf("server must not be nil")
 	}
-	if workspace == nil {
+	if isNilWorkspace(workspace) {
 		return fmt.Errorf("workspace must not be nil")
 	}
 
-	registry, err := NewMCPContext(workspace, config.FileSystem)
+	registry, err := newMCPContext(workspace, config.FileSystem, false)
 	if err != nil {
 		return fmt.Errorf("failed to create registry: %w", err)
 	}
@@ -131,14 +132,23 @@ func Register(server *mcp.Server, workspace types.WorkspaceContext, config Serve
 		return err
 	}
 
-	// Register does not watch for changes. NewMCPContext creates the file
-	// watcher eagerly, so close it rather than hold an inotify descriptor and
-	// goroutine for the server's lifetime.
-	if err := registry.LSPRegistry().StopFileWatching(); err != nil {
-		helpers.SafeDebugLog("Warning: Could not stop file watching: %v", err)
+	return register(server, registry)
+}
+
+// isNilWorkspace reports whether workspace is nil, including a typed nil
+// implementation stored in the interface.
+func isNilWorkspace(workspace types.WorkspaceContext) bool {
+	if workspace == nil {
+		return true
 	}
 
-	return register(server, registry)
+	value := reflect.ValueOf(workspace)
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
+	default:
+		return false
+	}
 }
 
 // loadRegistryData loads manifests and additional packages into registry.

@@ -183,6 +183,43 @@ func TestRegisterRejectsNilArguments(t *testing.T) {
 		err := Register(server, nil, ServerConfig{})
 		require.ErrorContains(t, err, "workspace must not be nil")
 	})
+
+	t.Run("typed-nil workspace", func(t *testing.T) {
+		var typedNil *testworkspace.MapWorkspaceContext
+		server := mcp.NewServer(&mcp.Implementation{
+			Name:    "host-server",
+			Version: "test",
+		}, nil)
+		err := Register(server, typedNil, ServerConfig{})
+		require.ErrorContains(t, err, "workspace must not be nil")
+	})
+}
+
+// TestRegisterAdditionalPackages exercises the AdditionalPackages branch
+// through a local fixture path. The fixture is read from disk because
+// additional packages resolve through the package workspace loader rather
+// than the test MapFS.
+func TestRegisterAdditionalPackages(t *testing.T) {
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/basic-integration")
+	require.NoError(t, workspace.Init())
+
+	hostServer := mcp.NewServer(&mcp.Implementation{
+		Name:    "host-server",
+		Version: "test",
+	}, nil)
+	require.NoError(t, Register(hostServer, workspace, ServerConfig{
+		MaxDescriptionLength: 2000,
+		AdditionalPackages:   []string{"./testdata/fixtures/multiple-elements-integration"},
+	}))
+
+	client := connectRegisterTestClient(t, hostServer)
+
+	result, err := client.ReadResource(context.Background(), &mcp.ReadResourceParams{
+		URI: "cem://element/button-element",
+	})
+	require.NoError(t, err, "an element from an additional package should be readable")
+	require.NotEmpty(t, result.Contents)
+	assert.NotEmpty(t, result.Contents[0].Text)
 }
 
 // TestRegisterToolCall works through a caller-owned server and verifies that
