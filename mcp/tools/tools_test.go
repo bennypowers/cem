@@ -27,12 +27,13 @@ import (
 	"bennypowers.dev/cem/mcp"
 	"bennypowers.dev/cem/mcp/templates"
 	"bennypowers.dev/cem/mcp/tools"
+	mcpTypes "bennypowers.dev/cem/mcp/types"
 	mcpSDK "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func getTestRegistry(t *testing.T) *mcp.MCPContextAdapter {
+func getTestRegistry(t *testing.T) mcpTypes.MCPContext {
 	workspace := testworkspace.NewMapWorkspaceContext(t, "../testdata/fixtures/multiple-elements-integration")
 	err := workspace.Init()
 	require.NoError(t, err)
@@ -43,7 +44,7 @@ func getTestRegistry(t *testing.T) *mcp.MCPContextAdapter {
 	err = registry.LoadManifests()
 	require.NoError(t, err)
 
-	return mcp.NewMCPContextAdapter(registry).(*mcp.MCPContextAdapter)
+	return mcp.NewMCPContextAdapter(registry)
 }
 
 func TestTemplateRenderer(t *testing.T) {

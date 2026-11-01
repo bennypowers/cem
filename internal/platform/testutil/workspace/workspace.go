@@ -48,6 +48,8 @@ type MapWorkspaceContext struct {
 	mfs                        *platform.MapFileSystem
 	root                       string
 	config                     *C.CemConfig
+	configErr                  error
+	configMu                   sync.RWMutex
 	customElementsManifestPath string
 	manifest                   *M.Package
 	manifestMu                 sync.RWMutex
@@ -114,6 +116,14 @@ func (c *MapWorkspaceContext) Init() error {
 	}
 
 	// Discover and load config from MapFS, mirroring FileSystemWorkspaceContext.initConfig
+	if err := c.loadConfig(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *MapWorkspaceContext) loadConfig() error {
 	if configPath := IC.FindConfigFile(c.root, c.mfs); configPath != "" {
 		cfg, err := IC.LoadConfig(configPath, c.mfs)
 		if err != nil {
@@ -127,16 +137,16 @@ func (c *MapWorkspaceContext) Init() error {
 			cfg.Generate.Exclude = make([]string, 0)
 		}
 		c.config = cfg
-	} else {
-		c.config = &IC.CemConfig{
-			ProjectDir: c.root,
-			Generate: IC.GenerateConfig{
-				Files:   make([]string, 0),
-				Exclude: make([]string, 0),
-			},
-		}
+		return nil
 	}
 
+	c.config = &IC.CemConfig{
+		ProjectDir: c.root,
+		Generate: IC.GenerateConfig{
+			Files:   make([]string, 0),
+			Exclude: make([]string, 0),
+		},
+	}
 	return nil
 }
 
@@ -145,12 +155,17 @@ func (c *MapWorkspaceContext) ConfigFile() string {
 }
 
 func (c *MapWorkspaceContext) Config() (*C.CemConfig, error) {
-	return c.config, nil
+	c.configMu.RLock()
+	defer c.configMu.RUnlock()
+	return c.config, c.configErr
 }
 
-// InvalidateConfig is a no-op: MapWorkspaceContext loads its configuration
-// from the in-memory filesystem during Init and does not re-read it.
-func (c *MapWorkspaceContext) InvalidateConfig() {}
+// InvalidateConfig re-reads the configuration from the in-memory filesystem.
+func (c *MapWorkspaceContext) InvalidateConfig() {
+	c.configMu.Lock()
+	defer c.configMu.Unlock()
+	c.configErr = c.loadConfig()
+}
 
 func (c *MapWorkspaceContext) PackageJSON() (*M.PackageJSON, error) {
 	return c.packageJSON, nil

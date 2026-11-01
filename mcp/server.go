@@ -100,7 +100,7 @@ func NewServerWithConfig(workspace types.WorkspaceContext, config ServerConfig) 
 //
 // Register must be called before server starts serving sessions: the SDK's
 // registration methods mutate the server's handler tables. The caller owns
-// the server and its long-lived lifecycle: Register does not start a
+// the server and its lifetime: Register does not start a long-lived serving
 // transport or file watching. It creates its own MCPContext and loads the
 // workspace manifests and any configured additional packages before
 // registering handlers, so the mounted tools and resources are usable as
@@ -564,6 +564,19 @@ func (s *Server) Registry() *MCPContext {
 	return s.registry
 }
 
+// reloadFromWatcher refreshes the in-place registry used by Run. It is the
+// lenient counterpart to Registration.Reload, which validates the manifest and
+// swaps a replacement generation. Keep cache invalidation changes in sync with
+// both paths.
+func (s *Server) reloadFromWatcher() {
+	helpers.SafeDebugLog("File change detected, reloading manifests and config")
+	s.registry.InvalidateConfig()
+	s.registry.InvalidateManifest()
+	if err := s.registry.LoadManifests(); err != nil {
+		helpers.SafeDebugLog("Warning: Failed to reload manifests: %v", err)
+	}
+}
+
 // Run starts the MCP server with stdio transport
 func (s *Server) Run(ctx context.Context) error {
 	helpers.SafeDebugLog("Starting CEM MCP server with stdio transport")
@@ -573,15 +586,11 @@ func (s *Server) Run(ctx context.Context) error {
 		return err
 	}
 
-	// Start file watching for manifest and config changes
-	if err := s.registry.LSPRegistry().StartFileWatching(func() {
-		helpers.SafeDebugLog("File change detected, reloading manifests and config")
-		s.registry.InvalidateConfig()
-		s.registry.InvalidateManifest()
-		if err := s.registry.LoadManifests(); err != nil {
-			helpers.SafeDebugLog("Warning: Failed to reload manifests: %v", err)
-		}
-	}); err != nil {
+	// Start file watching for manifest and config changes. This in-place
+	// recovery path is intentionally lenient. Registration.Reload is the strict
+	// path: it validates the manifest and swaps a replacement generation. Keep
+	// cache invalidation changes in sync with that path.
+	if err := s.registry.LSPRegistry().StartFileWatching(s.reloadFromWatcher); err != nil {
 		helpers.SafeDebugLog("Warning: Could not start file watching: %v", err)
 	}
 
