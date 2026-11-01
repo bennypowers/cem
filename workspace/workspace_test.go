@@ -176,7 +176,8 @@ func TestNewFileSystemWorkspaceContextSupportsRegister(t *testing.T) {
 		Name:    "external-embedder",
 		Version: "test",
 	}, nil)
-	require.NoError(t, mcp.Register(hostServer, ctx, mcp.ServerConfig{MaxDescriptionLength: 2000}))
+	_, err = mcp.Register(hostServer, ctx, mcp.ServerConfig{MaxDescriptionLength: 2000})
+	require.NoError(t, err)
 
 	client := connectInMemoryClient(t, hostServer)
 

@@ -27,6 +27,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 
 	C "bennypowers.dev/cem/cmd/config"
@@ -48,6 +49,7 @@ type MapWorkspaceContext struct {
 	config                     *C.CemConfig
 	customElementsManifestPath string
 	manifest                   *M.Package
+	manifestMu                 sync.RWMutex
 	packageJSON                *M.PackageJSON
 	designTokensCache          types.DesignTokensCache
 }
@@ -149,7 +151,21 @@ func (c *MapWorkspaceContext) PackageJSON() (*M.PackageJSON, error) {
 	return c.packageJSON, nil
 }
 
+// Manifest returns the parsed custom elements manifest, caching it after the
+// first successful read. InvalidateManifest clears the cache so the next call
+// re-reads the manifest.
 func (c *MapWorkspaceContext) Manifest() (*M.Package, error) {
+	c.manifestMu.RLock()
+	if c.manifest != nil {
+		manifest := c.manifest
+		c.manifestMu.RUnlock()
+		return manifest, nil
+	}
+	c.manifestMu.RUnlock()
+
+	c.manifestMu.Lock()
+	defer c.manifestMu.Unlock()
+
 	if c.manifest != nil {
 		return c.manifest, nil
 	}
@@ -171,6 +187,15 @@ func (c *MapWorkspaceContext) Manifest() (*M.Package, error) {
 
 	c.manifest = &pkg
 	return c.manifest, nil
+}
+
+// InvalidateManifest clears the cached manifest so the next Manifest call
+// re-reads it. It is safe to call concurrently with Manifest and other
+// readers.
+func (c *MapWorkspaceContext) InvalidateManifest() {
+	c.manifestMu.Lock()
+	c.manifest = nil
+	c.manifestMu.Unlock()
 }
 
 func (c *MapWorkspaceContext) CustomElementsManifestPath() string {

@@ -21,12 +21,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
+	"strings"
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/version"
 	"bennypowers.dev/cem/lsp/helpers"
 	"bennypowers.dev/cem/mcp/resources"
 	"bennypowers.dev/cem/mcp/tools"
+	MCPTypes "bennypowers.dev/cem/mcp/types"
 	"bennypowers.dev/cem/types"
 	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -67,72 +70,119 @@ func NewServer(workspace types.WorkspaceContext) (*Server, error) {
 func NewServerWithConfig(workspace types.WorkspaceContext, config ServerConfig) (*Server, error) {
 	helpers.SafeDebugLog("Creating CEM MCP server for workspace: %s", workspace.Root())
 
-	registry, err := NewMCPContext(workspace, config.FileSystem)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create registry: %w", err)
-	}
-
 	// Create MCP server
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    "cem",
 		Version: version.GetVersion(),
 	}, nil)
 
-	cemServer := &Server{
-		workspace: workspace,
-		registry:  registry,
-		server:    server,
-		config:    config,
-	}
-
 	// Registration is shared with Register so both entry points expose the
 	// same tools and resources. Unlike Register, this constructor defers
-	// manifest loading to Run, preserving the existing lifecycle.
-	if err := register(server, registry); err != nil {
+	// manifest loading to Run, preserving the existing lifecycle, and keeps
+	// the watcher-enabled registry that Run starts.
+	registration, err := mount(server, workspace, config, registerConfig{conflict: ConflictReplace}, true, false)
+	if err != nil {
 		return nil, err
 	}
 
-	return cemServer, nil
+	return &Server{
+		workspace: workspace,
+		registry:  registration.registry.load(),
+		server:    server,
+		config:    config,
+	}, nil
 }
 
-// Register adds cem's tools and resources to an existing MCP server.
+// Register adds cem's tools and resources to an existing MCP server and
+// returns a handle for reloading the workspace data behind them.
 //
 // Register must be called before server starts serving sessions: the SDK's
-// registration methods mutate the server's handler tables.
+// registration methods mutate the server's handler tables. The caller owns
+// the server and its lifecycle: Register does not start a transport or file
+// watching. It creates its own MCPContext and loads the workspace manifests
+// and any configured additional packages before registering handlers, so the
+// mounted tools and resources are usable as soon as Register returns. The
+// workspace must already be initialized.
 //
-// The caller owns the server and its lifecycle: Register does not start a
-// transport or file watching. It creates its own MCPContext, loads the
-// workspace manifests and any configured additional packages before
-// registering handlers, so the mounted tools and resources are usable as
-// soon as Register returns. The workspace must already be initialized.
+// Options select part of cem's surface and choose how to treat entries that
+// already exist on server. With no options, Register exposes every tool and
+// resource and replaces conflicting entries, which is the behavior before
+// options existed.
 //
-// Tool names and resource URIs are registered as-is, replacing any existing
-// entry with the same name or URI on server. Additional package failures are
-// logged but do not fail registration, matching Run. If registration fails
-// partway, server may already hold some cem tools or resources; callers
-// should discard it.
+// Filters match tool names, static resource URIs, or URI template strings
+// exactly and case-sensitively. Include selects a subset; an empty Include
+// selects everything. Exclude is applied after Include and wins on overlap.
+// An unknown Include entry is an error, while an unknown Exclude entry is
+// accepted so hosts can keep a stable deny list across cem versions. Empty
+// strings in either list are rejected. Repeated filter options accumulate,
+// and the last WithConflictPolicy wins.
 //
-// Callers that need manifest reloads or file watching on their own server
-// cannot get them from Register. NewServerWithConfig and Run provide that
-// lifecycle, but they own the SDK server and use stdio.
-func Register(server *mcp.Server, workspace types.WorkspaceContext, config ServerConfig) error {
+// ConflictError and ConflictSkip inspect the server's current tools and
+// resources through a temporary in-memory session before registering.
+// ConflictError fails when any selected entry already exists. ConflictSkip
+// leaves such entries in place and registers only the rest. All option
+// validation and conflict detection happen before the first handler is
+// registered, so an error leaves server unchanged.
+//
+// The returned Registration reloads the manifests, configuration, and
+// additional packages behind the registered handlers. Reload does not change
+// the registered tools, resources, schemas, or URIs; calling Register again is
+// a replacement operation, not a reload.
+func Register(server *mcp.Server, workspace types.WorkspaceContext, config ServerConfig, opts ...RegisterOption) (*Registration, error) {
 	if server == nil {
-		return fmt.Errorf("server must not be nil")
+		return nil, fmt.Errorf("server must not be nil")
 	}
 	if isNilWorkspace(workspace) {
-		return fmt.Errorf("workspace must not be nil")
+		return nil, fmt.Errorf("workspace must not be nil")
 	}
 
-	registry, err := newMCPContext(workspace, config.FileSystem, false)
+	cfg, err := applyRegisterOptions(opts)
 	if err != nil {
-		return fmt.Errorf("failed to create registry: %w", err)
+		return nil, err
 	}
 
-	if err := loadRegistryData(registry, config.AdditionalPackages, "config"); err != nil {
-		return err
+	return mount(server, workspace, config, cfg, false, true)
+}
+
+// mount builds a registry, applies registration options, and adds the
+// selected handlers to server. watch controls whether the underlying LSP
+// registry allocates a file watcher. load controls whether workspace data is
+// loaded before registration; NewServerWithConfig defers that load to Run.
+func mount(server *mcp.Server, workspace types.WorkspaceContext, config ServerConfig, cfg registerConfig, watch, load bool) (*Registration, error) {
+	initial, err := newMCPContext(workspace, config.FileSystem, watch)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create registry: %w", err)
 	}
 
-	return register(server, registry)
+	if load {
+		if err := loadRegistryData(initial, config.AdditionalPackages, "config"); err != nil {
+			return nil, err
+		}
+	}
+
+	registry := newReloadableContext(initial)
+	plan, err := buildRegistrationPlan(registry, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	if cfg.conflict != ConflictReplace {
+		existing, err := existingServerSurface(server)
+		if err != nil {
+			return nil, err
+		}
+		if err := plan.resolveConflicts(existing, cfg.conflict); err != nil {
+			return nil, err
+		}
+	}
+
+	plan.register(server)
+
+	return &Registration{
+		workspace: workspace,
+		config:    config,
+		registry:  registry,
+	}, nil
 }
 
 // isNilWorkspace reports whether workspace is nil, including a typed nil
@@ -168,15 +218,297 @@ func loadRegistryData(registry *MCPContext, additionalPackages []string, source 
 	return nil
 }
 
-// register adds every cem tool and resource to server using registry.
-func register(server *mcp.Server, registry *MCPContext) error {
-	if err := registerTools(server, registry); err != nil {
-		return fmt.Errorf("failed to register tools: %w", err)
+// registeredTool is a tool definition paired with its handler.
+type registeredTool struct {
+	tool    *mcp.Tool
+	handler mcp.ToolHandler
+}
+
+// registeredResource is a resource or resource template paired with its
+// handler.
+type registeredResource struct {
+	resource *mcp.Resource
+	template *mcp.ResourceTemplate
+	handler  mcp.ResourceHandler
+}
+
+// registrationPlan holds the filtered definitions that registration will add.
+type registrationPlan struct {
+	tools     []registeredTool
+	resources []registeredResource
+}
+
+// buildRegistrationPlan loads the static tool and resource definitions,
+// applies filters, and converts every selected definition before any handler
+// is registered.
+func buildRegistrationPlan(registry MCPTypes.MCPContext, cfg registerConfig) (*registrationPlan, error) {
+	toolDefs, err := tools.Tools(registry)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load tool definitions: %w", err)
 	}
-	if err := registerResources(server, registry); err != nil {
-		return fmt.Errorf("failed to register resources: %w", err)
+
+	resourceDefs, err := resources.Resources(registry)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load resource definitions: %w", err)
 	}
-	return nil
+
+	toolNames := make([]string, 0, len(toolDefs))
+	for _, def := range toolDefs {
+		toolNames = append(toolNames, def.Name)
+	}
+	selectedTools, err := selectNames("tool", cfg.tools, toolNames)
+	if err != nil {
+		return nil, err
+	}
+
+	var resourceURIs, templateURIs []string
+	for _, def := range resourceDefs {
+		if def.URITemplate {
+			templateURIs = append(templateURIs, def.URI)
+		} else {
+			resourceURIs = append(resourceURIs, def.URI)
+		}
+	}
+	selectedResources, err := selectNames("resource", cfg.resources, resourceURIs)
+	if err != nil {
+		return nil, err
+	}
+	selectedTemplates, err := selectNames("resource template", cfg.templates, templateURIs)
+	if err != nil {
+		return nil, err
+	}
+
+	plan := &registrationPlan{}
+	for _, def := range toolDefs {
+		if _, ok := selectedTools[def.Name]; !ok {
+			continue
+		}
+		tool, err := toolForRegistration(def)
+		if err != nil {
+			return nil, err
+		}
+		plan.tools = append(plan.tools, registeredTool{tool: tool, handler: def.Handler})
+	}
+
+	for _, def := range resourceDefs {
+		selected := selectedResources
+		if def.URITemplate {
+			selected = selectedTemplates
+		}
+		if _, ok := selected[def.URI]; !ok {
+			continue
+		}
+
+		if def.URITemplate {
+			plan.resources = append(plan.resources, registeredResource{
+				template: &mcp.ResourceTemplate{
+					URITemplate: def.URI,
+					Name:        def.Name,
+					MIMEType:    def.MimeType,
+					Description: def.Description,
+				},
+				handler: def.Handler,
+			})
+			continue
+		}
+
+		plan.resources = append(plan.resources, registeredResource{
+			resource: &mcp.Resource{
+				URI:         def.URI,
+				Name:        def.Name,
+				MIMEType:    def.MimeType,
+				Description: def.Description,
+			},
+			handler: def.Handler,
+		})
+	}
+
+	return plan, nil
+}
+
+// selectNames validates a Selection against the available names and returns
+// the selected set. Exclude is applied after Include and wins on overlap.
+func selectNames(kind string, selection Selection, available []string) (map[string]struct{}, error) {
+	for _, name := range selection.Include {
+		if name == "" {
+			return nil, fmt.Errorf("%s include entry must not be empty", kind)
+		}
+	}
+	for _, name := range selection.Exclude {
+		if name == "" {
+			return nil, fmt.Errorf("%s exclude entry must not be empty", kind)
+		}
+	}
+
+	all := make(map[string]struct{}, len(available))
+	for _, name := range available {
+		all[name] = struct{}{}
+	}
+
+	selected := make(map[string]struct{})
+	if len(selection.Include) == 0 {
+		for name := range all {
+			selected[name] = struct{}{}
+		}
+	} else {
+		for _, name := range selection.Include {
+			if _, ok := all[name]; !ok {
+				return nil, fmt.Errorf("%s include %q does not match any registered %s", kind, name, kind)
+			}
+			selected[name] = struct{}{}
+		}
+	}
+
+	for _, name := range selection.Exclude {
+		delete(selected, name)
+	}
+
+	return selected, nil
+}
+
+// toolForRegistration converts a tool definition's input schema.
+func toolForRegistration(def MCPTypes.ToolDefinition) (*mcp.Tool, error) {
+	var inputSchema *jsonschema.Schema
+	if def.InputSchema != nil {
+		schemaBytes, err := json.Marshal(def.InputSchema)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal input schema for tool %s: %w", def.Name, err)
+		}
+
+		var schema jsonschema.Schema
+		if err := json.Unmarshal(schemaBytes, &schema); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal input schema for tool %s: %w", def.Name, err)
+		}
+		inputSchema = &schema
+	}
+
+	return &mcp.Tool{
+		Name:        def.Name,
+		Description: def.Description,
+		InputSchema: inputSchema,
+	}, nil
+}
+
+// serverSurface is the set of entries already registered on a server.
+type serverSurface struct {
+	tools     map[string]struct{}
+	resources map[string]struct{}
+	templates map[string]struct{}
+}
+
+// existingServerSurface lists the tools, resources, and resource templates
+// already registered on server. The SDK does not expose its handler tables,
+// so this uses a short-lived in-memory client session.
+func existingServerSurface(server *mcp.Server) (serverSurface, error) {
+	ctx := context.Background()
+
+	serverTransport, clientTransport := mcp.NewInMemoryTransports()
+	serverSession, err := server.Connect(ctx, serverTransport, nil)
+	if err != nil {
+		return serverSurface{}, fmt.Errorf("failed to inspect existing server surface: %w", err)
+	}
+	defer func() { _ = serverSession.Close() }()
+
+	client := mcp.NewClient(&mcp.Implementation{
+		Name:    "cem-registration-preflight",
+		Version: version.GetVersion(),
+	}, nil)
+	clientSession, err := client.Connect(ctx, clientTransport, nil)
+	if err != nil {
+		return serverSurface{}, fmt.Errorf("failed to inspect existing server surface: %w", err)
+	}
+	defer func() { _ = clientSession.Close() }()
+
+	surface := serverSurface{
+		tools:     make(map[string]struct{}),
+		resources: make(map[string]struct{}),
+		templates: make(map[string]struct{}),
+	}
+
+	for tool, err := range clientSession.Tools(ctx, nil) {
+		if err != nil {
+			return serverSurface{}, fmt.Errorf("failed to inspect existing server tools: %w", err)
+		}
+		surface.tools[tool.Name] = struct{}{}
+	}
+	for resource, err := range clientSession.Resources(ctx, nil) {
+		if err != nil {
+			return serverSurface{}, fmt.Errorf("failed to inspect existing server resources: %w", err)
+		}
+		surface.resources[resource.URI] = struct{}{}
+	}
+	for template, err := range clientSession.ResourceTemplates(ctx, nil) {
+		if err != nil {
+			return serverSurface{}, fmt.Errorf("failed to inspect existing server resource templates: %w", err)
+		}
+		surface.templates[template.URITemplate] = struct{}{}
+	}
+
+	return surface, nil
+}
+
+// resolveConflicts applies policy to any plan entries that already exist on
+// the server.
+func (p *registrationPlan) resolveConflicts(existing serverSurface, policy ConflictPolicy) error {
+	switch policy {
+	case ConflictReplace:
+		return nil
+
+	case ConflictSkip:
+		p.tools = slices.DeleteFunc(p.tools, func(tool registeredTool) bool {
+			_, ok := existing.tools[tool.tool.Name]
+			return ok
+		})
+		p.resources = slices.DeleteFunc(p.resources, func(resource registeredResource) bool {
+			if resource.template != nil {
+				_, ok := existing.templates[resource.template.URITemplate]
+				return ok
+			}
+			_, ok := existing.resources[resource.resource.URI]
+			return ok
+		})
+		return nil
+
+	case ConflictError:
+		var conflicts []string
+		for _, tool := range p.tools {
+			if _, ok := existing.tools[tool.tool.Name]; ok {
+				conflicts = append(conflicts, fmt.Sprintf("tool %q", tool.tool.Name))
+			}
+		}
+		for _, resource := range p.resources {
+			if resource.template != nil {
+				if _, ok := existing.templates[resource.template.URITemplate]; ok {
+					conflicts = append(conflicts, fmt.Sprintf("resource template %q", resource.template.URITemplate))
+				}
+				continue
+			}
+			if _, ok := existing.resources[resource.resource.URI]; ok {
+				conflicts = append(conflicts, fmt.Sprintf("resource %q", resource.resource.URI))
+			}
+		}
+		if len(conflicts) > 0 {
+			return fmt.Errorf("registration conflicts with existing server entries: %s", strings.Join(conflicts, ", "))
+		}
+		return nil
+
+	default:
+		return fmt.Errorf("unknown conflict policy %d", policy)
+	}
+}
+
+// register adds every planned tool and resource to server.
+func (p *registrationPlan) register(server *mcp.Server) {
+	for _, tool := range p.tools {
+		server.AddTool(tool.tool, tool.handler)
+	}
+	for _, resource := range p.resources {
+		if resource.template != nil {
+			server.AddResourceTemplate(resource.template, resource.handler)
+			continue
+		}
+		server.AddResource(resource.resource, resource.handler)
+	}
 }
 
 // GetInfo returns server information
@@ -216,75 +548,4 @@ func (s *Server) Run(ctx context.Context) error {
 
 	// Run the MCP server
 	return s.server.Run(ctx, &mcp.StdioTransport{})
-}
-
-// registerTools adds tools to the MCP server
-func registerTools(server *mcp.Server, registry *MCPContext) error {
-	// Create registry adapter for tools
-	registryAdapter := NewMCPContextAdapter(registry)
-
-	// Get tool definitions from tools package
-	toolDefs, err := tools.Tools(registryAdapter)
-	if err != nil {
-		return fmt.Errorf("failed to load tool definitions: %w", err)
-	}
-
-	// Register each tool with the MCP server
-	for _, toolDef := range toolDefs {
-		// Convert input schema from map to *jsonschema.Schema
-		var inputSchema *jsonschema.Schema
-		if toolDef.InputSchema != nil {
-			schemaBytes, err := json.Marshal(toolDef.InputSchema)
-			if err != nil {
-				return fmt.Errorf("failed to marshal input schema for tool %s: %w", toolDef.Name, err)
-			}
-
-			var schema jsonschema.Schema
-			if err := json.Unmarshal(schemaBytes, &schema); err != nil {
-				return fmt.Errorf("failed to unmarshal input schema for tool %s: %w", toolDef.Name, err)
-			}
-			inputSchema = &schema
-		}
-
-		server.AddTool(&mcp.Tool{
-			Name:        toolDef.Name,
-			Description: toolDef.Description,
-			InputSchema: inputSchema,
-		}, toolDef.Handler)
-	}
-
-	return nil
-}
-
-// registerResources adds resources to the MCP server
-func registerResources(server *mcp.Server, registry *MCPContext) error {
-	// Create registry adapter for resources
-	registryAdapter := NewMCPContextAdapter(registry)
-
-	// Get resource definitions from resources package
-	resourceDefs, err := resources.Resources(registryAdapter)
-	if err != nil {
-		return fmt.Errorf("failed to load resource definitions: %w", err)
-	}
-
-	// Register each resource with the MCP server
-	for _, resourceDef := range resourceDefs {
-		if resourceDef.URITemplate {
-			server.AddResourceTemplate(&mcp.ResourceTemplate{
-				URITemplate: resourceDef.URI,
-				Name:        resourceDef.Name,
-				MIMEType:    resourceDef.MimeType,
-				Description: resourceDef.Description,
-			}, resourceDef.Handler)
-		} else {
-			server.AddResource(&mcp.Resource{
-				URI:         resourceDef.URI,
-				Name:        resourceDef.Name,
-				MIMEType:    resourceDef.MimeType,
-				Description: resourceDef.Description,
-			}, resourceDef.Handler)
-		}
-	}
-
-	return nil
 }

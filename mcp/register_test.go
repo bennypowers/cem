@@ -130,7 +130,8 @@ func TestRegisterMatchesNewServerSurface(t *testing.T) {
 		Name:    "host-server",
 		Version: "test",
 	}, nil)
-	require.NoError(t, Register(hostServer, workspace, config))
+	_, err = Register(hostServer, workspace, config)
+	require.NoError(t, err)
 
 	cemClient := connectRegisterTestClient(t, cemServer.server)
 	hostClient := connectRegisterTestClient(t, hostServer)
@@ -174,7 +175,7 @@ func TestRegisterRejectsNilArguments(t *testing.T) {
 	require.NoError(t, workspace.Init())
 
 	t.Run("nil server", func(t *testing.T) {
-		err := Register(nil, workspace, ServerConfig{})
+		_, err := Register(nil, workspace, ServerConfig{})
 		require.ErrorContains(t, err, "server must not be nil")
 	})
 
@@ -183,7 +184,7 @@ func TestRegisterRejectsNilArguments(t *testing.T) {
 			Name:    "host-server",
 			Version: "test",
 		}, nil)
-		err := Register(server, nil, ServerConfig{})
+		_, err := Register(server, nil, ServerConfig{})
 		require.ErrorContains(t, err, "workspace must not be nil")
 	})
 
@@ -193,7 +194,7 @@ func TestRegisterRejectsNilArguments(t *testing.T) {
 			Name:    "host-server",
 			Version: "test",
 		}, nil)
-		err := Register(server, typedNil, ServerConfig{})
+		_, err := Register(server, typedNil, ServerConfig{})
 		require.ErrorContains(t, err, "workspace must not be nil")
 	})
 }
@@ -210,10 +211,11 @@ func TestRegisterAdditionalPackages(t *testing.T) {
 		Name:    "host-server",
 		Version: "test",
 	}, nil)
-	require.NoError(t, Register(hostServer, workspace, ServerConfig{
+	_, err := Register(hostServer, workspace, ServerConfig{
 		MaxDescriptionLength: 2000,
 		AdditionalPackages:   []string{"./testdata/fixtures/multiple-elements-integration"},
-	}))
+	})
+	require.NoError(t, err)
 
 	client := connectRegisterTestClient(t, hostServer)
 
@@ -235,7 +237,8 @@ func TestRegisterToolCall(t *testing.T) {
 		Name:    "host-server",
 		Version: "test",
 	}, nil)
-	require.NoError(t, Register(hostServer, workspace, ServerConfig{MaxDescriptionLength: 2000}))
+	_, err := Register(hostServer, workspace, ServerConfig{MaxDescriptionLength: 2000})
+	require.NoError(t, err)
 
 	client := connectRegisterTestClient(t, hostServer)
 
@@ -264,7 +267,8 @@ func TestRegisterResourceRead(t *testing.T) {
 		Name:    "host-server",
 		Version: "test",
 	}, nil)
-	require.NoError(t, Register(hostServer, workspace, ServerConfig{MaxDescriptionLength: 2000}))
+	_, err := Register(hostServer, workspace, ServerConfig{MaxDescriptionLength: 2000})
+	require.NoError(t, err)
 
 	client := connectRegisterTestClient(t, hostServer)
 
