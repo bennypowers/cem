@@ -209,7 +209,7 @@ func (r *Registry) loadFromWorkspace(ws types.WorkspaceContext, strict bool) err
 	}
 
 	// 1. Load manifest from workspace itself (if available)
-	record("workspace manifest", r.loadWorkspaceManifest(ws))
+	record("workspace manifest", r.loadWorkspaceManifest(ws, strict))
 
 	// 2. Load manifests from workspace packages (npm/yarn/pnpm workspaces)
 	record("workspace package manifests", r.loadWorkspacePackageManifests(ws))
@@ -281,7 +281,7 @@ func (r *Registry) clearDataOnly() {
 }
 
 // loadWorkspaceManifest loads the manifest from the current workspace
-func (r *Registry) loadWorkspaceManifest(workspace types.WorkspaceContext) error {
+func (r *Registry) loadWorkspaceManifest(workspace types.WorkspaceContext, strict bool) error {
 	helpers.SafeDebugLog("Attempting to load workspace manifest...")
 	helpers.SafeDebugLog("Workspace root: %s", workspace.Root())
 	helpers.SafeDebugLog("Workspace manifest path: %s", workspace.CustomElementsManifestPath())
@@ -348,6 +348,11 @@ func (r *Registry) loadWorkspaceManifest(workspace types.WorkspaceContext) error
 			r.addManifest(generatedPkg, packageName)
 			r.localWorkspace = workspace
 			helpers.SafeDebugLog("Successfully generated in-memory manifest for workspace")
+		} else if strict {
+			// A strict load must not report success for a workspace whose
+			// manifest is unavailable and cannot be generated, which would
+			// otherwise replace a working registry with an empty generation.
+			return errors.New("workspace manifest is unavailable and could not be generated")
 		} else {
 			helpers.SafeDebugLog("Failed to generate in-memory manifest for workspace")
 		}
