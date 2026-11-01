@@ -18,6 +18,7 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"sort"
 	"testing"
 
@@ -65,6 +66,21 @@ func listRegisterTestToolNames(t *testing.T, session *mcp.ClientSession) []strin
 	}
 	sort.Strings(names)
 	return names
+}
+
+func listRegisterTestToolSchemas(t *testing.T, session *mcp.ClientSession) map[string]string {
+	t.Helper()
+
+	result, err := session.ListTools(context.Background(), &mcp.ListToolsParams{})
+	require.NoError(t, err)
+
+	schemas := make(map[string]string, len(result.Tools))
+	for _, tool := range result.Tools {
+		schema, err := json.Marshal(tool.InputSchema)
+		require.NoError(t, err)
+		schemas[tool.Name] = string(schema)
+	}
+	return schemas
 }
 
 func listRegisterTestResourceURIs(t *testing.T, session *mcp.ClientSession) []string {
@@ -124,6 +140,13 @@ func TestRegisterMatchesNewServerSurface(t *testing.T) {
 		assert.Equal(t, cemTools, hostTools)
 	})
 
+	t.Run("tool input schemas match", func(t *testing.T) {
+		assert.Equal(t,
+			listRegisterTestToolSchemas(t, cemClient),
+			listRegisterTestToolSchemas(t, hostClient),
+		)
+	})
+
 	t.Run("resource URIs match", func(t *testing.T) {
 		cemResources := listRegisterTestResourceURIs(t, cemClient)
 		hostResources := listRegisterTestResourceURIs(t, hostClient)
@@ -138,6 +161,27 @@ func TestRegisterMatchesNewServerSurface(t *testing.T) {
 
 		assert.NotEmpty(t, cemTemplates, "cem server should register resource templates")
 		assert.Equal(t, cemTemplates, hostTemplates)
+	})
+}
+
+// TestRegisterRejectsNilArguments covers the exported API's argument
+// validation so callers get an error rather than a panic.
+func TestRegisterRejectsNilArguments(t *testing.T) {
+	workspace := testworkspace.NewMapWorkspaceContext(t, "./testdata/fixtures/basic-integration")
+	require.NoError(t, workspace.Init())
+
+	t.Run("nil server", func(t *testing.T) {
+		err := Register(nil, workspace, ServerConfig{})
+		require.ErrorContains(t, err, "server must not be nil")
+	})
+
+	t.Run("nil workspace", func(t *testing.T) {
+		server := mcp.NewServer(&mcp.Implementation{
+			Name:    "host-server",
+			Version: "test",
+		}, nil)
+		err := Register(server, nil, ServerConfig{})
+		require.ErrorContains(t, err, "workspace must not be nil")
 	})
 }
 
@@ -156,13 +200,18 @@ func TestRegisterToolCall(t *testing.T) {
 	client := connectRegisterTestClient(t, hostServer)
 
 	result, err := client.CallTool(context.Background(), &mcp.CallToolParams{
-		Name:      "validate_config",
-		Arguments: map[string]any{},
+		Name:      "generate_config",
+		Arguments: map[string]any{"focus": "generate"},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.False(t, result.IsError, "validate_config should succeed on the fixture workspace")
-	assert.NotEmpty(t, result.Content)
+	assert.False(t, result.IsError, "generate_config should succeed on the fixture workspace")
+	require.NotEmpty(t, result.Content)
+
+	text, ok := result.Content[0].(*mcp.TextContent)
+	require.True(t, ok, "generate_config should return text content")
+	assert.Contains(t, text.Text, "Current config")
+	assert.Contains(t, text.Text, "Schema: generate")
 }
 
 // TestRegisterResourceRead works through a caller-owned server and verifies

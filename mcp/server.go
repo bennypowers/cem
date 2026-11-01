@@ -96,17 +96,30 @@ func NewServerWithConfig(workspace types.WorkspaceContext, config ServerConfig) 
 
 // Register adds cem's tools and resources to an existing MCP server.
 //
+// Register must be called before server starts serving sessions: the SDK's
+// registration methods mutate the server's handler tables.
+//
 // The caller owns the server and its lifecycle: Register does not start a
 // transport or file watching. It creates its own MCPContext, loads the
 // workspace manifests and any configured additional packages before
 // registering handlers, so the mounted tools and resources are usable as
-// soon as Register returns.
+// soon as Register returns. The workspace must already be initialized.
 //
-// Callers that need to reload manifests after startup, or that want to watch
-// for manifest changes, should use NewServerWithConfig and Run instead.
+// Tool names and resource URIs are registered as-is, replacing any existing
+// entry with the same name or URI on server. Additional package failures are
+// logged but do not fail registration, matching Run. If registration fails
+// partway, server may already hold some cem tools or resources; callers
+// should discard it.
+//
+// Callers that need manifest reloads or file watching on their own server
+// cannot get them from Register. NewServerWithConfig and Run provide that
+// lifecycle, but they own the SDK server and use stdio.
 func Register(server *mcp.Server, workspace types.WorkspaceContext, config ServerConfig) error {
 	if server == nil {
 		return fmt.Errorf("server must not be nil")
+	}
+	if workspace == nil {
+		return fmt.Errorf("workspace must not be nil")
 	}
 
 	registry, err := NewMCPContext(workspace, config.FileSystem)
@@ -114,28 +127,44 @@ func Register(server *mcp.Server, workspace types.WorkspaceContext, config Serve
 		return fmt.Errorf("failed to create registry: %w", err)
 	}
 
-	if err := registry.LoadManifests(); err != nil {
-		return fmt.Errorf("failed to load manifests: %w", err)
+	if err := loadRegistryData(registry, config.AdditionalPackages, "config"); err != nil {
+		return err
 	}
 
-	// Load additional packages from config, mirroring Run.
-	if len(config.AdditionalPackages) > 0 {
-		helpers.SafeDebugLog("Loading %d additional packages from config", len(config.AdditionalPackages))
-		if err := registry.LSPRegistry().LoadAdditionalPackages(config.AdditionalPackages); err != nil {
-			helpers.SafeDebugLog("Warning: Error loading additional packages: %v", err)
-		}
+	// Register does not watch for changes. NewMCPContext creates the file
+	// watcher eagerly, so close it rather than hold an inotify descriptor and
+	// goroutine for the server's lifetime.
+	if err := registry.LSPRegistry().StopFileWatching(); err != nil {
+		helpers.SafeDebugLog("Warning: Could not stop file watching: %v", err)
 	}
 
 	return register(server, registry)
 }
 
+// loadRegistryData loads manifests and additional packages into registry.
+// Additional package failures are logged and do not fail the load.
+func loadRegistryData(registry *MCPContext, additionalPackages []string, source string) error {
+	if err := registry.LoadManifests(); err != nil {
+		return fmt.Errorf("failed to load manifests: %w", err)
+	}
+
+	if len(additionalPackages) > 0 {
+		helpers.SafeDebugLog("Loading %d additional packages from %s", len(additionalPackages), source)
+		if err := registry.LSPRegistry().LoadAdditionalPackages(additionalPackages); err != nil {
+			helpers.SafeDebugLog("Warning: Error loading additional packages: %v", err)
+		}
+	}
+
+	return nil
+}
+
 // register adds every cem tool and resource to server using registry.
 func register(server *mcp.Server, registry *MCPContext) error {
 	if err := registerTools(server, registry); err != nil {
-		return fmt.Errorf("failed to setup tools: %w", err)
+		return fmt.Errorf("failed to register tools: %w", err)
 	}
 	if err := registerResources(server, registry); err != nil {
-		return fmt.Errorf("failed to setup resources: %w", err)
+		return fmt.Errorf("failed to register resources: %w", err)
 	}
 	return nil
 }
@@ -160,17 +189,8 @@ func (s *Server) Run(ctx context.Context) error {
 	helpers.SafeDebugLog("Starting CEM MCP server with stdio transport")
 
 	// Initialize the registry
-	err := s.registry.LoadManifests()
-	if err != nil {
-		return fmt.Errorf("failed to load manifests: %w", err)
-	}
-
-	// Load additional packages from CLI args (merged with config)
-	if len(s.config.AdditionalPackages) > 0 {
-		helpers.SafeDebugLog("Loading %d additional packages from CLI args", len(s.config.AdditionalPackages))
-		if err := s.registry.LSPRegistry().LoadAdditionalPackages(s.config.AdditionalPackages); err != nil {
-			helpers.SafeDebugLog("Warning: Error loading additional packages: %v", err)
-		}
+	if err := loadRegistryData(s.registry, s.config.AdditionalPackages, "CLI args"); err != nil {
+		return err
 	}
 
 	// Start file watching for manifest and config changes
