@@ -53,6 +53,11 @@ type MCPContext struct {
 	allCSSProperties   []string // All CSS custom properties across elements
 	computedCacheValid bool     // Whether computed cache is valid
 
+	configMu     sync.RWMutex
+	config       *IC.CemConfig
+	configErr    error
+	configLoaded bool
+
 	mu sync.RWMutex
 }
 
@@ -106,6 +111,13 @@ func NewMCPContext(workspace types.WorkspaceContext, fsys platform.FileSystem) (
 // LSP registry is created without a file watcher, so callers that only serve
 // requests do not allocate an inotify descriptor they will never use.
 func newMCPContext(workspace types.WorkspaceContext, fsys platform.FileSystem, watch bool) (*MCPContext, error) {
+	return newMCPContextWithDocumentManager(workspace, fsys, watch, nil)
+}
+
+// newMCPContextWithDocumentManager creates a new MCP context. When
+// documentManager is non-nil the context shares it instead of allocating a new
+// one, which lets reload generations reuse the same tree-sitter resources.
+func newMCPContextWithDocumentManager(workspace types.WorkspaceContext, fsys platform.FileSystem, watch bool, documentManager lspTypes.DocumentManager) (*MCPContext, error) {
 	if fsys == nil {
 		fsys = platform.NewOSFileSystem()
 	}
@@ -124,9 +136,12 @@ func newMCPContext(workspace types.WorkspaceContext, fsys platform.FileSystem, w
 	}
 
 	// Create a shared document manager for validation
-	documentManager, err := document.NewDocumentManager()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create document manager: %w", err)
+	if documentManager == nil {
+		var err error
+		documentManager, err = document.NewDocumentManager()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create document manager: %w", err)
+		}
 	}
 
 	context := &MCPContext{
@@ -140,8 +155,22 @@ func newMCPContext(workspace types.WorkspaceContext, fsys platform.FileSystem, w
 	return context, nil
 }
 
-// LoadManifests loads all available manifests
+// LoadManifests loads all available manifests, logging and ignoring load
+// failures. It snapshots the workspace configuration so every handler using
+// this generation sees the same configuration.
 func (ctx *MCPContext) LoadManifests() error {
+	return ctx.loadManifests(false)
+}
+
+// LoadManifestsStrict loads all available manifests and returns an error if
+// any manifest or the workspace configuration cannot be loaded. Reload uses
+// this path so a failed reload does not replace a working registry with a
+// partial one.
+func (ctx *MCPContext) LoadManifestsStrict() error {
+	return ctx.loadManifests(true)
+}
+
+func (ctx *MCPContext) loadManifests(strict bool) error {
 	ctx.mu.Lock()
 	defer ctx.mu.Unlock()
 
@@ -162,12 +191,29 @@ func (ctx *MCPContext) LoadManifests() error {
 	// Reset relationship detector
 	ctx.relationshipDetector = relationships.NewDetector()
 
-	if err := ctx.lspRegistry.LoadFromWorkspace(ctx.workspace); err != nil {
+	var err error
+	if strict {
+		err = ctx.lspRegistry.LoadFromWorkspaceStrict(ctx.workspace)
+	} else {
+		err = ctx.lspRegistry.LoadFromWorkspace(ctx.workspace)
+	}
+	if err != nil {
 		return fmt.Errorf("failed to load manifests from workspace %q: %w", ctx.workspace.Root(), err)
 	}
 
 	if cfgFile := ctx.workspace.ConfigFile(); cfgFile != "" {
 		ctx.lspRegistry.AddWatchPath(cfgFile)
+	}
+
+	// Snapshot config with the generation. Handlers read the snapshot instead
+	// of the live workspace cache, so a failed reload cannot change what the
+	// surviving generation serves.
+	ctx.configMu.Lock()
+	ctx.config, ctx.configErr = ctx.workspace.Config()
+	ctx.configLoaded = true
+	ctx.configMu.Unlock()
+	if strict && ctx.configErr != nil {
+		return fmt.Errorf("failed to load configuration: %w", ctx.configErr)
 	}
 
 	// Build relationship detector with all elements
@@ -384,8 +430,27 @@ func (ctx *MCPContext) LSPRegistry() *LSP.Registry {
 	return ctx.lspRegistry
 }
 
+// Config returns the configuration snapshot captured with the current
+// manifest generation. The first call after LoadManifests or InvalidateConfig
+// reads the workspace configuration and caches the result.
 func (ctx *MCPContext) Config() (*IC.CemConfig, error) {
-	return ctx.workspace.Config()
+	ctx.configMu.RLock()
+	if ctx.configLoaded {
+		config, err := ctx.config, ctx.configErr
+		ctx.configMu.RUnlock()
+		return config, err
+	}
+	ctx.configMu.RUnlock()
+
+	ctx.configMu.Lock()
+	defer ctx.configMu.Unlock()
+
+	if !ctx.configLoaded {
+		ctx.config, ctx.configErr = ctx.workspace.Config()
+		ctx.configLoaded = true
+	}
+
+	return ctx.config, ctx.configErr
 }
 
 func (ctx *MCPContext) ConfigFile() string {
@@ -404,12 +469,25 @@ func (ctx *MCPContext) FileSystem() platform.FileSystem {
 	return ctx.fs
 }
 
+// InvalidateConfig drops the configuration snapshot and the workspace
+// configuration cache so the next Config call re-reads the current file.
 func (ctx *MCPContext) InvalidateConfig() {
-	type invalidatable interface {
-		InvalidateConfig()
-	}
-	if ws, ok := ctx.workspace.(invalidatable); ok {
+	ctx.configMu.Lock()
+	ctx.config = nil
+	ctx.configErr = nil
+	ctx.configLoaded = false
+	ctx.configMu.Unlock()
+
+	if ws, ok := ctx.workspace.(interface{ InvalidateConfig() }); ok {
 		ws.InvalidateConfig()
+	}
+}
+
+// InvalidateManifest clears the workspace manifest cache when the workspace
+// supports it, so the next LoadManifests re-reads the manifest.
+func (ctx *MCPContext) InvalidateManifest() {
+	if ws, ok := ctx.workspace.(interface{ InvalidateManifest() }); ok {
+		ws.InvalidateManifest()
 	}
 }
 
@@ -663,59 +741,82 @@ func generateCacheKey(tagName string, _ *M.CustomElement) string {
 	return tagName
 }
 
-// MCPContextAdapter implements MCPTypes.MCPContext interface for tools package
+// MCPContextAdapter implements MCPTypes.MCPContext interface for tools package.
+// MCPContext is the context captured when the adapter was created; methods
+// resolve through resolve so reloadable registries can swap generations.
 type MCPContextAdapter struct {
 	*MCPContext
+	resolve func() *MCPContext
 }
 
 // NewMCPContextAdapter creates an adapter that implements the tools interface
 func NewMCPContextAdapter(context *MCPContext) MCPTypes.MCPContext {
-	return &MCPContextAdapter{MCPContext: context}
+	return newMCPContextAdapter(context, func() *MCPContext { return context })
+}
+
+// newMCPContextAdapter creates an adapter that resolves the current context on
+// every call, which lets reloadable registries swap generations.
+func newMCPContextAdapter(initial *MCPContext, resolve func() *MCPContext) *MCPContextAdapter {
+	return &MCPContextAdapter{MCPContext: initial, resolve: resolve}
+}
+
+func (ctx *MCPContextAdapter) context() *MCPContext {
+	return ctx.resolve()
 }
 
 // ElementInfo implements MCPTypes.MCPContext interface
 func (ctx *MCPContextAdapter) ElementInfo(tagName string) (MCPTypes.ElementInfo, error) {
-	element, err := ctx.GetElementInfo(tagName)
-	if err != nil {
-		return nil, err
-	}
-	return element, nil
+	return ctx.context().GetElementInfo(tagName)
 }
 
 // AllElements implements MCPTypes.MCPContext interface
 func (ctx *MCPContextAdapter) AllElements() map[string]MCPTypes.ElementInfo {
-	elements := ctx.GetAllElements()
-	return elements
+	return ctx.context().GetAllElements()
+}
+
+// LoadManifests implements MCPTypes.MCPContext interface
+func (ctx *MCPContextAdapter) LoadManifests() error {
+	return ctx.context().LoadManifests()
 }
 
 // GetManifestSchemaVersions implements MCPTypes.MCPContext interface
 func (ctx *MCPContextAdapter) GetManifestSchemaVersions() []string {
-	return ctx.MCPContext.GetManifestSchemaVersions()
+	return ctx.context().GetManifestSchemaVersions()
 }
 
 // DocumentManager implements MCPTypes.MCPContext interface
 func (ctx *MCPContextAdapter) DocumentManager() lspTypes.DocumentManager {
-	return ctx.MCPContext.DocumentManager()
+	return ctx.context().DocumentManager()
+}
+
+// CommonPrefixes implements MCPTypes.MCPContext interface
+func (ctx *MCPContextAdapter) CommonPrefixes() []string {
+	return ctx.context().CommonPrefixes()
+}
+
+// AllCSSProperties implements MCPTypes.MCPContext interface
+func (ctx *MCPContextAdapter) AllCSSProperties() []string {
+	return ctx.context().AllCSSProperties()
 }
 
 func (ctx *MCPContextAdapter) Config() (*IC.CemConfig, error) {
-	return ctx.MCPContext.Config()
+	return ctx.context().Config()
 }
 
 func (ctx *MCPContextAdapter) ConfigFile() string {
-	return ctx.MCPContext.ConfigFile()
+	return ctx.context().ConfigFile()
 }
 
 func (ctx *MCPContextAdapter) ConfigSchemaJSON() []byte {
-	return ctx.MCPContext.ConfigSchemaJSON()
+	return ctx.context().ConfigSchemaJSON()
 }
 
 func (ctx *MCPContextAdapter) Root() string {
-	return ctx.MCPContext.Root()
+	return ctx.context().Root()
 }
 
 func (ctx *MCPContextAdapter) FileSystem() platform.FileSystem {
-	return ctx.MCPContext.FileSystem()
+	return ctx.context().FileSystem()
 }
 
 // ElementInfoAdapter implements MCPTypes.ElementInfo interface

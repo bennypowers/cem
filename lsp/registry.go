@@ -19,8 +19,10 @@ package lsp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -28,13 +30,13 @@ import (
 
 	"bennypowers.dev/cem/generate"
 	"bennypowers.dev/cem/internal/logging"
+	"bennypowers.dev/cem/internal/modulegraph"
 	"bennypowers.dev/cem/internal/platform"
+	"bennypowers.dev/cem/internal/treesitter"
+	"bennypowers.dev/cem/internal/workspace"
 	"bennypowers.dev/cem/lsp/helpers"
 	M "bennypowers.dev/cem/manifest"
-	"bennypowers.dev/cem/internal/modulegraph"
-	"bennypowers.dev/cem/internal/treesitter"
 	"bennypowers.dev/cem/types"
-	"bennypowers.dev/cem/internal/workspace"
 	"gopkg.in/yaml.v3" // Required for parsing pnpm-workspace.yaml files
 )
 
@@ -172,32 +174,49 @@ func NewRegistryWithDefaults() (*Registry, error) {
 }
 
 // LoadFromWorkspace loads all available custom elements manifests from
-// the workspace context
+// the workspace context. Individual load failures are logged and ignored.
 func (r *Registry) LoadFromWorkspace(workspace types.WorkspaceContext) error {
+	return r.loadFromWorkspace(workspace, false)
+}
+
+// LoadFromWorkspaceStrict loads all available custom elements manifests from
+// the workspace context and returns an error if a manifest source cannot be
+// loaded. Missing optional sources, such as node_modules, are not failures.
+func (r *Registry) LoadFromWorkspaceStrict(workspace types.WorkspaceContext) error {
+	return r.loadFromWorkspace(workspace, true)
+}
+
+func (r *Registry) loadFromWorkspace(workspace types.WorkspaceContext, strict bool) error {
 	logging.Info("[REGISTRY] Loading manifests from workspace root: %s", workspace.Root())
 
 	// Clear existing data
 	r.clear()
 
-	// 1. Load manifest from workspace itself (if available)
-	if err := r.loadWorkspaceManifest(workspace); err != nil {
-		helpers.SafeDebugLog("Warning: Could not load workspace manifest: %v", err)
+	var loadErrors []error
+	record := func(step string, err error) {
+		if err == nil {
+			return
+		}
+		if strict {
+			loadErrors = append(loadErrors, fmt.Errorf("%s: %w", step, err))
+		}
+		helpers.SafeDebugLog("Warning: Could not load %s: %v", step, err)
 	}
+
+	// 1. Load manifest from workspace itself (if available)
+	record("workspace manifest", r.loadWorkspaceManifest(workspace))
 
 	// 2. Load manifests from workspace packages (npm/yarn/pnpm workspaces)
-	if err := r.loadWorkspacePackageManifests(workspace); err != nil {
-		helpers.SafeDebugLog("Warning: Could not load workspace package manifests: %v", err)
-	}
+	record("workspace package manifests", r.loadWorkspacePackageManifests(workspace))
 
-	// 3. Load manifests from node_modules packages
-	if err := r.loadNodeModulesManifests(workspace); err != nil {
-		helpers.SafeDebugLog("Warning: Could not load node_modules manifests: %v", err)
+	// 3. Load manifests from node_modules packages. A missing node_modules
+	// directory is normal and is not a reload failure.
+	if err := r.loadNodeModulesManifests(workspace); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		record("node_modules manifests", err)
 	}
 
 	// 4. Load manifests specified in config
-	if err := r.loadConfigManifests(workspace); err != nil {
-		helpers.SafeDebugLog("Warning: Could not load config manifests: %v", err)
-	}
+	record("config manifests", r.loadConfigManifests(workspace, strict))
 
 	// 5. Initialize module graph for lazy building
 	// Instead of scanning the entire workspace upfront (which was 5000+ files),
@@ -206,6 +225,9 @@ func (r *Registry) LoadFromWorkspace(workspace types.WorkspaceContext) error {
 	r.initializeLazyModuleGraph(workspace)
 
 	helpers.SafeDebugLog("Loaded %d custom elements from %d manifests", len(r.Elements), len(r.Manifests))
+	if strict {
+		return errors.Join(loadErrors...)
+	}
 	return nil
 }
 
@@ -670,16 +692,27 @@ func (r *Registry) generateInMemoryManifest(packagePath string, packageName stri
 }
 
 // loadConfigManifests loads manifests specified in the config
-func (r *Registry) loadConfigManifests(workspace types.WorkspaceContext) error {
+// loadConfigManifests loads manifests specified in the config. In strict
+// mode config and additional-package failures are returned.
+func (r *Registry) loadConfigManifests(workspace types.WorkspaceContext, strict bool) error {
 	config, err := workspace.Config()
-	if err != nil || config == nil {
+	if err != nil {
+		if strict {
+			return fmt.Errorf("failed to load configuration: %w", err)
+		}
 		return nil // No config is fine
+	}
+	if config == nil {
+		return nil
 	}
 
 	if len(config.AdditionalPackages) == 0 {
 		return nil
 	}
 
+	if strict {
+		return r.LoadAdditionalPackagesStrict(config.AdditionalPackages)
+	}
 	return r.LoadAdditionalPackages(config.AdditionalPackages)
 }
 
@@ -699,6 +732,18 @@ func (r *Registry) LoadAdditionalPackages(packages []string) error {
 		helpers.SafeDebugLog("Loaded %d/%d additional packages (%d failed)", len(packages)-failed, len(packages), failed)
 	}
 	return nil
+}
+
+// LoadAdditionalPackagesStrict loads manifests from additional package
+// specifiers and returns an error listing every package that failed.
+func (r *Registry) LoadAdditionalPackagesStrict(packages []string) error {
+	var loadErrors []error
+	for _, spec := range packages {
+		if err := r.loadAdditionalPackage(spec); err != nil {
+			loadErrors = append(loadErrors, fmt.Errorf("additional package %s: %w", spec, err))
+		}
+	}
+	return errors.Join(loadErrors...)
 }
 
 func (r *Registry) loadAdditionalPackage(spec string) error {

@@ -29,8 +29,8 @@ import (
 	"sync"
 
 	C "bennypowers.dev/cem/cmd/config"
-	DT "bennypowers.dev/cem/internal/designtokens"
 	IC "bennypowers.dev/cem/internal/config"
+	DT "bennypowers.dev/cem/internal/designtokens"
 	"bennypowers.dev/cem/internal/logging"
 	"bennypowers.dev/cem/internal/platform"
 	M "bennypowers.dev/cem/manifest"
@@ -39,6 +39,7 @@ import (
 )
 
 var _ types.WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
+var _ types.CacheInvalidator = (*FileSystemWorkspaceContext)(nil)
 
 // FileSystemWorkspaceContext implements WorkspaceContext for a local filesystem
 // package.
@@ -50,6 +51,7 @@ type FileSystemWorkspaceContext struct {
 	configMu                   sync.RWMutex
 	customElementsManifestPath string
 	manifest                   *M.Package
+	manifestMu                 sync.RWMutex
 	packageJSON                *M.PackageJSON
 	designTokensCache          types.DesignTokensCache
 	fs                         platform.FileSystem
@@ -202,7 +204,21 @@ func (c *FileSystemWorkspaceContext) CustomElementsManifestPath() string {
 	return c.customElementsManifestPath
 }
 
+// Manifest returns the parsed custom elements manifest, caching it after the
+// first successful read. InvalidateManifest clears the cache so the next call
+// re-reads the manifest from disk.
 func (c *FileSystemWorkspaceContext) Manifest() (*M.Package, error) {
+	c.manifestMu.RLock()
+	if c.manifest != nil {
+		manifest := c.manifest
+		c.manifestMu.RUnlock()
+		return manifest, nil
+	}
+	c.manifestMu.RUnlock()
+
+	c.manifestMu.Lock()
+	defer c.manifestMu.Unlock()
+
 	if c.manifest != nil {
 		return c.manifest, nil
 	}
@@ -224,6 +240,15 @@ func (c *FileSystemWorkspaceContext) Manifest() (*M.Package, error) {
 
 	c.manifest = m
 	return m, nil
+}
+
+// InvalidateManifest clears the cached manifest so the next Manifest call
+// re-reads it from disk. It is safe to call concurrently with Manifest and
+// other readers.
+func (c *FileSystemWorkspaceContext) InvalidateManifest() {
+	c.manifestMu.Lock()
+	c.manifest = nil
+	c.manifestMu.Unlock()
 }
 
 // Init discovers package.json file, caches paths/parsed results.
