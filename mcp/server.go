@@ -84,17 +84,60 @@ func NewServerWithConfig(workspace types.WorkspaceContext, config ServerConfig) 
 		config:    config,
 	}
 
-	// Add tools to the server
-	if err := cemServer.setupTools(); err != nil {
-		return nil, fmt.Errorf("failed to setup tools: %w", err)
-	}
-
-	// Add resources to the server
-	if err := cemServer.setupResources(); err != nil {
-		return nil, fmt.Errorf("failed to setup resources: %w", err)
+	// Registration is shared with Register so both entry points expose the
+	// same tools and resources. Unlike Register, this constructor defers
+	// manifest loading to Run, preserving the existing lifecycle.
+	if err := register(server, registry); err != nil {
+		return nil, err
 	}
 
 	return cemServer, nil
+}
+
+// Register adds cem's tools and resources to an existing MCP server.
+//
+// The caller owns the server and its lifecycle: Register does not start a
+// transport or file watching. It creates its own MCPContext, loads the
+// workspace manifests and any configured additional packages before
+// registering handlers, so the mounted tools and resources are usable as
+// soon as Register returns.
+//
+// Callers that need to reload manifests after startup, or that want to watch
+// for manifest changes, should use NewServerWithConfig and Run instead.
+func Register(server *mcp.Server, workspace types.WorkspaceContext, config ServerConfig) error {
+	if server == nil {
+		return fmt.Errorf("server must not be nil")
+	}
+
+	registry, err := NewMCPContext(workspace, config.FileSystem)
+	if err != nil {
+		return fmt.Errorf("failed to create registry: %w", err)
+	}
+
+	if err := registry.LoadManifests(); err != nil {
+		return fmt.Errorf("failed to load manifests: %w", err)
+	}
+
+	// Load additional packages from config, mirroring Run.
+	if len(config.AdditionalPackages) > 0 {
+		helpers.SafeDebugLog("Loading %d additional packages from config", len(config.AdditionalPackages))
+		if err := registry.LSPRegistry().LoadAdditionalPackages(config.AdditionalPackages); err != nil {
+			helpers.SafeDebugLog("Warning: Error loading additional packages: %v", err)
+		}
+	}
+
+	return register(server, registry)
+}
+
+// register adds every cem tool and resource to server using registry.
+func register(server *mcp.Server, registry *MCPContext) error {
+	if err := registerTools(server, registry); err != nil {
+		return fmt.Errorf("failed to setup tools: %w", err)
+	}
+	if err := registerResources(server, registry); err != nil {
+		return fmt.Errorf("failed to setup resources: %w", err)
+	}
+	return nil
 }
 
 // GetInfo returns server information
@@ -145,10 +188,10 @@ func (s *Server) Run(ctx context.Context) error {
 	return s.server.Run(ctx, &mcp.StdioTransport{})
 }
 
-// setupTools adds tools to the MCP server
-func (s *Server) setupTools() error {
+// registerTools adds tools to the MCP server
+func registerTools(server *mcp.Server, registry *MCPContext) error {
 	// Create registry adapter for tools
-	registryAdapter := NewMCPContextAdapter(s.registry)
+	registryAdapter := NewMCPContextAdapter(registry)
 
 	// Get tool definitions from tools package
 	toolDefs, err := tools.Tools(registryAdapter)
@@ -173,7 +216,7 @@ func (s *Server) setupTools() error {
 			inputSchema = &schema
 		}
 
-		s.server.AddTool(&mcp.Tool{
+		server.AddTool(&mcp.Tool{
 			Name:        toolDef.Name,
 			Description: toolDef.Description,
 			InputSchema: inputSchema,
@@ -183,10 +226,10 @@ func (s *Server) setupTools() error {
 	return nil
 }
 
-// setupResources adds resources to the MCP server
-func (s *Server) setupResources() error {
+// registerResources adds resources to the MCP server
+func registerResources(server *mcp.Server, registry *MCPContext) error {
 	// Create registry adapter for resources
-	registryAdapter := NewMCPContextAdapter(s.registry)
+	registryAdapter := NewMCPContextAdapter(registry)
 
 	// Get resource definitions from resources package
 	resourceDefs, err := resources.Resources(registryAdapter)
@@ -197,14 +240,14 @@ func (s *Server) setupResources() error {
 	// Register each resource with the MCP server
 	for _, resourceDef := range resourceDefs {
 		if resourceDef.URITemplate {
-			s.server.AddResourceTemplate(&mcp.ResourceTemplate{
+			server.AddResourceTemplate(&mcp.ResourceTemplate{
 				URITemplate: resourceDef.URI,
 				Name:        resourceDef.Name,
 				MIMEType:    resourceDef.MimeType,
 				Description: resourceDef.Description,
 			}, resourceDef.Handler)
 		} else {
-			s.server.AddResource(&mcp.Resource{
+			server.AddResource(&mcp.Resource{
 				URI:         resourceDef.URI,
 				Name:        resourceDef.Name,
 				MIMEType:    resourceDef.MimeType,
