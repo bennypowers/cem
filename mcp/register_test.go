@@ -122,6 +122,9 @@ func TestRegisterMatchesNewServerSurface(t *testing.T) {
 
 	cemServer, err := NewServerWithConfig(workspace, config)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = cemServer.Registry().LSPRegistry().StopFileWatching()
+	})
 
 	hostServer := mcp.NewServer(&mcp.Implementation{
 		Name:    "host-server",

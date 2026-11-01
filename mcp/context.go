@@ -120,7 +120,7 @@ func newMCPContext(workspace types.WorkspaceContext, fsys platform.FileSystem, w
 			return nil, fmt.Errorf("failed to create LSP registry: %w", err)
 		}
 	} else {
-		lspRegistry = LSP.NewRegistry(nil, nil)
+		lspRegistry = LSP.NewRegistry(nil, fsys)
 	}
 
 	// Create a shared document manager for validation
