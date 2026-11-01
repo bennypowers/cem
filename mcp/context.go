@@ -99,15 +99,28 @@ func NewMCPCustomElementDeclaration(element *M.CustomElement, tagName string) *M
 // NewMCPContext creates a new MCP context.
 // If fsys is nil, it defaults to platform.NewOSFileSystem().
 func NewMCPContext(workspace types.WorkspaceContext, fsys platform.FileSystem) (*MCPContext, error) {
+	return newMCPContext(workspace, fsys, true)
+}
+
+// newMCPContext creates a new MCP context. When watch is false the underlying
+// LSP registry is created without a file watcher, so callers that only serve
+// requests do not allocate an inotify descriptor they will never use.
+func newMCPContext(workspace types.WorkspaceContext, fsys platform.FileSystem, watch bool) (*MCPContext, error) {
 	if fsys == nil {
 		fsys = platform.NewOSFileSystem()
 	}
 	helpers.SafeDebugLog("Creating MCP registry for workspace: %s", workspace.Root())
 
 	// Create the underlying LSP registry for reuse
-	lspRegistry, err := LSP.NewRegistryWithDefaults()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create LSP registry: %w", err)
+	var lspRegistry *LSP.Registry
+	if watch {
+		var err error
+		lspRegistry, err = LSP.NewRegistryWithDefaults()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create LSP registry: %w", err)
+		}
+	} else {
+		lspRegistry = LSP.NewRegistry(nil, fsys)
 	}
 
 	// Create a shared document manager for validation

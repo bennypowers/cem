@@ -1,0 +1,2 @@
+generate:
+  output: dist/custom-elements.json

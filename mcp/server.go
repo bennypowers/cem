@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/version"
@@ -84,17 +85,98 @@ func NewServerWithConfig(workspace types.WorkspaceContext, config ServerConfig) 
 		config:    config,
 	}
 
-	// Add tools to the server
-	if err := cemServer.setupTools(); err != nil {
-		return nil, fmt.Errorf("failed to setup tools: %w", err)
-	}
-
-	// Add resources to the server
-	if err := cemServer.setupResources(); err != nil {
-		return nil, fmt.Errorf("failed to setup resources: %w", err)
+	// Registration is shared with Register so both entry points expose the
+	// same tools and resources. Unlike Register, this constructor defers
+	// manifest loading to Run, preserving the existing lifecycle.
+	if err := register(server, registry); err != nil {
+		return nil, err
 	}
 
 	return cemServer, nil
+}
+
+// Register adds cem's tools and resources to an existing MCP server.
+//
+// Register must be called before server starts serving sessions: the SDK's
+// registration methods mutate the server's handler tables.
+//
+// The caller owns the server and its lifecycle: Register does not start a
+// transport or file watching. It creates its own MCPContext, loads the
+// workspace manifests and any configured additional packages before
+// registering handlers, so the mounted tools and resources are usable as
+// soon as Register returns. The workspace must already be initialized.
+//
+// Tool names and resource URIs are registered as-is, replacing any existing
+// entry with the same name or URI on server. Additional package failures are
+// logged but do not fail registration, matching Run. If registration fails
+// partway, server may already hold some cem tools or resources; callers
+// should discard it.
+//
+// Callers that need manifest reloads or file watching on their own server
+// cannot get them from Register. NewServerWithConfig and Run provide that
+// lifecycle, but they own the SDK server and use stdio.
+func Register(server *mcp.Server, workspace types.WorkspaceContext, config ServerConfig) error {
+	if server == nil {
+		return fmt.Errorf("server must not be nil")
+	}
+	if isNilWorkspace(workspace) {
+		return fmt.Errorf("workspace must not be nil")
+	}
+
+	registry, err := newMCPContext(workspace, config.FileSystem, false)
+	if err != nil {
+		return fmt.Errorf("failed to create registry: %w", err)
+	}
+
+	if err := loadRegistryData(registry, config.AdditionalPackages, "config"); err != nil {
+		return err
+	}
+
+	return register(server, registry)
+}
+
+// isNilWorkspace reports whether workspace is nil, including a typed nil
+// implementation stored in the interface.
+func isNilWorkspace(workspace types.WorkspaceContext) bool {
+	if workspace == nil {
+		return true
+	}
+
+	value := reflect.ValueOf(workspace)
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
+	default:
+		return false
+	}
+}
+
+// loadRegistryData loads manifests and additional packages into registry.
+// Additional package failures are logged and do not fail the load.
+func loadRegistryData(registry *MCPContext, additionalPackages []string, source string) error {
+	if err := registry.LoadManifests(); err != nil {
+		return fmt.Errorf("failed to load manifests: %w", err)
+	}
+
+	if len(additionalPackages) > 0 {
+		helpers.SafeDebugLog("Loading %d additional packages from %s", len(additionalPackages), source)
+		if err := registry.LSPRegistry().LoadAdditionalPackages(additionalPackages); err != nil {
+			helpers.SafeDebugLog("Warning: Error loading additional packages: %v", err)
+		}
+	}
+
+	return nil
+}
+
+// register adds every cem tool and resource to server using registry.
+func register(server *mcp.Server, registry *MCPContext) error {
+	if err := registerTools(server, registry); err != nil {
+		return fmt.Errorf("failed to register tools: %w", err)
+	}
+	if err := registerResources(server, registry); err != nil {
+		return fmt.Errorf("failed to register resources: %w", err)
+	}
+	return nil
 }
 
 // GetInfo returns server information
@@ -117,17 +199,8 @@ func (s *Server) Run(ctx context.Context) error {
 	helpers.SafeDebugLog("Starting CEM MCP server with stdio transport")
 
 	// Initialize the registry
-	err := s.registry.LoadManifests()
-	if err != nil {
-		return fmt.Errorf("failed to load manifests: %w", err)
-	}
-
-	// Load additional packages from CLI args (merged with config)
-	if len(s.config.AdditionalPackages) > 0 {
-		helpers.SafeDebugLog("Loading %d additional packages from CLI args", len(s.config.AdditionalPackages))
-		if err := s.registry.LSPRegistry().LoadAdditionalPackages(s.config.AdditionalPackages); err != nil {
-			helpers.SafeDebugLog("Warning: Error loading additional packages: %v", err)
-		}
+	if err := loadRegistryData(s.registry, s.config.AdditionalPackages, "CLI args"); err != nil {
+		return err
 	}
 
 	// Start file watching for manifest and config changes
@@ -145,10 +218,10 @@ func (s *Server) Run(ctx context.Context) error {
 	return s.server.Run(ctx, &mcp.StdioTransport{})
 }
 
-// setupTools adds tools to the MCP server
-func (s *Server) setupTools() error {
+// registerTools adds tools to the MCP server
+func registerTools(server *mcp.Server, registry *MCPContext) error {
 	// Create registry adapter for tools
-	registryAdapter := NewMCPContextAdapter(s.registry)
+	registryAdapter := NewMCPContextAdapter(registry)
 
 	// Get tool definitions from tools package
 	toolDefs, err := tools.Tools(registryAdapter)
@@ -173,7 +246,7 @@ func (s *Server) setupTools() error {
 			inputSchema = &schema
 		}
 
-		s.server.AddTool(&mcp.Tool{
+		server.AddTool(&mcp.Tool{
 			Name:        toolDef.Name,
 			Description: toolDef.Description,
 			InputSchema: inputSchema,
@@ -183,10 +256,10 @@ func (s *Server) setupTools() error {
 	return nil
 }
 
-// setupResources adds resources to the MCP server
-func (s *Server) setupResources() error {
+// registerResources adds resources to the MCP server
+func registerResources(server *mcp.Server, registry *MCPContext) error {
 	// Create registry adapter for resources
-	registryAdapter := NewMCPContextAdapter(s.registry)
+	registryAdapter := NewMCPContextAdapter(registry)
 
 	// Get resource definitions from resources package
 	resourceDefs, err := resources.Resources(registryAdapter)
@@ -197,14 +270,14 @@ func (s *Server) setupResources() error {
 	// Register each resource with the MCP server
 	for _, resourceDef := range resourceDefs {
 		if resourceDef.URITemplate {
-			s.server.AddResourceTemplate(&mcp.ResourceTemplate{
+			server.AddResourceTemplate(&mcp.ResourceTemplate{
 				URITemplate: resourceDef.URI,
 				Name:        resourceDef.Name,
 				MIMEType:    resourceDef.MimeType,
 				Description: resourceDef.Description,
 			}, resourceDef.Handler)
 		} else {
-			s.server.AddResource(&mcp.Resource{
+			server.AddResource(&mcp.Resource{
 				URI:         resourceDef.URI,
 				Name:        resourceDef.Name,
 				MIMEType:    resourceDef.MimeType,
