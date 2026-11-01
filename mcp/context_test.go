@@ -288,7 +288,7 @@ func TestMCPContext_GetManifestSchema(t *testing.T) {
 	}
 
 	// The rest of the test just verifies we got a valid schema
-	// Since we're now using the real schema from V.GetSchema(), the exact structure
+	// Since we're now using the real schema from V.Schema(), the exact structure
 	// may vary but it should be a valid JSON schema
 }
 

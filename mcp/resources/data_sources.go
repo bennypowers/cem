@@ -252,7 +252,7 @@ func (p *DataSourceProvider) createSchemaDataSource() (map[string]any, error) {
 	}
 
 	// Get the actual schema data
-	schemaData, err := V.GetSchema(p.registry.FileSystem(), selectedVersion)
+	schemaData, err := V.Schema(p.registry.FileSystem(), selectedVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load schema: %w", err)
 	}

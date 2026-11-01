@@ -482,7 +482,7 @@ func (ctx *MCPContext) GetManifestSchema() (map[string]any, error) {
 	}
 
 	// Get the actual JSON schema using the same method as the validate command and schema resource
-	schemaData, err := V.GetSchema(ctx.fs, schemaVersion)
+	schemaData, err := V.Schema(ctx.fs, schemaVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load schema: %w", err)
 	}
