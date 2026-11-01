@@ -39,6 +39,7 @@ import (
 )
 
 var _ types.WorkspaceContext = (*FileSystemWorkspaceContext)(nil)
+var _ types.CacheInvalidator = (*FileSystemWorkspaceContext)(nil)
 
 // FileSystemWorkspaceContext implements WorkspaceContext for a local filesystem
 // package.

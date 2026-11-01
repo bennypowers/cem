@@ -65,3 +65,15 @@ type WorkspaceContext interface {
 	// DesignTokensCache returns the design tokens cache for this workspace
 	DesignTokensCache() DesignTokensCache
 }
+
+// CacheInvalidator is implemented by WorkspaceContext implementations that
+// cache parsed configuration or manifest data.
+//
+// Registration.Reload calls these methods, when available, before rebuilding
+// its registry so the new generation observes changes made after the previous
+// load. Workspaces that do not implement CacheInvalidator are still usable,
+// but Reload can only observe changes that the workspace itself re-reads.
+type CacheInvalidator interface {
+	InvalidateConfig()
+	InvalidateManifest()
+}

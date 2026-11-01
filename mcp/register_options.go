@@ -20,14 +20,13 @@ package mcp
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
+	"strings"
 	"sync"
 	"sync/atomic"
 
-	IC "bennypowers.dev/cem/internal/config"
-	"bennypowers.dev/cem/internal/platform"
-	lspTypes "bennypowers.dev/cem/lsp/types"
-	MCPTypes "bennypowers.dev/cem/mcp/types"
 	"bennypowers.dev/cem/types"
 )
 
@@ -85,11 +84,35 @@ const (
 	// ConflictReplace overwrites the existing entry. This is the default and
 	// matches the behavior before registration options existed.
 	ConflictReplace ConflictPolicy = iota
-	// ConflictError fails Register before anything is registered.
+	// ConflictError fails Register before anything is registered and returns a
+	// *RegistrationConflictError describing the conflicting entries.
 	ConflictError
 	// ConflictSkip keeps the existing entry and skips the conflicting one.
 	ConflictSkip
 )
+
+// RegistrationConflictError reports the entries that caused a Register call
+// with ConflictError to fail. Entries are grouped by kind and sorted.
+type RegistrationConflictError struct {
+	Tools             []string
+	Resources         []string
+	ResourceTemplates []string
+}
+
+// Error implements error.
+func (e *RegistrationConflictError) Error() string {
+	parts := make([]string, 0, len(e.Tools)+len(e.Resources)+len(e.ResourceTemplates))
+	for _, name := range e.Tools {
+		parts = append(parts, fmt.Sprintf("tool %q", name))
+	}
+	for _, uri := range e.Resources {
+		parts = append(parts, fmt.Sprintf("resource %q", uri))
+	}
+	for _, uri := range e.ResourceTemplates {
+		parts = append(parts, fmt.Sprintf("resource template %q", uri))
+	}
+	return fmt.Sprintf("registration conflicts with existing server entries: %s", strings.Join(parts, ", "))
+}
 
 // WithConflictPolicy sets the policy for entries that already exist on the
 // target server. The last WithConflictPolicy wins when repeated.
@@ -115,14 +138,39 @@ func applyRegisterOptions(opts []RegisterOption) (registerConfig, error) {
 		return registerConfig{}, fmt.Errorf("unknown conflict policy %d", cfg.conflict)
 	}
 
+	if err := validateSelection("tool", cfg.tools); err != nil {
+		return registerConfig{}, err
+	}
+	if err := validateSelection("resource", cfg.resources); err != nil {
+		return registerConfig{}, err
+	}
+	if err := validateSelection("resource template", cfg.templates); err != nil {
+		return registerConfig{}, err
+	}
+
 	return cfg, nil
+}
+
+// validateSelection rejects empty names before any registry work begins.
+func validateSelection(kind string, selection Selection) error {
+	for _, name := range selection.Include {
+		if name == "" {
+			return fmt.Errorf("%s include entry must not be empty", kind)
+		}
+	}
+	for _, name := range selection.Exclude {
+		if name == "" {
+			return fmt.Errorf("%s exclude entry must not be empty", kind)
+		}
+	}
+	return nil
 }
 
 // Registration is the handle returned by Register.
 //
-// Reload refreshes the manifests and configuration used by the handlers that
-// Register installed. It does not re-register tools or resources, so names,
-// URIs, and schemas stay stable for the lifetime of the server.
+// Reload refreshes the workspace data used by the handlers that this Register
+// call installed. It does not re-register tools or resources, so names, URIs,
+// and schemas stay stable for the lifetime of the server.
 type Registration struct {
 	workspace types.WorkspaceContext
 	config    ServerConfig
@@ -131,15 +179,29 @@ type Registration struct {
 }
 
 // Reload re-reads the workspace manifests, configuration, and additional
-// packages, then atomically swaps the state used by the registered handlers.
+// packages, then atomically swaps the state used by the handlers installed by
+// this Register call.
 //
 // Reload is explicit and synchronous, and safe to call while the server is
-// serving. On failure the previous state stays active and the error is
-// returned. Reload does not start file watching; call it when the host knows
-// the workspace changed.
+// serving. On failure the previous state stays active, including the
+// configuration snapshot captured with it, and the error is returned.
 //
-// Calling Register again on the same server is a replacement operation, not a
-// reload: it re-registers handlers and applies the conflict policy again.
+// Workspace data is refreshed when the workspace implements
+// types.CacheInvalidator. For other workspaces, Reload rebuilds the registry
+// from whatever the workspace returns, which may be cached; such workspaces
+// are responsible for observing their own changes. Reload does not re-run
+// WorkspaceContext.Init, so config-file discovery and package.json changes are
+// not observed.
+//
+// Additional package failures are returned as errors by Reload, unlike
+// Register, where they are logged and ignored. Reload does not start file
+// watching; call it when the host knows the workspace changed. The context
+// bounds the decision to start and commit the reload, but the synchronous
+// load itself is not interruptible.
+//
+// Register is additive: calling it again adds or replaces entries on the
+// server, and the earlier Registration keeps the handlers it installed bound
+// to its own registry.
 func (r *Registration) Reload(ctx context.Context) error {
 	if r == nil || r.registry == nil || r.workspace == nil {
 		return fmt.Errorf("registration did not own a reloadable registry")
@@ -158,13 +220,9 @@ func (r *Registration) Reload(ctx context.Context) error {
 		return err
 	}
 
-	// Workspace implementations cache parsed config and manifests. Ask them to
-	// drop those caches before building the replacement registry so the reload
-	// observes changes on disk.
-	if invalidator, ok := r.workspace.(interface{ InvalidateConfig() }); ok {
-		invalidator.InvalidateConfig()
-	}
-	if invalidator, ok := r.workspace.(interface{ InvalidateManifest() }); ok {
+	current := r.registry.load()
+	invalidator, canInvalidate := r.workspace.(types.CacheInvalidator)
+	if canInvalidate {
 		invalidator.InvalidateManifest()
 	}
 
@@ -176,11 +234,20 @@ func (r *Registration) Reload(ctx context.Context) error {
 		return fmt.Errorf("failed to reload manifests: %w", err)
 	}
 
-	next, err := newMCPContext(r.workspace, r.config.FileSystem, false)
+	// Invalidate configuration only after the manifest is known to parse. The
+	// replacement context snapshots the new configuration before the swap, so
+	// a later failure cannot change what the active generation serves either.
+	if canInvalidate {
+		invalidator.InvalidateConfig()
+	}
+
+	// Reuse the document manager: MCP handlers do not use it, and allocating a
+	// new tree-sitter-backed manager on every reload would leak resources.
+	next, err := newMCPContextWithDocumentManager(r.workspace, r.config.FileSystem, false, current.DocumentManager())
 	if err != nil {
 		return fmt.Errorf("failed to create registry: %w", err)
 	}
-	if err := loadRegistryData(next, r.config.AdditionalPackages, "reload"); err != nil {
+	if err := loadRegistryDataStrict(next, r.config.AdditionalPackages, "reload"); err != nil {
 		return err
 	}
 
@@ -200,9 +267,12 @@ func validateReloadManifest(workspace types.WorkspaceContext) error {
 		return nil
 	}
 	if _, err := workspace.Stat(path); err != nil {
-		// No manifest at the configured path: the registry may still build one
-		// from source, which is not a reload failure.
-		return nil
+		if errors.Is(err, fs.ErrNotExist) {
+			// No manifest at the configured path: the registry may still build
+			// one from source, which is not a reload failure.
+			return nil
+		}
+		return fmt.Errorf("cannot inspect manifest %q: %w", path, err)
 	}
 	if _, err := workspace.Manifest(); err != nil {
 		return err
@@ -212,15 +282,19 @@ func validateReloadManifest(workspace types.WorkspaceContext) error {
 
 // reloadableContext gives handlers a stable view of the current MCPContext.
 // Reload builds a complete replacement context and swaps it in atomically, so
-// a handler either observes the old state or the new one, never a partial
-// update. The old context stays valid for requests already in flight.
+// each registry access observes either the old state or the new one. A handler
+// that performs several accesses during a concurrent Reload may observe both
+// generations; the swap is atomic per access, not per request. The old context
+// stays valid for requests already in flight.
 type reloadableContext struct {
+	*MCPContextAdapter
 	current atomic.Pointer[MCPContext]
 }
 
 func newReloadableContext(initial *MCPContext) *reloadableContext {
 	r := &reloadableContext{}
-	r.store(initial)
+	r.current.Store(initial)
+	r.MCPContextAdapter = newMCPContextAdapter(initial, r.load)
 	return r
 }
 
@@ -230,52 +304,4 @@ func (r *reloadableContext) load() *MCPContext {
 
 func (r *reloadableContext) store(next *MCPContext) {
 	r.current.Store(next)
-}
-
-func (r *reloadableContext) ElementInfo(tagName string) (MCPTypes.ElementInfo, error) {
-	return r.load().GetElementInfo(tagName)
-}
-
-func (r *reloadableContext) AllElements() map[string]MCPTypes.ElementInfo {
-	return r.load().GetAllElements()
-}
-
-func (r *reloadableContext) LoadManifests() error {
-	return r.load().LoadManifests()
-}
-
-func (r *reloadableContext) GetManifestSchemaVersions() []string {
-	return r.load().GetManifestSchemaVersions()
-}
-
-func (r *reloadableContext) DocumentManager() lspTypes.DocumentManager {
-	return r.load().DocumentManager()
-}
-
-func (r *reloadableContext) CommonPrefixes() []string {
-	return r.load().CommonPrefixes()
-}
-
-func (r *reloadableContext) AllCSSProperties() []string {
-	return r.load().AllCSSProperties()
-}
-
-func (r *reloadableContext) Config() (*IC.CemConfig, error) {
-	return r.load().Config()
-}
-
-func (r *reloadableContext) ConfigFile() string {
-	return r.load().ConfigFile()
-}
-
-func (r *reloadableContext) ConfigSchemaJSON() []byte {
-	return r.load().ConfigSchemaJSON()
-}
-
-func (r *reloadableContext) Root() string {
-	return r.load().Root()
-}
-
-func (r *reloadableContext) FileSystem() platform.FileSystem {
-	return r.load().FileSystem()
 }

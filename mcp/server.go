@@ -20,9 +20,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"reflect"
 	"slices"
-	"strings"
+	"time"
 
 	"bennypowers.dev/cem/internal/platform"
 	"bennypowers.dev/cem/internal/version"
@@ -79,8 +80,9 @@ func NewServerWithConfig(workspace types.WorkspaceContext, config ServerConfig) 
 	// Registration is shared with Register so both entry points expose the
 	// same tools and resources. Unlike Register, this constructor defers
 	// manifest loading to Run, preserving the existing lifecycle, and keeps
-	// the watcher-enabled registry that Run starts.
-	registration, err := mount(server, workspace, config, registerConfig{conflict: ConflictReplace}, true, false)
+	// the watcher-enabled registry that Run starts. Run reloads that initial
+	// context in place; the handle is intentionally not retained here.
+	registration, err := mount(server, workspace, config, registerConfig{conflict: ConflictReplace}, mountOptions{watch: true})
 	if err != nil {
 		return nil, err
 	}
@@ -98,16 +100,18 @@ func NewServerWithConfig(workspace types.WorkspaceContext, config ServerConfig) 
 //
 // Register must be called before server starts serving sessions: the SDK's
 // registration methods mutate the server's handler tables. The caller owns
-// the server and its lifecycle: Register does not start a transport or file
-// watching. It creates its own MCPContext and loads the workspace manifests
-// and any configured additional packages before registering handlers, so the
-// mounted tools and resources are usable as soon as Register returns. The
-// workspace must already be initialized.
+// the server and its long-lived lifecycle: Register does not start a
+// transport or file watching. It creates its own MCPContext and loads the
+// workspace manifests and any configured additional packages before
+// registering handlers, so the mounted tools and resources are usable as
+// soon as Register returns. The workspace must already be initialized.
 //
 // Options select part of cem's surface and choose how to treat entries that
 // already exist on server. With no options, Register exposes every tool and
 // resource and replaces conflicting entries, which is the behavior before
-// options existed.
+// options existed. Register is additive: it never removes entries. Calling it
+// again adds or replaces selected entries, and handlers installed by earlier
+// calls keep their own registry.
 //
 // Filters match tool names, static resource URIs, or URI template strings
 // exactly and case-sensitively. Include selects a subset; an empty Include
@@ -115,19 +119,23 @@ func NewServerWithConfig(workspace types.WorkspaceContext, config ServerConfig) 
 // An unknown Include entry is an error, while an unknown Exclude entry is
 // accepted so hosts can keep a stable deny list across cem versions. Empty
 // strings in either list are rejected. Repeated filter options accumulate,
-// and the last WithConflictPolicy wins.
+// and the last WithConflictPolicy wins. Options are validated before registry
+// data is loaded, and unknown Include entries are validated before any
+// manifest or additional-package load.
 //
 // ConflictError and ConflictSkip inspect the server's current tools and
-// resources through a temporary in-memory session before registering.
-// ConflictError fails when any selected entry already exists. ConflictSkip
-// leaves such entries in place and registers only the rest. All option
-// validation and conflict detection happen before the first handler is
-// registered, so an error leaves server unchanged.
+// resources through a temporary in-memory client session before registering.
+// That session performs a normal initialize handshake, which fires any
+// ServerOptions.InitializedHandler on the host, and is closed before Register
+// returns. ConflictError fails when any selected entry already exists and
+// returns a *RegistrationConflictError. ConflictSkip leaves such entries in
+// place and registers only the rest. All option validation and conflict
+// detection happen before the first handler is registered, so an error leaves
+// server unchanged.
 //
 // The returned Registration reloads the manifests, configuration, and
-// additional packages behind the registered handlers. Reload does not change
-// the registered tools, resources, schemas, or URIs; calling Register again is
-// a replacement operation, not a reload.
+// additional packages behind the handlers installed by this call. Reload does
+// not change the registered tools, resources, schemas, or URIs.
 func Register(server *mcp.Server, workspace types.WorkspaceContext, config ServerConfig, opts ...RegisterOption) (*Registration, error) {
 	if server == nil {
 		return nil, fmt.Errorf("server must not be nil")
@@ -141,23 +149,26 @@ func Register(server *mcp.Server, workspace types.WorkspaceContext, config Serve
 		return nil, err
 	}
 
-	return mount(server, workspace, config, cfg, false, true)
+	return mount(server, workspace, config, cfg, mountOptions{load: true})
+}
+
+// mountOptions controls registry lifecycle for a mount call.
+type mountOptions struct {
+	// watch allocates a file watcher for the underlying LSP registry.
+	watch bool
+	// load loads workspace data before returning. NewServerWithConfig defers
+	// this load to Run.
+	load bool
 }
 
 // mount builds a registry, applies registration options, and adds the
-// selected handlers to server. watch controls whether the underlying LSP
-// registry allocates a file watcher. load controls whether workspace data is
-// loaded before registration; NewServerWithConfig defers that load to Run.
-func mount(server *mcp.Server, workspace types.WorkspaceContext, config ServerConfig, cfg registerConfig, watch, load bool) (*Registration, error) {
-	initial, err := newMCPContext(workspace, config.FileSystem, watch)
+// selected handlers to server. Filters and conflicts are validated before
+// workspace data is loaded, so a bad option or conflict fails fast and leaves
+// the server unchanged.
+func mount(server *mcp.Server, workspace types.WorkspaceContext, config ServerConfig, cfg registerConfig, opts mountOptions) (*Registration, error) {
+	initial, err := newMCPContext(workspace, config.FileSystem, opts.watch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create registry: %w", err)
-	}
-
-	if load {
-		if err := loadRegistryData(initial, config.AdditionalPackages, "config"); err != nil {
-			return nil, err
-		}
 	}
 
 	registry := newReloadableContext(initial)
@@ -172,6 +183,12 @@ func mount(server *mcp.Server, workspace types.WorkspaceContext, config ServerCo
 			return nil, err
 		}
 		if err := plan.resolveConflicts(existing, cfg.conflict); err != nil {
+			return nil, err
+		}
+	}
+
+	if opts.load {
+		if err := loadRegistryData(initial, config.AdditionalPackages, "config"); err != nil {
 			return nil, err
 		}
 	}
@@ -204,14 +221,35 @@ func isNilWorkspace(workspace types.WorkspaceContext) bool {
 // loadRegistryData loads manifests and additional packages into registry.
 // Additional package failures are logged and do not fail the load.
 func loadRegistryData(registry *MCPContext, additionalPackages []string, source string) error {
-	if err := registry.LoadManifests(); err != nil {
+	return loadRegistryDataWithPolicy(registry, additionalPackages, source, false)
+}
+
+// loadRegistryDataStrict loads manifests and additional packages into registry
+// and returns any load failure. Reload uses it so a partial load never
+// replaces a working registry.
+func loadRegistryDataStrict(registry *MCPContext, additionalPackages []string, source string) error {
+	return loadRegistryDataWithPolicy(registry, additionalPackages, source, true)
+}
+
+func loadRegistryDataWithPolicy(registry *MCPContext, additionalPackages []string, source string, strict bool) error {
+	var err error
+	if strict {
+		err = registry.LoadManifestsStrict()
+	} else {
+		err = registry.LoadManifests()
+	}
+	if err != nil {
 		return fmt.Errorf("failed to load manifests: %w", err)
 	}
 
 	if len(additionalPackages) > 0 {
 		helpers.SafeDebugLog("Loading %d additional packages from %s", len(additionalPackages), source)
-		if err := registry.LSPRegistry().LoadAdditionalPackages(additionalPackages); err != nil {
-			helpers.SafeDebugLog("Warning: Error loading additional packages: %v", err)
+		if strict {
+			if err := registry.LSPRegistry().LoadAdditionalPackagesStrict(additionalPackages); err != nil {
+				return fmt.Errorf("failed to load additional packages: %w", err)
+			}
+		} else {
+			_ = registry.LSPRegistry().LoadAdditionalPackages(additionalPackages)
 		}
 	}
 
@@ -329,27 +367,14 @@ func buildRegistrationPlan(registry MCPTypes.MCPContext, cfg registerConfig) (*r
 // selectNames validates a Selection against the available names and returns
 // the selected set. Exclude is applied after Include and wins on overlap.
 func selectNames(kind string, selection Selection, available []string) (map[string]struct{}, error) {
-	for _, name := range selection.Include {
-		if name == "" {
-			return nil, fmt.Errorf("%s include entry must not be empty", kind)
-		}
-	}
-	for _, name := range selection.Exclude {
-		if name == "" {
-			return nil, fmt.Errorf("%s exclude entry must not be empty", kind)
-		}
-	}
-
 	all := make(map[string]struct{}, len(available))
 	for _, name := range available {
 		all[name] = struct{}{}
 	}
 
-	selected := make(map[string]struct{})
+	selected := make(map[string]struct{}, len(all))
 	if len(selection.Include) == 0 {
-		for name := range all {
-			selected[name] = struct{}{}
-		}
+		maps.Copy(selected, all)
 	} else {
 		for _, name := range selection.Include {
 			if _, ok := all[name]; !ok {
@@ -396,11 +421,19 @@ type serverSurface struct {
 	templates map[string]struct{}
 }
 
+// surfaceInspectionTimeout bounds the temporary session used to inspect the
+// caller's server. The work is local, so a short bound is enough to avoid a
+// stalled host middleware blocking Register indefinitely.
+const surfaceInspectionTimeout = 10 * time.Second
+
 // existingServerSurface lists the tools, resources, and resource templates
 // already registered on server. The SDK does not expose its handler tables,
-// so this uses a short-lived in-memory client session.
+// so this uses a short-lived in-memory client session. The session sends the
+// normal initialize handshake, which fires any host InitializedHandler, and is
+// closed before this function returns.
 func existingServerSurface(server *mcp.Server) (serverSurface, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), surfaceInspectionTimeout)
+	defer cancel()
 
 	serverTransport, clientTransport := mcp.NewInMemoryTransports()
 	serverSession, err := server.Connect(ctx, serverTransport, nil)
@@ -448,7 +481,9 @@ func existingServerSurface(server *mcp.Server) (serverSurface, error) {
 }
 
 // resolveConflicts applies policy to any plan entries that already exist on
-// the server.
+// the server. mount calls it only for ConflictSkip and ConflictError; the
+// ConflictReplace and default arms keep the function exhaustive for future
+// callers.
 func (p *registrationPlan) resolveConflicts(existing serverSurface, policy ConflictPolicy) error {
 	switch policy {
 	case ConflictReplace:
@@ -470,25 +505,28 @@ func (p *registrationPlan) resolveConflicts(existing serverSurface, policy Confl
 		return nil
 
 	case ConflictError:
-		var conflicts []string
+		conflict := &RegistrationConflictError{}
 		for _, tool := range p.tools {
 			if _, ok := existing.tools[tool.tool.Name]; ok {
-				conflicts = append(conflicts, fmt.Sprintf("tool %q", tool.tool.Name))
+				conflict.Tools = append(conflict.Tools, tool.tool.Name)
 			}
 		}
 		for _, resource := range p.resources {
 			if resource.template != nil {
 				if _, ok := existing.templates[resource.template.URITemplate]; ok {
-					conflicts = append(conflicts, fmt.Sprintf("resource template %q", resource.template.URITemplate))
+					conflict.ResourceTemplates = append(conflict.ResourceTemplates, resource.template.URITemplate)
 				}
 				continue
 			}
 			if _, ok := existing.resources[resource.resource.URI]; ok {
-				conflicts = append(conflicts, fmt.Sprintf("resource %q", resource.resource.URI))
+				conflict.Resources = append(conflict.Resources, resource.resource.URI)
 			}
 		}
-		if len(conflicts) > 0 {
-			return fmt.Errorf("registration conflicts with existing server entries: %s", strings.Join(conflicts, ", "))
+		slices.Sort(conflict.Tools)
+		slices.Sort(conflict.Resources)
+		slices.Sort(conflict.ResourceTemplates)
+		if len(conflict.Tools)+len(conflict.Resources)+len(conflict.ResourceTemplates) > 0 {
+			return conflict
 		}
 		return nil
 
@@ -539,6 +577,7 @@ func (s *Server) Run(ctx context.Context) error {
 	if err := s.registry.LSPRegistry().StartFileWatching(func() {
 		helpers.SafeDebugLog("File change detected, reloading manifests and config")
 		s.registry.InvalidateConfig()
+		s.registry.InvalidateManifest()
 		if err := s.registry.LoadManifests(); err != nil {
 			helpers.SafeDebugLog("Warning: Failed to reload manifests: %v", err)
 		}

@@ -40,6 +40,7 @@ import (
 )
 
 var _ types.WorkspaceContext = (*MapWorkspaceContext)(nil)
+var _ types.CacheInvalidator = (*MapWorkspaceContext)(nil)
 
 // MapWorkspaceContext implements types.WorkspaceContext backed by a platform.MapFileSystem.
 // All reads come from in-memory MapFS, no disk I/O after construction.
@@ -146,6 +147,10 @@ func (c *MapWorkspaceContext) ConfigFile() string {
 func (c *MapWorkspaceContext) Config() (*C.CemConfig, error) {
 	return c.config, nil
 }
+
+// InvalidateConfig is a no-op: MapWorkspaceContext loads its configuration
+// from the in-memory filesystem during Init and does not re-read it.
+func (c *MapWorkspaceContext) InvalidateConfig() {}
 
 func (c *MapWorkspaceContext) PackageJSON() (*M.PackageJSON, error) {
 	return c.packageJSON, nil
