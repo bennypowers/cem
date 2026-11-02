@@ -45,6 +45,30 @@
               }
             },
             {
+              "name": "tone",
+              "type": {
+                "text": "'calm' | 'bold'"
+              }
+            },
+            {
+              "name": "caret",
+              "type": {
+                "text": "string | undefined"
+              }
+            },
+            {
+              "name": "formTarget",
+              "type": {
+                "text": "'_self' | '_blank' | string"
+              }
+            },
+            {
+              "name": "size",
+              "type": {
+                "text": "'sm' | null"
+              }
+            },
+            {
               "name": "legacy",
               "deprecated": "use variant instead",
               "type": {

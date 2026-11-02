@@ -466,6 +466,62 @@ func TestValidateOptionGating(t *testing.T) {
 		"Strict alone adds no findings")
 }
 
+// RHDS manifests describe literal unions with single quotes. Those values are
+// valid attribute values, and the error must not present TypeScript source
+// quoting as the accepted set. Inline assertions cover both halves of the
+// behavior without a golden.
+func TestValidateSingleQuotedLiteralUnion(t *testing.T) {
+	pkg := loadPackage(t)
+
+	valid, err := markup.Validate(pkg, `<my-button tone="calm"></my-button>`,
+		markup.Options{ValidateAttrs: true})
+	require.NoError(t, err)
+	assert.Empty(t, valid)
+
+	invalid, err := markup.Validate(pkg, `<my-button tone="loud"></my-button>`,
+		markup.Options{ValidateAttrs: true})
+	require.NoError(t, err)
+	require.Len(t, invalid, 1)
+	assert.Equal(t, markup.RuleInvalidAttributeValue, invalid[0].Rule)
+	assert.Equal(t, `["calm" "bold"]`, invalid[0].Details[markup.DetailExpected])
+	assert.NotContains(t, invalid[0].Message, "'calm'")
+
+	// The raw TypeScript source form remains accepted for compatibility.
+	raw, err := markup.Validate(pkg, `<my-button tone="'calm'"></my-button>`,
+		markup.Options{ValidateAttrs: true})
+	require.NoError(t, err)
+	assert.Empty(t, raw)
+
+	// A union with no literal members has no acceptable value set, so it must
+	// not produce an error with an empty list.
+	open, err := markup.Validate(pkg, `<my-button caret="anything"></my-button>`,
+		markup.Options{ValidateAttrs: true})
+	require.NoError(t, err)
+	assert.Empty(t, open)
+
+	// A union with an open member is not a finite set either.
+	openLiteral, err := markup.Validate(pkg, `<my-button formTarget="_custom"></my-button>`,
+		markup.Options{ValidateAttrs: true})
+	require.NoError(t, err)
+	assert.Empty(t, openLiteral)
+
+	// Null is an absence marker, not an open member, so the literal set stays
+	// closed and invalid values, including "null", are still reported.
+	nullable, err := markup.Validate(pkg, `<my-button size="sm"></my-button>`,
+		markup.Options{ValidateAttrs: true})
+	require.NoError(t, err)
+	assert.Empty(t, nullable)
+	for _, value := range []string{"null", "md"} {
+		issues, err := markup.Validate(pkg,
+			`<my-button size="`+value+`"></my-button>`,
+			markup.Options{ValidateAttrs: true})
+		require.NoError(t, err)
+		require.Len(t, issues, 1, "size=%q", value)
+		assert.Equal(t, markup.RuleInvalidAttributeValue, issues[0].Rule)
+		assert.Equal(t, `["sm"]`, issues[0].Details[markup.DetailExpected])
+	}
+}
+
 // Liquid comments never render, so markup inside them must not be validated;
 // markup outside them must still be. Inline assertions state both halves.
 func TestValidateLiquidComments(t *testing.T) {

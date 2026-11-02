@@ -372,8 +372,11 @@ func (v *validator) validateAttributes(el *elementNode, decl *manifest.CustomEle
 
 		if !attr.dynamic && manifestAttr.IsEnum() && attr.value != "" &&
 			(!v.template || !containsTemplateExpression(attr.value, v.handlebars)) {
-			if !manifestAttr.IsValidValue(attr.value) {
-				validValues := manifestAttr.EnumValues()
+			// A union with no literal members, or with an open member such as
+			// `string | 'a'`, has no finite set of acceptable attribute
+			// values, so it cannot be validated meaningfully.
+			validValues := manifestAttr.DisplayEnumValues()
+			if manifestAttr.IsClosedEnum() && len(validValues) > 0 && !manifestAttr.IsValidValue(attr.value) {
 				message := fmt.Sprintf("Invalid attribute value: `%s=\"%s\"` in `<%s>`. Valid values: %v",
 					attr.name, attr.value, el.tagName, validValues)
 				v.addAttribute(el, attr, RuleInvalidAttributeValue, SeverityError, ConfidenceHigh, message, map[string]string{
@@ -542,7 +545,7 @@ func isTrueFalseUnion(attr *manifest.Attribute) bool {
 	}
 
 	hasTrue, hasFalse := false, false
-	for _, value := range attr.EnumValues() {
+	for _, value := range attr.DisplayEnumValues() {
 		normalized := strings.ToLower(strings.Trim(strings.TrimSpace(value), `"'`))
 		switch normalized {
 		case "true":
