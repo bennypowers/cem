@@ -417,6 +417,8 @@ func scanDecimalDigits(s string, i int) (int, int) {
 	return i, count
 }
 
+// hasDigits reports whether s is a non-empty digit sequence in the given base,
+// allowing numeric separators between digits.
 func hasDigits(s string, base int) bool {
 	if s == "" {
 		return false
@@ -441,6 +443,7 @@ func hasDigits(s string, base int) bool {
 	return count > 0
 }
 
+// isDigitForBase reports whether c is a digit in the given base.
 func isDigitForBase(c byte, base int) bool {
 	var digit int
 	switch {
@@ -456,6 +459,7 @@ func isDigitForBase(c byte, base int) bool {
 	return digit < base
 }
 
+// isDecimalDigit reports whether c is a decimal digit.
 func isDecimalDigit(c byte) bool {
 	return c >= '0' && c <= '9'
 }
