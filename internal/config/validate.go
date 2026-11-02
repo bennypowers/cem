@@ -288,8 +288,10 @@ func extractURLPatternParams(pattern string) []string {
 	return params
 }
 
-// TemplateFuncNames lists the template functions allowed in urlTemplate fields.
-// demodiscovery registers real implementations; validation uses no-op stubs.
+// TemplateFuncNames lists the template functions allowed in
+// generate.demoDiscovery.urlTemplate. Path rewrite templates use the narrower
+// pathTemplateFuncNames in schema.go. demodiscovery registers real
+// implementations; validation uses no-op stubs.
 var TemplateFuncNames = []string{"alias", "slug", "lower", "upper"}
 
 var templateStubFuncs = makeStubFuncMap(TemplateFuncNames)
