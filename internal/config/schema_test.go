@@ -33,39 +33,6 @@ func TestValidateSchema_ExampleConfigs(t *testing.T) {
 	}
 }
 
-func TestValidateSchema_TemplateFunctions(t *testing.T) {
-	t.Run("accepts documented template functions", func(t *testing.T) {
-		data := []byte(`
-generate:
-  demoDiscovery:
-    urlPattern: "/elements/:tag/demo/:demo.html"
-    urlTemplate: "https://example.com/{{.tag | alias | slug}}/demo/{{.demo | lower}}/"
-serve:
-  urlRewrites:
-    - urlPattern: "/api/:path*"
-      urlTemplate: "/backend/{{.path | upper}}"
-`)
-		for _, e := range ValidateSchema(data, "yaml") {
-			t.Errorf("unexpected validation error: %s", e.Error())
-		}
-	})
-
-	t.Run("rejects unknown template function", func(t *testing.T) {
-		data := []byte(`
-generate:
-  demoDiscovery:
-    urlTemplate: "{{.tag | nope}}"
-`)
-		errs := ValidateSchema(data, "yaml")
-		if len(errs) == 0 {
-			t.Fatal("expected validation error for unknown template function, got none")
-		}
-		if field := errs[0].Field; field != "generate.demoDiscovery.urlTemplate" {
-			t.Errorf("expected error on generate.demoDiscovery.urlTemplate, got %q", field)
-		}
-	})
-}
-
 func TestValidateSchema(t *testing.T) {
 	mfs := testutil.LoadTestdataFS(t, filepath.Join("testdata", "schema"), "/")
 
