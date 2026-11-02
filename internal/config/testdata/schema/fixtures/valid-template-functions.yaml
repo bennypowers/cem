@@ -1,8 +1,8 @@
 generate:
   demoDiscovery:
     urlPattern: "/elements/:tag/demo/:demo.html"
-    urlTemplate: "https://example.com/{{.tag | alias | slug}}/demo/{{.demo | lower}}/"
+    urlTemplate: "https://example.com/{{.tag | alias | slug}}/demo/{{.demo | lower}}/{{.demo | upper}}/"
 serve:
   urlRewrites:
     - urlPattern: "/api/:path*"
-      urlTemplate: "/backend/{{.path | upper}}"
+      urlTemplate: "/backend/{{.path | lower}}/{{.path | slug}}/{{.path | upper}}"

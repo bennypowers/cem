@@ -148,6 +148,7 @@ serve:
   # Rewrites request URLs to source file paths for TypeScript resolution
   # Automatically detected from tsconfig.json (rootDir/outDir)
   # Manual rewrites override automatic detection
+  # urlTemplate supports the lower, slug, and upper functions.
   urlRewrites:
     - urlPattern: "/dist/:path*"
       urlTemplate: "/src/{{.path}}"
@@ -664,6 +665,8 @@ urlTemplate: "https://example.com/{{alias .component}}/{{slug .demo}}/"
 ```
 
 **Important:** All transformations must be explicitly specified. Unlike previous versions, no automatic aliasing or slugification is applied unless explicitly requested in the template.
+
+**Per-field function sets:** The table above applies to `generate.demoDiscovery.urlTemplate`. `serve.urlRewrites[].urlTemplate` supports only `lower`, `slug`, and `upper`, matching the dev server's path rewrite runtime. `alias` is not available for URL rewrites because they operate on captured path parameters and have no element alias map.
 
 ### Configuration Examples
 

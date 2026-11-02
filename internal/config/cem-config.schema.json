@@ -100,7 +100,7 @@
             "urlTemplate": {
               "type": "string",
               "format": "x-go-template",
-              "description": "Go template for generating demo URLs from matched parameters (e.g. '/demos/{{.tagName}}/')."
+              "description": "Go template for generating demo URLs from matched parameters (e.g. '/demos/{{.tagName}}/'). Allowed functions: alias, slug, lower, upper."
             }
           }
         }
@@ -223,8 +223,8 @@
               },
               "urlTemplate": {
                 "type": "string",
-                "format": "x-go-template",
-                "description": "Go template producing the rewritten path (e.g. '/src/{{.path}}')."
+                "format": "x-go-template-path",
+                "description": "Go template producing the rewritten path (e.g. '/src/{{.path}}'). Allowed functions: lower, slug, upper."
               }
             }
           }

@@ -3,7 +3,7 @@
   "errors": [
     {
       "field": "generate.demoDiscovery.urlTemplate",
-      "message": "'{{.tag | nope}}' is not valid x-go-template: invalid Go template: template: :1: function \"nope\" not defined",
+      "message": "'{{.tag | nope}}' is not valid x-go-template: invalid Go template: template: :1: function \"nope\" not defined (allowed functions: alias, slug, lower, upper)",
       "severity": "error"
     }
   ]

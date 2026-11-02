@@ -1,0 +1,10 @@
+{
+  "valid": false,
+  "errors": [
+    {
+      "field": "serve.urlRewrites.0.urlTemplate",
+      "message": "'/backend/{{.path | alias}}' is not valid x-go-template-path: invalid Go template: template: :1: function \"alias\" not defined (allowed functions: lower, slug, upper)",
+      "severity": "error"
+    }
+  ]
+}

@@ -91,24 +91,40 @@ var urlPatternFormat = &jsonschema.Format{
 	},
 }
 
-var goTemplateFormat = &jsonschema.Format{
-	Name: "x-go-template",
-	Validate: func(v any) error {
-		s, ok := v.(string)
-		if !ok {
+// pathTemplateFuncNames lists the template functions implemented by the dev
+// server's URL rewrite runtime (serve/middleware/transform/path_resolver.go).
+// It is narrower than TemplateFuncNames because path rewrites operate on
+// captured URL parameters and have no tag-alias map.
+var pathTemplateFuncNames = []string{"lower", "slug", "upper"}
+
+// goTemplateFormat validates templates that support every documented function.
+var goTemplateFormat = newGoTemplateFormat("x-go-template", TemplateFuncNames)
+
+// goTemplatePathFormat validates URL rewrite templates, which support only the
+// functions available to the dev server at runtime.
+var goTemplatePathFormat = newGoTemplateFormat("x-go-template-path", pathTemplateFuncNames)
+
+func newGoTemplateFormat(name string, funcNames []string) *jsonschema.Format {
+	funcs := makeStubFuncMap(funcNames)
+	return &jsonschema.Format{
+		Name: name,
+		Validate: func(v any) error {
+			s, ok := v.(string)
+			if !ok {
+				return nil
+			}
+			if s == "" {
+				return nil
+			}
+			// Register the allowed functions so that pipelines parse. Parse still
+			// rejects functions outside the allowlist.
+			_, err := template.New("").Funcs(funcs).Parse(s)
+			if err != nil {
+				return fmt.Errorf("invalid Go template: %w (allowed functions: %s)", err, strings.Join(funcNames, ", "))
+			}
 			return nil
-		}
-		if s == "" {
-			return nil
-		}
-		// Register the documented template functions so that pipelines such as
-		// {{.tag | alias | slug}} parse. Parse still rejects unknown functions.
-		_, err := template.New("").Funcs(templateStubFuncs).Parse(s)
-		if err != nil {
-			return fmt.Errorf("invalid Go template: %w", err)
-		}
-		return nil
-	},
+		},
+	}
 }
 
 // ValidateSchema validates raw config data against the CemConfig JSON Schema.
@@ -134,6 +150,7 @@ func ValidateSchema(configData []byte, format string) []ValidationError {
 	compiler.RegisterFormat(globFormat)
 	compiler.RegisterFormat(urlPatternFormat)
 	compiler.RegisterFormat(goTemplateFormat)
+	compiler.RegisterFormat(goTemplatePathFormat)
 
 	if err := compiler.AddResource("cem-config.schema.json", schemaDoc); err != nil {
 		return []ValidationError{{
