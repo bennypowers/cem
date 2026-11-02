@@ -58,6 +58,10 @@ dist/cem: .generate.stamp $(GO_SOURCES)
 .PHONY: build
 build: dist/cem
 
+dev-serve: generate
+	@mkdir -p dist
+	go build -tags cemdev -ldflags="$(shell ./scripts/ldflags.sh)" -o dist/cem .
+
 # NOTE: this is a non-traditional install target, which installs to ~/.local/bin/
 # It's mostly intended for local development, not for distribution
 .PHONY: install
