@@ -101,7 +101,9 @@ var goTemplateFormat = &jsonschema.Format{
 		if s == "" {
 			return nil
 		}
-		_, err := template.New("").Parse(s)
+		// Register the documented template functions so that pipelines such as
+		// {{.tag | alias | slug}} parse. Parse still rejects unknown functions.
+		_, err := template.New("").Funcs(templateStubFuncs).Parse(s)
 		if err != nil {
 			return fmt.Errorf("invalid Go template: %w", err)
 		}

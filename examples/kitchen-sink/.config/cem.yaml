@@ -8,7 +8,7 @@ generate:
   demoDiscovery:
     fileGlob: elements/**/demo/*.html
     urlPattern: elements/:tag/demo/:demo.html
-    urlTemplate: https://bennypowers.dev/cem/examples/kitchen-sink/{{.tag}}/{{.demo}}/
+    urlTemplate: https://bennypowers.dev/cem/examples/kitchen-sink/{{.tag | lower}}/{{.demo | slug}}/
   designTokens:
     spec: design-tokens.json
     prefix: demo
