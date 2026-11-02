@@ -18,7 +18,7 @@ generate:
   demoDiscovery:
     fileGlob: "elements/**/demo/*.html"
     urlPattern: "/elements/:tag/demo/:demo.html"
-    urlTemplate: "/elements/{{.tag}}/demo/{{.demo}}/"
+    urlTemplate: "/elements/{{.tag | alias | slug}}/demo/{{.demo | lower}}/"
 serve:
   port: 3000
   openBrowser: true
@@ -43,7 +43,7 @@ serve:
         - "vendor/**/*.css"
   urlRewrites:
     - urlPattern: "/api/:path*"
-      urlTemplate: "/backend/{{.path}}"
+      urlTemplate: "/backend/{{.path | upper}}"
   demos:
     rendering: shadow
 mcp:

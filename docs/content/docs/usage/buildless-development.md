@@ -102,6 +102,8 @@ URL templates use Go template syntax:
 - `{{.param | upper}}` - Applies the `upper` function (converts to uppercase)
 - `{{.param | slug}}` - Applies the `slug` function (URL-safe slug)
 
+`alias` is not available in URL rewrite templates. It requires the element alias map built during module collection, which the dev server's path resolver does not have.
+
 **Example:** Element name transformation for demos
 
 If your project serves demos at URLs that don't match the on-disk structure:
