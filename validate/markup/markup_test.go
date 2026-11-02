@@ -486,11 +486,14 @@ func TestValidateSingleQuotedLiteralUnion(t *testing.T) {
 	assert.Equal(t, `["calm" "bold"]`, invalid[0].Details[markup.DetailExpected])
 	assert.NotContains(t, invalid[0].Message, "'calm'")
 
-	// The raw TypeScript source form remains accepted for compatibility.
+	// A TypeScript string literal denotes its decoded value. The source form,
+	// quotes included, is a different HTML attribute value and must be rejected.
 	raw, err := markup.Validate(pkg, `<my-button tone="'calm'"></my-button>`,
 		markup.Options{ValidateAttrs: true})
 	require.NoError(t, err)
-	assert.Empty(t, raw)
+	require.Len(t, raw, 1)
+	assert.Equal(t, markup.RuleInvalidAttributeValue, raw[0].Rule)
+	assert.Equal(t, `["calm" "bold"]`, raw[0].Details[markup.DetailExpected])
 
 	// A union with no literal members has no acceptable value set, so it must
 	// not produce an error with an empty list.

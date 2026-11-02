@@ -185,9 +185,10 @@ func (a *Attribute) IsValidValue(value string) bool {
 		if !ok {
 			continue
 		}
-		// Compare against both the literal value and the raw member for
-		// compatibility with callers that pass the TypeScript source form.
-		if value == literal || value == member {
+		// A union member is the TypeScript source form, which includes the
+		// string delimiters. Callers validate an attribute value, so compare
+		// against the decoded literal only: "'primary'" is not "primary".
+		if value == literal {
 			return true
 		}
 	}
